@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+dist/
+build/
+*.zip
+*.rar
+*.pptx
+*.pdf
+.DS_Store
+Thumbs.db

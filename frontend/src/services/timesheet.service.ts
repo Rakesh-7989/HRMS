@@ -1,0 +1,118 @@
+import api from './api';
+import type {
+    Timesheet,
+    CreateTimesheetData,
+    ApproveTimesheetData,
+    TimesheetStatus,
+} from '@/types/project.types';
+
+/**
+ * Timesheet Service
+ * Handles all timesheet related API calls
+ * Uses exact endpoints as defined in backend specification
+ */
+export const timesheetService = {
+    /**
+     * Get timesheets
+     * GET /api/timesheet
+     */
+    /**
+     * Get timesheets (Weekly sheets)
+     * GET /api/projects/timesheets
+     */
+    getTimesheets: async (params?: {
+        employee_id?: string;
+        project_id?: string;
+        status?: TimesheetStatus;
+        week_start_date?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<Timesheet[]> => {
+        const response = await api.get<{ status: string; data: Timesheet[] }>(
+            '/projects/timesheets',
+            { params }
+        );
+        return response.data.data || [];
+    },
+
+    /**
+     * Create/Log a timesheet entry
+     * POST /api/projects/timesheets/entry
+     */
+    createTimesheet: async (data: CreateTimesheetData): Promise<Timesheet> => {
+        const response = await api.post<{ status: string; data: Timesheet }>(
+            '/projects/timesheets/entry',
+            data
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Submit a timesheet
+     * PUT /api/projects/timesheets/:id/submit
+     */
+    submitTimesheet: async (id: string): Promise<Timesheet> => {
+        const response = await api.put<{ status: string; data: Timesheet }>(
+            `/projects/timesheets/${id}/submit`
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Approve a timesheet
+     * PUT /api/projects/timesheets/:id/approve
+     */
+    approveTimesheet: async (data: ApproveTimesheetData): Promise<Timesheet> => {
+        const response = await api.put<{ status: string; data: Timesheet }>(
+            `/projects/timesheets/${data.timesheet_id}/approve`,
+            { notes: data.notes }
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Reject a timesheet
+     * PUT /api/projects/timesheets/:id/reject
+     */
+    rejectTimesheet: async (id: string, reason: string): Promise<Timesheet> => {
+        const response = await api.put<{ status: string; data: Timesheet }>(
+            `/projects/timesheets/${id}/reject`,
+            { rejection_reason: reason }
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Get pending timesheets for approval (for managers)
+     * GET /api/projects/timesheets/pending-approvals
+     */
+    getPendingApprovals: async (params?: {
+        limit?: number;
+        offset?: number;
+    }): Promise<Timesheet[]> => {
+        const response = await api.get<{ status: string; data: Timesheet[] }>(
+            '/projects/timesheets/pending-approvals',
+            { params }
+        );
+        return response.data.data || [];
+    },
+
+    /**
+     * Get my timesheet entries
+     * GET /api/projects/timesheets/my-entries
+     */
+    getMyTimesheets: async (params?: {
+        project_id?: string;
+        week_start_date?: string;
+        start_date?: string;
+        end_date?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<Timesheet[]> => {
+        const response = await api.get<{ status: string; data: Timesheet[] }>(
+            '/projects/timesheets/my-entries',
+            { params }
+        );
+        return response.data.data || [];
+    },
+};

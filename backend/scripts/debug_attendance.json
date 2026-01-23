@@ -1,0 +1,12 @@
+[
+  {
+    "id": "1b107bd3-66e0-4557-b004-ece1863234de",
+    "date": "2026-01-11T18:30:00.000Z",
+    "check_in_time": "11:30:19",
+    "status": "INCOMPLETE_HOURS",
+    "employee_id": "0a8c575c-6bdb-451c-8677-3d5c66a352ce",
+    "first_name": "Employee",
+    "last_name": "One",
+    "email": "testemployee1@seedtenant.com"
+  }
+]

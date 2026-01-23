@@ -1,0 +1,26 @@
+// src/config/env.js
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+const required = (key, fallback) => {
+    const value = process.env[key] ?? fallback;
+    if (value === undefined) {
+        throw new Error(`Missing required env var: ${key}`);
+    }
+    return value;
+};
+
+module.exports = {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: parseInt(process.env.PORT || '5000', 10),
+
+    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://hrms_user:root@localhost:5432/hrms_saas_db',
+    JWT_ACCESS_SECRET: required('JWT_ACCESS_SECRET'),
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
+    JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),
+    REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
+
+    LOG_LEVEL: (process.env.LOG_LEVEL || 'debug').toLowerCase(),
+
+    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173'
+};

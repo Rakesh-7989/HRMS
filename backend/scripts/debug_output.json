@@ -1,0 +1,34 @@
+[
+  {
+    "user_id": "2f63eb7b-ff76-4c0d-b52a-69b115346d83",
+    "email": "testemployee2@seedtenant.com",
+    "role": "EMPLOYEE",
+    "employee_id": "d6caca0c-9644-4659-9120-378609ce66be",
+    "first_name": "Employee",
+    "last_name": "Two"
+  },
+  {
+    "user_id": "540f43cd-0ad1-4464-bbe1-51903fedd11a",
+    "email": "testhr@seedtenant.com",
+    "role": "HR",
+    "employee_id": "ac757759-8d97-4e67-8d0c-05432b39d1d1",
+    "first_name": "HR",
+    "last_name": "User"
+  },
+  {
+    "user_id": "555a690c-c622-495c-adec-a665bf484f3b",
+    "email": "testemployee1@seedtenant.com",
+    "role": "EMPLOYEE",
+    "employee_id": "0a8c575c-6bdb-451c-8677-3d5c66a352ce",
+    "first_name": "Employee",
+    "last_name": "One"
+  },
+  {
+    "user_id": "53546727-4a7c-4565-a288-bae47e226d34",
+    "email": "contact@seedtenant.com",
+    "role": "ADMIN",
+    "employee_id": "66165aee-2b84-4059-bd54-df44cfecc328",
+    "first_name": "Admin",
+    "last_name": "User"
+  }
+]

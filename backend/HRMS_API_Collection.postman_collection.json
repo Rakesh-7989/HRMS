@@ -1,0 +1,706 @@
+{
+    "info": {
+        "name": "HRMS API Collection",
+        "description": "Complete API collection for HRMS SaaS Application",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000/api"
+        },
+        {
+            "key": "accessToken",
+            "value": ""
+        },
+        {
+            "key": "refreshToken",
+            "value": ""
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "1. Auth",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/auth/login",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"Password123!\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/auth/refresh",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/auth/logout",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Change Password",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/auth/change-password",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Sessions",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/auth/sessions"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Tenant",
+            "item": [
+                {
+                    "name": "Register Tenant",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/tenants/register",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"companyName\": \"Acme Corp\",\n  \"adminEmail\": \"admin@acme.com\",\n  \"adminPassword\": \"Password123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+919876543210\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Subscriptions",
+            "item": [
+                {
+                    "name": "Get Plans",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/subscriptions/plans"
+                    }
+                },
+                {
+                    "name": "My Subscription",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/subscriptions/my-subscription"
+                    }
+                },
+                {
+                    "name": "Get Usage",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/subscriptions/usage"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Dashboards",
+            "item": [
+                {
+                    "name": "Organization Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/dashboards/organization"
+                    }
+                },
+                {
+                    "name": "HR Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/dashboards/hr"
+                    }
+                },
+                {
+                    "name": "Team Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/dashboards/team"
+                    }
+                },
+                {
+                    "name": "Personal Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/dashboards/personal"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Users",
+            "item": [
+                {
+                    "name": "Create Employee",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/users",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"employee@company.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"EMPLOYEE\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"phone\": \"+919876543210\",\n  \"dateOfJoining\": \"2024-01-01\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "List Employees",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/users"
+                    }
+                },
+                {
+                    "name": "Get Employee By ID",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/users/:id"
+                    }
+                },
+                {
+                    "name": "My Profile",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/users/me/profile"
+                    }
+                },
+                {
+                    "name": "Update My Profile",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/users/me/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"+919876543211\",\n  \"personalEmail\": \"personal@email.com\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Change Role",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/users/:id/role",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"role\": \"MANAGER\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Assign Manager",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/users/:id/manager",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"managerId\": \"manager-uuid\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Departments",
+            "item": [
+                {
+                    "name": "Create Department",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/departments",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Engineering\",\n  \"code\": \"ENG\",\n  \"description\": \"Software Engineering\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "List Departments",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/departments"
+                    }
+                },
+                {
+                    "name": "Get Department",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/departments/:id"
+                    }
+                },
+                {
+                    "name": "Update Department",
+                    "request": {
+                        "method": "PATCH",
+                        "url": "{{baseUrl}}/departments/:id",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Engineering Updated\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Department",
+                    "request": {
+                        "method": "DELETE",
+                        "url": "{{baseUrl}}/departments/:id"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Attendance",
+            "item": [
+                {
+                    "name": "Clock In",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/attendance/clock-in",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"location\": \"Office\",\n  \"notes\": \"Starting work\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Clock Out",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/attendance/clock-out",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"End of day\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Today's Attendance",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/attendance/today"
+                    }
+                },
+                {
+                    "name": "My Attendance",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/attendance/my-attendance?from_date=2024-01-01&to_date=2024-12-31"
+                    }
+                },
+                {
+                    "name": "Team Attendance",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/attendance/team/attendance"
+                    }
+                },
+                {
+                    "name": "All Records",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/attendance/records"
+                    }
+                },
+                {
+                    "name": "Analytics",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/attendance/analytics"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Leave",
+            "item": [
+                {
+                    "name": "Apply Leave",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/leave/apply",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"leave_type_id\": \"leave-type-uuid\",\n  \"start_date\": \"2024-12-25\",\n  \"end_date\": \"2024-12-26\",\n  \"is_half_day\": false,\n  \"reason\": \"Family vacation\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "My Leaves",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/leave/my-leaves"
+                    }
+                },
+                {
+                    "name": "Cancel Leave",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/leave/:id/cancel",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        }
+                    }
+                },
+                {
+                    "name": "Pending Approvals",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/leave/approvals"
+                    }
+                },
+                {
+                    "name": "Approve Leave",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/leave/:id/approve",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"comment\": \"Approved\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Reject Leave",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/leave/:id/reject",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Insufficient notice period\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Leave Types",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/leave/types"
+                    }
+                },
+                {
+                    "name": "Create Leave Type",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/leave/types",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Casual Leave\",\n  \"code\": \"CL\",\n  \"is_paid\": true,\n  \"requires_approval\": true\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "My Balances",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/leave/balances/me"
+                    }
+                },
+                {
+                    "name": "Public Holidays",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/leave/holidays"
+                    }
+                },
+                {
+                    "name": "Create Holiday",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/leave/holidays",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Christmas\",\n  \"date\": \"2024-12-25\",\n  \"is_optional\": false\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Payroll",
+            "item": [
+                {
+                    "name": "Summary",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/summary"
+                    }
+                },
+                {
+                    "name": "Salary Templates",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/salary/templates"
+                    }
+                },
+                {
+                    "name": "Create Template",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/payroll/salary/templates",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Standard Template\",\n  \"basicPercentage\": 40,\n  \"hraPercentage\": 20,\n  \"daPercentage\": 10,\n  \"specialAllowancePercentage\": 20,\n  \"otherAllowancePercentage\": 10\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Assign Salary",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/payroll/salary/assign",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"employeeId\": \"employee-uuid\",\n  \"ctc\": 1200000,\n  \"effectiveFrom\": \"2024-01-01\",\n  \"bankName\": \"HDFC Bank\",\n  \"bankAccountNumber\": \"1234567890\",\n  \"bankIfsc\": \"HDFC0001234\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "All Salaries",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/salary/all"
+                    }
+                },
+                {
+                    "name": "Employee Salary",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/salary/employee/:employeeId"
+                    }
+                },
+                {
+                    "name": "Pay Schedules",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/payrun/schedules"
+                    }
+                },
+                {
+                    "name": "Create Pay Schedule",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/payroll/payrun/schedules",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Monthly Payroll\",\n  \"cycle\": \"MONTHLY\",\n  \"payDay\": 1,\n  \"cutOffDay\": 25\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Create Payrun",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/payroll/payrun",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"periodMonth\": 12,\n  \"periodYear\": 2024,\n  \"payDate\": \"2024-12-31\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "List Payruns",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/payrun"
+                    }
+                },
+                {
+                    "name": "Calculate Payrun",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/payroll/payrun/:id/calculate"
+                    }
+                },
+                {
+                    "name": "Approve Payrun",
+                    "request": {
+                        "method": "PATCH",
+                        "url": "{{baseUrl}}/payroll/payrun/:id/approve"
+                    }
+                },
+                {
+                    "name": "Statutory Config",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/statutory/config"
+                    }
+                },
+                {
+                    "name": "Payslips",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payroll/payslips"
+                    }
+                }
+            ]
+        }
+    ]
+}
