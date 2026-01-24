@@ -31,7 +31,6 @@ export const ForgotPasswordPage: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <AnimatedLogo size="lg" />
-          <span className="text-2xl font-bold text-primary-gradient tracking-widest">WellZo</span>
         </div>
 
         <Card>
@@ -74,3 +73,5 @@ export const ForgotPasswordPage: React.FC = () => {
     </div>
   );
 };
+
+

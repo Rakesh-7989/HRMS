@@ -3,7 +3,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { MyLeaveContent } from '@/components/leave/MyLeaveContent';
 import { TeamLeaveContent } from '@/components/leave/TeamLeaveContent';
-import { HolidaysContent } from '@/components/leave/HolidaysContent';
 import { LeaveSettingsContent } from '@/components/leave/LeaveSettingsContent';
 import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
@@ -11,7 +10,6 @@ import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationConten
 const LEAVE_TABS = [
   { id: 'my-leave', label: 'My Leave', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'team-requests', label: 'Team Requests', roles: ['MANAGER', 'HR', 'ADMIN'] },
-  { id: 'holidays', label: 'Holidays', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'allocation', label: 'Allocation', roles: ['HR', 'ADMIN'] },
   { id: 'balances', label: 'Balances', roles: ['HR', 'ADMIN'] },
   { id: 'settings', label: 'Settings', roles: ['HR', 'ADMIN'] },
@@ -54,7 +52,6 @@ export const LeavePage: React.FC = () => {
       <div className="min-h-[500px]">
         {activeTab === 'my-leave' && <MyLeaveContent />}
         {activeTab === 'team-requests' && <TeamLeaveContent />}
-        {activeTab === 'holidays' && <HolidaysContent />}
         {activeTab === 'allocation' && <LeaveAllocationContent />}
         {activeTab === 'balances' && <LeaveBalancesContent />}
         {activeTab === 'settings' && <LeaveSettingsContent />}

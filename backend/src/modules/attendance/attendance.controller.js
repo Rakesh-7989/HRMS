@@ -16,7 +16,7 @@ exports.clockIn = async (req, res) => {
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp }
+      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
     );
 
     res.status(201).json({
@@ -45,7 +45,7 @@ exports.clockOut = async (req, res) => {
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp }
+      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
     );
 
     res.json({

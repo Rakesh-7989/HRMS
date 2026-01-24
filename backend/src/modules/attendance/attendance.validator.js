@@ -15,11 +15,19 @@ const intString = z
  * No body expected.
  */
 exports.clockInSchema = z.object({
-  body: z.object({}).strict()
+  body: z.object({
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    device: z.string().max(50).optional()
+  })
 });
 
 exports.clockOutSchema = z.object({
-  body: z.object({}).strict()
+  body: z.object({
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    device: z.string().max(50).optional()
+  })
 });
 
 /**

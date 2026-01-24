@@ -6,6 +6,7 @@ import { TeamAttendanceContent } from '@/components/attendance/TeamAttendanceCon
 import { AttendanceReportsContent } from '@/components/attendance/AttendanceReportsContent';
 import { RegularizationRequestsContent } from '@/components/attendance/RegularizationRequestsContent';
 import { MyAttendanceContent } from '@/components/attendance/MyAttendanceContent';
+import { GeoFencingSettingsContent } from '@/components/attendance/GeoFencingSettingsContent';
 
 const ATTENDANCE_TABS = [
   { id: 'daily', label: 'Daily Log', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
@@ -13,6 +14,7 @@ const ATTENDANCE_TABS = [
   { id: 'regularization', label: 'Regularization', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] },
   { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+  { id: 'geofence', label: 'Geo-Fencing', roles: ['HR', 'ADMIN'] },
 ] as const;
 
 export const AttendancePage: React.FC = () => {
@@ -62,6 +64,7 @@ export const AttendancePage: React.FC = () => {
           {activeTab === 'regularization' && <RegularizationRequestsContent />}
           {activeTab === 'team' && <TeamAttendanceContent />}
           {activeTab === 'reports' && <AttendanceReportsContent />}
+          {activeTab === 'geofence' && <GeoFencingSettingsContent />}
         </div>
       </div>
     </DashboardLayout>

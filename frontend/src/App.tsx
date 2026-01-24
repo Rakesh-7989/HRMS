@@ -43,6 +43,7 @@ import { EmployeeDocumentsPage } from '@/pages/EmployeeDocumentsPage';
 import { AssetRequestsPage } from '@/pages/AssetRequestsPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
+import { CalendarPage } from '@/pages/CalendarPage';
 
 
 
@@ -191,6 +192,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
               <AttendancePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+              <CalendarPage />
             </ProtectedRoute>
           }
         />

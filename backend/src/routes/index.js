@@ -23,6 +23,8 @@ const assetManagementRouter = require('../modules/asset_management/asset_managem
 const eventsRouter = require('../modules/events/events.router');
 const auditRouter = require('../modules/audit/audit.router');
 const projectManagementRouter = require('../modules/project_management/project_management.router');
+const geoFencingRouter = require('../modules/geo_fencing/geoFencing.router');
+const calendarRouter = require('../modules/calendar/calendar.router');
 
 
 const router = express.Router();
@@ -73,6 +75,9 @@ router.use('/users', userRouter);
 // Attendance module
 router.use('/attendance', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), attendanceRouter);
 
+// Geo-Fencing module (for attendance location validation)
+router.use('/geo-fencing', geoFencingRouter);
+
 // Events module
 router.use('/events', eventsRouter);
 
@@ -91,5 +96,6 @@ router.use('/notifications', inboxRouter);
 router.use('/documents', documentsRouter);
 
 router.use('/projects', projectManagementRouter);
+router.use('/calendar', calendarRouter);
 
 module.exports = router;

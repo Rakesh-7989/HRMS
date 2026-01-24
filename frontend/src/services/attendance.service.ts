@@ -7,8 +7,11 @@ export interface Attendance {
   check_in_time?: string;
   check_out_time?: string;
   check_in_ip?: string;
+  check_out_ip?: string;
+  check_in_device?: string;
+  check_out_device?: string;
   is_late?: boolean;
-  status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'APPROVED' | 'REJECTED' | 'PENDING_CHECKOUT';
+  status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'APPROVED' | 'REJECTED' | 'PENDING_CHECKOUT' | 'INCOMPLETE_HOURS';
   approved_by?: string;
   rejected_by?: string;
   rejection_reason?: string;
@@ -142,13 +145,13 @@ export interface AttendanceReports {
 }
 
 export const attendanceService = {
-  clockIn: async (): Promise<Attendance> => {
-    const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-in', {});
+  clockIn: async (coords?: { latitude: number; longitude: number; device?: string }): Promise<Attendance> => {
+    const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-in', coords || {});
     return response.data.data!;
   },
 
-  clockOut: async (): Promise<Attendance> => {
-    const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-out', {});
+  clockOut: async (coords?: { latitude: number; longitude: number; device?: string }): Promise<Attendance> => {
+    const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-out', coords || {});
     return response.data.data!;
   },
 

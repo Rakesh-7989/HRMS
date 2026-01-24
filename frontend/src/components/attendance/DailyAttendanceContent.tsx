@@ -3,8 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
-import { Clock } from 'lucide-react';
+import { geoFencingService } from '@/services/geoFencing.service';
+import { Clock, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { detectDeviceType } from '@/utils/deviceDetection';
 import {
     Dialog,
     DialogContent,
@@ -39,15 +41,17 @@ export const DailyAttendanceContent: React.FC = () => {
         queryFn: () => attendanceService.getMyPendingCheckouts(),
     });
 
+    const { data: geoSettings } = useQuery({
+        queryKey: ['geo-fencing-settings'],
+        queryFn: () => geoFencingService.getSettings(),
+    });
+
     // Timer effect
     useEffect(() => {
         let interval: NodeJS.Timeout;
 
         if (isTimerRunning && todayAttendance?.check_in_time && !todayAttendance?.check_out_time) {
             try {
-                // Parse the date string safely to respect local timezone
-                // The backend returns an ISO string which might be in UTC (e.g., previous day for IST)
-                // We need to extract the "intended" date based on the user's local context
                 const recordDate = new Date(todayAttendance.date);
                 const year = recordDate.getFullYear();
                 const month = String(recordDate.getMonth() + 1).padStart(2, '0');
@@ -55,8 +59,6 @@ export const DailyAttendanceContent: React.FC = () => {
                 const dateStr = `${year}-${month}-${day}`;
 
                 const timeStr = todayAttendance.check_in_time;
-
-                // Construct Date object using local date and check-in time
                 const checkInDate = new Date(`${dateStr}T${timeStr}`);
                 const now = new Date();
 
@@ -103,7 +105,6 @@ export const DailyAttendanceContent: React.FC = () => {
 
     const calculateDuration = (checkInTime: string, checkOutTime: string) => {
         if (!checkInTime || !checkOutTime) return '-';
-        // Using arbitrary date for time comparison
         const checkIn = new Date(`1970-01-01T${checkInTime}`);
         const checkOut = new Date(`1970-01-01T${checkOutTime}`);
         const diffMs = checkOut.getTime() - checkIn.getTime();
@@ -112,43 +113,85 @@ export const DailyAttendanceContent: React.FC = () => {
     };
 
     const clockInMutation = useMutation({
-        mutationFn: () => attendanceService.clockIn(),
+        mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             setIsTimerRunning(true);
         },
         onError: (error: any) => {
-            if (error.message?.includes('Employee profile not linked')) {
+            const serverMessage = error.response?.data?.message || error.message || '';
+
+            if (serverMessage.includes('Employee profile not linked')) {
                 alert('Your employee profile is not complete. Please contact HR to set up your employee details.');
-            } else if (error.message?.includes('on approved leave')) {
+            } else if (serverMessage.includes('on approved leave')) {
                 alert('You are on approved leave today and cannot clock in.');
-            } else if (error.message?.includes('Already clocked in')) {
+            } else if (serverMessage.includes('Already clocked in')) {
                 alert('You have already clocked in today.');
+            } else if (serverMessage.includes('Location validation failed')) {
+                alert(serverMessage);
             } else {
-                alert('Failed to clock in. Please try again.');
+                alert(serverMessage || 'Failed to clock in. Please try again.');
             }
         },
     });
 
     const clockOutMutation = useMutation({
-        mutationFn: () => attendanceService.clockOut(),
+        mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockOut(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
         },
         onError: (error: any) => {
-            if (error.message?.includes('Employee profile not linked')) {
+            const serverMessage = error.response?.data?.message || error.message || '';
+
+            if (serverMessage.includes('Employee profile not linked')) {
                 alert('Your employee profile is not complete. Please contact HR to set up your employee details.');
-            } else if (error.message?.includes('No check-in found')) {
+            } else if (serverMessage.includes('No check-in found')) {
                 alert('No check-in record found for today. Please clock in first.');
-            } else if (error.message?.includes('Already clocked out')) {
+            } else if (serverMessage.includes('Already clocked out')) {
                 alert('You have already clocked out today.');
+            } else if (serverMessage.includes('Location validation failed')) {
+                alert(serverMessage);
             } else {
-                alert('Failed to clock out. Please try again.');
+                alert(serverMessage || 'Failed to clock out. Please try again.');
             }
         },
     });
+
+    const handleClockIn = async () => {
+        if (geoSettings?.is_enabled) {
+            const check = await geoFencingService.performGeoFenceCheck(geoSettings);
+            if (!check.allowed) {
+                alert(check.errorMessage || 'Geo-fence validation failed');
+                return;
+            }
+            clockInMutation.mutate({
+                latitude: check.position?.coords.latitude!,
+                longitude: check.position?.coords.longitude!,
+                device: detectDeviceType()
+            });
+        } else {
+            clockInMutation.mutate({ device: detectDeviceType() } as any);
+        }
+    };
+
+    const handleClockOut = async () => {
+        if (geoSettings?.is_enabled) {
+            const check = await geoFencingService.performGeoFenceCheck(geoSettings);
+            if (!check.allowed) {
+                alert(check.errorMessage || 'Geo-fence validation failed');
+                return;
+            }
+            clockOutMutation.mutate({
+                latitude: check.position?.coords.latitude!,
+                longitude: check.position?.coords.longitude!,
+                device: detectDeviceType()
+            });
+        } else {
+            clockOutMutation.mutate({ device: detectDeviceType() } as any);
+        }
+    };
 
     const confirmCheckoutMutation = useMutation({
         mutationFn: ({ id, status, reason }: { id: string; status: 'PRESENT' | 'HALF_DAY'; reason?: string }) =>
@@ -164,7 +207,6 @@ export const DailyAttendanceContent: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Clock In/Out Section */}
             <Card>
                 <div className="flex items-center justify-between">
                     <div>
@@ -183,19 +225,23 @@ export const DailyAttendanceContent: React.FC = () => {
                     </div>
                     <div className="flex gap-3 flex-wrap md:flex-nowrap">
                         {status === 'NOT_CHECKED_IN' && (
-                            <Button onClick={() => clockInMutation.mutate()} isLoading={clockInMutation.isPending} size="md">
-                                <Clock className="mr-2" size={18} />
-                                Clock In
+                            <Button
+                                onClick={handleClockIn}
+                                isLoading={clockInMutation.isPending}
+                                size="md"
+                            >
+                                {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
+                                Clock In {geoSettings?.is_enabled && '(Protected)'}
                             </Button>
                         )}
                         {canClockOut && isTimerRunning && (
                             <Button
                                 variant="destructive"
-                                onClick={() => clockOutMutation.mutate()}
+                                onClick={handleClockOut}
                                 isLoading={clockOutMutation.isPending}
                                 size="md"
                             >
-                                <Clock className="mr-2" size={18} />
+                                {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
                                 Clock Out
                             </Button>
                         )}
@@ -203,7 +249,6 @@ export const DailyAttendanceContent: React.FC = () => {
                 </div>
             </Card>
 
-            {/* My Attendance History */}
             <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Attendance History</h3>
                 {isLoading ? (
@@ -221,6 +266,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
@@ -237,6 +283,20 @@ export const DailyAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_out_time || '-'}</td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                                             {calculateDuration(att.check_in_time ?? '', att.check_out_time ?? '')}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <div className="flex flex-col gap-1">
+                                                {att.check_in_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 inline-block w-fit">
+                                                        IN: {att.check_in_device}
+                                                    </span>
+                                                )}
+                                                {att.check_out_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 inline-block w-fit">
+                                                        OUT: {att.check_out_device}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <span
@@ -258,7 +318,6 @@ export const DailyAttendanceContent: React.FC = () => {
                 )}
             </Card>
 
-            {/* My Pending Checkouts */}
             <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Pending Checkouts</h3>
                 {myPendingCheckouts.length === 0 ? (

@@ -99,9 +99,6 @@ export const LandingPage: React.FC = () => {
               whileHover={{ scale: 1.05 }}
             >
               <AnimatedLogo size="md" />
-              <span className="text-xl font-bold text-primary tracking-widest">
-                WellZo
-              </span>
             </motion.div>
 
             <div className="hidden md:flex items-center gap-4">

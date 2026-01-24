@@ -95,6 +95,7 @@ export const TeamAttendanceContent: React.FC = () => {
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Employee</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -110,6 +111,13 @@ export const TeamAttendanceContent: React.FC = () => {
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
+                                        <td className="py-3 px-4">
+                                            {att.check_in_device && (
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium whitespace-nowrap">
+                                                    IN: {att.check_in_device}
+                                                </span>
+                                            )}
+                                        </td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}
@@ -143,6 +151,7 @@ export const TeamAttendanceContent: React.FC = () => {
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
@@ -158,6 +167,20 @@ export const TeamAttendanceContent: React.FC = () => {
                                         </td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_out_time || '-'}</td>
+                                        <td className="py-3 px-4">
+                                            <div className="flex flex-col gap-1">
+                                                {att.check_in_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium whitespace-nowrap w-fit">
+                                                        IN: {att.check_in_device}
+                                                    </span>
+                                                )}
+                                                {att.check_out_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 font-medium whitespace-nowrap w-fit">
+                                                        OUT: {att.check_out_device}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
@@ -192,6 +215,7 @@ export const TeamAttendanceContent: React.FC = () => {
                                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Employee</th>
                                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Check In</th>
                                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Check Out</th>
+                                    <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Device</th>
                                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Status</th>
                                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Actions</th>
                                 </tr>
@@ -208,6 +232,20 @@ export const TeamAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{userMap[att.employee_id] || att.employee_id}</td>
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{att.check_in_time || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{att.check_out_time || '-'}</td>
+                                        <td className="py-3 px-4">
+                                            <div className="flex flex-col gap-1">
+                                                {att.check_in_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium whitespace-nowrap w-fit">
+                                                        IN: {att.check_in_device}
+                                                    </span>
+                                                )}
+                                                {att.check_out_device && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 font-medium whitespace-nowrap w-fit">
+                                                        OUT: {att.check_out_device}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className={`px-2 py-1 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'

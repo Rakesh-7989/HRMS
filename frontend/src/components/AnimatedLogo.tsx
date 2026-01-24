@@ -1,5 +1,8 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
+import darkLogo from '../../Assests/login_logo.png';
+import lightLogo from '../../Assests/light-logo.png';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface AnimatedLogoProps {
   className?: string;
@@ -7,22 +10,30 @@ interface AnimatedLogoProps {
 }
 
 export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, size = 'md' }) => {
+  const { theme } = useTheme();
 
   const sizeClasses = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-10 h-10 text-base',
-    lg: 'w-16 h-16 text-2xl',
+    sm: 'h-8 min-w-[32px]',
+    md: 'h-10 min-w-[40px]',
+    lg: 'h-16 min-w-[64px]',
   };
 
+  const logo = theme === 'light' ? lightLogo : darkLogo;
+
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn('relative h-fit', className)}>
       <div
         className={cn(
-          'rounded-lg bg-primary flex items-center justify-center font-semibold text-white',
+          'rounded-lg flex items-center justify-center',
           sizeClasses[size]
         )}
       >
-        <span>HR</span>
+        <img
+          src={logo}
+          alt="Logo"
+          className="h-full w-auto object-contain block"
+          loading="eager"
+        />
       </div>
     </div>
   );

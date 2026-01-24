@@ -590,6 +590,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                             <th className="text-left">Check In</th>
                                             <th className="text-left">Check Out</th>
                                             <th className="text-left">Status</th>
+                                            <th className="text-left">Device</th>
                                             <th className="text-left">Work Hours</th>
                                         </tr>
                                     </thead>
@@ -646,6 +647,20 @@ export const AttendanceReportsContent: React.FC = () => {
                                                         }`}>
                                                         {report.status}
                                                     </span>
+                                                </td>
+                                                <td className="py-3">
+                                                    <div className="flex gap-1">
+                                                        {report.check_in_device && (
+                                                            <span className="text-[10px] px-1 rounded bg-gray-100 dark:bg-gray-800" title={`In: ${report.check_in_device}`}>
+                                                                {report.check_in_device.charAt(0)}
+                                                            </span>
+                                                        )}
+                                                        {report.check_out_device && report.check_out_device !== report.check_in_device && (
+                                                            <span className="text-[10px] px-1 rounded bg-gray-100 dark:bg-gray-800" title={`Out: ${report.check_out_device}`}>
+                                                                {report.check_out_device.charAt(0)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="py-3">{report.work_hours ? `${report.work_hours}h` : '-'}</td>
                                             </motion.tr>

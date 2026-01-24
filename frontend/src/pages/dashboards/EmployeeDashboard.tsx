@@ -9,7 +9,6 @@ import { dashboardService } from '@/services/dashboard.service';
 import { attendanceService } from '@/services/attendance.service';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { Clock, Calendar, TrendingUp, Coffee, CheckCircle } from 'lucide-react';
-import { Megaphone } from 'lucide-react'
 import { format } from 'date-fns';
 import PeopleEventsCard from '@/components/dashboard/PeopleEventsCard';
 import CalendarCard from '@/components/dashboard/CalendarCard';
@@ -81,25 +80,6 @@ export const EmployeeDashboard: React.FC = () => {
       ? Math.round((attendanceSummary.days_present / 30) * 100)
       : 0;
 
-
-  const announcements = [
-    { id: 1, title: 'HR Policy Update', date: 'Today' },
-    { id: 2, title: 'Holiday on Friday', date: 'Dec 27' },
-  ];
-
-  const past7Days = [
-    { day: 'Mon', date: 'Dec 16', status: 'Present' },
-    { day: 'Tue', date: 'Dec 17', status: 'Late' },
-    { day: 'Wed', date: 'Dec 18', status: 'Present' },
-    { day: 'Thu', date: 'Dec 19', status: 'Absent' },
-    { day: 'Fri', date: 'Dec 20', status: 'Present' },
-    { day: 'Sat', date: 'Dec 21', status: 'Present' },
-    { day: 'Sun', date: 'Dec 22', status: 'Present' },
-  ]
-
-
-
-
   return (
     <DashboardLayout
       title="My Dashboard"
@@ -118,7 +98,7 @@ export const EmployeeDashboard: React.FC = () => {
             newJoiners={peopleEventsData?.joiners || []}
             isLoading={eventsLoading}
           />
-          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} announcements={announcements} past7Days={past7Days} />
+          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} />
         </div>
 
         {/* Welcome Card */}
@@ -158,7 +138,8 @@ export const EmployeeDashboard: React.FC = () => {
               </div>
             </Card>
           </motion.div>
-        )}
+        )
+        }
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -396,8 +377,8 @@ export const EmployeeDashboard: React.FC = () => {
             )}
           </Card>
         </motion.div>
-      </div>
-    </DashboardLayout>
+      </div >
+    </DashboardLayout >
   );
 };
 

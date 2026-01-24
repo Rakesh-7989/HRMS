@@ -6,12 +6,12 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData, CreateHolidayData } from '@/services/leave.service';
+import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData } from '@/services/leave.service';
 import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
-type TabType = 'types' | 'policies' | 'holidays';
+type TabType = 'types' | 'policies';
 
 export const LeaveSettingsContent: React.FC = () => {
     const queryClient = useQueryClient();
@@ -52,17 +52,6 @@ export const LeaveSettingsContent: React.FC = () => {
         priority: 100,
     });
 
-    // Holidays State
-    const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
-    const [holidayForm, setHolidayForm] = useState<CreateHolidayData>({
-        name: '',
-        date: '',
-        description: '',
-        is_optional: false,
-        is_paid: true,
-    });
-    const [holidayYear, setHolidayYear] = useState(new Date().getFullYear());
-
     // Queries
     const { data: leaveTypes = [], isLoading: typesLoading, refetch: refetchTypes } = useQuery({
         queryKey: ['leave-types'],
@@ -72,11 +61,6 @@ export const LeaveSettingsContent: React.FC = () => {
     const { data: policies = [], isLoading: policiesLoading, refetch: refetchPolicies } = useQuery({
         queryKey: ['leave-policies'],
         queryFn: () => leaveService.getPolicies(),
-    });
-
-    const { data: holidays = [], isLoading: holidaysLoading, refetch: refetchHolidays } = useQuery({
-        queryKey: ['holidays', holidayYear],
-        queryFn: () => leaveService.getPublicHolidays({ year: holidayYear }),
     });
 
     // Leave Type Mutations
@@ -159,31 +143,6 @@ export const LeaveSettingsContent: React.FC = () => {
         },
     });
 
-    // Holiday Mutations
-    const createHolidayMutation = useMutation({
-        mutationFn: (data: CreateHolidayData) => leaveService.createPublicHoliday(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['holidays'] });
-            setHolidayDialogOpen(false);
-            resetHolidayForm();
-            setErrorMessage(null);
-        },
-        onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to create holiday');
-        },
-    });
-
-    const deleteHolidayMutation = useMutation({
-        mutationFn: (id: string) => leaveService.deletePublicHoliday(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['holidays'] });
-            setErrorMessage(null);
-        },
-        onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to delete holiday');
-        },
-    });
-
     // Run Accrual Mutation
     const runAccrualMutation = useMutation({
         mutationFn: () => leaveService.runAccrual(),
@@ -235,16 +194,6 @@ export const LeaveSettingsContent: React.FC = () => {
         setEditingPolicy(null);
     };
 
-    const resetHolidayForm = () => {
-        setHolidayForm({
-            name: '',
-            date: '',
-            description: '',
-            is_optional: false,
-            is_paid: true,
-        });
-    };
-
     // Form Handlers
     const handleOpenTypeDialog = (type?: LeaveType) => {
         setErrorMessage(null);
@@ -259,6 +208,8 @@ export const LeaveSettingsContent: React.FC = () => {
                 requires_attachment: type.requires_attachment === true,
                 min_days_notice: type.min_days_notice || 0,
                 max_consecutive_days: type.max_consecutive_days || 0,
+                default_accrual_rate: type.default_accrual_rate || 0,
+                default_max_balance: type.default_max_balance || 0,
             });
         } else {
             resetTypeForm();
@@ -288,12 +239,6 @@ export const LeaveSettingsContent: React.FC = () => {
         setPolicyDialogOpen(true);
     };
 
-    const handleOpenHolidayDialog = () => {
-        setErrorMessage(null);
-        resetHolidayForm();
-        setHolidayDialogOpen(true);
-    };
-
     const handleSubmitType = (e: React.FormEvent) => {
         e.preventDefault();
         if (!typeForm.name.trim() || !typeForm.code.trim()) {
@@ -320,30 +265,15 @@ export const LeaveSettingsContent: React.FC = () => {
         }
     };
 
-    const handleSubmitHoliday = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!holidayForm.name.trim() || !holidayForm.date) {
-            setErrorMessage('Holiday Name and Date are required');
-            return;
-        }
-        createHolidayMutation.mutate(holidayForm);
-    };
-
     const handleDeleteType = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave type? This action cannot be undone.')) {
+        if (id && window.confirm('Are you sure you want to delete this leave type? This action cannot be undone.')) {
             deleteTypeMutation.mutate(id);
         }
     };
 
     const handleDeletePolicy = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave policy? This action cannot be undone.')) {
+        if (id && window.confirm('Are you sure you want to delete this leave policy? This action cannot be undone.')) {
             deletePolicyMutation.mutate(id);
-        }
-    };
-
-    const handleDeleteHoliday = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this holiday?')) {
-            deleteHolidayMutation.mutate(id);
         }
     };
 
@@ -359,16 +289,9 @@ export const LeaveSettingsContent: React.FC = () => {
         setErrorMessage(null);
     };
 
-    const handleCloseHolidayDialog = () => {
-        setHolidayDialogOpen(false);
-        resetHolidayForm();
-        setErrorMessage(null);
-    };
-
     const tabs = [
         { id: 'types' as TabType, label: 'Leave Types', icon: FileText },
         { id: 'policies' as TabType, label: 'Leave Policies', icon: ClipboardList },
-        { id: 'holidays' as TabType, label: 'Holidays', icon: Calendar },
     ];
 
     return (
@@ -515,7 +438,6 @@ export const LeaveSettingsContent: React.FC = () => {
                 </Card>
             )}
 
-            {/* Leave Policies Tab */}
             {activeTab === 'policies' && (
                 <Card>
                     <div className="flex items-center justify-between mb-6">
@@ -634,104 +556,6 @@ export const LeaveSettingsContent: React.FC = () => {
                 </Card>
             )}
 
-            {/* Holidays Tab */}
-            {activeTab === 'holidays' && (
-                <Card>
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Public Holidays</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Manage public holidays for your organization
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                            <select
-                                value={holidayYear}
-                                onChange={(e) => setHolidayYear(Number(e.target.value))}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
-                            >
-                                {[...Array(5)].map((_, i) => {
-                                    const year = new Date().getFullYear() + i - 1;
-                                    return <option key={year} value={year}>{year}</option>;
-                                })}
-                            </select>
-                            <Button variant="outline" size="sm" onClick={() => refetchHolidays()}>
-                                <RefreshCw size={16} className="mr-1" />
-                                Refresh
-                            </Button>
-                            <Button size="sm" onClick={handleOpenHolidayDialog}>
-                                <Plus size={16} className="mr-1" />
-                                Add Holiday
-                            </Button>
-                        </div>
-                    </div>
-
-                    {holidaysLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                        </div>
-                    ) : holidays.length === 0 ? (
-                        <div className="text-center py-12">
-                            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No holidays for {holidayYear}</h3>
-                            <p className="mt-1 text-sm text-gray-500">Add public holidays for your organization.</p>
-                            <Button className="mt-4" onClick={handleOpenHolidayDialog}>
-                                <Plus size={16} className="mr-1" />
-                                Add Holiday
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="grid gap-4">
-                            {holidays
-                                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                                .map((holiday) => (
-                                    <div
-                                        key={holiday.id}
-                                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex flex-col items-center justify-center w-14 h-14 bg-primary/10 rounded-lg">
-                                                <span className="text-xs text-primary font-medium">
-                                                    {format(new Date(holiday.date), 'MMM')}
-                                                </span>
-                                                <span className="text-lg font-bold text-primary">
-                                                    {format(new Date(holiday.date), 'dd')}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h3 className="font-medium text-gray-900 dark:text-white">{holiday.name}</h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {format(new Date(holiday.date), 'EEEE, MMMM d, yyyy')}
-                                                </p>
-                                                {holiday.description && (
-                                                    <p className="text-xs text-gray-400 mt-1">{holiday.description}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {holiday.is_optional && (
-                                                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs">
-                                                    Optional
-                                                </span>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleDeleteHoliday(holiday.id)}
-                                                className="text-red-500 hover:text-red-600"
-                                                disabled={deleteHolidayMutation.isPending}
-                                            >
-                                                <Trash2 size={14} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                    )}
-                </Card>
-            )}
-
-            {/* Leave Type Dialog */}
             <Dialog
                 open={typeDialogOpen}
                 onOpenChange={handleCloseTypeDialog}
@@ -859,7 +683,6 @@ export const LeaveSettingsContent: React.FC = () => {
                 </form>
             </Dialog>
 
-            {/* Leave Policy Dialog */}
             <Dialog
                 open={policyDialogOpen}
                 onOpenChange={handleClosePolicyDialog}
@@ -989,67 +812,7 @@ export const LeaveSettingsContent: React.FC = () => {
                     </div>
                 </form>
             </Dialog>
-
-            {/* Holiday Dialog */}
-            <Dialog
-                open={holidayDialogOpen}
-                onOpenChange={handleCloseHolidayDialog}
-                title="Add Public Holiday"
-                className="max-w-md"
-            >
-                <form onSubmit={handleSubmitHoliday}>
-                    <div className="space-y-4">
-                        <div>
-                            <Label htmlFor="holiday-name" className="block mb-1.5">Holiday Name *</Label>
-                            <Input
-                                id="holiday-name"
-                                value={holidayForm.name}
-                                onChange={(e) => setHolidayForm({ ...holidayForm, name: e.target.value })}
-                                placeholder="e.g., New Year's Day"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="holiday-date" className="block mb-1.5">Date *</Label>
-                            <Input
-                                id="holiday-date"
-                                type="date"
-                                value={holidayForm.date}
-                                onChange={(e) => setHolidayForm({ ...holidayForm, date: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="holiday-description" className="block mb-1.5">Description</Label>
-                            <Input
-                                id="holiday-description"
-                                value={holidayForm.description}
-                                onChange={(e) => setHolidayForm({ ...holidayForm, description: e.target.value })}
-                                placeholder="Optional description"
-                            />
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={holidayForm.is_optional}
-                                    onChange={(e) => setHolidayForm({ ...holidayForm, is_optional: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">Restricted/Optional Holiday</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={handleCloseHolidayDialog}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" isLoading={createHolidayMutation.isPending}>
-                            Create Holiday
-                        </Button>
-                    </div>
-                </form>
-            </Dialog>
         </div>
     );
 };
+export default LeaveSettingsContent;

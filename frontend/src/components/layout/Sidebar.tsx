@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
+import logo from '../../../Assests/logo.png';
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +15,7 @@ import {
   Package,
   FolderKanban,
   Activity,
+  CalendarRange,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -35,9 +37,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Organisation', icon: Building2, path: '/organisation', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE', 'SUPER_ADMIN'] },
 
   { label: 'Attendance', icon: Clock, path: '/attendance', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
+  { label: 'Calendar', icon: CalendarRange, path: '/calendar', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'] },
   { label: 'Leave', icon: Calendar, path: '/leave', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
   { label: 'Reports', icon: BarChart3, path: '/reports', roles: ['ADMIN', 'HR'] },
-  { label: 'Inbox', icon: Inbox, path: '/inbox', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
+  //{ label: 'Inbox', icon: Inbox, path: '/inbox', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
 
 
   // Asset Management
@@ -86,11 +89,9 @@ export const Sidebar: React.FC = () => {
           className="relative h-16 w-full flex items-center justify-center
              border-b border-white/10
              bg-primary-gradient
-             shadow-sm"
+             shadow-sm p-2"
         >
-          <span className="text-white font-semibold text-lg tracking-widest">
-            GZ
-          </span>
+          <img src={logo} alt="Logo" className="w-full h-full object-contain" />
         </div>
 
         {/* Navigation */}

@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const logger = require("../../config/logger");
+const geoFencingService = require("../geo_fencing/geoFencing.service");
 
 const getQuery = (db) => {
   if (db && typeof db.query === "function") return db.query;
@@ -21,6 +22,30 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   if (!employeeId) {
     throw new Error("Your employee profile is not complete. Please update your profile with personal details before clocking in.");
   }
+
+  // == GEO-FENCING PRE-CHECK ==
+  const geoValidation = await geoFencingService.validateLocation(
+    db,
+    actor.tenantId,
+    meta.latitude,
+    meta.longitude
+  );
+
+  if (!geoValidation.allowed) {
+    // Log violation
+    await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
+      action_type: 'CLOCK_IN',
+      latitude: meta.latitude,
+      longitude: meta.longitude,
+      nearest_location_id: geoValidation.location?.id,
+      distance_meters: geoValidation.distance,
+      violation_reason: geoValidation.reason,
+      device_type: meta.device
+    });
+
+    throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-in.' : 'You are outside the allowed zone.'}`);
+  }
+  // ===========================
 
   // 1) Check APPROVED LEAVE for today
   const leaveRes = await query(
@@ -64,8 +89,8 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   const result = await query(
     `
     INSERT INTO attendance
-      (tenant_id, employee_id, date, check_in_time, check_in_ip, status, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     `,
     [
@@ -74,6 +99,7 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       today,
       now,
       meta.ip || "Unknown",
+      meta.device || "Browser",
       status,
       actor.id
     ]
@@ -110,6 +136,30 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
     throw new Error(`Already clocked out at ${existing.rows[0].check_out_time}`);
   }
 
+  // == GEO-FENCING PRE-CHECK ==
+  const geoValidation = await geoFencingService.validateLocation(
+    db,
+    actor.tenantId,
+    meta.latitude,
+    meta.longitude
+  );
+
+  if (!geoValidation.allowed) {
+    // Log violation
+    await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
+      action_type: 'CLOCK_OUT',
+      latitude: meta.latitude,
+      longitude: meta.longitude,
+      nearest_location_id: geoValidation.location?.id,
+      distance_meters: geoValidation.distance,
+      violation_reason: geoValidation.reason,
+      device_type: meta.device
+    });
+
+    throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-out.' : 'You are outside the allowed zone.'}`);
+  }
+  // ===========================
+
   const attendance = existing.rows[0];
 
   // Calculate working hours
@@ -128,16 +178,18 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
     UPDATE attendance
     SET check_out_time = $1,
         check_out_ip   = $2,
-        status         = $3,
-        updated_by     = $4,
+        check_out_device = $3,
+        status         = $4,
+        updated_by     = $5,
         updated_at     = now()
-    WHERE id = $5
-      AND tenant_id = $6
+    WHERE id = $6
+      AND tenant_id = $7
     RETURNING *
     `,
     [
       now,
       meta.ip || "Unknown",
+      meta.device || "Browser",
       finalStatus,
       actor.id,
       attendance.id,
