@@ -118,7 +118,7 @@ async function setupDatabase() {
   }
   console.log("✓ Database + user created");
 
-  // Ensure the DB user password matches the one in .env so subsequent steps can connect
+  //Ensure the DB user password matches the one in .env so subsequent steps can connect
   if (DB_PASSWORD) {
     console.log("Setting database user password from .env...");
     const alterCmd = `psql -U ${SUPERUSER} -d postgres -c "ALTER ROLE ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"`;
@@ -143,7 +143,77 @@ async function setupDatabase() {
   console.log("✓ Schema applied");
 
   // -----------------------
-  // Step C: Seed initial roles
+  // Step C: Run all migrations
+  // -----------------------
+  console.log("Running migrations...");
+
+  const migrationFiles = [
+    "src/database/migrations/001_add_extended_employee_fields.sql",
+    "src/database/migrations/001_create_asset_management_tables.sql",
+    "src/database/migrations/001_create_expense_categories.sql",
+    "src/database/migrations/20251218_add_payroll_tables.sql",
+    "src/database/migrations/20260106_leave_tracker.sql",
+    "src/database/migrations/20260109_fix_payroll_schema.sql",
+    "src/database/migrations/20260113_add_attendance_regularization.sql",
+    "src/database/migrations/20260124_add_device_tracking.sql",
+    "src/database/migrations/20260124_corporate_calendar.sql",
+    "src/database/migrations/20260124_geo_fencing.sql"
+  ];
+
+  for (const migrationFile of migrationFiles) {
+    if (fs.existsSync(migrationFile)) {
+      console.log(`Running ${migrationFile}...`);
+      const migrationCmd = `psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f ${migrationFile}`;
+      if (!run(migrationCmd)) {
+        console.error(`Migration ${migrationFile} failed`);
+        process.exit(1);
+      }
+      console.log(`✓ ${migrationFile} completed`);
+    } else {
+      console.log(`Migration file ${migrationFile} not found, skipping...`);
+    }
+  }
+
+  console.log("✓ All migrations applied");
+
+  // -----------------------
+  // Step C: Seed Calendar Data
+  // -----------------------
+  console.log("Seeding calendar data...");
+  const seedCalendarPath = "scripts/seed_calendar_2026.js";
+
+  if (fs.existsSync(seedCalendarPath)) {
+    const calendarCmd = `node ${seedCalendarPath}`;
+
+    if (!run(calendarCmd)) {
+      console.error("Seeding calendar failed");
+      process.exit(1);
+    }
+    console.log("✓ Calendar data seeded");
+  } else {
+    console.log("No calendar seed script found");
+  }
+
+  // -----------------------
+  // Step C.1: Seed State Holidays
+  // -----------------------
+  console.log("Seeding state holidays...");
+  const seedStateHolidaysPath = "scripts/seed_state_holidays.js";
+
+  if (fs.existsSync(seedStateHolidaysPath)) {
+    const stateHolidaysCmd = `node ${seedStateHolidaysPath}`;
+
+    if (!run(stateHolidaysCmd)) {
+      console.error("Seeding state holidays failed");
+      process.exit(1);
+    }
+    console.log("✓ State holidays seeded");
+  } else {
+    console.log("No state holidays seed script found");
+  }
+
+  // -----------------------
+  // Step E: Seed initial roles
   // -----------------------
   console.log("Seeding roles...");
   const seedRolesPath = "src/database/seed/seed_initial_roles.sql";
@@ -162,7 +232,7 @@ async function setupDatabase() {
   }
 
   // -----------------------
-  // Step C.1: Seed Plans
+  // Step F: Seed Plans
   // -----------------------
   console.log("Seeding subscription plans...");
   const seedPlansPath = "src/database/seed/seed_plans.sql";
@@ -181,7 +251,7 @@ async function setupDatabase() {
   }
 
   // -----------------------
-  // Step D: Seed Super Admin
+  // Step G: Seed Super Admin
   // -----------------------
   console.log("Seeding super admin user...");
   const seedUserPath = "src/database/seed/seed_users.sql";
