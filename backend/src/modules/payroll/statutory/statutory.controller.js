@@ -80,6 +80,22 @@ const deleteCostCentre = async (req, res) => {
     res.json({ status: "success", data });
 };
 
+// Cost Centre Allocations
+const getCostCentreAllocations = async (req, res) => {
+    const data = await statutoryService.getCostCentreAllocations(req.user.tenantId, req.query);
+    res.json({ status: "success", data });
+};
+
+const upsertCostCentreAllocation = async (req, res) => {
+    const data = await statutoryService.upsertCostCentreAllocation(req.user.tenantId, req.body);
+    res.json({ status: "success", data });
+};
+
+const deleteCostCentreAllocation = async (req, res) => {
+    const data = await statutoryService.deleteCostCentreAllocation(req.user.tenantId, req.params.id);
+    res.json({ status: "success", data });
+};
+
 module.exports = {
     getStatutoryConfig,
     upsertStatutoryConfig,
@@ -95,5 +111,8 @@ module.exports = {
     getCostCentres,
     createCostCentre,
     updateCostCentre,
-    deleteCostCentre
+    deleteCostCentre,
+    getCostCentreAllocations,
+    upsertCostCentreAllocation,
+    deleteCostCentreAllocation
 };

@@ -78,11 +78,14 @@ export interface PayRun {
     period_start: string;
     period_end: string;
     pay_date: string;
-    status: 'DRAFT' | 'CALCULATING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PAID' | 'REVOKED';
+    status: 'DRAFT' | 'CALCULATING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PAID' | 'REVOKED' | 'LOCKED' | 'COMPLETED';
     total_employees: number;
     total_gross: number;
     total_deductions: number;
     total_net: number;
+    // Aliases for backend compatibility
+    total_net_pay?: number;
+    employee_count?: number;
     is_locked: boolean;
     created_at: string;
 }

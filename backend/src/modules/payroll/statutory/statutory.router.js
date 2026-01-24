@@ -190,4 +190,25 @@ router.delete(
     controller.deleteCostCentre
 );
 
+// =====================
+// COST CENTRE ALLOCATIONS
+// =====================
+router.get(
+    "/cost-centre-allocations",
+    requireRole(["ADMIN", "HR", "MANAGER"]),
+    controller.getCostCentreAllocations
+);
+
+router.post(
+    "/cost-centre-allocations",
+    requireRole(["ADMIN"]),
+    controller.upsertCostCentreAllocation
+);
+
+router.delete(
+    "/cost-centre-allocations/:id",
+    requireRole(["ADMIN"]),
+    controller.deleteCostCentreAllocation
+);
+
 module.exports = router;

@@ -383,8 +383,42 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     // LOP Deduction
     const lopDeduction = lopDays * perDaySalary;
 
-    // TDS (simplified - actual calculation is complex)
-    const tds = 0; // TODO: Implement based on tax declarations
+    // TDS Calculation
+    let tds = 0;
+    try {
+        const fy = `${payrun.period_year}-${(payrun.period_year + 1).toString().slice(-2)}`;
+
+        // Fetch declaration
+        const declarationRes = await client.query(
+            `SELECT * FROM employee_tax_declarations 
+             WHERE tenant_id = $1 AND employee_id = $2 AND financial_year = $3`,
+            [tenantId, emp.emp_id, fy]
+        );
+        const declaration = declarationRes.rows[0] || { regime: 'NEW' };
+
+        // Fetch slabs
+        const slabsRes = await client.query(
+            `SELECT * FROM tax_slabs 
+             WHERE (tenant_id = $1 OR tenant_id IS NULL) 
+             AND regime = $2 AND financial_year = $3 AND is_active = TRUE`,
+            [tenantId, declaration.regime, fy]
+        );
+        const slabs = slabsRes.rowCount > 0 ? slabsRes.rows : [];
+
+        if (slabs.length > 0) {
+            const annualGross = gross * 12; // simplified annual projection
+            const tdsResult = statutoryCalculator.calculateTDS(
+                annualGross,
+                slabs,
+                declaration,
+                declaration.regime
+            );
+            tds = tdsResult.monthlyTDS;
+        }
+    } catch (err) {
+        console.error('TDS calculation failed for employee', emp.emp_id, err);
+        tds = 0;
+    }
 
     // Total calculations
     const totalEarnings = gross + reimbursementTotal;

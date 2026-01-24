@@ -179,6 +179,15 @@ export const payrollService = {
     }
   },
 
+  getMyPayslips: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/payslips/my');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
   listPaySchedules: async () => {
     try {
       const response = await api.get<ApiResponse<Array<any>>>('/payroll/schedules');
@@ -361,6 +370,25 @@ export const payrollService = {
     } catch (err) {
       return [];
     }
+  },
+
+  getCostCentreAllocations: async (params?: { costCentreId?: string; employeeId?: string }) => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/cost-centre-allocations', { params });
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  upsertCostCentreAllocation: async (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/cost-centre-allocations', payload);
+    return response.data.data!;
+  },
+
+  deleteCostCentreAllocation: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/cost-centre-allocations/${id}`);
+    return response.data.data;
   },
 
   // Create cost center (simple helper for frontend forms)
@@ -548,6 +576,149 @@ export const payrollService = {
     const response = await api.post<ApiResponse<FnFSettlement>>(`/payroll/fnf/${id}/pay`);
     return response.data.data!;
   },
+
+  // ==========================================================================
+  // Reimbursements
+  // ==========================================================================
+  listReimbursements: async (scope: 'my' | 'all' = 'my') => {
+    try {
+      const endpoint = scope === 'all' ? '/payroll/settlement/reimbursements' : '/payroll/settlement/reimbursements/my';
+      const response = await api.get<ApiResponse<Array<any>>>(endpoint);
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createReimbursement: async (payload: { category: string; amount: number; claimDate: string; description?: string; receiptUrl?: string }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/settlement/reimbursements', payload);
+    return response.data.data!;
+  },
+
+  approveReimbursement: async (id: string, payload: { status: 'APPROVED' | 'REJECTED'; includeInPayroll?: boolean }) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/settlement/reimbursements/${id}/approve`, payload);
+    return response.data.data!;
+  },
+
+  // ==========================================================================
+  // Salary Revisions
+  // ==========================================================================
+  getSalaryRevisions: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/salary/revisions');
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createSalaryRevision: async (payload: { employeeId: string; newCtc: number; revisionType: string; effectiveFrom: string; remarks?: string }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/salary/revisions', payload);
+    return response.data.data!;
+  },
+
+  approveSalaryRevision: async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/salary/revisions/${id}/approve`, { status });
+    return response.data.data!;
+  },
+
+  // ==========================================================================
+  // Consultants
+  // ==========================================================================
+  listConsultants: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/consultants');
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createConsultant: async (payload: { name: string; email: string; phone?: string; companyName?: string; monthlyRate?: number }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/consultants', payload);
+    return response.data.data!;
+  },
+
+  listConsultantInvoices: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/consultants/invoices');
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createConsultantInvoice: async (payload: { consultantId: string; amount: number; invoiceDate: string }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/consultants/invoices', payload);
+    return response.data.data!;
+  },
+
+  approveConsultantInvoice: async (id: string) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/consultants/invoices/${id}/approve`);
+    return response.data.data!;
+  },
+
+  markConsultantInvoicePaid: async (id: string, paymentReference?: string) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/consultants/invoices/${id}/paid`, { paymentReference });
+    return response.data.data!;
+  },
+
+  // ==========================================================================
+  // Statutory Settings
+  // ==========================================================================
+  getStatutoryConfig: async () => {
+    try {
+      const response = await api.get<ApiResponse<any>>('/payroll/statutory/config');
+      return response.data.data;
+    } catch { return null; }
+  },
+
+  updateStatutoryConfig: async (payload: any) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/config', payload);
+    return response.data.data!;
+  },
+
+  getPtSlabs: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/pt-slabs');
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createPtSlab: async (payload: { state: string; minSalary: number; maxSalary?: number; monthlyTax: number }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/pt-slabs', payload);
+    return response.data.data!;
+  },
+
+  deletePtSlab: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/pt-slabs/${id}`);
+    return response.data.data;
+  },
+
+  getDeductionTypes: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/deduction-types');
+      return response.data.data || [];
+    } catch { return []; }
+  },
+
+  createDeductionType: async (payload: { name: string; code: string; category: string; calculationType: string; isRecurring: boolean }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/deduction-types', payload);
+    return response.data.data!;
+  },
+
+  // ==========================================================================
+  // Pay Run Enhanced
+  // ==========================================================================
+  deletePayRun: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/runs/${id}`);
+    return response.data.data;
+  },
+
+  rejectPayRun: async (id: string, reason: string) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/runs/${id}/reject`, { reason });
+    return response.data.data!;
+  },
+
+  revokePayRun: async (id: string) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/runs/${id}/revoke`);
+    return response.data.data!;
+  },
+
+  // Expose api for components that need direct access
+  _api: api,
 };
 
 export interface FnFSettlement {

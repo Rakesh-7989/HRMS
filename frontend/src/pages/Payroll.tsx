@@ -10,16 +10,24 @@ import { CostCentersContent } from '@/components/payroll/CostCentersContent';
 import { MerchantsContent } from '@/components/payroll/MerchantsContent';
 import { SalaryDetailsContent } from '@/components/payroll/SalaryDetailsContent';
 import { TimesheetContent } from '@/components/payroll/TimesheetContent';
+import { ReimbursementsContent } from '@/components/payroll/ReimbursementsContent';
+import { SalaryRevisionsContent } from '@/components/payroll/SalaryRevisionsContent';
+import { ConsultantsContent } from '@/components/payroll/ConsultantsContent';
+import { StatutorySettingsContent } from '@/components/payroll/StatutorySettingsContent';
 
 const PAYROLL_TABS = [
   { id: 'summary', label: 'Summary', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'timesheets', label: 'Timesheets', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'payslips', label: 'Payslips & Tax', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'salary_revisions', label: 'Revisions', roles: ['ADMIN', 'HR', 'MANAGER'] },
   { id: 'loans', label: 'Loans', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'expenses', label: 'Expenses', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
-  { id: 'cost_centers', label: 'Cost Centers & Reports', roles: ['ADMIN', 'HR'] },
-  { id: 'merchants', label: 'Merchants & Payouts', roles: ['ADMIN', 'HR', 'MANAGER'] },
-  { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'reimbursements', label: 'Reimbursements', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'cost_centers', label: 'Cost Centers', roles: ['ADMIN', 'HR'] },
+  { id: 'merchants', label: 'Merchants', roles: ['ADMIN', 'HR', 'MANAGER'] },
+  { id: 'consultants', label: 'Consultants', roles: ['ADMIN', 'HR'] },
+  { id: 'statutory', label: 'Statutory Settings', roles: ['ADMIN', 'HR'] },
 ] as const;
 
 export const Payroll: React.FC = () => {
@@ -64,11 +72,15 @@ export const Payroll: React.FC = () => {
         )}
         {activeTab === 'timesheets' && <TimesheetContent />}
         {activeTab === 'payslips' && <PayslipsContent />}
+        {activeTab === 'salary_details' && <SalaryDetailsContent />}
+        {activeTab === 'salary_revisions' && <SalaryRevisionsContent />}
         {activeTab === 'expenses' && <ExpensesContent />}
+        {activeTab === 'reimbursements' && <ReimbursementsContent />}
         {activeTab === 'loans' && <LoansContent />}
         {activeTab === 'cost_centers' && <CostCentersContent />}
         {activeTab === 'merchants' && <MerchantsContent />}
-        {activeTab === 'salary_details' && <SalaryDetailsContent />}
+        {activeTab === 'consultants' && <ConsultantsContent />}
+        {activeTab === 'statutory' && <StatutorySettingsContent />}
       </div>
     </DashboardLayout>
   );

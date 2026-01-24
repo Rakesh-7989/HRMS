@@ -334,6 +334,61 @@ const deleteCostCentre = async (tenantId, costCentreId) => {
     return result.rows[0];
 };
 
+// ===================================================================
+// COST CENTRE ALLOCATIONS
+// ===================================================================
+
+const getCostCentreAllocations = async (tenantId, { costCentreId, employeeId } = {}) => {
+    let query = `
+        SELECT cca.*, e.first_name, e.last_name, e.employee_id as emp_code, cc.name as cost_centre_name
+        FROM cost_centre_allocations cca
+        JOIN employees e ON e.id = cca.employee_id
+        JOIN cost_centres cc ON cc.id = cca.cost_centre_id
+        WHERE cca.tenant_id = $1 AND cca.is_active = TRUE
+    `;
+    const params = [tenantId];
+    let idx = 2;
+
+    if (costCentreId) {
+        query += ` AND cca.cost_centre_id = $${idx++}`;
+        params.push(costCentreId);
+    }
+    if (employeeId) {
+        query += ` AND cca.employee_id = $${idx++}`;
+        params.push(employeeId);
+    }
+
+    query += ` ORDER BY e.first_name, e.last_name`;
+
+    const result = await db.query(query, params);
+    return result.rows;
+};
+
+const upsertCostCentreAllocation = async (tenantId, payload) => {
+    const { costCentreId, employeeId, allocationPercentage } = payload;
+
+    const result = await db.query(
+        `INSERT INTO cost_centre_allocations (tenant_id, cost_centre_id, employee_id, allocation_percentage)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (employee_id, cost_centre_id) 
+         DO UPDATE SET allocation_percentage = EXCLUDED.allocation_percentage, is_active = TRUE, updated_at = now()
+         RETURNING *`,
+        [tenantId, costCentreId, employeeId, allocationPercentage || 100]
+    );
+
+    return result.rows[0];
+};
+
+const deleteCostCentreAllocation = async (tenantId, id) => {
+    const result = await db.query(
+        `UPDATE cost_centre_allocations SET is_active = FALSE, updated_at = now()
+         WHERE tenant_id = $1 AND id = $2
+         RETURNING *`,
+        [tenantId, id]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
     // Statutory Config
     getStatutoryConfig,
@@ -359,5 +414,10 @@ module.exports = {
     createCostCentre,
     getCostCentres,
     updateCostCentre,
-    deleteCostCentre
+    deleteCostCentre,
+
+    // Cost Centre Allocations
+    getCostCentreAllocations,
+    upsertCostCentreAllocation,
+    deleteCostCentreAllocation
 };

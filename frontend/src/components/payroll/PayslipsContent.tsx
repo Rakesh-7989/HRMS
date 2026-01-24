@@ -9,8 +9,12 @@ import { Download, Filter, FileText, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const PayslipsContent: React.FC = () => {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -34,16 +38,19 @@ export const PayslipsContent: React.FC = () => {
     }, [selectedPeriod, customFromDate, customToDate]);
 
     // Fetch data for each section (placeholders / keyed queries)
+    // For employees, use /my endpoint; for admin/HR, use all payslips
     const { data: payslips = [], isLoading: payslipsLoading } = useQuery({
-        queryKey: ['payslips', dateRange],
-        queryFn: () => payrollService.listPayslips(dateRange),
+        queryKey: ['payslips', dateRange, isAdmin ? 'all' : 'my'],
+        queryFn: () => isAdmin
+            ? payrollService.listPayslips(dateRange)
+            : payrollService.getMyPayslips(),
         enabled: activeSection === 'payslips'
     });
 
     const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
         queryKey: ['pay_schedules'],
         queryFn: () => payrollService.listPaySchedules(),
-        enabled: activeSection === 'pay_schedule'
+        enabled: activeSection === 'pay_schedule' && isAdmin
     });
 
     // Schedule edit dialog state
@@ -78,7 +85,7 @@ export const PayslipsContent: React.FC = () => {
     const { data: deductions = [], isLoading: deductionsLoading } = useQuery({
         queryKey: ['deductions', dateRange],
         queryFn: () => payrollService.listDeductions(dateRange),
-        enabled: activeSection === 'deductions'
+        enabled: activeSection === 'deductions' && isAdmin
     });
 
     const { data: incomeTax = [], isLoading: incomeTaxLoading } = useQuery({
@@ -90,36 +97,37 @@ export const PayslipsContent: React.FC = () => {
     const { data: revisions = [], isLoading: revisionsLoading } = useQuery({
         queryKey: ['salary_revisions', dateRange],
         queryFn: () => payrollService.listSalaryRevisions(dateRange),
-        enabled: activeSection === 'salary_revision'
+        enabled: activeSection === 'salary_revision' && isAdmin
     });
 
     const formatINR = (amount: number | null | undefined) =>
         amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
-    // Demo/mock data to display while backend is not populated
-    const demoPayslips = [
+    // Demo data is only shown for admin/HR when no real data exists
+    // Employees should NEVER see other employees' data
+    const demoPayslips = isAdmin ? [
         { id: 'p1', date: '2025-12-01', employee_name: 'Asha Rao', gross: 120000, deductions: 12000, net: 108000 },
         { id: 'p2', date: '2025-12-01', employee_name: 'Vikram Singh', gross: 85000, deductions: 8500, net: 76500 },
         { id: 'p3', date: '2025-11-25', employee_name: 'Meera Patel', gross: 60000, deductions: 6000, net: 54000 }
-    ];
+    ] : [];
 
-    const demoSchedules = [
+    const demoSchedules = isAdmin ? [
         { id: 's1', name: 'Monthly Salary', next_run: '2026-01-01', frequency: 'Monthly', cycle: 'Monthly', credit_day: 1, cutoff_day: 25 },
         { id: 's2', name: 'Fortnightly Payroll', next_run: '2025-12-28', frequency: 'Fortnightly', cycle: 'Fortnightly', credit_day: 28, cutoff_day: 26 }
-    ];
+    ] : [];
 
-    const demoDeductions = [
+    const demoDeductions = isAdmin ? [
         { id: 'd1', employee_name: 'Asha Rao', type: 'Provident Fund', amount: 1200, effective_date: '2025-01-01' },
         { id: 'd2', employee_name: 'Vikram Singh', type: 'Professional Tax', amount: 200, effective_date: '2025-04-01' }
-    ];
+    ] : [];
 
-    const demoIncomeTax = [
+    const demoIncomeTax = isAdmin ? [
         { id: 't1', employee_name: 'Asha Rao', fy: '2024-25', taxable_income: 1440000, tax_deducted: 150000 }
-    ];
+    ] : [];
 
-    const demoRevisions = [
+    const demoRevisions = isAdmin ? [
         { id: 'r1', employee_name: 'Meera Patel', old_salary: 55000, new_salary: 60000, effective_date: '2025-10-01' }
-    ];
+    ] : [];
 
     const displayPayslips = (payslips && payslips.length) ? payslips : demoPayslips;
     const displaySchedules = (schedules && schedules.length) ? schedules : demoSchedules;
