@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Minus, ZoomIn, ChevronsDown, ChevronsUp, Maximize, Move } from 'lucide-react';
+import { Plus, Minus, ZoomIn, ChevronsDown, ChevronsUp, Maximize } from 'lucide-react';
 import { usersService } from '@/services/users.service';
 
 const OrgNode: React.FC<{ name: string; title?: string; initials?: string }> = ({ name, title, initials }) => (
@@ -123,7 +123,7 @@ export const OrgTreeContent: React.FC = () => {
             if (!containerRef.current || !contentRef.current) return;
 
             const container = containerRef.current.getBoundingClientRect();
-            const content = contentRef.current.getBoundingClientRect();
+
 
             // Calculate padding (keep some space around)
             const padding = 80;

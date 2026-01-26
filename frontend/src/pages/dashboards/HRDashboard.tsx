@@ -8,13 +8,12 @@ import { Button } from '@/components/ui/Button';
 import { dashboardService } from '@/services/dashboard.service';
 import { BarChart } from '@/components/charts/BarChart';
 import { PieChart } from '@/components/charts/PieChart';
-import { Calendar, Clock, UserX, CheckCircle, XCircle, TrendingUp, CalendarCheck, Megaphone } from 'lucide-react';
+import { Calendar, Clock, UserX, CheckCircle, XCircle, TrendingUp, CalendarCheck } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import PeopleEventsCard from '@/components/dashboard/PeopleEventsCard';
 import CalendarCard from '@/components/dashboard/CalendarCard';
 import { eventsService } from '@/services/events.service';
 import { leaveService } from '@/services/leave.service';
-import { cn } from '@/utils/cn';
 
 export const HRDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({

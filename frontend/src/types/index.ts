@@ -90,8 +90,8 @@ export interface Asset {
   serial_number?: string;      // NEW FIELD from DB
   warranty_expiry?: string;
 
-  // Location & Department
   department_id?: string;
+  location?: string;
 
   // Configuration (keep for frontend UX)
   configuration?: {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { leaveService, Holiday, RestrictedHoliday, RestrictedHolidayUsage } from '@/services/leave.service';
+import { leaveService } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import { Calendar, Gift, PartyPopper, RefreshCw, CheckCircle, Clock } from 'lucide-react';

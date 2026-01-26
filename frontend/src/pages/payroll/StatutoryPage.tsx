@@ -264,7 +264,7 @@ const StatutoryPage: React.FC = () => {
                         <Table>
                             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Allocated</TableHead><TableHead>Spent</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {costCenters.length === 0 ? <TableRow><TableCell className="text-center">No cost centers</TableCell><TableCell></TableCell><TableCell></TableCell></TableRow> :
+                                {costCenters.length === 0 ? <TableRow><TableCell className="text-center">No cost centers</TableCell><TableCell>{null}</TableCell><TableCell>{null}</TableCell></TableRow> :
                                     costCenters.map(c => (
                                         <TableRow key={c.id}>
                                             <TableCell>{c.name}</TableCell>

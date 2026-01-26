@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, XCircle, Search, Filter, Calendar, User } from 'lucide-react';
+import { CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
 export const TeamLeaveContent: React.FC = () => {

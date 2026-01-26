@@ -13,9 +13,11 @@ type Props = {
   events?: PeopleEventsResponse;
   className?: string;
   compact?: boolean;
+  announcements?: Array<{ id: number; title: string; date: string; message?: string; created_at?: string }>;
+  past7Days?: Array<{ day: string; date: string; status: string }>;
 };
 
-const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = true }) => {
+const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = true, announcements: propAnnouncements, past7Days: propPast7Days }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   // Fetch dynamic calendar data for the current month
@@ -27,10 +29,13 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
     queryFn: () => calendarService.getCalendar(month, year),
   });
 
-  const { data: announcements = [] } = useQuery({
+  const { data: fetchedAnnouncements = [] } = useQuery({
     queryKey: ['corporate-announcements'],
     queryFn: () => calendarService.getAnnouncements(),
+    enabled: !propAnnouncements, // Only fetch if not provided via props
   });
+
+  const announcements = propAnnouncements || fetchedAnnouncements;
 
   const monthDays = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
@@ -114,6 +119,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
 
   // Past 7 Days Attendance (Mock for UI)
   const past7Days = useMemo(() => {
+    if (propPast7Days) return propPast7Days;
     return Array.from({ length: 7 }).map((_, i) => {
       const d = subDays(new Date(), 6 - i);
       return {
@@ -188,7 +194,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                   >
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{a.title}</p>
-                      <p className="text-[9px] text-muted font-bold uppercase tracking-wider bg-gray-100 dark:bg-black/20 px-2 py-0.5 rounded-full">{format(new Date(a.created_at), 'MMM dd')}</p>
+                      <p className="text-[9px] text-muted font-bold uppercase tracking-wider bg-gray-100 dark:bg-black/20 px-2 py-0.5 rounded-full">{format(new Date(a.created_at || new Date()), 'MMM dd')}</p>
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed italic line-clamp-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       {a.message}

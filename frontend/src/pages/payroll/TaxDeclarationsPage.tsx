@@ -7,11 +7,9 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const TaxDeclarationsPage: React.FC = () => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
     const currentYear = new Date().getFullYear();
     const currentFy = new Date().getMonth() > 2 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;

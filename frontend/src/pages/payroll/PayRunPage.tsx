@@ -88,8 +88,8 @@ const PayRunPage: React.FC = () => {
                                 runs.map(run => (
                                     <TableRow key={run.id}>
                                         <TableCell className="font-medium">{new Date(run.period_year, run.period_month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}</TableCell>
-                                        <TableCell>{(run.total_net_pay || 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
-                                        <TableCell>{run.employee_count || 0}</TableCell>
+                                        <TableCell>{(run.total_net || 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
+                                        <TableCell>{run.total_employees || 0}</TableCell>
                                         <TableCell>
                                             <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(run.status)}`}>{run.status}</span>
                                         </TableCell>

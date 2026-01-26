@@ -12,7 +12,7 @@ export const SAMPLE_PROJECT: Project = {
     name: 'Website Redesign (Sample)',
     start_date: new Date().toISOString(),
     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'IN_PROGRESS',
+    status: 'ACTIVE',
     client: SAMPLE_CLIENT,
 };
 

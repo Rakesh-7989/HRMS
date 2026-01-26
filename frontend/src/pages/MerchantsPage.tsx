@@ -33,10 +33,10 @@ const MerchantsPage: React.FC = () => {
       qc.setQueryData(['payroll', 'vendor-payments'], (old: any[] | undefined) => { return [...(old || []), tempItem]; });
       return { previous, tempId };
     },
-    onError: (err, variables, context: any) => {
+    onError: (_err, _variables, context: any) => {
       if (context?.previous) qc.setQueryData(['payroll', 'vendor-payments'], context.previous);
     },
-    onSuccess: (data: any, variables, context: any) => {
+    onSuccess: (data: any, _variables, context: any) => {
       qc.setQueryData(['payroll', 'vendor-payments'], (old: any[] | undefined) => {
         if (!old) return [data];
         return old.map((it: any) => (it.id === context?.tempId ? data : it));
@@ -55,10 +55,10 @@ const MerchantsPage: React.FC = () => {
       qc.setQueryData(['payroll', 'third-party-payouts'], (old: any[] | undefined) => { return [...(old || []), tempItem]; });
       return { previous, tempId };
     },
-    onError: (err, variables, context: any) => {
+    onError: (_err, _variables, context: any) => {
       if (context?.previous) qc.setQueryData(['payroll', 'third-party-payouts'], context.previous);
     },
-    onSuccess: (data: any, variables, context: any) => {
+    onSuccess: (data: any, _variables, context: any) => {
       qc.setQueryData(['payroll', 'third-party-payouts'], (old: any[] | undefined) => {
         if (!old) return [data];
         return old.map((it: any) => (it.id === context?.tempId ? data : it));
@@ -94,12 +94,12 @@ const MerchantsPage: React.FC = () => {
 
   const handleVendorCreate = () => {
     if (!vendorName || !vendorAmount) return;
-    createVendorMut.mutate({ vendorName: vendorName, amount: Number(vendorAmount), paymentDate: vendorDate || new Date().toISOString().slice(0,10), notes: vendorNotes }, { onSuccess: () => { setVendorOpen(false); setVendorName(''); setVendorAmount(''); setVendorDate(''); setVendorNotes(''); try { alert('Vendor payout created'); } catch (e) { /* ignore */ } } });
+    createVendorMut.mutate({ vendorName: vendorName, amount: Number(vendorAmount), paymentDate: vendorDate || new Date().toISOString().slice(0, 10), notes: vendorNotes }, { onSuccess: () => { setVendorOpen(false); setVendorName(''); setVendorAmount(''); setVendorDate(''); setVendorNotes(''); try { alert('Vendor payout created'); } catch (e) { /* ignore */ } } });
   };
 
   const handleThirdCreate = () => {
     if (!thirdName || !thirdAmount) return;
-    createThirdMut.mutate({ providerName: thirdName, amount: Number(thirdAmount), payoutDate: thirdDate || new Date().toISOString().slice(0,10), notes: thirdNotes }, { onSuccess: () => { setThirdOpen(false); setThirdName(''); setThirdAmount(''); setThirdDate(''); setThirdNotes(''); try { alert('Third-party payout created'); } catch (e) { /* ignore */ } } });
+    createThirdMut.mutate({ providerName: thirdName, amount: Number(thirdAmount), payoutDate: thirdDate || new Date().toISOString().slice(0, 10), notes: thirdNotes }, { onSuccess: () => { setThirdOpen(false); setThirdName(''); setThirdAmount(''); setThirdDate(''); setThirdNotes(''); try { alert('Third-party payout created'); } catch (e) { /* ignore */ } } });
   };
 
   const toggleVendorPaid = async (id: string, serverPaid?: boolean) => {
@@ -231,7 +231,7 @@ const MerchantsPage: React.FC = () => {
                   <TableCell>{(v.paid || localVendorPaid.includes(v.id)) ? 'Paid' : 'Pending'}{localVendorHidden.includes(v.id) && !showHidden ? ' (Deleted)' : ''}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {(['ADMIN','HR'].includes(role)) && (
+                      {(['ADMIN', 'HR'].includes(role)) && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleVendorPaid(v.id, v.paid)} isLoading={markVendorPaidMut.isPending}>{(v.paid || localVendorPaid.includes(v.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localVendorHidden.includes(v.id) ? (
@@ -280,7 +280,7 @@ const MerchantsPage: React.FC = () => {
                   <TableCell>{(t.paid || localThirdPaid.includes(t.id)) ? 'Paid' : 'Pending'}{localThirdHidden.includes(t.id) && !showHidden ? ' (Deleted)' : ''}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {(['ADMIN','HR'].includes(role)) && (
+                      {(['ADMIN', 'HR'].includes(role)) && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleThirdPaid(t.id, t.paid)} isLoading={markThirdPaidMut.isPending}>{(t.paid || localThirdPaid.includes(t.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localThirdHidden.includes(t.id) ? (

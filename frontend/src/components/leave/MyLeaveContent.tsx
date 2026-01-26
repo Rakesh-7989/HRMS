@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
-import { Plus, Search, Filter, Calendar, User, TrendingUp } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { Plus, Search, TrendingUp } from 'lucide-react';
+import { format } from 'date-fns';
 
 export const MyLeaveContent: React.FC = () => {
     const { user } = useAuth();

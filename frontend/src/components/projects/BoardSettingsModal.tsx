@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, Save, RotateCcw } from 'lucide-react';
+import { Settings, Save, RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { cn } from '@/utils/cn';
 import { BoardConfigItem, DEFAULT_BOARD_CONFIG } from './TaskBoard';
 
 interface BoardSettingsModalProps {

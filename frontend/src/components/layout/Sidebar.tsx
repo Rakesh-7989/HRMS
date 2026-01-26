@@ -8,7 +8,6 @@ import {
   Users,
   Calendar,
   Clock,
-  Inbox,
   Building2,
   BarChart3,
   Wallet,

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData } from '@/services/leave.service';
 import { cn } from '@/utils/cn';
-import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, FileText, ClipboardList, RefreshCw, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 type TabType = 'types' | 'policies';

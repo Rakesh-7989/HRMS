@@ -7,13 +7,12 @@ import { dashboardService } from '@/services/dashboard.service';
 import { BarChart } from '@/components/charts/BarChart';
 import { PieChart } from '@/components/charts/PieChart';
 import { AreaChart } from '@/components/charts/AreaChart';
-import { Users, UserCheck, Building2, Briefcase, Calendar, Megaphone, } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { Users, UserCheck, Building2, Briefcase, } from 'lucide-react';
+import { format } from 'date-fns';
 import PeopleEventsCard from '@/components/dashboard/PeopleEventsCard';
 import CalendarCard from '@/components/dashboard/CalendarCard';
 import { eventsService } from '@/services/events.service';
-import { cn } from '@/utils/cn';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 export const AdminDashboard: React.FC = () => {
   const { data, isLoading, error } = useQuery({
@@ -22,25 +21,11 @@ export const AdminDashboard: React.FC = () => {
   });
 
   const { data: peopleEventsData, isLoading: eventsLoading } = useQuery({
-    
+
     queryKey: ['peopleEvents', 'organization'],
     queryFn: () => eventsService.getPeopleEvents('organization'),
     staleTime: 1000 * 60 * 5,
   });
-
-  // useMemo must be called before any conditional returns to follow React's Rules of Hooks
-  const past7Days = useMemo(() => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      days.push({
-        day: format(date, 'EEE'),
-        date: format(date, 'MMM d'),
-        status: 'Present', // TODO: Fetch actual status from attendance API
-      });
-    }
-    return days;
-  }, []);
 
   if (error) {
     return (
@@ -100,7 +85,7 @@ export const AdminDashboard: React.FC = () => {
           <StatCard title="Active Employees" value={metrics.active_users} icon={UserCheck} isLoading={isLoading} />
           <StatCard title="Departments" value={metrics.total_departments} icon={Building2} isLoading={isLoading} />
           <StatCard title="Designations" value={metrics.total_designations} icon={Briefcase} isLoading={isLoading} />
-        </div> 
+        </div>
 
         {/* ===================== CHARTS ===================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
