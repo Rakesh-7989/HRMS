@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Megaphone, Building, Globe, Clock, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Megaphone, Building } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, subMonths, addMonths, subDays } from 'date-fns';
 import { PeopleEventsResponse, PersonEvent } from '@/services/events.service';
 import { calendarService } from '@/services/calendar.service';
@@ -68,16 +68,19 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
     return map;
   }, [events]);
 
-  const [monthEventMap, setMonthEventMap] = useState<Map<string, PersonEvent[]>>(new Map());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDateEvents, setSelectedDateEvents] = useState<PersonEvent[]>([]);
   const [selectedDateLabel, setSelectedDateLabel] = useState<string>('');
 
-  const buildMonthMap = async (monthDate: Date) => {
-    let all: PersonEvent[] = [...(events.birthdays || []), ...(events.anniversaries || []), ...(events.joiners || [])];
-    const year = monthDate.getFullYear();
-    const first = startOfOfMonth(monthDate).getTime();
-    const last = endOfOfMonth(monthDate).getTime();
+  const monthEventMap = useMemo(() => {
+    const all: PersonEvent[] = [
+      ...(events?.birthdays || []),
+      ...(events?.anniversaries || []),
+      ...(events?.joiners || [])
+    ];
+    const year = currentMonth.getFullYear();
+    const first = startOfMonth(currentMonth).getTime();
+    const last = endOfMonth(currentMonth).getTime();
 
     const map = new Map<string, PersonEvent[]>();
 
@@ -103,14 +106,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
       }
     });
 
-    setMonthEventMap(map);
-  };
-
-  function startOfOfMonth(date: Date) { return startOfMonth(date); }
-  function endOfOfMonth(date: Date) { return endOfMonth(date); }
-
-  React.useEffect(() => {
-    buildMonthMap(currentMonth);
+    return map;
   }, [currentMonth, events]);
 
   const prevMonth = () => setCurrentMonth((m) => subMonths(m, 1));
@@ -302,7 +298,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
             <DialogTitle className="text-xl font-bold tracking-tight text-center mb-4">{selectedDateLabel}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-4">
-            {selectedDateEvents.map((ev) => (
+            {selectedDateEvents.map((ev: any) => (
               <div key={ev.id} className="p-5 rounded-[1.5rem] bg-gray-50 dark:bg-white/[0.03] border border-light-border dark:border-white/5 flex items-center justify-between group hover:bg-white dark:hover:bg-white/[0.05] transition-all">
                 <div className="flex flex-col">
                   <p className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight">{ev.name}</p>

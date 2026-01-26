@@ -78,7 +78,7 @@ router.get(
 // Approve attendance
 router.put(
   "/:id/approve",
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(validator.approveAttendanceSchema),
   controller.approveAttendance
 );
@@ -86,7 +86,7 @@ router.put(
 // Reject attendance
 router.put(
   "/:id/reject",
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(validator.rejectAttendanceSchema),
   controller.rejectAttendance
 );

@@ -72,14 +72,33 @@ exports.attendanceRecordsQuerySchema = z.object({
  * APPROVE / REJECT BODY
  */
 exports.approveAttendanceSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  }),
   body: z.object({
     reason: z.string().max(500).optional()
   })
 });
 
 exports.rejectAttendanceSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  }),
   body: z.object({
     reason: z.string().min(5, "Rejection reason must be at least 5 characters")
+  })
+});
+
+/**
+ * CONFIRM CHECKOUT SCHEMA
+ */
+exports.confirmCheckoutSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  }),
+  body: z.object({
+    status: z.enum(["PRESENT", "HALF_DAY"]),
+    reason: z.string().max(500).optional()
   })
 });
 
@@ -149,6 +168,9 @@ exports.regularizationRequestSchema = z.object({
 });
 
 exports.regularizationReviewSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  }),
   body: z.object({
     status: z.enum(["APPROVED", "REJECTED"]),
     rejection_reason: z.string().optional()
