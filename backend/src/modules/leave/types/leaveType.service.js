@@ -1,5 +1,6 @@
 const pool = require("../../../config/db");
 const leavePolicyService = require("../policies/leavePolicy.service");
+const { BadRequestError } = require("../../../utils/customErrors");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -14,7 +15,7 @@ exports.createLeaveType = async (db, data, actor) => {
         [actor.tenantId, data.code.toUpperCase()]
     );
     if (existing.rowCount > 0) {
-        throw new Error(`Leave type with code '${data.code}' already exists`);
+        throw new BadRequestError(`Leave type with code '${data.code}' already exists`);
     }
 
     const res = await query(

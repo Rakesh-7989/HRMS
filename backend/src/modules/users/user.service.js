@@ -609,17 +609,8 @@ exports.assignDesignation = async (db, id, designationId, actor) => {
 exports.getOrgTree = async (db, actor) => {
   const query = getQuery(db);
 
-  // Determine prefix from actor's employeeId
-  let prefixFilter = "";
-  if (actor.employeeId) {
-    // Extract leading letters (e.g. "EMP" from "EMP001")
-    const match = actor.employeeId.match(/^([A-Za-z]+)/);
-    if (match) {
-      prefixFilter = match[1];
-    }
-  }
 
-  let sql = `
+  const sql = `
     SELECT 
       e.id, 
       e.user_id,
@@ -639,12 +630,6 @@ exports.getOrgTree = async (db, actor) => {
   `;
 
   const params = [actor.tenantId];
-
-  // If a prefix was found, filter by it
-  if (prefixFilter) {
-    sql += ` AND e.employee_id LIKE $2`;
-    params.push(`${prefixFilter}%`);
-  }
 
   // Fetch all active employees with their details
   const res = await query(sql, params);

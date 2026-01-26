@@ -5,6 +5,7 @@ import { Bell, CheckCheck, X, Info, AlertCircle, CheckCircle, AlertTriangle } fr
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 interface NotificationDropdownProps {
     isOpen: boolean;
@@ -186,12 +187,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         {/* Footer */}
                         {notifications.length > 0 && (
                             <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                                <a
-                                    href="/notifications"
+                                <Link
+                                    to="/notifications"
+                                    onClick={onClose}
                                     className="text-xs text-primary hover:underline font-medium block text-center"
                                 >
                                     View all notifications
-                                </a>
+                                </Link>
                             </div>
                         )}
                     </motion.div>

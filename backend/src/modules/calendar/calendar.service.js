@@ -78,6 +78,30 @@ exports.createCompanyHoliday = async (db, tenantId, date, holidayName) => {
          RETURNING *`,
         [tenantId, date, holidayName]
     );
+
+    // Broadcast holiday notification
+    try {
+        const usersRes = await query(
+            `SELECT id FROM users WHERE tenant_id = $1 AND is_active = true AND is_deleted = false`,
+            [tenantId]
+        );
+
+        if (usersRes.rowCount > 0) {
+            const title = `New Holiday: ${holidayName}`;
+            const message = `A new company holiday has been added for ${date}.`;
+            const values = usersRes.rows.map(u =>
+                `('${tenantId}', '${u.id}', '${title}', '${message}', 'info')`
+            ).join(',');
+
+            await query(
+                `INSERT INTO notifications (tenant_id, user_id, title, message, type)
+                 VALUES ${values}`
+            );
+        }
+    } catch (err) {
+        console.error('Error broadcasting holiday notifications:', err);
+    }
+
     return res.rows[0];
 };
 
@@ -129,13 +153,38 @@ exports.getAnnouncements = async (db, tenantId) => {
 
 exports.createAnnouncement = async (db, tenantId, userId, data) => {
     const query = getQuery(db);
+
+    // 1. Create the announcement record
     const res = await query(
         `INSERT INTO corporate_announcements (tenant_id, title, message, type, created_by) 
          VALUES ($1, $2, $3, $4, $5) 
          RETURNING *`,
         [tenantId, data.title, data.message, data.type || 'General', userId]
     );
-    return res.rows[0];
+    const announcement = res.rows[0];
+
+    // 2. Broadcast to all active users via notifications table
+    try {
+        const usersRes = await query(
+            `SELECT id FROM users WHERE tenant_id = $1 AND is_active = true AND is_deleted = false`,
+            [tenantId]
+        );
+
+        if (usersRes.rowCount > 0) {
+            const values = usersRes.rows.map(u =>
+                `('${tenantId}', '${u.id}', '${data.title}', '${data.message.replace(/'/g, "''")}', 'info')`
+            ).join(',');
+
+            await query(
+                `INSERT INTO notifications (tenant_id, user_id, title, message, type)
+                 VALUES ${values}`
+            );
+        }
+    } catch (err) {
+        console.error('Error broadcasting announcement notifications:', err);
+    }
+
+    return announcement;
 };
 
 exports.deleteAnnouncement = async (db, tenantId, id) => {

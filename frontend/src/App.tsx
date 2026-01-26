@@ -44,6 +44,7 @@ import { AssetRequestsPage } from '@/pages/AssetRequestsPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
+import { NotificationsPage } from '@/pages/NotificationsPage';
 
 
 
@@ -145,6 +146,15 @@ function App() {
           }
         />
 
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Feature Pages */}
         <Route

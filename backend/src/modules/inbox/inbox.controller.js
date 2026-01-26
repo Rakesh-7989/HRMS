@@ -44,3 +44,50 @@ exports.addActivity = async (req, res) => {
         res.status(400).json({ status: "error", message: err.message });
     }
 };
+
+/* -------------------------- NOTIFICATIONS -------------------------- */
+
+exports.getNotifications = async (req, res) => {
+    try {
+        const result = await inboxService.getNotifications(req.db, req.query, req.user);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ status: "error", message: err.message });
+    }
+};
+
+exports.getUnreadCount = async (req, res) => {
+    try {
+        const count = await inboxService.getUnreadCount(req.db, req.user);
+        res.json({ count });
+    } catch (err) {
+        res.status(400).json({ status: "error", message: err.message });
+    }
+};
+
+exports.markAsRead = async (req, res) => {
+    try {
+        await inboxService.markAsRead(req.db, req.params.id, req.user);
+        res.json({ status: "success" });
+    } catch (err) {
+        res.status(400).json({ status: "error", message: err.message });
+    }
+};
+
+exports.markAllAsRead = async (req, res) => {
+    try {
+        await inboxService.markAllAsRead(req.db, req.user);
+        res.json({ status: "success" });
+    } catch (err) {
+        res.status(400).json({ status: "error", message: err.message });
+    }
+};
+
+exports.deleteNotification = async (req, res) => {
+    try {
+        await inboxService.deleteNotification(req.db, req.params.id, req.user);
+        res.json({ status: "success" });
+    } catch (err) {
+        res.status(400).json({ status: "error", message: err.message });
+    }
+};

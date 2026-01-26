@@ -18,6 +18,7 @@ const leaveRouter = require('../modules/leave/index.router');
 const payrollRouter = require('../modules/payroll/payroll.router');
 const subscriptionRouter = require('../modules/subscriptions/subscriptions.routes');
 const inboxRouter = require('../modules/inbox/inbox.router');
+const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
 const assetManagementRouter = require('../modules/asset_management/asset_management.router');
 const eventsRouter = require('../modules/events/events.router');
@@ -90,7 +91,7 @@ router.use('/leave', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), leaveR
 
 // Inbox module
 router.use('/inbox', inboxRouter);
-router.use('/notifications', inboxRouter);
+router.use('/notifications', notificationRouter);
 
 // Documents module
 router.use('/documents', documentsRouter);

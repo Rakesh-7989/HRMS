@@ -20,4 +20,10 @@ router.get("/:id/activities", controller.getActivities);
 // ADD ACTIVITY (Reply)
 router.post("/:id/activities", controller.addActivity);
 
+// NOTIFICATIONS (Standard paths used by notificationsService)
+router.get("/unread-count", controller.getUnreadCount);
+router.patch("/mark-all-read", controller.markAllAsRead);
+router.patch("/:id/read", controller.markAsRead);
+router.delete("/:id", controller.deleteNotification);
+
 module.exports = router;
