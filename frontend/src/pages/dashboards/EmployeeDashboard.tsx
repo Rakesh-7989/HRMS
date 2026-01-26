@@ -13,7 +13,10 @@ import { format } from 'date-fns';
 import PeopleEventsCard from '@/components/dashboard/PeopleEventsCard';
 import CalendarCard from '@/components/dashboard/CalendarCard';
 import { eventsService } from '@/services/events.service';
+import { geoFencingService } from '@/services/geoFencing.service';
+import { detectDeviceType } from '@/utils/deviceDetection';
 import { cn } from '@/utils/cn';
+import { formatTime12Hour } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,21 +39,68 @@ export const EmployeeDashboard: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
+  const { data: geoSettings } = useQuery({
+    queryKey: ['geo-fencing-settings'],
+    queryFn: () => geoFencingService.getSettings(),
+  });
+
   const clockInMutation = useMutation({
-    mutationFn: () => attendanceService.clockIn(),
+    mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    },
+    onError: (error: any) => {
+      const serverMessage = error.response?.data?.message || error.message || '';
+      alert(serverMessage || 'Failed to clock in');
     },
   });
 
   const clockOutMutation = useMutation({
-    mutationFn: () => attendanceService.clockOut(),
+    mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockOut(coords),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
+    onError: (error: any) => {
+      const serverMessage = error.response?.data?.message || error.message || '';
+      alert(serverMessage || 'Failed to clock out');
+    },
   });
+
+  const handleClockIn = async () => {
+    if (geoSettings?.is_enabled) {
+      const check = await geoFencingService.performGeoFenceCheck(geoSettings);
+      if (!check.allowed) {
+        alert(check.errorMessage || 'Geo-fence validation failed');
+        return;
+      }
+      clockInMutation.mutate({
+        latitude: check.position?.coords.latitude!,
+        longitude: check.position?.coords.longitude!,
+        device: detectDeviceType()
+      });
+    } else {
+      clockInMutation.mutate({ device: detectDeviceType() } as any);
+    }
+  };
+
+  const handleClockOut = async () => {
+    if (geoSettings?.is_enabled) {
+      const check = await geoFencingService.performGeoFenceCheck(geoSettings);
+      if (!check.allowed) {
+        alert(check.errorMessage || 'Geo-fence validation failed');
+        return;
+      }
+      clockOutMutation.mutate({
+        latitude: check.position?.coords.latitude!,
+        longitude: check.position?.coords.longitude!,
+        device: detectDeviceType()
+      });
+    } else {
+      clockOutMutation.mutate({ device: detectDeviceType() } as any);
+    }
+  };
 
   const profile = data?.profile;
   const leaveMetrics = data?.leaveMetrics || {
@@ -193,9 +243,9 @@ export const EmployeeDashboard: React.FC = () => {
                       className="h-24 flex flex-col items-center justify-center"
                       onClick={() => {
                         if (todayStatus.status === 'NOT_CHECKED_IN') {
-                          clockInMutation.mutate();
+                          handleClockIn();
                         } else if (todayStatus.status === 'CHECKED_IN') {
-                          clockOutMutation.mutate();
+                          handleClockOut();
                         }
                       }}
                       isLoading={clockInMutation.isPending || clockOutMutation.isPending}
@@ -273,13 +323,13 @@ export const EmployeeDashboard: React.FC = () => {
                   <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 dark:bg-white/5">
                     <span className="text-sm text-muted">Check In</span>
                     <span className="font-medium">
-                      {todayStatus.check_in_time || '--:--'}
+                      {formatTime12Hour(todayStatus.check_in_time)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 dark:bg-white/5">
                     <span className="text-sm text-muted">Check Out</span>
                     <span className="font-medium">
-                      {todayStatus.check_out_time || '--:--'}
+                      {formatTime12Hour(todayStatus.check_out_time)}
                     </span>
                   </div>
                   {todayStatus.is_late && (

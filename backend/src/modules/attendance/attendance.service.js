@@ -7,7 +7,13 @@ const getQuery = (db) => {
   return pool.query.bind(pool);
 };
 
-const todayDate = () => new Date().toISOString().slice(0, 10);
+const todayDate = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 const nowTime = () => new Date().toTimeString().slice(0, 8);
 
 /**
@@ -23,47 +29,56 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     throw new Error("Your employee profile is not complete. Please update your profile with personal details before clocking in.");
   }
 
-  // == GEO-FENCING PRE-CHECK ==
-  const geoValidation = await geoFencingService.validateLocation(
-    db,
-    actor.tenantId,
-    meta.latitude,
-    meta.longitude
-  );
-
-  if (!geoValidation.allowed) {
-    // Log violation
-    await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
-      action_type: 'CLOCK_IN',
-      latitude: meta.latitude,
-      longitude: meta.longitude,
-      nearest_location_id: geoValidation.location?.id,
-      distance_meters: geoValidation.distance,
-      violation_reason: geoValidation.reason,
-      device_type: meta.device
-    });
-
-    throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-in.' : 'You are outside the allowed zone.'}`);
-  }
-  // ===========================
-
-  // 1) Check APPROVED LEAVE for today
+  // 1) Check APPROVED LEAVE / WFH for today
+  // Should happen BEFORE geo-fencing, because WFH bypasses geo-fencing
   const leaveRes = await query(
     `
-    SELECT id, is_half_day
-    FROM leave_applications
-    WHERE tenant_id = $1
-      AND employee_id = $2
-      AND status = 'APPROVED'
-      AND $3::date BETWEEN start_date AND end_date
+    SELECT la.id, la.is_half_day, lt.code as leave_code, lt.name as leave_name
+    FROM leave_applications la
+    LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
+    WHERE la.tenant_id = $1
+      AND la.employee_id = $2
+      AND la.status = 'APPROVED'
+      AND $3::date BETWEEN la.start_date AND la.end_date
     LIMIT 1
     `,
     [actor.tenantId, employeeId, today]
   );
 
-  if (leaveRes.rowCount > 0 && !leaveRes.rows[0].is_half_day) {
+  const approvedLeave = leaveRes.rows[0];
+  const isWFH = approvedLeave && (approvedLeave.leave_code === 'WFH' || approvedLeave.leave_name === 'Work From Home');
+
+  // If on approved leave that is NOT WFH and NOT Half-Day, block clock-in
+  if (approvedLeave && !isWFH && !approvedLeave.is_half_day) {
     throw new Error("You are on approved leave today. Clock-in is blocked.");
   }
+
+  // == GEO-FENCING CHECK ==
+  // Skip if WFH is approved
+  if (!isWFH) {
+    const geoValidation = await geoFencingService.validateLocation(
+      db,
+      actor.tenantId,
+      meta.latitude,
+      meta.longitude
+    );
+
+    if (!geoValidation.allowed) {
+      // Log violation
+      await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
+        action_type: 'CLOCK_IN',
+        latitude: meta.latitude,
+        longitude: meta.longitude,
+        nearest_location_id: geoValidation.location?.id,
+        distance_meters: geoValidation.distance,
+        violation_reason: geoValidation.reason,
+        device_type: meta.device
+      });
+
+      throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-in.' : 'You are outside the allowed zone.'}`);
+    }
+  }
+  // =======================
 
   // 2) Check if already clocked in
   const existing = await query(
@@ -81,16 +96,18 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     throw new Error(`Already clocked in at ${existing.rows[0].check_in_time}`);
   }
 
-  const status = leaveRes.rowCount > 0 && leaveRes.rows[0].is_half_day
-    ? "HALF_DAY"
-    : "PRESENT";
+  // Determine status (WFH -> PRESENT, Leave Half Day -> HALF_DAY, else PRESENT)
+  let status = "PRESENT";
+  if (approvedLeave && !isWFH && approvedLeave.is_half_day) {
+    status = "HALF_DAY";
+  }
 
   // 3) Insert attendance
   const result = await query(
     `
     INSERT INTO attendance
-      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *
     `,
     [
@@ -101,7 +118,8 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       meta.ip || "Unknown",
       meta.device || "Browser",
       status,
-      actor.id
+      actor.id,
+      isWFH ? 'REMOTE' : 'OFFICE'
     ]
   );
 
@@ -136,31 +154,34 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
     throw new Error(`Already clocked out at ${existing.rows[0].check_out_time}`);
   }
 
+  const attendance = existing.rows[0];
+
   // == GEO-FENCING PRE-CHECK ==
-  const geoValidation = await geoFencingService.validateLocation(
-    db,
-    actor.tenantId,
-    meta.latitude,
-    meta.longitude
-  );
+  // Skip if Work Mode is REMOTE (e.g. WFH)
+  if (attendance.work_mode !== 'REMOTE') {
+    const geoValidation = await geoFencingService.validateLocation(
+      db,
+      actor.tenantId,
+      meta.latitude,
+      meta.longitude
+    );
 
-  if (!geoValidation.allowed) {
-    // Log violation
-    await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
-      action_type: 'CLOCK_OUT',
-      latitude: meta.latitude,
-      longitude: meta.longitude,
-      nearest_location_id: geoValidation.location?.id,
-      distance_meters: geoValidation.distance,
-      violation_reason: geoValidation.reason,
-      device_type: meta.device
-    });
+    if (!geoValidation.allowed) {
+      // Log violation
+      await geoFencingService.logViolation(db, actor.tenantId, employeeId, {
+        action_type: 'CLOCK_OUT',
+        latitude: meta.latitude,
+        longitude: meta.longitude,
+        nearest_location_id: geoValidation.location?.id,
+        distance_meters: geoValidation.distance,
+        violation_reason: geoValidation.reason,
+        device_type: meta.device
+      });
 
-    throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-out.' : 'You are outside the allowed zone.'}`);
+      throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-out.' : 'You are outside the allowed zone.'}`);
+    }
   }
   // ===========================
-
-  const attendance = existing.rows[0];
 
   // Calculate working hours
   const workingHours = calculateHoursDifference(attendance.check_in_time, now);

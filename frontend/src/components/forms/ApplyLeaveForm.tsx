@@ -109,7 +109,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose} title="Apply for Leave" className="max-w-md">
+    <Dialog open={open} onOpenChange={handleClose} title="Request Leave / Remote Work" className="max-w-md">
       <form onSubmit={formik.handleSubmit}>
         <div className="space-y-4">
           {/* Error Message */}

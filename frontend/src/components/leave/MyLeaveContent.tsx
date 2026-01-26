@@ -148,7 +148,7 @@ export const MyLeaveContent: React.FC = () => {
                 <div className="flex-shrink-0">
                     <Button onClick={() => setApplyDialogOpen(true)} size="md">
                         <Plus className="mr-2" size={18} />
-                        Apply for Leave
+                        Request Leave / WFH
                     </Button>
                     <ApplyLeaveForm open={applyDialogOpen} onOpenChange={setApplyDialogOpen} />
                 </div>

@@ -7,6 +7,7 @@ import { geoFencingService } from '@/services/geoFencing.service';
 import { Clock, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
+import { formatTime12Hour, formatDuration, calculateWorkDuration } from '@/utils/timeFormat';
 import {
     Dialog,
     DialogContent,
@@ -95,22 +96,7 @@ export const DailyAttendanceContent: React.FC = () => {
         }
     }, [todayAttendance]);
 
-    const formatTimer = (seconds: number) => {
-        if (isNaN(seconds) || seconds < 0) return '00:00:00';
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const calculateDuration = (checkInTime: string, checkOutTime: string) => {
-        if (!checkInTime || !checkOutTime) return '-';
-        const checkIn = new Date(`1970-01-01T${checkInTime}`);
-        const checkOut = new Date(`1970-01-01T${checkOutTime}`);
-        const diffMs = checkOut.getTime() - checkIn.getTime();
-        const diffHours = diffMs / (1000 * 60 * 60);
-        return diffHours.toFixed(1) + 'h';
-    };
+    // Use imported formatDuration and calculateWorkDuration from timeFormat utils
 
     const clockInMutation = useMutation({
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
@@ -213,13 +199,13 @@ export const DailyAttendanceContent: React.FC = () => {
                         <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Today's Attendance</h3>
                         <p className="text-sm text-gray-600 dark:text-muted">
                             {todayAttendance?.check_in_time
-                                ? `Checked in at ${todayAttendance.check_in_time}`
+                                ? `Checked in at ${formatTime12Hour(todayAttendance.check_in_time)}`
                                 : 'Not checked in yet'}
                         </p>
                         {isTimerRunning && (
                             <div className="mt-2">
                                 <p className="text-xs text-gray-500 dark:text-muted">Current Session</p>
-                                <p className="text-xl font-mono font-bold text-primary">{formatTimer(currentTimer)}</p>
+                                <p className="text-xl font-mono font-bold text-primary">{formatDuration(currentTimer)}</p>
                             </div>
                         )}
                     </div>
@@ -279,10 +265,10 @@ export const DailyAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_out_time || '-'}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                            {calculateDuration(att.check_in_time ?? '', att.check_out_time ?? '')}
+                                            {calculateWorkDuration(att.check_in_time, att.check_out_time)}
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex flex-col gap-1">
@@ -342,7 +328,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}

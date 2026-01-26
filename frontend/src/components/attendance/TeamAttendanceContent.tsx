@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
 import { usersService, User } from '@/services/users.service';
 import { format } from 'date-fns';
+import { formatTime12Hour } from '@/utils/timeFormat';
 import {
     Dialog,
     DialogContent,
@@ -110,7 +111,7 @@ export const TeamAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
                                         <td className="py-3 px-4">
                                             {att.check_in_device && (
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium whitespace-nowrap">
@@ -165,8 +166,8 @@ export const TeamAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_in_time || '-'}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{att.check_out_time || '-'}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
                                         <td className="py-3 px-4">
                                             <div className="flex flex-col gap-1">
                                                 {att.check_in_device && (
@@ -230,8 +231,8 @@ export const TeamAttendanceContent: React.FC = () => {
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{userMap[att.employee_id] || att.employee_id}</td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{att.check_in_time || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{att.check_out_time || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{formatTime12Hour(att.check_in_time)}</td>
+                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{formatTime12Hour(att.check_out_time)}</td>
                                         <td className="py-3 px-4">
                                             <div className="flex flex-col gap-1">
                                                 {att.check_in_device && (
