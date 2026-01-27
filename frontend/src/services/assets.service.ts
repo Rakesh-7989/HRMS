@@ -6,6 +6,24 @@ export const generateBarcode = (): string => {
   return Math.random().toString().slice(2, 14);
 };
 
+// Helper to extract user-friendly error messages from backend responses
+const extractErrorMessage = (error: any): string => {
+  // Check for validation errors with details (Zod errors)
+  if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+    const issues = error.response.data.details;
+    // Return the first validation error message
+    if (issues.length > 0 && issues[0].message) {
+      return issues[0].message;
+    }
+  }
+
+  // Fallback to standard error messages
+  return error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    'An error occurred';
+};
+
 // Fetch configuration for asset types (returns default configurations)
 export const fetchAssetConfiguration = async (category: AssetCategory): Promise<Partial<Asset['configuration']>> => {
   const configs: Record<AssetCategory, Partial<Asset['configuration']>> = {
@@ -155,8 +173,13 @@ export const assetsService = {
 
   // Submit asset request
   submitRequest: async (data: { asset_name: string; category: string; priority: string; reason: string }): Promise<unknown> => {
-    const response = await api.post('/assets/requests/create', data);
-    return response.data;
+    try {
+      const response = await api.post('/assets/requests/create', data);
+      return response.data;
+    } catch (error: any) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
   },
 
   // List asset requests
@@ -168,6 +191,23 @@ export const assetsService = {
   // Handle asset request (Approve/Reject)
   handleRequest: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; admin_notes?: string }): Promise<unknown> => {
     const response = await api.post(`/assets/requests/${id}/handle`, data);
+    return response.data;
+  },
+
+  // Update request (Pending only)
+  updateRequest: async (id: string, data: { asset_name?: string; category?: string; priority?: string; reason?: string }): Promise<unknown> => {
+    try {
+      const response = await api.put(`/assets/requests/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
+  },
+
+  // Cancel request (Delete - Pending only)
+  cancelRequest: async (id: string): Promise<unknown> => {
+    const response = await api.delete(`/assets/requests/${id}`);
     return response.data;
   },
 };

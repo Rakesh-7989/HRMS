@@ -5,7 +5,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export const AssetReturnPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -29,7 +30,11 @@ export const AssetReturnPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assets'] });
             queryClient.invalidateQueries({ queryKey: ['asset', id] });
+            toast.success('Asset returned successfully');
             navigate(`/assets/${id}`);
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to return asset');
         },
     });
 
@@ -92,7 +97,7 @@ export const AssetReturnPage: React.FC = () => {
                                 required
                                 value={form.return_date}
                                 onChange={(e) => setForm({ ...form, return_date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:[color-scheme:dark]"
                             />
                         </div>
 
@@ -103,7 +108,7 @@ export const AssetReturnPage: React.FC = () => {
                             <select
                                 value={form.condition}
                                 onChange={(e) => setForm({ ...form, condition: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             >
                                 <option value="GOOD">Good</option>
                                 <option value="WORN">Worn / Minor Damage</option>
@@ -120,17 +125,12 @@ export const AssetReturnPage: React.FC = () => {
                                 rows={3}
                                 value={form.notes}
                                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                 placeholder="Any comments about the return..."
                             />
                         </div>
 
-                        {returnMutation.isError && (
-                            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md flex items-center gap-2">
-                                <AlertCircle size={16} />
-                                Failed to return asset. Please try again.
-                            </div>
-                        )}
+
 
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={returnMutation.isPending} className="flex items-center gap-2">

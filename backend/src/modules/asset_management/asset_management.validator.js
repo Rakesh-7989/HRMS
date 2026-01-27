@@ -320,3 +320,41 @@ exports.handleAssetRequestSchema = z.object({
       .optional()
   })
 });
+
+/**
+ * UPDATE ASSET REQUEST VALIDATION
+ */
+exports.updateAssetRequestSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid request ID")
+  }),
+  body: z.object({
+    asset_name: z
+      .string()
+      .min(2, "Asset name must be at least 2 characters")
+      .max(255, "Asset name must not exceed 255 characters")
+      .optional(),
+    category: z
+      .string()
+      .min(2, "Category must be at least 2 characters")
+      .max(100, "Category must not exceed 100 characters")
+      .optional(),
+    priority: z
+      .enum(["Low", "Medium", "High"])
+      .optional(),
+    reason: z
+      .string()
+      .min(5, "Reason must be at least 5 characters")
+      .max(1000, "Reason must not exceed 1000 characters")
+      .optional()
+  })
+});
+
+/**
+ * DELETE ASSET REQUEST VALIDATION
+ */
+exports.deleteAssetRequestSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid request ID")
+  })
+});

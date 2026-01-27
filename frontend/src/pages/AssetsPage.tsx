@@ -109,7 +109,7 @@ export const AssetsPage: React.FC = () => {
 
   const handleRequest = (assetId: string) => {
     // TODO: Implement asset request backend endpoint
-    alert(`Asset request for ${assetId} has been noted. Please contact your administrator.`);
+    toast.success(`Asset request for ${assetId} has been noted. Please contact your administrator.`);
   };
 
   const handlePrintBarcode = async (assetId: string) => {
@@ -136,10 +136,10 @@ export const AssetsPage: React.FC = () => {
           printWindow.document.close();
         }
       } else {
-        alert('Barcode not available for this asset.');
+        toast.error('Barcode not available for this asset.');
       }
     } catch {
-      alert('Failed to retrieve barcode.');
+      toast.error('Failed to retrieve barcode.');
     }
   };
 
@@ -152,10 +152,10 @@ export const AssetsPage: React.FC = () => {
         link.download = `barcode-${assetCode}.png`;
         link.click();
       } else {
-        alert('Barcode not available for this asset.');
+        toast.error('Barcode not available for this asset.');
       }
     } catch {
-      alert('Failed to download barcode.');
+      toast.error('Failed to download barcode.');
     }
   };
 
@@ -190,7 +190,7 @@ export const AssetsPage: React.FC = () => {
   const handleAssignAssetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignForm.assetId || !assignForm.employeeId) {
-      alert('Please select both an asset and an employee.');
+      toast.error('Please select both an asset and an employee.');
       return;
     }
     setAssignSubmitting(true);
@@ -199,13 +199,13 @@ export const AssetsPage: React.FC = () => {
       { id: assignForm.assetId, employeeId: assignForm.employeeId },
       {
         onSuccess: () => {
-          alert('Asset assigned successfully!');
+          toast.success('Asset assigned successfully!');
           setAssignForm({ assetId: '', employeeId: '' });
           setShowAssignModal(false);
           setAssignSubmitting(false);
         },
         onError: () => {
-          alert('Failed to assign asset. Please try again.');
+          toast.error('Failed to assign asset. Please try again.');
           setAssignSubmitting(false);
         },
       }
@@ -322,7 +322,7 @@ export const AssetsPage: React.FC = () => {
                 My Requests
               </Button>
             )}
-            {canManage && (
+            {user?.role === 'ADMIN' && (
               <Button onClick={() => navigate('/assets/new')} className="flex items-center gap-2">
                 <Plus size={18} />
                 Add Asset
@@ -707,7 +707,16 @@ export const AssetsPage: React.FC = () => {
                 >
                   <option value="">-- Select an employee --</option>
                   {employees
-                    .filter((employee) => employee.role !== 'ADMIN')
+                    .filter((employee) => {
+                      // Always exclude ADMIN from assignment
+                      if (employee.role === 'ADMIN') return false;
+
+                      // If logged-in user is HR, exclude HR role (only show MANAGER and EMPLOYEE)
+                      if (user?.role === 'HR' && employee.role === 'HR') return false;
+
+                      // Show all other employees
+                      return true;
+                    })
                     .map((employee) => (
                       <option key={employee.id} value={employee.employee_uuid || employee.id}>
                         {employee.first_name} {employee.last_name} ({employee.email})

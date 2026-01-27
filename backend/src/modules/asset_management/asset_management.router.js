@@ -15,7 +15,9 @@ const {
   getTrackingSchema,
   listAssetsSchema,
   createAssetRequestSchema,
-  handleAssetRequestSchema
+  handleAssetRequestSchema,
+  updateAssetRequestSchema,
+  deleteAssetRequestSchema
 } = require("./asset_management.validator");
 
 const router = express.Router();
@@ -200,6 +202,28 @@ router.post(
   requireRole(["ADMIN", "HR"]),
   validate(handleAssetRequestSchema),
   ctrl.handleAssetRequest
+);
+
+/**
+ * PUT /api/assets/requests/:id
+ * Update asset request (Pending only)
+ */
+router.put(
+  "/requests/:id",
+  verifyJwt,
+  validate(updateAssetRequestSchema),
+  ctrl.updateAssetRequest
+);
+
+/**
+ * DELETE /api/assets/requests/:id
+ * Delete asset request (Pending only)
+ */
+router.delete(
+  "/requests/:id",
+  verifyJwt,
+  validate(deleteAssetRequestSchema),
+  ctrl.deleteAssetRequest
 );
 
 module.exports = router;

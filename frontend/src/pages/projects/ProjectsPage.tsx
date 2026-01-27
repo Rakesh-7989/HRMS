@@ -30,7 +30,6 @@ import { projectsService } from '@/services/projects.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';
-import { SAMPLE_PROJECT } from '@/data/mockProjectData';
 
 export const ProjectsPage: React.FC = () => {
     const { user } = useAuth();
@@ -77,12 +76,10 @@ export const ProjectsPage: React.FC = () => {
     const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
 
     // Fetch Projects
-    const { data: serverProjects = [], isLoading: projectsLoading } = useQuery({
+    const { data: projects = [], isLoading: projectsLoading } = useQuery({
         queryKey: ['projects'],
         queryFn: () => projectsService.getProjects(),
     });
-
-    const projects: Project[] = serverProjects.length === 0 && !projectsLoading ? [SAMPLE_PROJECT] : serverProjects;
 
     // Fetch Clients for Dropdown
     const { data: clients = [] } = useQuery({

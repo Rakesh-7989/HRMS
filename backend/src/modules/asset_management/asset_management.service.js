@@ -798,3 +798,102 @@ exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => 
 
   return result.rows[0];
 };
+
+/**
+ * UPDATE ASSET REQUEST
+ * Only allowed if status is PENDING and user owns the request
+ */
+exports.updateAssetRequest = async (tenantId, requestId, userId, data) => {
+  // 1. Get request details
+  const requestResult = await pool.query(
+    `SELECT r.*, e.user_id 
+     FROM asset_requests r
+     JOIN employees e ON r.employee_id = e.id
+     WHERE r.id = $1 AND r.tenant_id = $2`,
+    [requestId, tenantId]
+  );
+
+  if (requestResult.rowCount === 0) {
+    throw new NotFoundError("Asset request not found");
+  }
+
+  const request = requestResult.rows[0];
+
+  // 2. Ownership check
+  if (request.user_id !== userId) {
+    throw new ForbiddenError("You can only modify your own requests");
+  }
+
+  // 3. Status check
+  if (request.status !== 'PENDING') {
+    throw new BadRequestError("Cannot modify request that is not PENDING");
+  }
+
+  // 4. Update request
+  const updateFields = [];
+  const params = [requestId, tenantId];
+  let paramCount = 2;
+
+  // Fields allowed to update
+  const allowedFields = ['asset_name', 'category', 'priority', 'reason'];
+
+  Object.keys(data).forEach(key => {
+    if (allowedFields.includes(key) && data[key] !== undefined) {
+      updateFields.push(`${key} = $${++paramCount}`);
+      params.push(data[key]);
+    }
+  });
+
+  if (updateFields.length === 0) {
+    return request;
+  }
+
+  const query = `
+    UPDATE asset_requests
+    SET ${updateFields.join(", ")}, updated_at = NOW()
+    WHERE id = $1 AND tenant_id = $2
+    RETURNING *
+  `;
+
+  const result = await pool.query(query, params);
+  return result.rows[0];
+};
+
+/**
+ * DELETE ASSET REQUEST
+ * Only allowed if status is PENDING and user owns the request
+ */
+exports.deleteAssetRequest = async (tenantId, requestId, userId) => {
+  // 1. Get request details
+  const requestResult = await pool.query(
+    `SELECT r.*, e.user_id 
+     FROM asset_requests r
+     JOIN employees e ON r.employee_id = e.id
+     WHERE r.id = $1 AND r.tenant_id = $2`,
+    [requestId, tenantId]
+  );
+
+  if (requestResult.rowCount === 0) {
+    throw new NotFoundError("Asset request not found");
+  }
+
+  const request = requestResult.rows[0];
+
+  // 2. Ownership check
+  if (request.user_id !== userId) {
+    throw new ForbiddenError("You can only delete your own requests");
+  }
+
+  // 3. Status check
+  if (request.status !== 'PENDING') {
+    throw new BadRequestError("Cannot delete request that is not PENDING");
+  }
+
+  // 4. Delete request
+  await pool.query(
+    `DELETE FROM asset_requests WHERE id = $1 AND tenant_id = $2`,
+    [requestId, tenantId]
+  );
+
+  return { message: "Request deleted successfully" };
+};

@@ -27,7 +27,7 @@ const PeopleEventsCard: React.FC<Props> = ({
 
   const [active, setActive] = useState<string>('birthdays');
 
-  const renderList = (items: Person[], section: 'birthdays' | 'anniversaries' | 'joinees' = 'anniversaries') => {
+  const renderList = (items: Person[], section: 'birthdays' | 'anniversaries' | 'joinees' = 'anniversaries', emptyMessage?: string) => {
     if (!items || items.length === 0) {
       const getIcon = () => {
         if (section === 'birthdays') {
@@ -44,7 +44,7 @@ const PeopleEventsCard: React.FC<Props> = ({
           <div className="min-h w-35 h-0 rounded-lg bg-white/5 flex items-center justify-center mb-3">
             {getIcon()}
           </div>
-          <p className="font-medium">No {active === 'birthdays' ? 'birthdays' : active === 'anniversaries' ? 'work anniversaries' : 'new joiners'} today.</p>
+          <p className="font-medium">{emptyMessage || `No ${active === 'birthdays' ? 'birthdays' : active === 'anniversaries' ? 'work anniversaries' : 'new joiners'} today.`}</p>
         </div>
       );
     }
@@ -81,8 +81,8 @@ const PeopleEventsCard: React.FC<Props> = ({
     if (!isNaN(d.getTime())) return { month: d.getMonth(), day: d.getDate() };
     const m = dateStr.match(/([A-Za-z]+)\s+(\d{1,2})/);
     if (m) {
-      const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-      const mi = months.indexOf(m[1].toLowerCase().slice(0,3));
+      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const mi = months.indexOf(m[1].toLowerCase().slice(0, 3));
       if (mi >= 0) return { month: mi, day: parseInt(m[2], 10) };
     }
     const iso = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -158,9 +158,8 @@ const PeopleEventsCard: React.FC<Props> = ({
               <button
                 key={t.key}
                 onClick={() => setActive(t.key)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-t-md text-sm border-b-2 ${
-                  active === t.key ? 'border-primary text-primary' : 'border-transparent text-muted'
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-t-md text-sm border-b-2 ${active === t.key ? 'border-primary text-primary' : 'border-transparent text-muted'
+                  }`}
               >
                 {t.icon}
                 <span className="font-semibold">{t.count} {t.label}</span>
@@ -185,7 +184,7 @@ const PeopleEventsCard: React.FC<Props> = ({
                   {renderList(birthdaysToday, 'birthdays')}
 
                   <p className="text-sm font-semibold mt-4 mb-2">Upcoming Birthdays</p>
-                  {renderList(upcomingBirthdays, 'birthdays')}
+                  {renderList(upcomingBirthdays, 'birthdays', 'No upcoming birthdays.')}
                 </>
               )}
 
@@ -195,7 +194,7 @@ const PeopleEventsCard: React.FC<Props> = ({
                   {renderList(anniversaries.filter((a) => a.date === new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' })), 'anniversaries')}
 
                   <p className="text-sm font-semibold mt-4 mb-2">Upcoming Anniversaries</p>
-                  {renderList(anniversaries, 'anniversaries')}
+                  {renderList(anniversaries, 'anniversaries', 'No upcoming anniversaries.')}
                 </>
               )}
 
@@ -205,7 +204,7 @@ const PeopleEventsCard: React.FC<Props> = ({
                   {renderList(joinersToday, 'joinees')}
 
                   <p className="text-sm font-semibold mt-4 mb-2">Recent Joiners</p>
-                  {renderList(recentJoiners, 'joinees')}
+                  {renderList(recentJoiners, 'joinees', 'No recent joiners.')}
                 </>
               )}
             </>

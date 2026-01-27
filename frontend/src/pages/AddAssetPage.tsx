@@ -133,12 +133,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.createAsset(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast('Asset created successfully', { icon: '✅' });
+      toast.success('Asset created successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast(err.message, { icon: '⚠️' });
+      toast.error(err.message);
     },
   });
 
@@ -147,12 +147,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.updateAsset(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast('Asset updated successfully', { icon: '✅' });
+      toast.success('Asset updated successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast(err.message, { icon: '⚠️' });
+      toast.error(err.message);
     },
   });
 
@@ -163,8 +163,34 @@ export const AddAssetPage: React.FC = () => {
     // Basic client-side validation to surface missing required fields
     if (!formData.asset_code || !formData.asset_code.trim() || !formData.name || !formData.name.trim()) {
       setError('Please provide both Asset Code and Asset Name.');
-      toast('Please provide both Asset Code and Asset Name.', { icon: '⚠️' });
+      toast.error('Please provide both Asset Code and Asset Name.');
       return;
+    }
+
+    // Date Validations
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (formData.purchase_date) {
+      const purchaseDate = new Date(formData.purchase_date);
+      purchaseDate.setHours(0, 0, 0, 0);
+
+      if (purchaseDate > today) {
+        setError('Purchase date cannot be in the future.');
+        toast.error('Purchase date cannot be in the future.');
+        return;
+      }
+
+      if (formData.warranty_expiry) {
+        const expiryDate = new Date(formData.warranty_expiry);
+        expiryDate.setHours(0, 0, 0, 0);
+
+        if (expiryDate < purchaseDate) {
+          setError('Warranty expiry date cannot be before purchase date.');
+          toast.error('Warranty expiry date cannot be before purchase date.');
+          return;
+        }
+      }
     }
 
     const submitData = {
@@ -304,7 +330,6 @@ export const AddAssetPage: React.FC = () => {
                 >
                   <option value="">Select Status</option>
                   <option value="AVAILABLE">AVAILABLE</option>
-                  <option value="ASSIGNED">ASSIGNED</option>
                   <option value="REQUESTED">REQUESTED</option>
                   <option value="UNDER_REPAIR">UNDER_REPAIR</option>
                   <option value="RETIRED">RETIRED</option>
@@ -334,7 +359,8 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.purchase_date}
                   onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
 
@@ -372,7 +398,8 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.warranty_expiry}
                   onChange={(e) => handleInputChange('warranty_expiry', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  min={formData.purchase_date}
                 />
               </div>
 

@@ -202,102 +202,102 @@ export const ManagerDashboard: React.FC = () => {
 
         {/* Team Members & Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="space-y-6"
-            >
-              <Card className="h-[380px]">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Team Members</h3>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-16 bg-white/10 dark:bg-white/5 rounded animate-pulse" />
-                    ))}
-                  </div>
-                ) : data?.directReports && data.directReports.length > 0 ? (
-                  <div className="space-y-2">
-                    {data.directReports.slice(0, 8).map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-white/5 dark:bg-white/5 border border-light-border dark:border-dark-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            transition={{ duration: 0.5 }}
-                            className="w-10 h-10 rounded-full bg-gradient-premium flex items-center justify-center font-bold text-white shadow-glow"
-                          >
-                            {member.first_name.charAt(0)}
-                          </motion.div>
-                          <div>
-                            <p className="font-semibold text-sm">
-                              {member.first_name} {member.last_name}
-                            </p>
-                            <p className="text-xs text-muted">{member.department}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {member.on_leave_today > 0 ? (
-                            <span className="px-2 py-1 rounded text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
-                              On Leave
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-600 dark:text-green-400">
-                              Active
-                            </span>
-                          )}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="space-y-6"
+          >
+            <Card className="h-[380px]">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Team Members</h3>
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-16 bg-white/10 dark:bg-white/5 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : data?.directReports && data.directReports.length > 0 ? (
+                <div className="space-y-2">
+                  {data.directReports.slice(0, 8).map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 dark:bg-white/5 border border-light-border dark:border-dark-border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.5 }}
+                          className="w-10 h-10 rounded-full bg-gradient-premium flex items-center justify-center font-bold text-white shadow-glow"
+                        >
+                          {member.first_name.charAt(0)}
+                        </motion.div>
+                        <div>
+                          <p className="font-semibold text-sm">
+                            {member.first_name} {member.last_name}
+                          </p>
+                          <p className="text-xs text-muted">{member.department}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center py-8 text-muted">No team members found</p>
-                )}
-              </Card>
-            </motion.div>
+                      <div className="flex items-center gap-2">
+                        {member.on_leave_today > 0 ? (
+                          <span className="px-2 py-1 rounded text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
+                            On Leave
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-600 dark:text-green-400">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted">No team members found</p>
+              )}
+            </Card>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="space-y-6"
-            >
-              <Card>
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Team Performance Metrics</h3>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-12 bg-white/10 dark:bg-white/5 rounded animate-pulse" />
-                    ))}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="space-y-6"
+          >
+            <Card>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Team Performance Metrics</h3>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-12 bg-white/10 dark:bg-white/5 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
+                    <span className="text-sm text-muted">Days Tracked (30d)</span>
+                    <span className="font-bold text-lg">{performanceMetrics.days_tracked || 0}</span>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
-                      <span className="text-sm text-muted">Days Tracked (30d)</span>
-                      <span className="font-bold text-lg">{performanceMetrics.days_tracked || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
-                      <span className="text-sm text-muted">Total Check-ins</span>
-                      <span className="font-bold text-lg">{performanceMetrics.total_checkins || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
-                      <span className="text-sm text-muted">Late Arrivals</span>
-                      <span className="font-bold text-lg text-yellow-400">
-                        {performanceMetrics.late_arrivals || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
-                      <span className="text-sm text-muted">Late Percentage</span>
-                      <span className="font-bold text-lg text-primary">
-                        {performanceMetrics.late_percentage || 0}%
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
+                    <span className="text-sm text-muted">Total Check-ins</span>
+                    <span className="font-bold text-lg">{performanceMetrics.total_checkins || 0}</span>
                   </div>
-                )}
-              </Card>
-            </motion.div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
+                    <span className="text-sm text-muted">Late Arrivals</span>
+                    <span className="font-bold text-lg text-yellow-400">
+                      {performanceMetrics.late_arrivals || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 dark:bg-white/5">
+                    <span className="text-sm text-muted">Late Percentage</span>
+                    <span className="font-bold text-lg text-primary">
+                      {performanceMetrics.late_percentage || 0}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </motion.div>
 
           {/* ===================== CALENDAR + ANNOUNCEMENTS ===================== */}
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -12,7 +12,11 @@ import {
     XCircle,
     Clock,
     ClipboardList,
-    ArrowLeft
+    ArrowLeft,
+    Edit,
+    Trash2,
+    X,
+    FileText
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -21,6 +25,18 @@ export const AssetRequestsPage: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const isAdminOrHR = ['ADMIN', 'HR'].includes(user?.role || '');
+
+    // Edit/Delete State
+    const [showModal, setShowModal] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [formData, setFormData] = useState({
+        asset_name: '',
+        category: 'Laptop',
+        priority: 'Medium',
+        reason: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data: requests, isLoading } = useQuery({
         queryKey: ['assetRequests'],
@@ -38,6 +54,73 @@ export const AssetRequestsPage: React.FC = () => {
             toast.error(error.message || 'Failed to update request');
         }
     });
+
+    const updateRequestMutation = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) =>
+            assetsService.updateRequest(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
+            toast.success('Request updated successfully');
+            setShowModal(false);
+            resetForm();
+        },
+        onError: (error: any) => {
+            toast.error(error.message || 'Failed to update request');
+            setIsSubmitting(false);
+        }
+    });
+
+    const cancelRequestMutation = useMutation({
+        mutationFn: (id: string) => assetsService.cancelRequest(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
+            toast.success('Request cancelled successfully');
+        },
+        onError: (error: any) => {
+            toast.error(error.message || 'Failed to cancel request');
+        }
+    });
+
+    const resetForm = () => {
+        setFormData({
+            asset_name: '',
+            category: 'Laptop',
+            priority: 'Medium',
+            reason: ''
+        });
+        setEditingId(null);
+        setIsEditMode(false);
+        setIsSubmitting(false);
+    };
+
+    const handleEdit = (request: any) => {
+        setFormData({
+            asset_name: request.asset_name,
+            category: request.category,
+            priority: request.priority,
+            reason: request.reason || ''
+        });
+        setEditingId(request.id);
+        setIsEditMode(true);
+        setShowModal(true);
+    };
+
+    const handleDelete = (id: string) => {
+        if (window.confirm('Are you sure you want to cancel this request? This action cannot be undone.')) {
+            cancelRequestMutation.mutate(id);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        if (isEditMode && editingId) {
+            updateRequestMutation.mutate({ id: editingId, data: formData });
+        } else {
+            setIsSubmitting(false);
+        }
+    };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -111,7 +194,7 @@ export const AssetRequestsPage: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Requested On</th>
-                                        {isAdminOrHR && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>}
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -141,37 +224,54 @@ export const AssetRequestsPage: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {format(new Date(request.created_at), 'MMM dd, yyyy')}
                                             </td>
-                                            {isAdminOrHR && (
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    {request.status === 'PENDING' ? (
-                                                        <div className="flex justify-end space-x-2">
-                                                            {(() => {
-                                                                const isSelfRequest = user?.id === request.employee_id;
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                {request.status === 'PENDING' ? (
+                                                    <div className="flex justify-end space-x-2">
+                                                        {(() => {
+                                                            const isSelfRequest = user?.employee_id === request.employee_id;
+
+                                                            if (isSelfRequest) {
+                                                                return (
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                                                            title="Edit Request"
+                                                                            onClick={() => handleEdit(request)}
+                                                                        >
+                                                                            <Edit size={14} />
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            className="text-red-600 border-red-200 hover:bg-red-50"
+                                                                            title="Cancel Request"
+                                                                            onClick={() => handleDelete(request.id)}
+                                                                        >
+                                                                            <Trash2 size={14} />
+                                                                        </Button>
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            if (isAdminOrHR) {
                                                                 return (
                                                                     <>
                                                                         <Button
                                                                             size="sm"
-                                                                            className={`${isSelfRequest
-                                                                                ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-60'
-                                                                                : 'bg-green-600 hover:bg-green-700'
-                                                                                }`}
-                                                                            disabled={isSelfRequest}
-                                                                            title={isSelfRequest ? "You cannot approve your own request" : "Approve Request"}
-                                                                            onClick={() => !isSelfRequest && handleActionMutation.mutate({ id: request.id, status: 'APPROVED' })}
+                                                                            className="bg-green-600 hover:bg-green-700"
+                                                                            title="Approve Request"
+                                                                            onClick={() => handleActionMutation.mutate({ id: request.id, status: 'APPROVED' })}
                                                                         >
                                                                             Approve
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"
                                                                             variant="outline"
-                                                                            className={`${isSelfRequest
-                                                                                ? 'text-gray-400 border-gray-200 cursor-not-allowed opacity-60 hover:bg-transparent'
-                                                                                : 'text-red-600 border-red-200 hover:bg-red-50'
-                                                                                }`}
-                                                                            disabled={isSelfRequest}
-                                                                            title={isSelfRequest ? "You cannot reject your own request" : "Reject Request"}
+                                                                            className="text-red-600 border-red-200 hover:bg-red-50"
+                                                                            title="Reject Request"
                                                                             onClick={() => {
-                                                                                if (isSelfRequest) return;
                                                                                 const notes = prompt('Reason for rejection?');
                                                                                 if (notes !== null) {
                                                                                     handleActionMutation.mutate({ id: request.id, status: 'REJECTED', admin_notes: notes });
@@ -182,15 +282,16 @@ export const AssetRequestsPage: React.FC = () => {
                                                                         </Button>
                                                                     </>
                                                                 );
-                                                            })()}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-400 italic text-xs">
-                                                            {request.status === 'APPROVED' ? 'Approved' : 'Rejected'}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            )}
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 italic text-xs">
+                                                        {request.status === 'APPROVED' ? 'Approved' : 'Rejected'}
+                                                    </span>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -199,6 +300,107 @@ export const AssetRequestsPage: React.FC = () => {
                     )}
                 </Card>
             </div>
+
+            {/* Edit Asset Request Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/10 to-purple-500/10">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <FileText size={22} className="text-primary" />
+                                {isEditMode ? 'Edit Asset Request' : 'New Asset Request'}
+                            </h2>
+                            <button
+                                onClick={() => { setShowModal(false); resetForm(); }}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Asset Name / Description *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.asset_name}
+                                    onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Category *
+                                </label>
+                                <select
+                                    required
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                >
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="Desktop">Desktop</option>
+                                    <option value="Mobile">Mobile</option>
+                                    <option value="Monitor">Monitor</option>
+                                    <option value="Printer">Printer</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Priority *
+                                </label>
+                                <select
+                                    required
+                                    value={formData.priority}
+                                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                >
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Reason *
+                                </label>
+                                <textarea
+                                    required
+                                    value={formData.reason}
+                                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                                    rows={4}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => { setShowModal(false); resetForm(); }}
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    isLoading={isSubmitting}
+                                >
+                                    {isEditMode ? 'Update Request' : 'Submit Request'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 };

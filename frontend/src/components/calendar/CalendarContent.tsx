@@ -199,7 +199,7 @@ export const CalendarContent: React.FC = () => {
                     <select
                         value={selectedState}
                         onChange={(e) => setSelectedState(e.target.value)}
-                        className="h-11 bg-white dark:bg-white/[0.02] border border-light-border dark:border-white/5 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-primary/20 outline-none transition-all cursor-pointer hover:border-primary/30 text-gray-700 dark:text-gray-200 shadow-sm"
+                        className="h-11 bg-white dark:bg-[#111] border border-light-border dark:border-white/5 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-primary/20 outline-none transition-all cursor-pointer hover:border-primary/30 text-gray-700 dark:text-gray-200 shadow-sm"
                     >
                         <option value="">Regions: All</option>
                         {states.map(state => (

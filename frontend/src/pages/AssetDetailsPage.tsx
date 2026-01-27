@@ -19,6 +19,7 @@ import {
   User,
   XCircle,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import type { AssetStatus } from '@/types';
 
@@ -128,7 +129,7 @@ export const AssetDetailsPage: React.FC = () => {
         printWindow.document.close();
       }
     } else {
-      alert('Barcode not available to print.');
+      toast.error('Barcode not available to print.');
     }
   };
 
@@ -139,7 +140,7 @@ export const AssetDetailsPage: React.FC = () => {
       link.download = `barcode-${asset?.asset_code || 'asset'}.png`;
       link.click();
     } else {
-      alert('Barcode not available to download.');
+      toast.error('Barcode not available to download.');
     }
   };
 
@@ -449,24 +450,24 @@ export const AssetDetailsPage: React.FC = () => {
                       <div className="text-center py-4 text-gray-500">No tracking events found.</div>
                     ) : (
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performed By</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Performed By</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                             {trackingHistory?.map((event: any, index: number) => (
                               <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                   {format(new Date(event.created_at), 'MMM dd, yyyy HH:mm')}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{event.event_type}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{event.description || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{event.event_type}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{event.description || '-'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                   {event.created_by_name || 'System'}
                                 </td>
                               </tr>
@@ -486,34 +487,34 @@ export const AssetDetailsPage: React.FC = () => {
                       <div className="text-center py-4 text-gray-500">No usage history found.</div>
                     ) : (
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logged At</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Employee</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Return Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Logged At</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                             {usageHistory?.map((usage: any, index: number) => (
                               <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                   {usage.first_name && usage.last_name
                                     ? `${usage.first_name} ${usage.last_name}`
                                     : usage.employee_id || '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                   {usage.assigned_date ? format(new Date(usage.assigned_date), 'MMM dd, yyyy') : '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {usage.return_date ? format(new Date(usage.return_date), 'MMM dd, yyyy') : <span className="text-green-600 font-medium">Active</span>}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {usage.return_date ? format(new Date(usage.return_date), 'MMM dd, yyyy') : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>}
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                   {usage.description || '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                   {usage.created_at ? format(new Date(usage.created_at), 'MMM dd, yyyy HH:mm') : '-'}
                                 </td>
                               </tr>

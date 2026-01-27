@@ -342,3 +342,31 @@ exports.handleAssetRequest = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * UPDATE ASSET REQUEST
+ */
+exports.updateAssetRequest = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { id: requestId } = req.params;
+    const request = await assetService.updateAssetRequest(tenantId, requestId, userId, req.body);
+    return success(res, request, "Asset request updated successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE ASSET REQUEST
+ */
+exports.deleteAssetRequest = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { id: requestId } = req.params;
+    await assetService.deleteAssetRequest(tenantId, requestId, userId);
+    return success(res, null, "Asset request deleted successfully");
+  } catch (error) {
+    next(error);
+  }
+};

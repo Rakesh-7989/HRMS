@@ -43,7 +43,6 @@ import { projectsService } from '@/services/projects.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
-import { SAMPLE_PROJECT, SAMPLE_TASKS } from '@/data/mockProjectData';
 
 export const TasksPage: React.FC = () => {
     const { id: projectId } = useParams<{ id: string }>();
@@ -93,7 +92,7 @@ export const TasksPage: React.FC = () => {
         retry: false, // Don't retry if mock data is needed
     });
 
-    const project = !serverProject && projectId === SAMPLE_PROJECT.id ? SAMPLE_PROJECT : serverProject;
+    const project = serverProject;
 
     const { data: serverTasks = [], isLoading: tasksLoading } = useQuery({
         queryKey: ['tasks', projectId],
@@ -102,8 +101,7 @@ export const TasksPage: React.FC = () => {
         retry: false,
     });
 
-    // Use Sample tasks if project is sample project, OR if server returns nothing (and we want to demo)
-    const tasks: Task[] = (serverTasks.length === 0 && projectId === SAMPLE_PROJECT.id) ? SAMPLE_TASKS : serverTasks;
+    const tasks: Task[] = serverTasks;
 
 
     const { data: projectMembers = [] } = useQuery({
@@ -116,12 +114,11 @@ export const TasksPage: React.FC = () => {
     const { data: kanbanStatus, isLoading: kanbanLoading } = useQuery({
         queryKey: ['kanban-exists', projectId],
         queryFn: () => projectsService.checkKanbanExists(projectId!),
-        enabled: !!projectId && projectId !== SAMPLE_PROJECT.id, // Skip for sample project
+        enabled: !!projectId,
         retry: false,
     });
 
-    // For sample project, assume Kanban exists
-    const kanbanExists = projectId === SAMPLE_PROJECT.id ? true : kanbanStatus?.exists ?? false;
+    const kanbanExists = kanbanStatus?.exists ?? false;
 
     // Get Kanban columns for status dropdown
     const kanbanColumns = kanbanStatus?.columns ?? [];
@@ -345,7 +342,7 @@ export const TasksPage: React.FC = () => {
     }
 
     // Show loading while checking Kanban status
-    if (kanbanLoading && projectId !== SAMPLE_PROJECT.id) {
+    if (kanbanLoading) {
         return (
             <DashboardLayout
                 title={project?.name || 'Tasks'}
@@ -363,7 +360,7 @@ export const TasksPage: React.FC = () => {
     }
 
     // Show Kanban setup card if board doesn't exist
-    if (!kanbanExists && projectId !== SAMPLE_PROJECT.id) {
+    if (!kanbanExists) {
         return (
             <DashboardLayout
                 title={project?.name || 'Tasks'}
