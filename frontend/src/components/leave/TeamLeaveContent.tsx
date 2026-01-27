@@ -73,7 +73,7 @@ export const TeamLeaveContent: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                     { label: 'Total Requests', value: leaveSummary?.total_applications || 0, accent: 'text-primary' },
-                    { label: 'Pending', value: leaveSummary?.pending || 0, accent: 'text-yellow-500' },
+                    { label: 'Pending', value: pendingApprovals.length, accent: 'text-yellow-500' },
                     { label: 'Approved', value: leaveSummary?.approved || 0, accent: 'text-accent-green' },
                     { label: 'Rejected', value: leaveSummary?.rejected || 0, accent: 'text-red-500' },
                 ].map((card) => (
@@ -81,7 +81,7 @@ export const TeamLeaveContent: React.FC = () => {
                         <p className="text-sm text-muted">{card.label}</p>
                         <p className={`text-2xl font-bold mt-2 ${card.accent}`}>{card.value}</p>
                         <p className="text-xs text-gray-500 dark:text-muted mt-1">
-                            Last 30 days
+                            {card.label === 'Pending' ? 'Active requests' : 'Last 30 days'}
                         </p>
                     </Card>
                 ))}
@@ -139,47 +139,50 @@ export const TeamLeaveContent: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredPendingApprovals.map((leave) => (
-                                    <tr
-                                        key={leave.id}
-                                        className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5"
-                                    >
-                                        <td className="py-3 px-4 text-gray-900 dark:text-white">
-                                            {leave.employee?.first_name} {leave.employee?.last_name}
-                                        </td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{(leave as any).leave_type_name || leave.leave_type}</td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">
-                                            {format(new Date(leave.start_date), 'MMM dd')} -{' '}
-                                            {format(new Date(leave.end_date), 'MMM dd, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted max-w-xs truncate">{leave.reason}</td>
-                                        <td className="py-3 px-4">
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => approveMutation.mutate(leave.id)}
-                                                    isLoading={approveMutation.isPending}
-                                                    title="Approve"
-                                                >
-                                                    <CheckCircle className="text-green-600 hover:text-green-700" size={20} />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        const reason = prompt('Rejection reason:');
-                                                        if (reason) rejectMutation.mutate({ id: leave.id, reason });
-                                                    }}
-                                                    isLoading={rejectMutation.isPending}
-                                                    title="Reject"
-                                                >
-                                                    <XCircle className="text-red-600 hover:text-red-700" size={20} />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filteredPendingApprovals.map((leave) => {
+                                    const emp = leave.employee || (leave as any).user || (leave as any);
+                                    return (
+                                        <tr
+                                            key={leave.id}
+                                            className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            <td className="py-3 px-4 text-gray-900 dark:text-white">
+                                                {emp.first_name} {emp.last_name}
+                                            </td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-muted">{(leave as any).leave_type_name || leave.leave_type}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-muted">
+                                                {format(new Date(leave.start_date), 'MMM dd')} -{' '}
+                                                {format(new Date(leave.end_date), 'MMM dd, yyyy')}
+                                            </td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-muted max-w-xs truncate">{leave.reason}</td>
+                                            <td className="py-3 px-4">
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => approveMutation.mutate(leave.id)}
+                                                        isLoading={approveMutation.isPending}
+                                                        title="Approve"
+                                                    >
+                                                        <CheckCircle className="text-green-600 hover:text-green-700" size={20} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            const reason = prompt('Rejection reason:');
+                                                            if (reason) rejectMutation.mutate({ id: leave.id, reason });
+                                                        }}
+                                                        isLoading={rejectMutation.isPending}
+                                                        title="Reject"
+                                                    >
+                                                        <XCircle className="text-red-600 hover:text-red-700" size={20} />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

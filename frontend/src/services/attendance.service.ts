@@ -16,6 +16,9 @@ export interface Attendance {
   rejected_by?: string;
   rejection_reason?: string;
   created_at?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
 }
 
 export interface AttendanceSummaryRow {

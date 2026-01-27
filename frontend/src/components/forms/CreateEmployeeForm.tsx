@@ -36,8 +36,18 @@ const createValidationSchema = Yup.object({
   designation_id: Yup.string().required('Designation is required'),
   employee_id: Yup.string().required('Employee ID is required'),
   date_of_birth: Yup.date()
-    .max(new Date(), 'Date of birth cannot be in the future')
-    .required('Date of birth is required'),
+    .required('Date of birth is required')
+    .test('age', 'Age must be 18+', function (value) {
+      if (!value) return true;
+      const today = new Date();
+      const birthDate = new Date(value);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age >= 18;
+    }),
   join_date: Yup.string()
     .required('Join date is required')
     .test('is-after-dob', 'Join date must be after Date of Birth', function (value) {
@@ -358,6 +368,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               name="date_of_birth"
               value={formik.values.date_of_birth}
               onChange={formik.handleChange}
+              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
               className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
             />
           </div>

@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
-import { usersService, User } from '@/services/users.service';
 import { format } from 'date-fns';
 import { formatTime12Hour } from '@/utils/timeFormat';
 import {
@@ -21,17 +20,7 @@ export const TeamAttendanceContent: React.FC = () => {
     const [rejectionAttendanceId, setRejectionAttendanceId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
 
-    const { data: users = [] } = useQuery<User[]>({
-        queryKey: ['users'],
-        queryFn: () => usersService.getUsers(),
-    });
 
-    const userMap = useMemo(() => {
-        return users.reduce((acc, user) => {
-            acc[user.id] = `${user.first_name} ${user.last_name}`;
-            return acc;
-        }, {} as Record<string, string>);
-    }, [users]);
 
     const { data: allPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'all-pending'],
@@ -107,7 +96,9 @@ export const TeamAttendanceContent: React.FC = () => {
                                         key={att.id}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                                     >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{userMap[att.employee_id] || att.employee_id}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                                            {att.first_name ? `${att.first_name} ${att.last_name}` : att.employee_id}
+                                        </td>
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
@@ -162,7 +153,9 @@ export const TeamAttendanceContent: React.FC = () => {
                                         key={att.id}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                                     >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{userMap[att.employee_id] || att.employee_id}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                                            {att.first_name ? `${att.first_name} ${att.last_name}` : att.employee_id}
+                                        </td>
                                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
@@ -230,7 +223,9 @@ export const TeamAttendanceContent: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-900 dark:text-white">
                                             {format(new Date(att.date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">{userMap[att.employee_id] || att.employee_id}</td>
+                                        <td className="py-3 px-4 text-gray-600 dark:text-muted">
+                                            {att.first_name ? `${att.first_name} ${att.last_name}` : att.employee_id}
+                                        </td>
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{formatTime12Hour(att.check_in_time)}</td>
                                         <td className="py-3 px-4 text-gray-600 dark:text-muted">{formatTime12Hour(att.check_out_time)}</td>
                                         <td className="py-3 px-4">
