@@ -10,7 +10,6 @@ import {
   Clock,
   Building2,
   BarChart3,
-  Wallet,
   Package,
   FolderKanban,
   Activity,

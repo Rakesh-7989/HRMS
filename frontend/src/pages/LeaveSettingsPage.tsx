@@ -33,8 +33,6 @@ export const LeaveSettingsPage: React.FC = () => {
         requires_attachment: false,
         min_days_notice: 0,
         max_consecutive_days: 0,
-        default_accrual_rate: 0,
-        default_max_balance: 0,
     });
 
     // Leave Policies State
@@ -214,8 +212,6 @@ export const LeaveSettingsPage: React.FC = () => {
             requires_attachment: false,
             min_days_notice: 0,
             max_consecutive_days: 0,
-            default_accrual_rate: 0,
-            default_max_balance: 0,
         });
         setEditingType(null);
     };
@@ -260,8 +256,6 @@ export const LeaveSettingsPage: React.FC = () => {
                 requires_attachment: type.requires_attachment === true,
                 min_days_notice: type.min_days_notice || 0,
                 max_consecutive_days: type.max_consecutive_days || 0,
-                default_accrual_rate: type.default_accrual_rate || 0,
-                default_max_balance: type.default_max_balance || 0,
             });
         } else {
             resetTypeForm();
@@ -879,32 +873,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="type-default-accrual" className="block mb-1.5 text-blue-600 dark:text-blue-400">Default Monthly Quota</Label>
-                                    <Input
-                                        id="type-default-accrual"
-                                        type="number"
-                                        step="0.1"
-                                        value={typeForm.default_accrual_rate}
-                                        onChange={(e) => setTypeForm({ ...typeForm, default_accrual_rate: Number(e.target.value) })}
-                                        min={0}
-                                        placeholder="e.g. 1.5"
-                                    />
-                                    <p className="text-[10px] text-gray-500 mt-1">Auto-creates a monthly policy</p>
-                                </div>
-                                <div>
-                                    <Label htmlFor="type-default-balance" className="block mb-1.5 text-blue-600 dark:text-blue-400">Max Balance (Cap)</Label>
-                                    <Input
-                                        id="type-default-balance"
-                                        type="number"
-                                        value={typeForm.default_max_balance}
-                                        onChange={(e) => setTypeForm({ ...typeForm, default_max_balance: Number(e.target.value) })}
-                                        min={0}
-                                        placeholder="Optional"
-                                    />
-                                </div>
-                            </div>
+
                         </div>
                         <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
                             <Button type="button" variant="ghost" onClick={handleCloseTypeDialog}>
