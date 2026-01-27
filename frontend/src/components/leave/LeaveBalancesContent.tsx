@@ -15,7 +15,7 @@ export const LeaveBalancesContent: React.FC = () => {
     const queryClient = useQueryClient();
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string; email: string } | null>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string; email: string; code?: string } | null>(null);
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
     const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -60,9 +60,10 @@ export const LeaveBalancesContent: React.FC = () => {
 
     const handleSelectEmployee = (user: any) => {
         setSelectedEmployee({
-            id: user.id,
+            id: user.employee_uuid || user.id,
             name: `${user.first_name} ${user.last_name}`,
             email: user.email,
+            code: user.employee_code,
         });
         setSearchQuery('');
     };
@@ -133,10 +134,19 @@ export const LeaveBalancesContent: React.FC = () => {
                                                 className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                 onClick={() => handleSelectEmployee(user)}
                                             >
-                                                <p className="font-medium text-sm text-gray-900 dark:text-white">
-                                                    {user.first_name} {user.last_name}
-                                                </p>
-                                                <p className="text-xs text-gray-500">{user.email}</p>
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="font-medium text-sm text-gray-900 dark:text-white">
+                                                            {user.first_name} {user.last_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                                    </div>
+                                                    {user.employee_code && (
+                                                        <span className="text-[10px] font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">
+                                                            {user.employee_code}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </button>
                                         </li>
                                     ))}
@@ -152,8 +162,13 @@ export const LeaveBalancesContent: React.FC = () => {
                 <Card>
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                 Balances for {selectedEmployee.name}
+                                {selectedEmployee.code && (
+                                    <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                        {selectedEmployee.code}
+                                    </span>
+                                )}
                             </h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {selectedEmployee.email}

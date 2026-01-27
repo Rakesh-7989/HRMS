@@ -91,8 +91,8 @@ exports.createUser = async (db, data, actor) => {
       (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
        emergency_name, emergency_phone, emergency_relation,
        employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
-       bank_name, account_name, account_number, ifsc_code, tax_id, address, created_by)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+       bank_name, account_name, account_number, ifsc_code, tax_id, address, annual_salary, created_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
     RETURNING id
     `,
     [
@@ -121,6 +121,7 @@ exports.createUser = async (db, data, actor) => {
       data.ifsc_code || null,
       data.tax_id || null,
       data.address || null,
+      data.annual_salary || data.ctc || 0,
       actor.id
     ]
   );
@@ -276,7 +277,7 @@ exports.getUsers = async (db, opts, actor) => {
   }
 
   if (opts.search) {
-    filter.push(`(u.email ILIKE $${i} OR e.first_name ILIKE $${i})`);
+    filter.push(`(u.email ILIKE $${i} OR e.first_name ILIKE $${i} OR e.last_name ILIKE $${i} OR e.employee_id ILIKE $${i})`);
     params.push(`%${opts.search}%`);
     i++;
   }
@@ -287,16 +288,17 @@ exports.getUsers = async (db, opts, actor) => {
     i++;
   }
 
-  const where = filter.length ? "WHERE " + filter.join(" AND ") : "WHERE u.is_deleted = false";
+  // Always include is_deleted check in filters if not already there
+  filter.push("u.is_deleted = false");
 
-  // Ensure is_deleted check is present if we built a custom WHERE clause
-  const finalWhere = filter.length ? `${where} AND u.is_deleted = false` : `WHERE u.is_deleted = false`;
+  const where = filter.length ? "WHERE " + filter.join(" AND ") : "";
 
   const sql = `
-    SELECT u.*, e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id
+    SELECT u.id, u.email, u.role, u.is_active, u.tenant_id, u.created_at,
+           e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = u.tenant_id
-    ${finalWhere}
+    ${where}
     ORDER BY u.created_at DESC
   `;
 
@@ -309,17 +311,18 @@ exports.getUserById = async (db, id, tenantId) => {
   const query = getQuery(db);
   const res = await query(
     `
-    SELECT u.*, 
-           e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
-           e.employee_id, e.join_date, e.employment_type, e.shift,
-           e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
-           e.emergency_name, e.emergency_phone, e.emergency_relation,
-           e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
-           m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name
-    FROM users u 
-    LEFT JOIN employees e ON e.user_id = u.id
-    LEFT JOIN employees m ON m.id = e.reports_to
-    WHERE u.id=$1 AND u.tenant_id=$2
+     SELECT u.*, 
+            e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
+            e.employee_id, e.join_date, e.employment_type, e.shift,
+            e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
+            e.emergency_name, e.emergency_phone, e.emergency_relation,
+            e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
+            e.annual_salary AS ctc,
+            m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name
+     FROM users u 
+     LEFT JOIN employees e ON e.user_id = u.id
+     LEFT JOIN employees m ON m.id = e.reports_to
+     WHERE u.id=$1 AND u.tenant_id=$2
     `,
     [id, tenantId]
   );
@@ -371,6 +374,9 @@ exports.updateEmployee = async (db, id, updates, tenantId) => {
     "ifsc_code",
     "tax_id",
 
+    "annual_salary",
+    "ctc", // support both aliases
+
     // Address
     "address"
   ];
@@ -381,7 +387,8 @@ exports.updateEmployee = async (db, id, updates, tenantId) => {
 
   for (const key of allowed) {
     if (updates[key] !== undefined) {
-      fields.push(`${key}=$${i}`);
+      const fieldName = key === 'ctc' ? 'annual_salary' : key;
+      fields.push(`${fieldName}=$${i}`);
       params.push(updates[key]);
       i++;
     }

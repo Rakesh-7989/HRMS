@@ -38,8 +38,9 @@ const transporter = createTransporter();
  * @returns {Promise} Send result
  */
 exports.sendMail = async (mailOptions) => {
+
     try {
-        const defaultFrom = process.env.SMTP_FROM || 'noreply@hrms.com';
+        const defaultFrom = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@hrms.com';
 
         const options = {
             from: mailOptions.from || defaultFrom,
@@ -57,7 +58,7 @@ exports.sendMail = async (mailOptions) => {
             subject: options.subject,
             from: options.from
         });
-        
+
         // Always log the email content in development mode
         if (env.NODE_ENV === 'development') {
             logger.info('Email Content:', {

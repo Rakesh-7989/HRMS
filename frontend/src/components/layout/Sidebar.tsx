@@ -46,7 +46,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Assets', icon: Package, path: '/assets', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
 
   // Payroll
-  { label: 'Payroll', icon: Wallet, path: '/Payroll', roles: ['HR', 'EMPLOYEE', 'MANAGER'] },
+  //{ label: 'Payroll', icon: Wallet, path: '/Payroll', roles: ['HR', 'EMPLOYEE', 'MANAGER'] },
 
   // Project Management
   { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'] },

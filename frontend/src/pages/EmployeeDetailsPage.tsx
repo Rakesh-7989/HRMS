@@ -417,14 +417,31 @@ export const EmployeeDetailsPage: React.FC = () => {
                             </div>
                         </Card>
 
-                        <Card>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Tax Information
-                            </h3>
-                            <div className="space-y-4">
-                                <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
-                            </div>
-                        </Card>
+                        <div className="space-y-6">
+                            {(canManage || currentUser?.id === id) && (
+                                <Card>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        Salary Information
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <InfoRow
+                                            icon={Wallet}
+                                            label="Annual Salary (CTC)"
+                                            value={employee.ctc ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(employee.ctc)) : 'Not defined'}
+                                        />
+                                    </div>
+                                </Card>
+                            )}
+
+                            <Card>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                    Tax Information
+                                </h3>
+                                <div className="space-y-4">
+                                    <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
+                                </div>
+                            </Card>
+                        </div>
                     </div>
                 )}
 

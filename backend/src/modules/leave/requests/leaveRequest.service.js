@@ -107,6 +107,98 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
         }
     }
 
+    // Check monthly usage limit (accrual_rate from policy acts as monthly limit)
+    const policyRes = await query(
+        `SELECT lp.accrual_rate, lp.accrual_type, lp.name as policy_name
+         FROM leave_policies lp
+         WHERE lp.tenant_id = $1 
+           AND lp.leave_type_id = $2 
+           AND lp.is_active = true
+         ORDER BY lp.priority ASC
+         LIMIT 1`,
+        [tenantId, leave_type_id]
+    );
+
+    if (policyRes.rowCount > 0) {
+        const policy = policyRes.rows[0];
+        const monthlyLimit = parseFloat(policy.accrual_rate);
+
+        if (monthlyLimit > 0 && policy.accrual_type === 'MONTHLY') {
+            // Get start and end of the month(s) covered by this leave
+            const startDateObj = new Date(start_date);
+            const endDateObj = new Date(end_date);
+
+            // Check each month the leave spans
+            const monthsToCheck = new Set();
+            let currentDate = new Date(startDateObj);
+            while (currentDate <= endDateObj) {
+                const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`;
+                monthsToCheck.add(monthKey);
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                currentDate.setDate(1);
+            }
+
+            for (const monthKey of monthsToCheck) {
+                const [year, month] = monthKey.split('-').map(Number);
+                const monthStart = new Date(year, month - 1, 1).toISOString().split('T')[0];
+                const monthEnd = new Date(year, month, 0).toISOString().split('T')[0];
+
+                // Calculate days in this month for current application
+                const appStartInMonth = new Date(Math.max(startDateObj.getTime(), new Date(monthStart).getTime()));
+                const appEndInMonth = new Date(Math.min(endDateObj.getTime(), new Date(monthEnd).getTime()));
+
+                let requestedDaysInMonth = 0;
+                if (is_half_day) {
+                    // Half day is only for single day, so it's either in this month or not
+                    if (startDateObj >= new Date(monthStart) && startDateObj <= new Date(monthEnd)) {
+                        requestedDaysInMonth = 0.5;
+                    }
+                } else {
+                    // Count working days in this month portion
+                    requestedDaysInMonth = await holidayService.countWorkingDays(
+                        db,
+                        appStartInMonth.toISOString().split('T')[0],
+                        appEndInMonth.toISOString().split('T')[0],
+                        tenantId
+                    );
+                }
+
+                // Get already approved/pending leaves in this month for this leave type
+                const existingLeavesRes = await query(
+                    `SELECT COALESCE(SUM(
+                        CASE 
+                            WHEN is_half_day THEN 0.5
+                            ELSE days_count
+                        END
+                    ), 0) as used_days
+                     FROM leave_applications
+                     WHERE tenant_id = $1
+                       AND employee_id = $2
+                       AND leave_type_id = $3
+                       AND status IN ('PENDING', 'APPROVED')
+                       AND (
+                           (start_date >= $4 AND start_date <= $5)
+                           OR (end_date >= $4 AND end_date <= $5)
+                           OR (start_date <= $4 AND end_date >= $5)
+                       )`,
+                    [tenantId, employeeId, leave_type_id, monthStart, monthEnd]
+                );
+
+                const alreadyUsedInMonth = parseFloat(existingLeavesRes.rows[0].used_days) || 0;
+                const totalAfterApplication = alreadyUsedInMonth + requestedDaysInMonth;
+
+                if (totalAfterApplication > monthlyLimit) {
+                    const monthName = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long' });
+                    throw new BadRequestError(
+                        `Monthly limit exceeded for ${monthName} ${year}. ` +
+                        `Limit: ${monthlyLimit} days, Already used: ${alreadyUsedInMonth} days, ` +
+                        `Requested: ${requestedDaysInMonth} days. Available: ${(monthlyLimit - alreadyUsedInMonth).toFixed(1)} days.`
+                    );
+                }
+            }
+        }
+    }
+
     const res = await query(
         `INSERT INTO leave_applications
             (tenant_id, employee_id, leave_type_id,
@@ -154,7 +246,7 @@ exports.getMyLeaves = async (db, tenantId, employeeId, filters) => {
         `SELECT
             la.*,
             lt.name AS leave_type_name,
-            lt.code AS leave_type_code 
+            lt.code AS leave_type 
          FROM leave_applications la
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
          ${where}
@@ -173,23 +265,42 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 
     const params = [actor.tenantId];
     let p = 2;
-    let where = `WHERE la.tenant_id = $1 AND la.status = 'PENDING'`;
 
-    if (actor.role === "MANAGER") {
-        // Limit to direct reports
+    // Default to PENDING if status not provided, otherwise allow filtering by specific status
+    let statusFilter = filters.status || 'PENDING';
+    let statusClause = `la.status = $${p}`;
+
+    if (statusFilter.includes(',')) {
+        statusClause = `la.status IN (${statusFilter.split(',').map(() => `$${p++}`).join(',')})`;
+        params.push(...statusFilter.split(','));
+    } else {
+        params.push(statusFilter);
+        p++;
+    }
+
+    let where = `WHERE la.tenant_id = $1 AND ${statusClause}`;
+
+    // Visibility Logic: 
+    // - MANAGERS only see their direct reports.
+    // - HR and ADMIN can see all pending requests in the organization (visibility only).
+    // Note: The actual Approve/Reject action is still strictly protected in the approveLeave/rejectLeave functions.
+    if (actor.role === 'MANAGER') {
+        if (!actor.employeeId) {
+            return [];
+        }
         where += ` AND e.reports_to = $${p}`;
         params.push(actor.employeeId);
         p++;
     }
 
     if (filters.from_date) {
-        where += ` AND la.start_date >= $${p}`;
+        where += ` AND la.created_at >= $${p}`;
         params.push(filters.from_date);
         p++;
     }
 
     if (filters.to_date) {
-        where += ` AND la.end_date <= $${p}`;
+        where += ` AND la.created_at <= $${p}::date + interval '1 day'`;
         params.push(filters.to_date);
         p++;
     }
@@ -198,16 +309,21 @@ exports.getPendingApprovals = async (db, actor, filters) => {
         `SELECT
             la.*,
             lt.name AS leave_type_name,
+            lt.code AS leave_type,
             e.first_name,
             e.last_name,
-            u.email
+            u.email,
+            m.first_name AS manager_first_name,
+            m.last_name AS manager_last_name,
+            CASE WHEN e.reports_to = $${p} THEN true ELSE false END AS can_approve
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id
          JOIN users u     ON u.id = e.user_id
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
+         LEFT JOIN employees m     ON m.id = e.reports_to
          ${where}
          ORDER BY la.start_date ASC`,
-        params
+        [...params, actor.employeeId]
     );
 
     return res.rows;
@@ -243,16 +359,14 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 
     const leave = leaveRes.rows[0];
 
-    // SECURITY FIX: Managers can only approve their direct reports
-    if (actor.role === 'MANAGER') {
-        // Block self-approval
-        if (leave.employee_id === actor.employeeId) {
-            throw new Error("Managers cannot approve their own leave requests");
-        }
-        // Verify direct report relationship
-        if (leave.reports_to !== actor.employeeId) {
-            throw new Error("You can only approve leave for employees who report directly to you");
-        }
+    // STRICT HIERARCHY: Verify reporter-manager relationship for all roles
+    // Block self-approval
+    if (leave.employee_id === actor.employeeId) {
+        throw new Error("You cannot approve your own leave requests. Your reporting manager must do this.");
+    }
+    // Verify direct report relationship
+    if (leave.reports_to !== actor.employeeId) {
+        throw new Error("You can only approve leave for employees who report directly to you.");
     }
 
     // Update leave status
@@ -302,23 +416,21 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
     }
 
     // For managers, verify the employee reports to them
-    if (actor.role === 'MANAGER') {
-        const leaveCheck = await query(
-            `SELECT la.employee_id, e.reports_to 
-             FROM leave_applications la
-             JOIN employees e ON e.id = la.employee_id
-             WHERE la.id = $1 AND la.tenant_id = $2`,
-            [leaveId, actor.tenantId]
-        );
+    const leaveCheck = await query(
+        `SELECT la.employee_id, e.reports_to 
+         FROM leave_applications la
+         JOIN employees e ON e.id = la.employee_id
+         WHERE la.id = $1 AND la.tenant_id = $2`,
+        [leaveId, actor.tenantId]
+    );
 
-        if (leaveCheck.rowCount > 0) {
-            const leave = leaveCheck.rows[0];
-            if (leave.employee_id === actor.employeeId) {
-                throw new Error("Managers cannot reject their own leave requests");
-            }
-            if (leave.reports_to !== actor.employeeId) {
-                throw new Error("You can only reject leave for employees who report directly to you");
-            }
+    if (leaveCheck.rowCount > 0) {
+        const leave = leaveCheck.rows[0];
+        if (leave.employee_id === actor.employeeId) {
+            throw new Error("You cannot reject your own leave requests.");
+        }
+        if (leave.reports_to !== actor.employeeId) {
+            throw new Error("You can only reject leave for employees who report directly to you.");
         }
     }
 
@@ -404,42 +516,85 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
 /**
  * ADMIN / HR: LEAVE SUMMARY (Dashboard logic mostly)
  */
-exports.getLeaveSummary = async (db, tenantId, filters) => {
+exports.getLeaveSummary = async (db, actor, filters) => {
     const query = getQuery(db);
+    const tenantId = actor.tenantId;
 
     const params = [tenantId];
     let p = 2;
-    let where = `WHERE la.tenant_id = $1 AND la.status = 'APPROVED'`;
+    let where = `WHERE la.tenant_id = $1`;
 
+    // Visibility: MANAGER sees only direct reports' summary. HR/ADMIN see whole tenant.
+    if (actor.role === 'MANAGER') {
+        if (!actor.employeeId) {
+            return {
+                approved: 0,
+                pending: 0,
+                rejected: 0,
+                cancelled: 0,
+                total: 0
+            };
+        }
+        where += ` AND e.reports_to = $${p}`;
+        params.push(actor.employeeId);
+        p++;
+    }
+
+    let dateFilter = '';
     if (filters.from_date) {
-        where += ` AND la.start_date >= $${p}`;
+        dateFilter += ` AND la.created_at >= $${p}`;
         params.push(filters.from_date);
         p++;
     }
 
     if (filters.to_date) {
-        where += ` AND la.end_date <= $${p}`;
+        // Adjust to include the end of the day
+        dateFilter += ` AND la.created_at <= $${p}::date + interval '1 day'`;
         params.push(filters.to_date);
         p++;
     }
 
-    const res = await query(
+    // Get overall counts based on creation date for the period
+    const countsRes = await query(
+        `SELECT
+            COUNT(*) AS total_applications,
+            COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END) AS approved,
+            COUNT(CASE WHEN la.status = 'REJECTED' THEN 1 END) AS rejected,
+            COUNT(CASE WHEN la.status = 'PENDING' THEN 1 END) AS pending,
+            COUNT(CASE WHEN la.status = 'CANCELLED' THEN 1 END) AS cancelled
+         FROM leave_applications la
+         JOIN employees e ON e.id = la.employee_id
+         ${where} ${dateFilter}`,
+        params
+    );
+
+    // Get breakdown by type for approved leaves in this period
+    const breakdownRes = await query(
         `SELECT
             lt.name AS leave_type_name,
             COUNT(*) AS requests,
             SUM(
                 CASE
                     WHEN la.is_half_day THEN 0.5
-                    ELSE (la.end_date - la.start_date + 1)
+                    ELSE la.days_count
                 END
             ) AS total_days
          FROM leave_applications la
+         JOIN employees e ON e.id = la.employee_id
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
-         ${where}
+         ${where} ${dateFilter} AND la.status = 'APPROVED'
          GROUP BY lt.name
          ORDER BY lt.name`,
         params
     );
 
-    return res.rows;
+    const counts = countsRes.rows[0];
+    return {
+        total_applications: parseInt(counts.total_applications || 0),
+        approved: parseInt(counts.approved || 0),
+        rejected: parseInt(counts.rejected || 0),
+        pending: parseInt(counts.pending || 0),
+        cancelled: parseInt(counts.cancelled || 0),
+        by_type: breakdownRes.rows
+    };
 };

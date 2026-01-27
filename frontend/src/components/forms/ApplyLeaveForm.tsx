@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Upload, X, FileText } from 'lucide-react';
 
 interface ApplyLeaveFormProps {
   open: boolean;
@@ -37,6 +37,11 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Fetch leave types dynamically
   const { data: leaveTypes = [], isLoading: typesLoading } = useQuery<LeaveType[]>({
     queryKey: ['leave-types'],
@@ -51,6 +56,19 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
     enabled: open,
   });
 
+  // Upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => leaveService.uploadAttachment(file),
+    onSuccess: (data) => {
+      setUploadedUrl(data.url);
+      setUploadError(null);
+    },
+    onError: (error: Error) => {
+      setUploadError(error.message || 'Failed to upload file');
+      setUploadedUrl(null);
+    },
+  });
+
   const applyMutation = useMutation({
     mutationFn: (data: ApplyLeaveData) => leaveService.applyLeave(data),
     onSuccess: () => {
@@ -58,6 +76,8 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       formik.resetForm();
+      setSelectedFile(null);
+      setUploadedUrl(null);
       onOpenChange(false);
     },
   });
@@ -80,10 +100,14 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
         reason: values.reason,
         is_half_day: values.is_half_day,
         half_day_session: values.is_half_day ? (values.half_day_session as 'MORNING' | 'AFTERNOON') : null,
+        attachment_url: uploadedUrl || undefined,
       };
       applyMutation.mutate(payload);
     },
   });
+
+  // Get the selected leave type details
+  const selectedLeaveType = leaveTypes.find(t => t.id === formik.values.leave_type_id);
 
   // Get the selected leave type's balance
   const selectedTypeBalance = leaveBalances.find(
@@ -102,11 +126,34 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
   const requestedDays = calculateDays();
 
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setUploadError(null);
+      uploadMutation.mutate(file);
+    }
+  };
+
+  // Handle file removal
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setUploadedUrl(null);
+    setUploadError(null);
+  };
+
   const handleClose = () => {
     formik.resetForm();
     applyMutation.reset();
+    setSelectedFile(null);
+    setUploadedUrl(null);
+    setUploadError(null);
     onOpenChange(false);
   };
+
+  // Check if attachment is required but not uploaded
+  const isAttachmentMissing = selectedLeaveType?.requires_attachment && !uploadedUrl;
 
   return (
     <Dialog open={open} onOpenChange={handleClose} title="Request Leave / Remote Work" className="max-w-md">
@@ -291,6 +338,68 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               <p className="mt-1 text-sm text-red-600">{formik.errors.reason}</p>
             )}
           </div>
+
+          {/* Attachment Upload - Show when leave type requires attachment */}
+          {selectedLeaveType?.requires_attachment && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Attachment *
+              </label>
+
+              {!selectedFile ? (
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="leave-attachment"
+                  />
+                  <label
+                    htmlFor="leave-attachment"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Upload size={20} className="text-gray-400" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Click to upload (PDF, DOC, JPG, PNG - max 5MB)
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="text-primary" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
+                      {selectedFile.name}
+                    </span>
+                    {uploadMutation.isPending && (
+                      <span className="text-xs text-blue-500">Uploading...</span>
+                    )}
+                    {uploadedUrl && (
+                      <span className="text-xs text-green-500">✓ Uploaded</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X size={16} className="text-gray-500" />
+                  </button>
+                </div>
+              )}
+
+              {uploadError && (
+                <p className="mt-1 text-sm text-red-600">{uploadError}</p>
+              )}
+
+              {!uploadedUrl && !uploadMutation.isPending && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  This leave type requires an attachment (e.g., medical certificate)
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -301,7 +410,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
           <Button
             type="submit"
             isLoading={applyMutation.isPending}
-            disabled={!formik.isValid || !formik.dirty || leaveTypes.length === 0}
+            disabled={!formik.isValid || !formik.dirty || leaveTypes.length === 0 || isAttachmentMissing || uploadMutation.isPending}
           >
             Apply for Leave
           </Button>

@@ -11,8 +11,9 @@ exports.createPolicy = async (db, data, actor) => {
         `INSERT INTO leave_policies 
             (tenant_id, leave_type_id, name, description,
              applicable_roles, employment_types, is_probation_eligible, min_tenure_months,
-             accrual_type, accrual_rate, max_balance, year_start_month, priority, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             accrual_type, accrual_rate, max_balance, year_start_month, priority, 
+             carry_forward_enabled, max_carry_forward, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          RETURNING *`,
         [
             actor.tenantId,
@@ -28,6 +29,8 @@ exports.createPolicy = async (db, data, actor) => {
             data.max_balance || null,
             data.year_start_month || 1,
             data.priority || 100,
+            data.carry_forward_enabled || false,
+            data.max_carry_forward || 0,
             actor.id
         ]
     );
@@ -144,7 +147,8 @@ exports.updatePolicy = async (db, id, updates, actor) => {
     const allowed = [
         "name", "description", "applicable_roles", "employment_types",
         "is_probation_eligible", "min_tenure_months", "accrual_type",
-        "accrual_rate", "max_balance", "year_start_month", "priority", "is_active"
+        "accrual_rate", "max_balance", "year_start_month", "priority", "is_active",
+        "carry_forward_enabled", "max_carry_forward"
     ];
 
     const fields = [];
@@ -260,12 +264,32 @@ exports.runMonthlyAccrual = async (db, tenantId) => {
             );
 
             if (balance.rowCount === 0) {
+                let carryForwardAmount = 0;
+
+                if (policy.carry_forward_enabled) {
+                    const prevYearBalance = await query(
+                        `SELECT current_balance FROM leave_balances 
+                         WHERE tenant_id = $1 AND employee_id = $2 AND leave_type_id = $3 AND year = $4`,
+                        [tenantId, emp.id, lt.id, currentYear - 1]
+                    );
+
+                    if (prevYearBalance.rowCount > 0) {
+                        const unused = parseFloat(prevYearBalance.rows[0].current_balance);
+                        const maxDays = policy.max_carry_forward * policy.accrual_rate;
+
+                        carryForwardAmount = policy.max_carry_forward > 0
+                            ? Math.min(unused, maxDays)
+                            : unused;
+                    }
+                }
+
                 await query(
                     `INSERT INTO leave_balances 
-                        (tenant_id, employee_id, leave_type_id, year, opening_balance, accrual_start_date)
-                     VALUES ($1, $2, $3, $4, 0, $5)`,
-                    [tenantId, emp.id, lt.id, currentYear, emp.join_date || today]
+                        (tenant_id, employee_id, leave_type_id, year, opening_balance, carry_forward, accrual_start_date)
+                     VALUES ($1, $2, $3, $4, 0, $5, $6)`,
+                    [tenantId, emp.id, lt.id, currentYear, carryForwardAmount, emp.join_date || today]
                 );
+
                 balance = await query(
                     `SELECT * FROM leave_balances 
                      WHERE tenant_id = $1 AND employee_id = $2 AND leave_type_id = $3 AND year = $4`,
@@ -278,8 +302,47 @@ exports.runMonthlyAccrual = async (db, tenantId) => {
             if (bal.last_accrual_date) {
                 const lastAccrualMonth = new Date(bal.last_accrual_date).getMonth() + 1;
                 const lastAccrualYear = new Date(bal.last_accrual_date).getFullYear();
+
                 if (lastAccrualMonth === currentMonth && lastAccrualYear === currentYear) {
                     continue;
+                }
+
+                // Enforce monthly carry forward limits if it's a new month in the same year
+                if (lastAccrualYear === currentYear && policy.accrual_type === 'MONTHLY') {
+                    const currentTotalBalance = parseFloat(bal.current_balance);
+                    const maxCarryDays = policy.carry_forward_enabled
+                        ? (policy.max_carry_forward > 0 ? policy.max_carry_forward * policy.accrual_rate : Infinity)
+                        : 0;
+
+                    if (currentTotalBalance > maxCarryDays) {
+                        const loss = currentTotalBalance - maxCarryDays;
+
+                        // Adjust balance down to the limit
+                        await query(
+                            `UPDATE leave_balances SET adjusted = adjusted - $1, updated_at = now() WHERE id = $2`,
+                            [loss, bal.id]
+                        );
+
+                        // Log the expiry
+                        await query(
+                            `INSERT INTO leave_balance_adjustments 
+                                (tenant_id, balance_id, employee_id, adjustment_type, amount, reason, 
+                                 previous_balance, new_balance, created_by)
+                             VALUES ($1, $2, $3, 'EXPIRY', $4, $5, $6, $7, $8)`,
+                            [
+                                tenantId, bal.id, emp.id, -loss,
+                                `Monthly carry-forward limit (${policy.max_carry_forward} months) enforced`,
+                                currentTotalBalance, maxCarryDays, null
+                            ]
+                        );
+
+                        // Refresh local bal object for subsequent calculations
+                        const refreshed = await query(
+                            `SELECT * FROM leave_balances WHERE id = $1`,
+                            [bal.id]
+                        );
+                        Object.assign(bal, refreshed.rows[0]);
+                    }
                 }
             }
 

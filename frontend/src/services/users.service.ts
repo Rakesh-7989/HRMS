@@ -33,6 +33,7 @@ export interface User {
   account_number?: string;
   ifsc_code?: string;
   tax_id?: string;
+  ctc?: string | number;
   // Emergency Contact
   emergency_name?: string;
   emergency_phone?: string;
@@ -76,6 +77,8 @@ export interface CreateUserData {
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
+  annual_salary?: string | number;
+  ctc?: string | number;
 }
 
 export interface UpdateUserData {
@@ -107,6 +110,8 @@ export interface UpdateEmployeeData {
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
+  annual_salary?: string | number;
+  ctc?: string | number;
 }
 
 export interface TerminateEmployeeData {

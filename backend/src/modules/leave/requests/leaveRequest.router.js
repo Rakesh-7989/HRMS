@@ -4,11 +4,15 @@ const router = express.Router();
 const verifyJwt = require("../../../middleware/verifyJwt");
 const requireRole = require("../../../middleware/requireRole");
 const validate = require("../../../middleware/validate");
+const { uploadDocument } = require("../../../utils/fileUpload");
 
 const controller = require("./leaveRequest.controller");
 const v = require("./leaveRequest.validator");
 
 router.use(verifyJwt);
+
+// File upload route (must be before other routes)
+router.post("/upload-attachment", uploadDocument.single('attachment'), controller.uploadAttachment);
 
 // Employee routes
 router.post("/apply", validate(v.applyLeaveSchema), controller.applyLeave);

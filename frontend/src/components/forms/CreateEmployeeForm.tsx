@@ -77,9 +77,13 @@ const createValidationSchema = Yup.object({
   ifsc_code: Yup.string()
     .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC Code format')
     .required('IFSC code is required'),
+
   tax_id: Yup.string()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
     .required('Tax ID is required'),
+  annual_salary: Yup.number()
+    .positive('Salary must be positive')
+    .nullable(),
   emergency_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('Emergency contact is required'),
@@ -132,9 +136,13 @@ const editValidationSchema = Yup.object({
   ifsc_code: Yup.string()
     .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC Code format')
     .required('IFSC code is required'),
+
   tax_id: Yup.string()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
     .required('Tax ID is required'),
+  annual_salary: Yup.number()
+    .positive('Salary must be positive')
+    .nullable(),
 });
 
 export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
@@ -226,6 +234,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
       account_number: editEmployee?.account_number || '',
       ifsc_code: editEmployee?.ifsc_code || '',
       tax_id: editEmployee?.tax_id || '',
+      annual_salary: editEmployee?.ctc || '',
       emergency_name: editEmployee?.emergency_name || '',
       emergency_phone: editEmployee?.emergency_phone || '',
       emergency_relation: editEmployee?.emergency_relation || '',
@@ -639,6 +648,25 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               <p className="mt-1 text-sm text-red-600">{formik.errors.bank_name}</p>
             )}
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Annual Salary (CTC)
+            </label>
+            <input
+              type="number"
+              name="annual_salary"
+              value={formik.values.annual_salary}
+              onChange={formik.handleChange}
+              placeholder="e.g., 1200000"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {formik.touched.annual_salary && formik.errors.annual_salary && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.annual_salary}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Account Name *

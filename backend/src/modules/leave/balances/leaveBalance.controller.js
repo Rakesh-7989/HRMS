@@ -61,9 +61,21 @@ exports.getAdjustmentHistory = async (req, res, next) => {
 
 exports.bulkAllocate = async (req, res, next) => {
     try {
-        const { leave_type_id, days, employee_ids, reason } = req.body;
+        const { leave_type_id, days, employee_ids, reason, year } = req.body;
         const result = await leaveBalanceService.bulkAllocate(
-            null, leave_type_id, days, employee_ids, reason, req.user
+            null, leave_type_id, days, employee_ids, reason, req.user, year
+        );
+        res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.bulkResetBalances = async (req, res, next) => {
+    try {
+        const { leave_type_id, employee_ids, reset_to_zero = true, reason, year } = req.body;
+        const result = await leaveBalanceService.bulkResetBalances(
+            null, leave_type_id, employee_ids, reset_to_zero, reason, req.user, year
         );
         res.json(result);
     } catch (err) {

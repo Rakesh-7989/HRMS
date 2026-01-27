@@ -289,9 +289,9 @@ exports.getAdjustmentHistory = async (db, employeeId, tenantId, filters = {}) =>
 };
 
 /* ========================== BULK ALLOCATE ========================== */
-exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor) => {
+exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor, year = null) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
+    const targetYear = year || new Date().getFullYear();
     const today = new Date().toISOString().split('T')[0];
 
     // If no specific employees, get all active employees
@@ -317,18 +317,18 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
 
     for (const emp of targetEmployees.rows) {
         try {
-            // Get or create balance
-            let balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, currentYear);
+            // Get or create balance for the specified year
+            let balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, targetYear);
 
             if (!balance) {
-                // Create balance record
+                // Create balance record for the specified year
                 await query(
                     `INSERT INTO leave_balances 
                         (tenant_id, employee_id, leave_type_id, year, opening_balance, accrual_start_date)
                      VALUES ($1, $2, $3, $4, 0, $5)`,
-                    [actor.tenantId, emp.employee_id, leaveTypeId, currentYear, today]
+                    [actor.tenantId, emp.employee_id, leaveTypeId, targetYear, today]
                 );
-                balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, currentYear);
+                balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, targetYear);
             }
 
             if (balance) {
@@ -353,7 +353,7 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
                      VALUES ($1, $2, $3, 'GRANT', $4, $5, $6, $7, $8)`,
                     [
                         actor.tenantId, balance.id, emp.employee_id,
-                        days, reason || 'Bulk Allocation',
+                        days, reason || `Bulk Allocation for ${targetYear}`,
                         previousBalance, updated.rows[0].current_balance, actor.id
                     ]
                 );
@@ -368,5 +368,154 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
         }
     }
 
-    return { success: true, processed, failed };
+    return { success: true, processed, failed, year: targetYear };
+};
+
+/* ========================== RESET BALANCES ========================== */
+/**
+ * Reset leave balances for employees
+ * @param {Object} db - Database connection
+ * @param {Object} options - Reset options
+ * @param {string} options.employee_id - Optional: specific employee to reset (null for all)
+ * @param {string} options.leave_type_id - Optional: specific leave type (null for all)
+ * @param {number} options.year - Year to reset (defaults to current year)
+ * @param {boolean} options.reset_to_zero - If true, set balance to 0. If false, reset used/pending only
+ * @param {Object} actor - User performing the action
+ */
+exports.resetBalances = async (db, options, actor) => {
+    const query = getQuery(db);
+    const { employee_id, leave_type_id, year, reset_to_zero = true, reason } = options;
+    const targetYear = year || new Date().getFullYear();
+
+    let conditions = [`lb.tenant_id = $1`, `lb.year = $2`];
+    let params = [actor.tenantId, targetYear];
+    let paramIndex = 3;
+
+    if (employee_id) {
+        conditions.push(`lb.employee_id = $${paramIndex}`);
+        params.push(employee_id);
+        paramIndex++;
+    }
+
+    if (leave_type_id) {
+        conditions.push(`lb.leave_type_id = $${paramIndex}`);
+        params.push(leave_type_id);
+        paramIndex++;
+    }
+
+    // Get all balances to reset
+    const balancesRes = await query(
+        `SELECT lb.*, lt.name as leave_type_name, e.first_name, e.last_name
+         FROM leave_balances lb
+         JOIN leave_types lt ON lt.id = lb.leave_type_id
+         JOIN employees e ON e.id = lb.employee_id
+         WHERE ${conditions.join(' AND ')}`,
+        params
+    );
+
+    if (balancesRes.rowCount === 0) {
+        return { success: true, message: 'No balances found to reset', processed: 0 };
+    }
+
+    let processed = 0;
+    let failed = 0;
+
+    for (const balance of balancesRes.rows) {
+        try {
+            const previousBalance = parseFloat(balance.current_balance);
+
+            if (reset_to_zero) {
+                // Reset everything to zero
+                await query(
+                    `UPDATE leave_balances 
+                     SET opening_balance = 0, 
+                         accrued = 0, 
+                         adjustments = 0, 
+                         used = 0, 
+                         pending = 0,
+                         carry_forward = 0,
+                         updated_at = now()
+                     WHERE id = $1`,
+                    [balance.id]
+                );
+            } else {
+                // Only reset used and pending (keep accrued/opening)
+                await query(
+                    `UPDATE leave_balances 
+                     SET used = 0, 
+                         pending = 0,
+                         updated_at = now()
+                     WHERE id = $1`,
+                    [balance.id]
+                );
+            }
+
+            const updated = await query(
+                `SELECT current_balance FROM leave_balances WHERE id = $1`,
+                [balance.id]
+            );
+
+            // Log the reset
+            await query(
+                `INSERT INTO leave_balance_adjustments 
+                    (tenant_id, balance_id, employee_id, adjustment_type, amount, reason, 
+                     previous_balance, new_balance, created_by)
+                 VALUES ($1, $2, $3, 'RESET', $4, $5, $6, $7, $8)`,
+                [
+                    actor.tenantId, balance.id, balance.employee_id,
+                    -previousBalance, reason || `Leave balance reset for ${targetYear}`,
+                    previousBalance, updated.rows[0].current_balance, actor.id
+                ]
+            );
+
+            processed++;
+        } catch (err) {
+            console.error(`Failed to reset balance ${balance.id}:`, err);
+            failed++;
+        }
+    }
+
+    return {
+        success: true,
+        processed,
+        failed,
+        year: targetYear,
+        message: `Reset ${processed} balance(s) for year ${targetYear}`
+    };
+};
+
+/* ========================== BULK RESET BALANCES ========================== */
+exports.bulkResetBalances = async (db, leave_type_id, employee_ids, reset_to_zero, reason, actor, year) => {
+    const query = getQuery(db);
+    const targetYear = year || new Date().getFullYear();
+
+    let processed = 0;
+    let failed = 0;
+
+    const employeesToReset = employee_ids && employee_ids.length > 0
+        ? employee_ids
+        : (await query(
+            `SELECT DISTINCT employee_id FROM leave_balances WHERE tenant_id = $1 AND year = $2`,
+            [actor.tenantId, targetYear]
+        )).rows.map(r => r.employee_id);
+
+    for (const empId of employeesToReset) {
+        try {
+            const result = await exports.resetBalances(db, {
+                employee_id: empId,
+                leave_type_id,
+                year: targetYear,
+                reset_to_zero,
+                reason
+            }, actor);
+
+            processed += result.processed;
+            failed += result.failed;
+        } catch (err) {
+            console.error(`Failed to reset for employee ${empId}:`, err);
+            failed++;
+        }
+    }
+
+    return { success: true, processed, failed, year: targetYear };
 };

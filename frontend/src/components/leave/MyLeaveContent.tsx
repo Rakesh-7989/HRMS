@@ -42,6 +42,7 @@ export const MyLeaveContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leaves'] });
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 

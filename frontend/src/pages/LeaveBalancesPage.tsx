@@ -56,6 +56,7 @@ export const LeaveBalancesPage: React.FC = () => {
         mutationFn: (data: BalanceAdjustmentData) => leaveService.adjustBalance(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances', selectedEmployee?.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             handleCloseDialog();
             setErrorMessage(null);
         },

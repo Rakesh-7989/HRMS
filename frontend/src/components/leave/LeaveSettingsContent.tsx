@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData } from '@/services/leave.service';
 import { cn } from '@/utils/cn';
-import { Plus, Pencil, Trash2, Check, X, FileText, ClipboardList, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, RefreshCw, AlertCircle, FileText, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 
 type TabType = 'types' | 'policies';
@@ -33,8 +33,6 @@ export const LeaveSettingsContent: React.FC = () => {
         requires_attachment: false,
         min_days_notice: 0,
         max_consecutive_days: 0,
-        default_accrual_rate: 0,
-        default_max_balance: 0,
     });
 
     // Leave Policies State
@@ -47,10 +45,10 @@ export const LeaveSettingsContent: React.FC = () => {
         accrual_type: 'MONTHLY',
         accrual_rate: 0,
         is_probation_eligible: false,
-        min_tenure_months: 0,
-        max_balance: null,
         year_start_month: 1,
         priority: 100,
+        carry_forward_enabled: false,
+        max_carry_forward: 0,
     });
 
     // Queries
@@ -161,6 +159,7 @@ export const LeaveSettingsContent: React.FC = () => {
         mutationFn: () => leaveService.runAccrual(),
         onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             toast.success(`Allocation completed! Processed ${data.accruals_processed} employee records.`);
         },
         onError: (error: Error) => {
@@ -186,8 +185,6 @@ export const LeaveSettingsContent: React.FC = () => {
             requires_attachment: false,
             min_days_notice: 0,
             max_consecutive_days: 0,
-            default_accrual_rate: 0,
-            default_max_balance: 0,
         });
         setEditingType(null);
     };
@@ -200,10 +197,10 @@ export const LeaveSettingsContent: React.FC = () => {
             accrual_type: 'MONTHLY',
             accrual_rate: 0,
             is_probation_eligible: false,
-            min_tenure_months: 0,
-            max_balance: null,
             year_start_month: 1,
             priority: 100,
+            carry_forward_enabled: false,
+            max_carry_forward: 0,
         });
         setEditingPolicy(null);
     };
@@ -222,8 +219,6 @@ export const LeaveSettingsContent: React.FC = () => {
                 requires_attachment: type.requires_attachment === true,
                 min_days_notice: type.min_days_notice || 0,
                 max_consecutive_days: type.max_consecutive_days || 0,
-                default_accrual_rate: type.default_accrual_rate || 0,
-                default_max_balance: type.default_max_balance || 0,
             });
         } else {
             resetTypeForm();
@@ -242,10 +237,10 @@ export const LeaveSettingsContent: React.FC = () => {
                 accrual_type: policy.accrual_type,
                 accrual_rate: policy.accrual_rate,
                 is_probation_eligible: policy.is_probation_eligible,
-                min_tenure_months: policy.min_tenure_months,
-                max_balance: policy.max_balance,
                 year_start_month: policy.year_start_month,
                 priority: policy.priority,
+                carry_forward_enabled: policy.carry_forward_enabled,
+                max_carry_forward: policy.max_carry_forward,
             });
         } else {
             resetPolicyForm();
@@ -351,9 +346,7 @@ export const LeaveSettingsContent: React.FC = () => {
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Types</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Configure different types of leaves available in your organization
-                            </p>
+                            <p className="text-sm text-gray-500">Define leave categories (Annual, Sick, etc.)</p>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={() => refetchTypes()}>
@@ -362,7 +355,7 @@ export const LeaveSettingsContent: React.FC = () => {
                             </Button>
                             <Button size="sm" onClick={() => handleOpenTypeDialog()}>
                                 <Plus size={16} className="mr-1" />
-                                Add Leave Type
+                                Add Type
                             </Button>
                         </div>
                     </div>
@@ -388,7 +381,9 @@ export const LeaveSettingsContent: React.FC = () => {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Code</TableHead>
                                     <TableHead>Paid</TableHead>
-                                    <TableHead>Approval</TableHead>
+                                    <TableHead>Notice</TableHead>
+                                    <TableHead>Max Days</TableHead>
+                                    <TableHead>Attachment</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -410,8 +405,22 @@ export const LeaveSettingsContent: React.FC = () => {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {type.requires_approval !== false ? (
-                                                <Check size={16} className="text-green-500" />
+                                            {type.min_days_notice ? (
+                                                <span className="text-sm">{type.min_days_notice}d</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {type.max_consecutive_days ? (
+                                                <span className="text-sm">{type.max_consecutive_days}d</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {type.requires_attachment ? (
+                                                <Check size={16} className="text-amber-500" />
                                             ) : (
                                                 <X size={16} className="text-gray-400" />
                                             )}
@@ -457,20 +466,18 @@ export const LeaveSettingsContent: React.FC = () => {
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Policies</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Define leave entitlements and rules for different employee groups
-                            </p>
+                            <p className="text-sm text-gray-500">Auto-accrual rules (monthly/yearly)</p>
                         </div>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleRunAccrual}
-                                disabled={runAccrualMutation.isPending}
+                                disabled={runAccrualMutation.isPending || policies.length === 0}
                                 className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
                             >
                                 <RefreshCw size={16} className={cn("mr-1", runAccrualMutation.isPending && "animate-spin")} />
-                                Run Allocation
+                                Run Accrual
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => refetchPolicies()}>
                                 <RefreshCw size={16} className="mr-1" />
@@ -509,11 +516,11 @@ export const LeaveSettingsContent: React.FC = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Policy Name</TableHead>
+                                    <TableHead>Policy</TableHead>
                                     <TableHead>Leave Type</TableHead>
-                                    <TableHead>Accrual Rate</TableHead>
-                                    <TableHead>Accrual Type</TableHead>
-                                    <TableHead>Probation Eligible</TableHead>
+                                    <TableHead>Accrual</TableHead>
+                                    <TableHead>Carry Forward</TableHead>
+                                    <TableHead>Probation</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -522,10 +529,30 @@ export const LeaveSettingsContent: React.FC = () => {
                                 {policies.map((policy) => (
                                     <TableRow key={policy.id}>
                                         <TableCell className="font-medium">{policy.name}</TableCell>
-                                        <TableCell>{policy.leave_type?.name || policy.leave_type_id}</TableCell>
-                                        <TableCell>{policy.accrual_rate} days</TableCell>
                                         <TableCell>
-                                            <span className="capitalize">{policy.accrual_type.toLowerCase()}</span>
+                                            <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                                {(policy as any).leave_type_name || policy.leave_type?.name || 'N/A'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="font-medium">{policy.accrual_rate}</span>
+                                            <span className="text-xs text-gray-500 ml-1">
+                                                /{policy.accrual_type === 'MONTHLY' ? 'mo' : policy.accrual_type === 'YEARLY' ? 'yr' : 'fixed'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {policy.carry_forward_enabled ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-green-600 flex items-center gap-1">
+                                                        <Check size={12} /> Enabled
+                                                    </span>
+                                                    {policy.max_carry_forward > 0 && (
+                                                        <span className="text-[10px] text-gray-500">Max: {policy.max_carry_forward}mo</span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400">Disabled</span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             {policy.is_probation_eligible ? (
@@ -659,32 +686,6 @@ export const LeaveSettingsContent: React.FC = () => {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="type-default-accrual" className="block mb-1.5 text-blue-600 dark:text-blue-400">Monthly Quota (Days/Month)</Label>
-                                <Input
-                                    id="type-default-accrual"
-                                    type="number"
-                                    step="0.5"
-                                    value={(typeForm as any).default_accrual_rate || 0}
-                                    onChange={(e) => setTypeForm({ ...typeForm, default_accrual_rate: Number(e.target.value) } as any)}
-                                    min={0}
-                                    placeholder="e.g. 1.5"
-                                />
-                                <p className="text-[10px] text-gray-500 mt-1">Days credited per month</p>
-                            </div>
-                            <div>
-                                <Label htmlFor="type-default-balance" className="block mb-1.5">Max Balance Cap</Label>
-                                <Input
-                                    id="type-default-balance"
-                                    type="number"
-                                    value={(typeForm as any).default_max_balance || 0}
-                                    onChange={(e) => setTypeForm({ ...typeForm, default_max_balance: Number(e.target.value) } as any)}
-                                    min={0}
-                                    placeholder="Optional"
-                                />
-                            </div>
-                        </div>
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={handleCloseTypeDialog}>
@@ -769,25 +770,6 @@ export const LeaveSettingsContent: React.FC = () => {
                             </p>
                         </div>
                         <div>
-                            <Label htmlFor="policy-max-balance" className="block mb-1.5">Max Balance Cap</Label>
-                            <Input
-                                id="policy-max-balance"
-                                type="number"
-                                value={policyForm.max_balance || ''}
-                                onChange={(e) => setPolicyForm({ ...policyForm, max_balance: e.target.value ? Number(e.target.value) : null })}
-                                placeholder="No limit"
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="policy-min-tenure" className="block mb-1.5">Min Tenure (Months)</Label>
-                            <Input
-                                id="policy-min-tenure"
-                                type="number"
-                                value={policyForm.min_tenure_months}
-                                onChange={(e) => setPolicyForm({ ...policyForm, min_tenure_months: Number(e.target.value) })}
-                            />
-                        </div>
-                        <div>
                             <Label htmlFor="policy-year-start" className="block mb-1.5">Cycle Start Month</Label>
                             <select
                                 id="policy-year-start"
@@ -802,7 +784,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        <div className="md:col-span-2 pt-2">
+                        <div className="md:col-span-2 pt-2 space-y-3">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -814,7 +796,33 @@ export const LeaveSettingsContent: React.FC = () => {
                                     Eligible during probation period
                                 </span>
                             </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={policyForm.carry_forward_enabled}
+                                    onChange={(e) => setPolicyForm({ ...policyForm, carry_forward_enabled: e.target.checked })}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    Enable Carry Forward
+                                </span>
+                            </label>
                         </div>
+                        {policyForm.carry_forward_enabled && (
+                            <div>
+                                <Label htmlFor="policy-max-carry" className="block mb-1.5">Max Carry Forward (Months)</Label>
+                                <Input
+                                    id="policy-max-carry"
+                                    type="number"
+                                    step="0.1"
+                                    value={policyForm.max_carry_forward}
+                                    onChange={(e) => setPolicyForm({ ...policyForm, max_carry_forward: Number(e.target.value) })}
+                                    placeholder="e.g. 1.5"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">Months of accrual to carry (e.g. 1.0 = one month's worth)</p>
+                            </div>
+                        )}
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={handleClosePolicyDialog}>

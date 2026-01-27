@@ -20,7 +20,10 @@ export interface LeaveApplication {
   rejected_by?: string;
   approval_comment?: string;
   rejection_reason?: string;
-  created_at?: string;
+  created_at: string;
+  updated_at?: string;
+  days_count?: number;
+  attachment_url?: string;
   employee?: {
     first_name: string;
     last_name: string;
@@ -33,7 +36,12 @@ export interface LeaveSummary {
   pending: number;
   approved: number;
   rejected: number;
-  by_type?: Record<string, number>;
+  cancelled?: number;
+  by_type?: Array<{
+    leave_type_name: string;
+    requests: number;
+    total_days: number;
+  }>;
 }
 
 export interface ApplyLeaveData {
@@ -44,6 +52,7 @@ export interface ApplyLeaveData {
   is_half_day: boolean;
   half_day_session?: 'MORNING' | 'AFTERNOON' | null;
   reason: string;
+  attachment_url?: string;
 }
 
 // Leave Types
@@ -61,8 +70,6 @@ export interface LeaveType {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  default_accrual_rate?: number;
-  default_max_balance?: number;
 }
 
 export interface CreateLeaveTypeData {
@@ -74,8 +81,6 @@ export interface CreateLeaveTypeData {
   requires_attachment?: boolean;
   min_days_notice?: number;
   max_consecutive_days?: number;
-  default_accrual_rate?: number;
-  default_max_balance?: number;
 }
 
 export interface UpdateLeaveTypeData extends Partial<CreateLeaveTypeData> {
@@ -104,6 +109,8 @@ export interface LeavePolicy {
   year_start_month: number;
 
   priority: number;
+  carry_forward_enabled: boolean;
+  max_carry_forward: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -122,6 +129,8 @@ export interface CreatePolicyData {
   max_balance?: number | null;
   year_start_month?: number;
   priority?: number;
+  carry_forward_enabled?: boolean;
+  max_carry_forward?: number;
 }
 
 export interface UpdatePolicyData extends Partial<CreatePolicyData> {
@@ -256,6 +265,7 @@ export interface YearParams {
 export interface PaginationParams {
   limit?: number;
   offset?: number;
+  status?: string;
 }
 
 // Helper function to handle API errors
@@ -290,6 +300,21 @@ export const leaveService = {
   applyLeave: async (data: ApplyLeaveData): Promise<LeaveApplication> => {
     try {
       const response = await api.post('/leave/apply', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  uploadAttachment: async (file: File): Promise<{ url: string; filename: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('attachment', file);
+      const response = await api.post('/leave/upload-attachment', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return extractData(response);
     } catch (error) {
       return handleApiError(error);
@@ -764,9 +789,25 @@ export const leaveService = {
     days: number;
     employee_ids?: string[];
     reason: string;
-  }): Promise<{ success: boolean; processed: number; failed: number }> => {
+    year?: number;
+  }): Promise<{ success: boolean; processed: number; failed: number; year?: number }> => {
     try {
       const response = await api.post('/leave/balances/bulk-allocate', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  bulkReset: async (data: {
+    leave_type_id?: string;
+    employee_ids?: string[];
+    reset_to_zero?: boolean;
+    reason?: string;
+    year?: number;
+  }): Promise<{ success: boolean; processed: number; failed: number; year?: number }> => {
+    try {
+      const response = await api.post('/leave/balances/bulk-reset', data);
       return extractData(response);
     } catch (error) {
       return handleApiError(error);

@@ -260,6 +260,8 @@ export const LeaveSettingsPage: React.FC = () => {
                 requires_attachment: type.requires_attachment === true,
                 min_days_notice: type.min_days_notice || 0,
                 max_consecutive_days: type.max_consecutive_days || 0,
+                default_accrual_rate: type.default_accrual_rate || 0,
+                default_max_balance: type.default_max_balance || 0,
             });
         } else {
             resetTypeForm();
@@ -423,9 +425,7 @@ export const LeaveSettingsPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Types</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Configure different types of leaves available in your organization
-                                </p>
+                                <p className="text-sm text-gray-500">Define leave categories (Annual, Sick, etc.)</p>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={() => refetchTypes()}>
@@ -434,7 +434,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                 </Button>
                                 <Button size="sm" onClick={() => handleOpenTypeDialog()}>
                                     <Plus size={16} className="mr-1" />
-                                    Add Leave Type
+                                    Add Type
                                 </Button>
                             </div>
                         </div>
@@ -459,9 +459,10 @@ export const LeaveSettingsPage: React.FC = () => {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Code</TableHead>
-                                        <TableHead>Monthly Quota</TableHead>
                                         <TableHead>Paid</TableHead>
-                                        <TableHead>Approval</TableHead>
+                                        <TableHead>Notice</TableHead>
+                                        <TableHead>Max Days</TableHead>
+                                        <TableHead>Attachment</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -476,13 +477,6 @@ export const LeaveSettingsPage: React.FC = () => {
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                {type.default_accrual_rate ? (
-                                                    <span className="text-sm font-medium">{type.default_accrual_rate} days</span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
                                                 {type.is_paid ? (
                                                     <Check size={16} className="text-green-500" />
                                                 ) : (
@@ -490,8 +484,22 @@ export const LeaveSettingsPage: React.FC = () => {
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                {type.requires_approval !== false ? (
-                                                    <Check size={16} className="text-green-500" />
+                                                {type.min_days_notice ? (
+                                                    <span className="text-sm">{type.min_days_notice}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {type.max_consecutive_days ? (
+                                                    <span className="text-sm">{type.max_consecutive_days}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {type.requires_attachment ? (
+                                                    <Check size={16} className="text-amber-500" />
                                                 ) : (
                                                     <X size={16} className="text-gray-400" />
                                                 )}
@@ -538,14 +546,18 @@ export const LeaveSettingsPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Policies</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Define leave entitlements and rules for different employee groups
-                                </p>
+                                <p className="text-sm text-gray-500">Auto-accrual rules (monthly/yearly)</p>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={handleRunAccrual} disabled={runAccrualMutation.isPending}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleRunAccrual}
+                                    disabled={runAccrualMutation.isPending || policies.length === 0}
+                                    className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                                >
                                     <RefreshCw size={16} className={cn("mr-1", runAccrualMutation.isPending && "animate-spin")} />
-                                    Run Allocation
+                                    Run Accrual
                                 </Button>
                                 <Button variant="outline" size="sm" onClick={() => refetchPolicies()}>
                                     <RefreshCw size={16} className="mr-1" />
@@ -584,11 +596,12 @@ export const LeaveSettingsPage: React.FC = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Policy Name</TableHead>
+                                        <TableHead>Policy</TableHead>
                                         <TableHead>Leave Type</TableHead>
-                                        <TableHead>Accrual Rate</TableHead>
-                                        <TableHead>Accrual Type</TableHead>
-                                        <TableHead>Probation Eligible</TableHead>
+                                        <TableHead>Accrual</TableHead>
+                                        <TableHead>Max Balance</TableHead>
+                                        <TableHead>Min Tenure</TableHead>
+                                        <TableHead>Probation</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -597,10 +610,30 @@ export const LeaveSettingsPage: React.FC = () => {
                                     {policies.map((policy) => (
                                         <TableRow key={policy.id}>
                                             <TableCell className="font-medium">{policy.name}</TableCell>
-                                            <TableCell>{policy.leave_type?.name || policy.leave_type_id}</TableCell>
-                                            <TableCell>{policy.accrual_rate} days</TableCell>
                                             <TableCell>
-                                                <span className="capitalize">{policy.accrual_type.toLowerCase()}</span>
+                                                <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                                    {(policy as any).leave_type_name || policy.leave_type?.name || 'N/A'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="font-medium">{policy.accrual_rate}</span>
+                                                <span className="text-xs text-gray-500 ml-1">
+                                                    /{policy.accrual_type === 'MONTHLY' ? 'mo' : policy.accrual_type === 'YEARLY' ? 'yr' : 'fixed'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                {policy.max_balance ? (
+                                                    <span>{policy.max_balance}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">∞</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {policy.min_tenure_months ? (
+                                                    <span>{policy.min_tenure_months}mo</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {policy.is_probation_eligible ? (
