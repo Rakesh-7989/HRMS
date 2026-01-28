@@ -35,7 +35,8 @@ exports.getAdminDashboard = async (req, res) => {
   try {
     const dashboard = await dashboardService.getAdminDashboard(
       req.db,
-      req.user.tenantId
+      req.user.tenantId,
+      req.query // Pass query params (startDate, endDate)
     );
     res.json({
       status: "success",
@@ -62,7 +63,8 @@ exports.getHRDashboard = async (req, res) => {
   try {
     const dashboard = await dashboardService.getHRDashboard(
       req.db,
-      req.user.tenantId
+      req.user.tenantId,
+      req.query // Pass query params (startDate, endDate)
     );
     res.json({
       status: "success",

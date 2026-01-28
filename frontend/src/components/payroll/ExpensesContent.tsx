@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
@@ -195,7 +196,7 @@ export const ExpensesContent: React.FC = () => {
                         <Input type="number" value={String(amount)} onChange={(e) => setAmount(Number(e.target.value) || '')} />
 
                         <Label>Expense Date</Label>
-                        <Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} />
+                        <DatePicker value={expenseDate} onChange={setExpenseDate} placeholder="Select date" />
 
                         <div className="flex items-center gap-2">
                             <input type="checkbox" checked={payrollIncluded} onChange={(e) => setPayrollIncluded(e.target.checked)} id="payrollIncluded" />
@@ -228,7 +229,7 @@ export const ExpensesContent: React.FC = () => {
                         <Input type="number" value={String(amount)} onChange={(e) => setAmount(Number(e.target.value) || '')} />
 
                         <Label>Expense Date</Label>
-                        <Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} />
+                        <DatePicker value={expenseDate} onChange={setExpenseDate} placeholder="Select date" />
 
                         <div className="flex items-center gap-2">
                             <input type="checkbox" checked={payrollIncluded} onChange={(e) => setPayrollIncluded(e.target.checked)} id="payrollIncludedEdit" />

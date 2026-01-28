@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { usersService, CreateUserData, UpdateEmployeeData, User } from '@/services/users.service';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { departmentService } from '@/services/department.service';
@@ -372,13 +373,10 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Date of Birth
             </label>
-            <input
-              type="date"
-              name="date_of_birth"
+            <DatePicker
               value={formik.values.date_of_birth}
-              onChange={formik.handleChange}
-              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
+              onChange={(date) => formik.setFieldValue('date_of_birth', date)}
+              placeholder="Select date of birth"
             />
           </div>
         </div>
@@ -573,12 +571,10 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Join Date *
             </label>
-            <input
-              type="date"
-              name="join_date"
+            <DatePicker
               value={formik.values.join_date}
-              onChange={formik.handleChange}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
+              onChange={(date) => formik.setFieldValue('join_date', date)}
+              placeholder="Select join date"
             />
             {formik.touched.join_date && formik.errors.join_date && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.join_date}</p>

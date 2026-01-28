@@ -95,7 +95,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="h-[300px] flex items-center justify-center">Loading...</div>
             ) : (
               <PieChart
-                data={roleDist.map((r) => ({ name: r.role, value: r.count }))}
+                data={roleDist.map((r) => ({ name: r.role, value: Number(r.count) }))}
                 height={300}
               />
             )}
@@ -107,7 +107,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="h-[300px] flex items-center justify-center">Loading...</div>
             ) : (
               <BarChart
-                data={deptAnalytics.slice(0, 10)}
+                data={deptAnalytics.slice(0, 10).map(d => ({ ...d, employee_count: Number(d.employee_count) }))}
                 dataKey="employee_count"
                 xKey="name"
                 height={300}
@@ -126,8 +126,8 @@ export const AdminDashboard: React.FC = () => {
               <AreaChart
                 data={attendanceData.map((d) => ({
                   date: format(new Date(d.date), 'MMM dd'),
-                  'Total Check-ins': d.total_checkins,
-                  'Late Arrivals': d.late_arrivals,
+                  'Total Check-ins': Number(d.total_checkins),
+                  'Late Arrivals': Number(d.late_arrivals),
                 }))}
                 dataKeys={['Total Check-ins', 'Late Arrivals']}
                 xKey="date"
@@ -142,7 +142,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="h-[300px] flex items-center justify-center">Loading...</div>
             ) : (
               <BarChart
-                data={leaveStats}
+                data={leaveStats.map(s => ({ ...s, total_requests: Number(s.total_requests) }))}
                 dataKey="total_requests"
                 xKey="leave_type"
                 height={300}

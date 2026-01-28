@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { payrollService } from '@/services/payroll.service';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
@@ -287,12 +288,24 @@ export const PayslipsContent: React.FC = () => {
                         {selectedPeriod === 'custom' && (
                             <>
                                 <div>
-                                    <label htmlFor="from-date" className="text-sm font-medium">From</label>
-                                    <input id="from-date" type="date" value={customFromDate} onChange={(e) => setCustomFromDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                    <label className="text-sm font-medium">From</label>
+                                    <div className="mt-2">
+                                        <DatePicker
+                                            value={customFromDate}
+                                            onChange={setCustomFromDate}
+                                            placeholder="Select start date"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label htmlFor="to-date" className="text-sm font-medium">To</label>
-                                    <input id="to-date" type="date" value={customToDate} onChange={(e) => setCustomToDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                    <label className="text-sm font-medium">To</label>
+                                    <div className="mt-2">
+                                        <DatePicker
+                                            value={customToDate}
+                                            onChange={setCustomToDate}
+                                            placeholder="Select end date"
+                                        />
+                                    </div>
                                 </div>
                             </>
                         )}
@@ -638,7 +651,13 @@ export const PayslipsContent: React.FC = () => {
 
                         <div>
                             <Label>Effective Date</Label>
-                            <input type="date" value={newDeductionDate} onChange={(e) => setNewDeductionDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary" />
+                            <div className="mt-2">
+                                <DatePicker
+                                    value={newDeductionDate}
+                                    onChange={setNewDeductionDate}
+                                    placeholder="Select date"
+                                />
+                            </div>
                         </div>
 
                         <div>

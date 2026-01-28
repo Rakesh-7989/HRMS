@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Upload, X, FileText } from 'lucide-react';
@@ -226,14 +227,10 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Start Date *
               </label>
-              <input
-                type="date"
-                name="start_date"
+              <DatePicker
                 value={formik.values.start_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
+                onChange={(date) => formik.setFieldValue('start_date', date)}
+                placeholder="Select start date"
               />
               {formik.touched.start_date && formik.errors.start_date && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.start_date}</p>
@@ -244,14 +241,10 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 End Date *
               </label>
-              <input
-                type="date"
-                name="end_date"
+              <DatePicker
                 value={formik.values.end_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                min={formik.values.start_date || new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
+                onChange={(date) => formik.setFieldValue('end_date', date)}
+                placeholder="Select end date"
               />
               {formik.touched.end_date && formik.errors.end_date && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.end_date}</p>

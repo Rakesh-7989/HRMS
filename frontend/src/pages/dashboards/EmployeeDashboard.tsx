@@ -127,7 +127,7 @@ export const EmployeeDashboard: React.FC = () => {
 
   const attendanceRate =
     attendanceSummary.total_days && attendanceSummary.days_present
-      ? Math.round((attendanceSummary.days_present / 30) * 100)
+      ? Math.round((Number(attendanceSummary.days_present) / 30) * 100)
       : 0;
 
   return (
@@ -287,9 +287,9 @@ export const EmployeeDashboard: React.FC = () => {
                         acc.push(existing);
                       }
                       if (att.type === 'ON_TIME' || att.type === 'PRESENT') {
-                        existing.Present += att.count;
+                        existing.Present += Number(att.count);
                       } else if (att.type === 'LATE') {
-                        existing.Late += att.count;
+                        existing.Late += Number(att.count);
                       }
                       return acc;
                     }, [])

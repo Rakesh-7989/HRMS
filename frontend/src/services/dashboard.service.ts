@@ -14,13 +14,13 @@ export const dashboardService = {
     return response.data.data!;
   },
 
-  getOrganizationDashboard: async (): Promise<OrganizationDashboard> => {
-    const response = await api.get<ApiResponse<OrganizationDashboard>>('/dashboards/organization');
+  getOrganizationDashboard: async (params?: { startDate?: string; endDate?: string }): Promise<OrganizationDashboard> => {
+    const response = await api.get<ApiResponse<OrganizationDashboard>>('/dashboards/organization', { params });
     return response.data.data!;
   },
 
-  getHRDashboard: async (): Promise<HRDashboard> => {
-    const response = await api.get<ApiResponse<HRDashboard>>('/dashboards/hr');
+  getHRDashboard: async (params?: { startDate?: string; endDate?: string }): Promise<HRDashboard> => {
+    const response = await api.get<ApiResponse<HRDashboard>>('/dashboards/hr', { params });
     return response.data.data!;
   },
 
