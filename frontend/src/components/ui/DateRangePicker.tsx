@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
     format,
     startOfMonth,
@@ -58,8 +59,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         // Center the target year in the grid (put it around position 2-3 of 12)
         return Math.max(minYear, targetYear - 2);
     });
-    const [position, setPosition] = useState<{ top: boolean; alignRight: boolean }>({ top: false, alignRight: false });
+    const [portalStyle, setPortalStyle] = useState<React.CSSProperties>({});
     const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
@@ -76,28 +78,55 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            const isOutsideButton = containerRef.current && !containerRef.current.contains(event.target as Node);
+            const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
+
+            if (isOutsideButton && isOutsideDropdown) {
                 setIsOpen(false);
                 setViewMode('calendar');
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isOpen]);
 
     // Calculate position
     useEffect(() => {
-        if (isOpen && containerRef.current) {
+        if (!isOpen || !containerRef.current) return;
+
+        const updatePosition = () => {
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const dropdownHeight = 420;
             const dropdownWidth = 340;
 
-            setPosition({
-                top: window.innerHeight - rect.bottom < dropdownHeight && rect.top > window.innerHeight - rect.bottom,
-                alignRight: window.innerWidth - rect.right < dropdownWidth - rect.width
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            const spaceOnRight = window.innerWidth - rect.right;
+
+            const shouldShowTop = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+            const shouldAlignRight = spaceOnRight < dropdownWidth - rect.width;
+
+            setPortalStyle({
+                position: 'fixed',
+                top: shouldShowTop ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
+                left: shouldAlignRight ? rect.right - dropdownWidth : rect.left,
+                width: dropdownWidth,
+                zIndex: 10001
             });
-        }
+        };
+
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
     }, [isOpen]);
 
     const handleDateClick = (day: Date) => {
@@ -421,15 +450,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 )}
             </button>
 
-            {isOpen && (
+            {isOpen && createPortal(
                 <div
+                    ref={dropdownRef}
                     className={cn(
-                        'absolute z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
-                        'min-w-[340px] animate-fadeIn',
-                        position.top ? 'bottom-full mb-2' : 'top-full mt-2',
-                        position.alignRight ? 'right-0' : 'left-0'
+                        'bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
+                        'animate-fadeIn'
                     )}
                     style={{
+                        ...portalStyle,
                         boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.02)'
                     }}
                 >
@@ -531,7 +560,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                             )}
                         </div>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

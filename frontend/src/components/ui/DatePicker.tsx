@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
     format,
     startOfMonth,
@@ -12,7 +13,10 @@ import {
     isSameDay,
     isToday,
     getYear,
-    getMonth
+    getMonth,
+    startOfDay,
+    isBefore,
+    isAfter
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -25,6 +29,8 @@ interface DatePickerProps {
     disabled?: boolean;
     minYear?: number;
     maxYear?: number;
+    minDate?: Date;
+    maxDate?: Date;
 }
 
 const MONTHS = [
@@ -42,10 +48,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     disabled = false,
     minYear = 1950,
     maxYear = 2100,
+    minDate,
+    maxDate,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(value ? new Date(value) : new Date());
-    const [position, setPosition] = useState<{ top: boolean; alignRight: boolean }>({ top: false, alignRight: false });
+    const [portalStyle, setPortalStyle] = useState<React.CSSProperties>({});
     const [viewMode, setViewMode] = useState<ViewMode>('calendar');
     const [yearPageStart, setYearPageStart] = useState(() => {
         const targetYear = value ? getYear(new Date(value)) : new Date().getFullYear();
@@ -53,6 +61,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         return Math.max(minYear, targetYear - 2);
     });
     const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const selectedDate = value ? new Date(value) : null;
     const currentYear = getYear(currentMonth);
@@ -60,28 +69,26 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            const isOutsideButton = containerRef.current && !containerRef.current.contains(event.target as Node);
+            const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
+
+            if (isOutsideButton && isOutsideDropdown) {
                 setIsOpen(false);
                 setViewMode('calendar');
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        if (value) {
-            const date = new Date(value);
-            setCurrentMonth(date);
-            // Center the year in the grid
-            setYearPageStart(Math.max(minYear, getYear(date) - 2));
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
         }
-    }, [value, minYear]);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
 
-    // Calculate optimal position when opening
     useEffect(() => {
-        if (isOpen && containerRef.current) {
+        if (!isOpen || !containerRef.current) return;
+
+        const updatePosition = () => {
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const dropdownHeight = 340;
             const dropdownWidth = 300;
@@ -90,11 +97,28 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             const spaceAbove = rect.top;
             const spaceOnRight = window.innerWidth - rect.right;
 
-            setPosition({
-                top: spaceBelow < dropdownHeight && spaceAbove > spaceBelow,
-                alignRight: spaceOnRight < dropdownWidth - rect.width
+            const shouldShowTop = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+            const shouldAlignRight = spaceOnRight < dropdownWidth - rect.width;
+
+            setPortalStyle({
+                position: 'fixed',
+                top: shouldShowTop ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
+                left: shouldAlignRight ? rect.right - dropdownWidth : rect.left,
+                width: dropdownWidth,
+                zIndex: 10001,
+                opacity: 1,
+                pointerEvents: 'auto'
             });
-        }
+        };
+
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
     }, [isOpen]);
 
     const handleDateClick = (day: Date) => {
@@ -344,11 +368,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
                 const isSunday = day.getDay() === 0;
 
+                // Disable if outside min/max range
+                const isDisabled = (minDate && isBefore(startOfDay(day), startOfDay(minDate))) ||
+                    (maxDate && isAfter(startOfDay(day), startOfDay(maxDate)));
+
                 days.push(
                     <button
                         type="button"
                         key={day.toString()}
-                        onClick={(e) => { e.stopPropagation(); handleDateClick(cloneDay); }}
+                        onClick={(e) => { e.stopPropagation(); if (!isDisabled) handleDateClick(cloneDay); }}
+                        disabled={isDisabled}
                         className={cn(
                             'h-9 w-9 mx-auto rounded-xl text-sm font-medium transition-all flex items-center justify-center relative',
                             isCurrentMonth
@@ -357,7 +386,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                     : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                                 : 'text-gray-300 dark:text-gray-700',
                             isSelected && 'bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/25 hover:from-primary hover:to-primary/80',
-                            isTodayDate && !isSelected && 'ring-2 ring-primary/40 font-bold text-primary bg-primary/5'
+                            isTodayDate && !isSelected && 'ring-2 ring-primary/40 font-bold text-primary bg-primary/5',
+                            isDisabled && 'opacity-20 cursor-not-allowed hover:bg-transparent grayscale'
                         )}
                     >
                         {format(day, 'd')}
@@ -403,16 +433,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 )} />
             </button>
 
-            {isOpen && (
+            {isOpen && createPortal(
                 <div
+                    ref={dropdownRef}
                     className={cn(
-                        'absolute z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
-                        'w-[300px] animate-fadeIn',
-                        position.top ? 'bottom-full mb-2' : 'top-full mt-2',
-                        position.alignRight ? 'right-0' : 'left-0'
+                        'bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
+                        'animate-fadeIn'
                     )}
                     style={{
-                        maxWidth: 'calc(100vw - 20px)',
+                        ...portalStyle,
                         boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.02)'
                     }}
                 >
@@ -458,7 +487,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             )}
                         </div>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

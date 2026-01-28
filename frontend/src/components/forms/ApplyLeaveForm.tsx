@@ -15,8 +15,8 @@ interface ApplyLeaveFormProps {
 
 const validationSchema = Yup.object({
   leave_type_id: Yup.string().required('Leave type is required'),
-  start_date: Yup.string().required('Start date is required'),
-  end_date: Yup.string()
+  start_date: Yup.date().required('Start date is required'),
+  end_date: Yup.date()
     .required('End date is required')
     .test('is-after-start', 'End date must be on or after start date', function (value) {
       const { start_date } = this.parent;

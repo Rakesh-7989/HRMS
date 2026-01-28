@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
@@ -38,23 +38,21 @@ const createValidationSchema = Yup.object({
   employee_id: Yup.string().required('Employee ID is required'),
   date_of_birth: Yup.date()
     .required('Date of birth is required')
-    .test('age', 'Age must be 18+', function (value) {
+    .max(new Date(), 'Date of birth cannot be in the future')
+    .test('age', 'Employee must be at least 18 years old', function (value) {
       if (!value) return true;
       const today = new Date();
-      const birthDate = new Date(value);
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age >= 18;
+      const minBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+      return new Date(value) <= minBirthDate;
     }),
-  join_date: Yup.string()
+  join_date: Yup.date()
     .required('Join date is required')
-    .test('is-after-dob', 'Join date must be after Date of Birth', function (value) {
+    .test('is-after-dob', 'Join date must be at least 18 years after Date of Birth', function (value) {
       const { date_of_birth } = this.parent;
       if (!date_of_birth || !value) return true;
-      return new Date(value) > new Date(date_of_birth);
+      const dob = new Date(date_of_birth);
+      const minJoinDate = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+      return new Date(value) >= minJoinDate;
     }),
   gender: Yup.string().required('Gender is required'),
   marital_status: Yup.string().required('Marital status is required'),
@@ -108,20 +106,32 @@ const editValidationSchema = Yup.object({
   last_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('Last name is required'),
-  join_date: Yup.string()
+  date_of_birth: Yup.date()
+    .required('Date of birth is required')
+    .max(new Date(), 'Date of birth cannot be in the future')
+    .test('age', 'Employee must be at least 18 years old', function (value) {
+      if (!value) return true;
+      const today = new Date();
+      const minBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+      return new Date(value) <= minBirthDate;
+    }),
+  join_date: Yup.date()
     .required('Join date is required')
-    .test('is-after-dob', 'Join date must be after Date of Birth', function (value) {
+    .test('is-after-dob', 'Join date must be at least 18 years after Date of Birth', function (value) {
       const { date_of_birth } = this.parent;
       if (!date_of_birth || !value) return true;
-      return new Date(value) > new Date(date_of_birth);
+      const dob = new Date(date_of_birth);
+      const minJoinDate = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+      return new Date(value) >= minJoinDate;
     }),
   phone: Yup.string()
     .matches(/^[0-9+\-()\s\.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
     .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number cannot exceed 20 digits'),
-  gender: Yup.string(),
-  marital_status: Yup.string(),
-  address: Yup.string(),
+    .max(20, 'Phone number cannot exceed 20 digits')
+    .required('Phone is required'),
+  gender: Yup.string().required('Gender is required'),
+  marital_status: Yup.string().required('Marital status is required'),
+  address: Yup.string().required('Address is required'),
   bank_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters')
     .required('Bank name is required'),
@@ -163,6 +173,8 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
 
   const [error, setError] = React.useState<string | null>(null);
 
+
+
   // Fetch departments
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],
@@ -195,6 +207,17 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     },
     onError: (err: Error) => {
       setError(err.message);
+
+      // Map specific server errors to Formik fields and mark as touched to show under the input
+      if (err.message.toLowerCase().includes('employee id')) {
+        formik.setFieldError('employee_id', err.message);
+        formik.setFieldTouched('employee_id', true, false);
+      }
+      if (err.message.toLowerCase().includes('email')) {
+        formik.setFieldError('email', err.message);
+        formik.setFieldTouched('email', true, false);
+      }
+
       toast(err.message, { icon: '⚠️' });
     },
   });
@@ -211,6 +234,10 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     },
     onError: (err: Error) => {
       setError(err.message);
+      if (err.message.toLowerCase().includes('employee id')) {
+        formik.setFieldError('employee_id', err.message);
+        formik.setFieldTouched('employee_id', true, false);
+      }
       toast(err.message, { icon: '⚠️' });
     },
   });
@@ -281,6 +308,19 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     },
   });
 
+  const maxDob = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d;
+  }, []);
+
+  const minJoinDate = useMemo(() => {
+    if (!formik.values.date_of_birth) return undefined;
+    const d = new Date(formik.values.date_of_birth);
+    d.setFullYear(d.getFullYear() + 18);
+    return d;
+  }, [formik.values.date_of_birth]);
+
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (!open) {
@@ -288,6 +328,11 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
       formik.resetForm();
     }
   }, [open]);
+
+  // Clear generic error when user starts correcting any field
+  useEffect(() => {
+    if (error) setError(null);
+  }, [formik.values]);
 
   // Helper to check if form has validation errors
   const hasValidationErrors = Object.keys(formik.errors).length > 0 && formik.submitCount > 0;
@@ -312,6 +357,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
   const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
     const name = target.name;
+
     if (name === 'first_name' || name === 'last_name' || name === 'emergency_name') {
       target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
     } else if (name === 'phone' || name === 'emergency_phone') {
@@ -443,6 +489,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               value={formik.values.date_of_birth}
               onChange={(date) => formik.setFieldValue('date_of_birth', date)}
               placeholder="Select date of birth"
+              maxDate={maxDob}
             />
           </div>
         </div>
@@ -641,6 +688,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               value={formik.values.join_date}
               onChange={(date) => formik.setFieldValue('join_date', date)}
               placeholder="Select join date"
+              minDate={minJoinDate}
             />
             {formik.touched.join_date && formik.errors.join_date && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.join_date}</p>

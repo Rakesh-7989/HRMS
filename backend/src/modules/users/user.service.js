@@ -56,8 +56,34 @@ exports.createUser = async (db, data, actor) => {
       `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
       [data.department_id, actor.tenantId]
     );
+<<<<<<< Updated upstream
     if (deptCheck.rowCount === 0) {
       throw new Error("Department not found or does not belong to your organization");
+=======
+
+    if (duplicate.rowCount) throw new Error("An employee with this email address already exists in your organization");
+
+    // Check for duplicate employee_id
+    if (data.employee_id) {
+      const duplicateEmpId = await client.query(
+        `SELECT id FROM employees WHERE employee_id = $1`,
+        [data.employee_id]
+      );
+      if (duplicateEmpId.rowCount > 0) {
+        throw new Error(`Employee ID "${data.employee_id}" is already assigned to another employee`);
+      }
+    }
+
+    // Validate department belongs to same tenant
+    if (data.department_id) {
+      const deptCheck = await client.query(
+        `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
+        [data.department_id, actor.tenantId]
+      );
+      if (deptCheck.rowCount === 0) {
+        throw new Error("Department not found or does not belong to your organization");
+      }
+>>>>>>> Stashed changes
     }
   }
 
@@ -172,6 +198,41 @@ exports.createUser = async (db, data, actor) => {
     } catch (err) {
       logger.error("Failed to assign initial salary structure in createUser:", err);
     }
+<<<<<<< Updated upstream
+=======
+
+    return {
+      user: userRes.rows[0],
+      employee: empRes.rows[0],
+      temporaryPassword: tempPassword,
+      _note: "Temporary password has been sent to user email"
+    };
+
+  } catch (err) {
+    // Rollback Transaction on Error
+    await client.query('ROLLBACK');
+
+    // Handle database unique constraint violations
+    if (err.code === '23505') {
+      if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
+        throw new Error(`Employee ID "${data.employee_id}" is already assigned to another employee`);
+      }
+      if (err.constraint === 'users_email_per_tenant' || err.message.includes('email')) {
+        throw new Error("An employee with this email address already exists in your organization");
+      }
+      if (err.constraint === 'employees_user_id_key') {
+        throw new Error("This user is already linked to an employee record");
+      }
+      // General unique constraint message
+      const field = err.detail?.match(/Key \((.*?)\)=/)?.[1] || "field";
+      throw new Error(`The ${field.replace('_', ' ')} provided is already in use by another record`);
+    }
+
+    throw err;
+  } finally {
+    // Release Client
+    client.release();
+>>>>>>> Stashed changes
   }
 
   return {
