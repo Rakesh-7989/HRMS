@@ -758,22 +758,7 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               <p className="mt-1 text-sm text-red-600">{formik.errors.bank_name}</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Annual Salary (CTC)
-            </label>
-            <input
-              type="number"
-              name="annual_salary"
-              value={formik.values.annual_salary}
-              onChange={formik.handleChange}
-              placeholder="e.g., 1200000"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            {formik.touched.annual_salary && formik.errors.annual_salary && (
-              <p className="mt-1 text-sm text-red-600">{formik.errors.annual_salary}</p>
-            )}
-          </div>
+
         </div>
 
         <div className="grid grid-cols-2 gap-4">

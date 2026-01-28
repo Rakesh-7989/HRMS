@@ -19,6 +19,7 @@ export interface TenantProfile {
     settings?: {
         workingHours?: WorkingHours;
         logo_url?: string;
+        primary_color?: string;
     };
 }
 
