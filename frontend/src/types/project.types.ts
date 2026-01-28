@@ -225,3 +225,33 @@ export interface EmployeeUtilization {
     projects_assigned: number;
 }
 
+// Task Comment Interface
+export interface TaskComment {
+    id: string;
+    task_id: string;
+    user_id: string;
+    content: string;
+    mentions: string[];
+    created_at: string;
+    updated_at: string;
+    user: {
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+    };
+}
+
+export interface CreateCommentData {
+    content: string;
+    mentions?: string[];
+}
+
+export interface MentionableUser {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    display_name: string;
+}
+

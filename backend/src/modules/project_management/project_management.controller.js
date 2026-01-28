@@ -186,6 +186,7 @@ exports.listProjects = async (req, res, next) => {
       // Pass user info for role-based filtering
       userRole: role,
       userEmployeeId: employeeId,
+      userId: req.user.id,
     });
 
     return res.status(200).json({
@@ -873,6 +874,130 @@ exports.getUtilizationReport = async (req, res, next) => {
       message: "Utilization report retrieved successfully",
       data: result.employees,
       pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * ============================================================================
+ * TASK COMMENT CONTROLLERS
+ * ============================================================================
+ */
+
+/**
+ * POST /api/project-management/tasks/:task_id/comments
+ * Create a comment on a task
+ * Requires: Any authenticated user
+ */
+exports.createComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { task_id } = req.params;
+    const { content, mentions } = req.body;
+
+    const comment = await service.createComment(tenantId, userId, task_id, {
+      content,
+      mentions: mentions || [],
+    });
+
+    return res.status(201).json({
+      status: 'success',
+      message: "Comment added successfully",
+      data: comment
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/project-management/tasks/:task_id/comments
+ * List comments for a task
+ * Requires: Any authenticated user
+ */
+exports.listComments = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const { task_id } = req.params;
+
+    const comments = await service.listComments(tenantId, task_id);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comments retrieved successfully",
+      data: comments
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/project-management/tasks/comments/:comment_id
+ * Update a comment
+ * Requires: Comment creator or ADMIN
+ */
+exports.updateComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, role } = req.user;
+    const { comment_id } = req.params;
+    const { content, mentions } = req.body;
+
+    const comment = await service.updateComment(tenantId, userId, comment_id, {
+      content,
+      mentions,
+    }, { role });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comment updated successfully",
+      data: comment
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/project-management/tasks/comments/:comment_id
+ * Delete a comment
+ * Requires: Comment creator or ADMIN
+ */
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, role } = req.user;
+    const { comment_id } = req.params;
+
+    const result = await service.deleteComment(tenantId, userId, comment_id, { role });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comment deleted successfully",
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/project-management/projects/:project_id/mentionable-users
+ * Get users that can be @mentioned in a project
+ * Requires: Any authenticated user
+ */
+exports.getMentionableUsers = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const { project_id } = req.params;
+
+    const users = await service.getMentionableUsers(tenantId, project_id);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Mentionable users retrieved successfully",
+      data: users
     });
   } catch (error) {
     next(error);

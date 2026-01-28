@@ -49,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Project Management
   { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'] },
+  { label: 'Clients', icon: Building2, path: '/projects/clients', roles: ['ADMIN', 'MANAGER', 'HR'] },
 
   // System
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'] },

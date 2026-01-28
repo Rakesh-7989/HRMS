@@ -49,7 +49,7 @@ const router = express.Router();
 router.post(
   "/clients",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(createClientSchema),
   ctrl.createClient
 );
@@ -75,7 +75,7 @@ router.get(
 router.put(
   "/clients/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(updateClientSchema),
   ctrl.updateClient
 );
@@ -88,7 +88,7 @@ router.put(
 router.delete(
   "/clients/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(updateClientSchema),
   ctrl.deleteClient
 );
@@ -107,7 +107,7 @@ router.delete(
 router.post(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(createProjectSchema),
   ctrl.createProject
 );
@@ -133,7 +133,7 @@ router.get(
 router.put(
   "/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(updateProjectSchema),
   ctrl.updateProject
 );
@@ -146,7 +146,7 @@ router.put(
 router.delete(
   "/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(updateProjectSchema),
   ctrl.deleteProject
 );
@@ -165,7 +165,7 @@ router.delete(
 router.post(
   "/:id/members",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(addProjectMemberSchema),
   ctrl.addProjectMember
 );
@@ -191,7 +191,7 @@ router.get(
 router.delete(
   "/:id/members/:employee_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(removeProjectMemberSchema),
   ctrl.removeProjectMember
 );
@@ -479,6 +479,72 @@ router.get(
   requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(getUtilizationReportSchema),
   ctrl.getUtilizationReport
+);
+
+/**
+ * ============================================================================
+ * TASK COMMENT ROUTES
+ * ============================================================================
+ */
+
+/**
+ * POST /api/project-management/tasks/:task_id/comments
+ * Create a comment on a task
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE
+ */
+router.post(
+  "/tasks/:task_id/comments",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.createComment
+);
+
+/**
+ * GET /api/project-management/tasks/:task_id/comments
+ * List comments for a task
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE
+ */
+router.get(
+  "/tasks/:task_id/comments",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.listComments
+);
+
+/**
+ * PUT /api/project-management/tasks/comments/:comment_id
+ * Update a comment
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE (creator only - checked in service)
+ */
+router.put(
+  "/tasks/comments/:comment_id",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.updateComment
+);
+
+/**
+ * DELETE /api/project-management/tasks/comments/:comment_id
+ * Delete a comment
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE (creator only - checked in service)
+ */
+router.delete(
+  "/tasks/comments/:comment_id",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.deleteComment
+);
+
+/**
+ * GET /api/project-management/projects/:project_id/mentionable-users
+ * Get users that can be @mentioned in a project
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE
+ */
+router.get(
+  "/projects/:project_id/mentionable-users",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.getMentionableUsers
 );
 
 module.exports = router;

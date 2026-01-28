@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Building2, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,9 +82,9 @@ export const ClientsPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create client');
+            toast.error(error.response?.data?.message || 'Failed to create client');
         },
     });
 
@@ -97,9 +98,9 @@ export const ClientsPage: React.FC = () => {
             setEditingClient(null);
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update client');
+            toast.error(error.response?.data?.message || 'Failed to update client');
         },
     });
 
@@ -110,8 +111,8 @@ export const ClientsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setClientToDelete(null);
         },
-        onError: () => {
-            alert('Failed to delete client. It may have linked projects.');
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to delete client. It may have linked projects.');
             setClientToDelete(null);
         },
     });

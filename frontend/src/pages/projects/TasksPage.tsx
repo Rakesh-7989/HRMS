@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import {
     Plus,
     Search,
@@ -193,9 +194,9 @@ export const TasksPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create task');
+            toast.error(error.response?.data?.message || 'Failed to create task');
         },
     });
 
@@ -216,9 +217,9 @@ export const TasksPage: React.FC = () => {
             setIsEditModalOpen(false);
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update task');
+            toast.error(error.response?.data?.message || 'Failed to update task');
         },
     });
 
@@ -228,8 +229,8 @@ export const TasksPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
             setTaskToDelete(null);
         },
-        onError: () => {
-            alert('Failed to delete task.');
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to delete task');
             setTaskToDelete(null);
         },
     });
@@ -290,12 +291,30 @@ export const TasksPage: React.FC = () => {
         });
     };
 
-    // Permission check for task edit/delete
+    // Permission check for task edit/delete - Hybrid approach:
+    // 1. Task creator can always edit their own task
+    // 2. Higher roles can edit tasks created by lower roles
+    // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+    const ROLE_HIERARCHY: Record<string, number> = {
+        'ADMIN': 4,
+        'MANAGER': 3,
+        'HR': 2,
+        'EMPLOYEE': 1,
+    };
+
     const canEditTask = (task: Task) => {
         if (!user) return false;
-        if (['ADMIN', 'HR', 'MANAGER'].includes(user.role)) return true;
-        // Task creator can edit
-        return task.created_by === user.id;
+
+        // 1. Task creator can always edit their own task
+        if (task.created_by === user.id) return true;
+
+        // 2. Get role levels for comparison
+        const userRoleLevel = ROLE_HIERARCHY[user.role] || 0;
+        const creatorRoleLevel = ROLE_HIERARCHY[(task as any).creator_role] || 0;
+
+        // Higher roles can edit tasks created by lower or equal roles
+        // ADMIN can edit all, MANAGER can edit MANAGER/HR/EMPLOYEE tasks, etc.
+        return userRoleLevel > creatorRoleLevel;
     };
 
     // Handlers
@@ -617,7 +636,7 @@ export const TasksPage: React.FC = () => {
                                                                 }
                                                                 return true;
                                                             })()}
-                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             {enabledColumns.length === 0 ? (

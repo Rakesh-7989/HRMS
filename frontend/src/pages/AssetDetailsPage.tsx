@@ -420,7 +420,7 @@ export const AssetDetailsPage: React.FC = () => {
           <div className="mt-8">
             <Card>
               <div className="p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Asset History</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Asset History</h3>
                 <div className="flex space-x-4 mb-6">
                   <Button
                     variant={historyView === 'tracking' ? 'primary' : 'outline'}
@@ -437,7 +437,7 @@ export const AssetDetailsPage: React.FC = () => {
                 </div>
 
                 {historyView === null && (
-                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
                     <p>Select a history type to view details</p>
                   </div>
                 )}

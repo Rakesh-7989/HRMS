@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -94,9 +95,9 @@ export const ProjectsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             handleCloseModal();
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create project');
+            toast.error(error.response?.data?.message || 'Failed to create project');
         },
     });
 
@@ -107,9 +108,9 @@ export const ProjectsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             handleCloseModal();
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update project');
+            toast.error(error.response?.data?.message || 'Failed to update project');
         },
     });
 
@@ -120,8 +121,8 @@ export const ProjectsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             setProjectToDelete(null);
         },
-        onError: () => {
-            alert('Failed to delete project. It may have linked tasks.');
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to delete project. It may have linked tasks.');
             setProjectToDelete(null);
         },
     });
@@ -165,6 +166,13 @@ export const ProjectsPage: React.FC = () => {
     };
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Date validation
+        if (new Date(formData.end_date) < new Date(formData.start_date)) {
+            toast.error('End date cannot be earlier than start date');
+            return;
+        }
+
         setIsSubmitting(true);
 
         const submissionData = {
@@ -422,6 +430,7 @@ export const ProjectsPage: React.FC = () => {
                                         id="start_date"
                                         type="date"
                                         value={formData.start_date}
+                                        max={formData.end_date}
                                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                                         required
                                     />
@@ -432,6 +441,7 @@ export const ProjectsPage: React.FC = () => {
                                         id="end_date"
                                         type="date"
                                         value={formData.end_date}
+                                        min={formData.start_date}
                                         onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                                         required
                                     />

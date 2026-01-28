@@ -217,28 +217,41 @@ exports.createProject = async (tenantId, userId, data) => {
  * Others: sees only projects they are members of
  */
 exports.listProjects = async (tenantId, filters = {}) => {
-  const { client_id, status, search, skip = 0, limit = 20, userRole, userEmployeeId } = filters;
+  const { client_id, status, search, skip = 0, limit = 20, userRole, userEmployeeId, userId } = filters;
 
-  // For non-ADMIN users, filter to only show projects they are members of
-  const isAdmin = userRole === 'ADMIN';
+  const canViewAll = ['ADMIN'].includes(userRole);
+  const isManager = userRole === 'MANAGER';
 
   let query = `SELECT DISTINCT p.*, c.name as client_name FROM projects p
                LEFT JOIN clients c ON p.client_id = c.id`;
 
-  // Join with project_members for non-admin filtering
-  if (!isAdmin) {
-    query += ` INNER JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2`;
+  // Filter for non-privileged users
+  if (!canViewAll) {
+    if (isManager) {
+      // Managers see projects they created OR projects they are members of
+      query += ` LEFT JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
+                 WHERE p.tenant_id = $1 AND (p.created_by = $3 OR pm.id IS NOT NULL)`;
+    } else {
+      // Employees only see projects they are members of
+      query += ` INNER JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
+                 WHERE p.tenant_id = $1`;
+    }
+  } else {
+    // Admin/HR see all
+    query += ` WHERE p.tenant_id = $1`;
   }
-
-  query += ` WHERE p.tenant_id = $1`;
 
   const params = [tenantId];
   let paramCount = 1;
 
-  // Add employee filter for non-admin
-  if (!isAdmin) {
+  if (!canViewAll) {
     params.push(userEmployeeId);
     paramCount++;
+
+    if (isManager) {
+      params.push(userId);
+      paramCount++;
+    }
   }
 
   if (client_id) {
@@ -827,11 +840,13 @@ exports.listTasks = async (tenantId, filters = {}) => {
   const { project_id, assigned_to, column_key, priority, search, skip = 0, limit = 20 } = filters;
 
   let query = `SELECT t.*, p.name as project_name,
-               e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email
+               e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email,
+               u_creator.role as creator_role
                FROM tasks t
                LEFT JOIN projects p ON t.project_id = p.id
                LEFT JOIN employees e_by ON t.assigned_by = e_by.id
                LEFT JOIN users u_by ON e_by.user_id = u_by.id
+               LEFT JOIN users u_creator ON t.created_by = u_creator.id
                WHERE t.tenant_id = $1`;
   const params = [tenantId];
   let paramCount = 1;
@@ -942,11 +957,13 @@ exports.listTasks = async (tenantId, filters = {}) => {
 exports.getTaskById = async (tenantId, taskId) => {
   const result = await pool.query(
     `SELECT t.*, p.name as project_name,
-            e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email
+            e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email,
+            u_creator.role as creator_role
      FROM tasks t
      LEFT JOIN projects p ON t.project_id = p.id
      LEFT JOIN employees e_by ON t.assigned_by = e_by.id
      LEFT JOIN users u_by ON e_by.user_id = u_by.id
+     LEFT JOIN users u_creator ON t.created_by = u_creator.id
      WHERE t.id = $1 AND t.tenant_id = $2`,
     [taskId, tenantId]
   );
@@ -998,11 +1015,19 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
   const { role } = options;
   const existingTask = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check: Employees can only edit tasks they created
-  if (role === 'EMPLOYEE') {
-    if (existingTask.created_by !== userId) {
-      throw new ForbiddenError("You can only edit tasks you created.");
-    }
+  // Permission Check - Hybrid approach:
+  // 1. Task creator can always edit their own task
+  // 2. Higher roles can edit tasks created by lower roles
+  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
+
+  const isCreator = existingTask.created_by === userId;
+  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
+  const creatorRoleLevel = ROLE_HIERARCHY[existingTask.creator_role] || 0;
+
+  // Allow if: creator OR higher role than creator
+  if (!isCreator && userRoleLevel <= creatorRoleLevel) {
+    throw new ForbiddenError("You don't have permission to edit this task.");
   }
 
   const {
@@ -1105,11 +1130,19 @@ exports.deleteTask = async (tenantId, taskId, options = {}) => {
   const { role, userId } = options;
   const task = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check: Employees can only delete tasks they created
-  if (role === 'EMPLOYEE') {
-    if (task.created_by !== userId) {
-      throw new ForbiddenError("You can only delete tasks you created.");
-    }
+  // Permission Check - Hybrid approach:
+  // 1. Task creator can always delete their own task
+  // 2. Higher roles can delete tasks created by lower roles
+  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
+
+  const isCreator = task.created_by === userId;
+  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
+  const creatorRoleLevel = ROLE_HIERARCHY[task.creator_role] || 0;
+
+  // Allow if: creator OR higher role than creator
+  if (!isCreator && userRoleLevel <= creatorRoleLevel) {
+    throw new ForbiddenError("You don't have permission to delete this task.");
   }
 
   // Delete any timesheet entries referencing this task
@@ -1755,4 +1788,174 @@ exports.getUtilizationReport = async (tenantId, filters = {}) => {
       hasMore: skip + limit < total,
     },
   };
+};
+
+/**
+ * ============================================================================
+ * TASK COMMENTS SERVICES
+ * ============================================================================
+ */
+
+/**
+ * CREATE COMMENT
+ * Anyone can comment on any task
+ */
+exports.createComment = async (tenantId, userId, taskId, data) => {
+  const { content, mentions = [] } = data;
+
+  // Verify task exists
+  await this.getTaskById(tenantId, taskId);
+
+  const commentId = crypto.randomUUID();
+  await pool.query(
+    `INSERT INTO task_comments (id, tenant_id, task_id, user_id, content, mentions, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+    [commentId, tenantId, taskId, userId, content, mentions]
+  );
+
+  return await this.getCommentById(tenantId, commentId);
+};
+
+/**
+ * GET COMMENT BY ID
+ */
+exports.getCommentById = async (tenantId, commentId) => {
+  const result = await pool.query(
+    `SELECT c.*, 
+            u.email as user_email,
+            COALESCE(e.first_name, u.email) as user_first_name,
+            COALESCE(e.last_name, '') as user_last_name
+     FROM task_comments c
+     JOIN users u ON c.user_id = u.id
+     LEFT JOIN employees e ON u.id = e.user_id AND e.tenant_id = c.tenant_id
+     WHERE c.id = $1 AND c.tenant_id = $2`,
+    [commentId, tenantId]
+  );
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError("Comment not found");
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    task_id: row.task_id,
+    user_id: row.user_id,
+    content: row.content,
+    mentions: row.mentions || [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user: {
+      id: row.user_id,
+      email: row.user_email,
+      first_name: row.user_first_name,
+      last_name: row.user_last_name
+    }
+  };
+};
+
+/**
+ * LIST COMMENTS FOR A TASK
+ */
+exports.listComments = async (tenantId, taskId) => {
+  // Verify task exists
+  await this.getTaskById(tenantId, taskId);
+
+  const result = await pool.query(
+    `SELECT c.*, 
+            u.email as user_email,
+            COALESCE(e.first_name, u.email) as user_first_name,
+            COALESCE(e.last_name, '') as user_last_name
+     FROM task_comments c
+     JOIN users u ON c.user_id = u.id
+     LEFT JOIN employees e ON u.id = e.user_id AND e.tenant_id = c.tenant_id
+     WHERE c.task_id = $1 AND c.tenant_id = $2
+     ORDER BY c.created_at ASC`,
+    [taskId, tenantId]
+  );
+
+  return result.rows.map(row => ({
+    id: row.id,
+    task_id: row.task_id,
+    user_id: row.user_id,
+    content: row.content,
+    mentions: row.mentions || [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user: {
+      id: row.user_id,
+      email: row.user_email,
+      first_name: row.user_first_name,
+      last_name: row.user_last_name
+    }
+  }));
+};
+
+/**
+ * UPDATE COMMENT
+ * Only comment creator can update
+ */
+exports.updateComment = async (tenantId, userId, commentId, data, options = {}) => {
+  const { role } = options;
+  const existingComment = await this.getCommentById(tenantId, commentId);
+
+  // Only creator or ADMIN can update
+  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+    throw new ForbiddenError("You can only edit your own comments");
+  }
+
+  const { content, mentions = existingComment.mentions } = data;
+
+  await pool.query(
+    `UPDATE task_comments SET content = $1, mentions = $2, updated_at = NOW()
+     WHERE id = $3 AND tenant_id = $4`,
+    [content, mentions, commentId, tenantId]
+  );
+
+  return await this.getCommentById(tenantId, commentId);
+};
+
+/**
+ * DELETE COMMENT
+ * Creator or ADMIN can delete
+ */
+exports.deleteComment = async (tenantId, userId, commentId, options = {}) => {
+  const { role } = options;
+  const existingComment = await this.getCommentById(tenantId, commentId);
+
+  // Only creator or ADMIN can delete
+  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+    throw new ForbiddenError("You can only delete your own comments");
+  }
+
+  await pool.query(
+    `DELETE FROM task_comments WHERE id = $1 AND tenant_id = $2`,
+    [commentId, tenantId]
+  );
+
+  return { success: true, message: "Comment deleted successfully" };
+};
+
+/**
+ * GET MENTIONABLE USERS FOR A PROJECT
+ * Returns project members that can be @mentioned
+ */
+exports.getMentionableUsers = async (tenantId, projectId) => {
+  const result = await pool.query(
+    `SELECT DISTINCT u.id, u.email, e.first_name, e.last_name
+     FROM project_members pm
+     JOIN employees e ON pm.employee_id = e.id
+     JOIN users u ON e.user_id = u.id
+     WHERE pm.tenant_id = $1 AND pm.project_id = $2
+     ORDER BY e.first_name, e.last_name`,
+    [tenantId, projectId]
+  );
+
+  return result.rows.map(row => ({
+    id: row.id,
+    email: row.email,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    display_name: `${row.first_name} ${row.last_name}`.trim() || row.email
+  }));
 };

@@ -4,6 +4,7 @@ import { Calendar, Clock, User } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { StatusBadge } from '@/components/projects/StatusBadge';
 import { Button } from '@/components/ui/Button';
+import { TaskComments } from '@/components/projects/TaskComments';
 import type { Task } from '@/types/project.types';
 
 interface TaskDetailsModalProps {
@@ -12,6 +13,7 @@ interface TaskDetailsModalProps {
     onClose: () => void;
     onEdit?: (task: Task) => void;
     canEdit?: boolean;
+    projectId?: string;
 }
 
 export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
@@ -19,13 +21,16 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     isOpen,
     onClose,
     onEdit,
-    canEdit
+    canEdit,
+    projectId
 }) => {
     if (!task) return null;
 
+    const resolvedProjectId = projectId || task.project_id;
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+            <DialogContent className="sm:max-w-[700px] p-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start bg-gray-50/50 dark:bg-gray-900/50">
                     <div className="space-y-1 pr-8">
@@ -179,7 +184,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     </div>
 
                     {/* Metadata Footer */}
-                    <div className="pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1 text-xs text-gray-400">
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1 text-xs text-gray-400">
                         {task.created_at && (
                             <div>Created on {format(new Date(task.created_at), 'MMM d, yyyy h:mm a')}</div>
                         )}
@@ -187,6 +192,13 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                             <div>Last updated on {format(new Date(task.updated_at), 'MMM d, yyyy h:mm a')}</div>
                         )}
                     </div>
+
+                    {/* Comments Section */}
+                    {resolvedProjectId && (
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                            <TaskComments taskId={task.id} projectId={resolvedProjectId} />
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer / Actions */}
@@ -207,3 +219,4 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         </Dialog>
     );
 };
+
