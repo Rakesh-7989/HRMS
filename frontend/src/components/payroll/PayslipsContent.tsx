@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { payrollService } from '@/services/payroll.service';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
@@ -286,28 +287,16 @@ export const PayslipsContent: React.FC = () => {
                         </div>
 
                         {selectedPeriod === 'custom' && (
-                            <>
-                                <div>
-                                    <label className="text-sm font-medium">From</label>
-                                    <div className="mt-2">
-                                        <DatePicker
-                                            value={customFromDate}
-                                            onChange={setCustomFromDate}
-                                            placeholder="Select start date"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">To</label>
-                                    <div className="mt-2">
-                                        <DatePicker
-                                            value={customToDate}
-                                            onChange={setCustomToDate}
-                                            placeholder="Select end date"
-                                        />
-                                    </div>
-                                </div>
-                            </>
+                            <div className="mt-4">
+                                <label className="text-sm font-medium mb-2 block">Custom Date Range</label>
+                                <DateRangePicker
+                                    startDate={customFromDate}
+                                    endDate={customToDate}
+                                    onStartDateChange={setCustomFromDate}
+                                    onEndDateChange={setCustomToDate}
+                                    placeholder="Select period"
+                                />
+                            </div>
                         )}
 
                         {/* placeholders for more filters */}

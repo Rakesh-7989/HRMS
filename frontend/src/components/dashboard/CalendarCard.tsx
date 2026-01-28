@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Megaphone, Building } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, subMonths, addMonths, subDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, subMonths, addMonths } from 'date-fns';
 import { PeopleEventsResponse, PersonEvent } from '@/services/events.service';
 import { calendarService } from '@/services/calendar.service';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -14,10 +14,9 @@ type Props = {
   className?: string;
   compact?: boolean;
   announcements?: Array<{ id: number; title: string; date: string; message?: string; created_at?: string }>;
-  past7Days?: Array<{ day: string; date: string; status: string }>;
 };
 
-const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = true, announcements: propAnnouncements, past7Days: propPast7Days }) => {
+const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = true, announcements: propAnnouncements }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   // Fetch dynamic calendar data for the current month
@@ -117,18 +116,57 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
   const prevMonth = () => setCurrentMonth((m) => subMonths(m, 1));
   const nextMonth = () => setCurrentMonth((m) => addMonths(m, 1));
 
-  // Past 7 Days Attendance (Mock for UI)
-  const past7Days = useMemo(() => {
-    if (propPast7Days) return propPast7Days;
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = subDays(new Date(), 6 - i);
-      return {
+  // Current Week Days for Activity section (dynamic based on current week)
+  const currentWeekDays = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    // Start from Monday of the current week
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = format(d, 'yyyy-MM-dd');
+
+      // Check if this day is a holiday from calendar data
+      const holidayInfo = calendarData.find(cd => cd.date === dateStr);
+      const isHoliday = holidayInfo?.holiday_name ? true : false;
+      const isSunday = d.getDay() === 0;
+      const isSaturday = d.getDay() === 6;
+      const isToday = isSameDay(d, new Date());
+      const isPast = d < new Date() && !isToday;
+      const isFuture = d > new Date();
+
+      let status: 'weekday' | 'weekend' | 'holiday' | 'today' = 'weekday';
+      if (isSunday || isHoliday) {
+        status = 'holiday';
+      } else if (isSaturday) {
+        // Saturday can be a working day or weekend based on company policy
+        // For now, treat as weekday (green)
+        status = 'weekday';
+      }
+
+      days.push({
         day: format(d, 'EEE'),
-        date: format(d, 'MMM dd'),
-        status: d.getDay() === 0 ? 'Weekend' : ['Present', 'Late', 'Present', 'Present', 'Late'][i % 5]
-      };
-    });
-  }, []);
+        dayLetter: format(d, 'EEEEE'), // Single letter: M, T, W, T, F, S, S
+        date: format(d, 'd'),
+        fullDate: format(d, 'MMM dd'),
+        dateStr,
+        status,
+        isToday,
+        isPast,
+        isFuture,
+        isSunday,
+        isSaturday,
+        isHoliday,
+        holidayName: holidayInfo?.holiday_name || null
+      });
+    }
+    return days;
+  }, [calendarData]);
 
   if (compact) {
     return (
@@ -205,27 +243,57 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
             )}
           </div>
 
-          {/* Past 7 Days Attendance */}
+          {/* Current Week Activity */}
           <div className="mt-auto">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1 w-4 bg-gray-200 dark:bg-gray-800 rounded-full" />
-              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Activity</p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This Week</p>
             </div>
             <div className="grid grid-cols-7 gap-1.5">
-              {past7Days.map((day, index) => (
+              {currentWeekDays.map((day, index) => (
                 <div
                   key={index}
+                  title={day.isHoliday ? day.holidayName || 'Holiday' : day.isSunday ? 'Sunday' : day.day}
                   className={cn(
-                    'p-2 rounded-xl flex flex-col items-center justify-center transition-all border outline outline-4 outline-transparent',
-                    day.status === 'Present' ? 'bg-green-500/5 text-green-600 dark:text-green-400 border-green-500/10' :
-                      day.status === 'Late' ? 'bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/10' :
-                        'bg-gray-50 dark:bg-white/[0.02] text-gray-300 dark:text-gray-700 border-transparent'
+                    'p-2 rounded-xl flex flex-col items-center justify-center transition-all border relative',
+                    // Today highlight
+                    day.isToday && 'ring-2 ring-primary ring-offset-1 bg-primary/10 border-primary/30',
+                    // Holiday or Sunday = Red
+                    (day.isSunday || day.isHoliday) && !day.isToday && 'bg-red-50 dark:bg-red-900/10 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800/30',
+                    // Weekdays (Mon-Sat, not holiday) = Green
+                    !day.isSunday && !day.isHoliday && !day.isToday && 'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/30',
+                    // Future days slightly faded
+                    day.isFuture && 'opacity-60'
                   )}
                 >
-                  <p className="text-[8px] font-bold uppercase tracking-tighter mb-1 opacity-50">{day.day[0]}</p>
-                  <p className="text-[12px] font-bold tracking-tighter">{day.date.split(' ')[1]}</p>
+                  <p className={cn(
+                    'text-[8px] font-bold uppercase tracking-tighter mb-1',
+                    (day.isSunday || day.isHoliday) ? 'text-red-400' : 'text-green-500'
+                  )}>
+                    {day.dayLetter}
+                  </p>
+                  <p className={cn(
+                    'text-[12px] font-bold tracking-tighter',
+                    day.isToday && 'text-primary'
+                  )}>
+                    {day.date}
+                  </p>
+                  {day.isHoliday && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
                 </div>
               ))}
+            </div>
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-4 mt-3 text-[9px] text-gray-400">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span>Weekday</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <span>Holiday/Sunday</span>
+              </div>
             </div>
           </div>
         </div>

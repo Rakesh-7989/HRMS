@@ -97,22 +97,6 @@ export const ManagerDashboard: React.FC = () => {
     }
   }, [data?.teamPerformanceMetrics, teamAnalytics, user?.role]);
 
-
-  const announcements = [
-    { id: 1, title: 'Team Meeting at 4 PM', date: 'Today' },
-    { id: 2, title: 'Performance Review Cycle Started', date: 'This Week' },
-  ];
-
-  const past7Days = [
-    { day: 'Mon', date: 'Dec 16', status: 'Present' },
-    { day: 'Tue', date: 'Dec 17', status: 'Late' },
-    { day: 'Wed', date: 'Dec 18', status: 'Present' },
-    { day: 'Thu', date: 'Dec 19', status: 'Absent' },
-    { day: 'Fri', date: 'Dec 20', status: 'Present' },
-    { day: 'Sat', date: 'Dec 21', status: 'Present' },
-    { day: 'Sun', date: 'Dec 22', status: 'Present' },
-  ];
-
   const { data: peopleEventsData, isLoading: eventsLoading } = useQuery({
     queryKey: ['peopleEvents', 'team'],
     queryFn: () => eventsService.getPeopleEvents('team'),
@@ -138,7 +122,7 @@ export const ManagerDashboard: React.FC = () => {
             isLoading={eventsLoading}
           />
 
-          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} announcements={announcements} past7Days={past7Days} />
+          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

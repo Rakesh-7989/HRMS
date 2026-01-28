@@ -49,13 +49,6 @@ export const AdminDashboard: React.FC = () => {
   const attendanceData = data?.attendanceMetrics || [];
   const leaveStats = data?.leaveStatistics || [];
 
-  /* ---------- STATIC DATA ---------- */
-
-  const announcements = [
-    { id: 1, title: 'Company Townhall Tomorrow', date: 'Today' },
-    { id: 2, title: 'New Leave Policy Released', date: 'Dec 27' },
-  ];
-
   return (
     <DashboardLayout
       title="Organization Dashboard"
@@ -76,7 +69,7 @@ export const AdminDashboard: React.FC = () => {
             isLoading={eventsLoading}
           />
 
-          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} announcements={announcements} />
+          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} />
         </div>
 
         {/* ===================== STATS ===================== */}

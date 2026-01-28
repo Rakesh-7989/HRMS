@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays } from 'date-fns';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { BarChart } from '@/components/charts/BarChart';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { PieChart } from '@/components/charts/PieChart';
-import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Table } from '@/components/ui/Table';
@@ -343,26 +343,17 @@ export const AttendanceReportsContent: React.FC = () => {
                         </div>
 
                         {selectedPeriod === 'custom' && (
-                            <>
-                                <div>
-                                    <Label htmlFor="from-date">From Date</Label>
-                                    <Input
-                                        id="from-date"
-                                        type="date"
-                                        value={customFromDate}
-                                        onChange={(e) => setCustomFromDate(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="to-date">To Date</Label>
-                                    <Input
-                                        id="to-date"
-                                        type="date"
-                                        value={customToDate}
-                                        onChange={(e) => setCustomToDate(e.target.value)}
-                                    />
-                                </div>
-                            </>
+                            <div className="md:col-span-2">
+                                <Label className="block text-sm font-medium mb-2">Custom Date Range</Label>
+                                <DateRangePicker
+                                    startDate={customFromDate}
+                                    endDate={customToDate}
+                                    onStartDateChange={setCustomFromDate}
+                                    onEndDateChange={setCustomToDate}
+                                    placeholder="Select range"
+                                    className="w-full"
+                                />
+                            </div>
                         )}
 
                         {selectedView === 'reports' && (

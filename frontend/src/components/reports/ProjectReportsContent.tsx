@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { DatePicker } from '@/components/ui/DatePicker';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { Label } from '@/components/ui/Label';
 import { projectsService } from '@/services/projects.service';
 import {
@@ -119,16 +119,16 @@ export const ProjectReportsContent: React.FC = () => {
                             </select>
                         </div>
                     )}
-                    <div>
-                        <Label>Start Date</Label>
+                    <div className="md:col-span-2">
+                        <Label>Date Range</Label>
                         <div className="mt-1">
-                            <DatePicker value={startDate} onChange={setStartDate} placeholder="Select start" />
-                        </div>
-                    </div>
-                    <div>
-                        <Label>End Date</Label>
-                        <div className="mt-1">
-                            <DatePicker value={endDate} onChange={setEndDate} placeholder="Select end" />
+                            <DateRangePicker
+                                startDate={startDate}
+                                endDate={endDate}
+                                onStartDateChange={setStartDate}
+                                onEndDateChange={setEndDate}
+                                placeholder="Select report duration"
+                            />
                         </div>
                     </div>
                 </div>

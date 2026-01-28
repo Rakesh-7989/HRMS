@@ -241,11 +241,28 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
       emergency_relation: editEmployee?.emergency_relation || '',
     },
     validationSchema: isEditMode ? editValidationSchema : createValidationSchema,
-    onSubmit: (values) => {
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values, { setSubmitting }) => {
       setError(null);
+
+      // Extra validation check before submission
+      try {
+        const schema = isEditMode ? editValidationSchema : createValidationSchema;
+        await schema.validate(values, { abortEarly: false });
+      } catch (validationError: any) {
+        // Collect all validation errors
+        if (validationError.inner && validationError.inner.length > 0) {
+          const errorMessages = validationError.inner.map((err: any) => err.message).join(', ');
+          setError(`Please fix the following errors: ${errorMessages}`);
+          toast.error('Please fix all validation errors before submitting');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       if (isEditMode) {
         // Remove email and role from update payload (can't change these)
-        // Create a payload excluding email and role without leaving unused local variables
         const updateData = { ...values } as Partial<CreateUserData>;
         delete updateData.email;
         delete updateData.role;
@@ -260,8 +277,27 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
   useEffect(() => {
     if (!open) {
       setError(null);
+      formik.resetForm();
     }
   }, [open]);
+
+  // Helper to check if form has validation errors
+  const hasValidationErrors = Object.keys(formik.errors).length > 0 && formik.submitCount > 0;
+
+  // Helper to get all current validation errors for display
+  const getValidationErrorSummary = () => {
+    if (!hasValidationErrors) return null;
+    const errors = Object.entries(formik.errors)
+      .filter(([_, value]) => value)
+      .map(([key, value]) => {
+        // Make field names more readable
+        const fieldName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return `${fieldName}: ${value}`;
+      });
+    return errors;
+  };
+
+  const validationErrors = getValidationErrorSummary();
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
@@ -277,11 +313,33 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
 
   const formFields = (
     <div className="space-y-6">
-      {/* Error Alert */}
+      {/* API Error Alert */}
       {error && (
         <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        </div>
+      )}
+
+      {/* Validation Errors Summary */}
+      {validationErrors && validationErrors.length > 0 && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-2">
+                Please fix the following validation errors:
+              </p>
+              <ul className="list-disc list-inside text-xs text-amber-600 dark:text-amber-500 space-y-1">
+                {validationErrors.slice(0, 5).map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+                {validationErrors.length > 5 && (
+                  <li className="font-medium">...and {validationErrors.length - 5} more errors</li>
+                )}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
 
@@ -803,17 +861,30 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     return (
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         {formFields}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => window.history.back()}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isLoading}>
-            {isEditMode ? 'Update Employee' : 'Create Employee'}
-          </Button>
+        <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-xs text-gray-500">
+            {hasValidationErrors && (
+              <span className="text-amber-600 dark:text-amber-400">
+                ⚠ Fix validation errors before submitting
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => window.history.back()}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={isLoading}
+            >
+              {isEditMode ? 'Update Employee' : 'Create Employee'}
+            </Button>
+          </div>
         </div>
       </form>
     );
@@ -828,13 +899,26 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     >
       <form onSubmit={formik.handleSubmit}>
         {formFields}
-        <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isLoading}>
-            {isEditMode ? 'Update Employee' : 'Create Employee'}
-          </Button>
+        <div className="flex items-center justify-between gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-xs text-gray-500">
+            {hasValidationErrors && (
+              <span className="text-amber-600 dark:text-amber-400">
+                ⚠ Fix validation errors before submitting
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={isLoading}
+            >
+              {isEditMode ? 'Update Employee' : 'Create Employee'}
+            </Button>
+          </div>
         </div>
       </form>
     </Dialog>

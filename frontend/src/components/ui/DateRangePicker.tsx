@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
     format,
     startOfMonth,
@@ -8,13 +8,18 @@ import {
     addDays,
     addMonths,
     subMonths,
+    setMonth,
+    setYear,
     isSameMonth,
     isSameDay,
     isToday,
     isWithinInterval,
-    isBefore
+    isBefore,
+    getYear,
+    getMonth,
+    differenceInDays
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, ChevronsLeft, ChevronsRight, ArrowRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface DateRangePickerProps {
@@ -23,7 +28,14 @@ interface DateRangePickerProps {
     onStartDateChange: (date: string) => void;
     onEndDateChange: (date: string) => void;
     className?: string;
+    placeholder?: string;
+    minYear?: number;
+    maxYear?: number;
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+type ViewMode = 'calendar' | 'month' | 'year';
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     startDate,
@@ -31,26 +43,62 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     onStartDateChange,
     onEndDateChange,
     className,
+    placeholder = 'Select date range',
+    minYear = 2024,
+    maxYear = 2100,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(startDate ? new Date(startDate) : new Date());
     const [selectingStart, setSelectingStart] = useState(true);
     const [hoverDate, setHoverDate] = useState<Date | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+    const [yearPageStart, setYearPageStart] = useState(() => {
+        const currentYear = new Date().getFullYear();
+        const targetYear = startDate ? getYear(new Date(startDate)) : currentYear;
+        // Center the target year in the grid (put it around position 2-3 of 12)
+        return Math.max(minYear, targetYear - 2);
+    });
+    const [position, setPosition] = useState<{ top: boolean; alignRight: boolean }>({ top: false, alignRight: false });
     const containerRef = useRef<HTMLDivElement>(null);
 
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
+    const currentYear = getYear(currentMonth);
+    const currentMonthIndex = getMonth(currentMonth);
+
+    // Calculate days between
+    const daysBetween = useMemo(() => {
+        if (start && end) {
+            return differenceInDays(end, start) + 1;
+        }
+        return 0;
+    }, [start, end]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setViewMode('calendar');
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Calculate position
+    useEffect(() => {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const dropdownHeight = 420;
+            const dropdownWidth = 340;
+
+            setPosition({
+                top: window.innerHeight - rect.bottom < dropdownHeight && rect.top > window.innerHeight - rect.bottom,
+                alignRight: window.innerWidth - rect.right < dropdownWidth - rect.width
+            });
+        }
+    }, [isOpen]);
 
     const handleDateClick = (day: Date) => {
         const dateStr = format(day, 'yyyy-MM-dd');
@@ -69,6 +117,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setSelectingStart(true);
             setIsOpen(false);
         }
+    };
+
+    const handleMonthSelect = (monthIndex: number) => {
+        setCurrentMonth(setMonth(currentMonth, monthIndex));
+        setViewMode('calendar');
+    };
+
+    const handleYearSelect = (year: number) => {
+        setCurrentMonth(setYear(currentMonth, year));
+        setViewMode('month');
     };
 
     const isInRange = (day: Date) => {
@@ -94,36 +152,168 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         return false;
     };
 
+    // Generate years for current page
+    const yearsInPage = useMemo(() => {
+        const years = [];
+        for (let i = 0; i < 12; i++) {
+            const year = yearPageStart + i;
+            if (year >= minYear && year <= maxYear) {
+                years.push(year);
+            }
+        }
+        return years;
+    }, [yearPageStart, minYear, maxYear]);
+
     const renderHeader = () => (
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between px-3 py-3 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-gray-100 dark:border-gray-800">
+            {viewMode === 'calendar' && (
+                <>
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setCurrentMonth(subMonths(currentMonth, 1)); }}
+                        className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all"
+                    >
+                        <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
+                        className="px-3 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
+                    >
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-primary">
+                            {format(currentMonth, 'MMMM yyyy')}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setCurrentMonth(addMonths(currentMonth, 1)); }}
+                        className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all"
+                    >
+                        <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                </>
+            )}
+
+            {viewMode === 'month' && (
+                <>
+                    <div className="flex-1" />
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setViewMode('year'); }}
+                        className="px-4 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
+                    >
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-primary">
+                            {currentYear}
+                        </span>
+                    </button>
+                    <div className="flex-1" />
+                </>
+            )}
+
+            {viewMode === 'year' && (
+                <>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (yearPageStart - 12 >= minYear) setYearPageStart(prev => prev - 12);
+                        }}
+                        disabled={yearPageStart <= minYear}
+                        className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all disabled:opacity-30"
+                    >
+                        <ChevronsLeft size={18} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                        {yearPageStart} - {Math.min(yearPageStart + 11, maxYear)}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (yearPageStart + 12 <= maxYear) setYearPageStart(prev => prev + 12);
+                        }}
+                        disabled={yearPageStart + 12 > maxYear}
+                        className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all disabled:opacity-30"
+                    >
+                        <ChevronsRight size={18} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                </>
+            )}
+        </div>
+    );
+
+    const renderMonthGrid = () => (
+        <div className="p-3">
+            <div className="grid grid-cols-3 gap-2">
+                {MONTHS.map((month, index) => (
+                    <button
+                        key={month}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleMonthSelect(index); }}
+                        className={cn(
+                            "py-3 px-2 rounded-xl text-sm font-medium transition-all",
+                            currentMonthIndex === index
+                                ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+                                : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                        )}
+                    >
+                        {month}
+                    </button>
+                ))}
+            </div>
             <button
                 type="button"
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setViewMode('calendar'); }}
+                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-primary"
             >
-                <ChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
+                ← Back to calendar
             </button>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">
-                {format(currentMonth, 'MMMM yyyy')}
-            </span>
+        </div>
+    );
+
+    const renderYearGrid = () => (
+        <div className="p-3">
+            <div className="grid grid-cols-3 gap-2">
+                {yearsInPage.map(year => (
+                    <button
+                        key={year}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleYearSelect(year); }}
+                        className={cn(
+                            "py-3 px-2 rounded-xl text-sm font-medium transition-all",
+                            currentYear === year
+                                ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+                                : year === new Date().getFullYear()
+                                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                                    : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                        )}
+                    >
+                        {year}
+                    </button>
+                ))}
+            </div>
             <button
                 type="button"
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
+                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-primary"
             >
-                <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
+                ← Back to months
             </button>
         </div>
     );
 
     const renderDays = () => {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
         return (
-            <div className="grid grid-cols-7 gap-0 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
+            <div className="grid grid-cols-7 gap-0 px-3 py-2">
                 {days.map((day) => (
                     <div
                         key={day}
-                        className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 py-2"
+                        className="text-center text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                     >
                         {day}
                     </div>
@@ -150,30 +340,33 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 const inRange = isInRange(day);
                 const isStart = isRangeStart(day);
                 const isEnd = isRangeEnd(day);
+                const isSunday = day.getDay() === 0;
 
                 days.push(
                     <button
                         type="button"
                         key={day.toString()}
-                        onClick={() => handleDateClick(cloneDay)}
+                        onClick={(e) => { e.stopPropagation(); handleDateClick(cloneDay); }}
                         onMouseEnter={() => setHoverDate(cloneDay)}
                         onMouseLeave={() => setHoverDate(null)}
                         className={cn(
                             'relative h-10 text-sm font-medium transition-all',
                             isCurrentMonth
-                                ? 'text-gray-900 dark:text-white'
-                                : 'text-gray-400 dark:text-gray-600',
-                            inRange && !isStart && !isEnd && 'bg-primary/10',
-                            isStart && 'bg-primary text-white rounded-l-full',
-                            isEnd && !isStart && 'bg-primary text-white rounded-r-full',
-                            isStart && isEnd && 'rounded-full',
-                            isTodayDate && !isStart && !isEnd && 'font-bold text-primary',
-                            !inRange && !isStart && !isEnd && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full'
+                                ? isSunday
+                                    ? 'text-red-500 dark:text-red-400'
+                                    : 'text-gray-800 dark:text-gray-200'
+                                : 'text-gray-300 dark:text-gray-700',
+                            inRange && !isStart && !isEnd && 'bg-primary/10 dark:bg-primary/20',
+                            isStart && 'bg-gradient-to-r from-primary to-primary/90 text-white rounded-l-xl',
+                            isEnd && !isStart && 'bg-gradient-to-l from-primary to-primary/90 text-white rounded-r-xl',
+                            isStart && isEnd && 'rounded-xl',
+                            isTodayDate && !isStart && !isEnd && 'font-bold text-primary ring-2 ring-primary/30 rounded-full',
+                            !inRange && !isStart && !isEnd && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl'
                         )}
                     >
                         <span className={cn(
                             'flex items-center justify-center w-full h-full',
-                            (isStart || isEnd) && 'rounded-full'
+                            (isStart || isEnd) && 'font-semibold'
                         )}>
                             {format(day, 'd')}
                         </span>
@@ -188,7 +381,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             );
             days = [];
         }
-        return <div className="px-3 py-2 space-y-0">{rows}</div>;
+        return <div className="px-3 py-2">{rows}</div>;
     };
 
     const displayText = () => {
@@ -196,9 +389,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             return `${format(start, 'dd MMM')} - ${format(end, 'dd MMM yyyy')}`;
         }
         if (start) {
-            return `${format(start, 'dd MMM yyyy')} - Select end`;
+            return `${format(start, 'dd MMM yyyy')} → Select end`;
         }
-        return 'Select date range';
+        return placeholder;
     };
 
     return (
@@ -207,86 +400,137 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all',
+                    'flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all w-full group',
                     'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
-                    'hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30',
-                    'text-sm font-medium text-gray-900 dark:text-white shadow-sm',
-                    isOpen && 'ring-2 ring-primary/30 border-primary'
+                    'hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
+                    'text-sm font-medium text-gray-900 dark:text-white',
+                    isOpen && 'ring-2 ring-primary/30 border-primary shadow-sm'
                 )}
             >
-                <Calendar size={18} className="text-primary" />
-                <span>{displayText()}</span>
+                <Calendar size={18} className={cn(
+                    "text-gray-400 flex-shrink-0 transition-colors",
+                    isOpen && "text-primary"
+                )} />
+                <span className={cn(!start && 'text-gray-400 dark:text-gray-500')}>
+                    {displayText()}
+                </span>
+                {daysBetween > 0 && (
+                    <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                        {daysBetween} day{daysBetween !== 1 ? 's' : ''}
+                    </span>
+                )}
             </button>
 
             {isOpen && (
                 <div
-                    className="absolute top-full right-0 mt-2 z-50 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[320px] animate-fadeIn"
+                    className={cn(
+                        'absolute z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
+                        'min-w-[340px] animate-fadeIn',
+                        position.top ? 'bottom-full mb-2' : 'top-full mt-2',
+                        position.alignRight ? 'right-0' : 'left-0'
+                    )}
+                    style={{
+                        boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.02)'
+                    }}
                 >
-                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-xs">
+                    {/* Selection Status Bar */}
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-center gap-3 text-sm">
                             <div className={cn(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors',
-                                selectingStart ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
+                                selectingStart
+                                    ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/25'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                             )}>
-                                <span className="font-medium">Start:</span>
-                                <span>{start ? format(start, 'dd MMM') : '---'}</span>
+                                <span className="text-xs font-medium opacity-70">Start</span>
+                                <span className="font-semibold">{start ? format(start, 'dd MMM') : '---'}</span>
                             </div>
-                            <ChevronRight size={16} className="text-gray-400" />
+                            <ArrowRight size={16} className="text-gray-400" />
                             <div className={cn(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors',
-                                !selectingStart ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
+                                !selectingStart
+                                    ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/25'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                             )}>
-                                <span className="font-medium">End:</span>
-                                <span>{end ? format(end, 'dd MMM') : '---'}</span>
+                                <span className="text-xs font-medium opacity-70">End</span>
+                                <span className="font-semibold">{end ? format(end, 'dd MMM') : '---'}</span>
                             </div>
                         </div>
                     </div>
 
                     {renderHeader()}
-                    {renderDays()}
-                    {renderCells()}
 
-                    <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const today = new Date();
-                                    const weekAgo = addDays(today, -7);
-                                    onStartDateChange(format(weekAgo, 'yyyy-MM-dd'));
-                                    onEndDateChange(format(today, 'yyyy-MM-dd'));
-                                    setIsOpen(false);
-                                }}
-                                className="text-xs px-3 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-                            >
-                                Last 7 days
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const today = new Date();
-                                    const monthAgo = addDays(today, -30);
-                                    onStartDateChange(format(monthAgo, 'yyyy-MM-dd'));
-                                    onEndDateChange(format(today, 'yyyy-MM-dd'));
-                                    setIsOpen(false);
-                                }}
-                                className="text-xs px-3 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-                            >
-                                Last 30 days
-                            </button>
+                    {viewMode === 'calendar' && (
+                        <>
+                            {renderDays()}
+                            {renderCells()}
+                        </>
+                    )}
+
+                    {viewMode === 'month' && renderMonthGrid()}
+                    {viewMode === 'year' && renderYearGrid()}
+
+                    {viewMode === 'calendar' && (
+                        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const today = new Date();
+                                        onStartDateChange(format(today, 'yyyy-MM-dd'));
+                                        onEndDateChange(format(today, 'yyyy-MM-dd'));
+                                        setIsOpen(false);
+                                    }}
+                                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
+                                >
+                                    Today
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const today = new Date();
+                                        const tomorrow = addDays(today, 1);
+                                        onStartDateChange(format(today, 'yyyy-MM-dd'));
+                                        onEndDateChange(format(tomorrow, 'yyyy-MM-dd'));
+                                        setIsOpen(false);
+                                    }}
+                                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
+                                >
+                                    2 Days
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const today = new Date();
+                                        const weekLater = addDays(today, 6);
+                                        onStartDateChange(format(today, 'yyyy-MM-dd'));
+                                        onEndDateChange(format(weekLater, 'yyyy-MM-dd'));
+                                        setIsOpen(false);
+                                    }}
+                                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
+                                >
+                                    1 Week
+                                </button>
+                            </div>
+                            {(start || end) && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onStartDateChange('');
+                                        onEndDateChange('');
+                                        setSelectingStart(true);
+                                    }}
+                                    className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            )}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onStartDateChange('');
-                                onEndDateChange('');
-                                setSelectingStart(true);
-                            }}
-                            className="text-xs text-red-500 hover:text-red-600 font-medium"
-                        >
-                            Clear
-                        </button>
-                    </div>
+                    )}
                 </div>
             )}
         </div>

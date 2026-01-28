@@ -11,139 +11,155 @@ const getQuery = (db) =>
 
 /* ----------------------------- CREATE USER ----------------------------- */
 exports.createUser = async (db, data, actor) => {
-  const query = getQuery(db);
-
-  // SUPER_ADMIN can create anyone, ADMIN/HR have role restrictions
-  if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
-    throw new Error("Not allowed to create users");
-  }
-
-  // HR users can create EMPLOYEE and MANAGER only
-  if (actor.role === "HR") {
-    if (!["EMPLOYEE", "MANAGER"].includes(data.role)) {
-      throw new Error("HR can only create EMPLOYEE or MANAGER roles");
-    }
-  }
-
-  // ADMIN can create EMPLOYEE, MANAGER, HR
-  if (actor.role === "ADMIN") {
-    if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
-      throw new Error("ADMIN can only create EMPLOYEE, MANAGER, or HR roles");
-    }
-  }
-
-  // Only SUPER_ADMIN can create ADMIN role
-  if (data.role === "ADMIN" && actor.role !== "SUPER_ADMIN") {
-    throw new Error("Only SUPER_ADMIN can create ADMIN role");
-  }
-
-  // Check employee limit
-  const canAddMore = await subscriptionService.checkEmployeeLimit(actor.tenantId, db);
-  if (!canAddMore) {
-    throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
-  }
-
-  const duplicate = await query(
-    `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
-    [actor.tenantId, data.email]
-  );
-
-  if (duplicate.rowCount) throw new Error("Email already exists");
-
-  // Validate department belongs to same tenant
-  if (data.department_id) {
-    const deptCheck = await query(
-      `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
-      [data.department_id, actor.tenantId]
-    );
-    if (deptCheck.rowCount === 0) {
-      throw new Error("Department not found or does not belong to your organization");
-    }
-  }
-
-  // Validate designation belongs to same tenant
-  if (data.designation_id) {
-    const desigCheck = await query(
-      `SELECT id FROM designations WHERE id = $1 AND tenant_id = $2`,
-      [data.designation_id, actor.tenantId]
-    );
-    if (desigCheck.rowCount === 0) {
-      throw new Error("Designation not found or does not belong to your organization");
-    }
-  }
-
-  const tempPassword = crypto.randomBytes(6).toString("hex");
-  const hash = await bcrypt.hash(tempPassword, 10);
-
-  const userRes = await query(
-    `
-    INSERT INTO users 
-      (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
-    VALUES ($1,$2,$3,$4,true,true,$5)
-    RETURNING id, email, role
-    `,
-    [actor.tenantId, data.email, hash, data.role, actor.id]
-  );
-
-  const empRes = await query(
-    `
-    INSERT INTO employees
-      (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
-       emergency_name, emergency_phone, emergency_relation,
-       employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
-       bank_name, account_name, account_number, ifsc_code, tax_id, address, annual_salary, created_by)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
-    RETURNING id
-    `,
-    [
-      actor.tenantId,
-      userRes.rows[0].id,
-      data.first_name,
-      data.last_name || null,
-      data.phone || null,
-      data.date_of_birth || null,
-      data.gender || null,
-      data.marital_status || null,
-      data.nationality || null,
-      data.emergency_name || null,
-      data.emergency_phone || null,
-      data.emergency_relation || null,
-      data.employee_id || null,
-      data.department_id || null,
-      data.designation_id || null,
-      data.reports_to || null,
-      data.join_date || null,
-      data.employment_type || null,
-      data.shift || null,
-      data.bank_name || null,
-      data.account_name || null,
-      data.account_number || null,
-      data.ifsc_code || null,
-      data.tax_id || null,
-      data.address || null,
-      data.annual_salary || data.ctc || 0,
-      actor.id
-    ]
-  );
+  // Use a dedicated client for transaction
+  const client = await pool.connect();
 
   try {
-    await mailer.sendWelcomeEmail(
-      userRes.rows[0].email,
-      data.first_name,
-      tempPassword
-    );
-  } catch (err) {
-    logger.error("Email sending error:", err);
-    // Log but don't fail - user is created, email is just a notification
-    // TODO: Add email retry mechanism or queue
-  }
+    // Start Transaction
+    await client.query('BEGIN');
 
-  return {
-    user: userRes.rows[0],
-    employee: empRes.rows[0],
-    temporaryPassword: tempPassword,
-    _note: "Temporary password has been sent to user email"
-  };
+    // SUPER_ADMIN can create anyone, ADMIN/HR have role restrictions
+    if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
+      throw new Error("Not allowed to create users");
+    }
+
+    // HR users can create EMPLOYEE and MANAGER only
+    if (actor.role === "HR") {
+      if (!["EMPLOYEE", "MANAGER"].includes(data.role)) {
+        throw new Error("HR can only create EMPLOYEE or MANAGER roles");
+      }
+    }
+
+    // ADMIN can create EMPLOYEE, MANAGER, HR
+    if (actor.role === "ADMIN") {
+      if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
+        throw new Error("ADMIN can only create EMPLOYEE, MANAGER, or HR roles");
+      }
+    }
+
+    // Only SUPER_ADMIN can create ADMIN role
+    if (data.role === "ADMIN" && actor.role !== "SUPER_ADMIN") {
+      throw new Error("Only SUPER_ADMIN can create ADMIN role");
+    }
+
+    // Check employee limit
+    const canAddMore = await subscriptionService.checkEmployeeLimit(actor.tenantId, client);
+    if (!canAddMore) {
+      throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
+    }
+
+    const duplicate = await client.query(
+      `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
+      [actor.tenantId, data.email]
+    );
+
+    if (duplicate.rowCount) throw new Error("Email already exists");
+
+    // Validate department belongs to same tenant
+    if (data.department_id) {
+      const deptCheck = await client.query(
+        `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
+        [data.department_id, actor.tenantId]
+      );
+      if (deptCheck.rowCount === 0) {
+        throw new Error("Department not found or does not belong to your organization");
+      }
+    }
+
+    // Validate designation belongs to same tenant
+    if (data.designation_id) {
+      const desigCheck = await client.query(
+        `SELECT id FROM designations WHERE id = $1 AND tenant_id = $2`,
+        [data.designation_id, actor.tenantId]
+      );
+      if (desigCheck.rowCount === 0) {
+        throw new Error("Designation not found or does not belong to your organization");
+      }
+    }
+
+    const tempPassword = crypto.randomBytes(6).toString("hex");
+    const hash = await bcrypt.hash(tempPassword, 10);
+
+    const userRes = await client.query(
+      `
+      INSERT INTO users 
+        (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
+      VALUES ($1,$2,$3,$4,true,true,$5)
+      RETURNING id, email, role
+      `,
+      [actor.tenantId, data.email, hash, data.role, actor.id]
+    );
+
+    const empRes = await client.query(
+      `
+      INSERT INTO employees
+        (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
+         emergency_name, emergency_phone, emergency_relation,
+         employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
+         bank_name, account_name, account_number, ifsc_code, tax_id, address, annual_salary, created_by)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+      RETURNING id
+      `,
+      [
+        actor.tenantId,
+        userRes.rows[0].id,
+        data.first_name,
+        data.last_name || null,
+        data.phone || null,
+        data.date_of_birth || null,
+        data.gender || null,
+        data.marital_status || null,
+        data.nationality || null,
+        data.emergency_name || null,
+        data.emergency_phone || null,
+        data.emergency_relation || null,
+        data.employee_id || null,
+        data.department_id || null,
+        data.designation_id || null,
+        data.reports_to || null,
+        data.join_date || null,
+        data.employment_type || null,
+        data.shift || null,
+        data.bank_name || null,
+        data.account_name || null,
+        data.account_number || null,
+        data.ifsc_code || null,
+        data.tax_id || null,
+        data.address || null,
+        data.annual_salary || data.ctc || 0,
+        actor.id
+      ]
+    );
+
+    // Commit Transaction
+    await client.query('COMMIT');
+
+    try {
+      await mailer.sendWelcomeEmail(
+        userRes.rows[0].email,
+        data.first_name,
+        tempPassword
+      );
+    } catch (err) {
+      logger.error("Email sending error:", err);
+      // Log but don't fail - user is created, email is just a notification
+    }
+
+    return {
+      user: userRes.rows[0],
+      employee: empRes.rows[0],
+      temporaryPassword: tempPassword,
+      _note: "Temporary password has been sent to user email"
+    };
+
+  } catch (err) {
+    // Rollback Transaction on Error
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    // Release Client
+    client.release();
+  }
 };
 
 /* -------------------------- SOFT DELETE USER -------------------------- */

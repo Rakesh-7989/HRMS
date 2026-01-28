@@ -3,7 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { DatePicker } from '@/components/ui/DatePicker';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Upload, X, FileText } from 'lucide-react';
@@ -221,35 +221,23 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
             </div>
           )}
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Start Date *
-              </label>
-              <DatePicker
-                value={formik.values.start_date}
-                onChange={(date) => formik.setFieldValue('start_date', date)}
-                placeholder="Select start date"
-              />
-              {formik.touched.start_date && formik.errors.start_date && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.start_date}</p>
+          {/* Date Range - Single Calendar */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Leave Duration *
+            </label>
+            <DateRangePicker
+              startDate={formik.values.start_date}
+              endDate={formik.values.end_date}
+              onStartDateChange={(date) => formik.setFieldValue('start_date', date)}
+              onEndDateChange={(date) => formik.setFieldValue('end_date', date)}
+            />
+            {((formik.touched.start_date && formik.errors.start_date) ||
+              (formik.touched.end_date && formik.errors.end_date)) && (
+                <p className="mt-2 text-sm text-red-600">
+                  {formik.errors.start_date || formik.errors.end_date}
+                </p>
               )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                End Date *
-              </label>
-              <DatePicker
-                value={formik.values.end_date}
-                onChange={(date) => formik.setFieldValue('end_date', date)}
-                placeholder="Select end date"
-              />
-              {formik.touched.end_date && formik.errors.end_date && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.end_date}</p>
-              )}
-            </div>
           </div>
 
           {/* Days Summary */}

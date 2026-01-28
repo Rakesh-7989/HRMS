@@ -52,22 +52,7 @@ export const HRDashboard: React.FC = () => {
     late_percentage: 0,
   };
 
-  /* ===== STATIC SIDEBAR DATA ===== */
-
-  const announcements = [
-    { id: 1, title: 'HR Policy Update', date: 'Today' },
-    { id: 2, title: 'Payroll Process on Friday', date: 'This Week' },
-  ];
-
-  const past7Days = [
-    { day: 'Mon', date: 'Dec 16', status: 'Present' },
-    { day: 'Tue', date: 'Dec 17', status: 'Late' },
-    { day: 'Wed', date: 'Dec 18', status: 'Present' },
-    { day: 'Thu', date: 'Dec 19', status: 'Absent' },
-    { day: 'Fri', date: 'Dec 20', status: 'Present' },
-    { day: 'Sat', date: 'Dec 21', status: 'Present' },
-    { day: 'Sun', date: 'Dec 22', status: 'Present' },
-  ];
+  /* ===== People Events Data ===== */
 
   const { data: peopleEventsData, isLoading: eventsLoading } = useQuery({
     queryKey: ['peopleEvents', 'hr'],
@@ -94,7 +79,7 @@ export const HRDashboard: React.FC = () => {
             newJoiners={peopleEventsData?.joiners || []}
             isLoading={eventsLoading}
           />
-          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} announcements={announcements} past7Days={past7Days} />
+          <CalendarCard className="h-full min-h-[200px] lg:col-span-1" events={peopleEventsData} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
