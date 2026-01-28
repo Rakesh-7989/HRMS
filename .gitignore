@@ -9,3 +9,7 @@ build/
 *.pdf
 .DS_Store
 Thumbs.db
+.setup.js
+.constants.ts
+
+
