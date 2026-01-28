@@ -6,6 +6,7 @@ const requireRole = require('../../middleware/requireRole');
 
 // Import sub-module routers
 const salaryRouter = require('./salary/salary.router');
+const salaryStructureRouter = require('./salary/salaryStructure.router');
 const payrunRouter = require('./payrun/payrun.router');
 const statutoryRouter = require('./statutory/statutory.router');
 const settlementRouter = require('./settlement/settlement.router');
@@ -24,6 +25,7 @@ const statutoryService = require('./statutory/statutory.service');
 // MOUNT SUB-MODULE ROUTERS
 // ===================================================================
 router.use('/salary', salaryRouter);
+router.use('/salary-structures', salaryStructureRouter); // New Keka-style salary structures
 router.use('/payrun', payrunRouter);
 router.use('/statutory', statutoryRouter);
 router.use('/settlement', settlementRouter);
@@ -65,9 +67,9 @@ router.get('/summary', verifyJwt, requireRole(['ADMIN', 'HR']), async (req, res)
     );
     const pendingPayslips = parseInt(payslipsRes.rows[0].count || 0);
 
-    // Get pending reimbursements
+    // Get pending reimbursement claims
     const reimbRes = await require('../../config/db').query(
-      `SELECT COALESCE(SUM(amount), 0) as total FROM reimbursements 
+      `SELECT COALESCE(SUM(amount), 0) as total FROM reimbursement_claims
        WHERE tenant_id = $1 AND status = 'PENDING'`,
       [tenantId]
     );

@@ -8,7 +8,7 @@ import { LoansContent } from '@/components/payroll/LoansContent';
 import { PayslipsContent } from '@/components/payroll/PayslipsContent';
 import { CostCentersContent } from '@/components/payroll/CostCentersContent';
 import { MerchantsContent } from '@/components/payroll/MerchantsContent';
-import { SalaryDetailsContent } from '@/components/payroll/SalaryDetailsContent';
+import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresContent';
 import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 
 const PAYROLL_TABS = [
@@ -68,7 +68,7 @@ export const Payroll: React.FC = () => {
         {activeTab === 'loans' && <LoansContent />}
         {activeTab === 'cost_centers' && <CostCentersContent />}
         {activeTab === 'merchants' && <MerchantsContent />}
-        {activeTab === 'salary_details' && <SalaryDetailsContent />}
+        {activeTab === 'salary_details' && <SalaryStructuresContent />}
       </div>
     </DashboardLayout>
   );

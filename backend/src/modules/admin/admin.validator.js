@@ -18,9 +18,14 @@ exports.updateTenantProfileSchema = z.object({
   body: z.object({
     name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters").optional(),
     phone: z.string().optional(),
+    address: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    country: z.string().optional()
+    country: z.string().optional(),
+    settings: z.object({
+      primary_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format").optional(),
+      logo_url: z.string().optional()
+    }).optional()
   })
 });
 

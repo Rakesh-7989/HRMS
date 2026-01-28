@@ -33,7 +33,9 @@ export interface User {
   account_number?: string;
   ifsc_code?: string;
   tax_id?: string;
-  ctc?: string | number;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
   // Emergency Contact
   emergency_name?: string;
   emergency_phone?: string;
@@ -42,6 +44,7 @@ export interface User {
   termination_date?: string;
   termination_reason?: string;
   is_terminated?: boolean;
+  ctc?: number;
   // Metadata
   created_at?: string;
   updated_at?: string;
@@ -77,8 +80,10 @@ export interface CreateUserData {
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
-  annual_salary?: string | number;
-  ctc?: string | number;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
+  ctc?: number;
 }
 
 export interface UpdateUserData {
@@ -110,8 +115,10 @@ export interface UpdateEmployeeData {
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
-  annual_salary?: string | number;
-  ctc?: string | number;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
+  ctc?: number;
 }
 
 export interface TerminateEmployeeData {

@@ -13,7 +13,7 @@ async function runMigration() {
         await client.connect();
 
         console.log('Reading migration file...');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260113_add_attendance_regularization.sql');
+        const migrationPath = path.join(__dirname, '../src/database/seed/seed_salary_components.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/Dialog';
 import { SessionsModal } from '@/components/forms/SessionsModal';
 import { ChangePasswordModal } from '@/components/forms/ChangePasswordModal';
+import { toast } from 'react-hot-toast';
 
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -63,7 +64,7 @@ export const SettingsPage: React.FC = () => {
               Manage your organization profile and settings.
             </p>
             <div className="space-y-3">
-              <OrganizationNameSection userRole={user?.role} />
+              <OrganizationProfileSection userRole={user?.role} />
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                 <div>
@@ -270,9 +271,9 @@ export const SettingsPage: React.FC = () => {
   );
 };
 
-const OrganizationNameSection: React.FC<{ userRole?: string }> = ({ userRole }) => {
+const OrganizationProfileSection: React.FC<{ userRole?: string }> = ({ userRole }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [formData, setFormData] = useState({ name: '', address: '' });
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
@@ -286,19 +287,26 @@ const OrganizationNameSection: React.FC<{ userRole?: string }> = ({ userRole }) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
       setIsEditing(false);
+      toast.success('Organization details updated successfully');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to update organization name');
+      toast.error(error.response?.data?.message || 'Failed to update organization details');
     }
   });
 
   const handleUpdate = () => {
-    if (!newName.trim()) return;
-    updateMutation.mutate({ name: newName });
+    if (!formData.name.trim()) {
+      toast.error('Organization name is required');
+      return;
+    }
+    updateMutation.mutate(formData);
   };
 
   const startEditing = () => {
-    setNewName(profile?.name || '');
+    setFormData({
+      name: profile?.name || '',
+      address: profile?.address || ''
+    });
     setIsEditing(true);
   };
 
@@ -308,33 +316,55 @@ const OrganizationNameSection: React.FC<{ userRole?: string }> = ({ userRole }) 
 
   return (
     <>
-      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-        <div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-2">
+          <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Profile Details</h4>
+          {isTenantAdmin && (
+            <Button variant="outline" size="sm" onClick={startEditing}>
+              Edit Profile
+            </Button>
+          )}
+        </div>
+
+        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
           <p className="font-medium text-gray-900 dark:text-white">Organization Name</p>
           <p className="text-sm text-gray-600 dark:text-muted">
             {profile?.name || 'Not set'}
           </p>
         </div>
-        {isTenantAdmin && (
-          <Button variant="outline" size="sm" onClick={startEditing}>
-            Edit
-          </Button>
-        )}
+
+        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+          <p className="font-medium text-gray-900 dark:text-white">Address</p>
+          <p className="text-sm text-gray-600 dark:text-muted whitespace-pre-wrap">
+            {profile?.address || 'Not set'}
+          </p>
+        </div>
       </div>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Organization Name</DialogTitle>
+            <DialogTitle>Edit Organization Profile</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="orgName">Organization Name</Label>
               <Input
                 id="orgName"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter organization name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="orgAddress">Address</Label>
+              <textarea
+                id="orgAddress"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Enter organization address"
+                rows={3}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="flex justify-end gap-2">

@@ -94,6 +94,10 @@ const createValidationSchema = Yup.object({
     .max(20, 'Emergency phone number cannot exceed 20 digits')
     .required('Emergency phone is required'),
   emergency_relation: Yup.string().required('Emergency relation is required'),
+  ctc: Yup.number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .min(0, 'CTC cannot be negative')
+    .required('Annual CTC (LPA) is required'),
 });
 
 // Edit mode has less strict validation
@@ -141,9 +145,10 @@ const editValidationSchema = Yup.object({
   tax_id: Yup.string()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
     .required('Tax ID is required'),
-  annual_salary: Yup.number()
-    .positive('Salary must be positive')
-    .nullable(),
+
+  ctc: Yup.number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .min(0, 'CTC cannot be negative'),
 });
 
 export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
@@ -235,10 +240,13 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
       account_number: editEmployee?.account_number || '',
       ifsc_code: editEmployee?.ifsc_code || '',
       tax_id: editEmployee?.tax_id || '',
-      annual_salary: editEmployee?.ctc || '',
+      uan: editEmployee?.uan || '',
+      pf_account: editEmployee?.pf_account || '',
+      esi_number: editEmployee?.esi_number || '',
       emergency_name: editEmployee?.emergency_name || '',
       emergency_phone: editEmployee?.emergency_phone || '',
       emergency_relation: editEmployee?.emergency_relation || '',
+      ctc: editEmployee?.ctc || '',
     },
     validationSchema: isEditMode ? editValidationSchema : createValidationSchema,
     validateOnChange: true,
@@ -786,6 +794,65 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               <p className="mt-1 text-sm text-red-600">{formik.errors.tax_id}</p>
             )}
           </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              UAN
+            </label>
+            <input
+              type="text"
+              name="uan"
+              value={formik.values.uan}
+              onChange={formik.handleChange}
+              placeholder="12-digit UAN"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              PF A/C Number
+            </label>
+            <input
+              type="text"
+              name="pf_account"
+              value={formik.values.pf_account}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ESI Number
+            </label>
+            <input
+              type="text"
+              name="esi_number"
+              value={formik.values.esi_number}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Annual CTC (INR) *
+          </label>
+          <input
+            type="number"
+            name="ctc"
+            value={formik.values.ctc}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            placeholder="e.g. 600000"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <p className="mt-1 text-xs text-gray-500">Enter the total annual package amount.</p>
+          {formik.touched.ctc && formik.errors.ctc && (
+            <p className="mt-1 text-sm text-red-600">{(formik.errors as any).ctc}</p>
+          )}
         </div>
       </div>
 

@@ -38,9 +38,13 @@ exports.createUserSchema = z.object({
     account_number: stringOrNull,
     ifsc_code: stringOrNull,
     tax_id: stringOrNull,
+    uan: stringOrNull,
+    pf_account: stringOrNull,
+    esi_number: stringOrNull,
 
     // Address
-    address: stringOrNull
+    address: stringOrNull,
+    ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0))
   })
 });
 
@@ -97,9 +101,13 @@ exports.updateEmployeeSchema = z.object({
     account_number: stringOrNull,
     ifsc_code: stringOrNull,
     tax_id: stringOrNull,
+    uan: stringOrNull,
+    pf_account: stringOrNull,
+    esi_number: stringOrNull,
 
     // Address
-    address: stringOrNull
+    address: stringOrNull,
+    ctc: z.coerce.number().optional().or(z.literal("").transform(() => undefined))
   })
 });
 

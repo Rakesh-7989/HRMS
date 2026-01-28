@@ -76,7 +76,7 @@ exports.updateUser = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
   try {
-    const updated = await userService.updateEmployee(req.db, req.params.id, req.body, req.user.tenantId);
+    const updated = await userService.updateEmployee(req.db, req.params.id, req.body, req.user);
     res.json({ status: "success", updated });
   } catch (err) {
     res.status(400).json({

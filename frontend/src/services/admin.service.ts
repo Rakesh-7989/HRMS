@@ -14,8 +14,11 @@ export interface TenantProfile {
     city: string;
     state: string;
     country: string;
+    address?: string;
+    zip_code?: string;
     settings?: {
         workingHours?: WorkingHours;
+        logo_url?: string;
     };
 }
 
@@ -95,4 +98,15 @@ export const adminService = {
             throw err;
         }
     },
+
+    uploadTenantLogo: async (file: File): Promise<{ logo_url: string }> => {
+        const formData = new FormData();
+        formData.append('logo', file);
+        const response = await api.put<any>('/admin/tenant/logo', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data.data;
+    }
 };

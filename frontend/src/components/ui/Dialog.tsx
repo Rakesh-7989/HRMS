@@ -76,8 +76,10 @@ export const Dialog: React.FC<DialogProps> = ({
                   </div>
                 </div>
               )}
-              {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+              {/* Content Wrapper */}
+              <div className={cn('flex-1 overflow-y-auto w-full', !className && 'px-6 py-4')}>
+                {children}
+              </div>
             </motion.div>
           </div>
         </>

@@ -27,7 +27,7 @@ const assignSalarySchema = z.object({
     body: z.object({
         employeeId: z.string().uuid(),
         templateId: z.string().uuid().optional(),
-        ctc: z.number().positive(),
+        ctc: z.coerce.number().positive(),
         effectiveFrom: z.string(),
         effectiveTo: z.string().optional(),
         bankName: z.string().optional(),

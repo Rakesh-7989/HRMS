@@ -11,156 +11,177 @@ const getQuery = (db) =>
 
 /* ----------------------------- CREATE USER ----------------------------- */
 exports.createUser = async (db, data, actor) => {
-  // Use a dedicated client for transaction
-  const client = await pool.connect();
+  const query = getQuery(db);
 
-  try {
-    // Start Transaction
-    await client.query('BEGIN');
+  // SUPER_ADMIN can create anyone, ADMIN/HR have role restrictions
+  if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
+    throw new Error("Not allowed to create users");
+  }
 
-    // SUPER_ADMIN can create anyone, ADMIN/HR have role restrictions
-    if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
-      throw new Error("Not allowed to create users");
+  // HR users can create EMPLOYEE and MANAGER only
+  if (actor.role === "HR") {
+    if (!["EMPLOYEE", "MANAGER"].includes(data.role)) {
+      throw new Error("HR can only create EMPLOYEE or MANAGER roles");
     }
+  }
 
-    // HR users can create EMPLOYEE and MANAGER only
-    if (actor.role === "HR") {
-      if (!["EMPLOYEE", "MANAGER"].includes(data.role)) {
-        throw new Error("HR can only create EMPLOYEE or MANAGER roles");
-      }
+  // ADMIN can create EMPLOYEE, MANAGER, HR
+  if (actor.role === "ADMIN") {
+    if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
+      throw new Error("ADMIN can only create EMPLOYEE, MANAGER, or HR roles");
     }
+  }
 
-    // ADMIN can create EMPLOYEE, MANAGER, HR
-    if (actor.role === "ADMIN") {
-      if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
-        throw new Error("ADMIN can only create EMPLOYEE, MANAGER, or HR roles");
-      }
-    }
+  // Only SUPER_ADMIN can create ADMIN role
+  if (data.role === "ADMIN" && actor.role !== "SUPER_ADMIN") {
+    throw new Error("Only SUPER_ADMIN can create ADMIN role");
+  }
 
-    // Only SUPER_ADMIN can create ADMIN role
-    if (data.role === "ADMIN" && actor.role !== "SUPER_ADMIN") {
-      throw new Error("Only SUPER_ADMIN can create ADMIN role");
-    }
+  // Check employee limit
+  const canAddMore = await subscriptionService.checkEmployeeLimit(actor.tenantId, db);
+  if (!canAddMore) {
+    throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
+  }
 
-    // Check employee limit
-    const canAddMore = await subscriptionService.checkEmployeeLimit(actor.tenantId, client);
-    if (!canAddMore) {
-      throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
-    }
+  const duplicate = await query(
+    `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
+    [actor.tenantId, data.email]
+  );
 
-    const duplicate = await client.query(
-      `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
-      [actor.tenantId, data.email]
+  if (duplicate.rowCount) throw new Error("Email already exists");
+
+  // Validate department belongs to same tenant
+  if (data.department_id) {
+    const deptCheck = await query(
+      `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
+      [data.department_id, actor.tenantId]
     );
-
-    if (duplicate.rowCount) throw new Error("Email already exists");
-
-    // Validate department belongs to same tenant
-    if (data.department_id) {
-      const deptCheck = await client.query(
-        `SELECT id FROM departments WHERE id = $1 AND tenant_id = $2`,
-        [data.department_id, actor.tenantId]
-      );
-      if (deptCheck.rowCount === 0) {
-        throw new Error("Department not found or does not belong to your organization");
-      }
+    if (deptCheck.rowCount === 0) {
+      throw new Error("Department not found or does not belong to your organization");
     }
+  }
 
-    // Validate designation belongs to same tenant
-    if (data.designation_id) {
-      const desigCheck = await client.query(
-        `SELECT id FROM designations WHERE id = $1 AND tenant_id = $2`,
-        [data.designation_id, actor.tenantId]
-      );
-      if (desigCheck.rowCount === 0) {
-        throw new Error("Designation not found or does not belong to your organization");
-      }
-    }
-
-    const tempPassword = crypto.randomBytes(6).toString("hex");
-    const hash = await bcrypt.hash(tempPassword, 10);
-
-    const userRes = await client.query(
-      `
-      INSERT INTO users 
-        (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
-      VALUES ($1,$2,$3,$4,true,true,$5)
-      RETURNING id, email, role
-      `,
-      [actor.tenantId, data.email, hash, data.role, actor.id]
+  // Validate designation belongs to same tenant
+  if (data.designation_id) {
+    const desigCheck = await query(
+      `SELECT id FROM designations WHERE id = $1 AND tenant_id = $2`,
+      [data.designation_id, actor.tenantId]
     );
+    if (desigCheck.rowCount === 0) {
+      throw new Error("Designation not found or does not belong to your organization");
+    }
+  }
 
-    const empRes = await client.query(
+  const tempPassword = crypto.randomBytes(6).toString("hex");
+  const hash = await bcrypt.hash(tempPassword, 10);
+
+  const userRes = await query(
+    `
+    INSERT INTO users 
+      (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
+    VALUES ($1,$2,$3,$4,true,true,$5)
+    RETURNING id, email, role
+    `,
+    [actor.tenantId, data.email, hash, data.role, actor.id]
+  );
+
+  const empRes = await query(
+    `
+    INSERT INTO employees
+      (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
+       emergency_name, emergency_phone, emergency_relation,
+       employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
+       bank_name, account_name, account_number, ifsc_code, tax_id, address,
+       uan, pf_account, esi_number, created_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
+    RETURNING id
+    `,
+    [
+      actor.tenantId,
+      userRes.rows[0].id,
+      data.first_name,
+      data.last_name || null,
+      data.phone || null,
+      data.date_of_birth || null,
+      data.gender || null,
+      data.marital_status || null,
+      data.nationality || null,
+      data.emergency_name || null,
+      data.emergency_phone || null,
+      data.emergency_relation || null,
+      data.employee_id || null,
+      data.department_id || null,
+      data.designation_id || null,
+      data.reports_to || null,
+      data.join_date || null,
+      data.employment_type || null,
+      data.shift || null,
+      data.bank_name || null,
+      data.account_name || null,
+      data.account_number || null,
+      data.ifsc_code || null,
+      data.tax_id || null,
+      data.address || null,
+      data.uan || null,
+      data.pf_account || null,
+      data.esi_number || null,
+      actor.id
+    ]
+  );
+
+  // Create initial salary details if CTC is provided
+  if (data.ctc) {
+    // 1. Maintain legacy bank info support
+    await query(
       `
-      INSERT INTO employees
-        (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
-         emergency_name, emergency_phone, emergency_relation,
-         employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
-         bank_name, account_name, account_number, ifsc_code, tax_id, address, annual_salary, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
-      RETURNING id
+      INSERT INTO employee_salary_details
+        (tenant_id, employee_id, ctc, bank_name, bank_account_number, bank_ifsc, is_current, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, true, $7)
       `,
       [
         actor.tenantId,
-        userRes.rows[0].id,
-        data.first_name,
-        data.last_name || null,
-        data.phone || null,
-        data.date_of_birth || null,
-        data.gender || null,
-        data.marital_status || null,
-        data.nationality || null,
-        data.emergency_name || null,
-        data.emergency_phone || null,
-        data.emergency_relation || null,
-        data.employee_id || null,
-        data.department_id || null,
-        data.designation_id || null,
-        data.reports_to || null,
-        data.join_date || null,
-        data.employment_type || null,
-        data.shift || null,
+        empRes.rows[0].id,
+        data.ctc,
         data.bank_name || null,
-        data.account_name || null,
         data.account_number || null,
         data.ifsc_code || null,
-        data.tax_id || null,
-        data.address || null,
-        data.annual_salary || data.ctc || 0,
         actor.id
       ]
     );
-
-    // Commit Transaction
-    await client.query('COMMIT');
-
+    // 2. New Keka-style assignment
     try {
-      await mailer.sendWelcomeEmail(
-        userRes.rows[0].email,
-        data.first_name,
-        tempPassword
+      const salaryStructureService = require("../payroll/salary/salaryStructure.service");
+      const defaultStructure = await query(
+        `SELECT id FROM salary_structures WHERE tenant_id = $1 AND is_default = TRUE AND is_active = TRUE`,
+        [actor.tenantId]
       );
+
+      if (defaultStructure.rowCount > 0) {
+        await salaryStructureService.assignEmployeeSalary(
+          actor.tenantId,
+          empRes.rows[0].id,
+          {
+            structure_id: defaultStructure.rows[0].id,
+            annual_ctc: parseFloat(data.ctc),
+            effective_from: data.join_date || new Date().toISOString().split('T')[0],
+            revision_reason: 'Initial assignment (Onboarding)'
+          },
+          actor.id
+        );
+      }
     } catch (err) {
-      logger.error("Email sending error:", err);
-      // Log but don't fail - user is created, email is just a notification
+      logger.error("Failed to assign initial salary structure in createUser:", err);
     }
-
-    return {
-      user: userRes.rows[0],
-      employee: empRes.rows[0],
-      temporaryPassword: tempPassword,
-      _note: "Temporary password has been sent to user email"
-    };
-
-  } catch (err) {
-    // Rollback Transaction on Error
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    // Release Client
-    client.release();
   }
+
+  return {
+    user: userRes.rows[0],
+    employee: empRes.rows[0],
+    temporaryPassword: tempPassword,
+    _note: "Temporary password has been sent to user email"
+  };
 };
+
 
 /* -------------------------- SOFT DELETE USER -------------------------- */
 exports.softDeleteUser = async (db, id, actor) => {
@@ -328,18 +349,21 @@ exports.getUserById = async (db, id, tenantId) => {
   const res = await query(
     `
      SELECT u.*, 
+            e.id AS employee_uuid,
             e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
-            e.employee_id, e.join_date, e.employment_type, e.shift,
+             e.employee_id, e.join_date, e.employment_type, e.shift,
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
             e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
-            e.annual_salary AS ctc,
-            m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name
+            e.uan, e.pf_account, e.esi_number,
+            m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
+            esd.ctc
      FROM users u 
      LEFT JOIN employees e ON e.user_id = u.id
      LEFT JOIN employees m ON m.id = e.reports_to
+     LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
      WHERE u.id=$1 AND u.tenant_id=$2
-    `,
+     `,
     [id, tenantId]
   );
 
@@ -356,8 +380,9 @@ exports.getUserById = async (db, id, tenantId) => {
 };
 
 /* ---------------------- EMPLOYEE PROFILE UPDATE ---------------------- */
-exports.updateEmployee = async (db, id, updates, tenantId) => {
+exports.updateEmployee = async (db, id, updates, actor) => {
   const query = getQuery(db);
+  const tenantId = actor.tenantId;
 
   const allowed = [
     // Personal
@@ -389,6 +414,9 @@ exports.updateEmployee = async (db, id, updates, tenantId) => {
     "account_number",
     "ifsc_code",
     "tax_id",
+    "uan",
+    "pf_account",
+    "esi_number",
 
     "annual_salary",
     "ctc", // support both aliases
@@ -422,6 +450,69 @@ exports.updateEmployee = async (db, id, updates, tenantId) => {
 
   const result = await query(sql, params);
 
+  // Update salary details if CTC or bank info changed
+  if (updates.ctc !== undefined || updates.bank_name || updates.account_number || updates.ifsc_code) {
+    const empId = result.rows[0].id;
+    const esdCheck = await query(
+      `SELECT id FROM employee_salary_details WHERE employee_id = $1 AND is_current = true`,
+      [empId]
+    );
+
+    if (esdCheck.rowCount > 0) {
+      // Update existing
+      const esdFields = [];
+      const esdParams = [];
+      let esdIdx = 1;
+
+      if (updates.ctc !== undefined) { esdFields.push(`ctc=$${esdIdx++}`); esdParams.push(updates.ctc); }
+      if (updates.bank_name !== undefined) { esdFields.push(`bank_name=$${esdIdx++}`); esdParams.push(updates.bank_name); }
+      if (updates.account_number !== undefined) { esdFields.push(`bank_account_number=$${esdIdx++}`); esdParams.push(updates.account_number); }
+      if (updates.ifsc_code !== undefined) { esdFields.push(`bank_ifsc=$${esdIdx++}`); esdParams.push(updates.ifsc_code); }
+
+      if (esdFields.length > 0) {
+        esdParams.push(empId);
+        await query(
+          `UPDATE employee_salary_details SET ${esdFields.join(", ")}, updated_at=now() WHERE employee_id=$${esdIdx} AND is_current=true`,
+          esdParams
+        );
+      }
+    } else {
+      // Create new
+      await query(
+        `INSERT INTO employee_salary_details (tenant_id, employee_id, ctc, bank_name, bank_account_number, bank_ifsc, is_current)
+         VALUES ($1, $2, $3, $4, $5, $6, true)`,
+        [tenantId, empId, updates.ctc || 0, updates.bank_name || null, updates.account_number || null, updates.ifsc_code || null]
+      );
+    }
+
+    // New Keka-style handling
+    if (updates.ctc !== undefined) {
+      try {
+        const salaryStructureService = require("../payroll/salary/salaryStructure.service");
+        const defaultStructure = await query(
+          `SELECT id FROM salary_structures WHERE tenant_id = $1 AND is_default = TRUE AND is_active = TRUE`,
+          [tenantId]
+        );
+
+        if (defaultStructure.rowCount > 0) {
+          await salaryStructureService.assignEmployeeSalary(
+            tenantId,
+            empId,
+            {
+              structure_id: defaultStructure.rows[0].id,
+              annual_ctc: parseFloat(updates.ctc),
+              effective_from: updates.join_date || new Date().toISOString().split('T')[0],
+              revision_reason: 'Salary update from profile'
+            },
+            actor.id
+          );
+        }
+      } catch (err) {
+        logger.error("Failed to update salary assignment in updateEmployee:", err);
+      }
+    }
+  }
+
   return result.rows[0];
 };
 
@@ -451,9 +542,12 @@ exports.getMyProfile = async (db, user) => {
       e.shift,
       e.bank_name,
       e.account_name,
-      e.account_number,
+       e.account_number,
       e.ifsc_code,
       e.tax_id,
+      e.uan,
+      e.pf_account,
+      e.esi_number,
       e.reports_to
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id
@@ -499,7 +593,7 @@ exports.updateMyProfile = async (db, user, updates) => {
   }
 
   // Now update the employee record
-  return this.updateEmployee(db, user.id, updates, user.tenantId);
+  return this.updateEmployee(db, user.id, updates, user);
 };
 
 /* ---------------------- UPDATE USER STATUS ---------------------- */

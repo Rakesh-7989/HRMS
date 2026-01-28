@@ -103,7 +103,7 @@ const PayRunPage: React.FC = () => {
                                                 )}
 
                                                 {/* Approve Action */}
-                                                {run.status === 'DRAFT' && (
+                                                {(run.status === 'PENDING_APPROVAL' || run.status === 'DRAFT') && (
                                                     <Button size="sm" variant="ghost" className="text-green-600" onClick={() => approveMut.mutate(run.id)} title="Approve">
                                                         <CheckCircle size={16} />
                                                     </Button>

@@ -11,14 +11,24 @@ import { Download, Filter, FileText, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
+import { PayrollSettings } from './PayrollSettings';
+import { Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const PayslipsContent: React.FC = () => {
+    const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
 
-    const [activeSection, setActiveSection] = useState<'payslips' | 'pay_schedule' | 'deductions' | 'income_tax' | 'salary_revision'>('payslips');
+    const [activeSection, setActiveSection] = useState<'payslips' | 'pay_schedule' | 'deductions' | 'income_tax' | 'salary_revision' | 'settings'>('payslips');
+    const [activeSubSection, setActiveSubSection] = useState<'personal' | 'staff'>('personal');
     const [showFilters, setShowFilters] = useState(false);
+
+    // Generate payslips dialog state
+    const [genDialogOpen, setGenDialogOpen] = useState(false);
+    const [genMonth, setGenMonth] = useState(new Date().getMonth() + 1);
+    const [genYear, setGenYear] = useState(new Date().getFullYear());
 
     const dateRange = useMemo(() => {
         const now = new Date();
@@ -32,13 +42,21 @@ export const PayslipsContent: React.FC = () => {
             default: fromDate = subDays(now, 30);
         }
 
-        return { from_date: format(fromDate, 'yyyy-MM-dd'), to_date: format(now, 'yyyy-MM-dd') };
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return {
+            from_date: format(fromDate, 'yyyy-MM-dd'),
+            to_date: format(endOfMonth, 'yyyy-MM-dd')
+        };
     }, [selectedPeriod, customFromDate, customToDate]);
 
-    // Fetch data for each section (placeholders / keyed queries)
     const { data: payslips = [], isLoading: payslipsLoading } = useQuery({
-        queryKey: ['payslips', dateRange],
-        queryFn: () => payrollService.listPayslips(dateRange),
+        queryKey: ['payslips', dateRange, user?.role, activeSubSection],
+        queryFn: () => {
+            if (activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR')) {
+                return payrollService.listPayslips(dateRange);
+            }
+            return payrollService.getMyPayslips();
+        },
         enabled: activeSection === 'payslips'
     });
 
@@ -99,35 +117,11 @@ export const PayslipsContent: React.FC = () => {
         amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
     // Demo/mock data to display while backend is not populated
-    const demoPayslips = [
-        { id: 'p1', date: '2025-12-01', employee_name: 'Asha Rao', gross: 120000, deductions: 12000, net: 108000 },
-        { id: 'p2', date: '2025-12-01', employee_name: 'Vikram Singh', gross: 85000, deductions: 8500, net: 76500 },
-        { id: 'p3', date: '2025-11-25', employee_name: 'Meera Patel', gross: 60000, deductions: 6000, net: 54000 }
-    ];
-
-    const demoSchedules = [
-        { id: 's1', name: 'Monthly Salary', next_run: '2026-01-01', frequency: 'Monthly', cycle: 'Monthly', credit_day: 1, cutoff_day: 25 },
-        { id: 's2', name: 'Fortnightly Payroll', next_run: '2025-12-28', frequency: 'Fortnightly', cycle: 'Fortnightly', credit_day: 28, cutoff_day: 26 }
-    ];
-
-    const demoDeductions = [
-        { id: 'd1', employee_name: 'Asha Rao', type: 'Provident Fund', amount: 1200, effective_date: '2025-01-01' },
-        { id: 'd2', employee_name: 'Vikram Singh', type: 'Professional Tax', amount: 200, effective_date: '2025-04-01' }
-    ];
-
-    const demoIncomeTax = [
-        { id: 't1', employee_name: 'Asha Rao', fy: '2024-25', taxable_income: 1440000, tax_deducted: 150000 }
-    ];
-
-    const demoRevisions = [
-        { id: 'r1', employee_name: 'Meera Patel', old_salary: 55000, new_salary: 60000, effective_date: '2025-10-01' }
-    ];
-
-    const displayPayslips = (payslips && payslips.length) ? payslips : demoPayslips;
-    const displaySchedules = (schedules && schedules.length) ? schedules : demoSchedules;
-    const displayDeductions = (deductions && deductions.length) ? deductions : demoDeductions;
-    const displayIncomeTax = (incomeTax && incomeTax.length) ? incomeTax : demoIncomeTax;
-    const displayRevisions = (revisions && revisions.length) ? revisions : demoRevisions;
+    const displayPayslips = payslips || [];
+    const displaySchedules = schedules || [];
+    const displayDeductions = deductions || [];
+    const displayIncomeTax = incomeTax || [];
+    const displayRevisions = revisions || [];
 
     const exportCSV = (rows: any[], filename = 'export.csv') => {
         if (!rows?.length) return;
@@ -145,18 +139,22 @@ export const PayslipsContent: React.FC = () => {
     // Payslip actions: generation, download PDF, email, history
     const queryClient = useQueryClient();
 
-    const [genDialogOpen, setGenDialogOpen] = useState(false);
-    const [genMonth, setGenMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
-    const [genYear, setGenYear] = useState<number>(new Date().getFullYear());
-
-    const generatePayslipsMut = useMutation({
+    // Generate payslips mutation
+    const generateMut = useMutation({
         mutationFn: (payload: { month: number; year: number }) => payrollService.generateMonthlyPayslips(payload),
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['payslips'] });
             setGenDialogOpen(false);
-            alert('Monthly payslip generation started. It may take a few moments.');
+            alert(`Payslips generated successfully! Total employees: ${data?.total_employees ?? 0}`);
+        },
+        onError: (err: any) => {
+            alert(`Failed to generate payslips: ${err?.response?.data?.message || err?.message || 'Unknown error'}`);
         }
     });
+
+    const handleGeneratePayslips = () => {
+        generateMut.mutate({ month: genMonth, year: genYear });
+    };
 
     const downloadPayslip = async (p: any) => {
         try {
@@ -173,6 +171,17 @@ export const PayslipsContent: React.FC = () => {
         }
     };
 
+    const viewPayslip = async (p: any) => {
+        try {
+            const blob = await payrollService.downloadPayslip(p.id);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to view payslip.');
+        }
+    };
+
     const emailPayslipMut = useMutation({
         mutationFn: ({ payslipId, to }: { payslipId: string; to?: string }) => payrollService.emailPayslip(payslipId, { to }),
         onSuccess: () => {
@@ -181,10 +190,20 @@ export const PayslipsContent: React.FC = () => {
         onError: () => alert('Failed to send payslip email.')
     });
 
+    const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+    const [emailTargetPayslip, setEmailTargetPayslip] = useState<any | null>(null);
+    const [emailAddress, setEmailAddress] = useState('');
+
     const emailPayslip = (p: any) => {
-        const to = (p as any).employee_email || prompt('Enter recipient email address', (p as any).employee_email || '');
-        if (!to) return;
-        emailPayslipMut.mutate({ payslipId: p.id, to });
+        setEmailTargetPayslip(p);
+        setEmailAddress(p.employee_email || '');
+        setEmailDialogOpen(true);
+    };
+
+    const handleSendEmail = () => {
+        if (!emailTargetPayslip || !emailAddress) return;
+        emailPayslipMut.mutate({ payslipId: emailTargetPayslip.id, to: emailAddress });
+        setEmailDialogOpen(false);
     };
 
     const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -234,24 +253,25 @@ export const PayslipsContent: React.FC = () => {
                         { id: 'payslips', label: 'Payslips Report' },
                         { id: 'pay_schedule', label: 'Pay Schedule' },
                         { id: 'deductions', label: 'Deductions' },
-                        { id: 'income_tax', label: 'Income Tax' },
-                        { id: 'salary_revision', label: 'Salary Revision' },
+                        { id: 'income_tax', label: 'Income Tax', icon: FileText },
+                        { id: 'salary_revision', label: 'Salary Revision', icon: FileText },
+                        { id: 'settings', label: 'Settings', icon: Settings },
                     ].map((b) => (
                         <Button key={b.id} variant={activeSection === b.id ? 'primary' : 'outline'} size="sm" onClick={() => setActiveSection(b.id as any)}>
-                            <FileText className="mr-2" size={14} />
+                            {b.icon && <b.icon className="mr-2" size={14} />}
                             {b.label}
                         </Button>
                     ))}
                 </div>
 
                 <div className="flex gap-2">
-                    {activeSection === 'payslips' && (
+                    {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
                         <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)}>
                             <FileText className="mr-2" size={14} />Generate Monthly
                         </Button>
                     )}
 
-                    {activeSection === 'deductions' && (
+                    {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'deductions' && (
                         <Button variant="primary" size="sm" onClick={() => setAddDeductionOpen(true)}>
                             <FileText className="mr-2" size={14} />Add Deduction
                         </Button>
@@ -271,6 +291,32 @@ export const PayslipsContent: React.FC = () => {
                     }><Download className="mr-2" size={14} />Export CSV</Button>
                 </div>
             </div>
+
+            {/* Sub-tabs for HR/Admin under Payslips Report */}
+            {activeSection === 'payslips' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+                <div className="flex gap-4 border-b border-gray-100 dark:border-gray-800 pb-2">
+                    <button
+                        onClick={() => setActiveSubSection('personal')}
+                        className={`text-sm font-medium px-2 py-1 transition-colors relative ${activeSubSection === 'personal' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        My Payslips
+                        {activeSubSection === 'personal' && (
+                            <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-primary" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveSubSection('staff')}
+                        className={`text-sm font-medium px-2 py-1 transition-colors relative ${activeSubSection === 'staff' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Staff Payslips (Report)
+                        {activeSubSection === 'staff' && (
+                            <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-primary" />
+                        )}
+                    </button>
+                </div>
+            )}
 
             {/* Filters area */}
             {showFilters && (
@@ -308,12 +354,14 @@ export const PayslipsContent: React.FC = () => {
             {/* Section content */}
             {activeSection === 'payslips' && (
                 <Card>
-                    <h3 className="text-lg font-semibold mb-4">Payslips Report</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                        {activeSubSection === 'staff' ? 'Staff Payslips Report' : 'My Payslips'}
+                    </h3>
                     <Table>
                         <TableHeader>
                             <tr>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Employee</TableHead>
+                                {activeSubSection === 'staff' && <TableHead>Employee</TableHead>}
                                 <TableHead>Gross Pay</TableHead>
                                 <TableHead>Deductions</TableHead>
                                 <TableHead>Net Pay</TableHead>
@@ -322,23 +370,27 @@ export const PayslipsContent: React.FC = () => {
                         </TableHeader>
                         <TableBody>
                             {payslipsLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={6}>Loading...</td></TableRow>
+                                <TableRow><td className="p-4 text-center" colSpan={activeSubSection === 'staff' ? 6 : 5}>Loading...</td></TableRow>
                             ) : displayPayslips.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={6}>No payslips for selected period</td></TableRow>
+                                <TableRow><td className="p-4 text-center" colSpan={activeSubSection === 'staff' ? 6 : 5}>No payslips for selected period</td></TableRow>
                             ) : (
                                 displayPayslips.map((p: any) => (
                                     <TableRow key={p.id}>
                                         <TableCell>{p.date}</TableCell>
-                                        <TableCell>{p.employee_name}</TableCell>
+                                        {activeSubSection === 'staff' && <TableCell>{p.employee_name}</TableCell>}
                                         <TableCell>{formatINR(p.gross)}</TableCell>
                                         <TableCell>{formatINR(p.deductions)}</TableCell>
                                         <TableCell>{formatINR(p.net)}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <Button size="sm" variant="outline">View</Button>
+                                                <Button size="sm" variant="outline" onClick={() => viewPayslip(p)}>View</Button>
                                                 <Button size="sm" variant="outline" className="ml-2" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
-                                                <Button size="sm" variant="outline" className="ml-2" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
-                                                <Button size="sm" variant="outline" className="ml-2" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                {user?.role === 'HR' && (
+                                                    <Button size="sm" variant="outline" className="ml-2" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
+                                                )}
+                                                {activeSubSection === 'staff' && (
+                                                    <Button size="sm" variant="outline" className="ml-2" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -552,7 +604,7 @@ export const PayslipsContent: React.FC = () => {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setGenDialogOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={() => generatePayslipsMut.mutate({ month: genMonth, year: genYear })} isLoading={generatePayslipsMut.isPending}>Generate</Button>
+                        <Button variant="primary" onClick={handleGeneratePayslips} isLoading={generateMut.isPending}>Generate</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -662,6 +714,31 @@ export const PayslipsContent: React.FC = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Email Payslip Dialog */}
+            <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Email Payslip {emailTargetPayslip ? `— ${emailTargetPayslip.employee_name}` : ''}</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="grid grid-cols-1 gap-4 mt-2">
+                        <div>
+                            <Label>Recipient Email Address</Label>
+                            <Input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} placeholder="employee@example.com" className="mt-2" />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSendEmail} isLoading={emailPayslipMut.isPending}>Send Email</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {activeSection === 'settings' && (
+                <PayrollSettings />
+            )}
         </div>
     );
 };

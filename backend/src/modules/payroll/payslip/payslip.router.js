@@ -39,6 +39,46 @@ const taxDeclarationSchema = z.object({
 router.use(verifyJwt);
 
 // =====================
+// GENERATE PAYSLIPS
+// =====================
+
+// Generate payslips for a month (creates and calculates a payrun)
+router.post(
+    "/generate",
+    requireRole(["HR", "ADMIN"]),
+    async (req, res) => {
+        try {
+            const tenantId = req.user.tenantId;
+            const userId = req.user.id;
+            const { month, year } = req.body;
+
+            if (!month || !year) {
+                return res.status(400).json({ status: 'error', message: 'Month and year are required' });
+            }
+
+            const payrunService = require('../payrun/payrun.service');
+
+            // Create the payrun
+            const payrun = await payrunService.createPayrun(tenantId, userId, {
+                periodMonth: month,
+                periodYear: year
+            });
+
+            // Calculate the payrun
+            const calculatedPayrun = await payrunService.calculatePayrun(tenantId, payrun.id, userId);
+
+            // Auto-approve the payrun so payslips are immediately available
+            const approvedPayrun = await payrunService.approvePayrun(tenantId, payrun.id, userId);
+
+            res.json({ status: 'success', data: approvedPayrun });
+        } catch (err) {
+            console.error('Payslip generation error:', err);
+            res.status(500).json({ status: 'error', message: err.message || 'Failed to generate payslips' });
+        }
+    }
+);
+
+// =====================
 // PAYSLIPS
 // =====================
 
@@ -47,6 +87,13 @@ router.get(
     "/my",
     requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyPayslips
+);
+
+// Admin/HR views all payslips
+router.get(
+    "/",
+    requireRole(["HR", "ADMIN"]),
+    controller.getAllPayslips
 );
 
 // Get specific payslip data
@@ -58,9 +105,16 @@ router.get(
 
 // Download payslip PDF
 router.get(
-    "/:payrollRunId/employee/:employeeId/download",
+    "/:id/download",
     requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.downloadPayslip
+);
+
+// Email payslip as PDF
+router.post(
+    "/:id/email",
+    requireRole(["HR"]),
+    controller.emailPayslip
 );
 
 // =====================

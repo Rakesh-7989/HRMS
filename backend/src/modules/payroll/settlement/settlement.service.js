@@ -18,14 +18,14 @@ const createReimbursement = async (tenantId, employeeId, userId, payload) => {
     }
 
     const result = await db.query(
-        `INSERT INTO reimbursements (
-      tenant_id, employee_id, category, amount, claim_date, 
-      description, is_taxable, receipt_url, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO reimbursement_claims (
+      tenant_id, employee_id, reimbursement_type_id, amount, claim_date, 
+      description, receipt_url, created_by
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *`,
         [
-            tenantId, employeeId, category, amount, claimDate,
-            description || null, isTaxable || false, receiptUrl || null, userId
+            tenantId, employeeId, payload.reimbursementTypeId, amount, claimDate,
+            description || null, receiptUrl || null, userId
         ]
     );
 
@@ -34,9 +34,10 @@ const createReimbursement = async (tenantId, employeeId, userId, payload) => {
 
 const getReimbursements = async (tenantId, filters = {}) => {
     let query = `
-    SELECT r.*, e.first_name, e.last_name, e.employee_id as emp_code
-    FROM reimbursements r
+    SELECT r.*, e.first_name, e.last_name, e.employee_id as emp_code, rt.name as category_name
+    FROM reimbursement_claims r
     JOIN employees e ON e.id = r.employee_id
+    LEFT JOIN reimbursement_types rt ON rt.id = r.reimbursement_type_id
     WHERE r.tenant_id = $1
   `;
     const params = [tenantId];
@@ -65,9 +66,11 @@ const getReimbursements = async (tenantId, filters = {}) => {
 
 const getMyReimbursements = async (tenantId, employeeId) => {
     const result = await db.query(
-        `SELECT * FROM reimbursements 
-     WHERE tenant_id = $1 AND employee_id = $2 
-     ORDER BY created_at DESC`,
+        `SELECT r.*, rt.name as category_name 
+     FROM reimbursement_claims r
+     LEFT JOIN reimbursement_types rt ON rt.id = r.reimbursement_type_id
+     WHERE r.tenant_id = $1 AND r.employee_id = $2 
+     ORDER BY r.created_at DESC`,
         [tenantId, employeeId]
     );
     return result.rows;
@@ -79,12 +82,11 @@ const approveReimbursement = async (tenantId, reimbursementId, userId, status, i
     }
 
     const result = await db.query(
-        `UPDATE reimbursements 
-     SET status = $1, approved_by = $2, approved_at = now(), 
-         include_in_payroll = $3
-     WHERE tenant_id = $4 AND id = $5 AND status = 'PENDING'
+        `UPDATE reimbursement_claims 
+     SET status = $1, approved_by = $2, approved_at = now()
+     WHERE tenant_id = $3 AND id = $4 AND status = 'PENDING'
      RETURNING *`,
-        [status, userId, includeInPayroll, tenantId, reimbursementId]
+        [status, userId, tenantId, reimbursementId]
     );
 
     if (result.rowCount === 0) {
@@ -96,8 +98,8 @@ const approveReimbursement = async (tenantId, reimbursementId, userId, status, i
 
 const markReimbursementPaid = async (tenantId, reimbursementId, payrollRunId) => {
     const result = await db.query(
-        `UPDATE reimbursements 
-     SET status = 'PAID', payroll_run_id = $1
+        `UPDATE reimbursement_claims 
+     SET status = 'PAID', paid_in_payrun_id = $1
      WHERE tenant_id = $2 AND id = $3 AND status = 'APPROVED'
      RETURNING *`,
         [payrollRunId, tenantId, reimbursementId]
@@ -123,13 +125,16 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
         throw new Error(`F&F settlement already exists for this employee (Status: ${existingFnF.rows[0].status})`);
     }
 
-    // Get employee's current salary
+    // Get employee's current salary assignment
     const salaryRes = await db.query(
-        `SELECT * FROM employee_salary_details 
-     WHERE tenant_id = $1 AND employee_id = $2 AND is_current = TRUE`,
+        `SELECT esa.id as assignment_id, esa.annual_ctc as ctc
+     FROM employee_salary_assignments esa
+     WHERE esa.tenant_id = $1 AND esa.employee_id = $2 AND esa.is_current = TRUE`,
         [tenantId, employeeId]
     );
-    const salary = salaryRes.rows[0];
+    const assignment = salaryRes.rows[0];
+    const ctc = assignment ? parseFloat(assignment.ctc || 0) : 0;
+    const perDaySalary = ctc / 12 / 30; // Simplified calculation for settlement baseline
 
     // Get pending loans
     const loansRes = await db.query(
@@ -140,11 +145,11 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
     );
     const loanRecovery = parseFloat(loansRes.rows[0]?.total || 0);
 
-    // Get pending reimbursements
+    // Get pending reimbursement claims
     const reimbRes = await db.query(
         `SELECT SUM(amount) as total 
-     FROM reimbursements 
-     WHERE tenant_id = $1 AND employee_id = $2 AND status = 'APPROVED' AND payroll_run_id IS NULL`,
+     FROM reimbursement_claims 
+     WHERE tenant_id = $1 AND employee_id = $2 AND status = 'APPROVED' AND paid_in_payrun_id IS NULL`,
         [tenantId, employeeId]
     );
     const reimbursementsPending = parseFloat(reimbRes.rows[0]?.total || 0);
@@ -158,11 +163,10 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
         [tenantId, employeeId]
     );
     const encashableDays = parseFloat(leaveRes.rows[0]?.total_days || 0);
-    const perDaySalary = salary ? parseFloat(salary.per_day_salary || 0) : 0;
     const leaveEncashment = encashableDays * perDaySalary;
 
     // Calculate pending salary (simplified - days from last payroll to LWD)
-    const pendingSalary = salary ? parseFloat(salary.ctc) / 12 : 0; // Full month for now
+    const pendingSalary = ctc / 12; // Full month for now
 
     // Calculate gratuity (5 years = 15 days salary per year)
     // Simplified: (basic * 15/26) * years_of_service

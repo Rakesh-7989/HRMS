@@ -216,6 +216,15 @@ export const payrollService = {
     }
   },
 
+  getMyPayslips: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/payslips/my');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
   listPaySchedules: async () => {
     try {
       const response = await api.get<ApiResponse<Array<any>>>('/payroll/schedules');
@@ -653,8 +662,216 @@ export const payrollService = {
 
   getCostCenters: async () => {
     return payrollService.listCostCenters();
+  },
+
+  // =====================================================
+  // SALARY STRUCTURE MANAGEMENT (Keka-Style)
+  // =====================================================
+
+  // Salary Components
+  listSalaryComponentsV2: async (filters?: { component_type?: string; is_active?: boolean }) => {
+    const response = await api.get<ApiResponse<SalaryComponent[]>>('/payroll/salary-structures/components', { params: filters });
+    return response.data.data || [];
+  },
+
+  createSalaryComponentV2: async (payload: Partial<SalaryComponent>) => {
+    const response = await api.post<ApiResponse<SalaryComponent>>('/payroll/salary-structures/components', payload);
+    return response.data.data!;
+  },
+
+  updateSalaryComponentV2: async (id: string, payload: Partial<SalaryComponent>) => {
+    const response = await api.put<ApiResponse<SalaryComponent>>(`/payroll/salary-structures/components/${id}`, payload);
+    return response.data.data!;
+  },
+
+  deleteSalaryComponentV2: async (id: string) => {
+    await api.delete(`/payroll/salary-structures/components/${id}`);
+  },
+
+  // Salary Structures
+  listSalaryStructures: async () => {
+    const response = await api.get<ApiResponse<SalaryStructure[]>>('/payroll/salary-structures/structures');
+    return response.data.data || [];
+  },
+
+  getSalaryStructureById: async (id: string) => {
+    const response = await api.get<ApiResponse<SalaryStructureDetail>>(`/payroll/salary-structures/structures/${id}`);
+    return response.data.data!;
+  },
+
+  createSalaryStructure: async (payload: CreateSalaryStructurePayload) => {
+    const response = await api.post<ApiResponse<SalaryStructure>>('/payroll/salary-structures/structures', payload);
+    return response.data.data!;
+  },
+
+  updateSalaryStructureV2: async (id: string, payload: Partial<CreateSalaryStructurePayload>) => {
+    const response = await api.put<ApiResponse<SalaryStructure>>(`/payroll/salary-structures/structures/${id}`, payload);
+    return response.data.data!;
+  },
+
+  deleteSalaryStructure: async (id: string) => {
+    await api.delete(`/payroll/salary-structures/structures/${id}`);
+  },
+
+  // CTC Calculator
+  calculateCTC: async (structureId: string, annualCTC: number) => {
+    const response = await api.post<ApiResponse<CTCBreakdown>>('/payroll/salary-structures/calculate-ctc', {
+      structure_id: structureId,
+      annual_ctc: annualCTC
+    });
+    return response.data.data!;
+  },
+
+  // Employee Salary
+  getEmployeeSalary: async (employeeId: string) => {
+    const response = await api.get<ApiResponse<EmployeeSalary>>(`/payroll/salary-structures/employees/${employeeId}/salary`);
+    return response.data.data;
+  },
+
+  assignEmployeeSalary: async (employeeId: string, payload: AssignSalaryPayload) => {
+    const response = await api.post<ApiResponse<EmployeeSalary>>(`/payroll/salary-structures/employees/${employeeId}/salary`, payload);
+    return response.data.data!;
+  },
+
+  getEmployeeSalaryHistory: async (employeeId: string) => {
+    const response = await api.get<ApiResponse<SalaryRevision[]>>(`/payroll/salary-structures/employees/${employeeId}/salary/history`);
+    return response.data.data || [];
+  },
+
+  // Seed defaults
+  seedSalaryDefaults: async () => {
+    const response = await api.post<ApiResponse<{ structure_id: string }>>('/payroll/salary-structures/seed-defaults');
+    return response.data.data!;
   }
 };
+
+// =====================================================
+// SALARY STRUCTURE INTERFACES
+// =====================================================
+
+export interface SalaryComponent {
+  id: string;
+  name: string;
+  code: string;
+  component_type: 'EARNING' | 'DEDUCTION' | 'EMPLOYER_CONTRIBUTION' | 'REIMBURSEMENT';
+  category?: string;
+  is_taxable: boolean;
+  is_pro_rata: boolean;
+  is_statutory: boolean;
+  statutory_code?: string;
+  is_active: boolean;
+  display_order: number;
+  description?: string;
+}
+
+export interface SalaryStructure {
+  id: string;
+  name: string;
+  description?: string;
+  is_default: boolean;
+  is_active: boolean;
+  component_count?: number;
+  created_at: string;
+}
+
+export interface StructureComponent {
+  id: string;
+  component_id: string;
+  component_name: string;
+  component_code: string;
+  component_type: string;
+  category?: string;
+  is_taxable: boolean;
+  calculation_type: 'FIXED' | 'PERCENTAGE_OF_CTC' | 'PERCENTAGE_OF_BASIC' | 'FORMULA' | 'REMAINING';
+  percentage?: number;
+  fixed_amount?: number;
+  formula?: string;
+  min_value?: number;
+  max_value?: number;
+  display_order: number;
+}
+
+export interface SalaryStructureDetail extends SalaryStructure {
+  components: StructureComponent[];
+}
+
+export interface CreateSalaryStructurePayload {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+  is_active?: boolean;
+  components?: {
+    component_id: string;
+    calculation_type: string;
+    percentage?: number;
+    fixed_amount?: number;
+    formula?: string;
+    min_value?: number;
+    max_value?: number;
+    display_order?: number;
+  }[];
+}
+
+export interface CTCBreakdown {
+  annual_ctc: number;
+  monthly_ctc: number;
+  gross_earnings: number;
+  total_deductions: number;
+  employer_contributions: number;
+  net_salary: number;
+  monthly_net: number;
+  breakdown: {
+    component_id: string;
+    component_name: string;
+    component_code: string;
+    component_type: string;
+    annual_amount: number;
+    monthly_amount: number;
+  }[];
+}
+
+export interface EmployeeSalary {
+  id: string;
+  employee_id: string;
+  structure_id: string;
+  structure_name?: string;
+  annual_ctc: number;
+  monthly_ctc: number;
+  effective_from: string;
+  is_current: boolean;
+  components: {
+    component_id: string;
+    component_name: string;
+    component_code: string;
+    component_type: string;
+    monthly_amount: number;
+    annual_amount: number;
+  }[];
+  summary: {
+    monthly_gross: number;
+    monthly_deductions: number;
+    monthly_net: number;
+  };
+}
+
+export interface AssignSalaryPayload {
+  structure_id: string;
+  annual_ctc: number;
+  effective_from: string;
+  revision_reason?: string;
+}
+
+export interface SalaryRevision {
+  id: string;
+  annual_ctc: number;
+  monthly_ctc: number;
+  effective_from: string;
+  effective_to?: string;
+  structure_name?: string;
+  revision_reason?: string;
+  created_by_email?: string;
+  created_at: string;
+}
 
 export interface FnFSettlement {
   id: string;
@@ -670,3 +887,4 @@ export interface FnFSettlement {
 }
 
 export default payrollService;
+

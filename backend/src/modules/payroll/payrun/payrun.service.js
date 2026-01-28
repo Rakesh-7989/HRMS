@@ -1,6 +1,7 @@
 const db = require("../../../config/db");
 const attendanceService = require("../../attendance/attendance.service");
 const statutoryCalculator = require("../utils/statutoryCalculator");
+const salaryStructureService = require("../salary/salaryStructure.service");
 
 // ===================================================================
 // PAY SCHEDULES
@@ -47,13 +48,28 @@ const createPayrun = async (tenantId, userId, payload) => {
 
     // Check for existing payrun
     const existing = await db.query(
-        `SELECT id FROM payroll_runs 
+        `SELECT id, status, run_number FROM payroll_runs 
      WHERE tenant_id = $1 AND period_month = $2 AND period_year = $3 AND status != 'REVOKED'`,
         [tenantId, periodMonth, periodYear]
     );
 
     if (existing.rowCount > 0) {
-        throw new Error(`Payrun for ${periodMonth}/${periodYear} already exists`);
+        const run = existing.rows[0];
+        // If it's still in DRAFT or CALCULATING, we can reuse it
+        if (['DRAFT', 'CALCULATING'].includes(run.status)) {
+            return run;
+        }
+
+        // Allow resetting PENDING_APPROVAL, REJECTED, or APPROVED to DRAFT for regeneration
+        if (['PENDING_APPROVAL', 'REJECTED', 'APPROVED'].includes(run.status)) {
+            await db.query(
+                `UPDATE payroll_runs SET status = 'DRAFT', updated_at = now() WHERE id = $1`,
+                [run.id]
+            );
+            return { ...run, status: 'DRAFT' };
+        }
+
+        throw new Error(`Payrun for ${periodMonth}/${periodYear} already exists (Status: ${run.status})`);
     }
 
     // Calculate period dates
@@ -132,6 +148,39 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
         throw new Error('Can only calculate DRAFT payruns');
     }
 
+    // 1. Auto-Repair block: Ensure all active employees with CTC have a salary assignment if a default structure exists.
+    // We do this BEFORE starting the transaction so that the transaction can see the newly created assignments
+    // which are committed in separate connections by the salaryStructureService.
+    const defaultStructureRes = await db.query(
+        `SELECT id FROM salary_structures WHERE tenant_id = $1 AND is_default = TRUE AND is_active = TRUE LIMIT 1`,
+        [tenantId]
+    );
+    const defaultStructureId = defaultStructureRes.rows[0]?.id;
+
+    if (defaultStructureId) {
+        const missingAssignments = await db.query(
+            `SELECT e.id, esd.ctc, e.join_date
+             FROM employees e
+             JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = TRUE
+             LEFT JOIN employee_salary_assignments esa ON esa.employee_id = e.id AND esa.is_current = TRUE
+             WHERE e.tenant_id = $1 AND e.status = 'ACTIVE' AND e.is_deleted = FALSE AND esa.id IS NULL AND esd.ctc > 0`,
+            [tenantId]
+        );
+
+        for (const emp of missingAssignments.rows) {
+            try {
+                await salaryStructureService.assignEmployeeSalary(tenantId, emp.id, {
+                    structure_id: defaultStructureId,
+                    annual_ctc: parseFloat(emp.ctc),
+                    effective_from: emp.join_date || payrun.period_start,
+                    revision_reason: 'Auto-assignment during payroll calculation'
+                }, userId);
+            } catch (err) {
+                console.error(`[calculatePayrun] Failed to auto-assign structure for employee ${emp.id}:`, err);
+            }
+        }
+    }
+
     // Get a client from the pool for transaction
     const client = await db.connect();
 
@@ -140,18 +189,61 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
 
         // Update status to CALCULATING
         await client.query(
-            `UPDATE payroll_runs SET status = 'CALCULATING' WHERE id = $1`,
+            `UPDATE payroll_runs SET status = 'CALCULATING', updated_at = now() WHERE id = $1`,
             [payrunId]
         );
 
-        // Get all employees with salary details
-        const employees = await client.query(
-            `SELECT esd.*, e.id as emp_id, e.first_name, e.last_name, e.date_of_joining
-             FROM employee_salary_details esd
-             JOIN employees e ON e.id = esd.employee_id
-             WHERE esd.tenant_id = $1 AND esd.is_current = TRUE AND e.status = 'ACTIVE'`,
-            [tenantId]
+        // Clear existing items if any (Idempotency)
+        await client.query(
+            `DELETE FROM payroll_run_items WHERE payroll_run_id = $1`,
+            [payrunId]
         );
+
+        const periodEndStr = payrun.period_end.toISOString().split('T')[0];
+
+        // Get all employees with salary assignments who joined before/during this period
+        const employees = await client.query(
+            `SELECT esa.id as assignment_id, esa.employee_id as emp_id, esa.annual_ctc as ctc,
+                    e.first_name, e.last_name, e.join_date, e.gender, e.date_of_birth
+             FROM employee_salary_assignments esa
+             JOIN employees e ON e.id = esa.employee_id
+             WHERE esa.tenant_id = $1 
+               AND esa.is_current = TRUE 
+               AND e.status = 'ACTIVE' 
+               AND e.is_deleted = FALSE
+               AND (e.join_date <= $2 OR e.join_date IS NULL)`,
+            [tenantId, periodEndStr]
+        );
+
+        if (employees.rowCount === 0) {
+            const activeEmpCount = await client.query(
+                `SELECT COUNT(*) FROM employees WHERE tenant_id = $1 AND status = 'ACTIVE' AND is_deleted = FALSE`,
+                [tenantId]
+            );
+
+            if (parseInt(activeEmpCount.rows[0].count) > 0) {
+                const hasAnyAssignments = await client.query(
+                    `SELECT COUNT(*) FROM employee_salary_assignments WHERE tenant_id = $1 AND is_current = TRUE`,
+                    [tenantId]
+                );
+
+                let diagMessage = "No eligible employees found for this pay period.";
+                if (parseInt(hasAnyAssignments.rows[0].count) === 0) {
+                    diagMessage = "No employees have a Salary Structure assigned. Please go to 'Salary Structures' settings and click 'Seed Defaults', or assign structures manually to employees.";
+                } else {
+                    diagMessage = "Eligible employees found with structures, but they might have joined after this pay period or are not marked as ACTIVE.";
+                }
+                throw new Error(diagMessage);
+            }
+
+            console.warn(`[calculatePayrun] No active employees found for tenant ${tenantId}`);
+            await client.query(
+                `UPDATE payroll_runs SET status = 'DRAFT', updated_at = now() WHERE id = $1`,
+                [payrunId]
+            );
+            await client.query('COMMIT');
+            return await getPayrunById(tenantId, payrunId);
+        }
 
         // Get statutory config
         const statutoryRes = await client.query(
@@ -175,7 +267,7 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
             );
 
             // Insert payroll run item
-            await client.query(
+            const priResult = await client.query(
                 `INSERT INTO payroll_run_items (
                     tenant_id, payroll_run_id, employee_id,
                     total_working_days, payable_days, present_days, absent_days,
@@ -185,7 +277,8 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                     pf_employee, pf_employer, esi_employee, esi_employer,
                     professional_tax, tds, loan_deduction, lop_deduction, total_deductions,
                     net_salary, status
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'PENDING')`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'PENDING')
+                RETURNING id`,
                 [
                     tenantId, payrunId, emp.emp_id,
                     result.totalWorkingDays, result.payableDays, result.presentDays, result.absentDays,
@@ -197,6 +290,18 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                     result.netSalary
                 ]
             );
+
+            const priId = priResult.rows[0].id;
+
+            // Insert components breakdown forpayslip
+            for (const comp of result.components) {
+                await client.query(
+                    `INSERT INTO payroll_run_item_components (
+                        tenant_id, payroll_run_item_id, component_id, name, code, amount, component_type
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [tenantId, priId, comp.component_id, comp.name, comp.code, comp.amount, comp.type]
+                );
+            }
 
             totalGross += result.gross;
             totalDeductions += result.totalDeductions;
@@ -299,13 +404,13 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
 
     const loanDeduction = parseFloat(loanDeductions.rows[0]?.total || 0);
 
-    // Get approved reimbursements
+    // Get approved reimbursement claims
     const reimbursements = await client.query(
         `SELECT SUM(amount) as total
-         FROM reimbursements
+         FROM reimbursement_claims
          WHERE tenant_id = $1 AND employee_id = $2 
-           AND status = 'APPROVED' AND include_in_payroll = TRUE
-           AND payroll_run_id IS NULL`,
+           AND status = 'APPROVED'
+           AND paid_in_payrun_id IS NULL`,
         [tenantId, emp.emp_id]
     );
 
@@ -335,16 +440,48 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const absentDays = parseInt(attData.absent_days);
     const payableDays = totalWorkingDays - lopDays;
 
-    // Calculate salary components
+    // Calculate salary components from dynamic structure
     const monthlyCtc = parseFloat(emp.ctc) / 12;
     const perDaySalary = monthlyCtc / totalDaysInMonth;
 
-    const gross = monthlyCtc;
-    const basic = parseFloat(emp.basic) / 12;
-    const hra = parseFloat(emp.hra) / 12;
-    const da = parseFloat(emp.da) / 12;
-    const specialAllowance = parseFloat(emp.special_allowance) / 12;
-    const otherAllowance = parseFloat(emp.other_allowance) / 12;
+    // Fetch component values for this assignment with their types
+    const componentsRes = await client.query(
+        `SELECT sc.id, sc.name, sc.code, escv.monthly_amount, sc.component_type 
+         FROM employee_salary_component_values escv
+         JOIN salary_components sc ON sc.id = escv.component_id
+         WHERE escv.assignment_id = $1`,
+        [emp.assignment_id]
+    );
+
+    const compMap = {};
+    const compDetails = [];
+    componentsRes.rows.forEach(c => {
+        const amount = parseFloat(c.monthly_amount);
+        compMap[c.code] = amount;
+        compDetails.push({
+            component_id: c.id,
+            name: c.name,
+            code: c.code,
+            amount,
+            type: c.component_type
+        });
+    });
+
+    // Map to standard variables for legacy compatibility
+    const basic = compMap['BASIC'] || 0;
+    const hra = compMap['HRA'] || 0;
+    const da = compMap['DA'] || 0;
+    const specialAllowance = compMap['SPECIAL_ALLOWANCE'] || 0;
+
+    // Only sum EARNING type components for otherAllowance (excluding major ones)
+    const otherAllowance = compDetails
+        .filter(c => c.type === 'EARNING' && !['BASIC', 'HRA', 'DA', 'SPECIAL_ALLOWANCE'].includes(c.code))
+        .reduce((sum, c) => sum + c.amount, 0);
+
+    // Gross should strictly be the sum of all EARNING type components
+    const gross = compDetails
+        .filter(c => c.type === 'EARNING')
+        .reduce((sum, c) => sum + c.amount, 0);
 
     // Get custom PT slabs from database
     const ptSlabsRes = await client.query(
@@ -361,7 +498,7 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         { basic, da, hra, gross },
         statutory,
         {
-            age: calculateAge(emp.date_of_joining), // Estimate age from DOJ
+            age: calculateAge(emp.date_of_birth),
             state: statutory.pt_state || 'Karnataka',
             gender: emp.gender || 'MALE',
             vpfRate: emp.vpf_rate || 0
@@ -387,9 +524,88 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const tds = 0; // TODO: Implement based on tax declarations
 
     // Total calculations
+    // Use values from structure if they exist (overrides), otherwise use calculated values
+    const finalPfEmployee = (compMap['PF_EE'] || compMap['PF_EMPLOYEE']) ?? pfEmployee;
+    const finalEsiEmployee = (compMap['ESI_EE'] || compMap['ESI_EMPLOYEE']) ?? esiEmployee;
+    const finalProfessionalTax = (compMap['PT'] || compMap['PROFESSIONAL_TAX']) ?? professionalTax;
+    const finalLwfEmployee = (compMap['LWF'] || compMap['LWF_EMPLOYEE']) ?? lwfEmployee;
+
     const totalEarnings = gross + reimbursementTotal;
-    const totalDeductions = pfEmployee + esiEmployee + professionalTax + lwfEmployee + tds + loanDeduction + lopDeduction;
+    const totalDeductions = finalPfEmployee + finalEsiEmployee + finalProfessionalTax + finalLwfEmployee + tds + loanDeduction + lopDeduction;
     const netSalary = totalEarnings - totalDeductions;
+
+    // ================================================================
+    // ADD STATUTORY DEDUCTIONS TO COMPONENTS FOR PAYSLIP DISPLAY
+    // ================================================================
+    // These are calculated above but need to be added to compDetails
+    // so they appear in the payslip PDF breakdown
+
+    // Check for existing components using both standard codes and potential variations
+    // The DB uses PF_EE, PF_ER, ESI_EE, ESI_ER
+
+    if (pfEmployee > 0 && !compMap['PF_EMPLOYEE'] && !compMap['PF_EE']) {
+        compDetails.push({
+            component_id: null,
+            name: 'Provident Fund (Employee)',
+            code: 'PF_EE', // Use standard DB code
+            amount: pfEmployee,
+            type: 'DEDUCTION'
+        });
+    }
+
+    if (pfEmployer > 0 && !compMap['PF_EMPLOYER'] && !compMap['PF_ER']) {
+        compDetails.push({
+            component_id: null,
+            name: 'Provident Fund (Employer)',
+            code: 'PF_ER', // Use standard DB code
+            amount: pfEmployer,
+            type: 'EMPLOYER_CONTRIBUTION'
+        });
+    }
+
+    if (esiEmployee > 0 && !compMap['ESI_EMPLOYEE'] && !compMap['ESI_EE']) {
+        compDetails.push({
+            component_id: null,
+            name: 'ESI (Employee)',
+            code: 'ESI_EE', // Use standard DB code
+            amount: esiEmployee,
+            type: 'DEDUCTION'
+        });
+    }
+
+    if (esiEmployer > 0 && !compMap['ESI_EMPLOYER'] && !compMap['ESI_ER']) {
+        compDetails.push({
+            component_id: null,
+            name: 'ESI (Employer)',
+            code: 'ESI_ER', // Use standard DB code
+            amount: esiEmployer,
+            type: 'EMPLOYER_CONTRIBUTION'
+        });
+    }
+
+    if (professionalTax > 0 && !compMap['PT']) {
+        compDetails.push({
+            component_id: null,
+            name: 'Professional Tax',
+            code: 'PT',
+            amount: professionalTax,
+            type: 'DEDUCTION'
+        });
+    }
+
+    if (lwfEmployee > 0 && !compMap['LWF']) {
+        compDetails.push({
+            component_id: null,
+            name: 'Labour Welfare Fund',
+            code: 'LWF',
+            amount: lwfEmployee,
+            type: 'DEDUCTION'
+        });
+    }
+
+    // NOTE: Gratuity is NOT added here because it already comes from the
+    // salary structure components (employee_salary_component_values).
+    // Adding it here would cause duplication on the payslip.
 
     return {
         totalWorkingDays,
@@ -418,7 +634,8 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         loanDeduction,
         lopDeduction,
         totalDeductions,
-        netSalary
+        netSalary,
+        components: compDetails
     };
 };
 
@@ -474,13 +691,13 @@ const calculateEmployeePayroll = async (tenantId, emp, payrun, statutory, period
 
     const loanDeduction = parseFloat(loanDeductions.rows[0]?.total || 0);
 
-    // Get approved reimbursements
+    // Get approved reimbursement claims
     const reimbursements = await db.query(
         `SELECT SUM(amount) as total
-     FROM reimbursements
+     FROM reimbursement_claims
      WHERE tenant_id = $1 AND employee_id = $2 
-       AND status = 'APPROVED' AND include_in_payroll = TRUE
-       AND payroll_run_id IS NULL`,
+       AND status = 'APPROVED'
+       AND paid_in_payrun_id IS NULL`,
         [tenantId, emp.emp_id]
     );
 

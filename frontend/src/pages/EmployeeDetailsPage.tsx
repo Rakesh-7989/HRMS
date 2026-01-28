@@ -33,6 +33,8 @@ import {
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
+import { SalaryAssignmentSection } from '@/components/payroll/SalaryAssignmentSection';
+
 type TabType = 'personal' | 'employment' | 'financial' | 'documents';
 
 export const EmployeeDetailsPage: React.FC = () => {
@@ -404,44 +406,35 @@ export const EmployeeDetailsPage: React.FC = () => {
                 )}
 
                 {activeTab === 'financial' && (
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <Card>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Bank Details
-                            </h3>
-                            <div className="space-y-4">
-                                <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
-                                <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
-                                <InfoRow icon={Wallet} label="Account Number" value={employee.account_number ? `****${employee.account_number.slice(-4)}` : 'Not provided'} />
-                                <InfoRow icon={Wallet} label="IFSC Code" value={employee.ifsc_code || 'Not provided'} />
-                            </div>
-                        </Card>
-
-                        <div className="space-y-6">
-                            {(canManage || currentUser?.id === id) && (
-                                <Card>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                        Salary Information
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <InfoRow
-                                            icon={Wallet}
-                                            label="Annual Salary (CTC)"
-                                            value={employee.ctc ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(employee.ctc)) : 'Not defined'}
-                                        />
-                                    </div>
-                                </Card>
-                            )}
-
+                    <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
                             <Card>
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                    Tax Information
+                                    Bank Details
+                                </h3>
+                                <div className="space-y-4">
+                                    <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
+                                    <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
+                                    <InfoRow icon={Wallet} label="Account Number" value={employee.account_number ? `****${employee.account_number.slice(-4)}` : 'Not provided'} />
+                                    <InfoRow icon={Wallet} label="IFSC Code" value={employee.ifsc_code || 'Not provided'} />
+                                </div>
+                            </Card>
+                            <Card>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                    Payroll & Tax Information
                                 </h3>
                                 <div className="space-y-4">
                                     <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
+                                    <InfoRow icon={FileText} label="UAN" value={employee.uan || 'Not provided'} />
+                                    <InfoRow icon={Wallet} label="PF A/C Number" value={employee.pf_account || 'Not provided'} />
+                                    <InfoRow icon={FileText} label="ESI Number" value={employee.esi_number || 'Not provided'} />
                                 </div>
                             </Card>
                         </div>
+
+                        {canManage && employee.employee_uuid && (
+                            <SalaryAssignmentSection employeeId={employee.employee_uuid} />
+                        )}
                     </div>
                 )}
 

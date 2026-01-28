@@ -13,7 +13,10 @@ router.use(requireRole(["ADMIN", "HR"]));
 
 // Tenant company profile (for settings page - future use)
 router.get("/tenant/profile", controller.getTenantProfile);
-router.put("/tenant/profile", requireRole(["ADMIN"]), validate(updateTenantProfileSchema), controller.updateTenantProfile);
+router.put("/tenant/profile", requireRole(["ADMIN", "HR"]), validate(updateTenantProfileSchema), controller.updateTenantProfile);
+
+const { uploadImage } = require("../../utils/fileUpload");
+router.put("/tenant/logo", requireRole(["ADMIN", "HR"]), uploadImage.single('logo'), controller.uploadLogo);
 
 // Audit logs (admin only) - for audit trail feature (future use)
 router.get("/audit-logs", requireRole(["ADMIN"]), controller.getAuditLogs);
