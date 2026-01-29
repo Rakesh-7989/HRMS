@@ -305,7 +305,49 @@ export const attendanceService = {
     const response = await api.put<{ status: string; data: RegularizationRequest }>(`/attendance/regularize/${id}/review`, data);
     return response.data.data!;
   },
+
+  // ============================================================================
+  // BREAK HISTORY & CURRENT STATUS
+  // ============================================================================
+
+  getBreakHistory: async (params?: {
+    employee_id?: string;
+    date?: string;
+    from_date?: string;
+    to_date?: string;
+  }): Promise<BreakRecord[]> => {
+    const response = await api.get<{ status: string; data: BreakRecord[] }>('/attendance/break/history', { params });
+    return response.data.data || [];
+  },
+
+  getCurrentBreaks: async (): Promise<CurrentBreakStatus[]> => {
+    const response = await api.get<{ status: string; data: CurrentBreakStatus[] }>('/attendance/break/current');
+    return response.data.data || [];
+  },
 };
+
+export interface BreakRecord {
+  id: string;
+  attendance_id: string;
+  start_time: string;
+  end_time?: string;
+  duration_minutes?: number;
+  date: string; // aggregated from attendance
+  employee_id: string; // aggregated
+  first_name?: string; // aggregated
+  last_name?: string; // aggregated
+}
+
+export interface CurrentBreakStatus {
+  employee_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  start_time: string;
+  date: string;
+  department_name?: string;
+  designation_name?: string;
+}
 
 export interface RegularizationRequest {
   id: string;

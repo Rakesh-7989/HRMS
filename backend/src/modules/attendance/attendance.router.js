@@ -43,6 +43,20 @@ router.post(
   controller.endBreak
 );
 
+// Get Break History
+router.get(
+  "/break/history",
+  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  controller.getBreakHistory
+);
+
+// Get Currently On Break (Manager/HR/Admin)
+router.get(
+  "/break/current",
+  requireRole(["MANAGER", "HR", "ADMIN"]),
+  controller.getCurrentBreaks
+);
+
 // Get today's attendance (All authenticated users can view)
 router.get("/today", controller.getTodayAttendance);
 

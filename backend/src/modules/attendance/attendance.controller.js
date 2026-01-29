@@ -97,7 +97,59 @@ exports.endBreak = async (req, res) => {
       data: result
     });
   } catch (error) {
-    logger.error("End break error:", error.message);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET BREAK HISTORY
+ */
+exports.getBreakHistory = async (req, res) => {
+  try {
+    const filters = {
+      date: req.query.date,
+      from_date: req.query.from_date,
+      to_date: req.query.to_date
+    };
+
+    // If not HR/Admin, restrict to self (or team, if Manager logic was added, but sticking to simple self vs all for now)
+    // Actually, usually MANAGERS might want to see team breaks.
+    // Let's implement basics: EMPLOYEE sees self. ADMIN/HR sees all. MANAGER sees self (or could be team if we added that logic).
+    // For safety: if EMPLOYEE, force employee_id.
+
+    if (req.user.role === 'EMPLOYEE') {
+      filters.employee_id = req.user.employeeId;
+    } else {
+      // ADMIN/HR/MANAGER can filter by specific employee if they want
+      if (req.query.employee_id) {
+        filters.employee_id = req.query.employee_id;
+      }
+    }
+
+    const result = await attendanceService.getBreakHistory(
+      req.db,
+      req.user.tenantId,
+      filters
+    );
+    res.json({ status: "success", data: result });
+  } catch (error) {
+    logger.error("Get break history error:", error);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET CURRENTLY ON BREAK
+ */
+exports.getCurrentBreaks = async (req, res) => {
+  try {
+    const result = await attendanceService.getCurrentBreaks(
+      req.db,
+      req.user.tenantId
+    );
+    res.json({ status: "success", data: result });
+  } catch (error) {
+    logger.error("Get current breaks error:", error);
     res.status(400).json({ status: "error", message: error.message });
   }
 };

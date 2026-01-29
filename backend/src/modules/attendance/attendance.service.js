@@ -320,6 +320,95 @@ exports.endBreak = async (db, employeeId, tenantId) => {
   return result.rows[0];
 };
 
+/**
+ * GET BREAK HISTORY
+ */
+exports.getBreakHistory = async (db, tenantId, filters) => {
+  const query = getQuery(db);
+  const params = [tenantId];
+  let p = 2;
+  let where = `WHERE att.tenant_id = $1`;
+
+  if (filters.employee_id) {
+    where += ` AND att.employee_id = $${p} `;
+    params.push(filters.employee_id);
+    p++;
+  }
+
+  if (filters.date) {
+    where += ` AND att.date = $${p} `;
+    params.push(filters.date);
+    p++;
+  } else {
+    // Optional date range
+    if (filters.from_date) {
+      where += ` AND att.date >= $${p} `;
+      params.push(filters.from_date);
+      p++;
+    }
+    if (filters.to_date) {
+      where += ` AND att.date <= $${p} `;
+      params.push(filters.to_date);
+      p++;
+    }
+  }
+
+  const result = await query(
+    `
+  SELECT
+  ab.*,
+    att.date,
+    att.employee_id,
+    e.first_name,
+    e.last_name
+    FROM attendance_breaks ab
+    JOIN attendance att ON att.id = ab.attendance_id
+    JOIN employees e ON e.id = att.employee_id
+    ${where}
+    ORDER BY ab.start_time DESC
+    `,
+    params
+  );
+
+  return result.rows;
+};
+
+/**
+ * GET CURRENTLY ON BREAK
+ */
+exports.getCurrentBreaks = async (db, tenantId) => {
+  const query = getQuery(db);
+
+  const today = todayDate();
+
+  const result = await query(
+    `
+  SELECT
+  ab.start_time,
+    att.date,
+    e.id as employee_id,
+    e.first_name,
+    e.last_name,
+    u.email,
+    d.name as department_name,
+    deg.name as designation_name
+    FROM attendance_breaks ab
+    JOIN attendance att ON att.id = ab.attendance_id
+    JOIN employees e ON e.id = att.employee_id
+    JOIN users u ON u.id = e.user_id
+    LEFT JOIN departments d ON d.id = e.department_id
+    LEFT JOIN designations deg ON deg.id = e.designation_id
+    WHERE att.tenant_id = $1
+      AND att.date = $2
+      AND ab.end_time IS NULL
+    ORDER BY ab.start_time DESC
+    `,
+    [tenantId, today]
+  );
+
+  return result.rows;
+};
+
 
 /**
  * TODAY'S ATTENDANCE
@@ -332,7 +421,7 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
   const result = await query(
     `
     SELECT att.*,
-      (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
+    (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
        FROM attendance_breaks ab
        WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
        LIMIT 1) as active_break
@@ -359,13 +448,13 @@ exports.getMyAttendance = async (db, employeeId, tenantId, filters) => {
   let where = `WHERE att.employee_id = $1 AND att.tenant_id = $2`;
 
   if (filters.from_date) {
-    where += ` AND att.date >= $${p}`;
+    where += ` AND att.date >= $${p} `;
     params.push(filters.from_date);
     p++;
   }
 
   if (filters.to_date) {
-    where += ` AND att.date <= $${p}`;
+    where += ` AND att.date <= $${p} `;
     params.push(filters.to_date);
     p++;
   }
@@ -380,7 +469,7 @@ exports.getMyAttendance = async (db, employeeId, tenantId, filters) => {
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}
-    `,
+  `,
     [...params, limit, offset]
   );
 
@@ -399,16 +488,16 @@ exports.getTeamAttendance = async (db, managerEmployeeId, tenantId, filters) => 
   let where = `
     WHERE e.reports_to = $1
       AND att.tenant_id = $2
-  `;
+    `;
 
   if (filters.from_date) {
-    where += ` AND att.date >= $${p}`;
+    where += ` AND att.date >= $${p} `;
     params.push(filters.from_date);
     p++;
   }
 
   if (filters.to_date) {
-    where += ` AND att.date <= $${p}`;
+    where += ` AND att.date <= $${p} `;
     params.push(filters.to_date);
     p++;
   }
@@ -418,18 +507,18 @@ exports.getTeamAttendance = async (db, managerEmployeeId, tenantId, filters) => 
 
   const result = await query(
     `
-    SELECT
-      att.*,
-      e.first_name,
-      e.last_name,
-      u.email
+  SELECT
+  att.*,
+    e.first_name,
+    e.last_name,
+    u.email
     FROM attendance att
     JOIN employees e ON e.id = att.employee_id
     JOIN users u     ON u.id = e.user_id
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}
-    `,
+  `,
     [...params, limit, offset]
   );
 
@@ -447,25 +536,25 @@ exports.getAttendanceRecords = async (db, tenantId, filters) => {
   let where = `WHERE att.tenant_id = $1`;
 
   if (filters.employee_id) {
-    where += ` AND att.employee_id = $${p}`;
+    where += ` AND att.employee_id = $${p} `;
     params.push(filters.employee_id);
     p++;
   }
 
   if (filters.from_date) {
-    where += ` AND att.date >= $${p}`;
+    where += ` AND att.date >= $${p} `;
     params.push(filters.from_date);
     p++;
   }
 
   if (filters.to_date) {
-    where += ` AND att.date <= $${p}`;
+    where += ` AND att.date <= $${p} `;
     params.push(filters.to_date);
     p++;
   }
 
   if (filters.status) {
-    where += ` AND att.status = $${p}`;
+    where += ` AND att.status = $${p} `;
     params.push(filters.status);
     p++;
   }
@@ -475,18 +564,18 @@ exports.getAttendanceRecords = async (db, tenantId, filters) => {
 
   const result = await query(
     `
-    SELECT
-      att.*,
-      e.first_name,
-      e.last_name,
-      u.email
+  SELECT
+  att.*,
+    e.first_name,
+    e.last_name,
+    u.email
     FROM attendance att
     JOIN employees e ON e.id = att.employee_id
     JOIN users u     ON u.id = e.user_id
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}
-    `,
+  `,
     [...params, limit, offset]
   );
 
@@ -502,13 +591,13 @@ exports.approveAttendance = async (db, attendanceId, tenantId, approverId, reaso
   const result = await query(
     `
     UPDATE attendance
-    SET status          = 'APPROVED',
-        approved_by     = $1,
-        approval_reason = $2,
-        updated_at      = now()
+    SET status = 'APPROVED',
+    approved_by = $1,
+    approval_reason = $2,
+    updated_at = now()
     WHERE id = $3
       AND tenant_id = $4
-    RETURNING *
+  RETURNING *
     `,
     [approverId, reason || null, attendanceId, tenantId]
   );
@@ -529,13 +618,13 @@ exports.rejectAttendance = async (db, attendanceId, tenantId, rejecterId, reason
   const result = await query(
     `
     UPDATE attendance
-    SET status           = 'REJECTED',
-        rejection_reason = $1,
-        approved_by      = $2,
-        updated_at       = now()
+    SET status = 'REJECTED',
+    rejection_reason = $1,
+    approved_by = $2,
+    updated_at = now()
     WHERE id = $3
       AND tenant_id = $4
-    RETURNING *
+  RETURNING *
     `,
     [reason || null, rejecterId, attendanceId, tenantId]
   );
@@ -569,39 +658,39 @@ exports.getAttendanceSummary = async (db, tenantId, filters) => {
   let leaveDateFilter = "";
 
   if (fromDate && toDate) {
-    attDateFilter = ` AND att.date BETWEEN $${p} AND $${p + 1}`;
+    attDateFilter = ` AND att.date BETWEEN $${p} AND $${p + 1} `;
     leaveDateFilter = `
       AND la.start_date <= $${p + 1}
-      AND la.end_date   >= $${p}
-    `;
+      AND la.end_date >= $${p}
+  `;
     params.push(fromDate, toDate);
     p += 2;
   }
 
   const result = await query(
     `
-    SELECT
-      e.id          AS employee_id,
-      e.first_name,
-      e.last_name,
-      u.email,
+  SELECT
+  e.id          AS employee_id,
+    e.first_name,
+    e.last_name,
+    u.email,
 
-      -- Attendance-based
-      COUNT(DISTINCT att.date) AS present_days,
-      SUM(CASE WHEN att.is_late THEN 1 ELSE 0 END) AS late_days,
+    --Attendance - based
+  COUNT(DISTINCT att.date) AS present_days,
+    SUM(CASE WHEN att.is_late THEN 1 ELSE 0 END) AS late_days,
 
-      -- Leave-based (full days + 0.5 for half-days)
-      COALESCE(
-        SUM(
-          CASE
+      --Leave - based(full days + 0.5 for half - days)
+    COALESCE(
+      SUM(
+        CASE
             WHEN la.status = 'APPROVED' AND la.is_half_day = false
-              THEN (LEAST(la.end_date, COALESCE($${fromDate ? p - 1 : 1}::date, la.end_date))
-                    - GREATEST(la.start_date, COALESCE($${fromDate ? p - 2 : 1}::date, la.start_date))
-                    + 1)
+              THEN(LEAST(la.end_date, COALESCE($${fromDate ? p - 1 : 1}:: date, la.end_date))
+- GREATEST(la.start_date, COALESCE($${fromDate ? p - 2 : 1}:: date, la.start_date))
+  + 1)
             WHEN la.status = 'APPROVED' AND la.is_half_day = true
               THEN 0.5
             ELSE 0
-          END
+END
         ), 0
       ) AS leave_days
 
@@ -619,7 +708,7 @@ exports.getAttendanceSummary = async (db, tenantId, filters) => {
     WHERE e.tenant_id = $1
     GROUP BY e.id, e.first_name, e.last_name, u.email
     ORDER BY e.first_name, e.last_name
-    `,
+  `,
     params
   );
 
@@ -641,29 +730,29 @@ exports.getPendingCheckouts = async (db, actor, filters) => {
 
   // Role-based filtering
   if (actor.role === "EMPLOYEE") {
-    where += ` AND att.employee_id = $${p}`;
+    where += ` AND att.employee_id = $${p} `;
     params.push(actor.employeeId);
     p++;
   } else if (actor.role === "MANAGER") {
-    where += ` AND e.reports_to = $${p}`;
+    where += ` AND e.reports_to = $${p} `;
     params.push(actor.employeeId);
     p++;
   }
 
   if (filters.employee_id && ["ADMIN", "HR"].includes(actor.role)) {
-    where += ` AND att.employee_id = $${p}`;
+    where += ` AND att.employee_id = $${p} `;
     params.push(filters.employee_id);
     p++;
   }
 
   if (filters.from_date) {
-    where += ` AND att.date >= $${p}`;
+    where += ` AND att.date >= $${p} `;
     params.push(filters.from_date);
     p++;
   }
 
   if (filters.to_date) {
-    where += ` AND att.date <= $${p}`;
+    where += ` AND att.date <= $${p} `;
     params.push(filters.to_date);
     p++;
   }
@@ -673,18 +762,18 @@ exports.getPendingCheckouts = async (db, actor, filters) => {
 
   const result = await query(
     `
-    SELECT
-      att.*,
-      e.first_name,
-      e.last_name,
-      u.email
+SELECT
+att.*,
+  e.first_name,
+  e.last_name,
+  u.email
     FROM attendance att
     JOIN employees e ON e.id = att.employee_id
     JOIN users u ON u.id = e.user_id
     ${where}
     ORDER BY att.date DESC, att.created_at DESC
     LIMIT $${p} OFFSET $${p + 1}
-    `,
+`,
     [...params, limit, offset]
   );
 
@@ -705,7 +794,7 @@ exports.confirmCheckout = async (db, attendanceId, tenantId, employeeId, finalSt
     SELECT id, employee_id, status, date
     FROM attendance
     WHERE id = $1 AND tenant_id = $2
-    `,
+  `,
     [attendanceId, tenantId]
   );
 
@@ -728,11 +817,11 @@ exports.confirmCheckout = async (db, attendanceId, tenantId, employeeId, finalSt
     `
     UPDATE attendance
     SET status = $1,
-        notes = COALESCE(notes, '') || $2,
-        updated_at = now()
+  notes = COALESCE(notes, '') || $2,
+  updated_at = now()
     WHERE id = $3 AND tenant_id = $4
-    RETURNING *
-    `,
+RETURNING *
+  `,
     [
       finalStatus,
       reason ? ` [Confirmed by employee: ${reason}]` : " [Confirmed by employee]",
@@ -757,17 +846,17 @@ exports.autoApprovePendingCheckouts = async (db, tenantId) => {
     `
     UPDATE attendance
     SET status = 'PRESENT',
-        notes = COALESCE(notes, '') || ' Auto-approved after 24h',
-        updated_at = now()
+  notes = COALESCE(notes, '') || ' Auto-approved after 24h',
+  updated_at = now()
     WHERE tenant_id = $1
       AND status = 'PENDING_CHECKOUT'
       AND created_at < (now() - interval '24 hours')
     RETURNING id, employee_id, date
-    `,
+  `,
     [tenantId]
   );
 
-  logger.info(`Auto-approved ${result.rowCount} pending checkouts for tenant ${tenantId}`);
+  logger.info(`Auto - approved ${result.rowCount} pending checkouts for tenant ${tenantId}`);
 
   return {
     count: result.rowCount,
@@ -787,71 +876,71 @@ exports.getOrganizationAttendanceAnalytics = async (db, tenantId, filters) => {
   const overallSummary = await query(
     `
     SELECT
-      COUNT(DISTINCT a.employee_id) AS total_employees,
-      COUNT(DISTINCT CASE WHEN a.date >= $1 AND a.date <= $2 THEN a.employee_id END) AS active_employees,
-      SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS total_present_days,
+COUNT(DISTINCT a.employee_id) AS total_employees,
+  COUNT(DISTINCT CASE WHEN a.date >= $1 AND a.date <= $2 THEN a.employee_id END) AS active_employees,
+    SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS total_present_days,
       SUM(CASE WHEN a.is_late THEN 1 ELSE 0 END) AS total_late_days,
-      SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS total_absent_days,
-      ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
-        EXTRACT(EPOCH FROM ((a.check_out_time::time - a.check_in_time::time) + (CASE WHEN a.check_out_time::time < a.check_in_time::time THEN INTERVAL '24 hours' ELSE INTERVAL '0' END)))/3600 END), 2) AS avg_work_hours
+        SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS total_absent_days,
+          ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
+        EXTRACT(EPOCH FROM((a.check_out_time:: time - a.check_in_time:: time) + (CASE WHEN a.check_out_time:: time < a.check_in_time:: time THEN INTERVAL '24 hours' ELSE INTERVAL '0' END))) / 3600 END), 2) AS avg_work_hours
     FROM attendance a
     WHERE a.tenant_id = $3
     AND a.date >= $1 AND a.date <= $2
-    `,
+  `,
     [filters.from_date, filters.to_date, tenantId]
   );
 
   // Daily attendance trends
   const dailyTrends = await query(
     `
-    SELECT
-      a.date,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
-      COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
+SELECT
+a.date,
+  COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+    COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
       COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count,
-      COUNT(DISTINCT a.employee_id) AS total_checkins
+        COUNT(DISTINCT a.employee_id) AS total_checkins
     FROM attendance a
     WHERE a.tenant_id = $1
     AND a.date >= $2 AND a.date <= $3
     GROUP BY a.date
     ORDER BY a.date DESC
     LIMIT 30
-    `,
+  `,
     [tenantId, filters.from_date, filters.to_date]
   );
 
   // Department-wise attendance
   const departmentStats = await query(
     `
-    SELECT
-      d.name AS department_name,
-      COUNT(DISTINCT e.id) AS total_employees,
-      COUNT(DISTINCT CASE WHEN a.date >= $1 AND a.date <= $2 THEN e.id END) AS active_employees,
+SELECT
+d.name AS department_name,
+  COUNT(DISTINCT e.id) AS total_employees,
+    COUNT(DISTINCT CASE WHEN a.date >= $1 AND a.date <= $2 THEN e.id END) AS active_employees,
       SUM(CASE WHEN a.status = 'PRESENT' AND a.date >= $1 AND a.date <= $2 THEN 1 ELSE 0 END) AS present_days,
-      SUM(CASE WHEN a.is_late AND a.date >= $1 AND a.date <= $2 THEN 1 ELSE 0 END) AS late_days,
-      ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL AND a.date >= $1 AND a.date <= $2 THEN
-        EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600 END), 2) AS avg_work_hours
+        SUM(CASE WHEN a.is_late AND a.date >= $1 AND a.date <= $2 THEN 1 ELSE 0 END) AS late_days,
+          ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL AND a.date >= $1 AND a.date <= $2 THEN
+        EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600 END), 2) AS avg_work_hours
     FROM departments d
     LEFT JOIN employees e ON d.id = e.department_id AND e.tenant_id = d.tenant_id
     LEFT JOIN attendance a ON e.id = a.employee_id AND a.tenant_id = d.tenant_id
     WHERE d.tenant_id = $3
     GROUP BY d.id, d.name
     ORDER BY d.name
-    `,
+  `,
     [filters.from_date, filters.to_date, tenantId]
   );
 
   // Top performers (most consistent attendance)
   const topPerformers = await query(
     `
-    SELECT
-      e.first_name,
-      e.last_name,
-      d.name AS department,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
+SELECT
+e.first_name,
+  e.last_name,
+  d.name AS department,
+    COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
       COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
-      COUNT(a.id) AS total_days,
-      ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / COUNT(a.id), 2) AS attendance_rate
+        COUNT(a.id) AS total_days,
+          ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / COUNT(a.id), 2) AS attendance_rate
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN attendance a ON e.id = a.employee_id
@@ -861,7 +950,7 @@ exports.getOrganizationAttendanceAnalytics = async (db, tenantId, filters) => {
     HAVING COUNT(a.id) > 0
     ORDER BY attendance_rate DESC, present_days DESC
     LIMIT 10
-    `,
+  `,
     [tenantId, filters.from_date, filters.to_date]
   );
 
@@ -886,9 +975,9 @@ exports.getManagerAttendanceAnalytics = async (db, managerEmployeeId, tenantId, 
     SELECT e.id, e.first_name, e.last_name, d.name AS department
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
-    WHERE (e.reports_to = $1 OR e.id = $1)
+WHERE(e.reports_to = $1 OR e.id = $1)
     AND e.tenant_id = $2
-    `,
+  `,
     [managerEmployeeId, tenantId]
   );
 
@@ -897,32 +986,32 @@ exports.getManagerAttendanceAnalytics = async (db, managerEmployeeId, tenantId, 
   // Team attendance summary
   const teamSummary = await query(
     `
-    SELECT
-      COUNT(DISTINCT a.employee_id) AS total_team_members,
-      SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS total_present_days,
-      SUM(CASE WHEN a.is_late THEN 1 ELSE 0 END) AS total_late_days,
+SELECT
+COUNT(DISTINCT a.employee_id) AS total_team_members,
+  SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS total_present_days,
+    SUM(CASE WHEN a.is_late THEN 1 ELSE 0 END) AS total_late_days,
       SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS total_absent_days,
-      ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
-        EXTRACT(EPOCH FROM ((a.check_out_time::time - a.check_in_time::time) + (CASE WHEN a.check_out_time::time < a.check_in_time::time THEN INTERVAL '24 hours' ELSE INTERVAL '0' END)))/3600 END), 2) AS avg_work_hours
+        ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
+        EXTRACT(EPOCH FROM((a.check_out_time:: time - a.check_in_time:: time) + (CASE WHEN a.check_out_time:: time < a.check_in_time:: time THEN INTERVAL '24 hours' ELSE INTERVAL '0' END))) / 3600 END), 2) AS avg_work_hours
     FROM attendance a
     WHERE a.employee_id = ANY($1)
     AND a.tenant_id = $2
     AND a.date >= $3 AND a.date <= $4
-    `,
+  `,
     [teamEmployeeIds, tenantId, filters.from_date, filters.to_date]
   );
 
   // Individual team member performance
   const teamMemberStats = await query(
     `
-    SELECT
-      e.first_name,
-      e.last_name,
-      d.name AS department,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
+SELECT
+e.first_name,
+  e.last_name,
+  d.name AS department,
+    COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
       COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
-      COUNT(a.id) AS total_days,
-      ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate
+        COUNT(a.id) AS total_days,
+          ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN attendance a ON e.id = a.employee_id
@@ -931,19 +1020,19 @@ exports.getManagerAttendanceAnalytics = async (db, managerEmployeeId, tenantId, 
     AND a.date >= $3 AND a.date <= $4
     GROUP BY e.id, e.first_name, e.last_name, d.name
     ORDER BY attendance_rate DESC, present_days DESC
-    `,
+  `,
     [teamEmployeeIds, tenantId, filters.from_date, filters.to_date]
   );
 
   // Daily team attendance trends
   const dailyTrends = await query(
     `
-    SELECT
-      a.date,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
-      COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
+SELECT
+a.date,
+  COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+    COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
       COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count,
-      COUNT(DISTINCT a.employee_id) AS active_members
+        COUNT(DISTINCT a.employee_id) AS active_members
     FROM attendance a
     WHERE a.employee_id = ANY($1)
     AND a.tenant_id = $2
@@ -951,7 +1040,7 @@ exports.getManagerAttendanceAnalytics = async (db, managerEmployeeId, tenantId, 
     GROUP BY a.date
     ORDER BY a.date DESC
     LIMIT 30
-    `,
+  `,
     [teamEmployeeIds, tenantId, filters.from_date, filters.to_date]
   );
 
@@ -973,52 +1062,52 @@ exports.getEmployeeAttendanceAnalytics = async (db, employeeId, tenantId, filter
   // Employee's personal attendance summary
   const personalSummary = await query(
     `
-    SELECT
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
-      COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
-      COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_days,
+SELECT
+COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
+  COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
+    COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_days,
       COUNT(a.id) AS total_days,
-      ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate,
-      ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
-        EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600 END), 2) AS avg_work_hours
+        ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate,
+          ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
+        EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600 END), 2) AS avg_work_hours
     FROM attendance a
     WHERE a.employee_id = $1
     AND a.tenant_id = $2
     AND a.date >= $3 AND a.date <= $4
-    `,
+  `,
     [employeeId, tenantId, filters.from_date, filters.to_date]
   );
 
   // Monthly attendance breakdown
   const monthlyBreakdown = await query(
     `
-    SELECT
-      TO_CHAR(a.date, 'YYYY-MM') AS month,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
-      COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
+SELECT
+TO_CHAR(a.date, 'YYYY-MM') AS month,
+  COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
+    COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
       COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_days,
-      COUNT(a.id) AS total_days
+        COUNT(a.id) AS total_days
     FROM attendance a
     WHERE a.employee_id = $1
     AND a.tenant_id = $2
     AND a.date >= $3 AND a.date <= $4
     GROUP BY TO_CHAR(a.date, 'YYYY-MM')
     ORDER BY month DESC
-    `,
+  `,
     [employeeId, tenantId, filters.from_date, filters.to_date]
   );
 
   // Daily attendance details
   const dailyDetails = await query(
     `
-    SELECT
-      a.date,
-      a.check_in_time,
-      a.check_out_time,
-      a.is_late,
-      a.status,
-      CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-        ROUND(EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600, 2)
+SELECT
+a.date,
+  a.check_in_time,
+  a.check_out_time,
+  a.is_late,
+  a.status,
+  CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
+ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
       END AS work_hours
     FROM attendance a
     WHERE a.employee_id = $1
@@ -1026,7 +1115,7 @@ exports.getEmployeeAttendanceAnalytics = async (db, employeeId, tenantId, filter
     AND a.date >= $3 AND a.date <= $4
     ORDER BY a.date DESC
     LIMIT 30
-    `,
+  `,
     [employeeId, tenantId, filters.from_date, filters.to_date]
   );
 
@@ -1047,19 +1136,19 @@ exports.getOrganizationAttendanceReports = async (db, tenantId, filters) => {
   const query = getQuery(db);
 
   let baseQuery = `
-    SELECT
-      e.first_name,
-      e.last_name,
-      u.email,
-      d.name AS department,
-      des.name AS designation,
+SELECT
+e.first_name,
+  e.last_name,
+  u.email,
+  d.name AS department,
+    des.name AS designation,
       a.date,
       a.check_in_time,
       a.check_out_time,
       a.is_late,
       a.status,
       CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-        ROUND(EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600, 2)
+ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
       END AS work_hours
     FROM employees e
     JOIN users u ON e.user_id = u.id
@@ -1074,14 +1163,14 @@ exports.getOrganizationAttendanceReports = async (db, tenantId, filters) => {
 
   // Add report type filtering
   if (filters.report_type === 'compliance') {
-    baseQuery += ` AND (a.is_late = true OR a.status = 'ABSENT')`;
+    baseQuery += ` AND(a.is_late = true OR a.status = 'ABSENT')`;
   } else if (filters.report_type === 'trends') {
     baseQuery += ` ORDER BY a.date DESC, e.first_name`;
   } else {
     baseQuery += ` ORDER BY e.first_name, a.date DESC`;
   }
 
-  baseQuery += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  baseQuery += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2} `;
   params.push(filters.limit, filters.offset);
 
   const reports = await query(baseQuery, params);
@@ -1089,17 +1178,17 @@ exports.getOrganizationAttendanceReports = async (db, tenantId, filters) => {
   // Get summary stats
   const summaryStats = await query(
     `
-    SELECT
-      COUNT(DISTINCT e.id) AS total_employees,
-      COUNT(a.id) AS total_records,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+SELECT
+COUNT(DISTINCT e.id) AS total_employees,
+  COUNT(a.id) AS total_records,
+    COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
       COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
-      COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count
+        COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count
     FROM employees e
     LEFT JOIN attendance a ON e.id = a.employee_id
     WHERE e.tenant_id = $1
     AND a.date >= $2 AND a.date <= $3
-    `,
+  `,
     [tenantId, filters.from_date, filters.to_date]
   );
 
@@ -1125,26 +1214,26 @@ exports.getManagerAttendanceReports = async (db, managerEmployeeId, tenantId, fi
     `
     SELECT e.id
     FROM employees e
-    WHERE (e.reports_to = $1 OR e.id = $1)
+WHERE(e.reports_to = $1 OR e.id = $1)
     AND e.tenant_id = $2
-    `,
+  `,
     [managerEmployeeId, tenantId]
   );
 
   const teamEmployeeIds = teamMembers.rows.map(member => member.id);
 
   let baseQuery = `
-    SELECT
-      e.first_name,
-      e.last_name,
-      d.name AS department,
-      a.date,
-      a.check_in_time,
-      a.check_out_time,
-      a.is_late,
-      a.status,
-      CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-        ROUND(EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600, 2)
+SELECT
+e.first_name,
+  e.last_name,
+  d.name AS department,
+    a.date,
+    a.check_in_time,
+    a.check_out_time,
+    a.is_late,
+    a.status,
+    CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
+ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
       END AS work_hours
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
@@ -1158,10 +1247,10 @@ exports.getManagerAttendanceReports = async (db, managerEmployeeId, tenantId, fi
 
   // Add report type filtering
   if (filters.report_type === 'compliance') {
-    baseQuery += ` AND (a.is_late = true OR a.status = 'ABSENT')`;
+    baseQuery += ` AND(a.is_late = true OR a.status = 'ABSENT')`;
   }
 
-  baseQuery += ` ORDER BY e.first_name, a.date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  baseQuery += ` ORDER BY e.first_name, a.date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2} `;
   params.push(filters.limit, filters.offset);
 
   const reports = await query(baseQuery, params);
@@ -1169,18 +1258,18 @@ exports.getManagerAttendanceReports = async (db, managerEmployeeId, tenantId, fi
   // Get team summary stats
   const summaryStats = await query(
     `
-    SELECT
-      COUNT(DISTINCT e.id) AS total_team_members,
-      COUNT(a.id) AS total_records,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+SELECT
+COUNT(DISTINCT e.id) AS total_team_members,
+  COUNT(a.id) AS total_records,
+    COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
       COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
-      COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count
+        COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count
     FROM employees e
     LEFT JOIN attendance a ON e.id = a.employee_id
     WHERE e.id = ANY($1)
     AND a.tenant_id = $2
     AND a.date >= $3 AND a.date <= $4
-    `,
+  `,
     [teamEmployeeIds, tenantId, filters.from_date, filters.to_date]
   );
 
@@ -1202,14 +1291,14 @@ exports.getEmployeeAttendanceReports = async (db, employeeId, tenantId, filters)
   const query = getQuery(db);
 
   let baseQuery = `
-    SELECT
-      a.date,
-      a.check_in_time,
-      a.check_out_time,
-      a.is_late,
-      a.status,
-      CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-        ROUND(EXTRACT(EPOCH FROM (a.check_out_time::time - a.check_in_time::time))/3600, 2)
+SELECT
+a.date,
+  a.check_in_time,
+  a.check_out_time,
+  a.is_late,
+  a.status,
+  CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
+ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
       END AS work_hours
     FROM attendance a
     WHERE a.employee_id = $1
@@ -1221,10 +1310,10 @@ exports.getEmployeeAttendanceReports = async (db, employeeId, tenantId, filters)
 
   // Add report type filtering
   if (filters.report_type === 'compliance') {
-    baseQuery += ` AND (a.is_late = true OR a.status = 'ABSENT')`;
+    baseQuery += ` AND(a.is_late = true OR a.status = 'ABSENT')`;
   }
 
-  baseQuery += ` ORDER BY a.date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  baseQuery += ` ORDER BY a.date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2} `;
   params.push(filters.limit, filters.offset);
 
   const reports = await query(baseQuery, params);
@@ -1232,16 +1321,16 @@ exports.getEmployeeAttendanceReports = async (db, employeeId, tenantId, filters)
   // Get personal summary stats
   const summaryStats = await query(
     `
-    SELECT
-      COUNT(a.id) AS total_records,
-      COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
-      COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
+SELECT
+COUNT(a.id) AS total_records,
+  COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+    COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
       COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count
     FROM attendance a
     WHERE a.employee_id = $1
     AND a.tenant_id = $2
     AND a.date >= $3 AND a.date <= $4
-    `,
+  `,
     [employeeId, tenantId, filters.from_date, filters.to_date]
   );
 
@@ -1277,11 +1366,11 @@ exports.createRegularizationRequest = async (db, employeeId, tenantId, data) => 
 
   const result = await query(
     `
-    INSERT INTO attendance_regularizations 
-      (tenant_id, employee_id, date, check_in_time, check_out_time, reason, status)
-    VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
-    RETURNING *
-    `,
+    INSERT INTO attendance_regularizations
+  (tenant_id, employee_id, date, check_in_time, check_out_time, reason, status)
+VALUES($1, $2, $3, $4, $5, $6, 'PENDING')
+RETURNING *
+  `,
     [
       tenantId,
       employeeId,
@@ -1302,7 +1391,7 @@ exports.getMyRegularizations = async (db, employeeId, tenantId) => {
   const query = getQuery(db);
   const result = await query(
     `
-    SELECT * FROM attendance_regularizations
+SELECT * FROM attendance_regularizations
     WHERE employee_id = $1 AND tenant_id = $2
     ORDER BY created_at DESC
     LIMIT 50
@@ -1323,7 +1412,7 @@ exports.getPendingRegularizations = async (db, viewerId, viewerRole, tenantId, {
 
   // Managers see only their team's requests
   if (viewerRole === 'MANAGER') {
-    whereClause += ` AND (e.reports_to = $2)`; // Assuming Manager only sees direct reports
+    whereClause += ` AND(e.reports_to = $2)`; // Assuming Manager only sees direct reports
     params.push(viewerId);
   } else if (['HR', 'ADMIN'].includes(viewerRole)) {
     // HR/Admin sees all
@@ -1338,13 +1427,13 @@ exports.getPendingRegularizations = async (db, viewerId, viewerRole, tenantId, {
 
   const result = await query(
     `
-    SELECT 
-      ar.*,
-      e.first_name,
-      e.last_name,
-      u.email,
-      d.name as department_name,
-      des.name as designation_name
+SELECT
+ar.*,
+  e.first_name,
+  e.last_name,
+  u.email,
+  d.name as department_name,
+  des.name as designation_name
     FROM attendance_regularizations ar
     JOIN employees e ON e.id = ar.employee_id
     JOIN users u ON u.id = e.user_id
@@ -1353,7 +1442,7 @@ exports.getPendingRegularizations = async (db, viewerId, viewerRole, tenantId, {
     ${whereClause}
     ORDER BY ar.created_at ASC
     LIMIT $${pLimit} OFFSET $${pOffset}
-    `,
+`,
     [...params, limit, offset]
   );
 
@@ -1400,12 +1489,12 @@ exports.approveRegularization = async (db, requestId, approverUserId, tenantId) 
       `
       UPDATE attendance
       SET check_in_time = $1,
-          check_out_time = $2,
-          status = 'APPROVED',
-          notes = COALESCE(notes, '') || ' [Regularized]',
-          updated_at = now()
+  check_out_time = $2,
+  status = 'APPROVED',
+  notes = COALESCE(notes, '') || ' [Regularized]',
+  updated_at = now()
       WHERE id = $3
-      `,
+  `,
       [request.check_in_time, request.check_out_time, attRes.rows[0].id]
     );
   } else {
@@ -1413,9 +1502,9 @@ exports.approveRegularization = async (db, requestId, approverUserId, tenantId) 
     await query(
       `
       INSERT INTO attendance
-        (tenant_id, employee_id, date, check_in_time, check_out_time, status, notes, created_by)
-      VALUES ($1, $2, $3, $4, $5, 'APPROVED', $6, $7)
-      `,
+  (tenant_id, employee_id, date, check_in_time, check_out_time, status, notes, created_by)
+VALUES($1, $2, $3, $4, $5, 'APPROVED', $6, $7)
+  `,
       [
         tenantId,
         request.employee_id,
@@ -1440,13 +1529,13 @@ exports.rejectRegularization = async (db, requestId, rejecterUserId, tenantId, r
   const result = await query(
     `
     UPDATE attendance_regularizations
-    SET status = 'REJECTED', 
-        approver_id = $1, 
-        rejection_reason = $2,
-        updated_at = now()
+    SET status = 'REJECTED',
+  approver_id = $1,
+  rejection_reason = $2,
+  updated_at = now()
     WHERE id = $3 AND tenant_id = $4
-    RETURNING *
-    `,
+RETURNING *
+  `,
     [rejecterUserId, reason, requestId, tenantId]
   );
 
