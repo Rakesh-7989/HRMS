@@ -28,6 +28,7 @@ export const WFHApprovalsContent: React.FC = () => {
             setShowApproveDialog(false);
             setSelectedRequest(null);
             setApprovalComment('');
+            setCapacityStats(null);
         },
     });
 
@@ -42,10 +43,24 @@ export const WFHApprovalsContent: React.FC = () => {
         },
     });
 
+    const [capacityStats, setCapacityStats] = useState<any>(null);
+
+    const checkCapacity = async (request: WFHRequest) => {
+        try {
+            const stats = await wfhService.getTeamCapacityStats(request.request_date);
+            setCapacityStats(stats);
+        } catch (error) {
+            console.error("Failed to check capacity", error);
+        }
+    };
+
     const handleApprove = (request: WFHRequest) => {
         setSelectedRequest(request);
+        setCapacityStats(null); // Reset first
+        checkCapacity(request);
         setShowApproveDialog(true);
     };
+
 
     const handleReject = (request: WFHRequest) => {
         setSelectedRequest(request);
@@ -168,6 +183,8 @@ export const WFHApprovalsContent: React.FC = () => {
                 )}
             </Card>
 
+
+
             <Dialog
                 open={showApproveDialog}
                 onOpenChange={setShowApproveDialog}
@@ -177,6 +194,33 @@ export const WFHApprovalsContent: React.FC = () => {
                 {selectedRequest && (
                     <div className="flex flex-col">
                         <DialogContent className="py-6 px-6">
+                            {capacityStats && capacityStats.totalTeamSize > 0 &&
+                                ((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) >= 0.5 && (
+                                    <div className="mb-4 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r shadow-sm">
+                                        <div className="flex">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3">
+                                                <h3 className="text-sm font-medium text-orange-800">
+                                                    High Absence Warning
+                                                </h3>
+                                                <div className="mt-1 text-sm text-orange-700">
+                                                    <p>
+                                                        {capacityStats.approvedWFHCount} WFH + {capacityStats.approvedLeaveCount} Leave
+                                                        out of {capacityStats.totalTeamSize} team members.
+                                                        {(
+                                                            ((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) * 100
+                                                        ).toFixed(0)}% of the team is away/remote.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                                 <p className="text-sm text-blue-900 dark:text-blue-300">
                                     <strong>{selectedRequest.first_name} {selectedRequest.last_name}</strong> has

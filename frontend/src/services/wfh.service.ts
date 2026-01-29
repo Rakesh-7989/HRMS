@@ -45,6 +45,12 @@ export interface RejectWFHData {
     reason: string;
 }
 
+export interface TeamCapacityStats {
+    totalTeamSize: number;
+    approvedWFHCount: number;
+    approvedLeaveCount: number;
+}
+
 // Helper function to handle API errors
 const handleApiError = (error: unknown): never => {
     if (error instanceof AxiosError) {
@@ -117,6 +123,18 @@ export const wfhService = {
             return extractData(response);
         } catch (error) {
             return handleApiError(error);
+        }
+    },
+
+    // Get Team Capacity Stats
+    getTeamCapacityStats: async (date: string): Promise<TeamCapacityStats> => {
+        try {
+            const response = await api.get('/wfh/capacity-stats', { params: { date } });
+            return extractData(response);
+        } catch (error) {
+            console.error('Error fetching capacity stats:', error);
+            // Return safe default to avoid breaking UI
+            return { totalTeamSize: 0, approvedWFHCount: 0, approvedLeaveCount: 0 };
         }
     },
 };

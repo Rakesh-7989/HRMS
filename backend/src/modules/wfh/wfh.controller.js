@@ -88,3 +88,20 @@ exports.rejectRequest = async (req, res, next) => {
         next(error);
     }
 };
+
+/* ========================== GET CAPACITY STATS ========================== */
+exports.getCapacityStats = async (req, res, next) => {
+    try {
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({ error: 'Date is required' });
+        }
+
+        const stats = await wfhService.getTeamCapacityStats(pool, req.user, date);
+
+        res.json({ data: stats });
+    } catch (error) {
+        next(error);
+    }
+};

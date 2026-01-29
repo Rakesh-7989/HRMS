@@ -11,6 +11,7 @@ router.get('/my-requests', wfhController.getMyRequests);
 
 // Manager routes
 router.get('/pending', wfhController.getPendingRequests);
+router.get('/capacity-stats', wfhController.getCapacityStats);
 router.put('/:id/approve', wfhController.approveRequest);
 router.put('/:id/reject', wfhController.rejectRequest);
 

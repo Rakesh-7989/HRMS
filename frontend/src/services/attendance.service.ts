@@ -23,6 +23,7 @@ export interface Attendance {
     id: string;
     start_time: string;
   };
+  work_mode?: 'OFFICE' | 'REMOTE' | 'HYBRID';
 }
 
 export interface AttendanceSummaryRow {
@@ -159,7 +160,7 @@ export const attendanceService = {
     return response.data.data!;
   },
 
-  clockOut: async (coords?: { latitude: number; longitude: number; device?: string }): Promise<Attendance> => {
+  clockOut: async (coords?: { latitude: number; longitude: number; device?: string; eodReport?: string }): Promise<Attendance> => {
     const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-out', coords || {});
     return response.data.data!;
   },

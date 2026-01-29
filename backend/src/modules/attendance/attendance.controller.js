@@ -45,7 +45,13 @@ exports.clockOut = async (req, res) => {
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
+      {
+        ip: clientIp,
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+        device: req.body.device,
+        eod_report: req.body.eod_report // Pass EOD report
+      }
     );
 
     res.json({

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
+import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { Clock, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
@@ -122,7 +123,7 @@ export const DailyAttendanceContent: React.FC = () => {
     });
 
     const clockOutMutation = useMutation({
-        mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockOut(coords),
+        mutationFn: (coords?: { latitude: number; longitude: number; device?: string; eodReport?: string }) => attendanceService.clockOut(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             setIsTimerRunning(false);
@@ -145,7 +146,27 @@ export const DailyAttendanceContent: React.FC = () => {
         },
     });
 
+    const [showEODDialog, setShowEODDialog] = useState(false);
+    const [eodReport, setEodReport] = useState('');
+    const [clockOutCoords, setClockOutCoords] = useState<{ latitude: number; longitude: number; device?: string } | undefined>(undefined);
+
+    const { data: myWFHRequests = [] } = useQuery({
+        queryKey: ['my-wfh-requests', 'approved'],
+        queryFn: () => wfhService.getMyRequests({ status: 'APPROVED' }),
+    });
+
+    const isWFHApprovedToday = () => {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        return myWFHRequests.some(req => req.request_date === todayStr && req.status === 'APPROVED');
+    };
+
     const handleClockIn = async () => {
+        // Skip Geofence if WFH is approved today
+        if (isWFHApprovedToday()) {
+            clockInMutation.mutate({ device: detectDeviceType() } as any);
+            return;
+        }
+
         if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
@@ -163,20 +184,47 @@ export const DailyAttendanceContent: React.FC = () => {
     };
 
     const handleClockOut = async () => {
-        if (geoSettings?.is_enabled) {
+        // Prepare coords first
+        let coords: { latitude: number; longitude: number; device?: string } | undefined = undefined;
+
+        // Skip Geofence check if WFH (REMOTE) - though backend checks too
+        const isRemote = todayAttendance?.work_mode === 'REMOTE' || isWFHApprovedToday();
+
+        if (geoSettings?.is_enabled && !isRemote) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
                 alert(check.errorMessage || 'Geo-fence validation failed');
                 return;
             }
-            clockOutMutation.mutate({
+            coords = {
                 latitude: check.position?.coords.latitude!,
                 longitude: check.position?.coords.longitude!,
                 device: detectDeviceType()
-            });
+            };
         } else {
-            clockOutMutation.mutate({ device: detectDeviceType() } as any);
+            coords = { device: detectDeviceType() } as any;
         }
+
+        // Check if EOD Report is needed (WFH / Remote)
+        if (isRemote) {
+            setClockOutCoords(coords);
+            setShowEODDialog(true);
+            return;
+        }
+
+        clockOutMutation.mutate(coords);
+    };
+
+    const submitEODReport = () => {
+        if (eodReport.trim().length < 10) return;
+
+        clockOutMutation.mutate({
+            ...clockOutCoords,
+            eodReport: eodReport
+        } as any); // Cast as any because react-query types might be tricky with optional args in mutationFn
+
+        setShowEODDialog(false);
+        setEodReport('');
     };
 
     const confirmCheckoutMutation = useMutation({
@@ -397,6 +445,45 @@ export const DailyAttendanceContent: React.FC = () => {
                             isLoading={confirmCheckoutMutation.isPending}
                         >
                             Confirm
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* EOD Report Dialog */}
+            <Dialog open={showEODDialog} onOpenChange={setShowEODDialog}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>End of Day Report</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 p-3 rounded-md text-sm border border-blue-100 dark:border-blue-800">
+                            Since you are working from home today, detailed daily report is required to clock out.
+                        </div>
+                        <div>
+                            <Label htmlFor="eod-report" className="text-gray-700 dark:text-gray-300">Accomplishments & Updates *</Label>
+                            <textarea
+                                id="eod-report"
+                                value={eodReport}
+                                onChange={(e) => setEodReport(e.target.value)}
+                                className="w-full mt-2 p-3 border rounded-md min-h-[120px] focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                placeholder="Please list your tasks completed, meetings attended, and any pending items... (Min 10 chars)"
+                            />
+                            <p className="text-xs text-right mt-1 text-gray-500 dark:text-gray-400">
+                                {eodReport.length}/10 characters
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setShowEODDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={submitEODReport}
+                            disabled={eodReport.trim().length < 10}
+                            isLoading={clockOutMutation.isPending}
+                        >
+                            Submit & Clock Out
                         </Button>
                     </div>
                 </DialogContent>

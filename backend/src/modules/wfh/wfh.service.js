@@ -226,3 +226,57 @@ exports.checkWFHForDate = async (db, tenantId, employeeId, date) => {
 
     return result.rows[0] || null;
 };
+
+/* ========================== GET TEAM CAPACITY STATS ========================== */
+exports.getTeamCapacityStats = async (db, actor, date) => {
+    const query = getQuery(db);
+
+    if (!actor.employeeId) {
+        return { totalTeamSize: 0, approvedWFHCount: 0, approvedLeaveCount: 0 };
+    }
+
+    // 1. Get Total Team Size (Number of employees reporting to this manager)
+    const teamRes = await query(
+        `SELECT COUNT(*) as count 
+         FROM employees 
+         WHERE reports_to = $1 AND tenant_id = $2 AND is_active = true`,
+        [actor.employeeId, actor.tenantId]
+    );
+    const totalTeamSize = parseInt(teamRes.rows[0].count || 0);
+
+    if (totalTeamSize === 0) {
+        return { totalTeamSize: 0, approvedWFHCount: 0, approvedLeaveCount: 0 };
+    }
+
+    // 2. Get Count of Approved WFH for the date (Team members only)
+    const wfhRes = await query(
+        `SELECT COUNT(*) as count 
+         FROM wfh_requests wr
+         JOIN employees e ON e.id = wr.employee_id
+         WHERE wr.tenant_id = $1 
+           AND wr.request_date = $2 
+           AND wr.status = 'APPROVED'
+           AND e.reports_to = $3`,
+        [actor.tenantId, date, actor.employeeId]
+    );
+    const approvedWFHCount = parseInt(wfhRes.rows[0].count || 0);
+
+    // 3. Get Count of Approved Leave for the date (Team members only)
+    const leaveRes = await query(
+        `SELECT COUNT(*) as count 
+         FROM leave_applications la
+         JOIN employees e ON e.id = la.employee_id
+         WHERE la.tenant_id = $1 
+           AND la.status = 'APPROVED'
+           AND $2::date BETWEEN la.start_date AND la.end_date
+           AND e.reports_to = $3`,
+        [actor.tenantId, date, actor.employeeId]
+    );
+    const approvedLeaveCount = parseInt(leaveRes.rows[0].count || 0);
+
+    return {
+        totalTeamSize,
+        approvedWFHCount,
+        approvedLeaveCount
+    };
+};

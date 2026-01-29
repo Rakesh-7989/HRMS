@@ -146,6 +146,7 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
   const today = todayDate();
   const now = nowTime();
   const { calculateHoursDifference } = require('../../utils/dateHelper');
+  const { eod_report } = meta; // Extract eod_report from meta
 
   const existing = await query(
     `
@@ -192,6 +193,11 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
 
       throw new Error(`Location validation failed: ${geoValidation.reason === 'LOCATION_REQUIRED' ? 'Location access is required for clock-out.' : 'You are outside the allowed zone.'}`);
     }
+  } else {
+    // == EOD REPORT VALIDATION FOR REMOTE USERS ==
+    if (!eod_report || eod_report.trim().length < 10) {
+      throw new Error("End of Day Report is mandatory for WFH days. Please describe your accomplishments (min 10 chars).");
+    }
   }
   // ===========================
 
@@ -224,9 +230,10 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
         check_out_device = $3,
         status         = $4,
         updated_by     = $5,
+        eod_report     = $6,
         updated_at     = now()
-    WHERE id = $6
-      AND tenant_id = $7
+    WHERE id = $7
+      AND tenant_id = $8
     RETURNING *
     `,
     [
@@ -235,6 +242,7 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
       meta.device || "Browser",
       finalStatus,
       actor.id,
+      eod_report || null, // Save EOD report
       attendance.id,
       actor.tenantId
     ]
