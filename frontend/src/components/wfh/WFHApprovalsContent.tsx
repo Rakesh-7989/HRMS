@@ -144,7 +144,7 @@ export const WFHApprovalsContent: React.FC = () => {
                                             <div className="flex gap-2">
                                                 <Button
                                                     size="sm"
-                                                    variant="default"
+                                                    variant="primary"
                                                     onClick={() => handleApprove(request)}
                                                 >
                                                     <CheckCircle size={14} className="mr-1" />
