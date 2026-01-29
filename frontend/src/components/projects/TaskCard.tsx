@@ -89,7 +89,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                 <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
                     {task.title}
                 </h4>
-            </div>
+            </div> 
+
 
             {task.description && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">

@@ -29,6 +29,20 @@ router.post(
   controller.clockOut
 );
 
+// Start Break
+router.post(
+  "/break/start",
+  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  controller.startBreak
+);
+
+// End Break
+router.post(
+  "/break/end",
+  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  controller.endBreak
+);
+
 // Get today's attendance (All authenticated users can view)
 router.get("/today", controller.getTodayAttendance);
 

@@ -59,6 +59,49 @@ exports.clockOut = async (req, res) => {
   }
 };
 
+
+/**
+ * START BREAK
+ */
+exports.startBreak = async (req, res) => {
+  try {
+    const result = await attendanceService.startBreak(
+      req.db,
+      req.user.employeeId,
+      req.user.tenantId
+    );
+    res.json({
+      status: "success",
+      message: "Break started successfully",
+      data: result
+    });
+  } catch (error) {
+    logger.error("Start break error:", error.message);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * END BREAK
+ */
+exports.endBreak = async (req, res) => {
+  try {
+    const result = await attendanceService.endBreak(
+      req.db,
+      req.user.employeeId,
+      req.user.tenantId
+    );
+    res.json({
+      status: "success",
+      message: "Break ended successfully",
+      data: result
+    });
+  } catch (error) {
+    logger.error("End break error:", error.message);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
 /**
  * GET TODAY
  */

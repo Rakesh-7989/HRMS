@@ -15,12 +15,13 @@ import { superAdminService } from '@/services/superAdmin.service';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
+import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 
 
 
 export const OrganisationPage: React.FC = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations'>('directory');
+  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts'>('directory');
 
   // If user is SUPER_ADMIN, ensure tree tab is not active
   useEffect(() => {
@@ -137,6 +138,7 @@ export const OrganisationPage: React.FC = () => {
                     <>
                       <button onClick={() => setTab('departments')} className={`py-2 px-3 text-sm ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
                       <button onClick={() => setTab('designations')} className={`py-2 px-3 text-sm ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                     </>
                   )}
                 </>
@@ -147,7 +149,7 @@ export const OrganisationPage: React.FC = () => {
           <div className="flex-1 min-h-0 relative overflow-hidden">
             {tab === 'departments' && <DepartmentsContent />}
             {tab === 'designations' && <DesignationsContent />}
-
+            {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
             {tab === 'tree' && <OrgTreeContent />}
 
             {tab === 'directory' && (

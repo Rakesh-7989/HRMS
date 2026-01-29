@@ -18,5 +18,3 @@ backend/scripts/test_*.js
 backend/scripts/run_*.js
 backend/wfh_debug.log
 backend/audit_results.json
-
-

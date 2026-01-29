@@ -45,6 +45,7 @@ import { SearchPage } from '@/pages/SearchPage';
 import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
+import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 
 
 
@@ -324,8 +325,16 @@ function App() {
         <Route
           path="/organisation"
           element={
-            <ProtectedRoute allowedRoles={["ADMIN", "HR", "MANAGER", "EMPLOYEE", "SUPER_ADMIN"]}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
               <OrganisationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organization/shifts"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+              <ShiftsPage />
             </ProtectedRoute>
           }
         />
@@ -493,7 +502,7 @@ function App() {
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      </Routes >
     </>
   );
 }

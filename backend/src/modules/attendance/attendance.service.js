@@ -198,12 +198,22 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
   // Calculate working hours
   const workingHours = calculateHoursDifference(attendance.check_in_time, now);
 
-  // Determine status based on 10-hour rule
-  let finalStatus = attendance.status; // Keep existing status (PRESENT or HALF_DAY)
-  if (workingHours < 10) {
-    finalStatus = 'INCOMPLETE_HOURS'; // Custom status for incomplete hours
-  } else if (workingHours >= 10) {
-    finalStatus = 'PRESENT'; // Ensure it's marked as present if hours are complete
+  // Calculate actual break duration
+  const breakRes = await query(
+    `SELECT SUM(duration_minutes) as total_break FROM attendance_breaks WHERE attendance_id = $1`,
+    [attendance.id]
+  );
+  const totalBreakMinutes = parseInt(breakRes.rows[0].total_break || 0);
+  const totalBreakHours = totalBreakMinutes / 60;
+
+  const actualWorkHours = workingHours - totalBreakHours;
+
+  // Determine status based on 10-hour rule (adjusted for shifts later if needed)
+  let finalStatus = attendance.status;
+  if (actualWorkHours < 9) { // Assuming 9 hours work + 1 hour break = 10 hours span
+    finalStatus = 'INCOMPLETE_HOURS';
+  } else {
+    finalStatus = 'PRESENT';
   }
 
   const result = await query(
@@ -234,6 +244,84 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
 };
 
 /**
+ * START BREAK
+ */
+exports.startBreak = async (db, employeeId, tenantId) => {
+  const query = getQuery(db);
+
+  // Get active attendance
+  const today = todayDate();
+  const attRes = await query(
+    `SELECT id, status FROM attendance WHERE employee_id = $1 AND tenant_id = $2 AND date = $3`,
+    [employeeId, tenantId, today]
+  );
+
+  if (attRes.rowCount === 0) throw new Error("You are not clocked in.");
+  const attendance = attRes.rows[0];
+  if (attendance.check_out_time) throw new Error("You have already clocked out.");
+
+  // Check if already on break
+  const activeBreak = await query(
+    `SELECT id FROM attendance_breaks WHERE attendance_id = $1 AND end_time IS NULL`,
+    [attendance.id]
+  );
+  if (activeBreak.rowCount > 0) throw new Error("You are already on a break.");
+
+  const result = await query(
+    `INSERT INTO attendance_breaks (tenant_id, attendance_id, start_time) VALUES ($1, $2, NOW()) RETURNING *`,
+    [tenantId, attendance.id]
+  );
+
+  // Optionally update status to ON_BREAK? 
+  // keeping STATUS as PRESENT/HALF_DAY usually, but maybe a UI status?
+  // User asked for "Break In" status.
+
+  return result.rows[0];
+};
+
+/**
+ * END BREAK
+ */
+exports.endBreak = async (db, employeeId, tenantId) => {
+  const query = getQuery(db);
+
+  // Get active attendance
+  const today = todayDate();
+  const attRes = await query(
+    `SELECT id FROM attendance WHERE employee_id = $1 AND tenant_id = $2 AND date = $3`,
+    [employeeId, tenantId, today]
+  );
+
+  if (attRes.rowCount === 0) throw new Error("You are not clocked in.");
+  const attendance = attRes.rows[0];
+
+  // Find active break
+  const activeBreak = await query(
+    `SELECT id, start_time FROM attendance_breaks WHERE attendance_id = $1 AND end_time IS NULL`,
+    [attendance.id]
+  );
+  if (activeBreak.rowCount === 0) throw new Error("You are not currently on a break.");
+
+  const breakRecord = activeBreak.rows[0];
+
+  // Calculate duration
+  const result = await query(
+    `
+    UPDATE attendance_breaks
+    SET end_time = NOW(),
+        duration_minutes = EXTRACT(EPOCH FROM (NOW() - start_time))/60,
+        updated_at = NOW()
+    WHERE id = $1
+    RETURNING *
+    `,
+    [breakRecord.id]
+  );
+
+  return result.rows[0];
+};
+
+
+/**
  * TODAY'S ATTENDANCE
  */
 exports.getTodayAttendance = async (db, employeeId, tenantId) => {
@@ -243,11 +331,15 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
 
   const result = await query(
     `
-    SELECT *
-    FROM attendance
-    WHERE employee_id = $1
-      AND tenant_id = $2
-      AND date = $3
+    SELECT att.*,
+      (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
+       FROM attendance_breaks ab
+       WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
+       LIMIT 1) as active_break
+    FROM attendance att
+    WHERE att.employee_id = $1
+      AND att.tenant_id = $2
+      AND att.date = $3
     `,
     [employeeId, tenantId, today]
   );

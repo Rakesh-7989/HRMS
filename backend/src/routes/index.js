@@ -27,6 +27,8 @@ const projectManagementRouter = require('../modules/project_management/project_m
 const geoFencingRouter = require('../modules/geo_fencing/geoFencing.router');
 const calendarRouter = require('../modules/calendar/calendar.router');
 const wfhRouter = require('../modules/wfh/wfh.router');
+const shiftRouter = require('../modules/shifts/shift.router');
+
 
 
 const router = express.Router();
@@ -103,5 +105,6 @@ router.use('/projects', projectManagementRouter);
 router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), wfhRouter);
 
 router.use('/calendar', calendarRouter);
+router.use('/shifts', shiftRouter);
 
 module.exports = router;

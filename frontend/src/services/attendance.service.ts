@@ -19,6 +19,10 @@ export interface Attendance {
   first_name?: string;
   last_name?: string;
   email?: string;
+  active_break?: {
+    id: string;
+    start_time: string;
+  };
 }
 
 export interface AttendanceSummaryRow {
@@ -261,6 +265,16 @@ export const attendanceService = {
   }): Promise<AttendanceReports> => {
     const response = await api.get<{ status: string; data: AttendanceReports }>('/attendance/reports', { params });
     return response.data.data!;
+  },
+
+  startBreak: async (): Promise<any> => {
+    const response = await api.post('/attendance/break/start');
+    return response.data;
+  },
+
+  endBreak: async (): Promise<any> => {
+    const response = await api.post('/attendance/break/end');
+    return response.data;
   },
 
   // ============================================================================

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Sidebar } from './Sidebar';
+import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2 } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
 import { NotificationDropdown } from './NotificationDropdown';
+import { NavbarClock } from './NavbarClock';
 
 interface BreadcrumbItem {
   label: string;
@@ -36,6 +38,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const canAccessSettings =
     user?.role === 'ADMIN' ||
@@ -58,6 +62,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       }
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        if (!searchQuery) {
+          setIsSearchExpanded(false);
+        }
       }
     };
     document.addEventListener('mousedown', handler);
@@ -185,6 +192,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3">
+              <NavbarClock />
               {actions && (
                 <div className="flex items-center gap-2 mr-2">
                   {actions}
@@ -192,22 +200,37 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               )}
 
               {/* Search with Suggestions */}
-              <div className="relative hidden md:block" ref={searchRef}>
+              <div
+                className={cn(
+                  "relative hidden md:block transition-all duration-300 ease-in-out",
+                  isSearchExpanded ? "w-64" : "w-10"
+                )}
+                ref={searchRef}
+              >
                 <button
                   type="button"
                   onClick={() => {
-                    const q = searchQuery.trim();
-                    if (q) {
-                      navigate(`/search?q=${encodeURIComponent(q)}`);
-                      setShowSuggestions(false);
+                    if (!isSearchExpanded) {
+                      setIsSearchExpanded(true);
+                      setTimeout(() => inputRef.current?.focus(), 100);
+                    } else {
+                      const q = searchQuery.trim();
+                      if (q) {
+                        navigate(`/search?q=${encodeURIComponent(q)}`);
+                        setShowSuggestions(false);
+                      }
                     }
                   }}
                   aria-label="Search"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-10",
+                    isSearchExpanded ? "left-1 text-gray-500" : "left-1 text-gray-500"
+                  )}
                 >
                   <Search size={18} />
                 </button>
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
@@ -216,9 +239,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     setShowSuggestions(true);
                     setSelectedIndex(-1);
                   }}
-                  onFocus={() => setShowSuggestions(true)}
+                  onFocus={() => {
+                    setIsSearchExpanded(true);
+                    setShowSuggestions(true);
+                  }}
+                  onBlur={() => {
+                    // Delay closing to allow clicking on suggestions
+                    // Handled by click outside listener
+                  }}
                   onKeyDown={handleKeyDown}
-                  className="pl-9 pr-4 py-2 w-64 text-sm rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className={cn(
+                    "pl-10 pr-4 py-2 h-10 text-sm rounded-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:bg-white dark:focus:bg-gray-900 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
+                    "transition-all duration-300 ease-in-out block",
+                    isSearchExpanded ? "w-full opacity-100" : "w-0 opacity-0 p-0 overflow-hidden"
+                  )}
                 />
 
                 {/* Suggestions Dropdown */}
