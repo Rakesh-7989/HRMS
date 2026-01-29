@@ -7,12 +7,16 @@ import { AttendanceReportsContent } from '@/components/attendance/AttendanceRepo
 import { RegularizationRequestsContent } from '@/components/attendance/RegularizationRequestsContent';
 import { MyAttendanceContent } from '@/components/attendance/MyAttendanceContent';
 import { GeoFencingSettingsContent } from '@/components/attendance/GeoFencingSettingsContent';
+import { WFHApprovalsContent } from '@/components/wfh/WFHApprovalsContent';
+import { MyWFHRequestsContent } from '@/components/wfh/MyWFHRequestsContent';
 
 const ATTENDANCE_TABS = [
   { id: 'daily', label: 'Daily Log', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'history', label: 'My History', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'regularization', label: 'Regularization', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+  { id: 'my-wfh', label: 'My WFH Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] },
+  { id: 'wfh-approvals', label: 'WFH Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] },
   { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'geofence', label: 'Geo-Fencing', roles: ['HR', 'ADMIN'] },
 ] as const;
@@ -62,7 +66,9 @@ export const AttendancePage: React.FC = () => {
           {activeTab === 'daily' && <DailyAttendanceContent />}
           {activeTab === 'history' && <MyAttendanceContent />}
           {activeTab === 'regularization' && <RegularizationRequestsContent />}
+          {activeTab === 'my-wfh' && <MyWFHRequestsContent />}
           {activeTab === 'team' && <TeamAttendanceContent />}
+          {activeTab === 'wfh-approvals' && <WFHApprovalsContent />}
           {activeTab === 'reports' && <AttendanceReportsContent />}
           {activeTab === 'geofence' && <GeoFencingSettingsContent />}
         </div>

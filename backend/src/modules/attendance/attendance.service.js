@@ -53,9 +53,21 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     throw new Error("You are on approved leave today. Clock-in is blocked.");
   }
 
+  // Check for approved WFH request for today (separate from leave)
+  const wfhRes = await query(
+    `SELECT id FROM wfh_requests 
+     WHERE tenant_id = $1 
+       AND employee_id = $2 
+       AND request_date = $3 
+       AND status = 'APPROVED'
+     LIMIT 1`,
+    [actor.tenantId, employeeId, today]
+  );
+  const hasWFHApproval = wfhRes.rowCount > 0;
+
   // == GEO-FENCING CHECK ==
-  // Skip if WFH is approved
-  if (!isWFH) {
+  // Skip if WFH is approved (either via leave type OR WFH request)
+  if (!isWFH && !hasWFHApproval) {
     const geoValidation = await geoFencingService.validateLocation(
       db,
       actor.tenantId,
@@ -119,7 +131,7 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       meta.device || "Browser",
       status,
       actor.id,
-      isWFH ? 'REMOTE' : 'OFFICE'
+      isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE'
     ]
   );
 

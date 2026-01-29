@@ -1,0 +1,228 @@
+const pool = require("../../config/db");
+
+const getQuery = (db) =>
+    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+
+/* ========================== REQUEST WFH ========================== */
+exports.requestWFH = async (db, data, actor) => {
+    const query = getQuery(db);
+    const { request_date, reason } = data;
+
+    if (!actor.employeeId) {
+        throw new Error("You must have an active employee profile to request WFH.");
+    }
+
+    // Check for existing request for the same date
+    const existing = await query(
+        `SELECT id, status FROM wfh_requests 
+         WHERE tenant_id = $1 AND employee_id = $2 AND request_date = $3`,
+        [actor.tenantId, actor.employeeId, request_date]
+    );
+
+    if (existing.rowCount > 0) {
+        const existingStatus = existing.rows[0].status;
+        if (existingStatus === 'PENDING') {
+            throw new Error("You already have a pending WFH request for this date.");
+        } else if (existingStatus === 'APPROVED') {
+            throw new Error("You already have an approved WFH request for this date.");
+        }
+        // If rejected, allow re-requesting
+    }
+
+    const result = await query(
+        `INSERT INTO wfh_requests 
+            (tenant_id, employee_id, request_date, reason, created_by)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [actor.tenantId, actor.employeeId, request_date, reason, actor.id]
+    );
+
+    return result.rows[0];
+};
+
+/* ========================== GET MY WFH REQUESTS ========================== */
+exports.getMyWFHRequests = async (db, actor, params = {}) => {
+    const query = getQuery(db);
+    const { status, from_date, to_date } = params;
+
+    let sql = `
+        SELECT wr.*, 
+               ea.first_name as approver_first_name,
+               ea.last_name as approver_last_name,
+               er.first_name as rejecter_first_name,
+               er.last_name as rejecter_last_name
+        FROM wfh_requests wr
+        LEFT JOIN employees ea ON ea.user_id = wr.approved_by
+        LEFT JOIN employees er ON er.user_id = wr.rejected_by
+        WHERE wr.tenant_id = $1 AND wr.employee_id = $2
+    `;
+
+    const values = [actor.tenantId, actor.employeeId];
+
+    let paramIndex = 3;
+
+    if (status) {
+        sql += ` AND wr.status = $${paramIndex}`;
+        values.push(status);
+        paramIndex++;
+    }
+
+    if (from_date) {
+        sql += ` AND wr.request_date >= $${paramIndex}`;
+        values.push(from_date);
+        paramIndex++;
+    }
+
+    if (to_date) {
+        sql += ` AND wr.request_date <= $${paramIndex}`;
+        values.push(to_date);
+        paramIndex++;
+    }
+
+    sql += ` ORDER BY wr.request_date DESC`;
+
+    const result = await query(sql, values);
+    return result.rows;
+};
+
+/* ========================== GET PENDING WFH REQUESTS (FOR MANAGERS) ========================== */
+exports.getPendingWFHRequests = async (db, actor) => {
+    const query = getQuery(db);
+
+    // Get requests from employees who report to this user
+    const result = await query(
+        `SELECT wr.*, 
+                e.first_name, e.last_name, u.email, e.employee_id as employee_code
+         FROM wfh_requests wr
+         JOIN employees e ON e.id = wr.employee_id
+         JOIN users u ON u.id = e.user_id
+         WHERE wr.tenant_id = $1 
+           AND wr.status = 'PENDING'
+           AND e.reports_to = $2
+         ORDER BY wr.request_date ASC, wr.created_at ASC`,
+        [actor.tenantId, actor.employeeId]
+    );
+
+    return result.rows;
+};
+
+/* ========================== APPROVE WFH REQUEST ========================== */
+exports.approveWFH = async (db, requestId, actor, comment = null) => {
+    const query = getQuery(db);
+
+    // Get request details and verify permissions
+    const requestRes = await query(
+        `SELECT wr.*, e.reports_to 
+         FROM wfh_requests wr
+         JOIN employees e ON e.id = wr.employee_id
+         WHERE wr.id = $1 AND wr.tenant_id = $2`,
+        [requestId, actor.tenantId]
+    );
+
+    if (requestRes.rowCount === 0) {
+        throw new Error("WFH request not found");
+    }
+
+    const request = requestRes.rows[0];
+
+    if (request.status !== 'PENDING') {
+        throw new Error(`Cannot approve a ${request.status.toLowerCase()} request`);
+    }
+
+    // Check authorization
+    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
+    if (!allowedRoles.includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin, HR, or Managers can approve WFH requests");
+    }
+
+    // If MANAGER, verify they manage this employee
+    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
+        throw new Error("You can only approve WFH requests for your direct reports");
+    }
+
+    // Approve the request
+    const result = await query(
+        `UPDATE wfh_requests 
+         SET status = 'APPROVED', 
+             approved_by = $1, 
+             approved_at = NOW(),
+             approval_comment = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND tenant_id = $4
+         RETURNING *`,
+        [actor.id, comment, requestId, actor.tenantId]
+    );
+
+    return result.rows[0];
+};
+
+/* ========================== REJECT WFH REQUEST ========================== */
+exports.rejectWFH = async (db, requestId, actor, reason) => {
+    const query = getQuery(db);
+
+    if (!reason || reason.trim().length < 5) {
+        throw new Error("Rejection reason is required (minimum 5 characters)");
+    }
+
+    // Get request details and verify permissions
+    const requestRes = await query(
+        `SELECT wr.*, e.reports_to 
+         FROM wfh_requests wr
+         JOIN employees e ON e.id = wr.employee_id
+         WHERE wr.id = $1 AND wr.tenant_id = $2`,
+        [requestId, actor.tenantId]
+    );
+
+    if (requestRes.rowCount === 0) {
+        throw new Error("WFH request not found");
+    }
+
+    const request = requestRes.rows[0];
+
+    if (request.status !== 'PENDING') {
+        throw new Error(`Cannot reject a ${request.status.toLowerCase()} request`);
+    }
+
+    // Check authorization
+    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
+    if (!allowedRoles.includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin, HR, or Managers can reject WFH requests");
+    }
+
+    // If MANAGER, verify they manage this employee
+    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
+        throw new Error("You can only reject WFH requests for your direct reports");
+    }
+
+    // Reject the request
+    const result = await query(
+        `UPDATE wfh_requests 
+         SET status = 'REJECTED', 
+             rejected_by = $1, 
+             rejected_at = NOW(),
+             rejection_reason = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND tenant_id = $4
+         RETURNING *`,
+        [actor.id, reason, requestId, actor.tenantId]
+    );
+
+    return result.rows[0];
+};
+
+/* ========================== CHECK WFH FOR DATE ========================== */
+exports.checkWFHForDate = async (db, tenantId, employeeId, date) => {
+    const query = getQuery(db);
+
+    const result = await query(
+        `SELECT * FROM wfh_requests 
+         WHERE tenant_id = $1 
+           AND employee_id = $2 
+           AND request_date = $3
+           AND status = 'APPROVED'
+         LIMIT 1`,
+        [tenantId, employeeId, date]
+    );
+
+    return result.rows[0] || null;
+};

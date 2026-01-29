@@ -87,7 +87,8 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
     }
 
     // Check leave balance (for paid leave types) with row lock to prevent race condition
-    if (leaveType.is_paid) {
+    // SKIP check for WFH (Work From Home) as it doesn't consume balance
+    if (leaveType.is_paid && leaveType.code !== 'WFH') {
         // Use FOR UPDATE to lock the balance row and prevent concurrent modifications
         const balanceRes = await query(
             `SELECT * FROM leave_balances 
@@ -345,7 +346,7 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 
     // Get leave details first
     const leaveRes = await query(
-        `SELECT la.*, lt.is_paid, e.reports_to
+        `SELECT la.*, lt.is_paid, lt.code as leave_type_code, e.reports_to
          FROM leave_applications la
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
          LEFT JOIN employees e ON e.id = la.employee_id
@@ -382,8 +383,8 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
         [actor.id, comment || null, leaveId]
     );
 
-    // Deduct balance for paid leave types
-    if (leave.is_paid && leave.leave_type_id) {
+    // Deduct balance for paid leave types (Except WFH)
+    if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
         const daysCount = leave.days_count ||
             (leave.is_half_day ? 0.5 :
                 Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);
@@ -463,7 +464,7 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
 
     // Get leave details
     const leaveRes = await query(
-        `SELECT la.*, lt.is_paid 
+        `SELECT la.*, lt.is_paid, lt.code as leave_type_code 
          FROM leave_applications la
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
          WHERE la.id = $1 AND la.tenant_id = $2 AND la.employee_id = $3 AND la.status = 'APPROVED'`,
@@ -494,8 +495,8 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
         [tenantId, employeeId, reason || 'Cancelled by employee', leaveId]
     );
 
-    // Restore balance for paid leave types
-    if (leave.is_paid && leave.leave_type_id) {
+    // Restore balance for paid leave types (Except WFH)
+    if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
         const daysCount = leave.days_count ||
             (leave.is_half_day ? 0.5 :
                 Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);

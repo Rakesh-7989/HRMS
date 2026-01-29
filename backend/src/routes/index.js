@@ -26,6 +26,7 @@ const auditRouter = require('../modules/audit/audit.router');
 const projectManagementRouter = require('../modules/project_management/project_management.router');
 const geoFencingRouter = require('../modules/geo_fencing/geoFencing.router');
 const calendarRouter = require('../modules/calendar/calendar.router');
+const wfhRouter = require('../modules/wfh/wfh.router');
 
 
 const router = express.Router();
@@ -97,6 +98,10 @@ router.use('/notifications', notificationRouter);
 router.use('/documents', documentsRouter);
 
 router.use('/projects', projectManagementRouter);
+
+// WFH (Work From Home) Request module
+router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), wfhRouter);
+
 router.use('/calendar', calendarRouter);
 
 module.exports = router;
