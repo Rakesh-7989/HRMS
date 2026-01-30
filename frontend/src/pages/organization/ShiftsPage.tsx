@@ -44,7 +44,10 @@ export const ShiftsPage = () => {
             setIsModalOpen(false);
             toast.success('Shift created successfully');
         },
-        onError: () => toast.error('Failed to create shift')
+        onError: (error: any) => {
+            const msg = error.response?.data?.message || 'Failed to create shift';
+            toast.error(msg);
+        }
     });
 
     const updateMutation = useMutation({
@@ -55,7 +58,10 @@ export const ShiftsPage = () => {
             setEditingShift(null);
             toast.success('Shift updated successfully');
         },
-        onError: () => toast.error('Failed to update shift')
+        onError: (error: any) => {
+            const msg = error.response?.data?.message || 'Failed to update shift';
+            toast.error(msg);
+        }
     });
 
     const deleteMutation = useMutation({
@@ -64,7 +70,10 @@ export const ShiftsPage = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             toast.success('Shift deleted successfully');
         },
-        onError: () => toast.error('Failed to delete shift')
+        onError: (error: any) => {
+            const msg = error.response?.data?.message || 'Failed to delete shift';
+            toast.error(msg);
+        }
     });
 
     const assignMutation = useMutation({

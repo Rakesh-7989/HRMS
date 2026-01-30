@@ -108,6 +108,45 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     throw new Error(`Already clocked in at ${existing.rows[0].check_in_time}`);
   }
 
+  // == SHIFT & LATE TRACKING LOGIC ==
+  const empShiftRes = await query(
+    `SELECT s.* 
+     FROM employees e
+     JOIN shifts s ON e.shift_id = s.id
+     WHERE e.id = $1 AND e.tenant_id = $2`,
+    [employeeId, actor.tenantId]
+  );
+
+  let shiftId = null;
+  let lateBy = null;
+
+  if (empShiftRes.rowCount > 0) {
+    const shift = empShiftRes.rows[0];
+    shiftId = shift.id;
+
+    // Calculate Late By
+    if (shift.start_time) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
+      const actualIn = new Date(`${todayStr}T${now}`);
+      const graceLimit = new Date(shiftStart.getTime() + (shift.grace_period_minutes || 0) * 60000);
+
+      if (actualIn > graceLimit) {
+        const diffMs = actualIn - shiftStart;
+        const diffMins = Math.floor(diffMs / 60000);
+        const hrs = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+
+        if (hrs > 0) {
+          lateBy = `${hrs}h ${mins}m`;
+        } else {
+          lateBy = `${mins}m`;
+        }
+      }
+    }
+  }
+  // ================================
+
   // Determine status (WFH -> PRESENT, Leave Half Day -> HALF_DAY, else PRESENT)
   let status = "PRESENT";
   if (approvedLeave && !isWFH && approvedLeave.is_half_day) {
@@ -118,8 +157,8 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   const result = await query(
     `
     INSERT INTO attendance
-      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode, shift_id, late_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *
     `,
     [
@@ -131,7 +170,9 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       meta.device || "Browser",
       status,
       actor.id,
-      isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE'
+      isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE',
+      shiftId,
+      lateBy
     ]
   );
 
@@ -331,18 +372,39 @@ exports.endBreak = async (db, employeeId, tenantId) => {
 /**
  * GET BREAK HISTORY
  */
-exports.getBreakHistory = async (db, tenantId, filters) => {
+exports.getBreakHistory = async (db, actor, filters) => {
   const query = getQuery(db);
-  const params = [tenantId];
+  const params = [actor.tenantId];
   let p = 2;
   let where = `WHERE att.tenant_id = $1`;
 
-  if (filters.employee_id) {
+  // Role-based visibility enforcement
+  if (actor.role === 'EMPLOYEE') {
+    // Employee sees only self
     where += ` AND att.employee_id = $${p} `;
-    params.push(filters.employee_id);
+    params.push(actor.employeeId);
+    p++;
+  } else if (actor.role === 'MANAGER') {
+    // Manager sees Self AND Team
+    // We join employees table "e" in the main query, so we can check reports_to
+    where += ` AND (att.employee_id = $${p} OR e.reports_to = $${p}) `;
+    params.push(actor.employeeId);
     p++;
   }
+  // ADMIN / HR see all (no extra WHERE clause added here)
 
+  // Specific Employee Filter (for Admin/Manager selecting a user)
+  if (filters.employee_id) {
+    if (actor.role === 'EMPLOYEE') {
+      // Ignore filter if employee triggers it (already forced above)
+    } else {
+      where += ` AND att.employee_id = $${p} `;
+      params.push(filters.employee_id);
+      p++;
+    }
+  }
+
+  // Date Filters
   if (filters.date) {
     where += ` AND att.date = $${p} `;
     params.push(filters.date);
@@ -363,12 +425,13 @@ exports.getBreakHistory = async (db, tenantId, filters) => {
 
   const result = await query(
     `
-  SELECT
-  ab.*,
-    att.date,
-    att.employee_id,
-    e.first_name,
-    e.last_name
+    SELECT 
+      ab.*,
+      att.date,
+      att.employee_id,
+      e.first_name,
+      e.last_name,
+      e.reports_to
     FROM attendance_breaks ab
     JOIN attendance att ON att.id = ab.attendance_id
     JOIN employees e ON e.id = att.employee_id
@@ -429,11 +492,15 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
   const result = await query(
     `
     SELECT att.*,
-    (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
-       FROM attendance_breaks ab
-       WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
-       LIMIT 1) as active_break
+           s.name as shift_name, 
+           s.start_time as shift_start, 
+           s.end_time as shift_end,
+           (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
+            FROM attendance_breaks ab
+            WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
+            LIMIT 1) as active_break
     FROM attendance att
+    LEFT JOIN shifts s ON att.shift_id = s.id
     WHERE att.employee_id = $1
       AND att.tenant_id = $2
       AND att.date = $3

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 import { attendanceService } from '@/services/attendance.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { Clock, MapPin, Coffee } from 'lucide-react';
@@ -9,6 +10,7 @@ import { formatDuration } from '@/utils/timeFormat';
 
 
 export const NavbarClock: React.FC = () => {
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -167,9 +169,22 @@ export const NavbarClock: React.FC = () => {
     const canClockOut = status === 'PRESENT' || status === 'HALF_DAY' || status === 'PENDING_CHECKOUT';
 
     // Don't render anything while loading initial state to avoid jumpiness
-    if (isLoadingAttendance) return null;
+    if (isLoadingAttendance) {
+        return (
+            <div className="flex items-center mr-2">
+                <Button variant="outline" disabled className="h-9 w-24 gap-2 border-gray-200 bg-gray-50">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                </Button>
+            </div>
+        );
+    }
 
     const activeBreak = todayAttendance?.active_break;
+
+    // Admins don't clock in/out
+    if (user?.role === 'ADMIN') {
+        return null;
+    }
 
     // Already clocked out for the day
     if (todayAttendance?.check_out_time) {

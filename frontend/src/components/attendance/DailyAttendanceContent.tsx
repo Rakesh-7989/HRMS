@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
 import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
-import { Clock, MapPin } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Clock, MapPin, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
-import { formatTime12Hour, formatDuration, calculateWorkDuration } from '@/utils/timeFormat';
+import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';
 import {
     Dialog,
     DialogContent,
@@ -21,6 +22,7 @@ import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 
 export const DailyAttendanceContent: React.FC = () => {
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -28,19 +30,44 @@ export const DailyAttendanceContent: React.FC = () => {
     const [confirmStatus, setConfirmStatus] = useState<'PRESENT' | 'HALF_DAY'>('PRESENT');
     const [confirmReason, setConfirmReason] = useState('');
 
+    // For HR/Manager View
+    const [searchQuery, setSearchQuery] = useState('');
+    const isHrOrManager = ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || '');
+
     const { data: todayAttendance } = useQuery({
         queryKey: ['attendance', 'today'],
         queryFn: () => attendanceService.getTodayAttendance(),
     });
 
-    const { data: myAttendance = [], isLoading } = useQuery({
+    // Employee: Fetches their own history
+    const { data: myAttendance = [], isLoading: isLoadingMyAttendance } = useQuery({
         queryKey: ['attendance', 'my'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
+        enabled: !isHrOrManager // Only fetch if NOT HR/Manager (default view)
     });
 
+    // Employee: Fetches their own pending checkouts
     const { data: myPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'my-pending'],
         queryFn: () => attendanceService.getMyPendingCheckouts(),
+        enabled: !isHrOrManager
+    });
+
+    // HR/Manager: Fetches Today's Attendance Log (Team/All)
+    const { data: todayTeamAttendance = [], isLoading: isLoadingTeamAttendance } = useQuery({
+        queryKey: ['attendance', 'today-team-log'],
+        queryFn: () => attendanceService.getAttendanceRecords({
+            from_date: getCurrentDate(),
+            to_date: getCurrentDate()
+        }),
+        enabled: isHrOrManager
+    });
+
+    // HR/Manager: Fetches Pending Checkouts (Team/All - API handles filtering based on role)
+    const { data: teamPendingCheckouts = [] } = useQuery({
+        queryKey: ['attendance', 'team-pending'],
+        queryFn: () => attendanceService.getPendingCheckouts({}),
+        enabled: isHrOrManager
     });
 
     const { data: geoSettings } = useQuery({
@@ -54,14 +81,21 @@ export const DailyAttendanceContent: React.FC = () => {
 
         if (isTimerRunning && todayAttendance?.check_in_time && !todayAttendance?.check_out_time) {
             try {
-                const recordDate = new Date(todayAttendance.date);
-                const year = recordDate.getFullYear();
-                const month = String(recordDate.getMonth() + 1).padStart(2, '0');
-                const day = String(recordDate.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
+                // If the time string is already full ISO, use it directly, else construct it
+                let checkInTime = todayAttendance.check_in_time;
+                let checkInDate: Date;
 
-                const timeStr = todayAttendance.check_in_time;
-                const checkInDate = new Date(`${dateStr}T${timeStr}`);
+                if (checkInTime.includes('T')) {
+                    checkInDate = new Date(checkInTime);
+                } else {
+                    const recordDate = new Date(todayAttendance.date);
+                    const year = recordDate.getFullYear();
+                    const month = String(recordDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(recordDate.getDate()).padStart(2, '0');
+                    const dateStr = `${year}-${month}-${day}`;
+                    checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                }
+
                 const now = new Date();
 
                 if (!isNaN(checkInDate.getTime())) {
@@ -97,7 +131,6 @@ export const DailyAttendanceContent: React.FC = () => {
         }
     }, [todayAttendance]);
 
-    // Use imported formatDuration and calculateWorkDuration from timeFormat utils
 
     const clockInMutation = useMutation({
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
@@ -239,6 +272,12 @@ export const DailyAttendanceContent: React.FC = () => {
     const status = todayAttendance?.status || 'NOT_CHECKED_IN';
     const canClockOut = status === 'PRESENT' || status === 'HALF_DAY' || status === 'PENDING_CHECKOUT';
 
+    // Helper to filter team logs
+    const filteredTeamLogs = todayTeamAttendance.filter(record =>
+        (record.first_name + ' ' + record.last_name).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (record.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="space-y-6">
             <Card>
@@ -250,6 +289,24 @@ export const DailyAttendanceContent: React.FC = () => {
                                 ? `Checked in at ${formatTime12Hour(todayAttendance.check_in_time)}`
                                 : 'Not checked in yet'}
                         </p>
+
+                        {(todayAttendance?.shift_name || todayAttendance?.late_by) && (
+                            <div className="mt-2 text-sm space-y-1">
+                                {todayAttendance.shift_name && (
+                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                        <span className="font-medium">Shift:</span>
+                                        <span>{todayAttendance.shift_name} ({formatTime12Hour(todayAttendance.shift_start)} - {formatTime12Hour(todayAttendance.shift_end)})</span>
+                                    </div>
+                                )}
+                                {todayAttendance.late_by && (
+                                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium">
+                                        <span>Late by:</span>
+                                        <span>{todayAttendance.late_by}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {isTimerRunning && (
                             <div className="mt-2">
                                 <p className="text-xs text-gray-500 dark:text-muted">Current Session</p>
@@ -268,132 +325,264 @@ export const DailyAttendanceContent: React.FC = () => {
                                 Clock In {geoSettings?.is_enabled && '(Protected)'}
                             </Button>
                         )}
+
                         {canClockOut && isTimerRunning && (
-                            <Button
-                                variant="destructive"
-                                onClick={handleClockOut}
-                                isLoading={clockOutMutation.isPending}
-                                size="md"
-                            >
-                                {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
-                                Clock Out
-                            </Button>
+                            <div className="flex gap-3">
+                                {todayAttendance?.active_break ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => attendanceService.endBreak().then(() => queryClient.invalidateQueries({ queryKey: ['attendance'] }))}
+                                        className="border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400"
+                                        size="md"
+                                    >
+                                        <div className="mr-2 h-4 w-4" /> {/* Coffee icon placeholder if needed, or just text */}
+                                        Break Out
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => attendanceService.startBreak().then(() => queryClient.invalidateQueries({ queryKey: ['attendance'] }))}
+                                        size="md"
+                                    >
+                                        <div className="mr-2 h-4 w-4" />
+                                        Break In
+                                    </Button>
+                                )}
+
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleClockOut}
+                                    isLoading={clockOutMutation.isPending}
+                                    disabled={!!todayAttendance?.active_break} // Disable clock out while on break
+                                    size="md"
+                                >
+                                    {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
+                                    Clock Out
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>
             </Card>
 
-            <Card>
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Attendance History</h3>
-                {isLoading ? (
-                    <div className="h-64 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
-                    </div>
-                ) : myAttendance.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records found</div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {myAttendance.map((att) => (
-                                    <tr
-                                        key={att.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                                    >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                            {format(new Date(att.date), 'MMM dd, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                            {calculateWorkDuration(att.check_in_time, att.check_out_time)}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <div className="flex flex-col gap-1">
-                                                {att.check_in_device && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 inline-block w-fit">
-                                                        IN: {att.check_in_device}
-                                                    </span>
-                                                )}
-                                                {att.check_out_device && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 inline-block w-fit">
-                                                        OUT: {att.check_out_device}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span
-                                                className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : att.status === 'REJECTED'
-                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    }`}
-                                            >
-                                                {att.status.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </Card>
+            {/* CONDITIONAL RENDERING BASED ON ROLE */}
+            {isHrOrManager ? (
+                <>
+                    {/* HR/MANAGER VIEW: TODAY'S TEAM ATTENDANCE LOG */}
+                    <Card>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Today's Attendance Log {user?.role === 'MANAGER' ? '(My Team)' : '(All Employees)'}
+                            </h3>
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                                <Input
+                                    placeholder="Search employee..."
+                                    className="pl-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </div>
 
-            <Card>
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Pending Checkouts</h3>
-                {myPendingCheckouts.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts</div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {myPendingCheckouts.map((att) => (
-                                    <tr
-                                        key={att.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                                    >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                            {format(new Date(att.date), 'MMM dd, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
-                                        <td className="py-3 px-4">
-                                            <span
-                                                className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}
+                        {isLoadingTeamAttendance ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                            </div>
+                        ) : filteredTeamLogs.length === 0 ? (
+                            <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records for today</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Employee</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                        {filteredTeamLogs.map((att) => (
+                                            <tr key={att.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
+                                                    {att.first_name} {att.last_name}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
+                                                <td className="py-3 px-4">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                                        }`}>
+                                                        {att.is_late ? 'Late' : 'On Time'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* HR/MANAGER VIEW: PENDING CHECKOUTS (TEAM/ALL) */}
+                    <Card>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                            Pending Checkout Confirmations {user?.role === 'MANAGER' ? '(My Team)' : '(All)'}
+                        </h3>
+                        {teamPendingCheckouts.length === 0 ? (
+                            <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts to review</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Employee</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                        {teamPendingCheckouts.map((att) => (
+                                            <tr key={att.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
+                                                    {att.first_name} {att.last_name}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4">
+                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-medium">
+                                                        Warning: Pending
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </Card>
+                </>
+            ) : (
+                <>
+                    {/* EMPLOYEE VIEW: MY ATTENDANCE HISTORY */}
+                    <Card>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Attendance History</h3>
+                        {isLoadingMyAttendance ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                            </div>
+                        ) : myAttendance.length === 0 ? (
+                            <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records found</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                        {myAttendance.map((att) => (
+                                            <tr
+                                                key={att.id}
+                                                className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                                             >
-                                                {att.status.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>Confirm</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </Card>
+                                                <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                                                    {calculateWorkDuration(att.check_in_time, att.check_out_time)}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex flex-col gap-1">
+                                                        {att.check_in_device && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 inline-block w-fit">
+                                                                IN: {att.check_in_device}
+                                                            </span>
+                                                        )}
+                                                        {att.check_out_device && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 inline-block w-fit">
+                                                                OUT: {att.check_out_device}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : att.status === 'REJECTED'
+                                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                            }`}
+                                                    >
+                                                        {att.status.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* EMPLOYEE VIEW: MY PENDING CHECKOUTS */}
+                    <Card>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Pending Checkouts</h3>
+                        {myPendingCheckouts.length === 0 ? (
+                            <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                        {myPendingCheckouts.map((att) => (
+                                            <tr
+                                                key={att.id}
+                                                className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                                            >
+                                                <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4">
+                                                    <span
+                                                        className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}
+                                                    >
+                                                        {att.status.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>Confirm</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </Card>
+                </>
+            )}
+
 
             <Dialog open={!!selectedAttendanceId} onOpenChange={(open) => !open && setSelectedAttendanceId(null)}>
                 <DialogContent>

@@ -251,6 +251,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                                 placeholder="Reason for regularization request..."
                                 value={formData.reason}
                                 onChange={e => setFormData({ ...formData, reason: e.target.value })}
+                                className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50 border-gray-200 dark:border-gray-800"
                             />
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
@@ -278,6 +279,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                                     value={rejectionReason}
                                     onChange={e => setRejectionReason(e.target.value)}
                                     placeholder="Explain why this request is being rejected..."
+                                    className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50 border-gray-200 dark:border-gray-800"
                                 />
                             </div>
                         )}

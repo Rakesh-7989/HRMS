@@ -24,6 +24,10 @@ export interface Attendance {
     start_time: string;
   };
   work_mode?: 'OFFICE' | 'REMOTE' | 'HYBRID';
+  late_by?: string;
+  shift_name?: string;
+  shift_start?: string;
+  shift_end?: string;
 }
 
 export interface AttendanceSummaryRow {

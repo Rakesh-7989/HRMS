@@ -325,7 +325,7 @@ function App() {
         <Route
           path="/organisation"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
               <OrganisationPage />
             </ProtectedRoute>
           }

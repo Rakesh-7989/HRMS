@@ -12,7 +12,7 @@ exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
 
   try {
-    // Get user + employee data
+    // Get user + employee + tenant data
     const userRes = await pool.query(
       `SELECT 
           u.id,
@@ -23,9 +23,11 @@ exports.login = async (req, res) => {
           u.is_active,
           u.must_change_password,
           u.last_login_at,
-          e.id AS employee_id
+          e.id AS employee_id,
+          t.is_active AS tenant_is_active
        FROM users u
        LEFT JOIN employees e ON e.user_id = u.id
+       LEFT JOIN tenants t ON t.id = u.tenant_id
        WHERE u.email = $1`,
       [email]
     );
@@ -35,6 +37,11 @@ exports.login = async (req, res) => {
     }
 
     const user = userRes.rows[0];
+
+    // Check if tenant is active (unless super admin, maybe? assuming even super admin belongs to a tenant usually, or null tenant for root super admin)
+    if (user.tenant_id && user.tenant_is_active === false) {
+      return res.status(403).json({ message: "Your organization account has been deactivated. Please contact support." });
+    }
 
     if (!user.is_active) {
       return res.status(403).json({ message: "Account is inactive" });

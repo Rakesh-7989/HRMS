@@ -106,10 +106,11 @@ exports.createUser = async (db, data, actor) => {
       INSERT INTO employees
         (tenant_id, user_id, first_name, last_name, phone, date_of_birth, gender, marital_status, nationality, 
          emergency_name, emergency_phone, emergency_relation,
-         employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift,
+         employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift, shift_id,
          bank_name, account_name, account_number, ifsc_code, tax_id, address,
          uan, pf_account, esi_number, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$30,
+         $20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
       RETURNING id
       `,
       [
@@ -131,7 +132,7 @@ exports.createUser = async (db, data, actor) => {
         data.reports_to || null,
         data.join_date || null,
         data.employment_type || null,
-        data.shift || null,
+        data.shift || null, // Keep legacy string if provided, or maybe we should fetch name? For now, keep as is.
         data.bank_name || null,
         data.account_name || null,
         data.account_number || null,
@@ -141,7 +142,8 @@ exports.createUser = async (db, data, actor) => {
         data.uan || null,
         data.pf_account || null,
         data.esi_number || null,
-        actor.id
+        actor.id,
+        data.shift_id || null // New parameter at index 30
       ]
     );
 
@@ -383,7 +385,8 @@ exports.getUsers = async (db, opts, actor) => {
 
   const sql = `
     SELECT u.id, u.email, u.role, u.is_active, u.tenant_id, u.created_at,
-           e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id
+           e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id,
+           e.shift, e.shift_id
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = u.tenant_id
     ${where}
@@ -402,7 +405,7 @@ exports.getUserById = async (db, id, tenantId) => {
      SELECT u.*, 
             e.id AS employee_uuid,
             e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
-             e.employee_id, e.join_date, e.employment_type, e.shift,
+             e.employee_id, e.join_date, e.employment_type, e.shift, e.shift_id,
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
             e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
@@ -458,6 +461,7 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     "join_date",
     "employment_type",
     "shift",
+    "shift_id",
 
     // Finance
     "bank_name",
@@ -595,6 +599,7 @@ exports.getMyProfile = async (db, user) => {
       e.join_date,
       e.employment_type,
       e.shift,
+      e.shift_id,
       e.bank_name,
       e.account_name,
        e.account_number,

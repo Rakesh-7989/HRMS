@@ -5,6 +5,9 @@ exports.createShift = async (req, res, next) => {
         const shift = await shiftService.createShift(req.db, req.user.tenantId, req.body, req.user.id);
         res.status(201).json({ status: 'success', data: shift });
     } catch (error) {
+        if (error.message && error.message.includes('already exists')) {
+            return res.status(409).json({ status: 'error', message: error.message });
+        }
         next(error);
     }
 };
@@ -34,6 +37,9 @@ exports.updateShift = async (req, res, next) => {
         if (!shift) return res.status(404).json({ status: 'error', message: 'Shift not found' });
         res.json({ status: 'success', data: shift });
     } catch (error) {
+        if (error.message && error.message.includes('already exists')) {
+            return res.status(409).json({ status: 'error', message: error.message });
+        }
         next(error);
     }
 };

@@ -11,18 +11,29 @@ export const formatTime12Hour = (time: string | null | undefined): string => {
     if (!time) return '--:--';
 
     try {
-        // Handle both HH:mm:ss and HH:mm formats
+        // Check if it's a full ISO string or Date string
+        if (time.includes('T') || time.includes('-') || time.includes('/')) {
+            const date = new Date(time);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+        }
+
+        // Handle HH:mm:ss and HH:mm formats (legacy behavior)
         const parts = time.split(':');
         let hours = parseInt(parts[0], 10);
-        const minutes = parts[1];
+        const minutes = parts[1]; // Keep minutes as string to preserve '00'
 
         if (isNaN(hours)) return '--:--';
+
+        // Extract first 2 digits of minutes just in case
+        const mins = minutes ? minutes.substring(0, 2) : '00';
 
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
         hours = hours ? hours : 12; // Handle midnight (0 -> 12)
 
-        return `${hours}:${minutes} ${ampm}`;
+        return `${hours}:${mins} ${ampm}`;
     } catch {
         return '--:--';
     }

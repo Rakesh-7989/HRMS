@@ -9,6 +9,7 @@ import { usersService, TerminateEmployeeData } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { leaveService } from '@/services/leave.service';
+import { getShifts } from '@/services/shift.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import {
@@ -67,6 +68,11 @@ export const EmployeeDetailsPage: React.FC = () => {
     const { data: designations = [] } = useQuery({
         queryKey: ['designations'],
         queryFn: () => designationService.getDesignations(),
+    });
+
+    const { data: shifts = [] } = useQuery({
+        queryKey: ['shifts'],
+        queryFn: () => getShifts(),
     });
 
     const { data: leaveBalances = [] } = useQuery({
@@ -146,6 +152,14 @@ export const EmployeeDetailsPage: React.FC = () => {
         if (!desigId) return 'Not Assigned';
         const desig = designations.find(d => d.id === desigId);
         return desig?.name || 'Unknown';
+    };
+
+    const getShiftName = (shiftId?: string, legacyShift?: string) => {
+        if (shiftId) {
+            const shift = shifts.find((s: any) => s.id === shiftId);
+            if (shift) return `${shift.name} (${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)})`;
+        }
+        return legacyShift || 'Regular';
     };
 
     const tabs = [
@@ -376,7 +390,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                             <div className="space-y-4">
                                 <InfoRow icon={Calendar} label="Join Date" value={employee.join_date ? format(new Date(employee.join_date), 'MMM dd, yyyy') : 'Not provided'} />
                                 <InfoRow icon={Briefcase} label="Employment Type" value={employee.employment_type || 'Full-time'} />
-                                <InfoRow icon={Clock} label="Shift" value={employee.shift || 'Regular'} />
+                                <InfoRow icon={Clock} label="Shift" value={getShiftName(employee.shift_id, employee.shift)} />
                             </div>
                         </Card>
 

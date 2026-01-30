@@ -16,12 +16,13 @@ import { DepartmentsContent } from '@/components/organization/DepartmentsContent
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
+import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
 
 
 
 export const OrganisationPage: React.FC = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts'>('directory');
+  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>('directory');
 
   // If user is SUPER_ADMIN, ensure tree tab is not active
   useEffect(() => {
@@ -131,6 +132,11 @@ export const OrganisationPage: React.FC = () => {
                   {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
                 </button>
               )}
+              {['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '') && (
+                <button onClick={() => setTab('roster')} className={`py-2 px-3 text-sm ${tab === 'roster' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                  Shift Roster
+                </button>
+              )}
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
                   <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
@@ -150,6 +156,7 @@ export const OrganisationPage: React.FC = () => {
             {tab === 'departments' && <DepartmentsContent />}
             {tab === 'designations' && <DesignationsContent />}
             {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
+            {tab === 'roster' && <div className="h-full overflow-y-auto"><ShiftRosterPage /></div>}
             {tab === 'tree' && <OrgTreeContent />}
 
             {tab === 'directory' && (

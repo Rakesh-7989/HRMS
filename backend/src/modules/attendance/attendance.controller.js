@@ -134,7 +134,7 @@ exports.getBreakHistory = async (req, res) => {
 
     const result = await attendanceService.getBreakHistory(
       req.db,
-      req.user.tenantId,
+      req.user, // Pass full actor object for role checks
       filters
     );
     res.json({ status: "success", data: result });

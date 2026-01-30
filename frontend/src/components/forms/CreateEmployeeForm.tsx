@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { usersService, CreateUserData, UpdateEmployeeData, User } from '@/services/users.service';
+import { getShifts } from '@/services/shift.service';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
@@ -193,6 +194,12 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     queryFn: () => usersService.getManagers(),
   });
 
+  // Fetch shifts
+  const { data: shifts = [] } = useQuery({
+    queryKey: ['shifts'],
+    queryFn: () => getShifts(),
+  });
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateUserData) => usersService.createUser(data),
@@ -260,7 +267,8 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
       employee_id: editEmployee?.employee_id || '',
       join_date: editEmployee?.join_date?.split('T')[0] || '',
       employment_type: editEmployee?.employment_type || 'FULL_TIME',
-      shift: editEmployee?.shift || 'REGULAR',
+      shift: editEmployee?.shift || '',
+      shift_id: editEmployee?.shift_id || '',
       address: editEmployee?.address || '',
       bank_name: editEmployee?.bank_name || '',
       account_name: editEmployee?.account_name || '',
@@ -720,16 +728,24 @@ export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               Shift
             </label>
             <select
-              name="shift"
-              value={formik.values.shift}
-              onChange={formik.handleChange}
+              name="shift_id"
+              value={formik.values.shift_id}
+              onChange={(e) => {
+                formik.handleChange(e);
+                // Also set the shift name for legacy support if needed
+                const selectedShift = shifts.find((s: any) => s.id === e.target.value);
+                if (selectedShift) {
+                  formik.setFieldValue('shift', selectedShift.name);
+                }
+              }}
               className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="REGULAR">Regular (9-6)</option>
-              <option value="MORNING">Morning</option>
-              <option value="EVENING">Evening</option>
-              <option value="NIGHT">Night</option>
-              <option value="FLEXIBLE">Flexible</option>
+              <option value="">Select Shift</option>
+              {shifts.map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)})
+                </option>
+              ))}
             </select>
           </div>
         </div>

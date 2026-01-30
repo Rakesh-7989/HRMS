@@ -7,20 +7,51 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { formatTime12Hour } from '@/utils/timeFormat';
 
+import { useAuth } from '@/contexts/AuthContext';
+import { usersService } from '@/services/users.service';
+
 export const BreakHistoryContent: React.FC = () => {
+    const { user } = useAuth();
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+
+    // Fetch employees for filter (Only for HR/Admin/Manager)
+    const { data: employees } = useQuery({
+        queryKey: ['employees-list'],
+        queryFn: () => usersService.getUsers({ is_active: true }),
+        enabled: ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || ''),
+    });
 
     const { data: history, isLoading, refetch } = useQuery({
-        queryKey: ['break-history', date],
-        queryFn: () => attendanceService.getBreakHistory({ date }),
+        queryKey: ['break-history', date, selectedEmployeeId],
+        queryFn: () => attendanceService.getBreakHistory({
+            date,
+            employee_id: selectedEmployeeId || undefined
+        }),
     });
+
+    const canFilterEmployees = ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || '');
 
     return (
         <Card>
             <div className="p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">Break History</h3>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {canFilterEmployees && (
+                            <select
+                                className="h-9 w-[180px] rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
+                                value={selectedEmployeeId}
+                                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                            >
+                                <option value="">All Employees</option>
+                                {employees?.filter(emp => (emp.first_name || emp.last_name) && emp.employee_uuid && emp.role !== 'ADMIN' && emp.role !== 'MANAGER').map((emp) => (
+                                    <option key={emp.id} value={emp.employee_uuid}>
+                                        {emp.first_name} {emp.last_name} {emp.employee_id ? `(${emp.employee_id})` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <div className="relative">
                             <CalIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                             <Input

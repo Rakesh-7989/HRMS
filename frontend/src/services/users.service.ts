@@ -26,6 +26,7 @@ export interface User {
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
   address?: string;
   // Financial
   bank_name?: string;
@@ -74,6 +75,7 @@ export interface CreateUserData {
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
   bank_name?: string;
   account_name?: string;
   account_number?: string;
@@ -109,6 +111,7 @@ export interface UpdateEmployeeData {
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
   bank_name?: string;
   account_name?: string;
   account_number?: string;
