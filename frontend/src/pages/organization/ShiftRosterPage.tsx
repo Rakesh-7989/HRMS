@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { usersService, User } from '@/services/users.service';
+import { usersService } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button'; // Assuming we have these
 import { Input } from '@/components/ui/Input';
-import { Clock, Search, User as UserIcon, Calendar, Filter } from 'lucide-react';
+import { Clock, Search, Calendar } from 'lucide-react';
 
 export const ShiftRosterPage = () => {
     const [search, setSearch] = useState('');
