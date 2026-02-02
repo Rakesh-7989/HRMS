@@ -6,11 +6,17 @@ import type {
   HRDashboard,
   ManagerDashboard,
   EmployeeDashboard,
+  SystemReports,
 } from '@/types/dashboard';
 
 export const dashboardService = {
   getSystemDashboard: async (): Promise<SystemDashboard> => {
     const response = await api.get<ApiResponse<SystemDashboard>>('/dashboards/system');
+    return response.data.data!;
+  },
+
+  getSystemReports: async (): Promise<SystemReports> => {
+    const response = await api.get<ApiResponse<SystemReports>>('/dashboards/system/reports');
     return response.data.data!;
   },
 

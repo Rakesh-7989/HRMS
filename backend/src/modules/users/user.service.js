@@ -50,11 +50,9 @@ exports.createUser = async (db, data, actor) => {
       `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
       [actor.tenantId, data.email]
     );
-
     if (duplicate.rowCount) {
       throw new Error("An employee with this email address already exists in your organization");
     }
-
     // Check for duplicate employee_id
     if (data.employee_id) {
       const duplicateEmpId = await client.query(
@@ -215,8 +213,8 @@ exports.createUser = async (db, data, actor) => {
     };
 
   } catch (err) {
-    await client.query("ROLLBACK");
 
+    await client.query("ROLLBACK");
     // Handle database unique constraint violations
     if (err.code === '23505') {
       if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
@@ -225,6 +223,10 @@ exports.createUser = async (db, data, actor) => {
       if (err.constraint === 'users_email_per_tenant' || err.message.includes('email')) {
         throw new Error("An employee with this email address already exists in your organization");
       }
+      if (err.constraint === 'employees_user_id_key') {
+        throw new Error("This user is already linked to an employee record");
+      }
+      // General unique constraint message
       const field = err.detail?.match(/Key \((.*?)\)=/)?.[1] || "field";
       throw new Error(`The ${field.replace('_', ' ')} provided is already in use by another record`);
     }

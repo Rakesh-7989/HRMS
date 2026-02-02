@@ -66,49 +66,57 @@ exports.updateUserSchema = z.object({
   })
 });
 
-/* EMPLOYEE UPDATE */
+/* BASE EMPLOYEE UPDATE BODY */
+const employeeUpdateBody = z.object({
+  // Personal
+  first_name: z.string().optional(),
+  last_name: stringOrNull,
+  phone: stringOrNull,
+  date_of_birth: dateOrNull,
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional().or(z.literal("").transform(() => null)),
+  marital_status: stringOrNull,
+  nationality: stringOrNull,
+
+  // Emergency
+  emergency_name: stringOrNull,
+  emergency_phone: stringOrNull,
+  emergency_relation: stringOrNull,
+
+  // Professional
+  employee_id: stringOrNull,
+  department_id: uuidOrNull,
+  designation_id: uuidOrNull,
+  reports_to: uuidOrNull,
+  join_date: dateOrNull,
+  employment_type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]).optional().or(z.literal("").transform(() => null)),
+  shift: stringOrNull,
+
+  // Finance
+  bank_name: stringOrNull,
+  account_name: stringOrNull,
+  account_number: stringOrNull,
+  ifsc_code: stringOrNull,
+  tax_id: stringOrNull,
+  uan: stringOrNull,
+  pf_account: stringOrNull,
+  esi_number: stringOrNull,
+
+  // Address
+  address: stringOrNull,
+  ctc: z.coerce.number().optional().or(z.literal("").transform(() => undefined))
+});
+
+/* EMPLOYEE UPDATE (By Admin/HR) */
 exports.updateEmployeeSchema = z.object({
   params: z.object({
     id: z.string().uuid()
   }),
-  body: z.object({
-    // Personal
-    first_name: z.string().optional(),
-    last_name: stringOrNull,
-    phone: stringOrNull,
-    date_of_birth: dateOrNull,
-    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional().or(z.literal("").transform(() => null)),
-    marital_status: stringOrNull,
-    nationality: stringOrNull,
+  body: employeeUpdateBody
+});
 
-    // Emergency
-    emergency_name: stringOrNull,
-    emergency_phone: stringOrNull,
-    emergency_relation: stringOrNull,
-
-    // Professional
-    employee_id: stringOrNull,
-    department_id: uuidOrNull,
-    designation_id: uuidOrNull,
-    reports_to: uuidOrNull,
-    join_date: dateOrNull,
-    employment_type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]).optional().or(z.literal("").transform(() => null)),
-    shift: stringOrNull,
-
-    // Finance
-    bank_name: stringOrNull,
-    account_name: stringOrNull,
-    account_number: stringOrNull,
-    ifsc_code: stringOrNull,
-    tax_id: stringOrNull,
-    uan: stringOrNull,
-    pf_account: stringOrNull,
-    esi_number: stringOrNull,
-
-    // Address
-    address: stringOrNull,
-    ctc: z.coerce.number().optional().or(z.literal("").transform(() => undefined))
-  })
+/* SELF PROFILE UPDATE */
+exports.updateProfileSchema = z.object({
+  body: employeeUpdateBody
 });
 
 /* ROLE CHANGE */

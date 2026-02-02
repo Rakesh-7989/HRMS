@@ -115,4 +115,16 @@ export const timesheetService = {
         );
         return response.data.data || [];
     },
+
+    /**
+     * Bulk approve timesheets
+     * POST /api/projects/timesheets/bulk-approve
+     */
+    bulkApproveTimesheets: async (timesheetIds: string[]): Promise<{ results: string[]; errors: any[] }> => {
+        const response = await api.post<{ status: string; data: { results: string[]; errors: any[] } }>(
+            '/projects/timesheets/bulk-approve',
+            { timesheetIds }
+        );
+        return response.data.data;
+    },
 };

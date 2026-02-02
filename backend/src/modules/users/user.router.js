@@ -10,6 +10,7 @@ const {
   getUsersSchema,
   updateUserSchema,
   updateEmployeeSchema,
+  updateProfileSchema,
   changeRoleSchema,
   changeManagerSchema,
   assignDeptSchema,
@@ -132,6 +133,6 @@ selfRouter.get("/me/profile", verifyJwt, controller.getMyProfile);
 selfRouter.put(
   "/me/profile",
   verifyJwt,
-  validate(updateEmployeeSchema),
+  validate(updateProfileSchema),
   controller.updateMyProfile
 );

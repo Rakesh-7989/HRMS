@@ -9,6 +9,7 @@ interface AreaChartProps {
   colors?: string[];
   height?: number;
   animated?: boolean;
+  yDomain?: [number | string, number | string];
 }
 
 // Ultra-vibrant colors for "colorful and effective" look
@@ -21,6 +22,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   colors = defaultColors,
   height = 300,
   animated = true,
+  yDomain,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -89,6 +91,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
             padding={{ left: 10, right: 10 }}
           />
           <YAxis
+            domain={yDomain}
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 500 }}
@@ -131,6 +134,3 @@ export const AreaChart: React.FC<AreaChartProps> = ({
     </motion.div>
   );
 };
-
-
-

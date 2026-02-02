@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { DatePicker } from '@/components/ui/DatePicker';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { payrollService } from '@/services/payroll.service';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -21,7 +20,8 @@ export const PayslipsContent: React.FC = () => {
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
 
-    const [activeSection, setActiveSection] = useState<'payslips' | 'pay_schedule' | 'deductions' | 'income_tax' | 'salary_revision' | 'settings'>('payslips');
+    const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+    const [activeSection, setActiveSection] = useState<'payslips' | 'settings'>('payslips');
     const [activeSubSection, setActiveSubSection] = useState<'personal' | 'staff'>('personal');
     const [showFilters, setShowFilters] = useState(false);
 
@@ -60,68 +60,13 @@ export const PayslipsContent: React.FC = () => {
         enabled: activeSection === 'payslips'
     });
 
-    const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
-        queryKey: ['pay_schedules'],
-        queryFn: () => payrollService.listPaySchedules(),
-        enabled: activeSection === 'pay_schedule'
-    });
-
-    // Schedule edit dialog state
-    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-    const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
-    const [scheduleCycle, setScheduleCycle] = useState<string>('Monthly');
-    const [scheduleCreditDay, setScheduleCreditDay] = useState<number | ''>('');
-    const [scheduleCutoffDay, setScheduleCutoffDay] = useState<number | ''>('');
-
-    const updateScheduleMut = useMutation({
-        mutationFn: ({ scheduleId, payload }: { scheduleId: string; payload: any }) => payrollService.updatePaySchedule(scheduleId, payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['pay_schedules'] });
-            setScheduleDialogOpen(false);
-            setEditingSchedule(null);
-        }
-    });
-
-    const openScheduleDialog = (s: any) => {
-        setEditingSchedule(s);
-        setScheduleCycle(s.cycle || s.frequency || 'Monthly');
-        setScheduleCreditDay(typeof s.credit_day === 'number' ? s.credit_day : (s.credit_day ? Number(s.credit_day) : ''));
-        setScheduleCutoffDay(typeof s.cutoff_day === 'number' ? s.cutoff_day : (s.cutoff_day ? Number(s.cutoff_day) : ''));
-        setScheduleDialogOpen(true);
-    };
-
-    const handleSaveSchedule = () => {
-        if (!editingSchedule) return;
-        updateScheduleMut.mutate({ scheduleId: editingSchedule.id, payload: { cycle: scheduleCycle, credit_day: Number(scheduleCreditDay || 0), cutoff_day: Number(scheduleCutoffDay || 0) } });
-    };
-
-    const { data: deductions = [], isLoading: deductionsLoading } = useQuery({
-        queryKey: ['deductions', dateRange],
-        queryFn: () => payrollService.listDeductions(dateRange),
-        enabled: activeSection === 'deductions'
-    });
-
-    const { data: incomeTax = [], isLoading: incomeTaxLoading } = useQuery({
-        queryKey: ['income_tax', dateRange],
-        queryFn: () => payrollService.listIncomeTax(dateRange),
-        enabled: activeSection === 'income_tax'
-    });
-
-    const { data: revisions = [], isLoading: revisionsLoading } = useQuery({
-        queryKey: ['salary_revisions', dateRange],
-        queryFn: () => payrollService.listSalaryRevisions(dateRange),
-        enabled: activeSection === 'salary_revision'
-    });
+    // Simplified sections logic - removed pay_schedule, deductions, income_tax, salary_revision
 
     const formatINR = (amount: number | null | undefined) =>
         amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
     // Demo/mock data to display while backend is not populated
     const displayPayslips = payslips || [];
-    const displaySchedules = schedules || [];
-    const displayDeductions = deductions || [];
-    const displayIncomeTax = incomeTax || [];
-    const displayRevisions = revisions || [];
 
     const exportCSV = (rows: any[], filename = 'export.csv') => {
         if (!rows?.length) return;
@@ -215,105 +160,78 @@ export const PayslipsContent: React.FC = () => {
         enabled: !!historyEmployee && historyDialogOpen,
     });
 
-    // Deduction types & Add Deduction dialog state
-    const { data: deductionTypes = [] } = useQuery({
-        queryKey: ['deduction-types'],
-        queryFn: () => payrollService.listDeductionTypes(),
-        enabled: activeSection === 'deductions',
-    });
 
-    const [addDeductionOpen, setAddDeductionOpen] = useState(false);
-    const [newDeductionEmployee, setNewDeductionEmployee] = useState('');
-    const [newDeductionType, setNewDeductionType] = useState<string>('pf');
-    const [newDeductionAmount, setNewDeductionAmount] = useState<number | ''>('');
-    const [newDeductionDate, setNewDeductionDate] = useState<string>('');
-    const [newDeductionNotes, setNewDeductionNotes] = useState<string>('');
-
-    const createDeductionMut = useMutation({
-        mutationFn: (payload: { employee_name?: string; type: string; amount: number; effective_date?: string; note?: string }) => payrollService.createDeduction(payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['deductions'] });
-            queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] });
-            setAddDeductionOpen(false);
-            setNewDeductionEmployee(''); setNewDeductionType('pf'); setNewDeductionAmount(''); setNewDeductionDate(''); setNewDeductionNotes('');
-        }
-    });
-
-    const handleAddDeduction = () => {
-        if (!newDeductionEmployee || !newDeductionAmount) return alert('Please enter employee and amount.');
-        createDeductionMut.mutate({ employee_name: newDeductionEmployee, type: newDeductionType, amount: Number(newDeductionAmount), effective_date: newDeductionDate || undefined, note: newDeductionNotes });
-    };
 
     return (
         <div className="space-y-6">
-            {/* Top controls */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex gap-2">
+            {/* Top controls: Navigation and Actions */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
                     {[
-                        { id: 'payslips', label: 'Payslips Report' },
-                        { id: 'pay_schedule', label: 'Pay Schedule' },
-                        { id: 'deductions', label: 'Deductions' },
-                        { id: 'income_tax', label: 'Income Tax', icon: FileText },
-                        { id: 'salary_revision', label: 'Salary Revision', icon: FileText },
-                        { id: 'settings', label: 'Settings', icon: Settings },
-                    ].map((b) => (
-                        <Button key={b.id} variant={activeSection === b.id ? 'primary' : 'outline'} size="sm" onClick={() => setActiveSection(b.id as any)}>
-                            {b.icon && <b.icon className="mr-2" size={14} />}
-                            {b.label}
-                        </Button>
-                    ))}
+                        { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                        { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                    ].map((b) => {
+                        if (!b.roles.includes(user?.role || '')) return null;
+                        return (
+                            <button
+                                key={b.id}
+                                onClick={() => setActiveSection(b.id as any)}
+                                className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
+                                    ? 'bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5'
+                                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                    }`}
+                            >
+                                {b.icon && <b.icon className="mr-1.5" size={14} />}
+                                {b.label}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
-                        <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)}>
+                        <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)} className="shadow-sm">
                             <FileText className="mr-2" size={14} />Generate Monthly
                         </Button>
                     )}
 
-                    {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'deductions' && (
-                        <Button variant="primary" size="sm" onClick={() => setAddDeductionOpen(true)}>
-                            <FileText className="mr-2" size={14} />Add Deduction
-                        </Button>
-                    )}
-
-                    <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}><Filter className="mr-2" size={14} />Filters</Button>
-                    <Button variant="outline" size="sm" onClick={() => {
-                        if (activeSection === 'payslips') exportCSV(displayPayslips, `payslips-${dateRange.from_date}-to-${dateRange.to_date}.csv`);
-                        else if (activeSection === 'pay_schedule') exportCSV(displaySchedules, 'pay-schedules.csv');
-                        else if (activeSection === 'deductions') exportCSV(displayDeductions, 'deductions.csv');
-                        else if (activeSection === 'income_tax') exportCSV(displayIncomeTax, 'income-tax.csv');
-                    }} disabled={
-                        (activeSection === 'payslips' && !displayPayslips.length) ||
-                        (activeSection === 'pay_schedule' && !displaySchedules.length) ||
-                        (activeSection === 'deductions' && !displayDeductions.length) ||
-                        (activeSection === 'income_tax' && !displayIncomeTax.length)
-                    }><Download className="mr-2" size={14} />Export CSV</Button>
+                    <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <Filter className="mr-2" size={14} />Filters
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            if (activeSection === 'payslips') exportCSV(displayPayslips, `payslips-${dateRange.from_date}-to-${dateRange.to_date}.csv`);
+                        }}
+                        disabled={(activeSection === 'payslips' && !displayPayslips.length)}
+                        className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                    >
+                        <Download className="mr-2" size={14} />Export CSV
+                    </Button>
                 </div>
             </div>
 
             {/* Sub-tabs for HR/Admin under Payslips Report */}
             {activeSection === 'payslips' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
-                <div className="flex gap-4 border-b border-gray-100 dark:border-gray-800 pb-2">
+                <div className="flex gap-2 p-1 bg-white/50 dark:bg-gray-800/30 rounded-lg w-fit border border-gray-100 dark:border-gray-800/50">
                     <button
                         onClick={() => setActiveSubSection('personal')}
-                        className={`text-sm font-medium px-2 py-1 transition-colors relative ${activeSubSection === 'personal' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                        className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'personal'
+                            ? 'bg-primary text-white shadow-md'
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         My Payslips
-                        {activeSubSection === 'personal' && (
-                            <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-primary" />
-                        )}
                     </button>
                     <button
                         onClick={() => setActiveSubSection('staff')}
-                        className={`text-sm font-medium px-2 py-1 transition-colors relative ${activeSubSection === 'staff' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                        className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'staff'
+                            ? 'bg-primary text-white shadow-md'
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         Staff Payslips (Report)
-                        {activeSubSection === 'staff' && (
-                            <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-primary" />
-                        )}
                     </button>
                 </div>
             )}
@@ -353,222 +271,75 @@ export const PayslipsContent: React.FC = () => {
 
             {/* Section content */}
             {activeSection === 'payslips' && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">
-                        {activeSubSection === 'staff' ? 'Staff Payslips Report' : 'My Payslips'}
-                    </h3>
-                    <Table>
-                        <TableHeader>
-                            <tr>
-                                <TableHead>Date</TableHead>
-                                {activeSubSection === 'staff' && <TableHead>Employee</TableHead>}
-                                <TableHead>Gross Pay</TableHead>
-                                <TableHead>Deductions</TableHead>
-                                <TableHead>Net Pay</TableHead>
-                                <TableHead>Actions</TableHead>
-                            </tr>
-                        </TableHeader>
-                        <TableBody>
-                            {payslipsLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={activeSubSection === 'staff' ? 6 : 5}>Loading...</td></TableRow>
-                            ) : displayPayslips.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={activeSubSection === 'staff' ? 6 : 5}>No payslips for selected period</td></TableRow>
-                            ) : (
-                                displayPayslips.map((p: any) => (
-                                    <TableRow key={p.id}>
-                                        <TableCell>{p.date}</TableCell>
-                                        {activeSubSection === 'staff' && <TableCell>{p.employee_name}</TableCell>}
-                                        <TableCell>{formatINR(p.gross)}</TableCell>
-                                        <TableCell>{formatINR(p.deductions)}</TableCell>
-                                        <TableCell>{formatINR(p.net)}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => viewPayslip(p)}>View</Button>
-                                                <Button size="sm" variant="outline" className="ml-2" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
-                                                {user?.role === 'HR' && (
-                                                    <Button size="sm" variant="outline" className="ml-2" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
-                                                )}
-                                                {activeSubSection === 'staff' && (
-                                                    <Button size="sm" variant="outline" className="ml-2" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
-                                                )}
+                <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                                <FileText size={18} className="stroke-[2.5px]" />
+                            </div>
+                            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                                {activeSubSection === 'staff' ? 'Staff Payslips Report' : (isHRorAdmin ? 'My Payslips Audit' : 'Payslips Report')}
+                            </h3>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
+                                <TableRow>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Date</TableHead>
+                                    {activeSubSection === 'staff' && <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Employee</TableHead>}
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Gross Pay</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Deductions</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Net Pay</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 text-right tracking-widest">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {payslipsLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12">
+                                            <div className="flex items-center justify-center gap-2 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                Retrieving Records...
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
-
-            {activeSection === 'pay_schedule' && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">Pay Schedule</h3>
-                    <Table>
-                        <TableHeader>
-                            <tr>
-                                <TableHead>Schedule</TableHead>
-                                <TableHead>Next Run</TableHead>
-                                <TableHead>Cycle</TableHead>
-                                <TableHead>Salary Credit (day)</TableHead>
-                                <TableHead>Payroll Cutoff (day)</TableHead>
-                                <TableHead>Actions</TableHead>
-                            </tr>
-                        </TableHeader>
-                        <TableBody>
-                            {schedulesLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={6}>Loading...</td></TableRow>
-                            ) : displaySchedules.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={6}>No schedules configured</td></TableRow>
-                            ) : (
-                                displaySchedules.map((s: any) => (
-                                    <TableRow key={s.id}>
-                                        <TableCell>{s.name}</TableCell>
-                                        <TableCell>{s.next_run}</TableCell>
-                                        <TableCell>{s.cycle || s.frequency}</TableCell>
-                                        <TableCell>{(s.credit_day ?? (s.credit_date || '—')) || '—'}</TableCell>
-                                        <TableCell>{(s.cutoff_day ?? (s.cutoff_date || '—')) || '—'}</TableCell>
-                                        <TableCell><Button size="sm" variant="outline" onClick={() => openScheduleDialog(s)}>Edit</Button></TableCell>
+                                ) : displayPayslips.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                                            No payslip data detected for selected cycle.
+                                        </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-
-                    {/* Schedule Edit Dialog */}
-                    <Dialog open={scheduleDialogOpen} onOpenChange={(open) => { setScheduleDialogOpen(open); if (!open) setEditingSchedule(null); }}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Edit Pay Schedule {editingSchedule ? `— ${editingSchedule.name}` : ''}</DialogTitle>
-                            </DialogHeader>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                                <div>
-                                    <Label>Cycle</Label>
-                                    <select value={scheduleCycle} onChange={(e) => setScheduleCycle(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary">
-                                        <option value="Monthly">Monthly</option>
-                                        <option value="Fortnightly">Fortnightly</option>
-                                        <option value="Weekly">Weekly</option>
-                                        <option value="Quarterly">Quarterly</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <Label>Salary Credit Day (1-31)</Label>
-                                    <Input type="number" min={1} max={31} value={scheduleCreditDay as any} onChange={(e) => setScheduleCreditDay(Number(e.target.value) || '')} className="mt-2" />
-                                </div>
-
-                                <div>
-                                    <Label>Payroll Cutoff Day (1-31)</Label>
-                                    <Input type="number" min={1} max={31} value={scheduleCutoffDay as any} onChange={(e) => setScheduleCutoffDay(Number(e.target.value) || '')} className="mt-2" />
-                                </div>
-                            </div>
-
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setScheduleDialogOpen(false)}>Cancel</Button>
-                                <Button variant="primary" onClick={handleSaveSchedule} isLoading={updateScheduleMut.isPending}>Save</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
+                                ) : (
+                                    displayPayslips.map((p: any) => (
+                                        <TableRow key={p.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 border-gray-50 dark:border-gray-800 transition-colors">
+                                            <TableCell className="px-6 py-4 font-bold text-gray-700 dark:text-gray-300 text-xs">{p.date}</TableCell>
+                                            {activeSubSection === 'staff' && <TableCell className="px-6 py-4 font-bold text-sm">{p.employee_name}</TableCell>}
+                                            <TableCell className="px-6 py-4 font-bold text-xs">{formatINR(p.gross)}</TableCell>
+                                            <TableCell className="px-6 py-4 font-bold text-xs text-red-500">{formatINR(p.deductions)}</TableCell>
+                                            <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white text-xs">{formatINR(p.net)}</TableCell>
+                                            <TableCell className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => viewPayslip(p)}>Audit</Button>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
+                                                    {user?.role === 'HR' && (
+                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
+                                                    )}
+                                                    {activeSubSection === 'staff' && (
+                                                        <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </Card>
             )}
 
-            {activeSection === 'deductions' && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">Deductions</h3>
-                    <Table>
-                        <TableHeader>
-                            <tr>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Effective</TableHead>
-                            </tr>
-                        </TableHeader>
-                        <TableBody>
-                            {deductionsLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
-                            ) : displayDeductions.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>No deductions</td></TableRow>
-                            ) : (
-                                displayDeductions.map((d: any) => (
-                                    <TableRow key={d.id}>
-                                        <TableCell>{d.employee_name}</TableCell>
-                                        <TableCell>{d.type}</TableCell>
-                                        <TableCell>{formatINR(d.amount)}</TableCell>
-                                        <TableCell>{d.effective_date}</TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
 
-            {activeSection === 'income_tax' && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">Income Tax</h3>
-                    <Table>
-                        <TableHeader>
-                            <tr>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>FY</TableHead>
-                                <TableHead>Taxable Income</TableHead>
-                                <TableHead>Tax Deducted</TableHead>
-                            </tr>
-                        </TableHeader>
-                        <TableBody>
-                            {incomeTaxLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
-                            ) : displayIncomeTax.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>No income tax records</td></TableRow>
-                            ) : (
-                                displayIncomeTax.map((t: any) => (
-                                    <TableRow key={t.id}>
-                                        <TableCell>{t.employee_name}</TableCell>
-                                        <TableCell>{t.fy}</TableCell>
-                                        <TableCell>{formatINR(t.taxable_income)}</TableCell>
-                                        <TableCell>{formatINR(t.tax_deducted)}</TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
-
-            {activeSection === 'salary_revision' && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">Salary Revisions</h3>
-                    <Table>
-                        <TableHeader>
-                            <tr>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>Old Salary</TableHead>
-                                <TableHead>New Salary</TableHead>
-                                <TableHead>Effective Date</TableHead>
-                            </tr>
-                        </TableHeader>
-                        <TableBody>
-                            {revisionsLoading ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
-                            ) : revisions.length === 0 ? (
-                                <TableRow><td className="p-4 text-center" colSpan={4}>No salary revisions</td></TableRow>
-                            ) : (
-                                displayRevisions.map((r: any) => (
-                                    <TableRow key={r.id}>
-                                        <TableCell>{r.employee_name}</TableCell>
-                                        <TableCell>{formatINR(r.old_salary)}</TableCell>
-                                        <TableCell>{formatINR(r.new_salary)}</TableCell>
-                                        <TableCell>{r.effective_date}</TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
 
             {/* Generate payslips dialog */}
             <Dialog open={genDialogOpen} onOpenChange={setGenDialogOpen}>
@@ -656,64 +427,7 @@ export const PayslipsContent: React.FC = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Add Deduction Dialog */}
-            <Dialog open={addDeductionOpen} onOpenChange={setAddDeductionOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add Deduction</DialogTitle>
-                    </DialogHeader>
 
-                    <div className="grid grid-cols-1 gap-4 mt-2">
-                        <div>
-                            <Label>Employee Name</Label>
-                            <Input value={newDeductionEmployee} onChange={(e) => setNewDeductionEmployee(e.target.value)} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <Label>Type</Label>
-                            <select value={newDeductionType} onChange={(e) => setNewDeductionType(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary">
-                                {deductionTypes && deductionTypes.length ? deductionTypes.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>) : (
-                                    <>
-                                        <option value="pf">Provident Fund</option>
-                                        <option value="pt">Professional Tax</option>
-                                        <option value="esi">ESI</option>
-                                        <option value="tds">Tax (TDS)</option>
-                                        <option value="loan_emi">Loan EMI</option>
-                                        <option value="other">Other</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
-
-                        <div>
-                            <Label>Amount</Label>
-                            <Input type="number" value={newDeductionAmount as any} onChange={(e) => setNewDeductionAmount(Number(e.target.value) || '')} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <Label>Effective Date</Label>
-                            <div className="mt-2">
-                                <DatePicker
-                                    value={newDeductionDate}
-                                    onChange={setNewDeductionDate}
-                                    placeholder="Select date"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label>Notes</Label>
-                            <Input value={newDeductionNotes} onChange={(e) => setNewDeductionNotes(e.target.value)} className="mt-2" />
-                        </div>
-
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setAddDeductionOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleAddDeduction} isLoading={createDeductionMut.isPending}>Add Deduction</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             {/* Email Payslip Dialog */}
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>

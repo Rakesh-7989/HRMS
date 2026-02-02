@@ -398,6 +398,18 @@ router.get(
 );
 
 /**
+ * POST /api/project-management/timesheets/bulk-approve
+ * Bulk approve timesheets
+ * Requires: ADMIN, HR, MANAGER
+ */
+router.post(
+  "/timesheets/bulk-approve",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER"]),
+  ctrl.bulkApproveTimesheets
+);
+
+/**
  * PUT /api/project-management/timesheets/:id/submit
  * Submit a timesheet
  * Requires: ADMIN, HR, EMPLOYEE

@@ -15,7 +15,7 @@ export const NavbarClock: React.FC = () => {
     const [currentTimer, setCurrentTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-    const { data: todayAttendance, isLoading: isLoadingAttendance } = useQuery({
+    const { data: todayAttendance, isLoading: isLoadingAttendance, isError } = useQuery({
         queryKey: ['attendance', 'today'],
         queryFn: () => attendanceService.getTodayAttendance(),
         staleTime: 1000 * 60, // 1 minute stale time to prevent flickering on every nav change
@@ -181,9 +181,20 @@ export const NavbarClock: React.FC = () => {
 
     const activeBreak = todayAttendance?.active_break;
 
-    // Admins don't clock in/out
-    if (user?.role === 'ADMIN') {
+    // Admins and Super Admins don't clock in/out
+    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
         return null;
+    }
+
+    // Failed to load attendance
+    if (isError) {
+        return (
+            <div className="flex items-center mr-2">
+                <Button variant="outline" className="h-9 w-auto gap-2 border-red-200 bg-red-50 text-red-600">
+                    <span className="text-xs">Error loading status</span>
+                </Button>
+            </div>
+        );
     }
 
     // Already clocked out for the day

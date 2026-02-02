@@ -10,6 +10,7 @@ import { AdminDashboard } from '@/pages/dashboards/AdminDashboard';
 import { HRDashboard } from '@/pages/dashboards/HRDashboard';
 import { ManagerDashboard } from '@/pages/dashboards/ManagerDashboard';
 import { EmployeeDashboard } from '@/pages/dashboards/EmployeeDashboard';
+import { SystemReportsPage } from '@/pages/dashboards/SystemReportsPage';
 import { EmployeesPage } from '@/pages/EmployeesPage';
 import { AddEmployeePage } from '@/pages/AddEmployeePage';
 import { AttendancePage } from '@/pages/AttendancePage';
@@ -90,6 +91,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
               <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/system/reports"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+              <SystemReportsPage />
             </ProtectedRoute>
           }
         />
@@ -315,7 +324,7 @@ function App() {
         <Route
           path="/reports"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN']}>
               <ReportsPage />
             </ProtectedRoute>
           }
@@ -427,14 +436,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-              <ReportsPage />
-            </ProtectedRoute>
-          }
-        />
+
 
         {/* Project Management Routes */}
         <Route

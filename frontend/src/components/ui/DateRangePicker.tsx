@@ -32,6 +32,7 @@ interface DateRangePickerProps {
     placeholder?: string;
     minYear?: number;
     maxYear?: number;
+    customTrigger?: React.ReactNode;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -47,6 +48,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     placeholder = 'Select date range',
     minYear = 2024,
     maxYear = 2100,
+    customTrigger,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(startDate ? new Date(startDate) : new Date());
@@ -425,30 +427,36 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
     return (
         <div ref={containerRef} className={cn('relative', className)}>
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all w-full group',
-                    'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
-                    'hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
-                    'text-sm font-medium text-gray-900 dark:text-white',
-                    isOpen && 'ring-2 ring-primary/30 border-primary shadow-sm'
-                )}
-            >
-                <Calendar size={18} className={cn(
-                    "text-gray-400 flex-shrink-0 transition-colors",
-                    isOpen && "text-primary"
-                )} />
-                <span className={cn(!start && 'text-gray-400 dark:text-gray-500')}>
-                    {displayText()}
-                </span>
-                {daysBetween > 0 && (
-                    <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                        {daysBetween} day{daysBetween !== 1 ? 's' : ''}
+            {customTrigger ? (
+                <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+                    {customTrigger}
+                </div>
+            ) : (
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={cn(
+                        'flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all w-full group',
+                        'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
+                        'hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
+                        'text-sm font-medium text-gray-900 dark:text-white',
+                        isOpen && 'ring-2 ring-primary/30 border-primary shadow-sm'
+                    )}
+                >
+                    <Calendar size={18} className={cn(
+                        "text-gray-400 flex-shrink-0 transition-colors",
+                        isOpen && "text-primary"
+                    )} />
+                    <span className={cn(!start && 'text-gray-400 dark:text-gray-500')}>
+                        {displayText()}
                     </span>
-                )}
-            </button>
+                    {daysBetween > 0 && (
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                            {daysBetween} day{daysBetween !== 1 ? 's' : ''}
+                        </span>
+                    )}
+                </button>
+            )}
 
             {isOpen && createPortal(
                 <div

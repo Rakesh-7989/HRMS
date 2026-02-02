@@ -20,6 +20,16 @@ router.get(
   controller.getSuperAdminDashboard
 );
 
+/**
+ * GET /api/dashboards/system/reports
+ * System reports with SaaS analytics
+ */
+router.get(
+  "/system/reports",
+  requireRole("SUPER_ADMIN"),
+  controller.getSuperAdminReports
+);
+
 /* ==================== ADMIN DASHBOARD ==================== */
 
 /**

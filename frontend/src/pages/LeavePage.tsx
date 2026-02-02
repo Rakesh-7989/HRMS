@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { MyLeaveContent } from '@/components/leave/MyLeaveContent';
@@ -15,9 +16,36 @@ const LEAVE_TABS = [
   { id: 'settings', label: 'Settings', roles: ['HR', 'ADMIN'] },
 ] as const;
 
+type TabId = typeof LEAVE_TABS[number]['id'];
+
 export const LeavePage: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<typeof LEAVE_TABS[number]['id']>('my-leave');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabId | null;
+
+  // Initialize from URL param if valid, otherwise default to 'my-leave'
+  const getInitialTab = (): TabId => {
+    if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
+      // Check if user has access to this tab
+      const tab = LEAVE_TABS.find(t => t.id === tabParam);
+      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+        return tabParam;
+      }
+    }
+    return 'my-leave';
+  };
+
+  const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
+
+  // Update tab when URL param changes
+  useEffect(() => {
+    if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
+      const tab = LEAVE_TABS.find(t => t.id === tabParam);
+      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, [tabParam, user?.role]);
 
   return (
     <DashboardLayout

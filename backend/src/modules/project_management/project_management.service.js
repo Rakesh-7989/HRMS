@@ -1289,11 +1289,15 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
   const { project_id, week_start_date, start_date, end_date, limit = 20, offset = 0 } = filters;
 
   let query = `SELECT te.*, ts.status, ts.week_start_date, ts.week_end_date,
+               ts.approved_at, ts.rejection_reason,
+               approver_e.first_name as approver_first_name, approver_e.last_name as approver_last_name,
                t.title as task_title, p.name as project_name, p.id as project_id
                FROM timesheet_entries te
                JOIN timesheets ts ON te.timesheet_id = ts.id
                JOIN tasks t ON te.task_id = t.id
                LEFT JOIN projects p ON t.project_id = p.id
+               LEFT JOIN users approver_u ON ts.approved_by = approver_u.id
+               LEFT JOIN employees approver_e ON approver_u.id = approver_e.user_id
                WHERE ts.tenant_id = $1 AND ts.employee_id = $2`;
 
   const params = [tenantId, employeeId];
@@ -1361,6 +1365,12 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
       hours: row.hours,
       notes: row.notes,
       status: row.status,
+      approved_at: row.approved_at,
+      rejection_reason: row.rejection_reason,
+      approver: row.approver_first_name ? {
+        first_name: row.approver_first_name,
+        last_name: row.approver_last_name
+      } : null,
       project: row.project_name ? { id: row.project_id, name: row.project_name } : null,
       task: { id: row.task_id, title: row.task_title }
     })),
@@ -1526,22 +1536,50 @@ exports.getMyTimesheets = async (tenantId, employeeId, filters = {}) => {
 /**
  * LIST PENDING APPROVALS (for managers)
  */
-exports.getPendingApprovals = async (tenantId, managerId, filters = {}) => {
+exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
   const { skip = 0, limit = 20 } = filters;
 
-  // Get all employees that report to this manager (simplified)
-  let query = `SELECT t.*, p.name as project_name, e.first_name, e.last_name, u.email FROM timesheets t
-               LEFT JOIN projects p ON t.project_id = p.id
-               LEFT JOIN employees e ON t.employee_id = e.id
+  // Get the user's role and employee ID
+  const userResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (userResult.rows.length === 0) {
+    throw new BadRequestError("User not found");
+  }
+
+  const { role, employee_id: managerEmployeeId } = userResult.rows[0];
+
+  // We return ENTRIES of submitted timesheets to match the UI requirements (hours, work_date, task)
+  let query = `SELECT te.*, ts.id as timesheet_id, ts.status, p.name as project_name, tk.title as task_title,
+                      e.first_name, e.last_name, u.email, u.role as employee_role
+               FROM timesheet_entries te
+               JOIN timesheets ts ON te.timesheet_id = ts.id
+               LEFT JOIN tasks tk ON te.task_id = tk.id
+               LEFT JOIN projects p ON ts.project_id = p.id
+               LEFT JOIN employees e ON ts.employee_id = e.id
                LEFT JOIN users u ON e.user_id = u.id
-               WHERE t.tenant_id = $1 AND t.status = 'SUBMITTED'`;
+               WHERE te.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
   const params = [tenantId];
 
-  const countQuery = query;
-  const countResult = await pool.query(countQuery, params);
+  // If user is a MANAGER, only show entries for their direct reports
+  if (role === 'MANAGER' && managerEmployeeId) {
+    query += ` AND e.reports_to = $2`;
+    params.push(managerEmployeeId);
+  } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
+    query += ` AND 1=0`;
+  }
+
+  const countResult = await pool.query(query, params);
   const total = countResult.rowCount;
 
-  query += ` ORDER BY t.submitted_at ASC LIMIT $2 OFFSET $3`;
+  const orderParamIndex = params.length + 1;
+  const skipParamIndex = params.length + 2;
+  query += ` ORDER BY te.work_date DESC, te.created_at ASC LIMIT $${orderParamIndex} OFFSET $${skipParamIndex}`;
   params.push(limit, skip);
 
   const result = await pool.query(query, params);
@@ -1549,13 +1587,20 @@ exports.getPendingApprovals = async (tenantId, managerId, filters = {}) => {
   return {
     timesheets: result.rows.map(row => ({
       ...row,
-      project: row.project_name ? { id: row.project_id, name: row.project_name } : null,
-      employee: row.first_name ? {
+      // The UI uses 'entry.id' for approval, so we provide timesheet_id AS id
+      // or we change the UI. Better to provide timesheet_id as 'id' here
+      // so the handleApprove(entry.id) call works on the timesheet.
+      id: row.timesheet_id,
+      entry_id: row.id, // Keep original entry ID just in case
+      project: row.project_name ? { name: row.project_name } : null,
+      task: row.task_title ? { title: row.task_title } : null,
+      employee: {
         id: row.employee_id,
         first_name: row.first_name,
         last_name: row.last_name,
-        email: row.email
-      } : null
+        email: row.email,
+        role: row.employee_role
+      }
     })),
     pagination: {
       total,
@@ -1586,6 +1631,73 @@ exports.submitTimesheet = async (tenantId, userId, timesheetId) => {
 };
 
 /**
+ * BULK APPROVE TIMESHEETS
+ */
+exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
+  if (!Array.isArray(timesheetIds) || timesheetIds.length === 0) {
+    throw new BadRequestError("No timesheets selected");
+  }
+
+  // Get approver's details (role and employee ID)
+  const approverResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (approverResult.rows.length === 0) {
+    throw new BadRequestError("Approver not found");
+  }
+
+  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+
+  const results = [];
+  const errors = [];
+
+  for (const timesheetId of timesheetIds) {
+    try {
+      const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+
+      if (timesheet.status !== "SUBMITTED") {
+        errors.push({ id: timesheetId, error: "Only submitted timesheets can be approved" });
+        continue;
+      }
+
+      // Prevent self-approval
+      if (approverEmployeeId && timesheet.employee_id === approverEmployeeId) {
+        errors.push({ id: timesheetId, error: "You cannot approve your own timesheet" });
+        continue;
+      }
+
+      // If approver is a MANAGER, ensure they are the reporting manager
+      if (approverRole === 'MANAGER') {
+        const employeeResult = await pool.query(
+          `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+          [timesheet.employee_id, tenantId]
+        );
+        if (employeeResult.rows[0]?.reports_to !== approverEmployeeId) {
+          errors.push({ id: timesheetId, error: "Unauthorized for this employee" });
+          continue;
+        }
+      }
+
+      await pool.query(
+        `UPDATE timesheets SET status = $1, approved_by = $2, approved_at = NOW(), updated_by = $3, updated_at = NOW()
+        WHERE id = $4 AND tenant_id = $5`,
+        ["APPROVED", userId, userId, timesheetId, tenantId]
+      );
+      results.push(timesheetId);
+    } catch (error) {
+      errors.push({ id: timesheetId, error: error.message });
+    }
+  }
+
+  return { results, errors };
+};
+
+/**
  * APPROVE TIMESHEET
  */
 exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
@@ -1595,14 +1707,35 @@ exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
     throw new BadRequestError("Only submitted timesheets can be approved");
   }
 
-  // Get approver's employee ID checks
-  const approverResult = await pool.query(`SELECT id FROM employees WHERE user_id = $1`, [userId]);
-  const approverId = approverResult.rows[0]?.id;
+  // Get approver's details (role and employee ID)
+  const approverResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
 
-  // Prevent self-approval (Managers/HR/Admin approving their own timesheet)
-  // Note: Admins technically might be allowed everything, but strict requirement says "dont allow self approval option"
-  if (approverId && timesheet.employee_id === approverId) {
+  if (approverResult.rows.length === 0) {
+    throw new BadRequestError("Approver not found");
+  }
+
+  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+
+  // Prevent self-approval
+  if (approverEmployeeId && timesheet.employee_id === approverEmployeeId) {
     throw new BadRequestError("You cannot approve your own timesheet");
+  }
+
+  // If approver is a MANAGER, ensure they are the reporting manager
+  if (approverRole === 'MANAGER') {
+    const employeeResult = await pool.query(
+      `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+      [timesheet.employee_id, tenantId]
+    );
+    if (employeeResult.rows[0]?.reports_to !== approverEmployeeId) {
+      throw new ForbiddenError("You can only approve timesheets of employees who report to you");
+    }
   }
 
   await pool.query(
@@ -1622,6 +1755,28 @@ exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason)
 
   if (timesheet.status !== "SUBMITTED") {
     throw new BadRequestError("Only submitted timesheets can be rejected");
+  }
+
+  // Get processor's details
+  const processorResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  const { role: processorRole, employee_id: processorEmployeeId } = processorResult.rows[0];
+
+  // If processor is a MANAGER, ensure they are the reporting manager
+  if (processorRole === 'MANAGER') {
+    const employeeResult = await pool.query(
+      `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+      [timesheet.employee_id, tenantId]
+    );
+    if (employeeResult.rows[0]?.reports_to !== processorEmployeeId) {
+      throw new ForbiddenError("You can only reject timesheets of employees who report to you");
+    }
   }
 
   await pool.query(

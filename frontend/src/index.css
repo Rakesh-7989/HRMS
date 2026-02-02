@@ -3,10 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   :root {
     --background: #F3F6F9;
     /* Cultured */

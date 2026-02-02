@@ -81,12 +81,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
         // Timesheet status colors
         if (type === 'timesheet') {
             switch (status as TimesheetStatus) {
+                case 'DRAFT':
+                    return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700';
                 case 'SUBMITTED':
-                    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+                    return 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-amber-100 dark:border-amber-900/30';
                 case 'APPROVED':
-                    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                    return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30';
                 case 'REJECTED':
-                    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                    return 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border-red-100 dark:border-red-900/30';
                 default:
                     return 'bg-gray-100 text-gray-600';
             }
@@ -102,7 +104,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
     return (
         <span
             className={cn(
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize',
+                'inline-flex items-center px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] border shadow-sm transition-all',
                 getStatusStyles(),
                 className
             )}

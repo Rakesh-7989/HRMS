@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2 } from 'lucide-react';
+import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 
@@ -26,6 +26,7 @@ import {
 import { StatusBadge } from '@/components/projects/StatusBadge';
 import { ProjectReports } from '@/components/projects/ProjectReports';
 import { ProjectMembersModal } from '@/components/projects/ProjectMembersModal';
+import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 
 import { projectsService } from '@/services/projects.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,7 +38,7 @@ export const ProjectsPage: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const [activeTab, setActiveTab] = useState<'list' | 'reports'>('list');
+    const [activeTab, setActiveTab] = useState<'list' | 'reports' | 'timesheets'>('list');
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -232,6 +233,18 @@ export const ProjectsPage: React.FC = () => {
                                 Reports
                             </button>
                         )}
+                        <button
+                            onClick={() => setActiveTab('timesheets')}
+                            className={cn(
+                                "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
+                                activeTab === 'timesheets'
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            )}
+                        >
+                            <Clock size={16} />
+                            Timesheets
+                        </button>
                     </div>
 
                     {activeTab === 'list' && (
@@ -385,8 +398,10 @@ export const ProjectsPage: React.FC = () => {
                             </Table>
                         </Card>
                     </>
-                ) : (
+                ) : activeTab === 'reports' ? (
                     <ProjectReports />
+                ) : (
+                    <TimesheetContent />
                 )}
 
                 {/* Create/Edit Project Modal - only relevant for List view actions, but kept here in layout */}

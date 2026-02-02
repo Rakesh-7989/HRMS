@@ -5,7 +5,7 @@ export type ClientStatus = 'ACTIVE' | 'INACTIVE';
 export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'ARCHIVED';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-export type TimesheetStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
 // Client Interface
 export interface Client {
@@ -173,11 +173,19 @@ export interface Timesheet {
     work_date: string;
     hours: number;
     status: TimesheetStatus;
+    entry_id?: string;
+    approved_at?: string;
+    rejection_reason?: string;
+    approver?: {
+        first_name: string;
+        last_name: string;
+    };
     employee?: {
         id: string;
         first_name: string;
         last_name: string;
         email?: string;
+        role?: string;
     };
     project?: Project;
     task?: Task;

@@ -53,21 +53,27 @@ exports.getSuperAdminDashboard = async (db) => {
     `
   );
 
-  // Get top active tenants
+  // Get top active tenants with details
   const topActiveTenants = await query(
     `
     SELECT
       t.id,
       t.name,
-      COUNT(DISTINCT u.id)::INTEGER AS user_count,
-      COUNT(DISTINCT us.id)::INTEGER AS session_count,
-      MAX(u.last_login_at) AS last_activity
+      t.domain,
+      (SELECT COUNT(*)::INTEGER FROM users u WHERE u.tenant_id = t.id) AS user_count,
+      (SELECT COUNT(*)::INTEGER FROM employees e WHERE e.tenant_id = t.id) AS employee_count,
+      (SELECT COUNT(*)::INTEGER FROM departments d WHERE d.tenant_id = t.id) AS department_count,
+      COALESCE((
+        SELECT ROUND(COALESCE(u2.active_count, 0) * 100.0 / NULLIF(p.max_employees, 0), 2)
+        FROM subscriptions s
+        JOIN plans p ON s.plan_id = p.id
+        LEFT JOIN (SELECT tenant_id, COUNT(*)::INTEGER as active_count FROM users WHERE is_active=true GROUP BY tenant_id) u2 ON u2.tenant_id = t.id
+        WHERE s.tenant_id = t.id AND s.status = 'ACTIVE'
+        LIMIT 1
+      ), 0) AS utilization
     FROM tenants t
-    LEFT JOIN users u ON u.tenant_id = t.id
-    LEFT JOIN user_sessions us ON us.tenant_id = t.id
     WHERE t.is_active = true
-    GROUP BY t.id, t.name
-    ORDER BY session_count DESC
+    ORDER BY t.created_at DESC
     LIMIT 10
     `
   );
@@ -87,8 +93,131 @@ exports.getSuperAdminDashboard = async (db) => {
     metrics: systemMetrics.rows[0],
     tenantGrowth: tenantGrowth.rows,
     userGrowth: userGrowth.rows,
-    topActiveTenants: topActiveTenants.rows,
+    recentTenants: topActiveTenants.rows, // Map to recentTenants for frontend
     systemHealth: systemHealth.rows[0],
+    generatedAt: new Date()
+  };
+};
+
+/**
+ * SaaS Analytics for Super Admin Reports
+ */
+exports.getSuperAdminReports = async (db) => {
+  const query = getQuery(db);
+
+  // 1. Tenant Growth vs Churn
+  const growthChurn = await query(`
+    SELECT 
+      DATE_TRUNC('month', created_at) as month,
+      COUNT(*) filter (where is_active = true) as new_tenants,
+      COUNT(*) filter (where is_active = false) as churned_tenants
+    FROM tenants
+    GROUP BY month
+    ORDER BY month DESC
+    LIMIT 12
+  `);
+
+  // 2. Subscription Plan Distribution
+  const planDistribution = await query(`
+    SELECT p.name, COUNT(s.id)::INTEGER as value
+    FROM subscriptions s
+    JOIN plans p ON s.plan_id = p.id
+    WHERE s.status = 'ACTIVE'
+    GROUP BY p.name
+  `);
+
+  // 3. Monthly Recurring Revenue (MRR)
+  const mrrTrend = await query(`
+    SELECT 
+      DATE_TRUNC('month', start_date) as date,
+      SUM(p.price) as revenue
+    FROM subscriptions s
+    JOIN plans p ON s.plan_id = p.id
+    WHERE s.status = 'ACTIVE'
+    GROUP BY date
+    ORDER BY date DESC
+    LIMIT 12
+  `);
+
+  // 4. Feature Usage Simulation (Real data points from table activity)
+  const featureUsage = await query(`
+    SELECT 'Attendance' as feature, COUNT(*)::INTEGER as usage FROM attendance
+    UNION ALL
+    SELECT 'Leaves' as feature, COUNT(*)::INTEGER as usage FROM leave_applications
+    UNION ALL
+    SELECT 'Payroll' as feature, COUNT(*)::INTEGER as usage FROM employee_loans WHERE status='ACTIVE'
+    UNION ALL
+    SELECT 'Assets' as feature, COUNT(*)::INTEGER as usage FROM audit_logs WHERE target_table='assets'
+    ORDER BY usage DESC
+  `);
+
+  // 5. Infrastructure Logs Summary (from audit_logs or sessions)
+  const infraHealth = await query(`
+    SELECT 
+      DATE_TRUNC('hour', created_at) as time,
+      COUNT(id)::INTEGER as requests,
+      AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) * 1000)::INTEGER as latency
+    FROM user_sessions
+    GROUP BY time
+    ORDER BY time DESC
+    LIMIT 24
+  `);
+
+  // 6. Revenue by Plan (Bar Chart)
+  const revenueByPlan = await query(`
+    SELECT p.name, SUM(p.price) as revenue
+    FROM subscriptions s
+    JOIN plans p ON s.plan_id = p.id
+    WHERE s.status = 'ACTIVE'
+    GROUP BY p.name
+  `);
+
+  // 7. Platform Usage Trend (Active Users)
+  const usageTrend = await query(`
+    SELECT 
+      DATE_TRUNC('day', last_login_at) as date,
+      COUNT(DISTINCT id)::INTEGER as active_users
+    FROM users
+    WHERE last_login_at IS NOT NULL
+      AND last_login_at > NOW() - INTERVAL '30 days'
+    GROUP BY date
+    ORDER BY date DESC
+  `);
+
+  // 8. Tenant Health (Simulated/Calculated from activity)
+  // Health score = (active_users / total_employees) * 100
+  const tenantHealth = await query(`
+    SELECT 
+      t.name,
+      COALESCE((SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id AND u.last_login_at > NOW() - INTERVAL '7 days'), 0) as active,
+      COALESCE((SELECT COUNT(*) FROM employees e WHERE e.tenant_id = t.id), 1) as total
+    FROM tenants t
+    WHERE t.is_active = true
+    LIMIT 10
+  `);
+
+  // 9. Summary Stats
+  const statsResult = await query(`
+    SELECT
+      (SELECT COALESCE(SUM(p.price), 0) FROM subscriptions s JOIN plans p ON s.plan_id = p.id WHERE s.status = 'ACTIVE')::FLOAT as total_mrr,
+      (SELECT COUNT(*) FROM tenants WHERE is_active = true)::INTEGER as total_tenants,
+      (SELECT COUNT(*) FROM users WHERE is_active = true AND last_login_at > NOW() - INTERVAL '24 hours')::INTEGER as active_users,
+      (SELECT AVG(emp_count) FROM (SELECT COUNT(*) as emp_count FROM employees GROUP BY tenant_id) sub)::FLOAT as avg_employees
+  `);
+
+  return {
+    growthChurn: growthChurn.rows,
+    planDistribution: planDistribution.rows,
+    mrrTrend: mrrTrend.rows,
+    featureUsage: featureUsage.rows,
+    infraHealth: infraHealth.rows,
+    revenueByPlan: revenueByPlan.rows,
+    usageTrend: usageTrend.rows,
+    tenantHealth: tenantHealth.rows.map(t => ({
+      name: t.name,
+      score: Math.min(100, Math.round((t.active / Math.max(1, t.total)) * 100))
+    })),
+    stats: statsResult.rows[0],
     generatedAt: new Date()
   };
 };
@@ -119,8 +248,19 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
         (SELECT COUNT(*)::INTEGER FROM employees WHERE tenant_id=$1) AS total_employees,
         (SELECT COUNT(*)::INTEGER FROM departments WHERE tenant_id=$1) AS total_departments,
         (SELECT COUNT(*)::INTEGER FROM designations WHERE tenant_id=$1) AS total_designations,
-        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_active = true) AS active_users,
-        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_active = false) AS inactive_users
+        (
+          SELECT COUNT(*)::INTEGER 
+          FROM employees e 
+          JOIN users u ON e.user_id = u.id 
+          WHERE e.tenant_id=$1 AND u.is_active = true
+        ) AS active_employees,
+        (
+          SELECT COUNT(*)::INTEGER 
+          FROM employees e 
+          JOIN users u ON e.user_id = u.id 
+          WHERE e.tenant_id=$1 AND u.is_active = false
+        ) AS inactive_employees,
+        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_active = true) AS active_users
     `,
     [tenantId]
   );
@@ -180,12 +320,13 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
         COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END)::INTEGER AS approved,
         COUNT(CASE WHEN la.status = 'REJECTED' THEN 1 END)::INTEGER AS rejected,
         COUNT(CASE WHEN la.status = 'PENDING' THEN 1 END)::INTEGER AS pending
-      FROM leave_applications la
-      LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
-      WHERE la.tenant_id=$1
-      AND la.created_at >= $2::DATE AND la.created_at <= ($3::DATE + INTERVAL '1 day')
+      FROM leave_types lt
+      LEFT JOIN leave_applications la ON lt.id = la.leave_type_id 
+        AND la.tenant_id=$1
+        AND la.created_at >= $2::DATE AND la.created_at <= ($3::DATE + INTERVAL '1 day')
+      WHERE lt.tenant_id=$1 AND lt.is_active = true
       GROUP BY lt.name
-      ORDER BY total_requests DESC
+      ORDER BY lt.name ASC
     `,
     [tenantId, startDateStr, endDateStr]
   );
@@ -240,13 +381,9 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
 exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   const query = getQuery(db);
 
-  // Default to 90 days if not provided for HR view (usually longer term)
-  const end = endDate || new Date();
-  const start = startDate || new Date(new Date().setDate(end.getDate() - 90));
-
-  const formatDate = (d) => d.toISOString().split('T')[0];
-  const startDateStr = formatDate(new Date(start));
-  const endDateStr = formatDate(new Date(end));
+  // Handle date strings safely
+  const startDateStr = startDate || null;
+  const endDateStr = endDate || null;
 
   // Get leave metrics
   const leaveMetrics = await query(
@@ -259,8 +396,13 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
       COUNT(DISTINCT employee_id)::INTEGER AS employees_with_requests
     FROM leave_applications
     WHERE tenant_id=$1
+    AND (
+      ($2::DATE IS NULL OR end_date >= $2::DATE)
+      AND 
+      ($3::DATE IS NULL OR start_date <= $3::DATE)
+    )
     `,
-    [tenantId]
+    [tenantId, startDateStr, endDateStr]
   );
 
   // Get pending leave requests with employee details
@@ -289,19 +431,33 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
     [tenantId]
   );
 
-  // Get leave type distribution
+  // Get leave type distribution with utilization metrics
   const leaveTypeDistribution = await query(
     `
     SELECT
       lt.name AS leave_type,
-      COUNT(la.id)::INTEGER AS count,
-      COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END)::INTEGER AS approved_count,
-      AVG(CAST(la.end_date - la.start_date AS INTEGER)) AS avg_duration_days
-    FROM leave_applications la
-    LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
-    WHERE la.tenant_id=$1
-    AND la.created_at >= $2::DATE AND la.created_at <= ($3::DATE + INTERVAL '1 day')
-    GROUP BY lt.name
+      (
+        SELECT COUNT(*)::INTEGER 
+        FROM leave_applications la 
+        WHERE la.leave_type_id = lt.id 
+        AND la.tenant_id = $1
+        AND (
+          ($2::DATE IS NULL OR la.end_date >= $2::DATE)
+          AND 
+          ($3::DATE IS NULL OR la.start_date <= $3::DATE)
+        )
+      ) AS count,
+      COALESCE(
+        ROUND(
+          SUM(lb.used) * 100.0 / NULLIF(SUM(lb.opening_balance + lb.accrued + lb.adjusted), 0),
+          1
+        ),
+        0
+      ) as utilization_percentage
+    FROM leave_types lt
+    LEFT JOIN leave_balances lb ON lt.id = lb.leave_type_id AND lb.year = EXTRACT(YEAR FROM CURRENT_DATE)
+    WHERE lt.tenant_id = $1
+    GROUP BY lt.id, lt.name
     ORDER BY count DESC
     `,
     [tenantId, startDateStr, endDateStr]

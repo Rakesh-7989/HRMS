@@ -26,6 +26,27 @@ exports.getSuperAdminDashboard = async (req, res) => {
   }
 };
 
+/**
+ * Get system reports with deep SaaS analytics
+ */
+exports.getSuperAdminReports = async (req, res) => {
+  try {
+    const reports = await dashboardService.getSuperAdminReports(req.db);
+    res.json({
+      status: "success",
+      data: reports,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.error("Super admin reports error:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch system reports",
+      error: err.message
+    });
+  }
+};
+
 /* ==================== ADMIN DASHBOARD ==================== */
 
 /**

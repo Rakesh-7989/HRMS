@@ -1,6 +1,7 @@
 const service = require("./project_management.service");
 const { success } = require("../../utils/successResponse");
 const logger = require("../../config/logger");
+const logAudit = require("../../utils/auditLogger");
 
 /**
  * ============================================================================
@@ -739,10 +740,41 @@ exports.submitTimesheet = async (req, res, next) => {
 
     const timesheet = await service.submitTimesheet(tenantId, userId, id);
 
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'SUBMIT', null, { status: 'SUBMITTED' });
+
     return res.status(200).json({
       status: 'success',
       message: "Timesheet submitted successfully",
       data: timesheet
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/project-management/timesheets/bulk-approve
+ * Bulk approve timesheets
+ * Requires: ADMIN, HR, MANAGER
+ */
+exports.bulkApproveTimesheets = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { timesheetIds } = req.body;
+
+    const result = await service.bulkApproveTimesheets(tenantId, userId, timesheetIds);
+
+    // Filter successful IDs to log
+    const successfulIds = result.results;
+    for (const id of successfulIds) {
+      await logAudit(req, 'timesheets', id, 'APPROVE (BULK)', { status: 'SUBMITTED' }, { status: 'APPROVED' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: `${successfulIds.length} timesheets approved successfully`,
+      data: result
     });
   } catch (error) {
     next(error);
@@ -760,6 +792,9 @@ exports.approveTimesheet = async (req, res, next) => {
     const { id } = req.params;
 
     const timesheet = await service.approveTimesheet(tenantId, userId, id);
+
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'APPROVE', { status: 'SUBMITTED' }, { status: 'APPROVED' });
 
     return res.status(200).json({
       status: 'success',
@@ -783,6 +818,9 @@ exports.rejectTimesheet = async (req, res, next) => {
     const { rejection_reason } = req.body;
 
     const timesheet = await service.rejectTimesheet(tenantId, userId, id, rejection_reason);
+
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'REJECT', { status: 'SUBMITTED' }, { status: 'REJECTED', reason: rejection_reason });
 
     return res.status(200).json({
       status: 'success',

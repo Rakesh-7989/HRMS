@@ -33,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system', roles: ['SUPER_ADMIN'] },
   { label: 'Tenants', icon: Building2, path: '/tenants', roles: ['SUPER_ADMIN'] },
   { label: 'Employees', icon: Users, path: '/employees', roles: ['ADMIN', 'HR', 'MANAGER'] },
-  { label: 'Organisation', icon: Building2, path: '/organisation', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE', 'SUPER_ADMIN'] },
+  { label: 'Organisation', icon: Building2, path: '/organisation', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
 
   { label: 'Attendance', icon: Clock, path: '/attendance', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
   { label: 'Calendar', icon: CalendarRange, path: '/calendar', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'] },

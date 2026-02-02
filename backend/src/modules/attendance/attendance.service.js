@@ -492,15 +492,11 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
   const result = await query(
     `
     SELECT att.*,
-           s.name as shift_name, 
-           s.start_time as shift_start, 
-           s.end_time as shift_end,
            (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
             FROM attendance_breaks ab
             WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
             LIMIT 1) as active_break
     FROM attendance att
-    LEFT JOIN shifts s ON att.shift_id = s.id
     WHERE att.employee_id = $1
       AND att.tenant_id = $2
       AND att.date = $3
@@ -1063,7 +1059,7 @@ WHERE(e.reports_to = $1 OR e.id = $1)
     `
 SELECT
 COUNT(DISTINCT a.employee_id) AS total_team_members,
-  SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS total_present_days,
+  SUM(CASE WHEN a.status IN ('PRESENT', 'HALF_DAY') THEN 1 ELSE 0 END) AS total_present_days,
     SUM(CASE WHEN a.is_late THEN 1 ELSE 0 END) AS total_late_days,
       SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS total_absent_days,
         ROUND(AVG(CASE WHEN a.check_in_time IS NOT NULL THEN
@@ -1083,10 +1079,10 @@ SELECT
 e.first_name,
   e.last_name,
   d.name AS department,
-    COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_days,
+    COUNT(CASE WHEN a.status IN ('PRESENT', 'HALF_DAY') THEN 1 END) AS present_days,
       COUNT(CASE WHEN a.is_late THEN 1 END) AS late_days,
         COUNT(a.id) AS total_days,
-          ROUND(100.0 * COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate
+          ROUND(100.0 * COUNT(CASE WHEN a.status IN ('PRESENT', 'HALF_DAY') THEN 1 END) / NULLIF(COUNT(a.id), 0), 2) AS attendance_rate
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN attendance a ON e.id = a.employee_id
@@ -1104,7 +1100,7 @@ e.first_name,
     `
 SELECT
 a.date,
-  COUNT(CASE WHEN a.status = 'PRESENT' THEN 1 END) AS present_count,
+  COUNT(CASE WHEN a.status IN ('PRESENT', 'HALF_DAY') THEN 1 END) AS present_count,
     COUNT(CASE WHEN a.is_late THEN 1 END) AS late_count,
       COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) AS absent_count,
         COUNT(DISTINCT a.employee_id) AS active_members
