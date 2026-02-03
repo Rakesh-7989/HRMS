@@ -775,9 +775,7 @@ export const ManagerDashboard: React.FC = () => {
             delay={0.5}
             badge={isAttendanceFetching ? 'Loading...' : 'Live Data'}
             headerAction={
-<<<<<<< Updated upstream
-              <div className="flex items-center gap-4">
-                {/* Reset Button - Only show if current view is NOT 'Today' */}
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto">
                 {!(attendanceDateRange.start === format(new Date(), 'yyyy-MM-dd') &&
                   attendanceDateRange.end === format(new Date(), 'yyyy-MM-dd')) && (
                     <Button
@@ -792,24 +790,7 @@ export const ManagerDashboard: React.FC = () => {
                       RESET TO TODAY
                     </Button>
                   )}
-                <div className="min-w-[220px]">
-=======
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto">
-                {attendanceDateRange.start !== format(subDays(new Date(), 15), 'yyyy-MM-dd') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-[10px] font-black text-indigo-600 hover:bg-indigo-50"
-                    onClick={() => setAttendanceDateRange({
-                      start: format(new Date(), 'yyyy-MM-dd'),
-                      end: format(new Date(), 'yyyy-MM-dd')
-                    })}
-                  >
-                    RESET TO TODAY
-                  </Button>
-                )}
                 <div className="w-full sm:w-[220px] min-w-0">
->>>>>>> Stashed changes
                   <DateRangePicker
                     startDate={attendanceDateRange.start}
                     endDate={attendanceDateRange.end}
@@ -843,11 +824,7 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             ) : (
               <>
-<<<<<<< Updated upstream
-                <div className="mt-2 mb-2 grid grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-3">
-=======
                 <div className="mt-2 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-6">
->>>>>>> Stashed changes
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
                     <div className="flex items-baseline gap-2">
@@ -886,11 +863,7 @@ export const ManagerDashboard: React.FC = () => {
                   </div>
                 </div>
 
-<<<<<<< Updated upstream
-                <div className="offset-0 overflow-x-auto pt-2 pb-2 px-2 -mx-2 custom-scrollbar">
-=======
                 <div className="mt-6 overflow-x-auto pb-4 custom-scrollbar px-2">
->>>>>>> Stashed changes
                   <div className="min-w-[800px]">
                     {/* Matrix Container */}
                     <div className="flex flex-col gap-2">

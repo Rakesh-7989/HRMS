@@ -85,6 +85,21 @@ const initSocket = (httpServer) => {
             // io.to(data.room).emit("receive_message", data);
         });
 
+        socket.on("typing_start", (conversationId) => {
+            socket.to(conversationId).emit("user_typing", {
+                conversationId,
+                userId: socket.user.id,
+                userName: `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim() || socket.user.email
+            });
+        });
+
+        socket.on("typing_stop", (conversationId) => {
+            socket.to(conversationId).emit("user_stopped_typing", {
+                conversationId,
+                userId: socket.user.id
+            });
+        });
+
         // --- WebRTC Signaling ---
         socket.on("call-user", async ({ to, offer, type, conversationId }) => {
             const targetRoom = `user_${String(to)}`;

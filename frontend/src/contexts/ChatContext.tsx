@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
 import api from '@/services/api';
@@ -34,6 +35,8 @@ interface ChatContextType {
     markAsRead: (conversationId: string) => Promise<void>;
     logCall: (conversationId: string, callType: string, duration: number, status: string) => Promise<void>;
     totalUnreadCount: number;
+    typingStatus: Record<string, string[]>; // convId -> list of user names
+    sendTypingStatus: (conversationId: string, isTyping: boolean) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -56,9 +59,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isMuted, setIsMuted] = useState(false);
     const [totalUnreadCount, setTotalUnreadCount] = useState(0);
     const [isVideoOff, setIsVideoOff] = useState(false);
+    const [typingStatus, setTypingStatus] = useState<Record<string, string[]>>({});
+    const queryClient = useQueryClient();
     const callStartTime = useRef<number | null>(null);
     const peerConnection = useRef<RTCPeerConnection | null>(null);
-    const queryClient = useRef<any>(null); // We'll set this later or use a different approach for global count
 
     // Fetch conversations and set total unread count
     const fetchTotalUnread = async () => {
@@ -147,6 +151,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             newSocket.on('unread_update', ({ conversationId }: { conversationId: string }) => {
                 console.log('[Socket] Unread update for:', conversationId);
                 fetchTotalUnread();
+            });
+
+            newSocket.on('user_typing', ({ conversationId, userName, userId }) => {
+                if (userId === user.id) return;
+                setTypingStatus(prev => {
+                    const current = prev[conversationId] || [];
+                    if (current.includes(userName)) return prev;
+                    return { ...prev, [conversationId]: [...current, userName] };
+                });
+            });
+
+            newSocket.on('user_stopped_typing', ({ conversationId }) => {
+                setTypingStatus(prev => {
+                    return { ...prev, [conversationId]: [] };
+                });
+            });
+
+            newSocket.on('messages_read', ({ conversationId }) => {
+                // Invalidate messages query to show blue checkmarks
+                queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
             });
 
             setSocket(newSocket);
@@ -303,6 +327,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const sendTypingStatus = (conversationId: string, isTyping: boolean) => {
+        if (socket) {
+            socket.emit(isTyping ? 'typing_start' : 'typing_stop', conversationId);
+        }
+    };
+
     const markAsRead = async (conversationId: string) => {
         try {
             await api.post(`/chat/conversations/${conversationId}/read`);
@@ -349,7 +379,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             initiateCall, acceptCall, rejectCall, endCall,
             isMuted, isVideoOff, toggleAudio, toggleVideo,
             markAsRead, logCall,
-            totalUnreadCount
+            totalUnreadCount,
+            typingStatus, sendTypingStatus
         }}>
             {children}
         </ChatContext.Provider>
