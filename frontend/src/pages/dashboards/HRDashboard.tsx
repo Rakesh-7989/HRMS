@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { dashboardService } from '@/services/dashboard.service';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
-  Calendar, Clock, UserX, CheckCircle, XCircle, TrendingUp,
-  Users, AlertCircle, UserCheck, ArrowRight, Timer, Sparkles, ExternalLink
+  Calendar, Clock, UserX, CheckCircle, TrendingUp,
+  Users, AlertCircle, UserCheck, Timer, Sparkles, ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   BarChart, Bar, PieChart, Pie, Cell, Sector,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 // Custom Tooltip

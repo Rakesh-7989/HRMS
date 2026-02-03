@@ -263,3 +263,52 @@ export interface MentionableUser {
     display_name: string;
 }
 
+
+// Dashboard Interfaces
+export interface TimesheetDashboardStats {
+    total_time: {
+        hours: number;
+        minutes: number;
+        trend: number;
+    };
+    billable_hours: {
+        hours: number;
+        minutes: number;
+        label: string;
+        trend: number;
+    };
+    productivity_score: {
+        value: number;
+        trend: number;
+    };
+}
+
+export interface TimesheetDashboardCharts {
+    billable_vs_non_billable: {
+        date: string;
+        billable: number;
+        nonBillable: number;
+    }[];
+    time_logged: {
+        date: string;
+        time: number;
+    }[];
+}
+
+export interface TimesheetDashboardBreakdown {
+    plans: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+    task_types: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+    projects: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+}

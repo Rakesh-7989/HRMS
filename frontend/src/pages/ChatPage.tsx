@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -15,7 +15,6 @@ interface User {
     first_name?: string;
     last_name?: string;
     designation?: string;
-    designation?: string;
     profile_pic?: string;
     status?: 'ONLINE' | 'AWAY' | 'DND' | 'BUSY' | 'OFFLINE';
 }
@@ -28,8 +27,8 @@ interface Message {
     type: 'TEXT' | 'FILE' | 'CALL';
     file_url?: string;
     conversation_id: string;
+    is_read?: boolean;
     sender_first_name?: string;
-    sender_last_name?: string;
     sender_last_name?: string;
     sender_profile_pic?: string;
     reactions?: { id: string; user_id: string; emoji: string }[];
@@ -47,7 +46,6 @@ interface Conversation {
         created_at: string;
         type: 'TEXT' | 'FILE' | 'CALL';
     };
-    unread_count: number;
     unread_count: number;
     updated_at: string;
 }
@@ -177,7 +175,7 @@ export const ChatPage = () => {
     });
 
     // Fetch Messages for selected conversation
-    const { data: messages, isLoading: isLoadingMessages } = useQuery({
+    const { data: messages } = useQuery({
         queryKey: ['messages', selectedConversationId],
         queryFn: async () => {
             if (!selectedConversationId) return [];
@@ -235,7 +233,7 @@ export const ChatPage = () => {
             });
 
             // Listen for message read status updates (bulk)
-            socket.on('messages_read', ({ conversationId, readerId }) => {
+            socket.on('messages_read', ({ conversationId, readerId }: { conversationId: string; readerId: string }) => {
                 if (conversationId === selectedConversationId) {
                     queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => {
                         return old.map(msg => {
@@ -253,7 +251,7 @@ export const ChatPage = () => {
             });
 
             // Listen for user status updates (global/tenant level)
-            socket.on('user_status_change', ({ userId, status }) => {
+            socket.on('user_status_change', ({ userId, status }: { userId: string; status: User['status'] }) => {
                 // Update status in conversations list
                 queryClient.setQueryData(['conversations'], (old: Conversation[] = []) => {
                     return old.map(conv => ({

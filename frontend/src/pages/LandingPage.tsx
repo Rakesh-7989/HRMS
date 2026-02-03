@@ -863,12 +863,12 @@ export const LandingPage: React.FC = () => {
                       plan.popular ? "shadow-primary/20" : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                     )}
                     onClick={() =>
-                      plan.price === 'Custom'
+                      (plan.price as any) === 'Custom'
                         ? window.open('mailto:sales@hrmspro.com')
                         : navigate('/register')
                     }
                   >
-                    {plan.price === 'Custom' ? 'Contact Partner' : 'Start Trial'}
+                    {(plan.price as any) === 'Custom' ? 'Contact Partner' : 'Start Trial'}
                   </Button>
                 </Card>
               </motion.div>

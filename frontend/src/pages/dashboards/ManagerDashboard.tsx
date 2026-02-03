@@ -383,8 +383,7 @@ export const ManagerDashboard: React.FC = () => {
 
         const onTime = Math.max(0, (Number(d.present_count) || 0) - (Number(d.late_count) || 0));
         const late = Number(d.late_count) || 0;
-        const absent = Number(d.absent_count) || 0;
-        const totalRecorded = onTime + late + absent;
+
         const totalTeamSize = teamMembers.length || 0;
 
         const isWeekend = getDay(day) === 0 || getDay(day) === 6;

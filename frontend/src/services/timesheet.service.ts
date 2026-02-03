@@ -4,6 +4,9 @@ import type {
     CreateTimesheetData,
     ApproveTimesheetData,
     TimesheetStatus,
+    TimesheetDashboardStats,
+    TimesheetDashboardCharts,
+    TimesheetDashboardBreakdown,
 } from '@/types/project.types';
 
 /**
@@ -126,5 +129,39 @@ export const timesheetService = {
             { timesheetIds }
         );
         return response.data.data;
+    },
+
+
+    /**
+     * Get dashboard stats
+     * GET /api/projects/dashboard/stats
+     */
+    getDashboardStats: async (): Promise<TimesheetDashboardStats> => {
+        const response = await api.get<{ status: string; data: TimesheetDashboardStats }>(
+            '/projects/dashboard/stats'
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Get dashboard charts data
+     * GET /api/projects/dashboard/charts
+     */
+    getDashboardCharts: async (): Promise<TimesheetDashboardCharts> => {
+        const response = await api.get<{ status: string; data: TimesheetDashboardCharts }>(
+            '/projects/dashboard/charts'
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Get dashboard breakdown data
+     * GET /api/projects/dashboard/breakdown
+     */
+    getDashboardBreakdown: async (): Promise<TimesheetDashboardBreakdown> => {
+        const response = await api.get<{ status: string; data: TimesheetDashboardBreakdown }>(
+            '/projects/dashboard/breakdown'
+        );
+        return response.data.data!;
     },
 };

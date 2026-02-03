@@ -15,7 +15,7 @@ import {
   CalendarPlus, Loader2, Sparkles, Timer,
   Award, ChevronRight, MapPin, Gift, Cake, Activity
 } from 'lucide-react';
-import { format, differenceInHours, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, ComposedChart, Line
