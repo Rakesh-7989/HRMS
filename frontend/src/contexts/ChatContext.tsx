@@ -42,7 +42,34 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const ICE_SERVERS = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [
+        // Public STUN servers (free, for simple NAT traversal)
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+
+        // Your TURN server (required for production - set via env vars)
+        ...(import.meta.env.VITE_TURN_SERVER ? [
+            {
+                urls: import.meta.env.VITE_TURN_SERVER,
+                username: import.meta.env.VITE_TURN_USERNAME,
+                credential: import.meta.env.VITE_TURN_CREDENTIAL
+            },
+            {
+                urls: `${import.meta.env.VITE_TURN_SERVER}?transport=tcp`,
+                username: import.meta.env.VITE_TURN_USERNAME,
+                credential: import.meta.env.VITE_TURN_CREDENTIAL
+            }
+        ] : []),
+
+        // TURNS (TLS) for strict firewalls
+        ...(import.meta.env.VITE_TURNS_SERVER ? [
+            {
+                urls: import.meta.env.VITE_TURNS_SERVER,
+                username: import.meta.env.VITE_TURN_USERNAME,
+                credential: import.meta.env.VITE_TURN_CREDENTIAL
+            }
+        ] : [])
+    ],
 };
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
