@@ -205,6 +205,16 @@ export interface EmployeeDashboard {
     rejected: number;
     upcoming_leaves: number;
   };
+  leaveBalance: number;
+  taskMetrics: Array<{ column_key: string; count: number }>;
+  recentTasks: Array<{
+    id: string;
+    title: string;
+    priority: string;
+    column_key: string;
+    due_date: string | null;
+    project_name: string | null;
+  }>;
   leaveHistory: Array<{
     id: string;
     leave_type: string;
@@ -233,6 +243,11 @@ export interface EmployeeDashboard {
     date: string;
     type: string;
     count: number;
+  }>;
+  weeklyActivity: Array<{
+    date: string;
+    check_in_time: string;
+    check_out_time: string | null;
   }>;
   upcomingLeaves: Array<{
     id: string;

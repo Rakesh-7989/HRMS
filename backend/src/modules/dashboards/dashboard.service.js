@@ -586,6 +586,7 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     `
     SELECT
       e.id,
+      e.user_id,
       e.first_name,
       e.last_name,
       u.email,
@@ -872,13 +873,78 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     [employeeId, tenantId]
   );
 
+  // Get weekly activity for Hours Graph
+  const weeklyActivityRes = await query(
+    `
+    SELECT
+      date,
+      check_in_time,
+      check_out_time
+    FROM attendance
+    WHERE employee_id = $1 AND tenant_id = $2
+    AND date >= CURRENT_DATE - INTERVAL '7 days'
+    AND check_in_time IS NOT NULL
+    ORDER BY date ASC
+    `,
+    [employeeId, tenantId]
+  );
+
+  // Get total leave balance
+  const leaveBalanceRes = await query(
+    `
+    SELECT COALESCE(SUM(current_balance), 0) AS total_balance
+    FROM leave_balances
+    WHERE employee_id = $1
+    AND tenant_id = $2
+    AND year = EXTRACT(YEAR FROM CURRENT_DATE)
+    `,
+    [employeeId, tenantId]
+  );
+  const totalLeaveBalance = parseFloat(leaveBalanceRes.rows[0]?.total_balance || 0);
+
+  // Get task metrics (My Projects)
+  const taskMetricsRes = await query(
+    `
+    SELECT column_key, COUNT(*)::INTEGER as count
+    FROM tasks t
+    WHERE t.tenant_id = $1 
+    AND (
+      t.assigned_to = $2 
+      OR EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
+    )
+    GROUP BY column_key
+    `,
+    [tenantId, employeeId]
+  );
+
+  // Get recent tasks
+  const recentTasksRes = await query(
+    `
+    SELECT t.id, t.title, t.priority, t.column_key, t.due_date, p.name as project_name
+    FROM tasks t
+    LEFT JOIN projects p ON t.project_id = p.id
+    WHERE t.tenant_id = $1 
+    AND (
+      t.assigned_to = $2 
+      OR EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
+    )
+    ORDER BY t.created_at DESC
+    LIMIT 5
+    `,
+    [tenantId, employeeId]
+  );
+
   return {
     profile: employeeProfile.rows[0],
     leaveMetrics: leaveMetrics.rows[0],
+    leaveBalance: totalLeaveBalance,
+    taskMetrics: taskMetricsRes.rows,
+    recentTasks: recentTasksRes.rows,
     leaveHistory: leaveHistory.rows,
     attendanceSummary: attendanceSummary.rows[0],
     todayStatus: todayStatus.rows[0] || { status: 'NOT_CHECKED_IN' },
     monthlyAttendance: monthlyAttendance.rows,
+    weeklyActivity: weeklyActivityRes.rows,
     upcomingLeaves: upcomingEvents.rows,
     generatedAt: new Date()
   };

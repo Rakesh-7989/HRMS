@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, UserCheck, Calendar, ChevronRight, Sparkles, UserX,
   CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, CheckSquare,
-  ArrowRight, Filter, ExternalLink
+  Filter, ExternalLink, Folder
 } from 'lucide-react';
-import { format, isAfter, parseISO, eachDayOfInterval, subDays, isWithinInterval, getDay, differenceInDays } from 'date-fns';
+import { format, isAfter, parseISO, eachDayOfInterval, subDays, getDay, differenceInDays } from 'date-fns';
 import {
   PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip,
+  XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Sector
 } from 'recharts';
 import { toast } from 'react-hot-toast';
@@ -150,13 +150,14 @@ const StatCard = ({
   </motion.div>
 );
 
-const ActiveMemberCard = ({ member, delay = 0 }: { member: any; delay?: number }) => (
+const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?: number; onClick?: () => void }) => (
   <motion.div
     initial={{ opacity: 0, x: -10 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ delay }}
     whileHover={{ x: 5 }}
-    className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all"
+    onClick={onClick}
+    className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer"
   >
     <div className="flex items-center gap-4">
       <div className="relative">
@@ -190,16 +191,35 @@ export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activePieIndex, setActivePieIndex] = useState<number | undefined>(undefined);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
   // State for Attendance Chart Date Range
   const [attendanceDateRange, setAttendanceDateRange] = useState({
-    start: format(subDays(new Date(), 15), 'yyyy-MM-dd'), // Last 1 week (including today)
+    start: format(new Date(), 'yyyy-MM-dd'), // Default to Today
     end: format(new Date(), 'yyyy-MM-dd')
   });
-  const [taskDateRange, setTaskDateRange] = useState({
-    start: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
-    end: format(new Date(), 'yyyy-MM-dd')
-  });
+
+
+  // Tooltip State for Matrix (Fixed Positioning to escape overflow)
+  const [tooltipData, setTooltipData] = useState<{
+    x: number;
+    y: number;
+    content: {
+      date: Date;
+      member: any;
+      statusLabel: string;
+      record: any;
+    };
+  } | null>(null);
+
+  const handleTooltip = (e: React.MouseEvent, date: Date, member: any, statusLabel: string, record: any) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltipData({
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      content: { date, member, statusLabel, record }
+    });
+  };
 
   // --- Data Fetching ---
 
@@ -222,19 +242,37 @@ export const ManagerDashboard: React.FC = () => {
   });
 
   // Fetch detailed team attendance records for the matrix view
+  // We fetch an extended range so the grid can show 14-day history even if only "Today" is selected.
+  const gridFetchStart = useMemo(() => {
+    if (!attendanceDateRange.start || !attendanceDateRange.end) return attendanceDateRange.start;
+    const s = parseISO(attendanceDateRange.start);
+    const e = parseISO(attendanceDateRange.end);
+    // Be consistent with the Grid's visual logic (show context if < 7 days selected)
+    if (differenceInDays(e, s) < 7) {
+      return format(subDays(e, 14), 'yyyy-MM-dd');
+    }
+    return attendanceDateRange.start;
+  }, [attendanceDateRange]);
+
   const { data: rawAttendanceRecords } = useQuery({
-    queryKey: ['team-attendance-records', attendanceDateRange.start, attendanceDateRange.end],
+    queryKey: ['team-attendance-records', gridFetchStart, attendanceDateRange.end],
     queryFn: () => attendanceService.getTeamAttendance({
-      from_date: attendanceDateRange.start,
+      from_date: gridFetchStart,
       to_date: attendanceDateRange.end,
       limit: 1000
     }),
-    enabled: !!attendanceDateRange.start && !!attendanceDateRange.end && user?.role === 'MANAGER',
+    enabled: !!gridFetchStart && !!attendanceDateRange.end && user?.role === 'MANAGER',
   });
 
   const { data: taskData, isLoading: isTasksLoading } = useQuery({
     queryKey: ['dashboard', 'team-tasks'],
     queryFn: () => projectsService.getTasks(),
+    enabled: user?.role === 'MANAGER',
+  });
+
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => projectsService.getProjects(),
     enabled: user?.role === 'MANAGER',
   });
 
@@ -293,13 +331,33 @@ export const ManagerDashboard: React.FC = () => {
     const completedTasks = teamTasks.filter((t: any) => t.status === 'DONE' || t.column_key === 'DONE').length;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+    // Use teamAttendanceToday for real-time status
+    // Backend returns STATUS: 'IN_OFFICE', 'COMPLETED', 'ABSENT' using CURRENT_DATE
+    const todayRecords = (teamData as any)?.teamAttendanceToday || [];
+
+    const activeCount = todayRecords.filter((r: any) =>
+      r.status === 'IN_OFFICE' ||
+      r.status === 'COMPLETED' ||
+      r.status === 'PRESENT' ||
+      r.status === 'HALF_DAY' ||
+      (r.check_in_time && r.status !== 'ABSENT')
+    ).length;
+
+    // Count explicit Absents or Leaves
+    // Backend returns 'ABSENT' if check_in_time is null
+    // const absentCount = todayRecords.filter((r: any) => r.status === 'ABSENT' || r.status === 'LEAVE').length;
+
+    // If total records matched team size, we could use absentCount.
+    // However, safest fallback for 'Not Here' is (Total - Active).
+    const notHere = teamMembers.length - activeCount;
+
     return {
       total_members: teamMembers.length,
-      active_now: teamMembers.filter((m: any) => m.on_leave_today === 0 || !m.on_leave_today).length,
-      on_leave: teamMembers.filter((m: any) => m.on_leave_today > 0).length,
+      active_now: activeCount,
+      on_leave: notHere,
       completion_rate: completionRate
     };
-  }, [teamMembers, teamTasks]);
+  }, [teamTasks, teamMembers, teamData]);
 
   // 1. Team Attendance Analytics
   const attendanceTrendData = useMemo(() => {
@@ -424,74 +482,98 @@ export const ManagerDashboard: React.FC = () => {
 
   // 2. Task Progress Overview (Stacked Bar)
   const taskProgressData = useMemo(() => {
-    // Filter tasks by date range
-    const filteredTasks = teamTasks.filter((t: any) => {
-      if (!taskDateRange.start || !taskDateRange.end) return true;
-      try {
-        const created = t.created_at ? parseISO(t.created_at) : new Date();
-        const start = parseISO(taskDateRange.start);
-        const end = parseISO(taskDateRange.end);
-        // Include start and end boundaries (using isWithinInterval from date-fns)
-        return isWithinInterval(created, { start, end });
-      } catch (e) {
-        return true;
-      }
-    });
+    // To match the Kanban Board view, we should show ALL tasks regardless of creation date.
+
+    // Filter by Selected Project
+    // If no project selected (default), show empty or explicit Prompt
+    if (!selectedProjectId) return [
+      { name: 'To Do', value: 0, fill: '#94a3b8', gradient: 'linear-gradient(to right, #94a3b8, #64748b)' },
+      { name: 'In Progress', value: 0, fill: '#6366f1', gradient: 'linear-gradient(to right, #6366f1, #4f46e5)' },
+      { name: 'Review', value: 0, fill: '#8b5cf6', gradient: 'linear-gradient(to right, #8b5cf6, #7c3aed)' },
+      { name: 'Completed', value: 0, fill: '#10b981', gradient: 'linear-gradient(to right, #10b981, #059669)' }
+    ];
+
+    const targetTasks = selectedProjectId === 'ALL'
+      ? teamTasks
+      : teamTasks.filter((t: any) => t.project_id === selectedProjectId);
 
     const counts = {
       'TODO': 0,
-      'BACKLOG': 0,
       'IN_PROGRESS': 0,
       'REVIEW': 0,
       'DONE': 0
     } as Record<string, number>;
 
-    filteredTasks.forEach((t: any) => {
-      const status = t.column_key || t.status;
-      if (counts[status] !== undefined) counts[status]++;
+    targetTasks.forEach((t: any) => {
+      // Normalize Status/Column Key
+      const rawStatus = (t.column_key || t.status || '').toString().toUpperCase();
+
+      if (rawStatus.includes('TODO') || rawStatus.includes('BACKLOG') || rawStatus.includes('OPEN') || rawStatus.includes('PENDING')) {
+        counts['TODO']++;
+      } else if (rawStatus.includes('PROGRESS') || rawStatus.includes('DOING') || rawStatus.includes('h-PROGRESS')) { // 'h-PROGRESS' handles potential casing
+        counts['IN_PROGRESS']++;
+      } else if (rawStatus.includes('REVIEW') || rawStatus.includes('QA') || rawStatus.includes('TEST')) {
+        counts['REVIEW']++;
+      } else if (rawStatus.includes('DONE') || rawStatus.includes('COMPL') || rawStatus.includes('CLOSE') || rawStatus.includes('FINISH')) {
+        counts['DONE']++;
+      } else {
+        // Default fallback if status is unknown/new
+        counts['TODO']++;
+      }
     });
 
     return [
-      { name: 'To Do', value: counts['TODO'] + counts['BACKLOG'], fill: '#94a3b8', gradient: 'linear-gradient(to right, #94a3b8, #64748b)' },
+      { name: 'To Do', value: counts['TODO'], fill: '#94a3b8', gradient: 'linear-gradient(to right, #94a3b8, #64748b)' },
       { name: 'In Progress', value: counts['IN_PROGRESS'], fill: '#6366f1', gradient: 'linear-gradient(to right, #6366f1, #4f46e5)' },
       { name: 'Review', value: counts['REVIEW'], fill: '#8b5cf6', gradient: 'linear-gradient(to right, #8b5cf6, #7c3aed)' },
       { name: 'Completed', value: counts['DONE'], fill: '#10b981', gradient: 'linear-gradient(to right, #10b981, #059669)' }
     ];
-  }, [teamTasks, taskDateRange]);
+  }, [teamTasks, selectedProjectId]);
 
   // 3. Individual Performance Comparison (Bar Chart)
   const performanceData = useMemo(() => {
+    // Check for Project Filter
+    const relevantTasks = (selectedProjectId && selectedProjectId !== 'ALL')
+      ? teamTasks.filter((t: any) => t.project_id === selectedProjectId)
+      : teamTasks;
+
     return teamMembers.map((m: any) => {
-      const memberTasks = teamTasks.filter((t: any) =>
+      const memberTasks = relevantTasks.filter((t: any) =>
         t.assigned_to === m.id || t.assignees?.some((a: any) => a.id === m.id)
       );
       const completed = memberTasks.filter((t: any) => t.column_key === 'DONE' || t.status === 'DONE').length;
+
+      // Calculate Score based purely on tickets completed
       const taskScore = memberTasks.length > 0 ? (completed / memberTasks.length) * 100 : 0;
 
-      // Attendance score from analytics if available
-      const attendStat = attendanceTrends?.teamMemberStats?.find(s => s.first_name === m.first_name);
-      const attendScore = attendStat?.attendance_rate || 95;
-
-      const totalScore = Math.round((taskScore * 0.6) + (attendScore * 0.4));
+      // Use Task Score directly (100% weight) as requested
+      const totalScore = Math.round(taskScore);
 
       return {
         name: `${m.first_name} ${m.last_name.charAt(0)}.`,
         score: totalScore,
-        tasks: memberTasks.length
+        fill: totalScore > 80 ? '#10b981' : totalScore > 50 ? '#6366f1' : '#f59e0b',
+        tasks: memberTasks.length,
+        completed: completed
       };
     }).sort((a: any, b: any) => b.score - a.score);
-  }, [teamMembers, teamTasks, attendanceTrends]);
+  }, [teamMembers, teamTasks, selectedProjectId]);
 
   // 4. Workload Distribution (Donut)
   const workloadData = useMemo(() => {
+    // Filter tasks by selected project if one is active
+    const relevantTasks = (selectedProjectId && selectedProjectId !== 'ALL')
+      ? teamTasks.filter((t: any) => t.project_id === selectedProjectId)
+      : teamTasks;
+
     return teamMembers.map((m: any) => {
-      const activeTasks = teamTasks.filter((t: any) =>
+      const activeTasks = relevantTasks.filter((t: any) =>
         (t.assigned_to === m.id || t.assignees?.some((a: any) => a.id === m.id)) &&
         (t.column_key !== 'DONE' && t.status !== 'DONE')
       ).length;
       return { name: `${m.first_name} ${m.last_name.charAt(0)}.`, value: activeTasks };
     }).filter((d: { value: number }) => d.value > 0);
-  }, [teamMembers, teamTasks]);
+  }, [teamMembers, teamTasks, selectedProjectId]);
 
   // 5. Deadline Adherence (Donut)
   const deadlineAdherence = useMemo(() => {
@@ -610,14 +692,18 @@ export const ManagerDashboard: React.FC = () => {
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span className="text-white/80 text-xs font-black uppercase tracking-widest">
-                  {greeting}, {user?.first_name}
+                  {greeting}
                 </span>
               </motion.div>
               <h1 className="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">
-                Team Pulse <span className="text-indigo-300">Dashboard</span>
+                Welcome back, {user?.first_name}! 👋
               </h1>
               <p className="text-white/70 text-base font-medium">
-                You have <span className="text-white font-bold">{totalPending} actions</span> requiring your attention today.
+                {totalPending > 0 ? (
+                  <>You have <span className="text-white font-bold">{totalPending} pending requests</span> to review today.</>
+                ) : (
+                  <>You're all caught up! No pending actions for today.</>
+                )}
               </p>
             </div>
 
@@ -637,14 +723,6 @@ export const ManagerDashboard: React.FC = () => {
                   <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">W{format(new Date(), 'w')}</p>
                 </div>
               </motion.div>
-
-              <Button
-                onClick={() => navigate('/projects/tasks')}
-                className="bg-white text-indigo-900 hover:bg-slate-100 h-14 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl transition-all hover:scale-105 active:scale-95 border-none group shrink-0"
-              >
-                Manage Tasks
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
             </div>
           </div>
         </motion.div>
@@ -697,20 +775,22 @@ export const ManagerDashboard: React.FC = () => {
             delay={0.5}
             badge={isAttendanceFetching ? 'Loading...' : 'Live Data'}
             headerAction={
-              <div className="flex items-center gap-2">
-                {attendanceDateRange.start !== format(subDays(new Date(), 15), 'yyyy-MM-dd') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-[10px] font-black text-indigo-600 hover:bg-indigo-50"
-                    onClick={() => setAttendanceDateRange({
-                      start: format(new Date(), 'yyyy-MM-dd'),
-                      end: format(new Date(), 'yyyy-MM-dd')
-                    })}
-                  >
-                    RESET TO TODAY
-                  </Button>
-                )}
+              <div className="flex items-center gap-4">
+                {/* Reset Button - Only show if current view is NOT 'Today' */}
+                {!(attendanceDateRange.start === format(new Date(), 'yyyy-MM-dd') &&
+                  attendanceDateRange.end === format(new Date(), 'yyyy-MM-dd')) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-[10px] font-black text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => setAttendanceDateRange({
+                        start: format(new Date(), 'yyyy-MM-dd'),
+                        end: format(new Date(), 'yyyy-MM-dd')
+                      })}
+                    >
+                      RESET TO TODAY
+                    </Button>
+                  )}
                 <div className="min-w-[220px]">
                   <DateRangePicker
                     startDate={attendanceDateRange.start}
@@ -741,7 +821,7 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="mt-2 mb-6 grid grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-6">
+                <div className="mt-2 mb-2 grid grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-3">
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
                     <div className="flex items-baseline gap-2">
@@ -780,7 +860,7 @@ export const ManagerDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 overflow-x-auto pb-4 custom-scrollbar">
+                <div className="offset-0 overflow-x-auto pt-2 pb-2 px-2 -mx-2 custom-scrollbar">
                   <div className="min-w-[800px]">
                     {/* Matrix Container */}
                     <div className="flex flex-col gap-2">
@@ -812,8 +892,8 @@ export const ManagerDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Employee Rows */}
-                      <div className="flex flex-col gap-3">
+                      {/* Employee Rows - Vertically Scrollable */}
+                      <div className="flex flex-col gap-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
                         {uniqueTeamMembers.map((member: any) => (
                           <div key={member.id} className="flex items-center group/row">
                             {/* Name Column */}
@@ -884,25 +964,13 @@ export const ManagerDashboard: React.FC = () => {
                                   }
 
                                   return (
-                                    <div key={i} className="group/cell relative">
+                                    <div
+                                      key={i}
+                                      className="group/cell relative"
+                                      onMouseEnter={(e) => handleTooltip(e, day, member, statusLabel, record)}
+                                      onMouseLeave={() => setTooltipData(null)}
+                                    >
                                       <div className={`w-8 h-8 rounded-md transition-all hover:scale-110 ${bgClass}`} />
-
-                                      {/* Tooltip */}
-                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/cell:block min-w-[120px] bg-white dark:bg-slate-900 p-2 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 z-50 text-xs">
-                                        <div className="font-bold whitespace-nowrap">{format(day, 'MMM dd, yyyy')}</div>
-                                        <div className="text-[10px] text-slate-500 mb-1">{member.first_name}</div>
-                                        <div className={`font-semibold ${statusLabel === 'Present' ? 'text-emerald-500' :
-                                          statusLabel === 'Late' ? 'text-amber-500' :
-                                            statusLabel === 'Absent' ? 'text-rose-500' : 'text-slate-400'
-                                          }`}>
-                                          {statusLabel}
-                                        </div>
-                                        {record?.check_in_time && (() => {
-                                          try {
-                                            return <div className="text-[10px] text-slate-400 mt-1">In: {format(parseISO(record.check_in_time), 'HH:mm')}</div>;
-                                          } catch (e) { return null; }
-                                        })()}
-                                      </div>
                                     </div>
                                   );
                                 });
@@ -915,6 +983,34 @@ export const ManagerDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Fixed Tooltip Overlay */}
+                {tooltipData && (
+                  <div
+                    className="fixed z-[9999] pointer-events-none"
+                    style={{
+                      top: tooltipData.y - 10,
+                      left: tooltipData.x,
+                      transform: 'translate(-50%, -100%)'
+                    }}
+                  >
+                    <div className="bg-white dark:bg-slate-900 p-2 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 text-xs min-w-[120px]">
+                      <div className="font-bold whitespace-nowrap">{format(tooltipData.content.date, 'MMM dd, yyyy')}</div>
+                      <div className="text-[10px] text-slate-500 mb-1">{tooltipData.content.member.first_name}</div>
+                      <div className={`font-semibold ${tooltipData.content.statusLabel === 'Present' ? 'text-emerald-500' :
+                        tooltipData.content.statusLabel === 'Late' ? 'text-amber-500' :
+                          tooltipData.content.statusLabel === 'Absent' ? 'text-rose-500' : 'text-slate-400'
+                        }`}>
+                        {tooltipData.content.statusLabel}
+                      </div>
+                      {tooltipData.content.record?.check_in_time && (() => {
+                        try {
+                          return <div className="text-[10px] text-slate-400 mt-1">In: {format(parseISO(tooltipData.content.record.check_in_time), 'HH:mm')}</div>;
+                        } catch (e) { return null; }
+                      })()}
+                    </div>
+                  </div>
+                )}
 
                 {/* Legend */}
                 <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
@@ -937,69 +1033,81 @@ export const ManagerDashboard: React.FC = () => {
 
           {/* Task Progress Overview (Horizontal Bar) */}
           <ChartCard
-            title="Task Pipeline"
-            subtitle="Current delivery workload status"
+            title={!selectedProjectId ? "Select Project" : "Task Pipeline"}
+            subtitle={!selectedProjectId ? "Please select a project to view status" : "Current delivery workload status"}
             delay={0.6}
             badge="Active"
             headerAction={
-              <div>
-                <DateRangePicker
-                  startDate={taskDateRange.start}
-                  endDate={taskDateRange.end}
-                  onStartDateChange={(s) => setTaskDateRange(prev => ({ ...prev, start: s }))}
-                  onEndDateChange={(e) => setTaskDateRange(prev => ({ ...prev, end: e }))}
-                  customTrigger={
-                    <div className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
-                      <Calendar className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                    </div>
-                  }
-                />
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="form-select bg-slate-50 dark:bg-slate-800 border-none text-xs font-bold text-slate-600 dark:text-slate-300 py-1.5 focus:ring-0 cursor-pointer"
+                >
+                  <option value="" disabled>Select Project</option>
+                  {/*  */}
+                  {projects?.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
             }
           >
-            <div className="h-[350px] mt-4 flex flex-col">
-              <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={taskProgressData} layout="vertical" margin={{ left: -10 }}>
-                    <XAxis type="number" hide />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#64748b', fontSize: 11, fontWeight: 900 }}
-                      width={100}
-                    />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                    <Bar
-                      dataKey="value"
-                      name="Count"
-                      radius={[0, 15, 15, 0]}
-                      barSize={36}
-                      animationDuration={2000}
-                    >
-                      {taskProgressData.map((_entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={_entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                {taskProgressData.map((item, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ scale: 1.05 }}
-                    className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-3xl border border-slate-100 dark:border-white/5 transition-all"
-                  >
-                    <div className="flex items-center gap-3 mb-2 text-slate-400">
-                      <div className="w-2.5 h-2.5 rounded-full ring-4 ring-current/10" style={{ backgroundColor: item.fill }} />
-                      <span className="text-[10px] font-black uppercase tracking-widest leading-none">{item.name}</span>
-                    </div>
-                    <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{item.value}</p>
-                  </motion.div>
-                ))}
-              </div>
+            <div className="h-[280px] mt-2 flex flex-col">
+              {!selectedProjectId ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 animate-in fade-in zoom-in duration-300">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                    <Folder className="w-8 h-8 opacity-50" />
+                  </div>
+                  <h4 className="font-bold text-slate-600 dark:text-slate-300 mb-1">No Project Selected</h4>
+                  <p className="text-xs text-slate-400">Please select a project from the dropdown to view the pipeline</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={taskProgressData} layout="vertical" margin={{ left: -10 }}>
+                        <XAxis type="number" hide />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: '#64748b', fontSize: 11, fontWeight: 900 }}
+                          width={100}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                        <Bar
+                          dataKey="value"
+                          name="Count"
+                          radius={[0, 15, 15, 0]}
+                          barSize={24}
+                          animationDuration={2000}
+                        >
+                          {taskProgressData.map((_entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={_entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    {taskProgressData.map((item, i) => (
+                      <motion.div
+                        key={i}
+                        whileHover={{ scale: 1.05 }}
+                        className="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-3xl border border-slate-100 dark:border-white/5 transition-all"
+                      >
+                        <div className="flex items-center gap-3 mb-2 text-slate-400">
+                          <div className="w-2.5 h-2.5 rounded-full ring-4 ring-current/10" style={{ backgroundColor: item.fill }} />
+                          <span className="text-[10px] font-black uppercase tracking-widest leading-none">{item.name}</span>
+                        </div>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{item.value}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </ChartCard>
         </div>
@@ -1175,7 +1283,12 @@ export const ManagerDashboard: React.FC = () => {
           >
             <div className="space-y-3 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
               {teamMembers.map((member: any, i: number) => (
-                <ActiveMemberCard key={member.id} member={member} delay={1.1 + i * 0.05} />
+                <ActiveMemberCard
+                  key={member.id}
+                  member={member}
+                  delay={1.1 + i * 0.05}
+                  onClick={() => navigate(`/employees/${member.user_id}`)}
+                />
               ))}
             </div>
           </ChartCard>
@@ -1187,7 +1300,7 @@ export const ManagerDashboard: React.FC = () => {
             delay={1.2}
             badge={`${totalPending} Pending`}
             headerAction={
-              <Button variant="ghost" size="sm" onClick={() => navigate('/leave')} className="text-[10px] font-black text-indigo-600 bg-indigo-50 border-none hover:bg-indigo-100 px-4 py-2 rounded-full flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/leave?tab=team-requests')} className="text-[10px] font-black text-indigo-600 bg-indigo-50 border-none hover:bg-indigo-100 px-4 py-2 rounded-full flex items-center gap-2">
                 All Requests
                 <ExternalLink className="w-3 h-3" />
               </Button>
