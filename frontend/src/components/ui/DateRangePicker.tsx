@@ -436,22 +436,25 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={cn(
-                        'flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all w-full group',
+                        'flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border transition-all w-full group',
                         'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
                         'hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
-                        'text-sm font-medium text-gray-900 dark:text-white',
+                        'text-xs sm:text-sm font-medium text-gray-900 dark:text-white',
                         isOpen && 'ring-2 ring-primary/30 border-primary shadow-sm'
                     )}
                 >
-                    <Calendar size={18} className={cn(
-                        "text-gray-400 flex-shrink-0 transition-colors",
+                    <Calendar size={16} className={cn(
+                        "text-gray-400 flex-shrink-0 transition-colors sm:w-[18px] sm:h-[18px]",
                         isOpen && "text-primary"
                     )} />
-                    <span className={cn(!start && 'text-gray-400 dark:text-gray-500')}>
+                    <span className={cn(
+                        !start && 'text-gray-400 dark:text-gray-500',
+                        "truncate"
+                    )}>
                         {displayText()}
                     </span>
                     {daysBetween > 0 && (
-                        <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                        <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-semibold whitespace-nowrap hidden xs:inline-flex">
                             {daysBetween} day{daysBetween !== 1 ? 's' : ''}
                         </span>
                     )}

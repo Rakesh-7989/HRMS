@@ -125,26 +125,26 @@ export const OrganisationPage: React.FC = () => {
 
         <Card className="flex-1 flex flex-col p-6 min-h-0 shadow-md border dark:border-gray-800">
           {/* Subtabs */}
-          <div className="mb-4 border-b border-light-border shrink-0">
-            <div className="flex items-center gap-6">
+          <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
+            <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => setTab('directory')} className={`py-2 px-3 text-sm ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                <button onClick={() => setTab('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
                   {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
                 </button>
               )}
               {['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => setTab('roster')} className={`py-2 px-3 text-sm ${tab === 'roster' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                <button onClick={() => setTab('roster')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'roster' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
                   Shift Roster
                 </button>
               )}
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
+                  <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => setTab('departments')} className={`py-2 px-3 text-sm ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
-                      <button onClick={() => setTab('designations')} className={`py-2 px-3 text-sm ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
-                      <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
+                      <button onClick={() => setTab('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
+                      <button onClick={() => setTab('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                     </>
                   )}
                 </>
@@ -163,8 +163,8 @@ export const OrganisationPage: React.FC = () => {
               <div className="h-full overflow-y-auto pr-2">
                 {user?.role === 'SUPER_ADMIN' ? (
                   <>
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex-1 max-w-md">
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="w-full md:flex-1 md:max-w-md">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" size={18} />
                           <input
@@ -176,8 +176,6 @@ export const OrganisationPage: React.FC = () => {
                           />
                         </div>
                       </div>
-
-
                     </div>
 
                     <div>
@@ -217,53 +215,55 @@ export const OrganisationPage: React.FC = () => {
                           </div>
 
                           {selectedTenant && (
-                            <div className="mt-6">
-                              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
-                                <div className="flex items-center justify-between mb-3">
+                            <div className="mt-6 md:mt-8">
+                              <div className="p-4 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-lg">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
                                   <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
                                     <p className="text-sm text-muted">{selectedTenant.email}</p>
                                   </div>
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)}>Close</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)} className="self-end md:self-auto">Close</Button>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Status</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Status</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{selectedTenant.is_active ? 'Active' : 'Inactive'}</p>
                                   </div>
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Created</p>
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Created</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{format(new Date(selectedTenant.created_at), 'MMM dd, yyyy')}</p>
                                   </div>
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Employees</p>
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Employees</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{tenantEmployeeCountQuery.isLoading ? '...' : tenantEmployeeCountQuery.data ?? 0}</p>
                                   </div>
                                 </div>
 
                                 <div>
-                                  <h4 className="text-md font-semibold mb-2 text-gray-900 dark:text-white">Users</h4>
+                                  <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">Users</h4>
                                   {selectedUsersQuery.isLoading ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                       {[1, 2, 3].map((i) => (
-                                        <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+                                        <div key={i} className="h-14 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
                                       ))}
                                     </div>
                                   ) : selectedUsersQuery.data && selectedUsersQuery.data.length > 0 ? (
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                       {selectedUsersQuery.data.map((user) => (
-                                        <div key={user.id} className="flex items-center justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                                          <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
+                                        <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                          <div className="mb-2 sm:mb-0">
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{user.email}</p>
                                             <p className="text-xs text-muted">{user.role} • Joined {format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
                                           </div>
-                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center ${user.is_active ? 'bg-primary text-white' : 'bg-primary/10 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>{user.is_active ? 'Active' : 'Inactive'}</span>
+                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center w-fit ${user.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                            {user.is_active ? 'Active' : 'Inactive'}
+                                          </span>
                                         </div>
                                       ))}
                                     </div>
                                   ) : (
-                                    <p className="text-muted text-sm">No users found for this tenant.</p>
+                                    <p className="text-muted text-sm italic py-2">No users found for this tenant.</p>
                                   )}
                                 </div>
                               </div>
@@ -275,11 +275,11 @@ export const OrganisationPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <label className="text-sm text-muted">Department</label>
-                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
-                          <option value="all">Select Department</option>
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+                        <label className="text-sm text-muted">Filter by Department:</label>
+                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
+                          <option value="all">All Departments</option>
                           {displayDepartments.map((d: Dept) => {
                             const count = deptCounts.byId.get(d.id || '') || deptCounts.byName.get((d.name || '').toLowerCase()) || 0;
                             return (
@@ -296,14 +296,14 @@ export const OrganisationPage: React.FC = () => {
                       ) : filteredEmployees.length === 0 ? (
                         <div className="text-center text-muted">No employees found</div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {filteredEmployees.map((emp) => (
-                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-md shadow p-4 flex items-center gap-3 border border-transparent dark:border-gray-700 hover:shadow-md transition-shadow">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-sm">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
-                              <div>
-                                <div className="font-medium text-gray-900 dark:text-white">{emp.first_name} {emp.last_name}</div>
-                                <div className="text-xs text-muted">{emp.role}</div>
-                                <div className="text-xs text-muted">{emp.email}</div>
+                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
+                              <div className="min-w-0">
+                                <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name} {emp.last_name}</div>
+                                <div className="text-xs text-muted truncate">{emp.role}</div>
+                                <div className="text-xs text-muted truncate">{emp.email}</div>
                               </div>
                             </div>
                           ))}

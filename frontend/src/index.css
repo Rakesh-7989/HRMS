@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   :root {
     --background: #F3F6F9;
     /* Cultured */
@@ -91,9 +95,14 @@
 
 @layer utilities {
   .glass-effect {
-    background-color: var(--card);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+  }
+
+  .dark .glass-effect {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .border-border {
@@ -235,6 +244,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

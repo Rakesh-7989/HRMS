@@ -28,6 +28,18 @@ module.exports = async function verifyJwt(req, res, next) {
   }
 
   try {
+    // Set minimal RLS variables for the initial user lookup, if possible
+    // (We rely on decoded token having tenantId or simply bypassing for this lookup if needed)
+    // Actually, let's update the store right away if we have the decoded tenant ID
+    const store = require("../utils/asyncContext").getStore();
+    if (store && decoded.tenantId) {
+      store.set("tenantId", decoded.tenantId);
+      // We don't have role yet, but maybe tenantId is enough for RLS access to 'users' table?
+      // If users table is RLS protected by tenant_id, this is crucial.
+    } else if (store) {
+      // If we don't have tenantId (SUPER ADMIN?), we might need to be careful.
+    }
+
     // Fetch full user details INCLUDING employee id (join employees table)
     const userRes = await pool.query(
       `
@@ -93,7 +105,6 @@ module.exports = async function verifyJwt(req, res, next) {
     // Set PostgreSQL RLS session variables
     // We update the async context store so that the db middleware (src/middleware/db.js)
     // can automatically set these variables on the connection when queries are executed.
-    const store = require("../utils/asyncContext").getStore();
     if (store) {
       store.set("tenantId", user.tenant_id);
       store.set("role", user.role);

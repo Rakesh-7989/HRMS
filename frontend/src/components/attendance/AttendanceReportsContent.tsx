@@ -427,7 +427,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2 }}
                             >
-                                <Card>
+                                <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <LineChartIcon className="mr-2" size={20} />
                                         Attendance Trends
@@ -449,7 +449,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <Card>
+                                <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <PieChartIcon className="mr-2" size={20} />
                                         Department Breakdown
@@ -469,7 +469,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <Card>
+                                <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <BarChart3 className="mr-2" size={20} />
                                         Team Performance
@@ -495,7 +495,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <Card>
+                                <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <BarChart3 className="mr-2" size={20} />
                                         Monthly Attendance

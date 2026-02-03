@@ -143,8 +143,9 @@ export const TeamLeaveContent: React.FC = () => {
                         </h3>
 
                         {/* Filters */}
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
+                        {/* Filters */}
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            <div className="relative flex-1 sm:w-64">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                                 <input
                                     type="text"

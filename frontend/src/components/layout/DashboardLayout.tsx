@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2 } from 'lucide-react';
+import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
@@ -31,6 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -149,49 +150,58 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="h-screen flex overflow-hidden bg-[var(--background)]">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main wrapper */}
-      <div className="flex flex-col flex-1 ml-[90px] min-w-0">
+      <div className="flex flex-col flex-1 ml-0 md:ml-[90px] min-w-0">
 
         {/* Header */}
         <header
-          className="sticky top-0 z-30 h-16 border-b px-6 flex items-center"
+          className="sticky top-0 z-30 min-h-16 border-b px-4 md:px-6 flex items-center py-2 transition-all"
           style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
         >
-          <div className="flex items-center justify-between w-full">
+          <div className="flex items-center justify-between w-full gap-2">
 
             {/* LEFT: Title + Breadcrumbs */}
-            <div className="flex flex-col justify-center leading-tight">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {title || 'Dashboard'}
-              </h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                className="md:hidden text-gray-500 hover:text-primary transition-colors focus:outline-none shrink-0"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
+              <div className="flex flex-col justify-center min-w-0">
+                <h1 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white leading-snug truncate md:text-clip">
+                  {title || 'Dashboard'}
+                </h1>
 
-              {breadcrumbs && breadcrumbs.length > 0 && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {breadcrumbs.map((crumb, idx) => (
-                    <React.Fragment key={crumb.label}>
-                      {idx > 0 && <span>/</span>}
-                      {crumb.href ? (
-                        <a
-                          href={crumb.href}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {crumb.label}
-                        </a>
-                      ) : (
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {crumb.label}
-                        </span>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
+                {breadcrumbs && breadcrumbs.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-full">
+                    {breadcrumbs.map((crumb, idx) => (
+                      <React.Fragment key={crumb.label}>
+                        {idx > 0 && <span>/</span>}
+                        {crumb.href ? (
+                          <a
+                            href={crumb.href}
+                            className="hover:text-primary transition-colors truncate"
+                          >
+                            {crumb.label}
+                          </a>
+                        ) : (
+                          <span className="text-gray-700 dark:text-gray-300 truncate">
+                            {crumb.label}
+                          </span>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* RIGHT: Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3">
               <NavbarClock />
               {actions && (
                 <div className="flex items-center gap-2 mr-2">
@@ -389,7 +399,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Main Content */}
-        <main className="p-6 flex-1 overflow-auto overscroll-contain" style={{ backgroundColor: 'var(--background)' }}>
+        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain" style={{ backgroundColor: 'var(--background)' }}>
           {children}
         </main>
       </div>

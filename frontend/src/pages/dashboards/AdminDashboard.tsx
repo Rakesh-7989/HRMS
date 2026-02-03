@@ -141,13 +141,13 @@ const ChartCard = ({
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
     className={`bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none ${className}`}
   >
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
+    <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="min-w-0">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{title}</h3>
+        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
       </div>
       {badge && (
-        <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
           {badge}
         </span>
       )}
@@ -291,14 +291,14 @@ export const AdminDashboard: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 bg-white/10 backdrop-blur-lg rounded-2xl p-4"
+              className="flex items-center gap-4 bg-white/10 backdrop-blur-lg rounded-2xl p-4 min-w-fit"
             >
               <div className="text-center px-4 border-r border-white/20">
-                <p className="text-3xl font-bold text-white">{format(new Date(), 'dd')}</p>
+                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'dd')}</p>
                 <p className="text-sm text-white/70">{format(new Date(), 'MMM yyyy')}</p>
               </div>
               <div className="text-center px-4">
-                <p className="text-3xl font-bold text-white">{format(new Date(), 'EEEE')}</p>
+                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'EEEE')}</p>
                 <p className="text-sm text-white/70">{format(new Date(), 'hh:mm a')}</p>
               </div>
             </motion.div>
@@ -440,10 +440,10 @@ export const AdminDashboard: React.FC = () => {
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                   <Legend
-                    layout="vertical"
-                    align="right"
-                    verticalAlign="middle"
-                    formatter={(value) => <span className="text-gray-600 dark:text-gray-300 text-sm">{value}</span>}
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                    align="center"
+                    formatter={(value) => <span className="text-gray-600 dark:text-gray-300 text-sm ml-2 mr-2">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>

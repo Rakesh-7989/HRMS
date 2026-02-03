@@ -174,8 +174,8 @@ export const CalendarContent: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center bg-gray-50/50 dark:bg-white/[0.03] p-1 border border-light-border dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col sm:flex-row w-full lg:w-auto items-stretch sm:items-center gap-4">
+                    <div className="flex items-center justify-between bg-gray-50/50 dark:bg-white/[0.03] p-1 border border-light-border dark:border-white/5 rounded-2xl">
                         <button
                             onClick={prevMonth}
                             className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-sm active:scale-95"
@@ -184,7 +184,7 @@ export const CalendarContent: React.FC = () => {
                         </button>
                         <button
                             onClick={goToToday}
-                            className="px-6 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+                            className="flex-1 px-6 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:text-primary transition-colors text-center"
                         >
                             Today
                         </button>
@@ -208,7 +208,7 @@ export const CalendarContent: React.FC = () => {
                     </select>
 
                     {canManage && (
-                        <Button onClick={() => setIsAddModalOpen(true)} className="h-11 rounded-2xl shadow-premium px-8 font-bold uppercase tracking-widest text-[11px] group">
+                        <Button onClick={() => setIsAddModalOpen(true)} className="h-11 rounded-2xl shadow-premium px-8 font-bold uppercase tracking-widest text-[11px] group w-full sm:w-auto">
                             <Plus size={16} className="mr-2" />
                             Add Holiday
                         </Button>
@@ -228,22 +228,22 @@ export const CalendarContent: React.FC = () => {
                         exit="exit"
                         transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
                     >
-                        <Card className="p-0 border-none shadow-2xl bg-white dark:bg-[#111] overflow-hidden rounded-[2.5rem]">
+                        <Card className="p-0 border-none shadow-2xl bg-white dark:bg-[#111] overflow-hidden rounded-3xl md:rounded-[2.5rem]">
                             {/* Days labels */}
                             <div className="grid grid-cols-7 border-b border-light-border dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01]">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
                                     <div key={d} className={cn(
-                                        "py-5 text-center text-[10px] font-bold uppercase tracking-[0.2em]",
+                                        "py-3 md:py-5 text-center text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em]",
                                         (i === 0 || i === 6) ? "text-red-500/70" : "text-gray-400 dark:text-gray-600"
                                     )}>
-                                        {d}
+                                        {d.charAt(0)}<span className="hidden md:inline">{d.slice(1)}</span>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="grid grid-cols-7">
                                 {Array.from({ length: startOfMonth(currentDate).getDay() }).map((_, i) => (
-                                    <div key={`pad-${i}`} className="min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
+                                    <div key={`pad-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
                                 ))}
 
                                 {monthDays.map(day => {
@@ -256,19 +256,19 @@ export const CalendarContent: React.FC = () => {
                                         <div
                                             key={dateStr}
                                             className={cn(
-                                                "min-h-[130px] p-4 border-r border-b border-light-border dark:border-white/5 transition-all relative group",
+                                                "min-h-[60px] md:min-h-[130px] p-1 md:p-4 border-r border-b border-light-border dark:border-white/5 transition-all relative group",
                                                 isToday && "bg-primary/[0.02] dark:bg-primary/[0.04]",
                                                 !holiday?.holiday_name && "hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                                             )}
                                         >
                                             {isToday && (
-                                                <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                                                <div className="absolute top-2 right-2 md:top-4 md:right-4 h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-primary animate-pulse" />
                                             )}
 
                                             <div className="relative z-10 flex flex-col h-full">
-                                                <div className="mb-4">
+                                                <div className="mb-1 md:mb-4 flex flex-col items-center md:items-start">
                                                     <span className={cn(
-                                                        "text-xl font-bold tracking-tighter",
+                                                        "text-sm md:text-xl font-bold tracking-tighter",
                                                         isToday ? "text-primary" :
                                                             isWeekend ? "text-red-500/50" :
                                                                 "text-gray-400 dark:text-gray-700 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"
@@ -283,7 +283,7 @@ export const CalendarContent: React.FC = () => {
                                                             initial={{ opacity: 0, y: 5 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className={cn(
-                                                                "p-3 rounded-2xl flex items-center gap-2 border border-transparent shadow-sm",
+                                                                "p-1 md:p-3 rounded-lg md:rounded-2xl flex items-center justify-center md:justify-start gap-1 md:gap-2 border border-transparent shadow-sm",
                                                                 holiday.holiday_type === 'Central' && "bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
                                                                 holiday.holiday_type === 'State' && "bg-purple-50/50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400",
                                                                 holiday.holiday_type === 'Company' && "bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
@@ -291,12 +291,12 @@ export const CalendarContent: React.FC = () => {
                                                             )}
                                                         >
                                                             <div className="shrink-0 scale-75 opacity-70">
-                                                                {holiday.holiday_type === 'Central' && <Globe size={16} />}
-                                                                {holiday.holiday_type === 'State' && <MapPin size={16} />}
-                                                                {holiday.holiday_type === 'Company' && <Building size={16} />}
-                                                                {holiday.holiday_type === 'Weekend' && <Clock size={16} />}
+                                                                {holiday.holiday_type === 'Central' && <Globe size={12} className="md:w-4 md:h-4" />}
+                                                                {holiday.holiday_type === 'State' && <MapPin size={12} className="md:w-4 md:h-4" />}
+                                                                {holiday.holiday_type === 'Company' && <Building size={12} className="md:w-4 md:h-4" />}
+                                                                {holiday.holiday_type === 'Weekend' && <Clock size={12} className="md:w-4 md:h-4" />}
                                                             </div>
-                                                            <span className="text-[10px] font-bold uppercase tracking-tight truncate">{holiday.holiday_name}</span>
+                                                            <span className="hidden md:inline text-[10px] font-bold uppercase tracking-tight truncate">{holiday.holiday_name}</span>
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
@@ -306,7 +306,7 @@ export const CalendarContent: React.FC = () => {
                                 })}
 
                                 {Array.from({ length: (7 - (endOfMonth(currentDate).getDay() + 1)) % 7 }).map((_, i) => (
-                                    <div key={`pad-end-${i}`} className="min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
+                                    <div key={`pad-end-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
                                 ))}
                             </div>
                         </Card>
@@ -336,7 +336,7 @@ export const CalendarContent: React.FC = () => {
                         </div>
                     </div>
 
-                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-5 rounded-[2.5rem] min-h-[250px]">
+                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px]">
                         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {announcements.length === 0 ? (
                                 <div className="py-20 text-center opacity-40">
@@ -347,7 +347,7 @@ export const CalendarContent: React.FC = () => {
                                 announcements.map((ann) => (
                                     <div
                                         key={ann.id}
-                                        className="p-6 rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 relative group hover:bg-white dark:hover:bg-white/[0.04] transition-all"
+                                        className="p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 relative group hover:bg-white dark:hover:bg-white/[0.04] transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -383,7 +383,7 @@ export const CalendarContent: React.FC = () => {
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Custom Calendar</h3>
                     </div>
 
-                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-5 rounded-[2.5rem] min-h-[250px] flex flex-col">
+                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px] flex flex-col">
                         <div className="flex-1 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {companyHolidays.length === 0 ? (
                                 <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-light-border dark:border-white/5 rounded-[2.5rem] py-16 opacity-30">
@@ -394,7 +394,7 @@ export const CalendarContent: React.FC = () => {
                                 </div>
                             ) : (
                                 companyHolidays.map((h) => (
-                                    <div key={h.id} className="flex items-center justify-between p-5 rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 group">
+                                    <div key={h.id} className="flex items-center justify-between p-4 md:p-5 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 group">
                                         <div className="flex items-center gap-5">
                                             <div className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-white dark:bg-black/40 shadow-sm text-primary font-bold">
                                                 <span className="text-[10px] uppercase opacity-60">{format(new Date(h.date), 'MMM')}</span>

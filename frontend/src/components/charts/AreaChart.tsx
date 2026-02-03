@@ -50,9 +50,9 @@ export const AreaChart: React.FC<AreaChartProps> = ({
         <RechartsAreaChart
           data={data}
           margin={{
-            top: 20,
-            right: 10,
-            left: 0,
+            top: 10,
+            right: 0,
+            left: -20,
             bottom: 0,
           }}
         >
@@ -88,7 +88,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
             tickLine={false}
             tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 500 }}
             dy={10}
-            padding={{ left: 10, right: 10 }}
+            padding={{ left: 0, right: 0 }}
           />
           <YAxis
             domain={yDomain}

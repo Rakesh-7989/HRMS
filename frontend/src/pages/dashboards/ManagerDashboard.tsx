@@ -59,15 +59,15 @@ const ChartCard = ({
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
     className={`bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300 ${className}`}
   >
-    <div className="flex items-center justify-between mb-4">
-      <div>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 md:gap-0">
+      <div className="w-full md:w-auto">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight break-words">{title}</h3>
         {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{subtitle}</p>}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-start sm:justify-end">
         {headerAction}
         {badge && (
-          <span className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
+          <span className="px-2 sm:px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm shrink-0 whitespace-nowrap">
             {badge}
           </span>
         )}
@@ -775,6 +775,7 @@ export const ManagerDashboard: React.FC = () => {
             delay={0.5}
             badge={isAttendanceFetching ? 'Loading...' : 'Live Data'}
             headerAction={
+<<<<<<< Updated upstream
               <div className="flex items-center gap-4">
                 {/* Reset Button - Only show if current view is NOT 'Today' */}
                 {!(attendanceDateRange.start === format(new Date(), 'yyyy-MM-dd') &&
@@ -792,6 +793,23 @@ export const ManagerDashboard: React.FC = () => {
                     </Button>
                   )}
                 <div className="min-w-[220px]">
+=======
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto">
+                {attendanceDateRange.start !== format(subDays(new Date(), 15), 'yyyy-MM-dd') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-[10px] font-black text-indigo-600 hover:bg-indigo-50"
+                    onClick={() => setAttendanceDateRange({
+                      start: format(new Date(), 'yyyy-MM-dd'),
+                      end: format(new Date(), 'yyyy-MM-dd')
+                    })}
+                  >
+                    RESET TO TODAY
+                  </Button>
+                )}
+                <div className="w-full sm:w-[220px] min-w-0">
+>>>>>>> Stashed changes
                   <DateRangePicker
                     startDate={attendanceDateRange.start}
                     endDate={attendanceDateRange.end}
@@ -811,17 +829,25 @@ export const ManagerDashboard: React.FC = () => {
                   <p className="text-xs text-slate-400 font-bold">Loading attendance data...</p>
                 </div>
               </div>
-            ) : attendanceTrendData.length === 0 ? (
+            ) : attendanceTrendData.length === 0 || teamMembers.length === 0 ? (
               <div className="h-[380px] flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
                   <Calendar className="w-8 h-8 text-slate-400" />
                 </div>
-                <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">No Data Available</h4>
-                <p className="text-xs text-slate-400">Try selecting a different date range</p>
+                <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">
+                  {teamMembers.length === 0 ? 'No Team Members Found' : 'No Attendance Data'}
+                </h4>
+                <p className="text-xs text-slate-400">
+                  {teamMembers.length === 0 ? 'Add employees to your team to see analytics' : 'Try selecting a different date range'}
+                </p>
               </div>
             ) : (
               <>
+<<<<<<< Updated upstream
                 <div className="mt-2 mb-2 grid grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-3">
+=======
+                <div className="mt-2 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-6">
+>>>>>>> Stashed changes
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
                     <div className="flex items-baseline gap-2">
@@ -860,15 +886,19 @@ export const ManagerDashboard: React.FC = () => {
                   </div>
                 </div>
 
+<<<<<<< Updated upstream
                 <div className="offset-0 overflow-x-auto pt-2 pb-2 px-2 -mx-2 custom-scrollbar">
+=======
+                <div className="mt-6 overflow-x-auto pb-4 custom-scrollbar px-2">
+>>>>>>> Stashed changes
                   <div className="min-w-[800px]">
                     {/* Matrix Container */}
                     <div className="flex flex-col gap-2">
 
                       {/* Header Row (Dates) */}
                       <div className="flex">
-                        {/* Spacer for Names Column */}
-                        <div className="w-[180px] flex-shrink-0"></div>
+                        {/* Spacer for Names Column (Sticky) */}
+                        <div className="w-[140px] sm:w-[180px] flex-shrink-0 sticky left-0 z-20 bg-white dark:bg-[#0f172a] border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]"></div>
                         {/* Dates */}
                         <div className="flex gap-1">
                           {(() => {
@@ -897,15 +927,16 @@ export const ManagerDashboard: React.FC = () => {
                         {uniqueTeamMembers.map((member: any) => (
                           <div key={member.id} className="flex items-center group/row">
                             {/* Name Column */}
-                            <div className="w-[180px] flex-shrink-0 flex items-center gap-3 pr-4">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                            {/* Name Column (Sticky) */}
+                            <div className="w-[140px] sm:w-[180px] flex-shrink-0 flex items-center gap-3 pr-4 sticky left-0 z-20 bg-white dark:bg-[#0f172a] border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
                                 {member.first_name?.[0]}{member.last_name?.[0]}
                               </div>
                               <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-semibold truncate text-slate-700 dark:text-slate-200">
+                                <span className="text-xs sm:text-sm font-semibold truncate text-slate-700 dark:text-slate-200">
                                   {member.first_name} {member.last_name}
                                 </span>
-                                <span className="text-[10px] text-slate-400 truncate">
+                                <span className="text-[9px] sm:text-[10px] text-slate-400 truncate">
                                   {member.designation?.name || member.role || 'Team Member'}
                                 </span>
                               </div>

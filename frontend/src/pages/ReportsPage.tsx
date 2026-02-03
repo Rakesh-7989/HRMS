@@ -255,7 +255,7 @@ export const ReportsPage: React.FC = () => {
       <div className="space-y-6">
         {/* Header with Filters */}
         <Card>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                 Reports & Analytics
@@ -264,47 +264,53 @@ export const ReportsPage: React.FC = () => {
                 Comprehensive insights into your organization&apos;s HR data
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-                {(['overview', 'attendance', 'leave', 'employee'] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setReportType(type)}
-                    className={cn(
-                      'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                      reportType === type
-                        ? 'bg-white dark:bg-gray-900 text-primary shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    )}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
+              {/* Scrollable Tabs Container */}
+              <div className="w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 min-w-max">
+                  {(['overview', 'attendance', 'leave', 'employee'] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setReportType(type)}
+                      className={cn(
+                        'px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
+                        reportType === type
+                          ? 'bg-white dark:bg-gray-900 text-primary shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      )}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value as any)}
+                    className="w-full sm:w-auto px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </button>
-                ))}
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                  {dateRange === 'custom' && (
+                    <DateRangePicker
+                      startDate={customStart}
+                      endDate={customEnd}
+                      onStartDateChange={setCustomStart}
+                      onEndDateChange={setCustomEnd}
+                    />
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={exportReport} className="whitespace-nowrap">
+                  <Download className="mr-2" size={16} />
+                  Export
+                </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value as any)}
-                  className="px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="7d">Last 7 days</option>
-                  <option value="30d">Last 30 days</option>
-                  <option value="90d">Last 90 days</option>
-                  <option value="custom">Custom</option>
-                </select>
-                {dateRange === 'custom' && (
-                  <DateRangePicker
-                    startDate={customStart}
-                    endDate={customEnd}
-                    onStartDateChange={setCustomStart}
-                    onEndDateChange={setCustomEnd}
-                  />
-                )}
-              </div>
-              <Button variant="outline" size="sm" onClick={exportReport}>
-                <Download className="mr-2" size={16} />
-                Export
-              </Button>
             </div>
           </div>
         </Card>

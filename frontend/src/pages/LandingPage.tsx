@@ -5,31 +5,241 @@ import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { AnimatedText, StaggerText } from '@/components/ui/AnimatedText';
-import { ArrowRight, CheckCircle, TrendingUp, Users, Clock, Shield } from 'lucide-react';
+import { AnimatedText } from '@/components/ui/AnimatedText';
+import {
+  ArrowRight, CheckCircle, Clock, Shield,
+  Smartphone, Tablet, Globe, LayoutDashboard, Briefcase, UserCheck,
+  MapPin, Columns, ClipboardList, Calendar, DollarSign
+} from 'lucide-react';
 import { cn } from '@/utils/cn';
 
-const features = [
+const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, colorConfig }) => {
+  const Icon = feature.icon;
+
+  if (feature.image) {
+    return (
+      <motion.div
+        whileHover={{ scale: 1.05, rotate: 1 }}
+        transition={{ type: "spring", stiffness: 300 }}
+        className="relative z-10 rounded-xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/10 h-full"
+      >
+        <img
+          src={feature.image}
+          alt={feature.title}
+          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+        />
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className={cn(
+      "relative z-10 rounded-xl overflow-hidden border border-black/5 dark:border-white/10 h-full bg-gradient-to-br flex flex-col items-center justify-center p-4 transition-all duration-500 group-hover:bg-black/[0.05] dark:group-hover:bg-white/[0.05]",
+      colorConfig.gradient
+    )}>
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
+
+      {feature.id === 'timesheets' && (
+        <div className="w-full space-y-3 px-2">
+          {[80, 45, 90].map((w, i) => (
+            <div key={i} className="h-1.5 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: `${w}%` }}
+                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                className={cn("h-full shadow-[0_0_8px_rgba(0,0,0,0.1)]", colorConfig.glow)}
+              />
+            </div>
+          ))}
+          <div className="flex justify-between items-center mt-2 opacity-40">
+            <Clock size={16} className={colorConfig.text} />
+            <div className="text-[9px] font-mono tracking-tighter font-semibold opacity-60">09:00 - 18:00</div>
+          </div>
+        </div>
+      )}
+
+      {feature.id === 'attendance' && (
+        <div className="relative w-20 h-20">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" className="text-black/5 dark:text-white/5" />
+            <motion.circle
+              cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6"
+              strokeDasharray="283"
+              initial={{ strokeDashoffset: 283 }}
+              whileInView={{ strokeDashoffset: 70 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className={cn(colorConfig.text, "drop-shadow-sm")}
+              style={{ strokeLinecap: 'round' }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ClipboardList size={22} className={cn("opacity-80", colorConfig.text)} />
+          </div>
+        </div>
+      )}
+
+      {feature.id === 'leave' && (
+        <div className="grid grid-cols-4 gap-1.5 w-full max-w-[120px]">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0.2 }}
+              whileInView={{ opacity: [0.2, 0.5, 0.2][i % 3] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.1 }}
+              className={cn(
+                "h-6 rounded-sm border border-black/5 dark:border-white/5",
+                i === 5 || i === 9 ? colorConfig.glow : "bg-black/5 dark:bg-white/5"
+              )}
+            />
+          ))}
+        </div>
+      )}
+
+      {feature.id === 'security' && (
+        <div className="relative">
+          <motion.div
+            animate={{
+              rotate: 360,
+              scale: [1, 1.05, 1]
+            }}
+            transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }, scale: { duration: 4, repeat: Infinity } }}
+            className="w-24 h-24 border-2 border-dashed border-black/10 dark:border-white/10 rounded-full flex items-center justify-center"
+          >
+            <div className="w-20 h-20 border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Shield size={32} className={cn("opacity-60 animate-pulse", colorConfig.text)} />
+            </div>
+          </motion.div>
+          {[0, 90, 180, 270].map((deg) => (
+            <motion.div
+              key={deg}
+              className={cn("absolute w-2 h-2 rounded-full shadow-sm", colorConfig.glow)}
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: `rotate(${deg}deg) translate(48px) rotate(-${deg}deg)`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {!['timesheets', 'attendance', 'leave', 'security'].includes(feature.id) && (
+        <Icon size={52} className={cn("relative z-20 opacity-40 group-hover:opacity-90 transition-opacity duration-500", colorConfig.text)} />
+      )}
+
+      <motion.div
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.35, 0.15]
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className={cn("absolute inset-0 blur-3xl", colorConfig.glow)}
+      />
+    </div>
+  );
+};
+
+// Assets
+import rolesVisual from '@/assets/hrms_roles.png';
+import geofencingVisual from '@/assets/geofencing_visual.png';
+import kanbanVisual from '@/assets/kanban_visual.png';
+import payrollVisual from '@/assets/payroll_visual.png';
+
+const keyFeatures = [
   {
-    icon: Users,
-    title: 'Employee Management',
-    description: 'Centralize employee data, manage departments, and track organizational hierarchy.',
+    id: 'geofencing',
+    title: 'Geo-Fencing Attendance',
+    icon: MapPin,
+    image: geofencingVisual,
+    color: 'emerald',
+    points: [
+      'Location-based check-in and check-out',
+      'Prevents attendance fraud with real-time geo validation',
+      'Configurable office and site boundaries',
+      'Accurate tracking for on-site and remote teams'
+    ],
+    description: "Ensure your team is exactly where they need to be. Define virtual perimeters for office locations and client sites to automate attendance accuracy with precision."
   },
   {
+    id: 'timesheets',
+    title: 'Smart Timesheets',
     icon: Clock,
-    title: 'Attendance Tracking',
-    description: 'Automated clock in/out with real-time monitoring and comprehensive reports.',
+    color: 'blue',
+    points: [
+      'Easy daily and weekly time logging',
+      'Project and task-wise hour tracking',
+      'Manager approvals with audit history',
+      'Improves productivity and billing accuracy'
+    ],
+    description: "Streamline time tracking with intuitive, automated logging that captures every billable hour without the manual hassle, ensuring transparency and efficiency."
   },
   {
-    icon: TrendingUp,
+    id: 'kanban',
+    title: 'Kanban Boards',
+    icon: Columns,
+    image: kanbanVisual,
+    color: 'purple',
+    points: [
+      'Visual task management with drag-and-drop workflow',
+      'Customizable stages for teams and projects',
+      'Real-time status updates and collaboration',
+      'Improves transparency and delivery timelines'
+    ],
+    description: "Visualize workflows and boost team collaboration with intuitive boards that keep every project moving forward, giving you a clear view of progress at a glance."
+  },
+  {
+    id: 'attendance',
+    title: 'Attendance Management',
+    icon: ClipboardList,
+    color: 'amber',
+    points: [
+      'Automated attendance calculation',
+      'Late, early, and overtime tracking',
+      'Daily, monthly, and custom reports',
+      'Seamless integration with payroll'
+    ],
+    description: "Goodbye manual registers. Capture clock-ins, breaks, and overtime with precision-engineered automated tracking that integrates seamlessly with your payroll."
+  },
+  {
+    id: 'leave',
     title: 'Leave Management',
-    description: 'Streamlined leave requests, approvals, and balance tracking for all employees.',
+    icon: Calendar,
+    color: 'rose',
+    points: [
+      'Online leave requests and approvals',
+      'Multiple leave types (CL, SL, PL, WFH, etc.)',
+      'Holiday calendar and leave balance tracking',
+      'Policy-based automation for accuracy'
+    ],
+    description: "Simplify time-off management with a transparent, policy-driven system that handles requests, approvals, and balances instantly, keeping everyone in sync."
   },
   {
-    icon: Shield,
-    title: 'Multi-Tenant SaaS',
-    description: 'Complete tenant isolation with role-based access control and security.',
+    id: 'payroll',
+    title: 'Payroll Management',
+    icon: DollarSign,
+    image: payrollVisual,
+    color: 'indigo',
+    points: [
+      'Automated salary calculation',
+      'Attendance and leave-based payroll processing',
+      'Statutory deductions and compliance ready',
+      'Payslip generation and salary reports'
+    ],
+    description: "Run error-free payroll in minutes. Automatically syncs with attendance and leave data for perfect payouts every time, ensuring your team is paid correctly and on time."
   },
+  {
+    id: 'security',
+    title: 'Secure & Scalable',
+    icon: Shield,
+    color: 'slate',
+    points: [
+      'Role-based access control',
+      'Secure data handling and storage',
+      'Scalable for startups to large enterprises',
+      'Cloud-ready architecture'
+    ],
+    description: "Enterprise-grade protection for your most sensitive data, ensuring full compliance and peace of mind at every scale with role-based access control."
+  }
 ];
 
 const stats = [
@@ -60,21 +270,70 @@ const testimonials = [
   {
     name: 'Ananya Sharma',
     role: 'Head of People, Fintech Co.',
+    avatarColor: 'bg-blue-500',
     quote:
       'WellZo HRMS helped us centralize attendance, leave, and payroll. Our HR team finally has time for people, not paperwork.',
   },
   {
     name: 'Rahul Verma',
     role: 'HR Manager, SaaS Startup',
+    avatarColor: 'bg-purple-500',
     quote:
       'The dashboard gives me real-time visibility into headcount, leaves, and payroll. No more juggling spreadsheets.',
   },
+];
+
+const platforms = [
+  { name: 'Web Browser', icon: Globe, description: 'Chrome, Safari, Firefox' },
+  { name: 'Mobile App', icon: Smartphone, description: 'iOS & Android' },
+  { name: 'Tablet View', icon: Tablet, description: 'Optimized Experience' },
+  { name: 'Desktop App', icon: LayoutDashboard, description: 'Windows & macOS' },
+];
+
+const roles = [
+  {
+    title: 'Admin',
+    icon: Shield,
+    description: 'Complete control over organization settings, payroll configuration, and high-level reports.',
+    features: ['System Configuration', 'Role Management', 'Advanced Analytics'],
+    color: 'from-purple-500/20 to-indigo-500/10'
+  },
+  {
+    title: 'Manager',
+    icon: Briefcase,
+    description: 'Efficiently manage team attendance, approve leave requests, and track project progress.',
+    features: ['Team Monitoring', 'Approval Workflows', 'Performance Tracking'],
+    color: 'from-amber-500/20 to-orange-500/10'
+  },
+  {
+    title: 'Employee',
+    icon: UserCheck,
+    description: 'Easy-to-use self-service portal for clocking in, requesting leave, and viewing payslips.',
+    features: ['Self Service', 'Leave Requests', 'Document Access'],
+    color: 'from-emerald-500/20 to-teal-500/10'
+  }
 ];
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
 
   const scrollToFeatures = () => {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
@@ -86,536 +345,629 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div ref={containerRef} className="h-screen bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
+      {/* Background GZ Big Text */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: [0, -20, 0],
+            x: [0, 10, 0]
+          }}
+          transition={{
+            opacity: { duration: 0.5 },
+            scale: { duration: 2 },
+            y: { duration: 15, repeat: Infinity, ease: "easeInOut" },
+            x: { duration: 20, repeat: Infinity, ease: "easeInOut" }
+          }}
+          className="text-[40rem] font-semibold tracking-tighter leading-none text-black/5 dark:text-white/5 opacity-100"
+        >
+          GZ
+        </motion.span>
+      </div>
+
       {/* Background gradient overlay */}
       <div className="fixed inset-0 bg-gradient-radial opacity-30 dark:opacity-90 pointer-events-none z-0" />
 
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-light-border dark:border-dark-border bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-xl transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <motion.div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-              whileHover={{ scale: 1.05 }}
-            >
-              <AnimatedLogo size="md" />
-            </motion.div>
+      {/* Futuristic Navigation - Floating Island */}
+      <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-6">
+        <nav className="w-full max-w-5xl border border-black/5 dark:border-white/10 bg-white/30 dark:bg-black/40 backdrop-blur-2xl rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300">
+          <div className="px-8 py-4">
+            <div className="flex items-center justify-between">
+              <motion.div
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                whileHover={{ scale: 1.05 }}
+              >
+                <AnimatedLogo size="md" />
+              </motion.div>
 
-            <div className="hidden md:flex items-center gap-4">
-              <Button variant="ghost" onClick={scrollToFeatures}>
-                Features
-              </Button>
-              <Button variant="ghost" onClick={scrollToPricing}>
-                Pricing
-              </Button>
-              <ThemeToggle />
-              <Button variant="outline" onClick={() => navigate('/register')}>
-                Register
-              </Button>
-              <Button variant="primary" onClick={() => navigate('/login')}>
-                Login
-              </Button>
-            </div>
+              <div className="hidden md:flex items-center gap-6">
+                <Button variant="ghost" className="hover:bg-primary/10" onClick={scrollToFeatures}>
+                  Features
+                </Button>
+                <Button variant="ghost" className="hover:bg-primary/10" onClick={scrollToPricing}>
+                  Pricing
+                </Button>
+                <div className="h-6 w-px bg-white/10 mx-2" />
+                <ThemeToggle />
+                <Button variant="outline" className="border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5" onClick={() => navigate('/register')}>
+                  Register
+                </Button>
+                <Button variant="primary" className="shadow-lg shadow-primary/20" onClick={() => navigate('/login')}>
+                  Login
+                </Button>
+              </div>
 
-            <div className="md:hidden flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/register')}>
-                Register
-              </Button>
-              <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
-                Login
-              </Button>
+              <div className="md:hidden flex items-center gap-2">
+                <ThemeToggle />
+                <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
+                  Login
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.8, ease: 'easeOut' }}
-            className="space-y-6"
-            style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-          >
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }}
-              style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
+      <section className="relative z-10 max-w-7xl mx-auto px-5 pt-36 mb-24">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col items-center text-center space-y-10 mb-20"
+        >
+          <motion.div variants={fadeInUp} className="max-w-4xl">
+            <motion.span
+              variants={fadeInUp}
+              className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary uppercase tracking-[0.2em] mb-8"
             >
-              <motion.span
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: prefersReducedMotion ? 0 : 0.1, duration: 0.5 }}
-                className="inline-block px-3 py-1 rounded-full bg-primary-10 dark:bg-primary-20 border border-primary/30 dark:border-primary/40 text-xs text-primary dark:text-primary-400 uppercase tracking-widest hover:bg-primary-20 dark:hover:bg-primary-30 hover:border-primary/50 transition-all"
-              >
-                HR MANAGEMENT · ATTENDANCE · PAYROLL
-              </motion.span>
-            </motion.div>
+              The Modern Workforce Ecosystem
+            </motion.span>
 
-            <AnimatedText variant="slide-up" delay={0.3} className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              All-in-one{' '}
-              <span className="text-gradient">HR management</span> for modern teams.
+            <AnimatedText
+              variant="slide-up"
+              className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.1] mb-8"
+            >
+              Master Your <span className="text-gradient">HR Operations</span> with Elegance.
             </AnimatedText>
 
-            <AnimatedText variant="fade-in" delay={0.5} className="text-lg text-gray-600 dark:text-muted max-w-lg">
-              Centralise employees, automate attendance, approve leave in one click, and run
-              payroll in hours instead of days — with an interface your team will actually enjoy
-              using.
+            <AnimatedText
+              variant="fade-in"
+              delay={0.4}
+              className="text-xl text-gray-600 dark:text-muted max-w-2xl mx-auto mb-10 leading-relaxed"
+            >
+              WellZo is the definitive all-in-one platform for high-performance teams.
+              Automate the mundane, empower your people, and scale with confidence.
             </AnimatedText>
 
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" onClick={() => navigate('/register')}>
-                Start free trial <ArrowRight className="ml-2 inline" size={20} />
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-5 justify-center">
+              <Button size="lg" className="rounded-xl px-8 py-5 text-base group" onClick={() => navigate('/register')}>
+                Begin Your Journey <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
               </Button>
-              <Button variant="outline" size="lg" onClick={scrollToFeatures}>
-                View features
+              <Button variant="outline" size="lg" className="rounded-xl px-8 py-5 text-base" onClick={scrollToFeatures}>
+                Explore Capabilities
               </Button>
-            </div>
-
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: prefersReducedMotion ? 0 : 0.4, duration: 0.5 }}
-              className="flex flex-wrap gap-6 pt-4"
-            >
-              <motion.div
-                whileHover={{ scale: 1.05, x: 4 }}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted"
-              >
-                <CheckCircle className="text-primary" size={16} />
-                <span>No credit card required</span>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05, x: 4 }}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted"
-              >
-                <CheckCircle className="text-accent-green" size={16} />
-                <span>Go live in under a week</span>
-              </motion.div>
             </motion.div>
           </motion.div>
+        </motion.div>
+      </section>
 
-          {/* Dashboard Preview */}
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.94, y: 18 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.9, delay: prefersReducedMotion ? 0 : 0.1, ease: 'easeOut' }}
-            className="relative"
-            style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-          >
-            <motion.div
-              className={prefersReducedMotion ? '' : 'animate-float'}
-              style={{
-                transform: 'translateZ(0)', // GPU acceleration
-                willChange: prefersReducedMotion ? 'auto' : 'transform'
-              }}
-            >
-              <Card className="border-primary-border shadow-premium p-5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-radial opacity-80 pointer-events-none" />
-                <motion.div
-                  className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.3, 0.5, 0.3],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-
-                <div className="relative space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted">Today&apos;s overview</span>
-                    <span className="px-3 py-1 rounded-full bg-black border border-primary text-xs text-muted">
-                      Live HR Snapshot
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Active employees', value: '148' },
-                      { label: 'Present today', value: '132' },
-                      { label: 'Pending leaves', value: '9' },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className="rounded-lg bg-gray-100/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3"
-                      >
-                        <p className="text-xs text-gray-600 dark:text-muted">{item.label}</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{item.value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <div className="flex-1 rounded-lg bg-primary-light border border-gray-300 dark:border-white/20 p-3">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-xs text-gray-600 dark:text-muted">Attendance</span>
-                        <span className="text-xs text-primary">Live</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="flex-1 h-1.5 rounded-full bg-green-400" />
-                        <div className="flex-[0.5] h-1.5 rounded-full bg-yellow-400" />
-                        <div className="flex-[0.7] h-1.5 rounded-full bg-red-400" />
-                      </div>
-                    </div>
-                    <div className="flex-[0.9] rounded-lg bg-gray-100/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3">
-                      <p className="text-xs text-gray-600 dark:text-muted">Next payroll</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">5 days left · Draft ready</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Features Section */}
-        <section id="features" className="mb-20">
-          <div className="text-center mb-12">
-            <AnimatedText variant="slide-up" delay={0.2}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                <StaggerText
-                  words={['Everything', 'you', 'need']}
-                  className="text-3xl md:text-4xl font-bold"
-                  delay={0.1}
-                />
-              </h2>
-            </AnimatedText>
-            <AnimatedText variant="fade-in" delay={0.4} className="text-gray-600 dark:text-muted text-lg max-w-2xl mx-auto">
-              Comprehensive HR management tools designed for modern organizations
-            </AnimatedText>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={feature.title}
-                  initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ delay: prefersReducedMotion ? 0 : index * 0.1, duration: 0.5, ease: 'easeOut' }}
-                  style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-                >
+      <main className="max-w-7xl mx-auto px-6">
+        {/* Platforms Section */}
+        <section className="py-24 border-y border-light-border dark:border-dark-border mb-24 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+              <div className="max-w-md text-center md:text-left">
+                <AnimatedText variant="slide-up" className="text-3xl font-bold mb-4">
+                  Truly <span className="text-gradient">Omnichannel</span>.
+                </AnimatedText>
+                <p className="text-gray-600 dark:text-muted">
+                  Seamlessly transition between devices. Your workforce doesn&apos;t wait, and neither does WellZo.
+                </p>
+              </div>
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="grid grid-cols-2 lg:grid-cols-4 gap-8"
+              >
+                {platforms.map((p) => (
                   <motion.div
-                    whileHover={{ y: -8 }}
-                    transition={{ duration: 0.3 }}
+                    key={p.name}
+                    variants={fadeInUp}
+                    whileHover={{ y: -5, borderColor: 'rgba(var(--primary), 0.5)' }}
+                    className="flex flex-col items-center p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-colors"
                   >
-                    <Card hover className="h-full group">
-                      <div>
-                        <Icon className="text-primary mb-4 group-hover:text-accent-blue transition-colors" size={32} />
-                      </div>
-                      <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{feature.title}</h3>
-                      <p className="text-gray-600 dark:text-muted text-sm">{feature.description}</p>
-                    </Card>
+                    <p.icon className="text-primary mb-3" size={32} />
+                    <span className="font-semibold text-sm">{p.name}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted mt-1">{p.description}</span>
                   </motion.div>
-                </motion.div>
-              );
-            })}
+                ))}
+              </motion.div>
+            </div>
           </div>
         </section>
 
-        {/* Workflow & Stats */}
-        <section className="grid lg:grid-cols-2 gap-16 mb-20">
+        {/* HRMS Ecosystem & Roles Section */}
+        <section className="mb-24">
+          <div className="text-center mb-20">
+            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Tailored Experience</motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6">Built for Every <span className="text-gradient">Role</span>.</AnimatedText>
+            <p className="text-gray-600 dark:text-muted max-w-2xl mx-auto">
+              Whether you&apos;re steering the ship, leading a team, or driving innovation,
+              WellZo adapts to your specific needs.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative rounded-3xl overflow-hidden shadow-2xl"
+            >
+              <img src={rolesVisual} alt="Roles in HRMS" className="w-full h-auto" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+            </motion.div>
+
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              {roles.map((role) => (
+                <motion.div
+                  key={role.title}
+                  variants={fadeInUp}
+                  className={cn(
+                    "p-8 rounded-3xl border border-black/5 dark:border-white/10 bg-gradient-to-r group hover:scale-[1.02] transition-all cursor-default",
+                    role.color
+                  )}
+                >
+                  <div className="flex items-start gap-5">
+                    <div className="p-4 rounded-2xl bg-white dark:bg-black/50 shadow-lg group-hover:scale-110 transition-transform">
+                      <role.icon className="text-primary" size={28} />
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-bold mb-2">{role.title}</h4>
+                      <p className="text-gray-600 dark:text-muted/80 text-sm mb-4 leading-relaxed">
+                        {role.description}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {role.features.map(f => (
+                          <span key={f} className="text-[10px] px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 font-medium">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="mb-24">
+          <div className="text-center mb-16">
+            <motion.span
+              variants={fadeInUp}
+              className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
+            >
+              Powerful Capabilities
+            </motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6">
+              Empower Your <span className="text-gradient">HR Engine</span>.
+            </AnimatedText>
+            <p className="text-gray-600 dark:text-muted text-lg max-w-2xl mx-auto">
+              A comprehensive suite of tools engineered to transform manual overhead into strategic advantage.
+            </p>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
             viewport={{ once: true }}
-            className="space-y-5"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(300px,_auto)]"
           >
-            <span className="text-xs uppercase text-gray-600 dark:text-muted tracking-widest">How it works</span>
-            <AnimatedText variant="slide-right" delay={0.2}>
-              <h2 className="text-3xl font-bold mb-5">
-                Go live in three <span className="text-gradient">simple steps</span>.
-              </h2>
+            {keyFeatures.map((feature) => {
+              const Icon = feature.icon;
+              const isLarge = feature.id === 'geofencing' || feature.id === 'payroll';
+
+              const colorConfig = {
+                emerald: { text: 'text-emerald-500', dot: 'bg-emerald-500/40', glow: 'bg-emerald-500', gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent' },
+                blue: { text: 'text-blue-500', dot: 'bg-blue-500/40', glow: 'bg-blue-500', gradient: 'from-blue-500/20 via-blue-500/5 to-transparent' },
+                purple: { text: 'text-purple-500', dot: 'bg-purple-500/40', glow: 'bg-purple-500', gradient: 'from-purple-500/20 via-purple-500/5 to-transparent' },
+                amber: { text: 'text-amber-500', dot: 'bg-amber-500/40', glow: 'bg-amber-500', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
+                rose: { text: 'text-rose-500', dot: 'bg-rose-500/40', glow: 'bg-rose-500', gradient: 'from-rose-500/20 via-rose-500/5 to-transparent' },
+                indigo: { text: 'text-indigo-500', dot: 'bg-indigo-500/40', glow: 'bg-indigo-500', gradient: 'from-indigo-500/20 via-indigo-500/5 to-transparent' },
+                slate: { text: 'text-slate-500', dot: 'bg-slate-500/40', glow: 'bg-slate-500', gradient: 'from-slate-500/20 via-slate-500/5 to-transparent' },
+              }[feature.color as string] || { text: 'text-primary', dot: 'bg-primary/40', glow: 'bg-primary', gradient: 'from-primary/20 via-primary/5 to-transparent' };
+
+              return (
+                <motion.div
+                  key={feature.id}
+                  variants={fadeInUp}
+                  className={cn(
+                    "relative group rounded-[2rem] overflow-hidden border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.02] backdrop-blur-xl transition-all duration-500 hover:border-black/10 dark:hover:border-white/20 hover:bg-black/[0.03] dark:hover:bg-white/[0.05]",
+                    isLarge ? "md:col-span-2" : "col-span-1"
+                  )}
+                >
+                  <div className="p-8 h-full flex flex-col">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className={cn(
+                        "p-3 rounded-xl bg-black/5 dark:bg-white/5 shadow-inner group-hover:scale-110 transition-transform duration-500",
+                        colorConfig.text
+                      )}>
+                        <Icon size={24} />
+                      </div>
+                      <h3 className="text-xl font-bold tracking-tight">{feature.title}</h3>
+                    </div>
+
+                    <div className={cn(
+                      "flex flex-col gap-6 h-full",
+                      isLarge ? "lg:flex-row" : ""
+                    )}>
+                      <div className="flex-1 space-y-4">
+                        <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                          {feature.description}
+                        </p>
+                        <div className="space-y-3">
+                          {feature.points.map((point, pIdx) => (
+                            <div key={pIdx} className="flex gap-3 text-gray-700 dark:text-muted/90 leading-relaxed group-hover:text-black dark:group-hover:text-white transition-colors duration-300">
+                              <div className={cn("mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 opacity-60", colorConfig.dot)} />
+                              <p className="text-sm font-medium">{point}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={cn(
+                        "flex-1 relative mt-2",
+                        isLarge ? "lg:mt-0 lg:max-w-[45%]" : "h-40"
+                      )}>
+                        <FeatureVisual feature={feature} colorConfig={colorConfig} />
+                        <div className={cn(
+                          "absolute -inset-4 blur-3xl opacity-20 -z-10",
+                          colorConfig.glow
+                        )} />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </section>
+
+        {/* Workflow & Stats */}
+        <section className="grid lg:grid-cols-2 gap-20 mb-24">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase block">Operational Excellence</motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl font-extrabold mb-8 leading-tight">
+              Go Live in Three <span className="text-gradient">Simple Phases</span>.
             </AnimatedText>
 
-            {workflow.map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="flex gap-4"
-              >
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              {workflow.map((item) => (
                 <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.5 }}
-                  className="rounded-full border-2 border-primary px-3 py-1 text-xs font-medium bg-primary-10 dark:bg-primary-20 text-primary shrink-0"
+                  key={item.step}
+                  variants={fadeInUp}
+                  className="flex gap-6 p-6 rounded-3xl border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
                 >
-                  {item.step}
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all">
+                    {item.step}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-1">{item.title}</h3>
+                    <p className="text-gray-600 dark:text-muted leading-relaxed">{item.description}</p>
+                  </div>
                 </motion.div>
-                <div>
-                  <h3 className="font-semibold mb-1 text-gray-900 dark:text-white">{item.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-muted">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </motion.div>
 
           <motion.div
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: 'easeOut' }}
-            style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            <Card>
-              <span className="text-xs uppercase text-gray-600 dark:text-muted tracking-widest">Outcomes</span>
-              <h3 className="text-xl font-semibold mb-4 mt-2">
+            <Card className="p-8 border-black/5 dark:border-white/10 glass-effect h-full">
+              <span className="text-xs uppercase text-primary font-bold tracking-widest block mb-2">ROI & Outcomes</span>
+              <h3 className="text-2xl font-bold mb-6 text-gradient">
                 Designed for HR teams that do more with less.
               </h3>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-6 mb-8">
                 {stats.map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    whileHover={{ scale: 1.05 }}
+                    transition={{ delay: 0.2 + index * 0.1 }}
+                    className="text-center"
                   >
-                    <p className="text-lg font-semibold text-gradient">{stat.value}</p>
-                    <p className="text-xs text-gray-600 dark:text-muted">{stat.label}</p>
+                    <p className="text-3xl font-extrabold text-primary mb-1">{stat.value}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted font-medium">{stat.label}</p>
                   </motion.div>
                 ))}
               </div>
 
-              <div className="border-t border-white/20 my-4" />
+              <div className="space-y-4 mb-8">
+                {[
+                  "Eliminate 90% of paperwork with automated workflows",
+                  "Unified data source for payroll and compliance",
+                  "Real-time visibility into workforce distribution",
+                  "Seamless self-service for improved employee satisfaction"
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className="flex items-center gap-3 text-sm text-muted/90"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                    {item}
+                  </motion.div>
+                ))}
+              </div>
 
-              <p className="text-xs text-gray-600 dark:text-muted">
-                Built for HR, finance, founders, and people managers to collaborate on one source
-                of truth for your workforce.
-              </p>
+              <div className="border-t border-white/10 pt-6 mt-auto">
+                <p className="text-xs text-muted/60 leading-relaxed italic">
+                  WellZo empowers high-growth teams to scale without the administrative drag,
+                  ensuring your HR strategy remains focused on people, not spreadsheets.
+                </p>
+              </div>
             </Card>
           </motion.div>
         </section>
 
-        {/* Testimonials */}
-        <section className="mb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12"
-          >
-            <span className="text-xs uppercase text-gray-600 dark:text-muted tracking-widest">
-              Teams that trust WellZo
-            </span>
-            <AnimatedText variant="slide-up" delay={0.2}>
-              <h2 className="text-3xl font-bold mt-2">
-                HR that people actually <span className="text-gradient">love to use</span>.
-              </h2>
-            </AnimatedText>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{
-                  delay: prefersReducedMotion ? 0 : index * 0.1,
-                  duration: 0.5,
-                  ease: 'easeOut',
-                }}
-                style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-              >
-                <Card hover className="h-full">
-                  <p className="text-sm text-gray-600 dark:text-muted mb-4">&ldquo;{testimonial.quote}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.5 }}
-                      className="w-10 h-10 rounded-full bg-gradient-premium flex items-center justify-center font-bold text-white shadow-glow"
-                    >
-                      {testimonial.name.charAt(0)}
-                    </motion.div>
-                    <div>
-                      <p className="text-sm font-medium">{testimonial.name}</p>
-                      <p className="text-xs text-gray-600 dark:text-muted">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </section>
 
         {/* Pricing Section */}
-        <div id="pricing" className="mb-20">
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: 'easeOut' }}
-            className="text-center mb-12"
-            style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-          >
-            <AnimatedText variant="slide-up" delay={0.2}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Simple, transparent <span className="text-gradient">pricing</span>
-              </h2>
+        <div id="pricing" className="mb-24">
+          <div className="text-center mb-20">
+            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Flexible Plans</motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6">
+              Invest in Your <span className="text-gradient">Growth</span>.
             </AnimatedText>
-            <AnimatedText variant="fade-in" delay={0.4} className="text-gray-600 dark:text-muted text-lg max-w-2xl mx-auto">
-              Choose the plan that works best for your organization
-            </AnimatedText>
-          </motion.div>
+            <p className="text-gray-600 dark:text-muted max-w-2xl mx-auto">
+              Transparent pricing configured for organizations of every scale.
+              No hidden fees, just pure operational efficiency.
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-3 gap-10"
+          >
             {[
               {
-                name: 'Starter',
-                price: 29,
-                period: 'month',
-                description: 'Perfect for small teams',
-                features: ['Up to 25 employees', 'Basic attendance', 'Leave management', 'Email support'],
+                name: 'Standard',
+                price: 45,
+                period: 'user/mo',
+                description: 'Essential features for small teams.',
+                features: ['Monthly: ₹55.00/user', 'Yearly: ₹45.00/user', 'Net Monthly: ₹64.90 (incl. GST)', 'Net Yearly: ₹637.20 (incl. GST)'],
                 popular: false,
+                glow: 'group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]'
               },
               {
-                name: 'Professional',
-                price: 79,
-                period: 'month',
-                description: 'For growing organizations',
+                name: 'Premium',
+                price: 60,
+                period: 'user/mo',
+                description: 'Advanced tools for growing businesses.',
                 features: [
-                  'Up to 100 employees',
-                  'Advanced analytics',
-                  'Payroll integration',
-                  'Priority support',
-                  'API access',
+                  'Monthly: ₹70.00/user',
+                  'Quarterly: ₹67.00/user',
+                  'Half-Yearly: ₹65.00/user',
+                  'Yearly: ₹60.00/user',
+                  'Setup Charge: ₹1,180.00'
                 ],
                 popular: true,
+                glow: 'shadow-[0_0_50px_rgba(66,39,90,0.15)] group-hover:shadow-[0_0_60px_rgba(66,39,90,0.2)]'
               },
               {
-                name: 'Enterprise',
-                price: 'Custom',
-                period: '',
-                description: 'For large organizations',
-                features: ['Unlimited employees', 'White-label', 'Dedicated support', 'Custom integrations'],
+                name: 'Elite',
+                price: 200,
+                period: 'user/mo',
+                description: 'Maximum power for large enterprises.',
+                features: [
+                  'Monthly: ₹220.00/user',
+                  'Quarterly: ₹214.00/user',
+                  'Half-Yearly: ₹208.00/user',
+                  'Yearly: ₹200.00/user',
+                  'Setup Charge: ₹1,770.00'
+                ],
                 popular: false,
+                glow: 'group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]'
               },
-            ].map((plan, index) => (
+            ].map((plan) => (
               <motion.div
                 key={plan.name}
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{
-                  delay: prefersReducedMotion ? 0 : index * 0.1,
-                  duration: 0.5,
-                  ease: 'easeOut',
-                }}
-                className={cn('relative', plan.popular && 'md:-mt-4 md:mb-4')}
-                style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
+                variants={fadeInUp}
+                className="group relative"
               >
-                {plan.popular && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 z-10"
-                  >
-                    <span className="px-4 py-1 rounded-full bg-gradient-premium text-white text-sm font-semibold shadow-glow">
-                      Most Popular
-                    </span>
-                  </motion.div>
-                )}
                 <Card
                   hover={false}
                   className={cn(
-                    'h-full flex flex-col',
-                    plan.popular &&
-                    'border-primary-border border-2 shadow-primary bg-gradient-to-b from-gold-light/30 to-transparent'
+                    'h-full flex flex-col p-10 border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem] transition-all duration-500',
+                    plan.popular ? 'border-primary/50 bg-primary/5 shadow-2xl shadow-primary/10' : 'hover:border-black/20 dark:hover:border-white/20 hover:bg-black/5 dark:hover:bg-white/[0.04]',
+                    plan.glow
                   )}
                 >
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                    <p className="text-muted text-sm mb-4">{plan.description}</p>
-                    <div className="flex items-baseline gap-1">
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <span className="px-5 py-1.5 rounded-full bg-primary text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/30">
+                        Most Power
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mb-10 text-center">
+                    <h3 className="text-xl font-bold mb-2 uppercase tracking-tight text-muted">{plan.name}</h3>
+                    <div className="flex items-baseline justify-center gap-1 mb-4">
                       {typeof plan.price === 'number' ? (
                         <>
-                          <span className="text-4xl font-bold">${plan.price}</span>
-                          <span className="text-muted">/{plan.period}</span>
+                          <span className="text-5xl font-extrabold tracking-tighter">₹{plan.price}</span>
+                          <span className="text-muted font-medium">/{plan.period}</span>
                         </>
                       ) : (
-                        <span className="text-4xl font-bold">{plan.price}</span>
+                        <span className="text-5xl font-extrabold tracking-tighter leading-none">{plan.price}</span>
                       )}
                     </div>
+                    <p className="text-sm text-gray-500 dark:text-muted/60 leading-relaxed">{plan.description}</p>
                   </div>
+
+                  <div className="border-t border-black/5 dark:border-white/5 mb-10" />
+
+                  <ul className="space-y-5 mb-12 flex-1">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-3">
+                        <div className="p-1 rounded-full bg-primary/20">
+                          <CheckCircle size={14} className="text-primary" />
+                        </div>
+                        <span className="text-sm font-medium">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
                   <Button
                     variant={plan.popular ? 'primary' : 'outline'}
-                    className="w-full mb-6"
+                    className={cn(
+                      "w-full py-5 text-base rounded-2xl shadow-xl transition-all",
+                      plan.popular ? "shadow-primary/20" : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    )}
                     onClick={() =>
                       plan.price === 'Custom'
                         ? window.open('mailto:sales@hrmspro.com')
                         : navigate('/register')
                     }
                   >
-                    {plan.price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}{' '}
-                    <ArrowRight className="ml-2 inline" size={18} />
+                    {plan.price === 'Custom' ? 'Contact Partner' : 'Start Trial'}
                   </Button>
-
-                  <ul className="space-y-3 flex-1">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <CheckCircle
-                          size={20}
-                          className={cn('mt-0.5 shrink-0', plan.popular ? 'text-primary' : 'text-green-400')}
-                        />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </Card>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
 
         {/* Final CTA */}
-        <motion.section
-          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: 'easeOut' }}
-          className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent-blue/10 to-accent-green/10 border border-primary-border p-8 md:p-12 backdrop-blur-sm"
-          style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
-        >
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div>
-              <AnimatedText variant="slide-up" delay={0.2}>
-                <h2 className="text-2xl font-bold mb-2">
-                  Ready to modernize your <span className="text-gradient">HR operations</span>?
-                </h2>
-              </AnimatedText>
-              <AnimatedText variant="fade-in" delay={0.4} className="text-gray-600 dark:text-muted">
-                Create your account in minutes, invite your team, and see how WellZo simplifies
-                attendance, leave, and payroll from day one.
-              </AnimatedText>
-            </div>
-            <div className="flex gap-3">
-              <Button size="md" onClick={() => navigate('/register')}>
-                Register now <ArrowRight className="ml-2 inline" size={18} />
-              </Button>
-              <Button variant="ghost" size="md" onClick={scrollToPricing}>
-                View pricing
-              </Button>
-            </div>
+        <section className="rounded-[3rem] bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-white/10 p-12 md:p-20 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-radial opacity-30 pointer-events-none" />
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+            className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -z-10"
+          />
+
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <AnimatedText variant="slide-up" className="text-4xl md:text-6xl font-extrabold mb-8 leading-tight">
+              Ready to <span className="text-gradient">Transform</span> Your Workplace?
+            </AnimatedText>
+            <p className="text-xl text-gray-600 dark:text-muted mb-12 leading-relaxed">
+              Join hundreds of high-growth companies using WellZo to build a better employee experience.
+              Start your 14-day free trial today.
+            </p>
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="flex flex-col sm:flex-row gap-5 justify-center"
+            >
+              <motion.div variants={fadeInUp}>
+                <Button size="lg" className="rounded-xl px-10 py-6 text-lg" onClick={() => navigate('/register')}>
+                  Get Started Now
+                </Button>
+              </motion.div>
+              <motion.div variants={fadeInUp}>
+                <Button variant="outline" size="lg" className="rounded-xl px-10 py-6 text-lg" onClick={scrollToPricing}>
+                  View Pricing
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
-        </motion.section>
-      </section>
+        </section>
+
+        {/* Testimonials (Success Stories) - Moved to End */}
+        <section className="mt-24 mb-24">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
+              Success Stories
+            </motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6">
+              Loved by <span className="text-gradient">Visionary Teams</span>.
+            </AnimatedText>
+          </motion.div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 gap-8"
+          >
+            {testimonials.map((testimonial) => (
+              <motion.div
+                key={testimonial.name}
+                variants={fadeInUp}
+              >
+                <Card hover className="h-full border-white/10 glass-effect p-8 flex flex-col justify-between">
+                  <p className="text-lg text-gray-600 dark:text-muted/90 italic mb-8 leading-relaxed">
+                    &ldquo;{testimonial.quote}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-xl",
+                      testimonial.avatarColor || "bg-primary"
+                    )}>
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg">{testimonial.name}</p>
+                      <p className="text-sm text-primary font-medium">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+      </main>
     </div>
   );
 };

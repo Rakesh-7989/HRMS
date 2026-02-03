@@ -214,13 +214,13 @@ export const NavbarClock: React.FC = () => {
     }
 
     return (
-        <div className="flex items-center mr-2">
+        <div className="flex items-center">
             {status === 'NOT_CHECKED_IN' && (
                 <Button
                     onClick={handleClockIn}
                     isLoading={clockInMutation.isPending}
                     variant="outline"
-                    className="h-9 gap-2 border-green-200 hover:bg-green-50 text-green-700 hover:text-green-800 dark:border-green-900/30 dark:hover:bg-green-900/20 dark:text-green-400"
+                    className="h-9 gap-2 px-3 sm:px-4 border-green-200 hover:bg-green-50 text-green-700 hover:text-green-800 dark:border-green-900/30 dark:hover:bg-green-900/20 dark:text-green-400"
                 >
                     {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}
                     <span className="hidden sm:inline">Clock In</span>
@@ -243,7 +243,7 @@ export const NavbarClock: React.FC = () => {
                             variant="outline"
                             onClick={handleEndBreak}
                             isLoading={endBreakMutation.isPending}
-                            className="h-9 gap-2 border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400"
+                            className="h-9 gap-2 px-3 sm:px-4 border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400"
                             size="sm"
                         >
                             <Coffee size={16} />
@@ -254,7 +254,7 @@ export const NavbarClock: React.FC = () => {
                             variant="outline"
                             onClick={handleStartBreak}
                             isLoading={startBreakMutation.isPending}
-                            className="h-9 gap-2"
+                            className="h-9 gap-2 px-3 sm:px-4"
                             size="sm"
                         >
                             <Coffee size={16} />
@@ -267,7 +267,7 @@ export const NavbarClock: React.FC = () => {
                             variant="destructive"
                             onClick={handleClockOut}
                             isLoading={clockOutMutation.isPending}
-                            className="h-9 gap-2"
+                            className="h-9 gap-2 px-3 sm:px-4"
                             size="sm"
                         >
                             {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}

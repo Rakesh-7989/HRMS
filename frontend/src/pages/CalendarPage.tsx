@@ -9,7 +9,7 @@ export const CalendarPage: React.FC = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-6 touch-none"
+                className="p-3 sm:p-6"
             >
                 <CalendarContent />
             </motion.div>

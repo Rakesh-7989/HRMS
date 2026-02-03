@@ -230,7 +230,7 @@ exports.getAttendanceRecords = async (req, res) => {
   try {
     const result = await attendanceService.getAttendanceRecords(
       req.db,
-      req.user.tenantId,
+      req.user, // Pass actor
       {
         employee_id: req.query.employee_id,
         from_date: req.query.from_date,

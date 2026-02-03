@@ -45,7 +45,7 @@ export const BarChart: React.FC<BarChartProps> = ({
       className="w-full"
     >
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsBarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <RechartsBarChart data={data} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
           <defs>
             <linearGradient id={`barGradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={chartColor} stopOpacity={0.9} />

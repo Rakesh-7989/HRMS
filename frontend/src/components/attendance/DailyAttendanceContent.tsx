@@ -281,8 +281,8 @@ export const DailyAttendanceContent: React.FC = () => {
     return (
         <div className="space-y-6">
             <Card>
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="w-full sm:w-auto">
                         <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Today's Attendance</h3>
                         <p className="text-sm text-gray-600 dark:text-muted">
                             {todayAttendance?.check_in_time
@@ -314,12 +314,13 @@ export const DailyAttendanceContent: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    <div className="flex gap-3 flex-wrap md:flex-nowrap">
+                    <div className="w-full sm:w-auto flex flex-col xs:flex-row items-stretch xs:items-center gap-3">
                         {status === 'NOT_CHECKED_IN' && (
                             <Button
                                 onClick={handleClockIn}
                                 isLoading={clockInMutation.isPending}
                                 size="md"
+                                className="w-full sm:w-auto"
                             >
                                 {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
                                 Clock In {geoSettings?.is_enabled && '(Protected)'}
@@ -327,25 +328,26 @@ export const DailyAttendanceContent: React.FC = () => {
                         )}
 
                         {canClockOut && isTimerRunning && (
-                            <div className="flex gap-3">
+                            <div className="w-full sm:w-auto grid grid-cols-2 sm:flex gap-3">
                                 {todayAttendance?.active_break ? (
                                     <Button
                                         variant="outline"
                                         onClick={() => attendanceService.endBreak().then(() => queryClient.invalidateQueries({ queryKey: ['attendance'] }))}
-                                        className="border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400"
+                                        className="border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400 w-full sm:w-auto"
                                         size="md"
                                     >
-                                        <div className="mr-2 h-4 w-4" /> {/* Coffee icon placeholder if needed, or just text */}
-                                        Break Out
+                                        <div className="mr-2 h-4 w-4 shrink-0" />
+                                        <span className="truncate">Break Out</span>
                                     </Button>
                                 ) : (
                                     <Button
                                         variant="outline"
                                         onClick={() => attendanceService.startBreak().then(() => queryClient.invalidateQueries({ queryKey: ['attendance'] }))}
                                         size="md"
+                                        className="w-full sm:w-auto"
                                     >
-                                        <div className="mr-2 h-4 w-4" />
-                                        Break In
+                                        <div className="mr-2 h-4 w-4 shrink-0" />
+                                        <span className="truncate">Break In</span>
                                     </Button>
                                 )}
 
@@ -353,11 +355,12 @@ export const DailyAttendanceContent: React.FC = () => {
                                     variant="destructive"
                                     onClick={handleClockOut}
                                     isLoading={clockOutMutation.isPending}
-                                    disabled={!!todayAttendance?.active_break} // Disable clock out while on break
+                                    disabled={!!todayAttendance?.active_break}
                                     size="md"
+                                    className="w-full sm:w-auto"
                                 >
                                     {geoSettings?.is_enabled ? <MapPin className="mr-2" size={18} /> : <Clock className="mr-2" size={18} />}
-                                    Clock Out
+                                    <span className="truncate">Clock Out</span>
                                 </Button>
                             </div>
                         )}

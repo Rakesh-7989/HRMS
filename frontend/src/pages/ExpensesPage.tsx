@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import payrollService from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
@@ -105,7 +105,7 @@ const ExpensesPage: React.FC = () => {
   const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id, payload: { status: 'REJECTED' } }); };
   return (
     <DashboardLayout title="Expenses">
-      <Sidebar />
+      {/* Sidebar removed - already in DashboardLayout */}
 
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">

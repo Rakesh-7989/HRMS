@@ -92,18 +92,19 @@ export const RegularizationRequestsContent: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header controls */}
-            <div className="flex items-center justify-between">
-                <div className="flex gap-4">
+            {/* Header controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div className="flex gap-4 border-b border-gray-100 dark:border-gray-800 pb-px sm:border-0 sm:pb-0">
                     <button
                         onClick={() => setActiveTab('my')}
-                        className={`text-sm font-medium pb-1 border-b-2 transition-colors ${activeTab === 'my' ? 'border-primary text-primary' : 'border-transparent text-muted'}`}
+                        className={`text-sm font-medium pb-2 sm:pb-1 border-b-2 transition-colors ${activeTab === 'my' ? 'border-primary text-primary' : 'border-transparent text-muted'} flex-1 sm:flex-none text-center sm:text-left`}
                     >
                         My Requests
                     </button>
                     {canReview && (
                         <button
                             onClick={() => setActiveTab('team')}
-                            className={`text-sm font-medium pb-1 border-b-2 transition-colors ${activeTab === 'team' ? 'border-primary text-primary' : 'border-transparent text-muted'}`}
+                            className={`text-sm font-medium pb-2 sm:pb-1 border-b-2 transition-colors ${activeTab === 'team' ? 'border-primary text-primary' : 'border-transparent text-muted'} flex-1 sm:flex-none text-center sm:text-left`}
                         >
                             Start Review ({teamRequests.length || 0})
                         </button>
@@ -111,7 +112,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                 </div>
 
                 {activeTab === 'my' && (
-                    <Button onClick={() => setIsApplyModalOpen(true)} size="sm">
+                    <Button onClick={() => setIsApplyModalOpen(true)} size="sm" className="w-full sm:w-auto">
                         <Clock className="mr-2" size={16} />
                         Regularize Attendance
                     </Button>
@@ -123,84 +124,88 @@ export const RegularizationRequestsContent: React.FC = () => {
                 {activeTab === 'my' ? (
                     myLoading ? <div className="p-8 text-center">Loading...</div> :
                         myRequests.length === 0 ? <div className="p-8 text-center text-muted">No regularization requests found.</div> :
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Time</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {myRequests.map((req) => (
-                                        <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td className="py-3 px-4">{format(new Date(req.date), 'MMM dd, yyyy')}</td>
-                                            <td className="py-3 px-4">
-                                                In: {req.check_in_time} <br />
-                                                Out: {req.check_out_time || '-'}
-                                            </td>
-                                            <td className="py-3 px-4 max-w-xs truncate" title={req.reason}>{req.reason}</td>
-                                            <td className="py-3 px-4">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                    req.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    }`}>
-                                                    {req.status}
-                                                </span>
-                                                {req.rejection_reason && <div className="text-xs text-red-500 mt-1">{req.rejection_reason}</div>}
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Time</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {myRequests.map((req) => (
+                                            <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td className="py-3 px-4 whitespace-nowrap">{format(new Date(req.date), 'MMM dd, yyyy')}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    In: {req.check_in_time} <br />
+                                                    Out: {req.check_out_time || '-'}
+                                                </td>
+                                                <td className="py-3 px-4 max-w-xs truncate" title={req.reason}>{req.reason}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                        req.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                        }`}>
+                                                        {req.status}
+                                                    </span>
+                                                    {req.rejection_reason && <div className="text-xs text-red-500 mt-1">{req.rejection_reason}</div>}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                 ) : (
                     // TEAM REQUESTS
                     teamLoading ? <div className="p-8 text-center">Loading...</div> :
                         teamRequests.length === 0 ? <div className="p-8 text-center text-muted">No pending requests for your team.</div> :
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Employee</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date/Time</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
-                                        <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {teamRequests.map((req) => (
-                                        <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td className="py-3 px-4">
-                                                <div className="font-medium">{req.first_name} {req.last_name}</div>
-                                                <div className="text-xs text-muted">{req.designation_name || req.email}</div>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-1"><Calendar size={12} /> {format(new Date(req.date), 'MMM dd')}</div>
-                                                <div className="text-xs text-muted mt-0.5">
-                                                    In: {req.check_in_time} | Out: {req.check_out_time || '-'}
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4 max-w-xs">{req.reason}</td>
-                                            <td className="py-3 px-4 text-right space-x-2">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => { setSelectedRequest(req); setReviewAction('APPROVED'); }}
-                                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                                >
-                                                    <CheckCircle size={14} className="mr-1" /> Approve
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => { setSelectedRequest(req); setReviewAction('REJECTED'); }}
-                                                >
-                                                    <XCircle size={14} className="mr-1" /> Reject
-                                                </Button>
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Employee</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date/Time</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
+                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {teamRequests.map((req) => (
+                                            <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <div className="font-medium">{req.first_name} {req.last_name}</div>
+                                                    <div className="text-xs text-muted">{req.designation_name || req.email}</div>
+                                                </td>
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-1"><Calendar size={12} /> {format(new Date(req.date), 'MMM dd')}</div>
+                                                    <div className="text-xs text-muted mt-0.5">
+                                                        In: {req.check_in_time} | Out: {req.check_out_time || '-'}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 max-w-xs truncate" title={req.reason}>{req.reason}</td>
+                                                <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => { setSelectedRequest(req); setReviewAction('APPROVED'); }}
+                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                    >
+                                                        <CheckCircle size={14} className="mr-1" /> Approve
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => { setSelectedRequest(req); setReviewAction('REJECTED'); }}
+                                                    >
+                                                        <XCircle size={14} className="mr-1" /> Reject
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                 )}
             </Card>
 

@@ -599,12 +599,22 @@ exports.getTeamAttendance = async (db, managerEmployeeId, tenantId, filters) => 
 /**
  * ADMIN / HR: ALL ATTENDANCE RECORDS
  */
-exports.getAttendanceRecords = async (db, tenantId, filters) => {
+exports.getAttendanceRecords = async (db, actor, filters) => {
   const query = getQuery(db);
+  const tenantId = actor.tenantId;
 
   const params = [tenantId];
   let p = 2;
   let where = `WHERE att.tenant_id = $1`;
+
+  // Filter for Managers
+  if (actor.role === 'MANAGER') {
+    // Join employees table to check reports_to
+    // Note: The main query already joins employees as 'e', so we can use it.
+    where += ` AND (e.reports_to = $${p} OR e.id = $${p}) `; // Manager sees team + self
+    params.push(actor.employeeId);
+    p++;
+  }
 
   if (filters.employee_id) {
     where += ` AND att.employee_id = $${p} `;

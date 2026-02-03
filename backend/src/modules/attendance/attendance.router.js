@@ -98,7 +98,7 @@ router.get(
 // Get all attendance records
 router.get(
   "/records",
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(validator.attendanceRecordsQuerySchema),
   controller.getAttendanceRecords
 );

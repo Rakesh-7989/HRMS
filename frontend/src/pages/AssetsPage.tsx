@@ -240,9 +240,10 @@ export const AssetsPage: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 max-w-md">
+        {/* Header */}
+        <div className="flex flex-col xl:flex-row gap-4 xl:items-center xl:justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+            <div className="w-full sm:w-64">
               <div className="relative">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
@@ -257,75 +258,82 @@ export const AssetsPage: React.FC = () => {
                 />
               </div>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as AssetStatus | 'All')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
-            >
-              <option value="All">All Status</option>
-              <option value="AVAILABLE">Available</option>
-              <option value="ASSIGNED">Assigned</option>
-              <option value="UNDER_REPAIR">Under Repair</option>
-              <option value="RETIRED">Retired</option>
-            </select>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as AssetCategory | 'All')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
-            >
-              <option value="All">All Categories</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Desktop">Desktop</option>
-              <option value="Mobile">Mobile</option>
-              <option value="Monitor">Monitor</option>
-              <option value="Printer">Printer</option>
-              <option value="Other">Other</option>
-            </select>
+            <div className="flex gap-4 w-full sm:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as AssetStatus | 'All')}
+                className="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
+              >
+                <option value="All">All Status</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="ASSIGNED">Assigned</option>
+                <option value="UNDER_REPAIR">Under Repair</option>
+                <option value="RETIRED">Retired</option>
+              </select>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value as AssetCategory | 'All')}
+                className="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
+              >
+                <option value="All">All Categories</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Desktop">Desktop</option>
+                <option value="Mobile">Mobile</option>
+                <option value="Monitor">Monitor</option>
+                <option value="Printer">Printer</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {canRequestAsset && (
               <Button
                 onClick={() => setShowRequestModal(true)}
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none"
               >
                 <FileText size={18} />
-                Request Asset
+                <span className="hidden sm:inline">Request</span>
+                <span className="sm:hidden">Request</span>
               </Button>
             )}
             {canManage && (
               <Button
                 onClick={() => setShowAssignModal(true)}
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none"
               >
                 <UserPlus size={18} />
-                Assign Asset
+                <span className="hidden sm:inline">Assign</span>
+                <span className="sm:hidden">Assign</span>
               </Button>
             )}
             {canManage || user?.role === 'HR' ? (
               <Button
                 onClick={() => navigate('/assets/requests')}
                 variant="outline"
-                className="flex items-center gap-2 border-primary text-primary hover:bg-primary/5"
+                className="flex items-center gap-2 border-primary text-primary hover:bg-primary/5 whitespace-nowrap flex-1 sm:flex-none"
               >
                 <ClipboardList size={18} />
-                Manage Requests
+                <span className="hidden sm:inline">Requests</span>
+                <span className="sm:hidden">Reqs</span>
               </Button>
             ) : (
               <Button
                 onClick={() => navigate('/assets/requests')}
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none"
               >
                 <Clock size={18} />
-                My Requests
+                <span className="hidden sm:inline">My Requests</span>
+                <span className="sm:hidden">My Reqs</span>
               </Button>
             )}
             {user?.role === 'ADMIN' && (
-              <Button onClick={() => navigate('/assets/new')} className="flex items-center gap-2">
+              <Button onClick={() => navigate('/assets/new')} className="flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none">
                 <Plus size={18} />
-                Add Asset
+                <span className="hidden sm:inline">Add Asset</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )}
           </div>

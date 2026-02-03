@@ -98,11 +98,11 @@ export const MyLeaveContent: React.FC = () => {
             </Card>
 
             {/* Actions Row */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row gap-3 flex-1">
                     {/* Search Input */}
-                    <div className="relative flex-1 md:max-w-xs">
+                    <div className="relative flex-1 min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
@@ -113,41 +113,44 @@ export const MyLeaveContent: React.FC = () => {
                         />
                     </div>
 
-                    {/* Status Filter */}
-                    <div className="flex gap-2">
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="ALL">All Status</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="APPROVED">Approved</option>
-                            <option value="REJECTED">Rejected</option>
-                            <option value="CANCELLED">Cancelled</option>
-                        </select>
-                    </div>
+                    {/* Filters Wrapper */}
+                    <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center">
+                        {/* Status Filter */}
+                        <div className="w-full sm:w-auto">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                                <option value="ALL">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="APPROVED">Approved</option>
+                                <option value="REJECTED">Rejected</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
 
-                    {/* Type Filter */}
-                    <div className="flex gap-2">
-                        <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="ALL">All Types</option>
-                            {leaveTypes.map((type) => (
-                                <option key={type.id} value={type.code || type.name}>
-                                    {type.name}
-                                </option>
-                            ))}
-                        </select>
+                        {/* Type Filter */}
+                        <div className="w-full sm:w-auto">
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                                <option value="ALL">All Types</option>
+                                {leaveTypes.map((type) => (
+                                    <option key={type.id} value={type.code || type.name}>
+                                        {type.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 {/* Apply Button */}
                 <div className="flex-shrink-0">
-                    <Button onClick={() => setApplyDialogOpen(true)} size="md">
+                    <Button onClick={() => setApplyDialogOpen(true)} size="md" className="w-full lg:w-auto">
                         <Plus className="mr-2" size={18} />
                         Request Leave / WFH
                     </Button>
@@ -177,12 +180,12 @@ export const MyLeaveContent: React.FC = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Start Date</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">End Date</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Reason</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Type</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Start Date</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">End Date</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider min-w-[150px]">Reason</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -191,17 +194,17 @@ export const MyLeaveContent: React.FC = () => {
                                         key={leave.id}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                                     >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{(leave as any).leave_type_name || leave.leave_type}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">{(leave as any).leave_type_name || leave.leave_type}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                             {format(new Date(leave.start_date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                             {format(new Date(leave.end_date), 'MMM dd, yyyy')}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">
+                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]" title={leave.reason}>
                                             {leave.reason}
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="py-3 px-4 whitespace-nowrap">
                                             <span
                                                 className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -213,7 +216,7 @@ export const MyLeaveContent: React.FC = () => {
                                                 {leave.status}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="py-3 px-4 text-right">
                                             {leave.status === 'PENDING' && (
                                                 <button
                                                     onClick={() => cancelMutation.mutate(leave.id)}

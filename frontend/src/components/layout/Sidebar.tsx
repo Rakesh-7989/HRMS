@@ -59,7 +59,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'] },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const { totalUnreadCount } = useChat();
   const { pathname } = useLocation();
@@ -87,7 +92,20 @@ export const Sidebar: React.FC = () => {
         `}
       </style>
 
-      <aside className="fixed inset-y-0 left-0 w-[90px] bg-primary-gradient text-white flex flex-col items-center z-40">
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 bg-primary-gradient text-white flex flex-col items-center z-50 w-[90px] transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
         {/* Logo */}
         <div
           className="relative h-16 w-full flex items-center justify-center
@@ -104,6 +122,7 @@ export const Sidebar: React.FC = () => {
             <Link
               key={`${path}-${index}`}
               to={path}
+              onClick={() => onClose?.()}
               className={cn(
                 'w-full flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors',
                 isActive(path)

@@ -106,7 +106,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-96 max-h-[500px] bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
+                        className="fixed left-4 right-4 top-[70px] w-auto mt-0 max-h-[80vh] bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 sm:absolute sm:right-0 sm:left-auto sm:top-full sm:mt-2 sm:w-96 sm:max-h-[500px]"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
