@@ -35,6 +35,7 @@ import { TasksPage } from '@/pages/projects/TasksPage';
 
 import { ProjectReportsPage } from '@/pages/projects/ProjectReportsPage';
 import InboxPage from './pages/InboxPage';
+import { ChatPage } from '@/pages/ChatPage';
 import OrganisationPage from '@/pages/OrganisationPage';
 import { LeaveSettingsPage } from '@/pages/LeaveSettingsPage';
 import { HolidaysPage } from '@/pages/HolidaysPage';
@@ -47,6 +48,7 @@ import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
+import { CallOverlay } from '@/components/chat/CallOverlay';
 
 
 
@@ -233,10 +235,10 @@ function App() {
         />
 
         <Route
-          path="/inbox"
+          path="/chat"
           element={
-            <ProtectedRoute allowedRoles={['HR', 'MANAGER', 'EMPLOYEE']}>
-              <InboxPage />
+            <ProtectedRoute>
+              <ChatPage />
             </ProtectedRoute>
           }
         />
@@ -505,6 +507,7 @@ function App() {
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes >
+      <CallOverlay />
     </>
   );
 }

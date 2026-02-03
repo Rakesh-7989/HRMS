@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChat } from '@/contexts/ChatContext';
 import { cn } from '@/utils/cn';
 import logo from '../../../Assests/logo.png';
 import {
@@ -15,6 +16,7 @@ import {
   Activity,
   CalendarRange,
   Wallet,
+  MessageSquare,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -53,11 +55,13 @@ const NAV_ITEMS: NavItem[] = [
   //{ label: 'Clients', icon: Building2, path: '/projects/clients', roles: ['ADMIN', 'MANAGER', 'HR'] },
 
   // System
+  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'] },
 ];
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
+  const { totalUnreadCount } = useChat();
   const { pathname } = useLocation();
 
   if (!user) return null;
@@ -107,7 +111,14 @@ export const Sidebar: React.FC = () => {
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               )}
             >
-              <Icon size={20} />
+              <div className="relative">
+                <Icon size={20} />
+                {label === 'Chat' && totalUnreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-primary-gradient">
+                    {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                  </span>
+                )}
+              </div>
               <span className="text-center leading-tight px-1 max-w-[72px]">
                 {label}
               </span>

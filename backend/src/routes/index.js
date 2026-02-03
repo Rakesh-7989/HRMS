@@ -31,6 +31,7 @@ const shiftRouter = require('../modules/shifts/shift.router');
 
 
 
+const chatRouter = require('../modules/chat/chat.router');
 const router = express.Router();
 
 // Always attach RLS/ALS context
@@ -104,6 +105,7 @@ router.use('/projects', projectManagementRouter);
 // WFH (Work From Home) Request module
 router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), wfhRouter);
 
+router.use('/chat', chatRouter);
 router.use('/calendar', calendarRouter);
 router.use('/shifts', shiftRouter);
 

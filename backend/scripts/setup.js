@@ -158,7 +158,9 @@ async function setupDatabase() {
     "src/database/migrations/20260124_add_device_tracking.sql",
     "src/database/migrations/20260124_corporate_calendar.sql",
     "src/database/migrations/20260124_geo_fencing.sql",
-    "src/database/migrations/20260128_task_comments.sql"
+    "src/database/migrations/20260128_task_comments.sql",
+    "src/database/migrations/20260202_create_chat_tables.sql",
+    "src/database/migrations/20260203_chat_enhancements.sql"
   ];
 
   for (const migrationFile of migrationFiles) {
