@@ -311,4 +311,7 @@ export interface TimesheetDashboardBreakdown {
         color: string;
         time: string;
     }[];
+    time_logged?: { date: string; time: number }[];
+    billable_vs_non_billable?: { date: string; billable: number; nonBillable: number }[];
 }
+

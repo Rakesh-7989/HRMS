@@ -13,7 +13,7 @@ async function runMigration() {
         await client.connect();
 
         console.log('Reading migration file...');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260129_create_wfh_requests.sql');
+        const migrationPath = path.join(__dirname, '../src/database/migrations/20260203_chat_enhancements.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

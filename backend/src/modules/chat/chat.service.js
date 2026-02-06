@@ -263,6 +263,75 @@ exports.markAsRead = async (db, conversationId, userId) => {
   return { success: true };
 };
 
+exports.updateMessage = async (db, userId, conversationId, messageId, content) => {
+  const query = queryDb(db);
+
+  // Verify ownership
+  const msgRes = await query(`SELECT sender_id FROM messages WHERE id = $1 AND conversation_id = $2`, [messageId, conversationId]);
+  if (msgRes.rowCount === 0) throw new NotFoundError("Message not found");
+  if (msgRes.rows[0].sender_id !== userId) throw new ForbiddenError("You can only edit your own messages");
+
+  const res = await query(
+    `UPDATE messages SET content = $1, is_edited = true WHERE id = $2 RETURNING *`,
+    [content, messageId]
+  );
+
+  // Real-time broadcast update
+  try {
+    const io = getIo();
+    io.to(conversationId).emit("message_updated", res.rows[0]);
+  } catch (e) {
+    console.error("Socket emit failed", e);
+  }
+
+  return res.rows[0];
+};
+
+exports.deleteMessage = async (db, userId, conversationId, messageId) => {
+  const query = queryDb(db);
+
+  // Verify ownership
+  const msgRes = await query(`SELECT sender_id FROM messages WHERE id = $1 AND conversation_id = $2`, [messageId, conversationId]);
+  if (msgRes.rowCount === 0) throw new NotFoundError("Message not found");
+  if (msgRes.rows[0].sender_id !== userId) throw new ForbiddenError("You can only delete your own messages");
+
+  await query(`DELETE FROM messages WHERE id = $1`, [messageId]);
+
+  // Real-time broadcast delete
+  try {
+    const io = getIo();
+    io.to(conversationId).emit("message_deleted", { messageId, conversationId });
+  } catch (e) {
+    console.error("Socket emit failed", e);
+  }
+
+  return true;
+};
+
+exports.togglePinMessage = async (db, conversationId, messageId) => {
+  const query = queryDb(db);
+
+  // Get current state
+  const res = await query(`SELECT is_pinned FROM messages WHERE id = $1 AND conversation_id = $2`, [messageId, conversationId]);
+  if (res.rowCount === 0) throw new NotFoundError("Message not found");
+
+  const newState = !res.rows[0].is_pinned;
+  const updateRes = await query(
+    `UPDATE messages SET is_pinned = $1 WHERE id = $2 RETURNING *`,
+    [newState, messageId]
+  );
+
+  // Real-time broadcast
+  try {
+    const io = getIo();
+    io.to(conversationId).emit("message_pinned", updateRes.rows[0]);
+  } catch (e) {
+    console.error("Socket emit failed", e);
+  }
+
+  return updateRes.rows[0];
+};
+
 exports.logCall = async (db, senderId, tenantId, conversationId, callType, duration, status) => {
   const content = JSON.stringify({ callType, duration, status });
   return await exports.sendMessage(db, senderId, tenantId, conversationId, content, 'CALL');

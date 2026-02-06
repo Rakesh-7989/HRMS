@@ -100,23 +100,52 @@ const initSocket = (httpServer) => {
             });
         });
 
+        socket.on("group-call-started", async ({ conversationId, type }) => {
+            logger.info(`📞 Group call started by ${socket.user.id} in room ${conversationId}`);
+
+            try {
+                // Fetch all participants for this conversation to send global notifications
+                const client = await pool.connect();
+                try {
+                    const participantsRes = await client.query(
+                        "SELECT user_id FROM conversation_participants WHERE conversation_id = $1",
+                        [conversationId]
+                    );
+
+                    const participants = participantsRes.rows;
+
+                    participants.forEach(p => {
+                        // Don't send notification to the person who started the call
+                        if (p.user_id === socket.user.id) return;
+
+                        const targetRoom = `user_${String(p.user_id)}`;
+                        io.to(targetRoom).emit("incoming-call", {
+                            from: socket.user.id,
+                            type,
+                            conversationId,
+                            isGroup: true,
+                            callerName: `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim() || socket.user.email
+                        });
+                    });
+                } finally {
+                    client.release();
+                }
+            } catch (err) {
+                logger.error("Failed to fetch group participants for call broadcast", err);
+                // Fallback: Still emit to room in case people are actively in the chat tab
+                socket.to(conversationId).emit("incoming-call", {
+                    from: socket.user.id,
+                    type,
+                    conversationId,
+                    isGroup: true,
+                    callerName: `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim() || socket.user.email
+                });
+            }
+        });
+
         // --- WebRTC Signaling ---
         socket.on("call-user", async ({ to, offer, type, conversationId }) => {
             const targetRoom = `user_${String(to)}`;
-            logger.info(`📞 Processing call-user from ${socket.user.id} to ${to} (${type}) in conv ${conversationId}`);
-
-            // Exhaustive room audit
-            const rooms = io.sockets.adapter.rooms;
-            const clients = rooms.get(targetRoom);
-            const numClients = clients ? clients.size : 0;
-
-            const allUserRooms = Array.from(rooms.keys()).filter(r => r.startsWith('user_'));
-            logger.info(`Room Audit: Target=${targetRoom}, ActiveSockets=${numClients}, AvailableUserRooms=[${allUserRooms.join(', ')}]`);
-
-            if (numClients === 0) {
-                logger.warn(`User ${to} is not reachable. No active sockets in ${targetRoom}.`);
-            }
-
             io.to(targetRoom).emit("incoming-call", {
                 from: socket.user.id,
                 offer,
@@ -124,12 +153,10 @@ const initSocket = (httpServer) => {
                 conversationId,
                 callerName: `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim() || socket.user.email
             });
-            logger.info(`Signal 'incoming-call' emitted to ${numClients} sockets in room ${targetRoom}`);
         });
 
         socket.on("answer-call", ({ to, answer }) => {
             const targetRoom = `user_${String(to)}`;
-            logger.info(`Answer-call from ${socket.user.id} to ${to}`);
             io.to(targetRoom).emit("call-answered", {
                 from: socket.user.id,
                 answer
@@ -144,11 +171,48 @@ const initSocket = (httpServer) => {
             });
         });
 
-        socket.on("end-call", ({ to }) => {
+        socket.on("end-call", async ({ to, isGroup }) => {
+            if (isGroup) {
+                // For group calls, 'to' is the conversationId (room)
+                socket.to(to).emit("call-ended", { from: socket.user.id });
+                socket.leave(to);
+
+                // Check if anyone else is still in the room
+                const room = io.sockets.adapter.rooms.get(to);
+                if (!room || room.size === 0) {
+                    logger.info(`🚫 Group call in room ${to} has ended (last user left)`);
+                    // Broadcast to all conversation participants that the call is totally over
+                    try {
+                        const client = await pool.connect();
+                        const parts = await client.query("SELECT user_id FROM conversation_participants WHERE conversation_id = $1", [to]);
+                        client.release();
+
+                        parts.rows.forEach(p => {
+                            io.to(`user_${String(p.user_id)}`).emit("group-call-ended", { conversationId: to });
+                        });
+                    } catch (e) { console.error("End broadcast failed", e); }
+                }
+            } else {
+                const targetRoom = `user_${String(to)}`;
+                io.to(targetRoom).emit("call-ended", {
+                    from: socket.user.id
+                });
+            }
+        });
+
+        socket.on("add-to-call", ({ to, conversationId, type, callerName }) => {
+            if (!to) {
+                logger.warn(`⚠️ [Socket] add-to-call attempt without target user by ${socket.user.id}`);
+                return;
+            }
             const targetRoom = `user_${String(to)}`;
-            logger.info(`End-call from ${socket.user.id} to ${to}`);
-            io.to(targetRoom).emit("call-ended", {
-                from: socket.user.id
+            logger.info(`📡 [Socket] User ${socket.user.id} inviting ${to} to room ${conversationId || 'P2P'}`);
+            io.to(targetRoom).emit("incoming-call", {
+                from: socket.user.id,
+                type,
+                conversationId,
+                isGroup: true,
+                callerName: callerName || `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim() || socket.user.email
             });
         });
 

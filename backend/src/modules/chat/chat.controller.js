@@ -61,6 +61,27 @@ exports.startDirectChat = async (req, res) => {
   }
 };
 
+exports.updateMessage = async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.params;
+    const { content } = req.body;
+    const data = await chatService.updateMessage(req.db, req.user.id, conversationId, messageId, content);
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.params;
+    await chatService.deleteMessage(req.db, req.user.id, conversationId, messageId);
+    res.json({ status: "success" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
 exports.getContacts = async (req, res) => {
   try {
     console.log(`[ChatController] Fetching contacts for user ${req.user.id}, tenant ${req.user.tenantId}`);
@@ -176,6 +197,16 @@ exports.getThread = async (req, res) => {
   try {
     const { messageId } = req.params;
     const data = await chatService.getThreadMessages(req.db, messageId);
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.togglePin = async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.params;
+    const data = await chatService.togglePinMessage(req.db, conversationId, messageId);
     res.json({ status: "success", data });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });

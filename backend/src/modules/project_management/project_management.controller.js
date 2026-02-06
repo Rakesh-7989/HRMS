@@ -483,7 +483,7 @@ exports.createTask = async (req, res, next) => {
  */
 exports.listTasks = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId } = req.user;
     const { project_id, assigned_to, column_key, priority, search, skip, limit } = req.query;
 
     const result = await service.listTasks(tenantId, {
@@ -494,6 +494,8 @@ exports.listTasks = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
+      userRole: role,
+      userEmployeeId: employeeId,
     });
 
     return res.status(200).json({

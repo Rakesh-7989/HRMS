@@ -5,9 +5,12 @@ import { useChat } from '@/contexts/ChatContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import api from '@/services/api';
 import { format } from 'date-fns';
-import { Send, Phone, Video, MoreVertical, Search, Paperclip } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, Search, Paperclip, Edit2, Trash2, X, Check, Users, Plus, Smile, Clock, Minus, PhoneIncoming, Pin, ArrowRight, MicOff, VideoOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { API_BASE_URL } from '@/utils/constants';
+import { EmojiPicker } from '@/components/chat/EmojiPicker';
+import { MessageSearch } from '@/components/chat/MessageSearch';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
 
 interface User {
     id: string;
@@ -34,6 +37,8 @@ interface Message {
     reactions?: { id: string; user_id: string; emoji: string }[];
     parent_id?: string;
     parent_message?: { content: string; sender_first_name?: string };
+    is_edited?: boolean;
+    is_pinned?: boolean;
 }
 
 interface Conversation {
@@ -50,8 +55,52 @@ interface Conversation {
     updated_at: string;
 }
 
-// --- Icons ---
-import { Users, Plus, X, Search as SearchIcon, Smile, Check, Clock, Minus, PhoneIncoming } from 'lucide-react';
+const ForwardModal = ({ isOpen, onClose, conversations, onForward, message }: { isOpen: boolean; onClose: () => void; conversations: Conversation[]; onForward: (conversationId: string) => void; message: Message | null }) => {
+    const [search, setSearch] = useState('');
+    if (!isOpen || !message) return null;
+
+    const filtered = conversations.filter(c => (c.name || 'Group').toLowerCase().includes(search.toLowerCase()));
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5 border dark:border-gray-800 animate-in zoom-in-95 duration-200">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-lg">Forward Message</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><X size={20} /></button>
+                </div>
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Search conversations..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                    {filtered.map(conv => (
+                        <button
+                            key={conv.id}
+                            onClick={() => { onForward(conv.id); onClose(); }}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-primary-10 dark:hover:bg-primary-20 rounded-xl transition-colors text-left"
+                        >
+                            <div className="h-10 w-10 rounded-xl bg-primary-gradient flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                {(conv.name || 'G').slice(0, 1).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{conv.name || 'Group Chat'}</p>
+                            </div>
+                            <ArrowRight size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Icons imported above ---
 
 const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading }: { isOpen: boolean; onClose: () => void; contacts: User[]; onCreate: (name: string, userIds: string[]) => void; isLoading: boolean }) => {
     const [groupName, setGroupName] = useState('');
@@ -71,46 +120,74 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading }: { 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold">Create Group Chat</h3>
-                    <button onClick={onClose}><X className="h-5 w-5" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200/50 dark:border-gray-800/50 animate-in zoom-in-95 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-primary-gradient bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">Create Group Chat</h3>
+                        <p className="text-xs text-gray-400 mt-0.5">Add members to start a group conversation</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                        <X className="h-5 w-5 text-gray-400" />
+                    </button>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1">Group Name</label>
+                    <div className="mb-5">
+                        <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">Group Name</label>
                         <input
                             type="text"
                             value={groupName}
                             onChange={e => setGroupName(e.target.value)}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                             placeholder="e.g. Marketing Team"
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1">Add Participants</label>
-                        <div className="max-h-48 min-h-[100px] overflow-y-auto border rounded-lg dark:border-gray-700 p-2 space-y-2">
+                    <div className="mb-5">
+                        <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">Add Participants</label>
+                        <div className="max-h-52 min-h-[120px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1.5 bg-gray-50/50 dark:bg-gray-800/30">
                             {isLoading ? (
-                                <p className="text-sm text-gray-500 text-center py-4">Loading contacts...</p>
+                                <p className="text-sm text-gray-500 text-center py-8">Loading contacts...</p>
                             ) : contacts.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-4">No contacts found</p>
+                                <p className="text-sm text-gray-500 text-center py-8">No contacts found</p>
                             ) : (
                                 contacts.map(user => (
-                                    <div key={user.id} onClick={() => toggleUser(user.id)} className={cn("p-2 flex items-center gap-3 rounded cursor-pointer", selectedUsers.includes(user.id) ? "bg-primary/10 border-primary" : "hover:bg-gray-50 dark:hover:bg-gray-800")}>
-                                        <div className={`h-4 w-4 rounded border flex items-center justify-center ${selectedUsers.includes(user.id) ? 'bg-primary border-primary' : 'border-gray-300'}`}>
-                                            {selectedUsers.includes(user.id) && <Check size={10} className="text-white" />}
+                                    <div
+                                        key={user.id}
+                                        onClick={() => toggleUser(user.id)}
+                                        className={cn(
+                                            "p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200",
+                                            selectedUsers.includes(user.id)
+                                                ? "bg-primary-10 border border-primary/20"
+                                                : "hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
+                                            selectedUsers.includes(user.id)
+                                                ? 'bg-primary-gradient border-transparent'
+                                                : 'border-gray-300 dark:border-gray-600'
+                                        )}>
+                                            {selectedUsers.includes(user.id) && <Check size={12} className="text-white" />}
                                         </div>
-                                        <span className="text-sm">{user.first_name} {user.last_name}</span>
+                                        <span className="text-sm font-medium">{user.first_name} {user.last_name}</span>
                                     </div>
                                 ))
                             )}
                         </div>
+                        {selectedUsers.length > 0 && (
+                            <p className="text-xs text-primary mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
+                        )}
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-                        <button type="submit" className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90">Create Group</button>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</button>
+                        <button
+                            type="submit"
+                            disabled={!groupName || selectedUsers.length === 0}
+                            className="px-5 py-2.5 text-sm font-medium bg-primary-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                        >
+                            Create Group
+                        </button>
                     </div>
                 </form>
             </div>
@@ -122,12 +199,16 @@ export const ChatPage = () => {
     const { user } = useAuth();
     const {
         socket, joinRoom, markAsRead, initiateCall,
-        typingStatus, sendTypingStatus
+        typingStatus, sendTypingStatus,
+        activeCall, isMuted, isVideoOff, toggleAudio, toggleVideo,
+        activeRoomCall, joinActiveCall
     } = useChat();
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
     const [isSelectingContact, setIsSelectingContact] = useState(false);
     const [messageInput, setMessageInput] = useState('');
     const [replyToMessage, setReplyToMessage] = useState<Message | null>(null); // New: Reply state
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [editContent, setEditContent] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Added typingTimeoutRef
@@ -136,6 +217,12 @@ export const ChatPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]); // Global search results
     const [userStatus, setUserStatus] = useState<'ONLINE' | 'AWAY' | 'DND' | 'BUSY' | 'OFFLINE'>('ONLINE'); // Local status state
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showMessageSearch, setShowMessageSearch] = useState(false);
+    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+    const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null); // Message ID for reaction picker
+    const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
+    const [showPins, setShowPins] = useState(false);
 
     const handleStatusChange = async (status: 'ONLINE' | 'AWAY' | 'DND' | 'BUSY' | 'OFFLINE') => {
         setUserStatus(status);
@@ -203,19 +290,29 @@ export const ChatPage = () => {
         }
     };
 
+    // Use a ref to prevent infinite loops on conversation selection
+    const lastJoinedRoomRef = useRef<string | null>(null);
+
     // Join room and mark as read when conversation selected
     useEffect(() => {
-        if (selectedConversationId) {
+        if (selectedConversationId && selectedConversationId !== lastJoinedRoomRef.current) {
             joinRoom(selectedConversationId);
-            markAsRead(selectedConversationId);
+
+            // Only mark as read if there are unread messages in the local state
+            const currentConv = conversations?.find(c => c.id === selectedConversationId);
+            if (currentConv && currentConv.unread_count > 0) {
+                markAsRead(selectedConversationId);
+            }
+
+            lastJoinedRoomRef.current = selectedConversationId;
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
-    }, [selectedConversationId, joinRoom, markAsRead, queryClient]);
+    }, [selectedConversationId, joinRoom, markAsRead, queryClient, conversations]);
 
     // Listen for real-time messages
     useEffect(() => {
         if (socket) {
-            socket.on('receive_message', (newMessage: Message) => {
+            const handleReceiveMessage = (newMessage: Message) => {
                 // If message belongs to current conversation, update messages
                 if (newMessage.conversation_id === selectedConversationId) {
                     queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => {
@@ -226,12 +323,12 @@ export const ChatPage = () => {
                     markAsRead(selectedConversationId);
                 }
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            });
+            };
 
-            socket.on('unread_update', () => {
-                queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            });
+            socket.on('receive_message', handleReceiveMessage);
+            socket.on('unread_update', () => queryClient.invalidateQueries({ queryKey: ['conversations'] }));
 
+            // ... (rest of listeners)
             // Listen for message read status updates (bulk)
             socket.on('messages_read', ({ conversationId, readerId }: { conversationId: string; readerId: string }) => {
                 if (conversationId === selectedConversationId) {
@@ -261,17 +358,35 @@ export const ChatPage = () => {
                         )
                     }));
                 });
+            });
 
-                // If we had a direct "contact list" query, we'd update that too.
+            socket.on('message_updated', (updatedMessage: Message) => {
+                if (updatedMessage.conversation_id === selectedConversationId) {
+                    queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => {
+                        return old.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m);
+                    });
+                }
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            });
+
+            socket.on('message_deleted', ({ messageId, conversationId }: { messageId: string, conversationId: string }) => {
+                if (conversationId === selectedConversationId) {
+                    queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => {
+                        return old.filter(m => m.id !== messageId);
+                    });
+                }
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
             });
 
             return () => {
                 socket.off('receive_message');
                 socket.off('unread_update');
-                socket.off('messages_read'); // Updated listener name
+                socket.off('messages_read');
                 socket.off('reaction_added');
                 socket.off('reaction_removed');
                 socket.off('user_status_change');
+                socket.off('message_updated');
+                socket.off('message_deleted');
             };
         }
     }, [socket, selectedConversationId, queryClient, markAsRead]);
@@ -312,6 +427,18 @@ export const ChatPage = () => {
         };
     }, [socket, selectedConversationId, queryClient]);
 
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('message_pinned', (updated: Message) => {
+            if (updated.conversation_id === selectedConversationId) {
+                queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
+                    old.map(m => m.id === updated.id ? { ...m, is_pinned: updated.is_pinned } : m)
+                );
+            }
+        });
+        return () => { socket.off('message_pinned'); };
+    }, [socket, selectedConversationId, queryClient]);
+
     // Scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -347,12 +474,13 @@ export const ChatPage = () => {
                     type: 'FILE',
                     file_url: fileUrl
                 });
+                import('react-hot-toast').then(({ toast }) => toast.success('File uploaded successfully'));
             } else {
                 throw new Error("Invalid response from server");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Upload failed", err);
-            // Optionally add toast here if you have a toast library
+            import('react-hot-toast').then(({ toast }) => toast.error(err.response?.data?.message || 'File upload failed'));
         }
     };
 
@@ -394,6 +522,102 @@ export const ChatPage = () => {
         }, 3000);
     };
 
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!selectedConversationId) return;
+        if (!confirm('Are you sure you want to delete this message?')) return;
+        try {
+            await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}`);
+            // Optimistic update
+            queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => old.filter(m => m.id !== messageId));
+        } catch (err) {
+            console.error("Failed to delete", err);
+        }
+    };
+
+    const startEditing = (msg: Message) => {
+        setEditingMessageId(msg.id);
+        setEditContent(msg.content);
+    };
+
+    const cancelEditing = () => {
+        setEditingMessageId(null);
+        setEditContent('');
+    };
+
+    const saveEdit = async (messageId: string) => {
+        if (!selectedConversationId || !editContent.trim()) return;
+
+        // Find the current message to check if content actually changed
+        const currentMsgs = queryClient.getQueryData<Message[]>(['messages', selectedConversationId]) || [];
+        const originalMsg = currentMsgs.find(m => m.id === messageId);
+
+        if (originalMsg && originalMsg.content === editContent.trim()) {
+            cancelEditing();
+            return;
+        }
+
+        try {
+            await api.put(`/chat/conversations/${selectedConversationId}/messages/${messageId}`, {
+                content: editContent
+            });
+            // Optimistic update
+            queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
+                old.map(m => m.id === messageId ? { ...m, content: editContent, is_edited: true } : m)
+            );
+            setEditingMessageId(null);
+            setEditContent('');
+        } catch (err) {
+            console.error("Failed to update", err);
+        }
+    };
+
+    const handleTogglePin = async (messageId: string) => {
+        if (!selectedConversationId) return;
+        try {
+            const res = await api.post(`/chat/conversations/${selectedConversationId}/messages/${messageId}/toggle-pin`);
+            const updated = res.data.data;
+            queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
+                old.map(m => m.id === messageId ? { ...m, is_pinned: updated.is_pinned } : m)
+            );
+        } catch (err) {
+            console.error("Failed to toggle pin", err);
+        }
+    };
+
+    const handleForward = async (message: Message, targetConversationId: string) => {
+        try {
+            await api.post(`/chat/conversations/${targetConversationId}/messages`, {
+                content: `Forwarded: ${message.content}`,
+                type: message.type,
+                fileUrl: message.file_url
+            });
+            import('react-hot-toast').then(({ toast }) => toast.success('Message forwarded'));
+        } catch (err) {
+            console.error("Failed to forward", err);
+        }
+    };
+
+    const handleToggleReaction = async (messageId: string, emoji: string, currentReactions: any[] = []) => {
+        if (!selectedConversationId || !user) return;
+        const existing = currentReactions?.find(r => String(r.user_id) === String(user.id) && r.emoji === emoji);
+
+        try {
+            if (existing) {
+                await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}/reactions`, { data: { emoji } });
+                queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
+                    old.map(m => m.id === messageId ? { ...m, reactions: m.reactions?.filter(r => !(String(r.user_id) === String(user.id) && r.emoji === emoji)) } : m)
+                );
+            } else {
+                await api.post(`/chat/conversations/${selectedConversationId}/messages/${messageId}/reactions`, { emoji });
+                queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
+                    old.map(m => m.id === messageId ? { ...m, reactions: [...(m.reactions || []), { user_id: user.id, emoji }] } : m)
+                );
+            }
+        } catch (err) {
+            console.error("Failed to toggle reaction", err);
+        }
+    };
+
     // -- Helper to get conversation name/image --
     const getConversationDetails = (conv: Conversation) => {
         if (!conv || !conv.type) {
@@ -422,10 +646,10 @@ export const ChatPage = () => {
 
     return (
         <DashboardLayout>
-            <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-800">
+            <div className="flex h-[calc(100vh-6rem)] bg-gradient-to-br from-slate-50 via-white to-primary/5 dark:from-gray-900 dark:via-gray-900 dark:to-primary/10 rounded-2xl shadow-2xl overflow-hidden border border-gray-200/50 dark:border-gray-800/50 backdrop-blur-xl">
 
                 {/* Sidebar */}
-                <div className="w-80 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+                <div className="w-[340px] border-r border-gray-200/80 dark:border-gray-800/80 flex flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {/* Status Selector - Teams Style */}
@@ -469,19 +693,22 @@ export const ChatPage = () => {
                                     ))}
                                 </div>
                             </div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Messages</h2>
+                            <div>
+                                <h2 className="text-xl font-black bg-gradient-to-r from-primary via-primary-light to-primary bg-clip-text text-transparent">Messages</h2>
+                                <p className="text-[10px] text-gray-400 font-medium">Stay connected with your team</p>
+                            </div>
                         </div>
                         <div className="flex gap-1">
                             <button
                                 onClick={() => setIsGroupModalOpen(true)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-500 hover:text-primary transition-colors"
+                                className="p-2.5 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105"
                                 title="New Group"
                             >
                                 <Users className="h-5 w-5" />
                             </button>
                             <button
                                 onClick={() => setIsSelectingContact(!isSelectingContact)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-primary transition-colors"
+                                className="p-2.5 bg-primary-gradient hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
                                 title="New Chat"
                             >
                                 <Plus className="h-5 w-5" />
@@ -489,24 +716,24 @@ export const ChatPage = () => {
                         </div>
                     </div>
 
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <div className="px-4 py-3">
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder="Search conversations..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={async (e) => {
                                     if (e.key === 'Enter' && searchQuery) {
                                         try {
                                             const res = await api.get(`/chat/search?q=${searchQuery}`);
-                                            setSearchResults(res.data.data.users); // Just showing users for now
-                                            setIsSelectingContact(true); // Reuse contact list view to show search results
+                                            setSearchResults(res.data.data.users);
+                                            setIsSelectingContact(true);
                                         } catch (err) { console.error(err); }
                                     }
                                 }}
-                                className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-lg text-sm focus:ring-1 focus:ring-primary"
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-gray-400"
                             />
                         </div>
                     </div>
@@ -530,7 +757,7 @@ export const ChatPage = () => {
                                                 className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                                             >
                                                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                                                    <SearchIcon size={16} />
+                                                    <Search size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -584,11 +811,13 @@ export const ChatPage = () => {
                                                 key={conv.id}
                                                 onClick={() => setSelectedConversationId(conv.id)}
                                                 className={cn(
-                                                    "w-full p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 text-left relative group",
-                                                    isActive && "bg-primary/5 dark:bg-primary/10"
+                                                    "w-full p-3 mx-2 my-0.5 flex items-center gap-3 rounded-xl transition-all duration-200 text-left relative group",
+                                                    isActive
+                                                        ? "bg-primary-10 dark:bg-primary-20 shadow-sm"
+                                                        : "hover:bg-gray-50/80 dark:hover:bg-gray-800/50"
                                                 )}
                                             >
-                                                {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full" />}
+                                                {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-primary-gradient rounded-full" />}
 
                                                 <div className="relative flex-shrink-0">
                                                     <div className={cn(
@@ -657,11 +886,11 @@ export const ChatPage = () => {
                 </div>
 
                 {/* Chat Area */}
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col bg-gradient-to-br from-white via-gray-50/50 to-primary/5 dark:from-gray-900 dark:via-gray-900 dark:to-primary/10">
                     {selectedConversationId ? (
                         <>
                             {/* Header */}
-                            <div className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 bg-white dark:bg-gray-900">
+                            <div className="h-[72px] border-b border-gray-200/50 dark:border-gray-800/50 flex items-center justify-between px-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
                                 <div className="flex items-center gap-3">
                                     {(() => {
                                         const conv = activeConversation || conversations?.find(c => String(c.id) === String(selectedConversationId));
@@ -710,36 +939,131 @@ export const ChatPage = () => {
                                     })()}
                                 </div>
                                 <div className="flex items-center gap-4 text-gray-400">
+                                    {activeRoomCall === selectedConversationId && !activeCall && (
+                                        <button
+                                            onClick={() => joinActiveCall(selectedConversationId, 'video')}
+                                            className="group relative flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all border border-emerald-500/20 active:scale-95"
+                                            title="Meeting in progress - Click to Join"
+                                        >
+                                            <div className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                            </div>
+                                            <Video size={18} className="animate-pulse" />
+                                            <span className="text-[11px] font-black uppercase tracking-wider">Join ongoing call</span>
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => {
+                                            if (activeCall) {
+                                                toggleAudio();
+                                                return;
+                                            }
                                             const conv = conversations?.find(c => c.id === selectedConversationId);
                                             if (conv) {
                                                 const details = getConversationDetails(conv);
-                                                if (details.participantId) initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
+                                                if (details.participantId) {
+                                                    initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
+                                                } else if (conv.type === 'GROUP') {
+                                                    initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
+                                                }
                                             }
                                         }}
-                                        className="hover:text-gray-600 dark:hover:text-gray-200"
+                                        className={cn(
+                                            "hover:text-gray-600 dark:hover:text-gray-200 transition-colors",
+                                            activeCall && !isMuted ? "text-emerald-500" : "text-gray-400"
+                                        )}
+                                        title={activeCall ? "Toggle Audio" : "Audio Call"}
                                     >
-                                        <Phone size={20} />
+                                        {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
                                     </button>
                                     <button
                                         onClick={() => {
+                                            if (activeCall) {
+                                                toggleVideo();
+                                                return;
+                                            }
                                             const conv = conversations?.find(c => c.id === selectedConversationId);
                                             if (conv) {
                                                 const details = getConversationDetails(conv);
-                                                if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
+                                                if (details.participantId) {
+                                                    initiateCall(details.participantId, details.name, 'video', selectedConversationId);
+                                                } else if (conv.type === 'GROUP') {
+                                                    initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
+                                                }
                                             }
                                         }}
-                                        className="hover:text-gray-600 dark:hover:text-gray-200"
+                                        className={cn(
+                                            "hover:text-gray-600 dark:hover:text-gray-200 transition-colors",
+                                            activeCall && !isVideoOff ? "text-primary" : "text-gray-400"
+                                        )}
+                                        title={activeCall ? "Toggle Video" : "Video Call"}
                                     >
-                                        <Video size={20} />
+                                        {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowPins(!showPins)}
+                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200", showPins && "text-primary")}
+                                        title="Pinned Messages"
+                                    >
+                                        <Pin size={20} className={showPins ? "fill-primary" : ""} />
+                                    </button>
+                                    <button
+                                        onClick={() => setShowMessageSearch(true)}
+                                        className="hover:text-gray-600 dark:hover:text-gray-200"
+                                        title="Search in conversation"
+                                    >
+                                        <Search size={20} />
                                     </button>
                                     <button className="hover:text-gray-600 dark:hover:text-gray-200"><MoreVertical size={20} /></button>
                                 </div>
                             </div>
 
+                            {/* Message Search Overlay */}
+                            {showMessageSearch && (
+                                <MessageSearch
+                                    messages={messages || []}
+                                    onResultSelect={(messageId) => {
+                                        setHighlightedMessageId(messageId);
+                                        // Scroll to message
+                                        const element = document.getElementById(`message-${messageId}`);
+                                        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        // Remove highlight after animation
+                                        setTimeout(() => setHighlightedMessageId(null), 2000);
+                                    }}
+                                    onClose={() => setShowMessageSearch(false)}
+                                />
+                            )}
+
+                            {/* Pinned Messages Display */}
+                            {showPins && messages?.some(m => m.is_pinned) && (
+                                <div className="bg-primary/5 border-b border-primary/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
+                                    <div className="flex-shrink-0 flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider">
+                                        <Pin size={12} className="fill-primary" />
+                                        Pinned
+                                    </div>
+                                    <div className="flex items-center gap-3 pr-4">
+                                        {messages.filter(m => m.is_pinned).map(msg => (
+                                            <div
+                                                key={msg.id}
+                                                onClick={() => {
+                                                    const el = document.getElementById(`message-${msg.id}`);
+                                                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                    setHighlightedMessageId(msg.id);
+                                                    setTimeout(() => setHighlightedMessageId(null), 2000);
+                                                }}
+                                                className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-primary/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-md transition-all group relative"
+                                            >
+                                                <p className="text-xs truncate font-medium text-gray-700 dark:text-gray-200">{msg.content}</p>
+                                                <p className="text-[10px] text-gray-400 truncate">by {msg.sender_first_name}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50 dark:bg-gray-900/50">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50 dark:bg-gray-900/50 relative">
                                 {messages?.map((msg, index) => {
                                     const isMe = msg.sender_id === user?.id;
                                     const prevMsg = index > 0 ? messages[index - 1] : null;
@@ -769,8 +1093,19 @@ export const ChatPage = () => {
                                         );
                                     }
 
+                                    const isEditing = editingMessageId === msg.id;
+                                    const isHighlighted = highlightedMessageId === msg.id;
                                     return (
-                                        <div key={msg.id} className={cn("flex items-end gap-3 px-2 group", isMe ? "flex-row-reverse" : "flex-row", isSameSender ? "mt-1" : "mt-6")}>
+                                        <div
+                                            key={msg.id}
+                                            id={`message-${msg.id}`}
+                                            className={cn(
+                                                "flex items-end gap-3 px-2 group transition-all duration-500",
+                                                isMe ? "flex-row-reverse" : "flex-row",
+                                                isSameSender ? "mt-1" : "mt-6",
+                                                isHighlighted && "bg-primary/10 rounded-xl scale-[1.02] ring-2 ring-primary/30"
+                                            )}
+                                        >
                                             <div className="flex-shrink-0 w-8 h-8">
                                                 {showAvatar ? (
                                                     <div className="h-8 w-8 rounded-full bg-primary-gradient p-[1px] shadow-sm">
@@ -797,7 +1132,7 @@ export const ChatPage = () => {
                                                 )}
 
                                                 {/* Threading UI: Show Parent Message */}
-                                                {msg.parent_message && (
+                                                {msg.parent_message && !isEditing && (
                                                     <div className={cn(
                                                         "text-xs mb-1 px-3 py-1 rounded-t-lg border-l-4 opacity-80 cursor-pointer hover:opacity-100",
                                                         isMe ? "bg-white/10 border-white text-white" : "bg-gray-200 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-300"
@@ -808,88 +1143,178 @@ export const ChatPage = () => {
                                                 )}
 
                                                 <div className={cn(
-                                                    "rounded-2xl px-4 py-2.5 shadow-sm group-hover:shadow-md transition-shadow relative",
+                                                    "rounded-2xl px-4 py-3 shadow-sm group-hover:shadow-lg transition-all duration-300 relative",
                                                     isMe
-                                                        ? "bg-primary-gradient text-white rounded-br-sm"
-                                                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-100 dark:border-gray-700"
+                                                        ? "bg-primary-gradient text-white rounded-br-md"
+                                                        : "bg-white dark:bg-gray-800/90 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-100/80 dark:border-gray-700/50 backdrop-blur-sm"
                                                 )}>
-                                                    {msg.type === 'FILE' ? (
-                                                        <a
-                                                            href={`${API_BASE_URL.replace('/api', '')}${msg.file_url}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={cn(
-                                                                "flex items-center gap-4 p-3 rounded-xl transition-colors",
-                                                                isMe ? "bg-white/10 hover:bg-white/20" : "bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700"
-                                                            )}
-                                                        >
-                                                            <div className={cn("p-2 rounded-lg", isMe ? "bg-white/20" : "bg-primary/10 text-primary")}>
-                                                                <Paperclip size={20} />
+                                                    {isEditing ? (
+                                                        <div className="flex flex-col gap-2 min-w-[200px]">
+                                                            <input
+                                                                type="text"
+                                                                value={editContent}
+                                                                onChange={(e) => setEditContent(e.target.value)}
+                                                                className="text-gray-900 text-sm rounded p-1 w-full"
+                                                                autoFocus
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') saveEdit(msg.id);
+                                                                    if (e.key === 'Escape') cancelEditing();
+                                                                }}
+                                                            />
+                                                            <div className="flex justify-end gap-2">
+                                                                <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></button>
+                                                                <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></button>
                                                             </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-sm font-semibold truncate">{msg.content}</p>
-                                                                <p className="text-[10px] opacity-70">File Attachment</p>
-                                                            </div>
-                                                        </a>
+                                                        </div>
                                                     ) : (
-                                                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                                                    )}
+                                                        <>
+                                                            {msg.type === 'FILE' ? (
+                                                                <a
+                                                                    href={`${API_BASE_URL.replace('/api', '')}${msg.file_url}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className={cn(
+                                                                        "flex items-center gap-4 p-3 rounded-xl transition-colors",
+                                                                        isMe ? "bg-white/10 hover:bg-white/20" : "bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700"
+                                                                    )}
+                                                                >
+                                                                    <div className={cn("p-2 rounded-lg", isMe ? "bg-white/20" : "bg-primary/10 text-primary")}>
+                                                                        <Paperclip size={20} />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-sm font-semibold truncate">{msg.content}</p>
+                                                                        <p className="text-[10px] opacity-70">File Attachment</p>
+                                                                    </div>
+                                                                </a>
+                                                            ) : (
+                                                                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                                                    {msg.content}
+                                                                    {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
+                                                                </p>
+                                                            )}
 
-                                                    {/* Reactions UI - Overlapping */}
-                                                    {msg.reactions && msg.reactions.length > 0 && (
-                                                        <div className={cn(
-                                                            "absolute -bottom-3 flex items-center bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-sm border border-gray-100 dark:border-gray-700 z-10",
-                                                            isMe ? "left-0 -translate-x-2" : "right-0 translate-x-2"
-                                                        )}>
-                                                            {msg.reactions.map((reaction, i) => (
-                                                                <span key={i} className="text-[10px] px-0.5" title="Reaction">
-                                                                    {reaction.emoji}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                            {msg.is_pinned && (
+                                                                <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-primary/20 shadow-md">
+                                                                    <Pin size={10} className="text-primary fill-primary" />
+                                                                </div>
+                                                            )}
 
-                                                    {isMe && (
-                                                        <div className="flex justify-end mt-1">
-                                                            <div className={cn("flex -space-x-1", msg.is_read ? "text-blue-200" : "text-white/60")}>
-                                                                <Check size={12} strokeWidth={3} />
-                                                                <Check size={12} strokeWidth={3} />
+                                                            {/* Reactions UI - Overlapping */}
+                                                            {msg.reactions && msg.reactions.length > 0 && (
+                                                                <div className={cn(
+                                                                    "absolute -bottom-3 flex items-center bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-sm border border-gray-100 dark:border-gray-700 z-10",
+                                                                    isMe ? "left-0 -translate-x-2" : "right-0 translate-x-2"
+                                                                )}>
+                                                                    {msg.reactions.map((reaction, i) => (
+                                                                        <span key={i} className="text-[10px] px-0.5" title="Reaction">
+                                                                            {reaction.emoji}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            <div className="flex justify-end mt-1 items-center gap-1">
+                                                                <p className={cn("text-[9px]", isMe ? "text-white/80" : "text-gray-400")}>
+                                                                    {format(new Date(msg.created_at), 'HH:mm')}
+                                                                </p>
+                                                                {isMe && (
+                                                                    <div className={cn("flex -space-x-1", msg.is_read ? "text-blue-200" : "text-white/60")}>
+                                                                        <Check size={12} strokeWidth={3} />
+                                                                        <Check size={12} strokeWidth={3} />
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        </div>
+                                                        </>
                                                     )}
+                                                </div>
 
+                                                {!isEditing && (
                                                     <div className={cn(
-                                                        "text-[9px] mt-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 -translate-y-1/2 whitespace-nowrap",
-                                                        isMe ? "-left-20 text-gray-400" : "-right-24 text-gray-400"
+                                                        "flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 shadow-sm rounded-lg px-2 py-1 z-20 border border-gray-100 dark:border-gray-700",
+                                                        isMe ? "-left-32" : "-right-28"
                                                     )}>
+                                                        {/* Quick Reaction Picker */}
+                                                        <div className="relative">
+                                                            <button
+                                                                className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+                                                                onClick={() => setShowReactionPicker(showReactionPicker === msg.id ? null : msg.id)}
+                                                                title="React"
+                                                            >
+                                                                <Smile size={14} />
+                                                            </button>
+                                                            {showReactionPicker === msg.id && (
+                                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
+                                                                    <div className="flex gap-1">
+                                                                        {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉'].map(emoji => (
+                                                                            <button
+                                                                                key={emoji}
+                                                                                onClick={() => {
+                                                                                    handleToggleReaction(msg.id, emoji, msg.reactions);
+                                                                                    setShowReactionPicker(null);
+                                                                                }}
+                                                                                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
+                                                                            >
+                                                                                {emoji}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <button
-                                                            className="p-1 hover:text-primary"
-                                                            onClick={async () => {
-                                                                await api.post(`/chat/conversations/${selectedConversationId}/messages/${msg.id}/reactions`, { emoji: '👍' });
-                                                            }}
-                                                            title="Like"
-                                                        >
-                                                            <Smile size={14} />
-                                                        </button>
-                                                        <button
-                                                            className="p-1 hover:text-primary"
+                                                            className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                                             onClick={() => {
                                                                 setReplyToMessage(msg);
                                                                 fileInputRef.current?.focus();
                                                             }}
                                                             title="Reply"
                                                         >
-                                                            ↩️
+                                                            <span className="text-sm leading-none">↩️</span>
                                                         </button>
-                                                        {format(new Date(msg.created_at), 'HH:mm')}
+
+                                                        <button
+                                                            onClick={() => handleTogglePin(msg.id)}
+                                                            className={cn("p-1 rounded", msg.is_pinned ? "text-primary bg-primary/10" : "text-gray-500 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700")}
+                                                            title={msg.is_pinned ? "Unpin" : "Pin"}
+                                                        >
+                                                            <Pin size={14} className={msg.is_pinned ? "fill-primary" : ""} />
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => setForwardingMessage(msg)}
+                                                            className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+                                                            title="Forward"
+                                                        >
+                                                            <ArrowRight size={14} />
+                                                        </button>
+
+                                                        {isMe && msg.type === 'TEXT' && (
+                                                            <>
+                                                                <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-600 mx-1"></div>
+                                                                <button onClick={() => startEditing(msg)} className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded text-blue-500" title="Edit">
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button onClick={() => handleDeleteMessage(msg.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-red-500" title="Delete">
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
                                 })}
                                 <div ref={messagesEndRef} />
                             </div>
+
+                            {/* Typing Indicator */}
+                            {typingStatus[selectedConversationId || '']?.length > 0 && (
+                                <TypingIndicator
+                                    users={typingStatus[selectedConversationId!]}
+                                    className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+                                />
+                            )}
 
                             {/* Input */}
                             <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
@@ -902,7 +1327,7 @@ export const ChatPage = () => {
                                         <button onClick={() => setReplyToMessage(null)}><X size={14} /></button>
                                     </div>
                                 )}
-                                <form onSubmit={handleSendMessage} className="relative flex items-end gap-3 max-w-5xl mx-auto">
+                                <form onSubmit={handleSendMessage} className="relative flex items-end gap-4 max-w-4xl mx-auto">
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -910,11 +1335,11 @@ export const ChatPage = () => {
                                         onChange={handleFileSelect}
                                     />
 
-                                    <div className="flex-1 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all duration-200">
+                                    <div className="flex-1 flex items-center gap-2 bg-white/80 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/40 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/50 transition-all duration-300 backdrop-blur-xl shadow-sm hover:shadow-md">
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="p-2 text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors"
+                                            className="p-2.5 text-gray-400 hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl transition-all duration-200"
                                         >
                                             <Paperclip size={20} />
                                         </button>
@@ -923,31 +1348,67 @@ export const ChatPage = () => {
                                             type="text"
                                             value={messageInput}
                                             onChange={handleInputChange}
-                                            placeholder="Type a message..."
-                                            className="flex-1 bg-transparent !border-0 !outline-none focus:ring-0 text-sm py-2 px-3 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                            placeholder="Type your message..."
+                                            className="flex-1 bg-transparent !border-0 !outline-none focus:ring-0 text-sm py-3 px-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         />
+
+                                        {/* Emoji Picker Button */}
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                className="p-2.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-xl transition-all duration-200"
+                                            >
+                                                <Smile size={20} />
+                                            </button>
+                                            {showEmojiPicker && (
+                                                <EmojiPicker
+                                                    onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
+                                                    onClose={() => setShowEmojiPicker(false)}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={!messageInput.trim()}
-                                        className="h-[52px] w-[52px] flex items-center justify-center bg-primary-gradient text-white rounded-2xl hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed transition-all shadow-md group"
+                                        className="h-[56px] w-[56px] flex items-center justify-center bg-primary-gradient text-white rounded-2xl hover:shadow-xl hover:shadow-primary/25 active:scale-95 disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed transition-all duration-300 shadow-lg group"
                                     >
-                                        <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                        <Send size={22} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
                                     </button>
                                 </form>
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                            <div className="h-16 w-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                <Send size={32} />
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
+                            <div className="relative mb-6">
+                                <div className="h-24 w-24 bg-primary-10 dark:bg-primary-20 rounded-3xl flex items-center justify-center shadow-lg animate-pulse">
+                                    <Send size={40} className="text-primary" />
+                                </div>
+                                <div className="absolute -top-2 -right-2 h-8 w-8 bg-primary-gradient rounded-xl flex items-center justify-center shadow-md">
+                                    <Plus size={16} className="text-white" />
+                                </div>
                             </div>
-                            <p>Select a conversation to start chatting</p>
+                            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">Start a Conversation</h3>
+                            <p className="text-sm text-gray-400 text-center max-w-xs mb-6">Select a conversation from the sidebar or start a new chat with your team members</p>
+                            <button
+                                onClick={() => setIsSelectingContact(true)}
+                                className="px-6 py-2.5 bg-primary-gradient text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:scale-105"
+                            >
+                                New Conversation
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
+            <ForwardModal
+                isOpen={!!forwardingMessage}
+                onClose={() => setForwardingMessage(null)}
+                conversations={conversations || []}
+                message={forwardingMessage}
+                onForward={(targetId) => forwardingMessage && handleForward(forwardingMessage, targetId)}
+            />
             <CreateGroupModal
                 isOpen={isGroupModalOpen}
                 onClose={() => setIsGroupModalOpen(false)}
@@ -967,3 +1428,4 @@ export const ChatPage = () => {
 };
 
 export default ChatPage;
+

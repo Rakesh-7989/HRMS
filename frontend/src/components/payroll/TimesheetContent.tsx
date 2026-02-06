@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, History, ListTodo, Send, MessageSquare, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, History, Send, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import {
@@ -13,8 +13,8 @@ import {
     TableCell,
 } from '@/components/ui/Table';
 import { StatusBadge } from '@/components/projects/StatusBadge';
-import { TimesheetEntryForm } from '@/components/projects/TimesheetEntryForm';
 import { TimesheetApprovals } from '@/components/projects/TimesheetApprovals';
+import { TimesheetDashboard } from '@/components/timesheets/TimesheetDashboard';
 import { timesheetService } from '@/services/timesheet.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
@@ -99,16 +99,15 @@ export const TimesheetContent: React.FC = () => {
 
             {activeTab === 'my' ? (
                 <div className="grid grid-cols-1 gap-12">
-                    {/* Entry Form Section */}
-                    <div className="max-w-4xl">
-                        <TimesheetEntryForm />
+                    {/* Dashboard Section */}
+                    <div className="w-full">
+                        <TimesheetDashboard />
                     </div>
 
                     {/* History Table */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="flex items-center gap-2">
-                                <ListTodo size={16} className="text-primary" />
                                 <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Labor History</h3>
                             </div>
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest ring-1 ring-emerald-500/20">
