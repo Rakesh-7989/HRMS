@@ -13,6 +13,8 @@ export interface User {
   designation_id?: string;
   is_active: boolean;
   avatar?: string;
+  job_title?: string;
+  profile_photo_url?: string;
 }
 
 export interface AuthResponse {
