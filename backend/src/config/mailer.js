@@ -98,6 +98,23 @@ exports.sendWelcomeEmail = async (to, name, tempPassword) => {
 };
 
 /**
+ * Send email verification OTP
+ */
+exports.sendVerificationOTP = async (to, code) => {
+    return exports.sendMail({
+        to,
+        subject: 'Verify Your Email - HRMS Registration',
+        html: `
+            <h1>Email Verification</h1>
+            <p>Your verification code is:</p>
+            <h2 style="font-size: 32px; letter-spacing: 4px; color: #42275a;">${code}</h2>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this, please ignore this email.</p>
+        `
+    });
+};
+
+/**
  * Send password reset email
  */
 exports.sendPasswordResetEmail = async (to, resetToken) => {
@@ -130,6 +147,40 @@ exports.sendLeaveNotification = async (to, employeeName, leaveType, startDate, e
             <p><strong>Type:</strong> ${leaveType}</p>
             <p><strong>From:</strong> ${startDate}</p>
             <p><strong>To:</strong> ${endDate}</p>
+        `
+    });
+};
+
+/**
+ * Send password changed notification
+ */
+exports.sendPasswordChangedNotification = async (to) => {
+    return exports.sendMail({
+        to,
+        subject: 'Security Alert: Password Changed',
+        html: `
+            <h1>Password Changed Successfully</h1>
+            <p>Your password for HRMS was recently changed.</p>
+            <p>If you did not make this change, please contact your administrator immediately.</p>
+        `
+    });
+};
+
+/**
+ * Send subscription pricing email
+ */
+exports.sendSubscriptionPricingEmail = async (to, tenantName, tenantId) => {
+    const pricingUrl = `${env.FRONTEND_URL}/pricing?tenantId=${tenantId}`;
+
+    return exports.sendMail({
+        to,
+        subject: 'Action Required: Activate Your HRMS Subscription',
+        html: `
+            <h1>Hello ${tenantName},</h1>
+            <p>A Super Admin has enabled your organization's subscription access.</p>
+            <p>To start using all features, please follow the link below to select your desired plan and complete the setup:</p>
+            <p><a href="${pricingUrl}" style="display: inline-block; padding: 10px 20px; background-color: #42275a; color: white; text-decoration: none; border-radius: 5px;">View Pricing Plans</a></p>
+            <p>If you have any questions, please contact support.</p>
         `
     });
 };

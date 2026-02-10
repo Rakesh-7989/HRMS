@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
+const tenantService = require("../tenant/tenant.service");
 
 const getQuery = (db) =>
   db && typeof db.query === "function" ? db.query : dbQuery;
@@ -46,22 +47,20 @@ exports.createUser = async (db, data, actor) => {
       throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
     }
 
+    // Check for globally unique email (across all tenants)
     const duplicate = await client.query(
-      `SELECT id FROM users WHERE tenant_id=$1 AND email=$2`,
-      [actor.tenantId, data.email]
+      `SELECT id FROM users WHERE LOWER(email)=LOWER($1) AND is_deleted = false`,
+      [data.email]
     );
     if (duplicate.rowCount) {
-      throw new Error("An employee with this email address already exists in your organization");
+      throw new Error("Email Not Available");
     }
-    // Check for duplicate employee_id
-    if (data.employee_id) {
-      const duplicateEmpId = await client.query(
-        `SELECT id FROM employees WHERE tenant_id = $1 AND employee_id = $2`,
-        [actor.tenantId, data.employee_id]
-      );
-      if (duplicateEmpId.rowCount > 0) {
-        throw new Error(`Employee ID "${data.employee_id}" is already assigned to another employee`);
-      }
+    // Auto-generate employee ID using tenant's configured prefix
+    let generatedEmployeeId;
+    try {
+      generatedEmployeeId = await tenantService.generateNextEmployeeId(actor.tenantId, client);
+    } catch (err) {
+      throw new Error(err.message || "Failed to generate employee ID. Please configure the employee ID prefix first.");
     }
 
     // Validate department belongs to same tenant
@@ -124,7 +123,7 @@ exports.createUser = async (db, data, actor) => {
         data.emergency_name || null,
         data.emergency_phone || null,
         data.emergency_relation || null,
-        data.employee_id || null,
+        generatedEmployeeId, // Use auto-generated ID
         data.department_id || null,
         data.designation_id || null,
         data.reports_to || null,
@@ -610,10 +609,16 @@ exports.getMyProfile = async (db, user) => {
       e.uan,
       e.pf_account,
       e.esi_number,
-      e.reports_to
+      e.reports_to,
+      s.status as subscription_status,
+      p.name as subscription_plan_name
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id
+    LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id AND s.status != 'CANCELLED'
+    LEFT JOIN plans p ON s.plan_id = p.id
     WHERE u.id=$1
+    ORDER BY s.created_at DESC
+    LIMIT 1
     `,
     [user.id]
   );
@@ -747,6 +752,51 @@ exports.changeManager = async (db, id, managerEmployeeId, actor) => {
   const manager = managerCheck.rows[0];
   if (manager.role !== "MANAGER") {
     throw new Error("Only MANAGER role users can be assigned as reporting manager");
+  }
+
+  // Get the employee's ID (not user ID)
+  const employeeCheck = await query(
+    `SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2`,
+    [id, actor.tenantId]
+  );
+
+  if (employeeCheck.rowCount === 0) {
+    throw new Error("Employee not found");
+  }
+
+  const employeeId = employeeCheck.rows[0].id;
+
+  // SECURITY FIX: Detect circular reporting lines
+  // Traverse up the manager's reporting chain to ensure the employee is not in it
+  const visited = new Set();
+  let currentManagerId = managerEmployeeId;
+  const MAX_DEPTH = 50; // Prevent infinite loops in case of existing circular data
+  let depth = 0;
+
+  while (currentManagerId && depth < MAX_DEPTH) {
+    if (currentManagerId === employeeId) {
+      throw new Error("Circular reporting line detected. This assignment would create a loop in the reporting hierarchy.");
+    }
+
+    if (visited.has(currentManagerId)) {
+      // Existing circular reference in the chain - break to avoid infinite loop
+      logger.warn(`Existing circular reference detected in reporting chain at employee ${currentManagerId}`);
+      break;
+    }
+
+    visited.add(currentManagerId);
+
+    const parentResult = await query(
+      `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+      [currentManagerId, actor.tenantId]
+    );
+
+    if (parentResult.rowCount === 0 || !parentResult.rows[0].reports_to) {
+      break; // Reached top of hierarchy
+    }
+
+    currentManagerId = parentResult.rows[0].reports_to;
+    depth++;
   }
 
   const res = await query(

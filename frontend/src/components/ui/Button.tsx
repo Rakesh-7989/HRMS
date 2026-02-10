@@ -1,11 +1,13 @@
 import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 
-interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'onAnimationStart'> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  requiresActivePlan?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,8 +17,13 @@ export const Button: React.FC<ButtonProps> = ({
   className,
   isLoading,
   disabled,
+  requiresActivePlan,
   ...props
 }) => {
+  const { hasActivePlan } = useAuth();
+  const isSubscriptionDisabled = requiresActivePlan && !hasActivePlan;
+  const effectivelyDisabled = disabled || isLoading || isSubscriptionDisabled;
+
   const baseClasses =
     'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -39,11 +46,18 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <motion.button
-      className={cn(baseClasses, variantClasses[variant], sizeClasses[size], className)}
-      whileHover={disabled || isLoading ? {} : { scale: 1.02, y: -1 }}
-      whileTap={disabled || isLoading ? {} : { scale: 0.98 }}
+      className={cn(
+        baseClasses,
+        variantClasses[variant],
+        sizeClasses[size],
+        isSubscriptionDisabled && 'grayscale-[0.5] opacity-60 cursor-not-allowed',
+        className
+      )}
+      whileHover={effectivelyDisabled ? {} : { scale: 1.02, y: -1 }}
+      whileTap={effectivelyDisabled ? {} : { scale: 0.98 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      disabled={disabled || isLoading}
+      disabled={effectivelyDisabled}
+      title={isSubscriptionDisabled ? 'This action requires an active subscription plan.' : props.title}
       {...(props as any)}
     >
       {isLoading ? (

@@ -344,10 +344,10 @@ exports.removeProjectMember = async (req, res, next) => {
  */
 exports.checkKanbanExists = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const result = await service.checkKanbanExists(tenantId, project_id);
+    const result = await service.checkKanbanExists(tenantId, project_id, { role, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -401,10 +401,10 @@ exports.createKanbanBoard = async (req, res, next) => {
  */
 exports.getKanbanBoard = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const board = await service.getKanbanBoard(tenantId, project_id);
+    const board = await service.getKanbanBoard(tenantId, project_id, { role, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -516,7 +516,7 @@ exports.listTasks = async (req, res, next) => {
  */
 exports.updateTask = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role } = req.user;
+    const { tenantId, id: userId, role, employeeId } = req.user;
     const { id } = req.params;
     const { title, description, assigned_to, priority, due_date, estimated_hours } = req.body;
 
@@ -527,7 +527,7 @@ exports.updateTask = async (req, res, next) => {
       priority,
       due_date,
       estimated_hours,
-    }, { role });
+    }, { role, employeeId });
 
     return res.status(200).json({
       status: 'success',

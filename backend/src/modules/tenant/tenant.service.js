@@ -13,6 +13,122 @@ function getDbFromReq(req) {
   return { query: pool.query.bind(pool), client: null, usingReqClient: false };
 }
 
+// ========================================================================
+// OTP VERIFICATION FUNCTIONS
+// ========================================================================
+
+/**
+ * Send OTP to email for verification
+ */
+exports.sendVerificationOtp = async (email, domain, phone) => {
+  // Check if email already exists in tenants
+  const emailDup = await pool.query(
+    `SELECT id FROM tenants WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+    [email]
+  );
+  if (emailDup.rowCount > 0) {
+    throw new Error("A tenant with this email already exists");
+  }
+
+  // Check if email already exists in users (globally unique)
+  const userEmailDup = await pool.query(
+    `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND is_deleted = false LIMIT 1`,
+    [email]
+  );
+  if (userEmailDup.rowCount > 0) {
+    throw new Error("This email address is already registered in the system");
+  }
+
+  // Check domain duplicate if provided
+  if (domain) {
+    const domainDup = await pool.query(
+      `SELECT id FROM tenants WHERE domain = $1 LIMIT 1`,
+      [domain]
+    );
+    if (domainDup.rowCount > 0) {
+      throw new Error("A tenant with this domain already exists");
+    }
+  }
+
+  // Check phone duplicate if provided
+  if (phone) {
+    const phoneDup = await pool.query(
+      `SELECT id FROM tenants WHERE phone = $1 LIMIT 1`,
+      [phone]
+    );
+    if (phoneDup.rowCount > 0) {
+      throw new Error("A tenant with this phone number already exists");
+    }
+  }
+
+  // Generate 6-digit OTP
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Delete old codes for this email
+  await pool.query(
+    `DELETE FROM email_verifications WHERE email = $1`,
+    [email]
+  );
+
+  // Insert new code
+  await pool.query(
+    `INSERT INTO email_verifications (email, code, expires_at)
+     VALUES ($1, $2, $3)`,
+    [email, code, expiresAt]
+  );
+
+  // Send email
+  try {
+    await mailer.sendVerificationOTP(email, code);
+    logger.info("Verification OTP sent", { email });
+  } catch (err) {
+    logger.error("Failed to send verification OTP", { email, err });
+    throw new Error("Failed to send verification email");
+  }
+
+  return { message: "OTP sent successfully" };
+};
+
+/**
+ * Verify OTP code
+ */
+exports.verifyOtp = async (email, code) => {
+  const result = await pool.query(
+    `SELECT id FROM email_verifications 
+     WHERE email = $1 AND code = $2 AND expires_at > NOW() AND verified = false
+     LIMIT 1`,
+    [email, code]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Invalid or expired verification code");
+  }
+
+  // Mark as verified
+  await pool.query(
+    `UPDATE email_verifications SET verified = true WHERE id = $1`,
+    [result.rows[0].id]
+  );
+
+  return { verified: true };
+};
+
+/**
+ * Check if email is verified (within last 30 minutes)
+ */
+exports.checkEmailVerified = async (email) => {
+  const result = await pool.query(
+    `SELECT id FROM email_verifications 
+     WHERE email = $1 AND verified = true AND created_at > NOW() - INTERVAL '30 minutes'
+     LIMIT 1`,
+    [email]
+  );
+
+  return result.rowCount > 0;
+};
+
+
 exports.registerTenant = async (data, req = null) => {
   const { query, client, usingReqClient } = getDbFromReq(req);
 
@@ -24,7 +140,7 @@ exports.registerTenant = async (data, req = null) => {
     city: data.city || null,
     state: data.state || null,
     country: data.country || null,
-    zip_code: data.zip_code || null,
+    zip_code: data.zip_code ? String(data.zip_code) : null,
     email: data.email,
     settings: data.settings || {}
   };
@@ -41,25 +157,49 @@ exports.registerTenant = async (data, req = null) => {
     }
   }
 
-  // duplicate check (domain || email || phone)
+  // duplicate check - check each field individually for specific error messages
   const dupClient = client || (await pool.connect());
   let releaseDup = !usingReqClient && !client;
 
   try {
-    const dupRes = await dupClient.query(
-      `
-      SELECT id FROM tenants
-      WHERE 
-        (domain IS NOT NULL AND domain = $1)
-        OR (email IS NOT NULL AND email = $2)
-        OR (phone IS NOT NULL AND phone = $3)
-      LIMIT 1
-      `,
-      [tenantFields.domain, tenantFields.email, tenantFields.phone]
+    // Check email duplicate in tenants table
+    const emailDup = await dupClient.query(
+      `SELECT id FROM tenants WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+      [tenantFields.email]
     );
+    if (emailDup.rowCount > 0) {
+      throw new Error("A tenant with this email already exists");
+    }
 
-    if (dupRes.rowCount > 0) {
-      throw new Error("Tenant with same domain, email, or phone already exists");
+    // Check email duplicate in users table (globally unique email)
+    const userEmailDup = await dupClient.query(
+      `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND is_deleted = false LIMIT 1`,
+      [tenantFields.email]
+    );
+    if (userEmailDup.rowCount > 0) {
+      throw new Error("This email address is already registered in the system");
+    }
+
+    // Check domain duplicate (only if domain is provided)
+    if (tenantFields.domain) {
+      const domainDup = await dupClient.query(
+        `SELECT id FROM tenants WHERE domain = $1 LIMIT 1`,
+        [tenantFields.domain]
+      );
+      if (domainDup.rowCount > 0) {
+        throw new Error("A tenant with this domain already exists");
+      }
+    }
+
+    // Check phone duplicate (only if phone is provided)
+    if (tenantFields.phone) {
+      const phoneDup = await dupClient.query(
+        `SELECT id FROM tenants WHERE phone = $1 LIMIT 1`,
+        [tenantFields.phone]
+      );
+      if (phoneDup.rowCount > 0) {
+        throw new Error("A tenant with this phone number already exists");
+      }
     }
   } finally {
     if (releaseDup) dupClient.release();
@@ -101,7 +241,7 @@ exports.registerTenant = async (data, req = null) => {
         `
         INSERT INTO users
           (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
-        VALUES ($1,$2,$3,'ADMIN',true,false,$4)
+        VALUES ($1,$2,$3,'ADMIN',true,true,$4)
         RETURNING id, email, role
         `,
         [tenant.id, tenant.email, passwordHash, null]
@@ -109,8 +249,14 @@ exports.registerTenant = async (data, req = null) => {
 
       const user = userInsert.rows[0];
 
-      // Create trial subscription
-      await subscriptionService.createTrial(tenant.id, client);
+      // Create subscription - trial if no plan selected, pending payment if plan selected
+      if (data.plan_id) {
+        // User selected a specific plan - create pending subscription awaiting payment
+        await subscriptionService.createPendingSubscription(tenant.id, client, data.plan_id, data.billing_cycle || 'MONTHLY');
+      } else {
+        // No plan selected - create trial subscription
+        await subscriptionService.createTrial(tenant.id, client, null, 'MONTHLY');
+      }
 
       await client.query("COMMIT");
 
@@ -172,8 +318,14 @@ exports.registerTenant = async (data, req = null) => {
 
     const user = userInsert.rows[0];
 
-    // Create trial subscription
-    await subscriptionService.createTrial(tenant.id, c);
+    // Create subscription - trial if no plan selected, pending payment if plan selected
+    if (data.plan_id) {
+      // User selected a specific plan - create pending subscription awaiting payment
+      await subscriptionService.createPendingSubscription(tenant.id, client, data.plan_id, data.billing_cycle || 'MONTHLY', data.coupon_code || null);
+    } else {
+      // No plan selected - create trial subscription
+      await subscriptionService.createTrial(tenant.id, c, null, 'MONTHLY');
+    }
 
     await c.query("COMMIT");
 
@@ -194,4 +346,127 @@ exports.registerTenant = async (data, req = null) => {
   } finally {
     c.release();
   }
+};
+
+// ========================================================================
+// EMPLOYEE ID SETTINGS FUNCTIONS
+// ========================================================================
+
+/**
+ * Get employee ID settings for a tenant
+ */
+exports.getEmployeeIdSettings = async (tenantId) => {
+  const result = await pool.query(
+    `SELECT settings FROM tenants WHERE id = $1`,
+    [tenantId]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Tenant not found");
+  }
+
+  const settings = result.rows[0].settings || {};
+  const prefix = settings.employee_id_prefix || null;
+  const counter = settings.employee_id_counter || 0;
+
+  // Generate next ID preview
+  let nextId = null;
+  if (prefix) {
+    const nextNumber = counter + 1;
+    nextId = `${prefix}${String(nextNumber).padStart(3, '0')}`;
+  }
+
+  return {
+    prefix,
+    counter,
+    nextId,
+    isConfigured: !!prefix
+  };
+};
+
+/**
+ * Set employee ID prefix for a tenant (one-time only)
+ */
+exports.setEmployeeIdPrefix = async (tenantId, prefix) => {
+  // Validate prefix format (2-5 uppercase letters)
+  if (!prefix || !/^[A-Z]{2,5}$/.test(prefix)) {
+    throw new Error("Prefix must be 2-5 uppercase letters");
+  }
+
+  // Check if prefix is already set
+  const current = await pool.query(
+    `SELECT settings FROM tenants WHERE id = $1`,
+    [tenantId]
+  );
+
+  if (current.rowCount === 0) {
+    throw new Error("Tenant not found");
+  }
+
+  const settings = current.rows[0].settings || {};
+  if (settings.employee_id_prefix) {
+    throw new Error("Employee ID prefix is already configured and cannot be changed");
+  }
+
+  // Set the prefix and initialize counter to 0
+  const newSettings = {
+    ...settings,
+    employee_id_prefix: prefix,
+    employee_id_counter: 0
+  };
+
+  await pool.query(
+    `UPDATE tenants SET settings = $1, updated_at = NOW() WHERE id = $2`,
+    [JSON.stringify(newSettings), tenantId]
+  );
+
+  return {
+    prefix,
+    nextId: `${prefix}001`,
+    message: "Employee ID prefix configured successfully"
+  };
+};
+
+/**
+ * Generate next employee ID (atomically increment counter)
+ * This should be called within a transaction when creating an employee
+ */
+exports.generateNextEmployeeId = async (tenantId, client = null) => {
+  const executor = client || pool;
+
+  // Use FOR UPDATE to lock the row during counter increment
+  const result = await executor.query(
+    `SELECT settings FROM tenants WHERE id = $1 FOR UPDATE`,
+    [tenantId]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Tenant not found");
+  }
+
+  const settings = result.rows[0].settings || {};
+  const prefix = settings.employee_id_prefix;
+
+  if (!prefix) {
+    throw new Error("Employee ID prefix not configured. Please set the prefix first.");
+  }
+
+  const currentCounter = settings.employee_id_counter || 0;
+  const newCounter = currentCounter + 1;
+
+  // Update the counter
+  const newSettings = {
+    ...settings,
+    employee_id_counter: newCounter
+  };
+
+  await executor.query(
+    `UPDATE tenants SET settings = $1, updated_at = NOW() WHERE id = $2`,
+    [JSON.stringify(newSettings), tenantId]
+  );
+
+  // Generate the employee ID (e.g., AM001, AM010, AM100)
+  const employeeId = `${prefix}${String(newCounter).padStart(3, '0')}`;
+
+  return employeeId;
 };

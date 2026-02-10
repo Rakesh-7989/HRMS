@@ -49,6 +49,8 @@ export interface User {
   // Metadata
   created_at?: string;
   updated_at?: string;
+  subscription_status?: string;
+  subscription_plan_name?: string;
   // Joined data
   department?: { id: string; name: string };
   designation?: { id: string; name: string };

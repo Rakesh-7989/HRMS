@@ -10,9 +10,11 @@ import { usersService, User } from '@/services/users.service';
 import { CheckCircle, AlertCircle, RefreshCw, Users, User as UserIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const LeaveAllocationContent: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const currentYear = new Date().getFullYear();
 
     // Form State
@@ -74,7 +76,7 @@ export const LeaveAllocationContent: React.FC = () => {
         setReason('');
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!leaveTypeId || days <= 0) {
             toast.error('Select leave type and enter valid days');
@@ -90,7 +92,13 @@ export const LeaveAllocationContent: React.FC = () => {
             ? `Allocate ${days} days of ${typeName} to ALL employees for ${year}?`
             : `Allocate ${days} days to ${selectedIds.length} employees for ${year}?`;
 
-        if (window.confirm(msg)) {
+        const result = await confirm({
+            title: 'Confirm Allocation',
+            message: msg,
+            confirmText: 'Allocate Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             allocateMutation.mutate({
                 leave_type_id: leaveTypeId,
                 days,
@@ -101,13 +109,20 @@ export const LeaveAllocationContent: React.FC = () => {
         }
     };
 
-    const handleResetAction = () => {
+    const handleResetAction = async () => {
         const typeName = leaveTypeId ? leaveTypes.find((t: LeaveType) => t.id === leaveTypeId)?.name : 'ALL';
         const msg = target === 'all'
             ? `RESET ${typeName} leave balances for ALL employees for ${year}? This will set balances to 0!`
             : `RESET ${typeName} leave balances for ${selectedIds.length} selected employees for ${year}? This will set balances to 0!`;
 
-        if (window.confirm(msg)) {
+        const result = await confirm({
+            title: 'Reset Leave Balances',
+            message: msg,
+            type: 'destructive',
+            confirmText: 'Reset Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             resetBalancesMutation.mutate({
                 leave_type_id: leaveTypeId || undefined,
                 year,

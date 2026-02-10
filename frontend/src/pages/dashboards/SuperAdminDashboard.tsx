@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, Activity, Users, Shield, ChevronRight,
   Server, Database, Zap, Globe, Settings, Plus, BarChart3,
-  Sparkles, Clock
+  Sparkles, Clock, Tag
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -526,9 +526,9 @@ export const SuperAdminDashboard: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-indigo-500 to-purple-600' },
+              { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-rose-500' },
               { label: 'System Logs', icon: Activity, path: '/activity', color: 'from-emerald-500 to-teal-500' },
               { label: 'System Settings', icon: Settings, path: '/settings', color: 'from-amber-500 to-orange-500' },
-              { label: 'View Reports', icon: BarChart3, path: '/dashboard/system/reports', color: 'from-pink-500 to-rose-500' },
             ].map((action) => (
               <motion.button
                 key={action.label}

@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  hasActivePlan: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               designation_id: profile.designation_id || storedUser.designation_id,
               email: profile.email || storedUser.email,
               is_active: profile.is_active ?? storedUser.is_active,
+              subscription_status: profile.subscription_status,
+              subscription_plan_name: profile.subscription_plan_name,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
             setUser(merged);
@@ -81,7 +84,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
     // Tokens and user are already stored by authService.login()
-    // Set minimal user immediately
+
+    // Check if user must change password first - DON'T set user yet
+    // so isAuthenticated stays false and LoginPage doesn't redirect to dashboard
+    if (response.mustChangePassword) {
+      navigate('/change-password');
+      return;
+    }
+
+    // Set minimal user now (after password change check)
     setUser(response.user);
 
     // Try to fetch full profile and merge into user object
@@ -97,6 +108,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           designation_id: profile.designation_id || response.user.designation_id,
           email: profile.email || response.user.email,
           is_active: profile.is_active ?? response.user.is_active,
+          subscription_status: profile.subscription_status,
+          subscription_plan_name: profile.subscription_plan_name,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
         setUser(merged);
@@ -124,6 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         isAuthenticated: !!user,
+        hasActivePlan: user?.role === 'SUPER_ADMIN' || user?.subscription_status === 'ACTIVE' || user?.subscription_status === 'TRIAL' || user?.subscription_status === 'CANCEL_AT_PERIOD_END',
       }}
     >
       {children}

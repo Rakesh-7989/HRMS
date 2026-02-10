@@ -9,6 +9,8 @@ import { TimesheetDashboard } from '@/components/timesheets/TimesheetDashboard';
 import { timesheetService } from '@/services/timesheet.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { toast } from 'react-hot-toast';
 import type { Timesheet } from '@/types/project.types';
 
 // Group entries by week_start_date or derived week
@@ -61,6 +63,7 @@ export const TimesheetContent: React.FC = () => {
     const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
 
     const queryClient = useQueryClient();
+    const { confirm, alert: showAlert } = useConfirm();
 
     // Fetch My Timesheets
     const { data: timesheets = [], isLoading } = useQuery({
@@ -73,15 +76,26 @@ export const TimesheetContent: React.FC = () => {
         mutationFn: timesheetService.submitTimesheet,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
+            toast.success('Timesheet submitted for audit');
         },
-        onError: () => {
-            alert('Failed to submit timesheet');
+        onError: (error: any) => {
+            showAlert({
+                title: 'Submission Failed',
+                message: error.message || 'Failed to submit timesheet for approval.',
+                confirmText: 'Dismiss'
+            });
         },
     });
 
-    const handleSubmitSheet = (id: string | undefined) => {
+    const handleSubmitSheet = async (id: string | undefined) => {
         if (!id) return;
-        if (window.confirm('Are you sure you want to submit this timesheet for approval?')) {
+        const result = await confirm({
+            title: 'Submit Timesheet',
+            message: 'Are you sure you want to submit this timesheet for approval? Once submitted, it will be locked for auditing.',
+            confirmText: 'Submit Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             submitMutation.mutate(id);
         }
     };

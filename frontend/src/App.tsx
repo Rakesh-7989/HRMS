@@ -4,7 +4,11 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 import { PricingPage } from '@/pages/PricingPage';
+import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
+import { PaymentFailurePage } from '@/pages/PaymentFailurePage';
+import { BillingPortalPage } from '@/pages/BillingPortalPage';
 import { SuperAdminDashboard } from '@/pages/dashboards/SuperAdminDashboard';
 import { AdminDashboard } from '@/pages/dashboards/AdminDashboard';
 import { HRDashboard } from '@/pages/dashboards/HRDashboard';
@@ -49,6 +53,8 @@ import { CalendarPage } from '@/pages/CalendarPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { CallOverlay } from '@/components/chat/CallOverlay';
+import { PlansPage } from '@/pages/PlansPage';
+import { CouponsPage } from '@/pages/CouponsPage';
 
 
 
@@ -86,6 +92,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
 
         {/* Protected Dashboard Routes */}
         <Route
@@ -109,6 +116,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
               <TenantsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/plans"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+              <PlansPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coupons"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+              <CouponsPage />
             </ProtectedRoute>
           }
         />
@@ -147,8 +170,11 @@ function App() {
 
         {/* Pricing Route */}
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/payment-success" element={<PaymentSuccessPage />} />
+        <Route path="/payment-failure" element={<PaymentFailurePage />} />
+        <Route path="/billing" element={<BillingPortalPage />} />
 
-        {/* Search Route */}
+        {/* Super Admin Protected Routes */}
         <Route
           path="/search"
           element={

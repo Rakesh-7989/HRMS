@@ -43,10 +43,11 @@ module.exports = async function withTenantContext(req, res, next) {
 
         // Check subscription status
         const subscriptionResult = await pool.query(
-            `SELECT status, end_date, trial_end_date 
-             FROM tenant_subscription 
-             WHERE tenant_id = $1 
-             ORDER BY created_at DESC 
+            `SELECT s.status, s.end_date, s.trial_ends_at as trial_end_date, p.features
+             FROM subscriptions s
+             JOIN plans p ON s.plan_id = p.id
+             WHERE s.tenant_id = $1 AND s.status != 'CANCELLED'
+             ORDER BY s.created_at DESC 
              LIMIT 1`,
             [tenantId]
         );

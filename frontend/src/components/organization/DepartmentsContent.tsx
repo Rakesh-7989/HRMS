@@ -7,11 +7,13 @@ import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DepartmentsContent: React.FC = () => {
     const { user } = useAuth();
     const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog
     const [editItem, setEditItem] = useState<Department | null>(null); // Controls edit dialog
 
@@ -57,8 +59,16 @@ export const DepartmentsContent: React.FC = () => {
     // --------------------------------------------------------------------------
     // Handlers
     // --------------------------------------------------------------------------
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this department? \nThis action cannot be undone if employees are assigned to it.')) {
+    const handleDelete = async (id: string) => {
+        const dept = departments.find(d => d.id === id);
+        const result = await confirm({
+            title: 'Delete Department',
+            message: `Are you sure you want to delete "${dept?.name || 'this department'}"? This action cannot be undone and may affect assigned employees.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteMutation.mutate(id);
         }
     };

@@ -18,10 +18,11 @@ async function query(sql, params) {
       const employeeId = ctx.get("employeeId");
 
       if (role === 'SUPER_ADMIN') {
-        await client.query(`SELECT set_config('app.tenant_id', '', true)`);
+        await client.query(`SELECT set_config('app.tenant_id', NULL, true)`);
         await client.query(`SELECT set_config('app.role', 'SUPER_ADMIN', true)`);
       } else {
-        await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantId || '']);
+        const tId = tenantId ? tenantId.toString() : '';
+        await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tId]);
         await client.query(`SELECT set_config('app.role', $1, true)`, [role || '']);
       }
 

@@ -3,6 +3,7 @@ const express = require('express');
 const dbSessionContext = require('../middleware/dbSessionContext');
 const verifyJwt = require('../middleware/verifyJwt');
 const requireRole = require('../middleware/requireRole');
+const { requireFeature, checkAccess } = require('../middleware/subscription.middleware');
 
 // Module routers
 const authRoutes = require('../modules/auth/auth.router');
@@ -16,7 +17,7 @@ const userRouter = require('../modules/users/user.router');
 const attendanceRouter = require('../modules/attendance/attendance.router');
 const leaveRouter = require('../modules/leave/index.router');
 const payrollRouter = require('../modules/payroll/payroll.router');
-const subscriptionRouter = require('../modules/subscriptions/subscriptions.routes');
+const subscriptionRouter = require('../modules/subscriptions/billing.routes');
 const inboxRouter = require('../modules/inbox/inbox.router');
 const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
@@ -37,7 +38,7 @@ const router = express.Router();
 // Always attach RLS/ALS context
 router.use(dbSessionContext);
 
-router.use('/assets', assetManagementRouter);
+router.use('/assets', verifyJwt, requireFeature('asset_management'), assetManagementRouter);
 
 // Public routes
 router.use('/auth', authRoutes);
@@ -55,19 +56,19 @@ router.use('/subscriptions', subscriptionRouter);
 router.use(verifyJwt);
 
 // Dashboards module (all authenticated users)
-router.use('/dashboards', dashboardRouter);
+router.use('/dashboards', checkAccess(), dashboardRouter);
 
 // Admin module (ADMIN, HR)
-router.use('/admin', requireRole(['ADMIN', 'HR']), adminRouter);
+router.use('/admin', requireRole(['ADMIN', 'HR']), checkAccess(), adminRouter);
 
 // Super admin module
 router.use('/super-admin', requireRole(['SUPER_ADMIN']), superAdminRouter);
 
 // Department module
-router.use('/departments', departmentRouter);
+router.use('/departments', checkAccess(), departmentRouter);
 
 // Designation module
-router.use('/designations', designationRouter);
+router.use('/designations', checkAccess(), designationRouter);
 
 // User module - TWO MOUNTS for layered access control:
 // 1. Self-service routes (no role restriction) → /users/me/profile, /users/me/password etc.
@@ -75,38 +76,38 @@ router.use('/designations', designationRouter);
 // 2. Admin routes (ADMIN, HR only) → /users/:id, /users (list), CREATE/UPDATE/DELETE
 //    Only admins can manage other users
 router.use('/users', userRouter.selfService);
-router.use('/users', userRouter);
+router.use('/users', checkAccess(), userRouter);
 
 // Attendance module
-router.use('/attendance', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), attendanceRouter);
+router.use('/attendance', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('attendance_tracker'), attendanceRouter);
 
 // Geo-Fencing module (for attendance location validation)
-router.use('/geo-fencing', geoFencingRouter);
+router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRouter);
 
 // Events module
 router.use('/events', eventsRouter);
 
 // Payroll module (includes: salary, payrun, statutory, settlement, 
 // consultants, payslips, expenses, loans, merchants)
-router.use('/payroll', payrollRouter);
+router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
 
 // Leave module
-router.use('/leave', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), leaveRouter);
+router.use('/leave', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('leave_tracker'), leaveRouter);
 
 // Inbox module
 router.use('/inbox', inboxRouter);
 router.use('/notifications', notificationRouter);
 
 // Documents module
-router.use('/documents', documentsRouter);
+router.use('/documents', requireFeature('employee_management.document_storage'), documentsRouter);
 
-router.use('/projects', projectManagementRouter);
+router.use('/projects', requireFeature('project_management'), projectManagementRouter);
 
 // WFH (Work From Home) Request module
-router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), wfhRouter);
+router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('attendance_tracker'), wfhRouter);
 
-router.use('/chat', chatRouter);
-router.use('/calendar', calendarRouter);
-router.use('/shifts', shiftRouter);
+router.use('/chat', requireFeature('collaboration'), chatRouter);
+router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);
+router.use('/shifts', requireFeature('attendance_tracker'), shiftRouter);
 
 module.exports = router;

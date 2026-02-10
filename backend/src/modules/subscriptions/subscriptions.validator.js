@@ -6,7 +6,7 @@ const createSubscriptionSchema = z.object({
         plan_id: z.string().uuid(),
         billing_cycle: z.enum(['MONTHLY', 'YEARLY']).default('MONTHLY'),
         is_trial: z.boolean().optional().default(false),
-        status: z.enum(['TRIAL', 'ACTIVE', 'EXPIRED', 'CANCELLED']).optional().default('TRIAL')
+        status: z.enum(['TRIAL', 'ACTIVE', 'EXPIRED', 'CANCELLED', 'PENDING_PAYMENT', 'PAST_DUE', 'SUSPENDED']).optional().default('TRIAL')
     })
 });
 

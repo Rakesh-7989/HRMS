@@ -58,3 +58,40 @@ exports.getTenantEmployeeCount = async (req, res) => {
   }
 };
 
+
+exports.getPlans = async (req, res) => {
+  try {
+    const plans = await service.getPlans(req.db);
+    res.json({ status: "success", plans });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.updatePlan = async (req, res) => {
+  try {
+    const updated = await service.updatePlan(req.db, req.params.id, req.body);
+    res.json({ status: "success", data: updated });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.createPlan = async (req, res) => {
+  try {
+    const plan = await service.createPlan(req.db, req.body);
+    res.json({ status: "success", data: plan });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.deletePlan = async (req, res) => {
+  try {
+    const deleted = await service.deletePlan(req.db, req.params.id);
+    if (!deleted) return res.status(404).json({ status: "error", message: "Plan not found" });
+    res.json({ status: "success", data: deleted });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};

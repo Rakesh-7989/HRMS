@@ -205,7 +205,7 @@ export const SubscriptionPage: React.FC = () => {
                             <div className="mb-6">
                                 <h4 className="text-lg font-bold">{p.name}</h4>
                                 <div className="flex items-baseline gap-1 my-4">
-                                    <span className="text-3xl font-black">₹{billingCycle === 'YEARLY' ? p.price * 12 : p.price}</span>
+                                    <span className="text-3xl font-black">₹{(() => { const price = p.prices?.find(pr => pr.interval === billingCycle)?.unit_amount || 0; return price; })()}</span>
                                     <span className="text-muted text-sm">/{billingCycle.toLowerCase()}</span>
                                 </div>
                                 <p className="text-sm text-muted line-clamp-2">{p.description}</p>

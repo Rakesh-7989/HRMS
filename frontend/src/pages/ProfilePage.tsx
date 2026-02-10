@@ -21,6 +21,7 @@ import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { documentsService } from '@/services/documents.service';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 const profileValidationSchema = Yup.object({
   first_name: Yup.string()
@@ -56,6 +57,7 @@ const profileValidationSchema = Yup.object({
 
 export const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { alert: showAlert } = useConfirm();
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch Profile
@@ -98,10 +100,14 @@ export const ProfilePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setIsEditing(false);
-      // Optional: Show toast
+      toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
-      alert("Failed to update profile: " + error.message);
+      showAlert({
+        title: 'Profile Update Failed',
+        message: error.response?.data?.message || error.message || 'Failed to update profile. Please try again.',
+        confirmText: 'OK'
+      });
     }
   });
 
@@ -422,6 +428,7 @@ const DisplayField = ({ label, value }: { label: string, value: string | undefin
 const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -552,8 +559,15 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
                       </a>
                       {canManage && (
                         <button
-                          onClick={() => {
-                            if (window.confirm('Delete this document?')) {
+                          onClick={async () => {
+                            const result = await confirm({
+                              title: 'Delete Document',
+                              message: `Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`,
+                              type: 'destructive',
+                              confirmText: 'Delete',
+                              cancelText: 'Cancel'
+                            });
+                            if (result) {
                               deleteMutation.mutate(doc.id);
                             }
                           }}

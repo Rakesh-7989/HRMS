@@ -80,17 +80,36 @@ module.exports = async function verifyJwt(req, res, next) {
       }
     }
 
-    // Check if there's an active session for this user
-    // This prevents using access tokens after logout
-    const sessionRes = await pool.query(
-      `SELECT id, is_revoked FROM user_sessions 
-       WHERE user_id = $1 AND is_revoked = false
-       ORDER BY created_at DESC LIMIT 1`,
-      [decoded.id]
-    );
+    // SECURITY FIX: Check if the SPECIFIC session from the token is active
+    // Previously: checked if ANY session was active, allowing revoked tokens to work
+    if (decoded.sessionId) {
+      // New tokens have sessionId - validate it specifically
+      const sessionRes = await pool.query(
+        `SELECT id, is_revoked FROM user_sessions 
+         WHERE id = $1 AND user_id = $2`,
+        [decoded.sessionId, decoded.id]
+      );
 
-    if (sessionRes.rowCount === 0) {
-      return next(new UnauthorizedError("Session has been revoked - please login again"));
+      if (sessionRes.rowCount === 0) {
+        return next(new UnauthorizedError("Session not found - please login again"));
+      }
+
+      if (sessionRes.rows[0].is_revoked) {
+        return next(new UnauthorizedError("Session has been revoked - please login again"));
+      }
+    } else {
+      // Legacy tokens without sessionId - use old check (backwards compatibility)
+      // TODO: Remove this fallback after all users have re-logged in
+      const sessionRes = await pool.query(
+        `SELECT id, is_revoked FROM user_sessions 
+         WHERE user_id = $1 AND is_revoked = false
+         ORDER BY created_at DESC LIMIT 1`,
+        [decoded.id]
+      );
+
+      if (sessionRes.rowCount === 0) {
+        return next(new UnauthorizedError("Session has been revoked - please login again"));
+      }
     }
 
     // Build req.user for controllers

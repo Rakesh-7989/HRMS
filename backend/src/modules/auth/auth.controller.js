@@ -317,11 +317,23 @@ exports.resetPassword = async (req, res) => {
 // ========================================================================
 exports.changePassword = async (req, res) => {
   const userId = req.user.id;
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
   try {
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password do not match" });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: "New password cannot be the same as current password" });
+    }
+
     const row = await pool.query(
-      `SELECT password_hash FROM users WHERE id = $1`,
+      `SELECT email, password_hash FROM users WHERE id = $1`,
       [userId]
     );
 
@@ -329,8 +341,10 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const user = row.rows[0];
+
     // Validate old password
-    const valid = await bcrypt.compare(currentPassword, row.rows[0].password_hash);
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!valid) {
       return res.status(400).json({ message: "Old password incorrect" });
@@ -347,6 +361,14 @@ exports.changePassword = async (req, res) => {
        WHERE id = $2`,
       [hash, userId]
     );
+
+    // Send notification email
+    try {
+      await mailer.sendPasswordChangedNotification(user.email);
+    } catch (mailErr) {
+      console.error("Failed to send password change notification:", mailErr);
+      // Don't fail the request if email fails, but log it
+    }
 
     return res.json({
       status: "success",

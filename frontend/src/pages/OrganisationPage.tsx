@@ -15,7 +15,7 @@ import { superAdminService } from '@/services/superAdmin.service';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
-import { UnifiedShiftsContent } from '@/components/organization/UnifiedShiftsContent';
+import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/UnifiedShiftsContent';
 
 
 export const OrganisationPage: React.FC = () => {
@@ -148,9 +148,9 @@ export const OrganisationPage: React.FC = () => {
           </div>
 
           <div className="flex-1 min-h-0 relative overflow-hidden">
-            {tab === 'departments' && <DepartmentsContent />}
-            {tab === 'designations' && <DesignationsContent />}
-            {tab === 'shifts' && <UnifiedShiftsContent />}
+            {tab === 'departments' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DepartmentsContent /></div>}
+            {tab === 'designations' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DesignationsContent /></div>}
+            {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
             {tab === 'tree' && <OrgTreeContent />}
 
             {tab === 'directory' && (

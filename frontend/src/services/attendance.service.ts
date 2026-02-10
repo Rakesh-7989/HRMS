@@ -28,6 +28,7 @@ export interface Attendance {
   shift_name?: string;
   shift_start?: string;
   shift_end?: string;
+  total_break_seconds?: number;
 }
 
 export interface AttendanceSummaryRow {

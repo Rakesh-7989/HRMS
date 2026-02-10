@@ -904,23 +904,27 @@ export const TasksPage: React.FC = () => {
                                     <div className="space-y-2">
                                         <Label htmlFor="edit_assignees">Assignees (Optional)</Label>
                                         <div className="border border-gray-300 dark:border-gray-700 rounded-md p-2 max-h-24 overflow-y-auto bg-white dark:bg-gray-900">
-                                            {projectMembers?.map((member) => (
-                                                <label key={member.employee_id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editFormData.assignee_ids.includes(member.employee_id)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setEditFormData({ ...editFormData, assignee_ids: [...editFormData.assignee_ids, member.employee_id] });
-                                                            } else {
-                                                                setEditFormData({ ...editFormData, assignee_ids: editFormData.assignee_ids.filter(id => id !== member.employee_id) });
-                                                            }
-                                                        }}
-                                                        className="rounded border-gray-300"
-                                                    />
-                                                    {member.employee.first_name} {member.employee.last_name}
-                                                </label>
-                                            ))}
+                                            {projectMembers.length === 0 ? (
+                                                <p className="text-sm text-gray-400">No members found - Add members to project first</p>
+                                            ) : (
+                                                projectMembers.map((member) => (
+                                                    <label key={member.employee_id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editFormData.assignee_ids.includes(member.employee_id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setEditFormData({ ...editFormData, assignee_ids: [...editFormData.assignee_ids, member.employee_id] });
+                                                                } else {
+                                                                    setEditFormData({ ...editFormData, assignee_ids: editFormData.assignee_ids.filter(id => id !== member.employee_id) });
+                                                                }
+                                                            }}
+                                                            className="rounded border-gray-300"
+                                                        />
+                                                        {member.employee.first_name} {member.employee.last_name}
+                                                    </label>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
                                 </div>

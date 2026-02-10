@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 const ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
 const PAGE_SIZE = 10;
@@ -33,6 +34,7 @@ const PAGE_SIZE = 10;
 export const EmployeesPage: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
 
   // Filters
@@ -152,6 +154,19 @@ export const EmployeesPage: React.FC = () => {
 
   const hasActiveFilters = roleFilter || departmentFilter || statusFilter;
 
+  // Subscription Query for Limit Check
+  const { data: subscription } = useQuery({
+    queryKey: ['my-subscription'],
+    queryFn: () => import('@/services/subscription.service').then(m => m.subscriptionService.getMySubscription()),
+    retry: false
+  });
+
+  const currentCount = subscription?.current_employees || 0;
+  const maxEmployees = subscription?.max_employees || 0;
+  // If maxEmployees is 0 or null/undefined, it usually means unlimited or custom, but let's assume valid limits for STD/PREM/ELITE
+  // If maxEmployees is null, it's unlimited.
+  const isLimitReached = maxEmployees > 0 && currentCount >= maxEmployees;
+
   return (
     <DashboardLayout
       title="Employees"
@@ -189,10 +204,22 @@ export const EmployeesPage: React.FC = () => {
           </div>
 
           {canManage && (
-            <Button onClick={() => navigate('/employees/new')}>
-              <Plus size={18} className="mr-2" />
-              Add Employee
-            </Button>
+            <div className="flex flex-col items-end">
+              <Button
+                onClick={() => navigate('/employees/new')}
+                disabled={isLimitReached}
+                title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
+                className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
+              >
+                <Plus size={18} className="mr-2" />
+                Add Employee
+              </Button>
+              {isLimitReached && (
+                <p className="text-xs text-red-500 mt-1 font-medium">
+                  Plan limit reached ({currentCount}/{maxEmployees})
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -397,8 +424,15 @@ export const EmployeesPage: React.FC = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => {
-                                    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+                                  onClick={async () => {
+                                    const result = await confirm({
+                                      title: 'Delete Employee',
+                                      message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
+                                      type: 'destructive',
+                                      confirmText: 'Delete Employee',
+                                      cancelText: 'Cancel'
+                                    });
+                                    if (result) {
                                       deleteMutation.mutate(emp.id);
                                     }
                                   }}

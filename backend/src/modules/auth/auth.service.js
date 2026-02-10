@@ -8,29 +8,20 @@ const ACCESS_EXP = env.JWT_EXPIRES_IN || "15m";
 const REFRESH_DAYS = parseInt(env.REFRESH_TOKEN_EXPIRY_DAYS || "7", 10);
 
 exports.generateTokens = async (user, rememberMe = false) => {
-  const accessToken = jwt.sign(
-    {
-      id: user.id,
-      userId: user.id,
-      tenantId: user.tenant_id,
-      role: user.role,
-      employeeId: user.employee_id
-    },
-    env.JWT_ACCESS_SECRET,
-    { expiresIn: rememberMe ? "30d" : ACCESS_EXP }
-  );
-
   const refreshDays = rememberMe ? 30 : REFRESH_DAYS;
   const refreshToken = crypto.randomBytes(48).toString("hex");
+  const sessionId = crypto.randomUUID(); // Generate unique session ID
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + refreshDays);
 
+  // Insert session first to get the ID
   await pool.query(
     `INSERT INTO user_sessions 
-       (tenant_id, user_id, refresh_token, expires_at, ip_address, user_agent)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+       (id, tenant_id, user_id, refresh_token, expires_at, ip_address, user_agent)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
+      sessionId,
       user.tenant_id || null,
       user.id,
       refreshToken,
@@ -40,8 +31,23 @@ exports.generateTokens = async (user, rememberMe = false) => {
     ]
   );
 
-  return { accessToken, refreshToken };
+  // SECURITY FIX: Include sessionId in JWT payload for proper revocation
+  const accessToken = jwt.sign(
+    {
+      id: user.id,
+      userId: user.id,
+      tenantId: user.tenant_id,
+      role: user.role,
+      employeeId: user.employee_id,
+      sessionId: sessionId // NEW: Include session ID for revocation check
+    },
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: rememberMe ? "30d" : ACCESS_EXP }
+  );
+
+  return { accessToken, refreshToken, sessionId };
 };
+
 
 exports.verifyRefreshToken = async (refreshToken) => {
   const res = await pool.query(

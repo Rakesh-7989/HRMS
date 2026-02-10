@@ -4,6 +4,7 @@ const controller = require("./user.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
 const requireRole = require("../../middleware/requireRole");
+const { checkLimit } = require("../../middleware/subscription.middleware");
 
 const {
   createUserSchema,
@@ -23,6 +24,7 @@ router.post(
   "/",
   verifyJwt,
   requireRole(["ADMIN", "HR"]),
+  checkLimit('employees'),
   validate(createUserSchema),
   controller.createUser
 );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,8 +56,17 @@ export const LoginPage: React.FC = () => {
     },
   });
 
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
+  const planId = searchParams.get('plan_id');
+  const cycle = searchParams.get('cycle');
+
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    let target = redirect;
+    if (planId && redirect === '/billing') {
+      target += `?plan_id=${planId}&cycle=${cycle}`;
+    }
+    return <Navigate to={target} replace />;
   }
 
   return (
@@ -144,8 +153,8 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">
               Don&apos;t have an account?{' '}
-              <a href="/register" className="text-primary hover:underline">
-                Register now
+              <a href="/pricing" className="text-primary hover:underline">
+                Register
               </a>
             </p>
           </div>

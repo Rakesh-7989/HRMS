@@ -37,6 +37,10 @@ export interface OrganizationDashboard {
     active_employees: number;
     inactive_users: number;
     inactive_employees: number;
+    employee_growth: number;
+    active_employee_growth: number;
+    department_growth: number;
+    designation_growth: number;
   };
   roleDistribution: Array<{ role: string; count: number }>;
   departmentAnalytics: Array<{

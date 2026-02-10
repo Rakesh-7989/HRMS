@@ -149,6 +149,10 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
         } else {
           lateBy = `${mins}m`;
         }
+
+        // Persist structured late data
+        lateByMinutes = diffMins;
+        isLate = true;
       }
     }
   }
@@ -496,18 +500,26 @@ exports.getCurrentBreaks = async (db, tenantId) => {
  * TODAY'S ATTENDANCE
  */
 exports.getTodayAttendance = async (db, employeeId, tenantId) => {
-  console.log("DEBUG: getTodayAttendance called with:", { employeeId, tenantId });
+  if (!employeeId) return null; // Admin/HR without employee profile
+
   const query = getQuery(db);
   const today = todayDate();
 
   const result = await query(
     `
     SELECT att.*,
+           s.name AS shift_name,
+           s.start_time AS shift_start,
+           s.end_time AS shift_end,
+           (SELECT COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (ab_inner.end_time - ab_inner.start_time)))), 0)
+            FROM attendance_breaks ab_inner
+            WHERE ab_inner.attendance_id = att.id AND ab_inner.end_time IS NOT NULL) as total_break_seconds,
            (SELECT json_build_object('id', ab.id, 'start_time', ab.start_time)
             FROM attendance_breaks ab
             WHERE ab.attendance_id = att.id AND ab.end_time IS NULL
             LIMIT 1) as active_break
     FROM attendance att
+    LEFT JOIN shifts s ON att.shift_id = s.id
     WHERE att.employee_id = $1
       AND att.tenant_id = $2
       AND att.date = $3
@@ -593,10 +605,12 @@ exports.getTeamAttendance = async (db, managerEmployeeId, tenantId, filters) => 
   att.*,
     e.first_name,
     e.last_name,
-    u.email
+    u.email,
+    s.name AS shift_name
     FROM attendance att
     JOIN employees e ON e.id = att.employee_id
     JOIN users u     ON u.id = e.user_id
+    LEFT JOIN shifts s ON att.shift_id = s.id
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}
@@ -660,10 +674,12 @@ exports.getAttendanceRecords = async (db, actor, filters) => {
   att.*,
     e.first_name,
     e.last_name,
-    u.email
+    u.email,
+    s.name AS shift_name
     FROM attendance att
     JOIN employees e ON e.id = att.employee_id
     JOIN users u     ON u.id = e.user_id
+    LEFT JOIN shifts s ON att.shift_id = s.id
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}

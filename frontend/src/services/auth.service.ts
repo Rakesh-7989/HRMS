@@ -80,10 +80,16 @@ export const authService = {
     storage.setItem('refreshToken', refreshToken);
     storage.setItem('user', JSON.stringify(user));
 
+    // Store mustChangePassword flag for redirect handling
+    if (response.data.mustChangePassword) {
+      storage.setItem('mustChangePassword', 'true');
+    }
+
     return {
       accessToken,
       refreshToken,
       user,
+      mustChangePassword: response.data.mustChangePassword,
     };
   },
 

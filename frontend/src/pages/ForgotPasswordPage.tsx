@@ -64,9 +64,12 @@ export const ForgotPasswordPage: React.FC = () => {
               <ArrowLeft size={14} />
               Back to login
             </a>
-            <a href="/register" className="text-primary hover:underline">
-              Register
-            </a>
+            <p className="text-gray-600 dark:text-muted">
+              Don't have an account?{' '}
+              <a href="/pricing" className="text-primary hover:underline">
+                Register now
+              </a>
+            </p>
           </div>
         </Card>
       </div>

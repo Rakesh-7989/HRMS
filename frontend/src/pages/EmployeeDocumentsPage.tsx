@@ -8,10 +8,12 @@ import { usersService } from '@/services/users.service';
 import { FileText, Upload, Trash2, Download, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const EmployeeDocumentsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const [searchTerm, setSearchTerm] = useState('');
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -34,7 +36,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
         mutationFn: (docId: string) => documentsService.deleteDocument(docId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-documents', id] });
-            toast('Document deleted');
+            toast.success('Document deleted');
         }
     });
 
@@ -158,8 +160,15 @@ export const EmployeeDocumentsPage: React.FC = () => {
                                                     <Download size={16} />
                                                 </a>
                                                 <button
-                                                    onClick={() => {
-                                                        if (window.confirm('Delete this document?')) {
+                                                    onClick={async () => {
+                                                        const result = await confirm({
+                                                            title: 'Delete Document',
+                                                            message: `Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`,
+                                                            type: 'destructive',
+                                                            confirmText: 'Delete',
+                                                            cancelText: 'Cancel'
+                                                        });
+                                                        if (result) {
                                                             deleteMutation.mutate(doc.id);
                                                         }
                                                     }}

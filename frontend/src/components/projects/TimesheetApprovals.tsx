@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { Check, X, Calendar, Clock, Loader2, CheckSquare, Square, ChevronDown, ChevronRight, Briefcase } from 'lucide-react';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { toast } from 'react-hot-toast';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -37,8 +39,21 @@ interface WeekTimesheet {
 
 export const TimesheetApprovals: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm, alert: showAlert, prompt: showPrompt } = useConfirm();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+    const toggleExpand = (id: string) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
 
     // Fetch Pending Approvals (now returns week-level timesheets)
     const { data: rawData, isLoading } = useQuery({
@@ -53,9 +68,14 @@ export const TimesheetApprovals: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
+            toast.success('Timesheet entry committed');
         },
-        onError: () => {
-            alert('Failed to approve timesheet');
+        onError: (error: any) => {
+            showAlert({
+                title: 'Operation Failed',
+                message: error.message || 'Failed to approve timesheet',
+                confirmText: 'Dismiss'
+            });
         },
     });
 
@@ -66,11 +86,21 @@ export const TimesheetApprovals: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
             if (data.errors.length > 0) {
-                alert(`Approved ${data.results.length} sheets. ${data.errors.length} errors occurred.`);
+                showAlert({
+                    title: 'Partial Success',
+                    message: `Approved ${data.results.length} sheets. ${data.errors.length} errors occurred.`,
+                    confirmText: 'Dismiss'
+                });
+            } else {
+                toast.success(`Successfully approved ${data.results.length} entries`);
             }
         },
-        onError: () => {
-            alert('Failed to process bulk approval');
+        onError: (error: any) => {
+            showAlert({
+                title: 'Bulk Processing Failed',
+                message: error.message || 'Failed to process bulk approval',
+                confirmText: 'Dismiss'
+            });
         },
     });
 
@@ -80,21 +110,38 @@ export const TimesheetApprovals: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
+            toast.success('Timesheet entry rejected');
         },
-        onError: () => {
-            alert('Failed to reject timesheet');
+        onError: (error: any) => {
+            showAlert({
+                title: 'Operation Failed',
+                message: error.message || 'Failed to reject timesheet',
+                confirmText: 'Dismiss'
+            });
         },
     });
 
-    const handleApprove = (id: string) => {
-        if (window.confirm('Are you sure you want to approve this weekly timesheet?')) {
+    const handleApprove = async (id: string) => {
+        const result = await confirm({
+            title: 'Commit Labor Record',
+            message: 'Are you sure you want to approve this timesheet entry for formal audit?',
+            confirmText: 'Commit Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             approveMutation.mutate({ timesheet_id: id });
         }
     };
 
-    const handleReject = (id: string) => {
-        const reason = window.prompt('Please enter a reason for rejection:');
-        if (reason !== null) {
+    const handleReject = async (id: string) => {
+        const reason = await showPrompt({
+            title: 'Reject Labor Record',
+            message: 'Please provide a justification for rejecting this timesheet entry.',
+            placeholder: 'Reason for rejection...',
+            confirmText: 'Reject Entry',
+            cancelText: 'Cancel'
+        });
+        if (reason) {
             rejectMutation.mutate({ id, reason });
         }
     };
@@ -113,21 +160,15 @@ export const TimesheetApprovals: React.FC = () => {
         }
     };
 
-    const toggleExpand = (id: string) => {
-        setExpandedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
-
-    const handleBulkApprove = () => {
+    const handleBulkApprove = async () => {
         if (selectedIds.length === 0) return;
-        if (window.confirm(`Are you sure you want to approve ${selectedIds.length} timesheets?`)) {
+        const result = await confirm({
+            title: 'Bulk Commit Operations',
+            message: `Are you sure you want to approve ${selectedIds.length} labor records in the current audit queue?`,
+            confirmText: 'Execute Bulk Commit',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             bulkApproveMutation.mutate(selectedIds);
         }
     };

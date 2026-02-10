@@ -1,163 +1,94 @@
-// src/jobs/subscriptionRenewal.job.js
 const cron = require('node-cron');
 const pool = require('../config/db');
 const logger = require('../config/logger');
-const mailer = require('../config/mailer');
 const moment = require('moment');
+const subscriptionService = require('../modules/subscriptions/subscriptions.service');
+const invoiceService = require('../modules/subscriptions/invoice.service');
 
 /**
  * Subscription renewal and expiry check job
- * Checks for expiring trials and subscriptions
- * Sends notifications and updates statuses
  * Runs daily at midnight
  */
 const subscriptionRenewal = cron.schedule(
     '0 0 * * *', // Run at midnight every day
     async () => {
         try {
-            logger.info('Running subscription renewal job...');
+            logger.info('Starting robust subscription renewal job...');
+            const now = moment();
+            const today = now.format('YYYY-MM-DD');
 
-            const today = moment().format('YYYY-MM-DD');
+            // 1. GENERATE RENEWAL INVOICES (5 days before expiry)
+            const renewalWarningDate = moment().add(5, 'days').format('YYYY-MM-DD');
+            const toRenewRes = await pool.query(`
+                SELECT s.* 
+                FROM subscriptions s
+                WHERE s.status IN ('ACTIVE', 'TRIAL')
+                  AND s.end_date = $1
+                  AND s.cancel_at_period_end = FALSE
+                  AND s.is_trial = FALSE
+            `, [renewalWarningDate]);
 
-            // Check for expiring trials (7 days before expiry)
-            const trialWarningDate = moment().add(7, 'days').format('YYYY-MM-DD');
-
-            const expiringTrialsResult = await pool.query(
-                `SELECT ts.id, ts.tenant_id, ts.trial_end_date, t.name as tenant_name, u.email
-                 FROM tenant_subscription ts
-                 INNER JOIN tenants t ON ts.tenant_id = t.id
-                 INNER JOIN users u ON u.tenant_id = t.id AND u.role = 'ADMIN'
-                 WHERE ts.status = 'TRIAL'
-                   AND ts.trial_end_date = $1
-                   AND t.is_active = true`,
-                [trialWarningDate]
-            );
-
-            for (const trial of expiringTrialsResult.rows) {
+            for (const sub of toRenewRes.rows) {
                 try {
-                    await mailer.sendMail({
-                        to: trial.email,
-                        subject: 'Trial Period Expiring Soon',
-                        html: `
-                            <h1>Trial Period Expiring</h1>
-                            <p>Dear ${trial.tenant_name},</p>
-                            <p>Your trial period will expire in 7 days on ${moment(trial.trial_end_date).format('MMMM DD, YYYY')}.</p>
-                            <p>Please upgrade your subscription to continue using our services.</p>
-                            <p>Thank you!</p>
-                        `
-                    });
+                    // Check if invoice already exists for this next period
+                    const existingInv = await pool.query(`
+                        SELECT id FROM subscription_invoices 
+                        WHERE subscription_id = $1 
+                          AND billing_period_start = $2
+                    `, [sub.id, sub.end_date]);
 
-                    logger.info(`Trial expiry warning sent to ${trial.email} for tenant ${trial.tenant_name}`);
-                } catch (emailError) {
-                    logger.error(`Error sending trial warning email to ${trial.email}:`, emailError);
+                    if (existingInv.rowCount === 0) {
+                        logger.info(`Generating renewal invoice for tenant ${sub.tenant_id}`);
+                        await subscriptionService.initiateSubscription(sub.tenant_id, sub.plan_id, sub.billing_cycle);
+                    }
+                } catch (err) {
+                    logger.error(`Failed to generate renewal for tenant ${sub.tenant_id}:`, err);
                 }
             }
 
-            const expiredTrialsResult = await pool.query(
-                `UPDATE tenant_subscription
-                 SET status = 'EXPIRED', updated_at = NOW()
-                 WHERE status = 'TRIAL'
-                   AND trial_end_date < $1
-                 RETURNING id, tenant_id`,
-                [today]
-            );
+            // 2. HANDLE EXPIRATIONS (Access block after grace)
+            // If end_date is in the past and status is not yet EXPIRED
+            const gracePeriodDays = 5;
+            const expiryThreshold = moment().subtract(gracePeriodDays, 'days').format('YYYY-MM-DD');
 
-            if (expiredTrialsResult.rowCount > 0) {
-                logger.info(`Expired ${expiredTrialsResult.rowCount} trial subscriptions`);
+            const toExpireRes = await pool.query(`
+                UPDATE subscriptions
+                SET status = 'EXPIRED', updated_at = NOW()
+                WHERE status IN ('ACTIVE', 'PAST_DUE', 'CANCELLED')
+                  AND end_date < $1
+                RETURNING id, tenant_id
+            `, [expiryThreshold]);
 
-                // Deactivate tenants with expired trials
-                for (const expired of expiredTrialsResult.rows) {
-                    await pool.query(
-                        'UPDATE tenants SET is_active = false WHERE id = $1',
-                        [expired.tenant_id]
-                    );
-                }
+            if (toExpireRes.rowCount > 0) {
+                logger.info(`Marked ${toExpireRes.rowCount} subscriptions as EXPIRED.`);
             }
 
-            // Check for expiring subscriptions (3 days before expiry)
-            const subscriptionWarningDate = moment().add(3, 'days').format('YYYY-MM-DD');
+            // 3. AUTO-TRANSITION TO PAST_DUE
+            // If end_date has passed but still within grace, mark as PAST_DUE if not already
+            const toPastDueRes = await pool.query(`
+                UPDATE subscriptions
+                SET status = 'PAST_DUE', updated_at = NOW()
+                WHERE status = 'ACTIVE'
+                  AND end_date < $1
+                  AND end_date >= $2
+                RETURNING id, tenant_id
+            `, [today, expiryThreshold]);
 
-            const expiringSubscriptionsResult = await pool.query(
-                `SELECT ts.id, ts.tenant_id, ts.end_date, t.name as tenant_name, u.email
-                 FROM tenant_subscription ts
-                 INNER JOIN tenants t ON ts.tenant_id = t.id
-                 INNER JOIN users u ON u.tenant_id = t.id AND u.role = 'ADMIN'
-                 WHERE ts.status = 'ACTIVE'
-                   AND ts.end_date = $1
-                   AND t.is_active = true`,
-                [subscriptionWarningDate]
-            );
-
-            // Send subscription expiry warnings
-            for (const subscription of expiringSubscriptionsResult.rows) {
-                try {
-                    await mailer.sendMail({
-                        to: subscription.email,
-                        subject: 'Subscription Expiring Soon',
-                        html: `
-                            <h1>Subscription Expiring</h1>
-                            <p>Dear ${subscription.tenant_name},</p>
-                            <p>Your subscription will expire in 3 days on ${moment(subscription.end_date).format('MMMM DD, YYYY')}.</p>
-                            <p>Please renew your subscription to avoid service interruption.</p>
-                            <p>Thank you!</p>
-                        `
-                    });
-
-                    logger.info(`Subscription expiry warning sent to ${subscription.email}`);
-                } catch (emailError) {
-                    logger.error(`Error sending subscription warning email:`, emailError);
-                }
+            if (toPastDueRes.rowCount > 0) {
+                logger.info(`Marked ${toPastDueRes.rowCount} subscriptions as PAST_DUE.`);
             }
 
-            // Expire subscriptions that have ended
-            const expiredSubscriptionsResult = await pool.query(
-                `UPDATE tenant_subscription
-                 SET status = 'EXPIRED', updated_at = NOW()
-                 WHERE status = 'ACTIVE'
-                   AND end_date < $1
-                   AND auto_renew = false
-                 RETURNING id, tenant_id`,
-                [today]
-            );
-
-            if (expiredSubscriptionsResult.rowCount > 0) {
-                logger.info(`Expired ${expiredSubscriptionsResult.rowCount} subscriptions`);
-
-                // Deactivate tenants with expired subscriptions
-                for (const expired of expiredSubscriptionsResult.rows) {
-                    await pool.query(
-                        'UPDATE tenants SET is_active = false WHERE id = $1',
-                        [expired.tenant_id]
-                    );
-                }
-            }
-
-            // Auto-renew subscriptions
-            const autoRenewResult = await pool.query(
-                `UPDATE tenant_subscription
-                 SET end_date = end_date + INTERVAL '1 month',
-                     updated_at = NOW()
-                 WHERE status = 'ACTIVE'
-                   AND end_date < $1
-                   AND auto_renew = true
-                 RETURNING id, tenant_id`,
-                [today]
-            );
-
-            if (autoRenewResult.rowCount > 0) {
-                logger.info(`Auto-renewed ${autoRenewResult.rowCount} subscriptions`);
-            }
-
-            logger.info('Subscription renewal job completed');
-
+            logger.info('Subscription renewal job completed.');
         } catch (error) {
             logger.error('Error in subscription renewal job:', error);
         }
     },
     {
         scheduled: false,
-        timezone: process.env.TZ || 'Asia/Kolkata'
+        timezone: 'Asia/Kolkata'
     }
 );
+
+module.exports = subscriptionRenewal;
 
 module.exports = subscriptionRenewal;

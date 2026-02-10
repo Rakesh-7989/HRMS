@@ -303,8 +303,11 @@ exports.listProjects = async (tenantId, filters = {}) => {
 
 /**
  * GET PROJECT BY ID
+ * @param {string} tenantId
+ * @param {string} projectId
+ * @param {Object} userContext - Optional. { role, employeeId, userId }. If provided, validates access.
  */
-exports.getProjectById = async (tenantId, projectId) => {
+exports.getProjectById = async (tenantId, projectId, userContext = null) => {
   const result = await pool.query(
     `SELECT p.*, c.name as client_name FROM projects p
      LEFT JOIN clients c ON p.client_id = c.id
@@ -317,11 +320,37 @@ exports.getProjectById = async (tenantId, projectId) => {
   }
 
   const project = result.rows[0];
+
+  // SECURITY FIX: Validate user access if userContext is provided
+  if (userContext) {
+    const { role, employeeId, userId } = userContext;
+    const canViewAll = ['ADMIN', 'SUPER_ADMIN'].includes(role);
+
+    if (!canViewAll) {
+      // Managers can view projects they created OR are members of
+      // Employees can only view projects they are members of
+      const isCreator = project.created_by === userId;
+      const isMember = employeeId ? await this.isProjectMember(tenantId, projectId, employeeId) : false;
+
+      if (role === 'MANAGER') {
+        if (!isCreator && !isMember) {
+          throw new ForbiddenError("You do not have access to this project");
+        }
+      } else {
+        // EMPLOYEE, HR
+        if (!isMember) {
+          throw new ForbiddenError("You do not have access to this project");
+        }
+      }
+    }
+  }
+
   return {
     ...project,
     client: project.client_name ? { id: project.client_id, name: project.client_name } : null
   };
 };
+
 
 /**
  * UPDATE PROJECT
@@ -539,9 +568,9 @@ exports.getEnabledColumn = async (tenantId, projectId, columnKey) => {
 /**
  * CHECK IF KANBAN BOARD EXISTS FOR PROJECT
  */
-exports.checkKanbanExists = async (tenantId, projectId) => {
-  // Verify project exists
-  await this.getProjectById(tenantId, projectId);
+exports.checkKanbanExists = async (tenantId, projectId, userContext = null) => {
+  // Verify project exists and user has access
+  await this.getProjectById(tenantId, projectId, userContext);
 
   const columnsResult = await pool.query(
     `SELECT id, column_key, column_label, order_index, is_enabled FROM project_kanban_columns
@@ -651,9 +680,9 @@ exports.createKanbanBoard = async (tenantId, userId, projectId, options = {}) =>
 /**
  * GET KANBAN BOARD FOR PROJECT
  */
-exports.getKanbanBoard = async (tenantId, projectId) => {
-  // Verify project exists
-  await this.getProjectById(tenantId, projectId);
+exports.getKanbanBoard = async (tenantId, projectId, userContext = null) => {
+  // Verify project exists and user has access
+  await this.getProjectById(tenantId, projectId, userContext);
 
   const columnsResult = await pool.query(
     `SELECT id, column_key, column_label, order_index, is_enabled FROM project_kanban_columns
@@ -1033,6 +1062,7 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
   // Permission Check - Hybrid approach:
   // 1. Task creator can always edit their own task
   // 2. Higher roles can edit tasks created by lower roles
+  // 3. Assigned employees can update their task status
   // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
   const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
 
@@ -1040,8 +1070,13 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
   const userRoleLevel = ROLE_HIERARCHY[role] || 0;
   const creatorRoleLevel = ROLE_HIERARCHY[existingTask.creator_role] || 0;
 
-  // Allow if: creator OR higher role than creator
-  if (!isCreator && userRoleLevel <= creatorRoleLevel) {
+  // Check if employee is assigned to this task
+  const { employeeId } = options;
+  const isAssignedEmployee = role === 'EMPLOYEE' && employeeId &&
+    (existingTask.assignees?.some(a => a.id === employeeId) || existingTask.assigned_to === employeeId);
+
+  // Allow if: creator OR higher role than creator OR assigned employee
+  if (!isCreator && userRoleLevel <= creatorRoleLevel && !isAssignedEmployee) {
     throw new ForbiddenError("You don't have permission to edit this task.");
   }
 

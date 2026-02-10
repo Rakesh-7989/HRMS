@@ -21,6 +21,40 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+/**
+ * Utility to extract and format a human-readable error message from Axios errors
+ */
+const getErrorMessage = (error: AxiosError<ApiResponse>): string => {
+  if (error.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+  if (!error.response) return 'Network error. Please check your internet connection.';
+
+  const status = error.response.status;
+  const data = error.response.data as any;
+  const backendMessage = data?.message || data?.error;
+
+  switch (status) {
+    case 400:
+      return backendMessage || 'Invalid request. Please check your input.';
+    case 401:
+      return backendMessage || 'Session expired. Please log in again.';
+    case 403:
+      return backendMessage || 'Access denied. You do not have permission for this action.';
+    case 404:
+      return backendMessage || 'Resource not found.';
+    case 422:
+      return backendMessage || 'Validation failed. Please check the provided data.';
+    case 429:
+      return 'Too many requests. Please slow down and try again later.';
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return backendMessage || 'Our servers are experiencing issues. Please try again in a few minutes.';
+    default:
+      return backendMessage || `An unexpected error occurred (Code: ${status})`;
+  }
+};
+
 // Response interceptor - Handle token refresh
 api.interceptors.response.use(
   (response) => response,
@@ -115,6 +149,8 @@ api.interceptors.response.use(
       }
     }
 
+    // Transform raw error into a user-friendly message for the frontend
+    error.message = getErrorMessage(error);
     return Promise.reject(error);
   }
 );

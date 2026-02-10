@@ -8,9 +8,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DepartmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
   const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
   const [createBit, setCreateBit] = useState(false); // Controls create dialog
@@ -40,9 +42,9 @@ export const DepartmentsPage: React.FC = () => {
     mutationFn: (id: string) => departmentService.deleteDepartment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast('Department deleted', { icon: '✅' });
+      toast.success('Department deleted successfully');
     },
-    onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+    onError: (err: any) => toast.error(err.message || 'Failed to delete'),
   });
 
   const toggleStatusMutation = useMutation({
@@ -50,16 +52,23 @@ export const DepartmentsPage: React.FC = () => {
       departmentService.updateDepartment(item.id, { is_active: !item.is_active }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast(`Department ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+      toast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
     },
-    onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+    onError: (err: any) => toast.error(err.message || 'Failed to update status'),
   });
 
   // --------------------------------------------------------------------------
   // Handlers
   // --------------------------------------------------------------------------
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this department? \nThis action cannot be undone if employees are assigned to it.')) {
+  const handleDelete = async (id: string) => {
+    const result = await confirm({
+      title: 'Delete Department',
+      message: 'Are you sure you want to delete this department? This action cannot be undone if employees are assigned to it.',
+      type: 'destructive',
+      confirmText: 'Delete Department',
+      cancelText: 'Cancel'
+    });
+    if (result) {
       deleteMutation.mutate(id);
     }
   };

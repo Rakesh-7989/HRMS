@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu } from 'lucide-react';
+import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
@@ -28,7 +28,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   breadcrumbs,
   actions
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasActivePlan } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -99,8 +99,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       );
     }
 
+    // Filter out results if no active plan
+    if (!hasActivePlan && user?.role !== 'SUPER_ADMIN') {
+      const restrictedPrefixes = ['/payroll', '/attendance', '/leave', '/assets', '/projects', '/wfh', '/chat'];
+      results = results.filter(r =>
+        !restrictedPrefixes.some(prefix => r.url.startsWith(prefix))
+      );
+    }
+
     return results.slice(0, 10);
-  }, [searchResults, user?.role]);
+  }, [searchResults, user?.role, hasActivePlan]);
 
   const handleResultClick = (result: SearchResult) => {
     navigate(result.url);
@@ -398,8 +406,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
         </header>
 
+        {/* Subscription Warning Banner */}
+        {/* Subscription Warning Banner */}
+        {!hasActivePlan && user?.role !== 'SUPER_ADMIN' && (
+          <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              <span>
+                {user?.role === 'ADMIN'
+                  ? "No active subscription found. Restore access to your features now."
+                  : "No active subscription found. Some features are restricted. Please contact your administrator."}
+              </span>
+            </div>
+            {user?.role === 'ADMIN' && (
+              <button
+                onClick={() => navigate('/pricing')}
+                className="bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                Upgrade Plan
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain" style={{ backgroundColor: 'var(--background)' }}>
+        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
           {children}
         </main>
       </div>

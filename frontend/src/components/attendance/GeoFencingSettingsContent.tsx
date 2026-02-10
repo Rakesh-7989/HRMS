@@ -11,9 +11,11 @@ import { MapPin, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, RefreshCw, Check
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const GeoFencingSettingsContent: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
 
     // State
     const [locationDialogOpen, setLocationDialogOpen] = useState(false);
@@ -144,8 +146,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
         }
     };
 
-    const handleDeleteLocation = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this location?')) {
+    const handleDeleteLocation = async (id: string) => {
+        const location = locations.find(l => l.id === id);
+        const result = await confirm({
+            title: 'Delete Location',
+            message: `Are you sure you want to delete "${location?.name || 'this location'}"? This will remove the geo-fence protection for this area.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteLocationMutation.mutate(id);
         }
     };

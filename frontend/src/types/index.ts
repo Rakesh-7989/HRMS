@@ -15,12 +15,15 @@ export interface User {
   avatar?: string;
   job_title?: string;
   profile_photo_url?: string;
+  subscription_status?: string;
+  subscription_plan_name?: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  mustChangePassword?: boolean;
 }
 
 export interface LoginCredentials {

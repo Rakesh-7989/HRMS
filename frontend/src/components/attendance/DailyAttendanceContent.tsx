@@ -6,10 +6,12 @@ import { attendanceService } from '@/services/attendance.service';
 import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, MapPin, Search } from 'lucide-react';
+import { Clock, MapPin, Search, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { toast } from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -24,7 +26,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 export const DailyAttendanceContent: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const { alert: showAlert } = useConfirm();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
+    const [breakTimer, setBreakTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [selectedAttendanceId, setSelectedAttendanceId] = useState<string | null>(null);
     const [confirmStatus, setConfirmStatus] = useState<'PRESENT' | 'HALF_DAY'>('PRESENT');
@@ -80,41 +84,58 @@ export const DailyAttendanceContent: React.FC = () => {
         let interval: NodeJS.Timeout;
 
         if (isTimerRunning && todayAttendance?.check_in_time && !todayAttendance?.check_out_time) {
-            try {
-                // If the time string is already full ISO, use it directly, else construct it
-                let checkInTime = todayAttendance.check_in_time;
-                let checkInDate: Date;
+            const updateTimers = () => {
+                try {
+                    const now = new Date();
 
-                if (checkInTime.includes('T')) {
-                    checkInDate = new Date(checkInTime);
-                } else {
-                    const recordDate = new Date(todayAttendance.date);
-                    const year = recordDate.getFullYear();
-                    const month = String(recordDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(recordDate.getDate()).padStart(2, '0');
-                    const dateStr = `${year}-${month}-${day}`;
-                    checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                    // Get check-in date
+                    let checkInTime = todayAttendance.check_in_time;
+                    if (!checkInTime) return;
+
+                    let checkInDate: Date;
+
+                    if (checkInTime.includes('T')) {
+                        checkInDate = new Date(checkInTime);
+                    } else {
+                        const recordDate = new Date(todayAttendance.date);
+                        const year = recordDate.getFullYear();
+                        const month = String(recordDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(recordDate.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                    }
+
+                    if (isNaN(checkInDate.getTime())) return;
+
+                    const totalCompletedBreakSeconds = Number(todayAttendance.total_break_seconds || 0);
+                    const activeBreak = todayAttendance.active_break;
+
+                    if (activeBreak) {
+                        // Calculate Break Timer (Completed + current active)
+                        const breakStartTime = new Date(activeBreak.start_time);
+                        const elapsedBreak = Math.floor((now.getTime() - breakStartTime.getTime()) / 1000);
+                        setBreakTimer(totalCompletedBreakSeconds + (elapsedBreak >= 0 ? elapsedBreak : 0));
+
+                        // Freeze Session Timer: (BreakStart - CheckIn) - CompletedBreaks
+                        const sessionTillBreak = Math.floor((breakStartTime.getTime() - checkInDate.getTime()) / 1000);
+                        setCurrentTimer(sessionTillBreak - totalCompletedBreakSeconds);
+                    } else {
+                        // Total break time is just completed breaks
+                        setBreakTimer(totalCompletedBreakSeconds);
+                        // Calculate Session Timer: (Now - CheckIn) - CompletedBreaks
+                        const totalElapsed = Math.floor((now.getTime() - checkInDate.getTime()) / 1000);
+                        setCurrentTimer(totalElapsed - totalCompletedBreakSeconds);
+                    }
+                } catch (error) {
+                    console.error('Error in timer logic:', error);
                 }
+            };
 
-                const now = new Date();
-
-                if (!isNaN(checkInDate.getTime())) {
-                    const elapsedSeconds = Math.floor((now.getTime() - checkInDate.getTime()) / 1000);
-                    setCurrentTimer(elapsedSeconds >= 0 ? elapsedSeconds : 0);
-
-                    interval = setInterval(() => {
-                        setCurrentTimer(prev => prev + 1);
-                    }, 1000);
-                } else {
-                    console.error('Invalid check-in time format:', todayAttendance);
-                    setCurrentTimer(0);
-                }
-            } catch (error) {
-                console.error('Error calculating timer:', error);
-                setCurrentTimer(0);
-            }
-        } else if (!isTimerRunning) {
+            updateTimers();
+            interval = setInterval(updateTimers, 1000);
+        } else {
             setCurrentTimer(0);
+            setBreakTimer(0);
         }
 
         return () => {
@@ -136,22 +157,27 @@ export const DailyAttendanceContent: React.FC = () => {
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
+            toast.success('Successfully clocked in!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
 
+            let message = serverMessage || 'Failed to clock in. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                alert('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                message = 'Your employee profile is not complete. Please contact HR to set up your employee details.';
             } else if (serverMessage.includes('on approved leave')) {
-                alert('You are on approved leave today and cannot clock in.');
+                message = 'You are on approved leave today and cannot clock in.';
             } else if (serverMessage.includes('Already clocked in')) {
-                alert('You have already clocked in today.');
-            } else if (serverMessage.includes('Location validation failed')) {
-                alert(serverMessage);
-            } else {
-                alert(serverMessage || 'Failed to clock in. Please try again.');
+                message = 'You have already clocked in today.';
             }
+
+            showAlert({
+                title: 'Attendance Error',
+                message: message,
+                confirmText: 'OK'
+            });
         },
     });
 
@@ -159,23 +185,28 @@ export const DailyAttendanceContent: React.FC = () => {
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string; eodReport?: string }) => attendanceService.clockOut(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
+            toast.success('Successfully clocked out!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
 
+            let message = serverMessage || 'Failed to clock out. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                alert('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                message = 'Your employee profile is not complete. Please contact HR to set up your employee details.';
             } else if (serverMessage.includes('No check-in found')) {
-                alert('No check-in record found for today. Please clock in first.');
+                message = 'No check-in record found for today. Please clock in first.';
             } else if (serverMessage.includes('Already clocked out')) {
-                alert('You have already clocked out today.');
-            } else if (serverMessage.includes('Location validation failed')) {
-                alert(serverMessage);
-            } else {
-                alert(serverMessage || 'Failed to clock out. Please try again.');
+                message = 'You have already clocked out today.';
             }
+
+            showAlert({
+                title: 'Attendance Error',
+                message: message,
+                confirmText: 'OK'
+            });
         },
     });
 
@@ -203,7 +234,11 @@ export const DailyAttendanceContent: React.FC = () => {
         if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
-                alert(check.errorMessage || 'Geo-fence validation failed');
+                showAlert({
+                    title: 'Geo-fence Validation Failed',
+                    message: check.errorMessage || 'You are outside the permitted work area.',
+                    confirmText: 'OK'
+                });
                 return;
             }
             clockInMutation.mutate({
@@ -226,7 +261,11 @@ export const DailyAttendanceContent: React.FC = () => {
         if (geoSettings?.is_enabled && !isRemote) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
-                alert(check.errorMessage || 'Geo-fence validation failed');
+                showAlert({
+                    title: 'Geo-fence Validation Failed',
+                    message: check.errorMessage || 'You are outside the permitted work area.',
+                    confirmText: 'OK'
+                });
                 return;
             }
             coords = {
@@ -308,9 +347,17 @@ export const DailyAttendanceContent: React.FC = () => {
                         )}
 
                         {isTimerRunning && (
-                            <div className="mt-2">
-                                <p className="text-xs text-gray-500 dark:text-muted">Current Session</p>
-                                <p className="text-xl font-mono font-bold text-primary">{formatDuration(currentTimer)}</p>
+                            <div className="mt-2 flex gap-6">
+                                <div>
+                                    <p className="text-[10px] text-gray-500 dark:text-muted uppercase font-semibold tracking-wider">Session</p>
+                                    <p className="text-xl font-mono font-bold text-primary">{formatDuration(currentTimer)}</p>
+                                </div>
+                                {(breakTimer > 0 || todayAttendance?.active_break) && (
+                                    <div>
+                                        <p className="text-[10px] text-orange-500 uppercase font-semibold tracking-wider">Break</p>
+                                        <p className="text-xl font-mono font-bold text-orange-600 dark:text-orange-400">{formatDuration(breakTimer)}</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -336,7 +383,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                         className="border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400 w-full sm:w-auto"
                                         size="md"
                                     >
-                                        <div className="mr-2 h-4 w-4 shrink-0" />
+                                        <Coffee className="mr-2" size={18} />
                                         <span className="truncate">Break Out</span>
                                     </Button>
                                 ) : (
@@ -346,7 +393,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                         size="md"
                                         className="w-full sm:w-auto"
                                     >
-                                        <div className="mr-2 h-4 w-4 shrink-0" />
+                                        <Coffee className="mr-2" size={18} />
                                         <span className="truncate">Break In</span>
 
                                     </Button>
@@ -417,7 +464,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4">
                                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                         }`}>
-                                                        {att.is_late ? 'Late' : 'On Time'}
+                                                        {att.is_late ? `Late ${att.late_by ? '(' + att.late_by + ')' : ''}` : 'On Time'}
                                                     </span>
                                                 </td>
                                             </tr>

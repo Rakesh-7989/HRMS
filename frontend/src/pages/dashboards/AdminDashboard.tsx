@@ -6,7 +6,7 @@ import { dashboardService } from '@/services/dashboard.service';
 import { eventsService } from '@/services/events.service';
 import {
   Users, Building2, Briefcase, TrendingUp, TrendingDown,
-  Calendar, Clock, Activity, Sparkles, Award, Folder
+  Calendar, Clock, Activity, Sparkles, Award, UserCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
@@ -209,6 +209,10 @@ export const AdminDashboard: React.FC = () => {
     active_employees: 0,
     total_departments: 0,
     total_designations: 0,
+    employee_growth: 0,
+    active_employee_growth: 0,
+    department_growth: 0,
+    designation_growth: 0,
   };
 
   const roleDist = data?.roleDistribution || [];
@@ -312,25 +316,27 @@ export const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Employees"
-            value={metrics.total_users || metrics.total_employees}
-            change={12}
-            trend="up"
+            value={metrics.total_employees}
+            change={metrics.employee_growth}
+            trend={metrics.employee_growth >= 0 ? 'up' : 'down'}
             icon={Users}
             gradient={COLORS.gradients.purple}
             delay={0.1}
           />
           <StatCard
-            title="Total Projects"
-            value={(metrics as any).total_projects || 0}
-            change={5}
-            trend="up"
-            icon={Folder}
+            title="Active Employees"
+            value={metrics.active_employees || metrics.total_employees}
+            change={metrics.active_employee_growth}
+            trend={metrics.active_employee_growth >= 0 ? 'up' : 'down'}
+            icon={UserCheck}
             gradient={COLORS.gradients.green}
             delay={0.2}
           />
           <StatCard
             title="Departments"
             value={metrics.total_departments}
+            change={metrics.department_growth}
+            trend={metrics.department_growth >= 0 ? 'up' : 'down'}
             icon={Building2}
             gradient={COLORS.gradients.blue}
             delay={0.3}
@@ -338,6 +344,8 @@ export const AdminDashboard: React.FC = () => {
           <StatCard
             title="Designations"
             value={metrics.total_designations}
+            change={metrics.designation_growth}
+            trend={metrics.designation_growth >= 0 ? 'up' : 'down'}
             icon={Briefcase}
             gradient={COLORS.gradients.orange}
             delay={0.4}

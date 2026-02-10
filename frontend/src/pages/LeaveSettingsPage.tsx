@@ -11,11 +11,13 @@ import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicy
 import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle, Power } from 'lucide-react';
 import { format } from 'date-fns';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 type TabType = 'types' | 'policies' | 'holidays';
 
 export const LeaveSettingsPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm, alert: showAlert } = useConfirm();
     const [activeTab, setActiveTab] = useState<TabType>('types');
 
     // Error state for displaying API errors
@@ -188,15 +190,25 @@ export const LeaveSettingsPage: React.FC = () => {
         mutationFn: () => leaveService.runAccrual(),
         onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
-            alert(`Accrual run successfully! Processed ${data.accruals_processed} records.`);
+            showAlert({
+                title: 'Accrual Processed',
+                message: `Accrual run successfully! Processed ${data.accruals_processed} records.`,
+                confirmText: 'Great'
+            });
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to run accrual');
         },
     });
 
-    const handleRunAccrual = () => {
-        if (window.confirm('Are you sure you want to run monthly allocation for all employees? This will add leave credits based on policies.')) {
+    const handleRunAccrual = async () => {
+        const result = await confirm({
+            title: 'Run Leave Accrual',
+            message: 'Are you sure you want to run monthly allocation for all employees? This will add leave credits based on policies.',
+            confirmText: 'Run Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             runAccrualMutation.mutate();
         }
     };
@@ -326,20 +338,44 @@ export const LeaveSettingsPage: React.FC = () => {
         createHolidayMutation.mutate(holidayForm);
     };
 
-    const handleDeleteType = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave type? This action cannot be undone.')) {
+    const handleDeleteType = async (id: string) => {
+        const type = leaveTypes.find(t => t.id === id);
+        const result = await confirm({
+            title: 'Delete Leave Type',
+            message: `Are you sure you want to delete "${type?.name || 'this leave type'}"? This action cannot be undone and may affect existing leave records.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteTypeMutation.mutate(id);
         }
     };
 
-    const handleDeletePolicy = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave policy? This action cannot be undone.')) {
+    const handleDeletePolicy = async (id: string) => {
+        const policy = policies.find(p => p.id === id);
+        const result = await confirm({
+            title: 'Delete Policy',
+            message: `Are you sure you want to delete "${policy?.name || 'this policy'}"? This action cannot be undone.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deletePolicyMutation.mutate(id);
         }
     };
 
-    const handleDeleteHoliday = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this holiday?')) {
+    const handleDeleteHoliday = async (id: string) => {
+        const holiday = holidays.find(h => h.id === id);
+        const result = await confirm({
+            title: 'Delete Holiday',
+            message: `Are you sure you want to delete "${holiday?.name || 'this holiday'}"?`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteHolidayMutation.mutate(id);
         }
     };

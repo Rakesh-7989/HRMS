@@ -6,15 +6,16 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ChatProvider } from '@/contexts/ChatContext';
+import { ConfirmProvider } from '@/contexts/ConfirmContext';
 import App from './App';
 import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 0,
     },
   },
 });
@@ -25,9 +26,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AuthProvider>
-            <ChatProvider>
-              <App />
-            </ChatProvider>
+            <ConfirmProvider>
+              <ChatProvider>
+                <App />
+              </ChatProvider>
+            </ConfirmProvider>
             <ReactQueryDevtools initialIsOpen={false} />
           </AuthProvider>
         </ThemeProvider>

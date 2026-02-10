@@ -7,12 +7,16 @@ import { geoFencingService } from '@/services/geoFencing.service';
 import { Clock, MapPin, Coffee } from 'lucide-react';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { toast } from 'react-hot-toast';
 
 
 export const NavbarClock: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const { alert: showAlert } = useConfirm();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
+    const [breakTimer, setBreakTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
 
     const { data: todayAttendance, isLoading: isLoadingAttendance, isError } = useQuery({
@@ -32,7 +36,7 @@ export const NavbarClock: React.FC = () => {
     const { data: geoSettings } = useQuery({
         queryKey: ['geo-fencing-settings'],
         queryFn: () => geoFencingService.getSettings(),
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: false,
     });
 
     // Timer effect
@@ -40,33 +44,58 @@ export const NavbarClock: React.FC = () => {
         let interval: NodeJS.Timeout;
 
         if (isTimerRunning && todayAttendance?.check_in_time && !todayAttendance?.check_out_time) {
-            try {
-                const recordDate = new Date(todayAttendance.date);
-                const year = recordDate.getFullYear();
-                const month = String(recordDate.getMonth() + 1).padStart(2, '0');
-                const day = String(recordDate.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
+            const updateTimers = () => {
+                try {
+                    const now = new Date();
 
-                const timeStr = todayAttendance.check_in_time;
-                const checkInDate = new Date(`${dateStr}T${timeStr}`);
-                const now = new Date();
+                    // Get check-in date
+                    let checkInTime = todayAttendance.check_in_time;
+                    if (!checkInTime) return;
 
-                if (!isNaN(checkInDate.getTime())) {
-                    const elapsedSeconds = Math.floor((now.getTime() - checkInDate.getTime()) / 1000);
-                    setCurrentTimer(elapsedSeconds >= 0 ? elapsedSeconds : 0);
+                    let checkInDate: Date;
 
-                    interval = setInterval(() => {
-                        setCurrentTimer(prev => prev + 1);
-                    }, 1000);
-                } else {
-                    setCurrentTimer(0);
+                    if (checkInTime.includes('T')) {
+                        checkInDate = new Date(checkInTime);
+                    } else {
+                        const recordDate = new Date(todayAttendance.date);
+                        const year = recordDate.getFullYear();
+                        const month = String(recordDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(recordDate.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                    }
+
+                    if (isNaN(checkInDate.getTime())) return;
+
+                    const totalCompletedBreakSeconds = Number(todayAttendance.total_break_seconds || 0);
+                    const activeBreak = todayAttendance.active_break;
+
+                    if (activeBreak) {
+                        // Calculate Break Timer (Completed + current active)
+                        const breakStartTime = new Date(activeBreak.start_time);
+                        const elapsedBreak = Math.floor((now.getTime() - breakStartTime.getTime()) / 1000);
+                        setBreakTimer(totalCompletedBreakSeconds + (elapsedBreak >= 0 ? elapsedBreak : 0));
+
+                        // Freeze Session Timer: (BreakStart - CheckIn) - CompletedBreaks
+                        const sessionTillBreak = Math.floor((breakStartTime.getTime() - checkInDate.getTime()) / 1000);
+                        setCurrentTimer(sessionTillBreak - totalCompletedBreakSeconds);
+                    } else {
+                        // Total break time is just completed breaks
+                        setBreakTimer(totalCompletedBreakSeconds);
+                        // Calculate Session Timer: (Now - CheckIn) - CompletedBreaks
+                        const totalElapsed = Math.floor((now.getTime() - checkInDate.getTime()) / 1000);
+                        setCurrentTimer(totalElapsed - totalCompletedBreakSeconds);
+                    }
+                } catch (error) {
+                    console.error('Error in timer logic:', error);
                 }
-            } catch (error) {
-                console.error('Error calculating timer:', error);
-                setCurrentTimer(0);
-            }
-        } else if (!isTimerRunning) {
+            };
+
+            updateTimers();
+            interval = setInterval(updateTimers, 1000);
+        } else {
             setCurrentTimer(0);
+            setBreakTimer(0);
         }
 
         return () => {
@@ -87,11 +116,17 @@ export const NavbarClock: React.FC = () => {
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
+            toast.success('Successfully clocked in!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
-            alert(serverMessage || 'Failed to clock in. Please try again.');
+            showAlert({
+                title: 'Attendance Error',
+                message: serverMessage || 'Failed to clock in. Please try again.',
+                confirmText: 'OK'
+            });
         },
     });
 
@@ -99,12 +134,18 @@ export const NavbarClock: React.FC = () => {
         mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockOut(coords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
+            toast.success('Successfully clocked out!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
-            alert(serverMessage || 'Failed to clock out. Please try again.');
+            showAlert({
+                title: 'Attendance Error',
+                message: serverMessage || 'Failed to clock out. Please try again.',
+                confirmText: 'OK'
+            });
         },
 
     });
@@ -113,10 +154,16 @@ export const NavbarClock: React.FC = () => {
         mutationFn: () => attendanceService.startBreak(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast.success('Break started');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
-            alert(serverMessage || 'Failed to start break. Please try again.');
+            showAlert({
+                title: 'Break Error',
+                message: serverMessage || 'Failed to start break. Please try again.',
+                confirmText: 'OK'
+            });
         }
     });
 
@@ -124,10 +171,16 @@ export const NavbarClock: React.FC = () => {
         mutationFn: () => attendanceService.endBreak(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast.success('Break ended');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
-            alert(serverMessage || 'Failed to end break. Please try again.');
+            showAlert({
+                title: 'Break Error',
+                message: serverMessage || 'Failed to end break. Please try again.',
+                confirmText: 'OK'
+            });
         }
     });
 
@@ -135,7 +188,11 @@ export const NavbarClock: React.FC = () => {
         if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
-                alert(check.errorMessage || 'Geo-fence validation failed');
+                showAlert({
+                    title: 'Geo-fence Validation Failed',
+                    message: check.errorMessage || 'You are outside the permitted work area.',
+                    confirmText: 'OK'
+                });
                 return;
             }
             clockInMutation.mutate({
@@ -152,7 +209,11 @@ export const NavbarClock: React.FC = () => {
         if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
-                alert(check.errorMessage || 'Geo-fence validation failed');
+                showAlert({
+                    title: 'Geo-fence Validation Failed',
+                    message: check.errorMessage || 'You are outside the permitted work area.',
+                    confirmText: 'OK'
+                });
                 return;
             }
             clockOutMutation.mutate({
@@ -201,7 +262,7 @@ export const NavbarClock: React.FC = () => {
         return (
             <div className="flex items-center mr-2">
                 <Button variant="outline" className="h-9 w-auto gap-2 border-red-200 bg-red-50 text-red-600">
-                    <span className="text-xs">Error loading status</span>
+                    <span className="text-xs">Unavailable</span>
                 </Button>
             </div>
         );
@@ -242,12 +303,23 @@ export const NavbarClock: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <div className="hidden lg:flex flex-col items-end mr-2 leading-none">
                         <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
-                            {activeBreak ? 'On Break' : 'Session'}
+                            Session
                         </span>
                         <span className="text-sm font-mono font-bold text-gray-700 dark:text-gray-300">
                             {formatDuration(currentTimer)}
                         </span>
                     </div>
+
+                    {(breakTimer > 0 || activeBreak) && (
+                        <div className="hidden lg:flex flex-col items-end mr-2 leading-none">
+                            <span className="text-[10px] text-orange-500 uppercase font-semibold tracking-wider">
+                                Break
+                            </span>
+                            <span className="text-sm font-mono font-bold text-orange-600 dark:text-orange-400">
+                                {formatDuration(breakTimer)}
+                            </span>
+                        </div>
+                    )}
 
                     {activeBreak ? (
                         <Button

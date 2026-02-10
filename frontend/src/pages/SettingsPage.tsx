@@ -18,7 +18,10 @@ import {
 } from '@/components/ui/Dialog';
 import { SessionsModal } from '@/components/forms/SessionsModal';
 import { ChangePasswordModal } from '@/components/forms/ChangePasswordModal';
-import { toast } from 'react-hot-toast';
+import { subscriptionService } from '@/services/subscription.service';
+import { CreditCard, ExternalLink } from 'lucide-react';
+import { SuccessModal } from '@/components/ui/SuccessModal';
+
 
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -31,6 +34,26 @@ export const SettingsPage: React.FC = () => {
     push: false,
     leaveApprovals: true,
     attendanceAlerts: true,
+  });
+
+  const [successConfig, setSuccessConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success',
+  });
+
+  const isTenantAdmin = user?.role === 'ADMIN';
+
+  const { data: subscription, isLoading: isSubLoading } = useQuery({
+    queryKey: ['my-subscription'],
+    queryFn: () => subscriptionService.getMySubscription(),
+    enabled: isTenantAdmin,
   });
 
   const canManageOrg = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
@@ -64,7 +87,7 @@ export const SettingsPage: React.FC = () => {
               Manage your organization profile and settings.
             </p>
             <div className="space-y-3">
-              <OrganizationProfileSection userRole={user?.role} />
+              <OrganizationProfileSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                 <div>
@@ -85,6 +108,75 @@ export const SettingsPage: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </Card>
+        )}
+
+        {/* Subscription Management */}
+        {isTenantAdmin && (
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <CreditCard className="text-primary" size={24} />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Subscription Management
+                </h3>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/pricing')}
+                className="gap-2"
+              >
+                Upgrade Plan
+                <ExternalLink size={14} />
+              </Button>
+            </div>
+
+            {isSubLoading ? (
+              <div className="animate-pulse space-y-3">
+                <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+              </div>
+            ) : subscription ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <p className="text-sm text-gray-500 mb-1">Current Plan</p>
+                    <p className="text-xl font-bold text-primary">{subscription.plan_name}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <p className="text-sm text-gray-500 mb-1">Status</p>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${subscription.status === 'ACTIVE' || subscription.status === 'TRIAL'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                      : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+                      }`}>
+                      {subscription.status}
+                    </span>
+                  </div>
+                </div>
+
+                {subscription.end_date && (
+                  <div className="p-3 rounded-lg bg-indigo-50/50 dark:bg-indigo-500/5 text-sm text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/10">
+                    Your subscription will {subscription.status === 'CANCELLED' ? 'expire' : 'renew'} on <b>{new Date(subscription.end_date).toLocaleDateString()}</b>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-primary hover:bg-primary/5 border border-primary/20"
+                    onClick={() => navigate('/billing')}
+                  >
+                    View Billing History & Invoices
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+                <p className="text-gray-500 mb-3">No active subscription found</p>
+                <Button size="sm" onClick={() => navigate('/pricing')}>Explore Plans</Button>
+              </div>
+            )}
           </Card>
         )}
 
@@ -266,12 +358,28 @@ export const SettingsPage: React.FC = () => {
           isOpen={isChangePasswordModalOpen}
           onClose={() => setIsChangePasswordModalOpen(false)}
         />
+
+        <SuccessModal
+          isOpen={successConfig.isOpen}
+          onClose={() => setSuccessConfig({ ...successConfig, isOpen: false })}
+          title={successConfig.title}
+          message={successConfig.message}
+          type={successConfig.type}
+        />
       </div>
     </DashboardLayout>
   );
 };
 
-const OrganizationProfileSection: React.FC<{ userRole?: string }> = ({ userRole }) => {
+const OrganizationProfileSection: React.FC<{
+  userRole?: string,
+  setSuccessConfig: React.Dispatch<React.SetStateAction<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>>
+}> = ({ userRole, setSuccessConfig }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '' });
   const queryClient = useQueryClient();
@@ -287,16 +395,31 @@ const OrganizationProfileSection: React.FC<{ userRole?: string }> = ({ userRole 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
       setIsEditing(false);
-      toast.success('Organization details updated successfully');
+      setSuccessConfig({
+        isOpen: true,
+        title: 'Organization Updated',
+        message: 'Organization details updated successfully',
+        type: 'success'
+      });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update organization details');
+      setSuccessConfig({
+        isOpen: true,
+        title: 'Update Failed',
+        message: error.response?.data?.message || 'Failed to update organization details',
+        type: 'error'
+      });
     }
   });
 
   const handleUpdate = () => {
     if (!formData.name.trim()) {
-      toast.error('Organization name is required');
+      setSuccessConfig({
+        isOpen: true,
+        title: 'Validation Error',
+        message: 'Organization name is required',
+        type: 'error'
+      });
       return;
     }
     updateMutation.mutate(formData);

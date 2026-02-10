@@ -19,11 +19,13 @@ import {
     FileText
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const AssetRequestsPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { confirm, prompt: showPrompt } = useConfirm();
     const isAdminOrHR = ['ADMIN', 'HR'].includes(user?.role || '');
 
     // Edit/Delete State
@@ -105,8 +107,15 @@ export const AssetRequestsPage: React.FC = () => {
         setShowModal(true);
     };
 
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to cancel this request? This action cannot be undone.')) {
+    const handleDelete = async (id: string) => {
+        const result = await confirm({
+            title: 'Cancel Request',
+            message: 'Are you sure you want to cancel this asset request? This action cannot be undone.',
+            type: 'destructive',
+            confirmText: 'Cancel Request',
+            cancelText: 'Keep Request'
+        });
+        if (result) {
             cancelRequestMutation.mutate(id);
         }
     };
@@ -271,8 +280,14 @@ export const AssetRequestsPage: React.FC = () => {
                                                                             variant="outline"
                                                                             className="text-red-600 border-red-200 hover:bg-red-50"
                                                                             title="Reject Request"
-                                                                            onClick={() => {
-                                                                                const notes = prompt('Reason for rejection?');
+                                                                            onClick={async () => {
+                                                                                const notes = await showPrompt({
+                                                                                    title: 'Reject Request',
+                                                                                    message: 'Please provide a reason for rejecting this request.',
+                                                                                    placeholder: 'Reason for rejection...',
+                                                                                    confirmText: 'Reject',
+                                                                                    cancelText: 'Cancel'
+                                                                                });
                                                                                 if (notes !== null) {
                                                                                     handleActionMutation.mutate({ id: request.id, status: 'REJECTED', admin_notes: notes });
                                                                                 }

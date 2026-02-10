@@ -7,9 +7,11 @@ import { designationService, Designation } from '@/services/designation.service'
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DesignationsPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog
     const [editItem, setEditItem] = useState<Designation | null>(null); // Controls edit dialog
 
@@ -37,9 +39,9 @@ export const DesignationsPage: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast('Designation deleted', { icon: '✅' });
+            toast.success('Designation deleted successfully');
         },
-        onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+        onError: (err: any) => toast.error(err.message || 'Failed to delete'),
     });
 
     const toggleStatusMutation = useMutation({
@@ -47,16 +49,23 @@ export const DesignationsPage: React.FC = () => {
             designationService.updateDesignation(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+            toast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
         },
-        onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+        onError: (err: any) => toast.error(err.message || 'Failed to update status'),
     });
 
     // --------------------------------------------------------------------------
     // Handlers
     // --------------------------------------------------------------------------
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this designation? \nThis action cannot be undone if employees are assigned to it.')) {
+    const handleDelete = async (id: string) => {
+        const result = await confirm({
+            title: 'Delete Designation',
+            message: 'Are you sure you want to delete this designation? \nThis action cannot be undone if employees are assigned to it.',
+            type: 'destructive',
+            confirmText: 'Delete Designation',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteMutation.mutate(id);
         }
     };

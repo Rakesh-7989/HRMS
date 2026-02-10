@@ -15,4 +15,10 @@ router.patch("/tenants/:id/deactivate", validate(tenantIdParam), controller.deac
 router.get("/tenants/:id/users", validate(tenantIdParam), controller.getUsersByTenant);
 router.get("/tenants/:id/employees", validate(tenantIdParam), controller.getTenantEmployeeCount);
 
+// Plan management
+router.get("/plans", controller.getPlans);
+router.post("/plans", controller.createPlan);
+router.put("/plans/:id", controller.updatePlan);
+router.delete("/plans/:id", controller.deletePlan);
+
 module.exports = router;

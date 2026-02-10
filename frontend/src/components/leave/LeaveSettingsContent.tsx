@@ -11,11 +11,13 @@ import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicy
 import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, RefreshCw, AlertCircle, FileText, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 type TabType = 'types' | 'policies';
 
 export const LeaveSettingsContent: React.FC = () => {
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const [activeTab, setActiveTab] = useState<TabType>('types');
 
     // Error state for displaying API errors
@@ -168,8 +170,15 @@ export const LeaveSettingsContent: React.FC = () => {
         },
     });
 
-    const handleRunAccrual = () => {
-        if (window.confirm('Run monthly leave allocation for all employees? This will credit leaves based on policies.')) {
+    const handleRunAccrual = async () => {
+        const result = await confirm({
+            title: 'Run Leave Accrual',
+            message: 'Run monthly leave allocation for all employees? This will credit leaves based on policies.',
+            type: 'destructive',
+            confirmText: 'Run Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             runAccrualMutation.mutate();
         }
     };
@@ -274,14 +283,30 @@ export const LeaveSettingsContent: React.FC = () => {
         }
     };
 
-    const handleDeleteType = (id: string) => {
-        if (id && window.confirm('Are you sure you want to delete this leave type? This action cannot be undone.')) {
+    const handleDeleteType = async (id: string) => {
+        if (!id) return;
+        const result = await confirm({
+            title: 'Delete Leave Type',
+            message: 'Are you sure you want to delete this leave type? This action cannot be undone.',
+            type: 'destructive',
+            confirmText: 'Delete Type',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteTypeMutation.mutate(id);
         }
     };
 
-    const handleDeletePolicy = (id: string) => {
-        if (id && window.confirm('Are you sure you want to delete this leave policy? This action cannot be undone.')) {
+    const handleDeletePolicy = async (id: string) => {
+        if (!id) return;
+        const result = await confirm({
+            title: 'Delete Leave Policy',
+            message: 'Are you sure you want to delete this leave policy? This action cannot be undone.',
+            type: 'destructive',
+            confirmText: 'Delete Policy',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deletePolicyMutation.mutate(id);
         }
     };

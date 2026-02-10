@@ -14,6 +14,10 @@ export interface Tenant {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  employee_count?: number;
+  plan_name?: string;
+  subscription_status?: string;
+  is_trial?: boolean;
 }
 
 export interface TenantUser {
@@ -53,6 +57,41 @@ export const superAdminService = {
   getTenantEmployeeCount: async (id: string): Promise<number> => {
     const response = await api.get<{ status: string; count: number }>(`/super-admin/tenants/${id}/employees`);
     return response.data.count || 0;
+  },
+
+  cancelTenantSubscription: async (id: string): Promise<any> => {
+    const response = await api.post(`/subscriptions/admin/cancel/${id}`);
+    return response.data;
+  },
+
+  extendTenantSubscription: async (id: string, days: number): Promise<any> => {
+    const response = await api.post(`/subscriptions/admin/extend/${id}`, { days });
+    return response.data;
+  },
+
+  enableTenantSubscription: async (id: string, planId?: string, days?: number): Promise<any> => {
+    const response = await api.post(`/subscriptions/admin/enable/${id}`, { planId, days });
+    return response.data;
+  },
+
+  upgradeTenantSubscription: async (id: string, planId: string, billingCycle?: string): Promise<any> => {
+    const response = await api.post(`/subscriptions/admin/upgrade/${id}`, { planId, billingCycle });
+    return response.data;
+  },
+
+  suspendTenantSubscription: async (id: string): Promise<any> => {
+    const response = await api.post(`/subscriptions/admin/suspend/${id}`);
+    return response.data;
+  },
+
+  getTenantBillingHistory: async (id: string): Promise<any[]> => {
+    const response = await api.get(`/subscriptions/admin/billing/${id}`);
+    return response.data.data || [];
+  },
+
+  getPlans: async (): Promise<any[]> => {
+    const response = await api.get('/subscriptions/plans');
+    return response.data.plans || [];
   },
 };
 

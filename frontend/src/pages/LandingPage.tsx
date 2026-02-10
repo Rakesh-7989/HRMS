@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Button } from '@/components/ui/Button';
@@ -7,10 +7,12 @@ import { Card } from '@/components/ui/Card';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import {
-  ArrowRight, CheckCircle, Clock, Shield,
+  ArrowRight, Clock, Shield,
   Smartphone, Tablet, Globe, LayoutDashboard, Briefcase, UserCheck,
-  MapPin, Columns, ClipboardList, Calendar, DollarSign
+  MapPin, Columns, ClipboardList, Calendar, DollarSign, Loader2, Star, Check
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { plansService, Plan } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
 
 const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, colorConfig }) => {
@@ -314,10 +316,95 @@ const roles = [
   }
 ];
 
+// featureKeys and formatFeatureLabel removed (unused)
+
+
+const categoryLabels: Record<string, string> = {
+  dashboard: 'Core HR & Dashboards',
+  collaboration: 'Collaboration Tools',
+  employee_management: 'Employee Management',
+  leave_tracker: 'Leave & Time Off',
+  attendance_tracker: 'Attendance Tracking',
+  project_management: 'Project & Workspace',
+  asset_management: 'Asset Management',
+  employee_activity_monitoring: 'Activity Monitoring',
+  automation: 'Workflow Automation',
+  performance_management: 'Performance Management',
+  payroll_automation: 'Payroll Automation',
+  mobile_application: 'Mobile Solutions',
+  other_features: 'Additional Capabilities',
+};
+
+// Helper to count enabled features in a plan for landing page display
+const countEnabledFeatures = (features: Record<string, any>): string[] => {
+  const enabledList: string[] = [];
+
+  if (!features || typeof features !== 'object') return [];
+
+  Object.entries(features).forEach(([category, value]) => {
+    if (category === 'contact_sales') return;
+
+    if (typeof value === 'object' && value !== null) {
+      const enabledCount = Object.values(value).filter(Boolean).length;
+      if (enabledCount > 0) {
+        const label = categoryLabels[category] || category.replace(/_/g, ' ');
+        enabledList.push(label);
+      }
+    }
+  });
+
+  return enabledList;
+};
+
+// Map database plan to display format
+const mapPlanToDisplay = (plan: Plan, index: number, totalPlans: number, billingCycle: 'monthly' | 'annual') => {
+  const isCustom = plan.name === 'CUSTOM' || plan.price === 0;
+  const isMiddlePlan = index === Math.floor(totalPlans / 2);
+
+  // Apply 20% discount for annual billing
+  let price = plan.price;
+  if (!isCustom && billingCycle === 'annual') {
+    price = Math.round(plan.price * 0.8);
+  }
+
+  return {
+    id: plan.id,
+    name: plan.name,
+    price: isCustom ? 'Custom' : price,
+    period: isCustom ? '' : billingCycle === 'monthly' ? 'mth' : 'yr',
+    description: plan.max_employees
+      ? `Up to ${plan.max_employees} employees`
+      : 'Unlimited employees',
+    features: countEnabledFeatures(plan.features),
+    popular: isMiddlePlan && !isCustom,
+    glow: isMiddlePlan && !isCustom
+      ? 'shadow-[0_0_50px_rgba(37,99,235,0.1)] group-hover:shadow-[0_0_60px_rgba(37,99,235,0.15)]'
+      : 'group-hover:shadow-[0_0_40px_rgba(0,0,0,0.02)]',
+    rawPlan: plan // Keep reference for table comparison
+  };
+};
+
 export const LandingPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const tenantId = searchParams.get('tenantId');
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [billingCycle, setBillingCycle] = React.useState<'monthly' | 'annual'>('monthly');
+
+  const { data: plansData, isLoading } = useQuery({
+    queryKey: ['landing-plans'],
+    queryFn: () => plansService.getPlans(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  React.useEffect(() => {
+    console.log('Landing plansData:', plansData);
+  }, [plansData]);
+
+  const displayPlans = Array.isArray(plansData)
+    ? plansData.map((plan, index) => mapPlanToDisplay(plan, index, plansData.length, billingCycle))
+    : [];
 
   const staggerContainer = {
     hidden: { opacity: 0 },
@@ -345,6 +432,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div ref={containerRef} className="h-screen bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
+
       {/* Background GZ Big Text */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
         <motion.span
@@ -352,8 +440,8 @@ export const LandingPage: React.FC = () => {
           animate={{
             opacity: 1,
             scale: 1,
-            y: [0, -20, 0],
-            x: [0, 10, 0]
+            y: [0, -10, 0],
+            x: [0, 5, 0]
           }}
           transition={{
             opacity: { duration: 0.5 },
@@ -361,14 +449,15 @@ export const LandingPage: React.FC = () => {
             y: { duration: 15, repeat: Infinity, ease: "easeInOut" },
             x: { duration: 20, repeat: Infinity, ease: "easeInOut" }
           }}
-          className="text-[40rem] font-semibold tracking-tighter leading-none text-black/5 dark:text-white/5 opacity-100"
+          className="text-[28rem] md:text-[40rem] font-semibold tracking-tighter leading-none text-black/[0.03] dark:text-white/[0.03] opacity-100"
         >
           GZ
         </motion.span>
       </div>
 
-      {/* Background gradient overlay */}
+      {/* Background gradient overlay & Grid Pattern */}
       <div className="fixed inset-0 bg-gradient-radial opacity-30 dark:opacity-90 pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Futuristic Navigation - Floating Island */}
       <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-6">
@@ -392,7 +481,7 @@ export const LandingPage: React.FC = () => {
                 </Button>
                 <div className="h-6 w-px bg-white/10 mx-2" />
                 <ThemeToggle />
-                <Button variant="outline" className="border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5" onClick={() => navigate('/register')}>
+                <Button variant="outline" className="border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5" onClick={() => navigate('/pricing')}>
                   Register
                 </Button>
                 <Button variant="primary" className="shadow-lg shadow-primary/20" onClick={() => navigate('/login')}>
@@ -444,7 +533,7 @@ export const LandingPage: React.FC = () => {
             </AnimatedText>
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-5 justify-center">
-              <Button size="lg" className="rounded-xl px-8 py-5 text-base group" onClick={() => navigate('/register')}>
+              <Button size="lg" className="rounded-xl px-8 py-5 text-base group" onClick={() => navigate('/pricing')}>
                 Begin Your Journey <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
               </Button>
               <Button variant="outline" size="lg" className="rounded-xl px-8 py-5 text-base" onClick={scrollToFeatures}>
@@ -747,133 +836,143 @@ export const LandingPage: React.FC = () => {
 
 
         {/* Pricing Section */}
-        <div id="pricing" className="mb-24">
-          <div className="text-center mb-20">
-            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Flexible Plans</motion.span>
-            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6">
-              Invest in Your <span className="text-gradient">Growth</span>.
-            </AnimatedText>
-            <p className="text-gray-600 dark:text-muted max-w-2xl mx-auto">
-              Transparent pricing configured for organizations of every scale.
-              No hidden fees, just pure operational efficiency.
-            </p>
+        <div id="pricing" className="mb-24 pt-20">
+          <div className="text-center mb-16">
+            <motion.span
+              variants={fadeInUp}
+              className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
+            >
+              Subscription Plans
+            </motion.span>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-8 text-[#101828] dark:text-white leading-tight">
+              Ready to <span className="text-gradient">Scale</span> Your Business?
+            </h2>
+
+            {/* Billing Toggle - Horizon Style */}
+            <div className="flex justify-center mb-12">
+              <div className="inline-flex p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/10 backdrop-blur-md">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={cn(
+                    "px-8 py-2 rounded-lg text-sm font-bold transition-all duration-300 uppercase tracking-widest",
+                    billingCycle === 'monthly'
+                      ? "bg-white dark:bg-primary text-black dark:text-white shadow-xl"
+                      : "text-gray-500 hover:text-gray-900 dark:text-muted dark:hover:text-white"
+                  )}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingCycle('annual')}
+                  className={cn(
+                    "px-8 py-2 rounded-lg text-sm font-bold transition-all duration-300 uppercase tracking-widest flex items-center gap-2",
+                    billingCycle === 'annual'
+                      ? "bg-white dark:bg-primary text-black dark:text-white shadow-xl"
+                      : "text-gray-500 hover:text-gray-900 dark:text-muted dark:hover:text-white"
+                  )}
+                >
+                  Annual
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/20">
+                    -20%
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-10"
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col justify-center items-center py-20 gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <span className="text-muted/60 font-medium tracking-widest uppercase text-xs">Synchronizing Plans</span>
+            </div>
+          )}
+
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4"
           >
-            {[
-              {
-                name: 'Standard',
-                price: 45,
-                period: 'user/mo',
-                description: 'Essential features for small teams.',
-                features: ['Monthly: ₹55.00/user', 'Yearly: ₹45.00/user', 'Net Monthly: ₹64.90 (incl. GST)', 'Net Yearly: ₹637.20 (incl. GST)'],
-                popular: false,
-                glow: 'group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]'
-              },
-              {
-                name: 'Premium',
-                price: 60,
-                period: 'user/mo',
-                description: 'Advanced tools for growing businesses.',
-                features: [
-                  'Monthly: ₹70.00/user',
-                  'Quarterly: ₹67.00/user',
-                  'Half-Yearly: ₹65.00/user',
-                  'Yearly: ₹60.00/user',
-                  'Setup Charge: ₹1,180.00'
-                ],
-                popular: true,
-                glow: 'shadow-[0_0_50px_rgba(66,39,90,0.15)] group-hover:shadow-[0_0_60px_rgba(66,39,90,0.2)]'
-              },
-              {
-                name: 'Elite',
-                price: 200,
-                period: 'user/mo',
-                description: 'Maximum power for large enterprises.',
-                features: [
-                  'Monthly: ₹220.00/user',
-                  'Quarterly: ₹214.00/user',
-                  'Half-Yearly: ₹208.00/user',
-                  'Yearly: ₹200.00/user',
-                  'Setup Charge: ₹1,770.00'
-                ],
-                popular: false,
-                glow: 'group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]'
-              },
-            ].map((plan) => (
+            {!isLoading && displayPlans.length === 0 && (
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                <p className="text-muted/60 font-bold uppercase tracking-widest text-sm">No Active Plans Found</p>
+                <p className="text-[10px] text-muted/30 mt-2">Check database table permissions or is_active flags.</p>
+              </div>
+            )}
+            {displayPlans.map((plan: any) => (
               <motion.div
                 key={plan.name}
                 variants={fadeInUp}
-                className="group relative"
+                className={cn(
+                  "group relative rounded-[2.5rem] p-8 transition-all duration-500 overflow-hidden border",
+                  plan.popular
+                    ? "bg-black/[0.03] dark:bg-white/[0.03] border-primary/30 shadow-[0_0_50px_rgba(var(--primary),0.05)] scale-105 z-10"
+                    : "bg-black/[0.01] dark:bg-white/[0.01] border-black/5 dark:border-white/5 backdrop-blur-sm"
+                )}
               >
-                <Card
-                  hover={false}
-                  className={cn(
-                    'h-full flex flex-col p-10 border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem] transition-all duration-500',
-                    plan.popular ? 'border-primary/50 bg-primary/5 shadow-2xl shadow-primary/10' : 'hover:border-black/20 dark:hover:border-white/20 hover:bg-black/5 dark:hover:bg-white/[0.04]',
-                    plan.glow
-                  )}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <span className="px-5 py-1.5 rounded-full bg-primary text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/30">
-                        Most Power
+                {/* Decorative background glow */}
+                <div className={cn(
+                  "absolute -top-20 -right-20 w-40 h-40 blur-[80px] -z-10 opacity-20 transition-opacity duration-500 group-hover:opacity-40",
+                  plan.name === 'STANDARD' ? 'bg-blue-500' :
+                    plan.name === 'PREMIUM' ? 'bg-primary' : 'bg-purple-500'
+                )} />
+
+                {plan.popular && (
+                  <div className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 border border-primary/20 backdrop-blur-md">
+                    <Star className="text-primary fill-primary" size={10} />
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Recommended</span>
+                  </div>
+                )}
+
+                <div className="mb-10 text-center">
+                  <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] mb-4">{plan.name}</h3>
+                  <div className="flex items-baseline justify-center gap-1.5 mb-2">
+                    <span className="text-4xl lg:text-5xl font-black tracking-tighter">
+                      {typeof plan.price === 'number' ? `₹${plan.price.toLocaleString()}` : plan.price}
+                    </span>
+                    {typeof plan.price === 'number' && (
+                      <span className="text-muted/60 text-sm font-bold uppercase tracking-widest">/{plan.period}</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted/40 uppercase tracking-widest font-black">Excl. 18% GST</p>
+                  <p className="mt-4 text-sm text-muted font-medium italic">{plan.description}</p>
+                </div>
+
+                <div className="space-y-4 mb-10">
+                  {plan.features.slice(0, 6).map((feature: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Check size={10} className="text-primary" />
+                      </div>
+                      <span className="text-xs font-bold text-muted/80 group-hover:text-white transition-colors capitalize">
+                        {feature}
                       </span>
                     </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant={plan.popular ? 'primary' : 'outline'}
+                  className={cn(
+                    "w-full py-6 rounded-2xl text-xs font-black uppercase tracking-[0.2em] group/btn transition-all duration-300",
+                    !plan.popular && "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                   )}
-
-                  <div className="mb-10 text-center">
-                    <h3 className="text-xl font-bold mb-2 uppercase tracking-tight text-muted">{plan.name}</h3>
-                    <div className="flex items-baseline justify-center gap-1 mb-4">
-                      {typeof plan.price === 'number' ? (
-                        <>
-                          <span className="text-5xl font-extrabold tracking-tighter">₹{plan.price}</span>
-                          <span className="text-muted font-medium">/{plan.period}</span>
-                        </>
-                      ) : (
-                        <span className="text-5xl font-extrabold tracking-tighter leading-none">{plan.price}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-muted/60 leading-relaxed">{plan.description}</p>
-                  </div>
-
-                  <div className="border-t border-black/5 dark:border-white/5 mb-10" />
-
-                  <ul className="space-y-5 mb-12 flex-1">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-3">
-                        <div className="p-1 rounded-full bg-primary/20">
-                          <CheckCircle size={14} className="text-primary" />
-                        </div>
-                        <span className="text-sm font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    variant={plan.popular ? 'primary' : 'outline'}
-                    className={cn(
-                      "w-full py-5 text-base rounded-2xl shadow-xl transition-all",
-                      plan.popular ? "shadow-primary/20" : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                    )}
-                    onClick={() =>
-                      (plan.price as any) === 'Custom'
-                        ? window.open('mailto:sales@hrmspro.com')
-                        : navigate('/register')
+                  onClick={() => {
+                    if ((plan.price as any) === 'Custom') {
+                      window.open('mailto:sales@WellZo.com');
+                    } else if (tenantId) {
+                      // Existing tenant flow - go to login with return params
+                      navigate(`/login?tenantId=${tenantId}&plan_id=${plan.id}&cycle=${billingCycle.toUpperCase()}&redirect=/billing`);
+                    } else {
+                      // New user flow
+                      navigate(`/register?plan_id=${plan.id}&cycle=${billingCycle.toUpperCase()}`);
                     }
-                  >
-                    {(plan.price as any) === 'Custom' ? 'Contact Partner' : 'Start Trial'}
-                  </Button>
-                </Card>
+                  }}
+                >
+                  {plan.price === 'Custom' ? 'Contact Partner' : 'Start Trial Now'}
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                </Button>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
 
         {/* Final CTA */}
@@ -904,7 +1003,7 @@ export const LandingPage: React.FC = () => {
               className="flex flex-col sm:flex-row gap-5 justify-center"
             >
               <motion.div variants={fadeInUp}>
-                <Button size="lg" className="rounded-xl px-10 py-6 text-lg" onClick={() => navigate('/register')}>
+                <Button size="lg" className="rounded-xl px-10 py-6 text-lg" onClick={() => navigate('/pricing')}>
                   Get Started Now
                 </Button>
               </motion.div>

@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+
+const path = require("path");
+
+// Switch to backend directory (parent of scripts/)
+const backendRoot = path.join(__dirname, "..");
+if (process.cwd() !== backendRoot) {
+  process.chdir(backendRoot);
+  console.log(`Switching execution context to: ${backendRoot}`);
+}
+
 require("dotenv").config();
 const { execSync } = require("child_process");
 const fs = require("fs");
@@ -99,7 +109,7 @@ async function setupDatabase() {
     DB_PASSWORD,
   } = process.env;
 
-  if (DB_PASSWORD) process.env.PGPASSWORD = DB_PASSWORD;
+  // if (DB_PASSWORD) process.env.PGPASSWORD = DB_PASSWORD; // Moved down to avoid conflict with postgres user auth
 
   const isWindows = process.platform === "win32";
   const SUPERUSER = "postgres";
@@ -129,6 +139,9 @@ async function setupDatabase() {
     console.log("✓ DB user password updated");
   }
 
+  // Now that we are switching to the app user for migrations, set the password in env
+  if (DB_PASSWORD) process.env.PGPASSWORD = DB_PASSWORD;
+
   // -----------------------
   // Step B: Run schema.sql
   // -----------------------
@@ -154,6 +167,9 @@ async function setupDatabase() {
     "src/database/migrations/20251218_add_payroll_tables.sql",
     "src/database/migrations/20260106_leave_tracker.sql",
     "src/database/migrations/20260109_fix_payroll_schema.sql",
+    "src/database/migrations/20260109_fix_payroll_schema_tables_only.sql",
+    "src/database/migrations/20260109_patch_missing_columns.sql",
+    "src/database/migrations/20260109_patch_payroll_items.sql",
     "src/database/migrations/20260113_add_attendance_regularization.sql",
     "src/database/migrations/20260124_add_device_tracking.sql",
     "src/database/migrations/20260124_corporate_calendar.sql",
@@ -161,6 +177,19 @@ async function setupDatabase() {
     "src/database/migrations/20260128_task_comments.sql",
     "src/database/migrations/20260202_create_chat_tables.sql",
     "src/database/migrations/20260203_chat_enhancements.sql"
+
+    "src/database/migrations/20260127_add_annual_salary.sql",
+    "src/database/migrations/20260127_add_work_mode.sql",
+    "src/database/migrations/20260127_enhanced_payroll_structures.sql",
+    "src/database/migrations/20260128_add_employee_uan_esi.sql",
+    "src/database/migrations/20260128_add_payroll_item_components.sql",
+    "src/database/migrations/20260128_make_component_id_nullable.sql",
+    "src/database/migrations/20260128_task_comments.sql",
+    "src/database/migrations/20260129_add_shifts_table.sql",
+    "src/database/migrations/20260129_add_wfh_leave_type.sql",
+    "src/database/migrations/20260129_create_wfh_requests.sql",
+    "src/database/migrations/20260130_add_dynamic_pricing.sql",
+    "src/database/migrations/20260130_add_shift_tracking_to_attendance.sql"
   ];
 
   for (const migrationFile of migrationFiles) {
@@ -254,6 +283,25 @@ async function setupDatabase() {
   }
 
   // -----------------------
+  // Step F.1: Seed Salary Components
+  // -----------------------
+  console.log("Seeding salary components...");
+  const seedSalaryComponentsPath = "src/database/seed/seed_salary_components.sql";
+
+  if (fs.existsSync(seedSalaryComponentsPath)) {
+    const seedCmd =
+      `psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f ${seedSalaryComponentsPath}`;
+
+    if (!run(seedCmd)) {
+      console.error(" Seeding salary components failed");
+      process.exit(1);
+    }
+    console.log("✓ Salary components seeded");
+  } else {
+    console.log("No salary components seed file found");
+  }
+
+  // -----------------------
   // Step G: Seed Super Admin
   // -----------------------
   console.log("Seeding super admin user...");
@@ -270,6 +318,25 @@ async function setupDatabase() {
     console.log("✓ Super Admin seeded");
   } else {
     console.log("No user seed file found");
+  }
+
+  // -----------------------
+  // Step H: Seed Demo Data
+  // -----------------------
+  console.log("Seeding demo data...");
+  const seedDemoDataPath = "src/database/seed/seed_demo_data.sql";
+
+  if (fs.existsSync(seedDemoDataPath)) {
+    const seedCmd =
+      `psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f ${seedDemoDataPath}`;
+
+    if (!run(seedCmd)) {
+      console.error(" Seeding demo data failed");
+      process.exit(1);
+    }
+    console.log("✓ Demo data seeded");
+  } else {
+    console.log("No demo data seed file found");
   }
 
   console.log("");
