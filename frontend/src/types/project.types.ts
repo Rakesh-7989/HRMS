@@ -168,12 +168,19 @@ export interface CreateTaskData {
 export interface Timesheet {
     id: string;
     employee_id: string;
-    project_id: string;
-    task_id: string;
+    project_id?: string;
+    task_id?: string;
     work_date: string;
     hours: number;
+    notes?: string;
     status: TimesheetStatus;
+    timesheet_id?: string;
     entry_id?: string;
+    project_name?: string;
+    week_start_date?: string;
+    week_end_date?: string;
+    total_hours?: number;
+    submitted_at?: string;
     approved_at?: string;
     rejection_reason?: string;
     approver?: {

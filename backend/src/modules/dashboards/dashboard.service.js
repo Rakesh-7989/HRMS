@@ -244,23 +244,24 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
   const orgMetrics = await query(
     `
       SELECT
-        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1) AS total_users,
-        (SELECT COUNT(*)::INTEGER FROM employees WHERE tenant_id=$1) AS total_employees,
+        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_deleted = false) AS total_users,
+        (SELECT COUNT(*)::INTEGER FROM employees WHERE tenant_id=$1 AND is_deleted = false) AS total_employees,
+        (SELECT COUNT(*)::INTEGER FROM projects WHERE tenant_id=$1) AS total_projects,
         (SELECT COUNT(*)::INTEGER FROM departments WHERE tenant_id=$1) AS total_departments,
         (SELECT COUNT(*)::INTEGER FROM designations WHERE tenant_id=$1) AS total_designations,
         (
           SELECT COUNT(*)::INTEGER 
           FROM employees e 
           JOIN users u ON e.user_id = u.id 
-          WHERE e.tenant_id=$1 AND u.is_active = true
+          WHERE e.tenant_id=$1 AND u.is_active = true AND u.is_deleted = false
         ) AS active_employees,
         (
           SELECT COUNT(*)::INTEGER 
           FROM employees e 
           JOIN users u ON e.user_id = u.id 
-          WHERE e.tenant_id=$1 AND u.is_active = false
+          WHERE e.tenant_id=$1 AND u.is_active = false AND u.is_deleted = false
         ) AS inactive_employees,
-        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_active = true) AS active_users
+        (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id=$1 AND is_active = true AND is_deleted = false) AS active_users
     `,
     [tenantId]
   );
@@ -309,6 +310,19 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
       ORDER BY date DESC
     `,
     [tenantId, startDateStr, endDateStr]
+  );
+
+  // Get task metrics
+  const taskMetrics = await query(
+    `
+      SELECT 
+        column_key, 
+        COUNT(*)::INTEGER as count
+      FROM tasks 
+      WHERE tenant_id=$1
+      GROUP BY column_key
+    `,
+    [tenantId]
   );
 
   // Get leave statistics
@@ -366,6 +380,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
     roleDistribution: roleDistribution.rows,
     departmentAnalytics: departmentAnalytics.rows,
     attendanceMetrics: attendanceMetrics.rows,
+    taskMetrics: taskMetrics.rows,
     leaveStatistics: leaveStatistics.rows,
     employeeStatus: employeeStatus.rows[0],
     topDepartments: topDepartments.rows,

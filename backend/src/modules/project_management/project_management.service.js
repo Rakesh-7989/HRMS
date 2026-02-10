@@ -1189,7 +1189,7 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
 
   // 1. Verify project member
   if (project_id) {
-    const isMember = await this.isProjectMember(tenantId, project_id, employeeId);
+    const isMember = await exports.isProjectMember(tenantId, project_id, employeeId);
     if (!isMember) {
       throw new BadRequestError("Employee must be a project member to log timesheets");
     }
@@ -1381,6 +1381,9 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
       hours: row.hours,
       notes: row.notes,
       status: row.status,
+      week_start_date: row.week_start_date,
+      week_end_date: row.week_end_date,
+      project_name: row.project_name,
       approved_at: row.approved_at,
       rejection_reason: row.rejection_reason,
       approver: row.approver_first_name ? {
@@ -1400,14 +1403,20 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
 
 /**
  * CREATE TIMESHEET WITH ENTRIES
+ * - Reuses existing sheet for the same week (deletes old entries first)
+ * - Sets status to SUBMITTED so it enters the approval queue
  */
 exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
   const { project_id, week_start_date, week_end_date, entries } = data;
 
-  // Validate Project Member (if header project set)
-  if (project_id) {
-    const isMember = await this.isProjectMember(tenantId, project_id, employeeId);
-    if (!isMember) throw new BadRequestError("Employee must be a project member");
+  // Validate Project Members for billable entries
+  for (const entry of entries) {
+    if (entry.project_id) {
+      const isMember = await exports.isProjectMember(tenantId, entry.project_id, employeeId);
+      if (!isMember) {
+        throw new BadRequestError("Employee must be a project member to log billable time");
+      }
+    }
   }
 
   // Validate daily hours
@@ -1418,27 +1427,28 @@ exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
     if (hoursByDate[dateKey] > 24) throw new BadRequestError(`Exceeds 24h on ${dateKey}`);
   }
 
-  // Check Exists
+  // Check if a sheet already exists for this week
   const existingSheet = await pool.query(
-    `SELECT id FROM timesheets WHERE tenant_id = $1 AND employee_id = $2 AND week_start_date = $3 AND (project_id IS NULL OR project_id = $4)`,
+    `SELECT id, status FROM timesheets WHERE tenant_id = $1 AND employee_id = $2 AND week_start_date = $3 AND (project_id IS NULL OR project_id = $4)`,
     [tenantId, employeeId, week_start_date, project_id || null]
   );
 
-  // NOTE: Logic change - we reuse the sheet if it exists and is Draft!
-  // Instead of throwing Conflict, we append?
-  // Current requirement implies "adding rows". 
-  // If user calls createWeeklyTimesheet, and sheet exists, we should probably merge?
-  // But strict requirement in code was ConflictError. 
-  // Let's stick to Conflict for "Atomic Week Creation" OR allow "Update" workflow.
-  // Given frontend sends "entries" for the whole week view often...
-  // Let's try to REUSE if DRAFT.
-
   let timesheetId;
   if (existingSheet.rowCount > 0) {
-    // Reuse existing sheet
     const sheet = existingSheet.rows[0];
-    // Assuming status check
+    // Only allow re-submission for DRAFT or REJECTED sheets
+    if (sheet.status === 'APPROVED') {
+      throw new BadRequestError('This week\'s timesheet is already approved and cannot be modified');
+    }
+    if (sheet.status === 'SUBMITTED') {
+      throw new BadRequestError('This week\'s timesheet is already submitted and pending approval');
+    }
     timesheetId = sheet.id;
+    // Delete old entries before inserting fresh ones (prevents duplicates)
+    await pool.query(
+      `DELETE FROM timesheet_entries WHERE timesheet_id = $1 AND tenant_id = $2`,
+      [timesheetId, tenantId]
+    );
   } else {
     timesheetId = crypto.randomUUID();
     await pool.query(
@@ -1448,12 +1458,8 @@ exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
     );
   }
 
-  const totalHours = entries.reduce((sum, e) => sum + e.hours, 0);
-
-  // Insert entries
+  // Insert fresh entries
   for (const entry of entries) {
-    // Check dupe?
-    // We'll just Insert. 
     await pool.query(
       `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, project_id, work_date, hours, notes, created_by, updated_by, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
@@ -1461,13 +1467,19 @@ exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
     );
   }
 
-  // Update total
+  // Update total hours and set status to SUBMITTED
   await pool.query(
-    `UPDATE timesheets SET total_hours = (SELECT SUM(hours) FROM timesheet_entries WHERE timesheet_id = $1), updated_at = NOW() WHERE id = $1`,
-    [timesheetId]
+    `UPDATE timesheets SET 
+      total_hours = (SELECT COALESCE(SUM(hours), 0) FROM timesheet_entries WHERE timesheet_id = $1), 
+      status = 'SUBMITTED', 
+      submitted_at = NOW(), 
+      updated_by = $2, 
+      updated_at = NOW() 
+    WHERE id = $1`,
+    [timesheetId, userId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
@@ -1566,6 +1578,7 @@ exports.getMyTimesheets = async (tenantId, employeeId, filters = {}) => {
 
 /**
  * LIST PENDING APPROVALS (for managers)
+ * Returns week-level timesheets with nested entries for week-wise approval view
  */
 exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
   const { skip = 0, limit = 20 } = filters;
@@ -1585,58 +1598,81 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
 
   const { role, employee_id: managerEmployeeId } = userResult.rows[0];
 
-  // We return ENTRIES of submitted timesheets to match the UI requirements (hours, work_date, task)
-  let query = `SELECT te.*, ts.id as timesheet_id, ts.status, 
-                      COALESCE(p_entry.name, p_task.name, p_header.name) as project_name, 
-                      tk.title as task_title,
-                      e.first_name, e.last_name, u.email, u.role as employee_role
-               FROM timesheet_entries te
-               JOIN timesheets ts ON te.timesheet_id = ts.id
-               LEFT JOIN tasks tk ON te.task_id = tk.id
-               LEFT JOIN projects p_entry ON te.project_id = p_entry.id
-               LEFT JOIN projects p_task ON tk.project_id = p_task.id
-               LEFT JOIN projects p_header ON ts.project_id = p_header.id
-               LEFT JOIN employees e ON ts.employee_id = e.id
-               LEFT JOIN users u ON e.user_id = u.id
-               WHERE te.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
+  // First get the submitted timesheets (week-level)
+  let tsQuery = `SELECT ts.*, 
+                        e.first_name, e.last_name, u.email, u.role as employee_role,
+                        p.name as project_name
+                 FROM timesheets ts
+                 LEFT JOIN employees e ON ts.employee_id = e.id
+                 LEFT JOIN users u ON e.user_id = u.id
+                 LEFT JOIN projects p ON ts.project_id = p.id
+                 WHERE ts.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
   const params = [tenantId];
 
-  // If user is a MANAGER, only show entries for their direct reports
+  // If user is a MANAGER, only show timesheets for their direct reports
   if (role === 'MANAGER' && managerEmployeeId) {
-    query += ` AND e.reports_to = $2`;
+    tsQuery += ` AND e.reports_to = $2`;
     params.push(managerEmployeeId);
   } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
-    query += ` AND 1=0`;
+    tsQuery += ` AND 1=0`;
   }
 
-  const countResult = await pool.query(query, params);
-  const total = countResult.rowCount;
+  // Count for pagination
+  const countResult = await pool.query(
+    tsQuery.replace(/SELECT ts\.\*.*?FROM/s, 'SELECT COUNT(*) as count FROM'),
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count || 0);
 
-  const orderParamIndex = params.length + 1;
-  const skipParamIndex = params.length + 2;
-  query += ` ORDER BY te.work_date DESC, te.created_at ASC LIMIT $${orderParamIndex} OFFSET $${skipParamIndex}`;
+  tsQuery += ` ORDER BY ts.submitted_at DESC, ts.week_start_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
   params.push(limit, skip);
 
-  const result = await pool.query(query, params);
+  const tsResult = await pool.query(tsQuery, params);
+
+  // For each timesheet, fetch its entries
+  const timesheets = [];
+  for (const ts of tsResult.rows) {
+    const entriesResult = await pool.query(
+      `SELECT te.*, 
+              COALESCE(p_entry.name, p_task.name) as project_name,
+              tk.title as task_title
+       FROM timesheet_entries te
+       LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+       LEFT JOIN tasks tk ON te.task_id = tk.id
+       LEFT JOIN projects p_task ON tk.project_id = p_task.id
+       WHERE te.timesheet_id = $1 AND te.tenant_id = $2
+       ORDER BY te.work_date ASC`,
+      [ts.id, tenantId]
+    );
+
+    timesheets.push({
+      id: ts.id,
+      week_start_date: ts.week_start_date,
+      week_end_date: ts.week_end_date,
+      total_hours: ts.total_hours,
+      status: ts.status,
+      submitted_at: ts.submitted_at,
+      project_name: ts.project_name,
+      employee: {
+        id: ts.employee_id,
+        first_name: ts.first_name,
+        last_name: ts.last_name,
+        email: ts.email,
+        role: ts.employee_role
+      },
+      entries: entriesResult.rows.map(e => ({
+        id: e.id,
+        work_date: e.work_date,
+        hours: e.hours,
+        notes: e.notes,
+        project_name: e.project_name,
+        task_title: e.task_title
+      }))
+    });
+  }
 
   return {
-    timesheets: result.rows.map(row => ({
-      ...row,
-      // The UI uses 'entry.id' for approval, so we provide timesheet_id AS id
-      // or we change the UI. Better to provide timesheet_id as 'id' here
-      // so the handleApprove(entry.id) call works on the timesheet.
-      id: row.timesheet_id,
-      entry_id: row.id, // Keep original entry ID just in case
-      project: row.project_name ? { name: row.project_name } : null,
-      task: row.task_title ? { title: row.task_title } : null,
-      employee: {
-        id: row.employee_id,
-        first_name: row.first_name,
-        last_name: row.last_name,
-        email: row.email,
-        role: row.employee_role
-      }
-    })),
+    timesheets,
     pagination: {
       total,
       skip,
@@ -1650,7 +1686,7 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
  * SUBMIT TIMESHEET
  */
 exports.submitTimesheet = async (tenantId, userId, timesheetId) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "DRAFT") {
     throw new BadRequestError("Only draft timesheets can be submitted");
@@ -1662,7 +1698,7 @@ exports.submitTimesheet = async (tenantId, userId, timesheetId) => {
     ["SUBMITTED", userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
@@ -1693,7 +1729,7 @@ exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
 
   for (const timesheetId of timesheetIds) {
     try {
-      const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+      const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
       if (timesheet.status !== "SUBMITTED") {
         errors.push({ id: timesheetId, error: "Only submitted timesheets can be approved" });
@@ -1736,7 +1772,7 @@ exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
  * APPROVE TIMESHEET
  */
 exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "SUBMITTED") {
     throw new BadRequestError("Only submitted timesheets can be approved");
@@ -1779,14 +1815,14 @@ exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
     ["APPROVED", userId, userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
  * REJECT TIMESHEET
  */
 exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "SUBMITTED") {
     throw new BadRequestError("Only submitted timesheets can be rejected");
@@ -1820,7 +1856,7 @@ exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason)
     ["REJECTED", rejectionReason, userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**

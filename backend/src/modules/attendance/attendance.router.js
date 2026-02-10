@@ -159,6 +159,14 @@ router.get(
   controller.getAttendanceReports
 );
 
+// ===== WEEKLY HOURS FOR TIMESHEET =====
+// Get weekly attendance hours (for timesheet display)
+router.get(
+  "/my-weekly-hours",
+  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  controller.getWeeklyAttendanceHours
+);
+
 // ===== REGULARIZATION ENDPOINTS =====
 
 // Apply for regularization (EMPLOYEE)

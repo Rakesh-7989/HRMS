@@ -54,7 +54,11 @@ export const MyAttendanceContent: React.FC = () => {
                                                         'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                             }`}>
                                             {record.status === 'APPROVED' ? 'REGULARIZED' : record.status}
-                                            {record.is_late && <span className="ml-1 text-red-600 font-bold">• LATE</span>}
+                                            {record.is_late && (
+                                                <span className="ml-1 text-red-600 font-bold">
+                                                    • LATE {record.late_by ? `(${record.late_by})` : ''}
+                                                </span>
+                                            )}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center font-mono text-gray-600 dark:text-gray-300">

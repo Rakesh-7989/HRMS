@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usersService } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
+import { departmentService } from '@/services/department.service';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Clock, Search, Calendar } from 'lucide-react';
@@ -19,6 +20,12 @@ export const ShiftRosterPage = () => {
     const { data: shifts = [] } = useQuery({
         queryKey: ['shifts'],
         queryFn: () => getShifts(),
+    });
+
+    // Fetch Departments (Fix for missing dept names)
+    const { data: departments = [] } = useQuery({
+        queryKey: ['departments'],
+        queryFn: () => departmentService.getDepartments(),
     });
 
     // Helper to get shift details
@@ -43,6 +50,15 @@ export const ShiftRosterPage = () => {
         return timeStr.substring(0, 5);
     };
 
+    const getDepartmentName = (emp: any) => {
+        if (emp.department?.name) return emp.department.name;
+        if (emp.department_id) {
+            const dept = departments.find((d: any) => d.id === emp.department_id);
+            return dept ? dept.name : 'No Dept';
+        }
+        return 'No Dept';
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -61,7 +77,7 @@ export const ShiftRosterPage = () => {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
                         placeholder="Search employees..."
-                        className="pl-9"
+                        className="pl-9 h-10" // Force standard height
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -94,7 +110,7 @@ export const ShiftRosterPage = () => {
                                                     {employee.first_name} {employee.last_name}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {employee.employee_id} • {employee.department?.name || 'No Dept'}
+                                                    {employee.employee_id} • {getDepartmentName(employee)}
                                                 </p>
                                             </div>
                                         </div>

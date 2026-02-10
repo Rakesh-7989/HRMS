@@ -15,9 +15,7 @@ import { superAdminService } from '@/services/superAdmin.service';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
-import { ShiftsPage } from '@/pages/organization/ShiftsPage';
-import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
-
+import { UnifiedShiftsContent } from '@/components/organization/UnifiedShiftsContent';
 
 
 export const OrganisationPage: React.FC = () => {
@@ -132,11 +130,8 @@ export const OrganisationPage: React.FC = () => {
                   {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
                 </button>
               )}
-              {['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => setTab('roster')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'roster' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
-                  Shift Roster
-                </button>
-              )}
+
+
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
                   <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
@@ -155,8 +150,7 @@ export const OrganisationPage: React.FC = () => {
           <div className="flex-1 min-h-0 relative overflow-hidden">
             {tab === 'departments' && <DepartmentsContent />}
             {tab === 'designations' && <DesignationsContent />}
-            {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
-            {tab === 'roster' && <div className="h-full overflow-y-auto"><ShiftRosterPage /></div>}
+            {tab === 'shifts' && <UnifiedShiftsContent />}
             {tab === 'tree' && <OrgTreeContent />}
 
             {tab === 'directory' && (

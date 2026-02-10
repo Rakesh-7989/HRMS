@@ -61,6 +61,7 @@ export const timesheetService = {
         week_end_date: string;
         entries: {
             task_id?: string;
+            project_id?: string;
             work_date: string;
             hours: number;
             notes?: string;

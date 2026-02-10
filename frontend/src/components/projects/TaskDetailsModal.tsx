@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock, User, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { StatusBadge } from '@/components/projects/StatusBadge';
 import { Button } from '@/components/ui/Button';
@@ -30,7 +30,15 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[700px] p-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+            <DialogContent className="sm:max-w-[700px] p-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden relative">
+                {/* Floating Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors shadow-sm"
+                    aria-label="Close"
+                >
+                    <X size={18} />
+                </button>
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start bg-gray-50/50 dark:bg-gray-900/50">
                     <div className="space-y-1 pr-8">
@@ -202,7 +210,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 </div>
 
                 {/* Footer / Actions */}
-                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+                <div className="sticky bottom-0 z-10 p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
                     <Button variant="ghost" onClick={onClose}>
                         Close
                     </Button>

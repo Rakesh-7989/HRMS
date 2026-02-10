@@ -6,7 +6,7 @@ import { attendanceService } from '@/services/attendance.service';
 import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, MapPin, Search } from 'lucide-react';
+import { Clock, MapPin, Search, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';
@@ -270,7 +270,7 @@ export const DailyAttendanceContent: React.FC = () => {
     });
 
     const status = todayAttendance?.status || 'NOT_CHECKED_IN';
-    const canClockOut = status === 'PRESENT' || status === 'HALF_DAY' || status === 'PENDING_CHECKOUT';
+    const canClockOut = !!todayAttendance?.check_in_time && !todayAttendance?.check_out_time;
 
     // Helper to filter team logs
     const filteredTeamLogs = todayTeamAttendance.filter(record =>
@@ -348,6 +348,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                     >
                                         <div className="mr-2 h-4 w-4 shrink-0" />
                                         <span className="truncate">Break In</span>
+
                                     </Button>
                                 )}
 

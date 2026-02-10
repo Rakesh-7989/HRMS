@@ -5,13 +5,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { dashboardService } from '@/services/dashboard.service';
 import { eventsService } from '@/services/events.service';
 import {
-  Users, UserCheck, Building2, Briefcase, TrendingUp, TrendingDown,
-  Calendar, Clock, Activity, Sparkles, Award
+  Users, Building2, Briefcase, TrendingUp, TrendingDown,
+  Calendar, Clock, Activity, Sparkles, Award, Folder
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  AreaChart, Area, PieChart, Pie, Cell,
+  AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
@@ -204,6 +204,8 @@ export const AdminDashboard: React.FC = () => {
 
   const metrics = data?.orgMetrics || {
     total_employees: 0,
+    total_users: 0,
+    total_projects: 0,
     active_employees: 0,
     total_departments: 0,
     total_designations: 0,
@@ -224,6 +226,11 @@ export const AdminDashboard: React.FC = () => {
   const roleChartData = roleDist.map((r: any) => ({
     name: r.role,
     value: Number(r.count),
+  }));
+
+  const taskChartData = (data?.taskMetrics || []).map((t: any) => ({
+    status: t.column_key.replace('_', ' '),
+    count: Number(t.count),
   }));
 
 
@@ -309,7 +316,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Employees"
-            value={metrics.total_employees}
+            value={metrics.total_users || metrics.total_employees}
             change={12}
             trend="up"
             icon={Users}
@@ -317,11 +324,11 @@ export const AdminDashboard: React.FC = () => {
             delay={0.1}
           />
           <StatCard
-            title="Active Employees"
-            value={metrics.active_employees || metrics.total_employees}
-            change={8}
+            title="Total Projects"
+            value={metrics.total_projects || 0}
+            change={5}
             trend="up"
-            icon={UserCheck}
+            icon={Folder}
             gradient={COLORS.gradients.green}
             delay={0.2}
           />
@@ -343,29 +350,19 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Attendance Trend Chart */}
+          {/* Task Overview Chart - Replaces Attendance */}
           <ChartCard
-            title="Attendance Overview"
-            subtitle="Last 7 days check-in trends"
-            badge="Live Data"
+            title="Task Overview"
+            subtitle="Tasks by Status"
+            badge="Project Health"
             delay={0.5}
           >
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={attendanceChartData}>
-                  <defs>
-                    <linearGradient id="colorCheckins" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorLate" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={taskChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                   <XAxis
-                    dataKey="date"
+                    dataKey="status"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#9ca3af', fontSize: 12 }}
@@ -376,27 +373,12 @@ export const AdminDashboard: React.FC = () => {
                     tick={{ fill: '#9ca3af', fontSize: 12 }}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    wrapperStyle={{ paddingTop: '20px' }}
-                    formatter={(value) => <span className="text-gray-600 dark:text-gray-300 text-sm">{value}</span>}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="Check-ins"
-                    stroke="#6366f1"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorCheckins)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="Late"
-                    stroke="#f59e0b"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorLate)"
-                  />
-                </AreaChart>
+                  <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                    {taskChartData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </ChartCard>

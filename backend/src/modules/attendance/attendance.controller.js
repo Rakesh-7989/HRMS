@@ -584,3 +584,36 @@ exports.reviewRegularization = async (req, res) => {
     res.status(400).json({ status: "error", message: error.message });
   }
 };
+
+/**
+ * GET WEEKLY ATTENDANCE HOURS
+ * Returns hours worked from clock-in/out for a given week
+ */
+exports.getWeeklyAttendanceHours = async (req, res) => {
+  try {
+    const { week_start, week_end } = req.query;
+
+    if (!week_start || !week_end) {
+      return res.status(400).json({
+        status: "error",
+        message: "week_start and week_end query parameters are required"
+      });
+    }
+
+    const result = await attendanceService.getWeeklyAttendanceHours(
+      req.db,
+      req.user.employeeId,
+      req.user.tenantId,
+      week_start,
+      week_end
+    );
+
+    res.json({
+      status: "success",
+      data: result
+    });
+  } catch (error) {
+    logger.error("Get weekly attendance hours error:", error);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};

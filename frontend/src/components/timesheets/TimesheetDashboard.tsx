@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Mail, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { StatsSection } from './StatsSection';
@@ -75,10 +75,6 @@ export const TimesheetDashboard: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-6 w-full md:w-auto justify-end">
-                    <div className="relative hidden md:block">
-                        <Search className="text-gray-300 absolute left-0 top-1/2 -translate-y-1/2" size={20} />
-                    </div>
-
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setShowEntryForm(true)}
@@ -87,17 +83,6 @@ export const TimesheetDashboard: React.FC = () => {
                             <Plus size={16} />
                             Log Time
                         </button>
-
-                        <button className="text-gray-400 hover:text-gray-600 relative">
-                            <Bell size={20} />
-                            <span className="absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full border-2 border-white"></span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                            <Mail size={20} />
-                        </button>
-                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
-                            <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
-                        </div>
                     </div>
                 </div>
             </motion.div>

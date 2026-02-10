@@ -2,26 +2,24 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { DailyAttendanceContent } from '@/components/attendance/DailyAttendanceContent';
-import { TeamAttendanceContent } from '@/components/attendance/TeamAttendanceContent';
 import { AttendanceReportsContent } from '@/components/attendance/AttendanceReportsContent';
 import { RegularizationRequestsContent } from '@/components/attendance/RegularizationRequestsContent';
 import { MyAttendanceContent } from '@/components/attendance/MyAttendanceContent';
 import { GeoFencingSettingsContent } from '@/components/attendance/GeoFencingSettingsContent';
-import { WFHApprovalsContent } from '@/components/wfh/WFHApprovalsContent';
-import { MyWFHRequestsContent } from '@/components/wfh/MyWFHRequestsContent';
-import { BreakHistoryContent } from '@/components/attendance/BreakHistoryContent';
-import { CurrentBreaksContent } from '@/components/attendance/CurrentBreaksContent';
+import { UnifiedBreaksContent } from '@/components/attendance/UnifiedBreaksContent';
+import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApprovalsContent';
 
 const ATTENDANCE_TABS = [
+    { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'daily', label: 'Daily Log', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'history', label: 'My History', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'break-history', label: 'Break History', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'current-breaks', label: 'On Break', roles: ['MANAGER', 'HR', 'ADMIN'] },
+  { id: 'breaks', label: 'Breaks', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
   { id: 'regularization', label: 'Regularization', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'my-wfh', label: 'My WFH Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] },
-  { id: 'wfh-approvals', label: 'WFH Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] },
-  { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+  //{ id: 'my-wfh', label: 'My WFH Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] }, // Merged
+  { id: 'approvals', label: 'Approvals & Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+  //{ id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
+  //{ id: 'wfh-approvals', label: 'WFH Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
+
   { id: 'geofence', label: 'Geo-Fencing', roles: ['HR', 'ADMIN'] },
 ] as const;
 
@@ -69,12 +67,9 @@ export const AttendancePage: React.FC = () => {
         <div className="min-h-[500px]">
           {activeTab === 'daily' && <DailyAttendanceContent />}
           {activeTab === 'history' && <MyAttendanceContent />}
-          {activeTab === 'break-history' && <BreakHistoryContent />}
-          {activeTab === 'current-breaks' && <CurrentBreaksContent />}
+          {activeTab === 'breaks' && <UnifiedBreaksContent />}
           {activeTab === 'regularization' && <RegularizationRequestsContent />}
-          {activeTab === 'my-wfh' && <MyWFHRequestsContent />}
-          {activeTab === 'team' && <TeamAttendanceContent />}
-          {activeTab === 'wfh-approvals' && <WFHApprovalsContent />}
+          {activeTab === 'approvals' && <UnifiedApprovalsContent />}
           {activeTab === 'reports' && <AttendanceReportsContent />}
           {activeTab === 'geofence' && <GeoFencingSettingsContent />}
         </div>

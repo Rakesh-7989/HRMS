@@ -118,7 +118,9 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   );
 
   let shiftId = null;
-  let lateBy = null;
+  let lateBy = null; // String format (e.g. "15m")
+  let lateByMinutes = 0;
+  let isLate = false;
 
   if (empShiftRes.rowCount > 0) {
     const shift = empShiftRes.rows[0];
@@ -129,11 +131,16 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       const todayStr = new Date().toISOString().split('T')[0];
       const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
       const actualIn = new Date(`${todayStr}T${now}`);
+      // Grace period default 0 if null
       const graceLimit = new Date(shiftStart.getTime() + (shift.grace_period_minutes || 0) * 60000);
 
       if (actualIn > graceLimit) {
         const diffMs = actualIn - shiftStart;
         const diffMins = Math.floor(diffMs / 60000);
+
+        lateByMinutes = diffMins;
+        isLate = true;
+
         const hrs = Math.floor(diffMins / 60);
         const mins = diffMins % 60;
 
@@ -154,11 +161,13 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   }
 
   // 3) Insert attendance
+  // Assuming table has: late_by (varchar), late_by_minutes (int), is_late (bool) based on conversation
+  // If late_by_minutes doesn't exist in migration for you, user said "I have this in table".
   const result = await query(
     `
     INSERT INTO attendance
-      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode, shift_id, late_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode, shift_id, late_by, is_late, late_by_minutes)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     RETURNING *
     `,
     [
@@ -172,7 +181,9 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       actor.id,
       isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE',
       shiftId,
-      lateBy
+      lateBy,
+      isLate,
+      lateByMinutes
     ]
   );
 
@@ -1623,4 +1634,90 @@ RETURNING *
   if (result.rowCount === 0) throw new Error("Request not found");
 
   return result.rows[0];
+};
+
+/**
+ * GET WEEKLY ATTENDANCE HOURS
+ * Calculate total worked hours from check_in_time and check_out_time for a date range
+ * Also includes leave status for each day
+ */
+exports.getWeeklyAttendanceHours = async (db, employeeId, tenantId, weekStartDate, weekEndDate) => {
+  const query = getQuery(db);
+
+  // Get attendance records
+  const attendanceResult = await query(
+    `
+    SELECT 
+      TO_CHAR(date, 'YYYY-MM-DD') as date_str,
+      check_in_time,
+      check_out_time,
+      CASE 
+        WHEN check_in_time IS NOT NULL AND check_out_time IS NOT NULL THEN
+          ROUND(EXTRACT(EPOCH FROM (check_out_time::time - check_in_time::time)) / 3600.0, 2)
+        ELSE 0
+      END as hours_worked
+    FROM attendance
+    WHERE employee_id = $1
+      AND tenant_id = $2
+      AND date >= $3
+      AND date <= $4
+    ORDER BY date ASC
+    `,
+    [employeeId, tenantId, weekStartDate, weekEndDate]
+  );
+
+  // Get approved leaves for the week
+  const leavesResult = await query(
+    `
+    SELECT 
+      TO_CHAR(d::date, 'YYYY-MM-DD') as date_str,
+      la.leave_type_id,
+      lt.name as leave_type_name
+    FROM leave_applications la
+    CROSS JOIN LATERAL generate_series(
+      la.start_date::date, 
+      la.end_date::date, 
+      '1 day'::interval
+    ) as d
+    LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
+    WHERE la.employee_id = $1
+      AND la.tenant_id = $2
+      AND la.status = 'APPROVED'
+      AND d::date >= $3::date
+      AND d::date <= $4::date
+    `,
+    [employeeId, tenantId, weekStartDate, weekEndDate]
+  );
+
+  // Build daily breakdown with status
+  const dailyData = {};
+  let totalHours = 0;
+
+  // First, mark leaves
+  for (const row of leavesResult.rows) {
+    dailyData[row.date_str] = {
+      hours: 0,
+      status: 'LEAVE',
+      leave_type: row.leave_type_name || 'Leave'
+    };
+  }
+
+  // Then add attendance data (overrides if present)
+  for (const row of attendanceResult.rows) {
+    const hours = parseFloat(row.hours_worked) || 0;
+    dailyData[row.date_str] = {
+      hours: hours,
+      status: 'PRESENT',
+      leave_type: null
+    };
+    totalHours += hours;
+  }
+
+  return {
+    employee_id: employeeId,
+    week_start: weekStartDate,
+    week_end: weekEndDate,
+    daily_data: dailyData,
+    total_hours: Math.round(totalHours * 100) / 100
+  };
 };

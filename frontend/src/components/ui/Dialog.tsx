@@ -46,7 +46,7 @@ export const Dialog: React.FC<DialogProps> = ({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col',
+                'relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden',
                 className
               )}
               onClick={(e) => e.stopPropagation()}
@@ -77,7 +77,7 @@ export const Dialog: React.FC<DialogProps> = ({
                 </div>
               )}
               {/* Content Wrapper */}
-              <div className={cn('flex-1 overflow-y-auto w-full', !className && 'px-6 py-4')}>
+              <div className={cn('flex-1 overflow-y-auto w-full px-6 py-4', !className && 'px-6 py-4')}>
                 {children}
               </div>
             </motion.div>

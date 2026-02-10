@@ -614,10 +614,10 @@ export const AttendanceReportsContent: React.FC = () => {
                                                 <td className="py-3">
                                                     {report.check_in_time ? (
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className={report.is_late || isCheckInLate(report.check_in_time) ? 'text-yellow-500 font-medium' : ''}>
+                                                            <span className={report.is_late ? 'text-yellow-500 font-medium' : ''}>
                                                                 {report.check_in_time}
                                                             </span>
-                                                            {(report.is_late || isCheckInLate(report.check_in_time)) && (
+                                                            {report.is_late && (
                                                                 <span className="flex items-center text-[10px] text-yellow-600 font-bold bg-yellow-50 px-1 rounded border border-yellow-200" title="Late Arrival">
                                                                     LATE
                                                                 </span>

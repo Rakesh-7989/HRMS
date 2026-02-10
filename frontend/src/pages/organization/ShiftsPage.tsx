@@ -259,14 +259,14 @@ export const ShiftsPage = () => {
                         <div>
                             <Label>Select Shift</Label>
                             <select
-                                className="w-full mt-1 border rounded-md p-2 bg-background"
+                                className="w-full mt-1 border rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700"
                                 value={selectedShiftId}
                                 onChange={(e) => setSelectedShiftId(e.target.value)}
                                 required
                             >
-                                <option value="">Select a shift...</option>
+                                <option value="" className="dark:bg-gray-800">Select a shift...</option>
                                 {shifts?.map((shift: Shift) => (
-                                    <option key={shift.id} value={shift.id}>
+                                    <option key={shift.id} value={shift.id} className="dark:bg-gray-800">
                                         {shift.name} ({shift.start_time} - {shift.end_time})
                                     </option>
                                 ))}
@@ -289,25 +289,27 @@ export const ShiftsPage = () => {
                                 <div className="space-y-2">
                                     <Label>Select Employees</Label>
                                     <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1">
-                                        {employees.map((emp: any) => (
-                                            <div key={emp.id} className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`emp-${emp.id}`}
-                                                    checked={selectedEmployeeIds.includes(emp.id)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedEmployeeIds([...selectedEmployeeIds, emp.id]);
-                                                        } else {
-                                                            setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.id));
-                                                        }
-                                                    }}
-                                                />
-                                                <label htmlFor={`emp-${emp.id}`} className="text-sm cursor-pointer select-none">
-                                                    {emp.first_name} {emp.last_name} ({emp.email})
-                                                </label>
-                                            </div>
-                                        ))}
+                                        {employees
+                                            .filter((emp: any) => !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(emp.role))
+                                            .map((emp: any) => (
+                                                <div key={emp.id} className="flex items-center space-x-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`emp-${emp.id}`}
+                                                        checked={selectedEmployeeIds.includes(emp.id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedEmployeeIds([...selectedEmployeeIds, emp.id]);
+                                                            } else {
+                                                                setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.id));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <label htmlFor={`emp-${emp.id}`} className="text-sm cursor-pointer select-none">
+                                                        {emp.first_name} {emp.last_name} ({emp.email})
+                                                    </label>
+                                                </div>
+                                            ))}
                                     </div>
                                 </div>
                             )}

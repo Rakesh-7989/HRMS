@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, UserCheck, Calendar, ChevronRight, Sparkles, UserX,
+  Users, UserCheck, Calendar, ChevronRight, ChevronLeft, Sparkles, UserX,
   CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, CheckSquare,
   Filter, ExternalLink, Folder
 } from 'lucide-react';
@@ -157,21 +157,21 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
     transition={{ delay }}
     whileHover={{ x: 5 }}
     onClick={onClick}
-    className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer"
+    className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer w-full"
   >
-    <div className="flex items-center gap-4">
-      <div className="relative">
+    <div className="flex items-center gap-4 flex-1 min-w-0">
+      <div className="relative shrink-0">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform">
           {member.first_name[0]}{member.last_name[0]}
         </div>
         <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
       </div>
-      <div className="min-w-0">
-        <h4 className="font-black text-slate-900 dark:text-white text-sm truncate">{member.first_name} {member.last_name}</h4>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{member.designation || 'Team Member'}</p>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-black text-slate-900 dark:text-white text-sm break-words leading-tight">{member.first_name} {member.last_name}</h4>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation || 'Team Member'}</p>
       </div>
     </div>
-    <div className="flex items-center gap-4 shrink-0">
+    <div className="flex items-center gap-4 shrink-0 ml-3">
       <div className="text-right hidden sm:block">
         <p className={`text-[10px] font-black px-2 py-0.5 rounded-full ${member.on_leave_today > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
           {member.on_leave_today > 0 ? 'Away' : 'Active'}
@@ -529,34 +529,74 @@ export const ManagerDashboard: React.FC = () => {
     ];
   }, [teamTasks, selectedProjectId]);
 
-  // 3. Individual Performance Comparison (Bar Chart)
+  // 3. Individual Performance Comparison (with Attendance)
   const performanceData = useMemo(() => {
     // Check for Project Filter
     const relevantTasks = (selectedProjectId && selectedProjectId !== 'ALL')
       ? teamTasks.filter((t: any) => t.project_id === selectedProjectId)
       : teamTasks;
 
+    // Parse attendance date range
+    const start = parseISO(attendanceDateRange.start);
+    const end = parseISO(attendanceDateRange.end);
+    let days: Date[] = [];
+    try {
+      days = eachDayOfInterval({ start, end });
+    } catch (e) {
+      days = [];
+    }
+
+    // Map attendance records for O(1) access
+    const attendanceMap: Record<string, any> = {};
+    if (Array.isArray(rawAttendanceRecords)) {
+      rawAttendanceRecords.forEach((r: any) => {
+        if (!r || !r.date) return;
+        try {
+          const rDate = format(parseISO(r.date), 'yyyy-MM-dd');
+          attendanceMap[`${r.employee_id}-${rDate}`] = r;
+        } catch (e) { }
+      });
+    }
+
     return teamMembers.map((m: any) => {
+      // Task Performance
       const memberTasks = relevantTasks.filter((t: any) =>
         t.assigned_to === m.id || t.assignees?.some((a: any) => a.id === m.id)
       );
       const completed = memberTasks.filter((t: any) => t.column_key === 'DONE' || t.status === 'DONE').length;
-
-      // Calculate Score based purely on tickets completed
       const taskScore = memberTasks.length > 0 ? (completed / memberTasks.length) * 100 : 0;
 
-      // Use Task Score directly (100% weight) as requested
-      const totalScore = Math.round(taskScore);
+      // Attendance Performance
+      let attendedDays = 0;
+      let totalWorkDays = 0;
+      days.forEach(day => {
+        const isWeekend = getDay(day) === 0 || getDay(day) === 6;
+        const isFuture = isAfter(day, new Date());
+        if (!isWeekend && !isFuture) {
+          totalWorkDays++;
+          const dateKey = format(day, 'yyyy-MM-dd');
+          const record = attendanceMap[`${m.id}-${dateKey}`];
+          if (record && (record.status === 'PRESENT' || record.status === 'HALF_DAY')) {
+            attendedDays++;
+          }
+        }
+      });
+      const attendanceScore = totalWorkDays > 0 ? (attendedDays / totalWorkDays) * 100 : 0;
+
+      // Overall Performance (average of task and attendance)
+      const overallScore = Math.round((taskScore + attendanceScore) / 2);
 
       return {
         name: `${m.first_name} ${m.last_name.charAt(0)}.`,
-        score: totalScore,
-        fill: totalScore > 80 ? '#10b981' : totalScore > 50 ? '#6366f1' : '#f59e0b',
+        score: overallScore,
+        taskScore: Math.round(taskScore),
+        attendanceScore: Math.round(attendanceScore),
+        fill: overallScore > 80 ? '#10b981' : overallScore > 50 ? '#6366f1' : '#f59e0b',
         tasks: memberTasks.length,
         completed: completed
       };
     }).sort((a: any, b: any) => b.score - a.score);
-  }, [teamMembers, teamTasks, selectedProjectId]);
+  }, [teamMembers, teamTasks, selectedProjectId, rawAttendanceRecords, attendanceDateRange]);
 
   // 4. Workload Distribution (Donut)
   const workloadData = useMemo(() => {
@@ -1117,60 +1157,21 @@ export const ManagerDashboard: React.FC = () => {
 
         {/* --- Secondary Charts Row --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Individual Performance Comparison (Bar Chart) */}
+          {/* Managed Workforce (moved from bottom) */}
           <ChartCard
-            title="Performance Index"
-            subtitle="Top performing team members"
+            title="Managed Workforce"
+            subtitle={`${teamMembers.length} Direct collaborators in your orbit`}
             delay={0.7}
-            headerAction={<Filter className="w-4 h-4 text-slate-400" />}
+            badge="Live Status"
           >
-            <div className="h-[300px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceData.slice(0, 5)}>
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 800 }}
-                    dy={10}
-                  />
-                  <YAxis hide domain={[0, 100]} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar
-                    dataKey="score"
-                    name="Performance %"
-                    radius={[12, 12, 0, 0]}
-                    barSize={40}
-                  >
-                    {performanceData.map((_entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={`url(#perfGrad${index})`} />
-                    ))}
-                  </Bar>
-                  <defs>
-                    {performanceData.map((_: any, i: number) => (
-                      <linearGradient key={i} id={`perfGrad${i}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={COLORS[i % COLORS.length]} />
-                        <stop offset="100%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0.4} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-6 space-y-3">
-              {performanceData.slice(0, 3).map((item: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-white/5">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-slate-300 w-5">#0{i + 1}</span>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-200">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${item.score}%` }} />
-                    </div>
-                    <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 w-8 text-right">{item.score}%</span>
-                  </div>
-                </div>
+            <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar">
+              {teamMembers.map((member: any, i: number) => (
+                <ActiveMemberCard
+                  key={member.id}
+                  member={member}
+                  delay={0.8 + i * 0.05}
+                  onClick={() => navigate(`/employees/${member.user_id}`)}
+                />
               ))}
             </div>
           </ChartCard>
@@ -1182,15 +1183,15 @@ export const ManagerDashboard: React.FC = () => {
             delay={0.8}
             badge={`${workloadData.length} active`}
           >
-            <div className="h-[280px] relative">
+            <div className="h-[220px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={workloadData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={75}
-                    outerRadius={95}
+                    innerRadius={60}
+                    outerRadius={80}
                     paddingAngle={8}
                     dataKey="value"
                     activeIndex={activePieIndex}
@@ -1211,17 +1212,17 @@ export const ManagerDashboard: React.FC = () => {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Active</p>
-                <p className="text-4xl font-black text-slate-900 dark:text-white leading-none">
+                <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
                   {workloadData.reduce((acc: number, curr: any) => acc + curr.value, 0)}
                 </p>
               </div>
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-3 max-h-[140px] overflow-y-auto custom-scrollbar pr-3">
+            <div className="mt-4 grid grid-cols-2 gap-2 overflow-y-auto custom-scrollbar pr-3">
               {workloadData.map((item: any, i: number) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                <div key={i} className="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate">{item.name}</span>
-                  <span className="text-[11px] font-black text-slate-900 dark:text-white ml-auto">{item.value}</span>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 break-words leading-tight flex-1">{item.name}</span>
+                  <span className="text-[11px] font-black text-slate-900 dark:text-white shrink-0">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -1276,24 +1277,137 @@ export const ManagerDashboard: React.FC = () => {
         </div>
 
         {/* --- Team Roster & Leave Requests --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Active Team Roster */}
+        <div className="grid grid-cols-1 lg:grid-cols-[70%_28%] gap-5">
+          {/* Performance Index Carousel (moved from top) */}
           <ChartCard
-            title="Managed Workforce"
-            subtitle={`${teamMembers.length} Direct collaborators in your orbit`}
+            title="Performance Index"
+            subtitle="Team member performance"
             delay={1.0}
-            badge="Live Status"
+            headerAction={<Filter className="w-4 h-4 text-slate-400" />}
           >
-            <div className="space-y-3 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
-              {teamMembers.map((member: any, i: number) => (
-                <ActiveMemberCard
-                  key={member.id}
-                  member={member}
-                  delay={1.1 + i * 0.05}
-                  onClick={() => navigate(`/employees/${member.user_id}`)}
-                />
-              ))}
-            </div>
+            {performanceData.length === 0 ? (
+              <div className="h-[300px] flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-slate-400" />
+                </div>
+                <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">No Performance Data</h4>
+                <p className="text-xs text-slate-400">Select a project to view team performance</p>
+              </div>
+            ) : (
+              <div className="relative mt-4">
+                {/* Navigation Arrows */}
+                <button
+                  onClick={() => {
+                    const container = document.getElementById('perf-carousel-bottom');
+                    if (container) container.scrollBy({ left: -220, behavior: 'smooth' });
+                  }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.getElementById('perf-carousel-bottom');
+                    if (container) container.scrollBy({ left: 220, behavior: 'smooth' });
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </button>
+
+                {/* Carousel Container */}
+                <div
+                  id="perf-carousel-bottom"
+                  className="flex gap-4 overflow-x-auto scroll-smooth px-10 pb-2 hide-scrollbar"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {performanceData.map((item: any, i: number) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex-shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-md transition-all group"
+                    >
+                      {/* Avatar */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md"
+                          style={{ background: COLORS[i % COLORS.length] }}
+                        >
+                          {item.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-400">{item.tasks || 0} tasks assigned</p>
+                        </div>
+                      </div>
+
+                      {/* Score Circle with Overall % */}
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="relative w-24 h-24">
+                          <svg className="w-full h-full -rotate-90">
+                            <circle
+                              cx="48"
+                              cy="48"
+                              r="40"
+                              stroke="currentColor"
+                              strokeWidth="6"
+                              fill="none"
+                              className="text-slate-100 dark:text-slate-800"
+                            />
+                            <circle
+                              cx="48"
+                              cy="48"
+                              r="40"
+                              stroke={item.score > 80 ? '#10b981' : item.score > 50 ? '#6366f1' : item.score > 0 ? '#f59e0b' : '#94a3b8'}
+                              strokeWidth="6"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={`${(item.score / 100) * 251} 251`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-slate-800 dark:text-white">{item.score}%</span>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wider">Overall</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Horizontal Progress Bars */}
+                      <div className="space-y-2">
+                        {/* Attendance Bar */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Attendance</span>
+                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{item.attendanceScore || 0}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
+                              style={{ width: `${item.attendanceScore || 0}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* Tasks Bar */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Tasks</span>
+                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">{item.taskScore || 0}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-indigo-400 to-indigo-500 rounded-full transition-all duration-500"
+                              style={{ width: `${item.taskScore || 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </ChartCard>
 
           {/* Pending Leave Requests */}

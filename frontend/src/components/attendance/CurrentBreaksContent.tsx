@@ -12,6 +12,15 @@ export const CurrentBreaksContent: React.FC = () => {
         queryFn: attendanceService.getCurrentBreaks,
     });
 
+    // Force re-render every minute to update the "duration" calculation
+    const [_, setTick] = React.useState(0);
+    React.useEffect(() => {
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+        }, 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -52,7 +61,17 @@ export const CurrentBreaksContent: React.FC = () => {
                             <tbody>
                                 {breaks.map((item, index) => {
                                     const startTime = new Date(item.start_time);
-                                    const diffMinutes = Math.floor((new Date().getTime() - startTime.getTime()) / 60000);
+
+                                    // Calculate time difference
+                                    // Note: dates from API might be UTC. new Date(item.start_time) usually handles ISO strings correctly.
+                                    // Ensure we compare against current time correctly.
+                                    let diffMinutes = 0;
+                                    if (!isNaN(startTime.getTime())) {
+                                        diffMinutes = Math.floor((new Date().getTime() - startTime.getTime()) / 60000);
+                                    }
+
+                                    // Fix for negative or zero duration if clock skews slightly or just started
+                                    if (diffMinutes < 0) diffMinutes = 0;
 
                                     return (
                                         <tr key={index} className="bg-white border-b dark:bg-gray-900 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">

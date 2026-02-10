@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
-import { Loader2, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Layers } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Trash2, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-import { projectsService } from '@/services/projects.service';
 import { timesheetService } from '@/services/timesheet.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { attendanceService } from '@/services/attendance.service';
+import { projectsService } from '@/services/projects.service';
 import { cn } from '@/utils/cn';
 
 // Interfaces
@@ -19,22 +18,23 @@ interface WeeklyTimesheetEntryProps {
     onCancel?: () => void;
 }
 
-interface TimesheetRow {
-    id: string;
-    projectId: string;
-    projectName?: string;
-    taskId: string;
-    hours: Record<string, number>;
-    description: string;
+const MAX_HOURS = 9; // Standard work hours
+const GRACE_PERIOD = 0.5; // 30 minutes grace period
+const OVERTIME_THRESHOLD = MAX_HOURS + GRACE_PERIOD; // 9.5 hours - only show overtime above this
+
+interface DaySplit {
+    project_id: string;
+    hours: number;
+    notes?: string;
 }
 
 export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSuccess, onCancel }) => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [rows, setRows] = useState<TimesheetRow[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedProjectToAdd, setSelectedProjectToAdd] = useState<string>('');
+    const [overtimeReasons, setOvertimeReasons] = useState<Record<string, string>>({});
+    const [billableDays, setBillableDays] = useState<Record<string, boolean>>({});
+    const [daySplits, setDaySplits] = useState<Record<string, DaySplit[]>>({});
 
     // Get current week range
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
@@ -42,100 +42,266 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSu
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
     const dates = weekDays.map(d => format(d, 'yyyy-MM-dd'));
 
-    // Queries
-    const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
-        queryKey: ['projects', 'all'],
-        queryFn: () => projectsService.getProjects(),
-    });
-
-    const assignedProjects = projects;
-
-    // Fetch tasks filtering by assignee if employee (kept for potential future use)
-    const { isLoading: isLoadingTasks } = useQuery({
-        queryKey: ['tasks', 'my-tasks', user?.id],
-        queryFn: () => projectsService.getTasks({
-            assigned_to: user?.role === 'EMPLOYEE' ? user.employee_id : undefined,
-            limit: 1000
+    // Fetch attendance hours for the current week
+    const { data: attendanceHours, isLoading: isLoadingAttendance, error: attendanceError } = useQuery({
+        queryKey: ['attendance', 'weekly-hours', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
+        queryFn: () => attendanceService.getWeeklyAttendanceHours({
+            week_start: format(weekStart, 'yyyy-MM-dd'),
+            week_end: format(weekEnd, 'yyyy-MM-dd')
         }),
     });
 
-    // Initialize with one empty row if none - REMOVED, now user adds projects
+    // Fetch existing timesheet entries for the week
+    const { data: existingEntries, isLoading: isLoadingEntries } = useQuery({
+        queryKey: ['existing-timesheets', weekStart.toISOString()],
+        queryFn: () => timesheetService.getMyTimesheets({
+            week_start_date: format(weekStart, 'yyyy-MM-dd')
+        })
+    });
+
+    // Fetch projects
+    const { data: projects } = useQuery({
+        queryKey: ['projects', 'list'],
+        queryFn: () => projectsService.getProjects({ status: 'ACTIVE' }),
+    });
+
+    // Initialize state from attendance and existing entries
     useEffect(() => {
-        // No initial row, user adds projects via dropdown
-    }, []);
+        if (attendanceHours?.daily_data) {
+            const initialBillable: Record<string, boolean> = {};
+            const initialSplits: Record<string, DaySplit[]> = {};
+            const initialOvertime: Record<string, string> = {};
 
-    const handleAddProject = (projectId: string) => {
-        if (!projectId) return;
-        const project = assignedProjects.find((p: any) => p.id === projectId);
-        if (!project) return;
+            dates.forEach(dateStr => {
+                // Find existing entries for this date
+                const dayEntries = existingEntries?.filter(e =>
+                    e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr))
+                ) || [];
 
-        // Check availability
-        if (rows.some(r => r.projectId === projectId)) {
-            toast.error("Project already added to the list");
-            return;
-        }
+                if (dayEntries.length > 0) {
+                    // Check if any entry has a project (meaning it was billable)
+                    // The backend returns project: { id, name }
+                    const isBillable = dayEntries.some(e => e.project?.id || e.project_id);
+                    initialBillable[dateStr] = isBillable;
 
-        const newRow: TimesheetRow = {
-            id: Math.random().toString(36).substr(2, 9),
-            projectId: project.id,
-            projectName: project.name, // Display name
-            taskId: '', // No task selection at this level
-            description: '',
-            hours: dates.reduce((acc, date) => ({ ...acc, [date]: 0 }), {}),
-        };
-        setRows([...rows, newRow]);
-        setSelectedProjectToAdd(''); // Reset dropdown
-    };
-
-    const handleRemoveRow = (id: string) => {
-        setRows(rows.filter(r => r.id !== id));
-    };
-
-    // handleUpdateRow is no longer needed as project/task selection is removed from rows.
-
-    const handleHourChange = (rowId: string, dateStr: string, value: string) => {
-        const numValue = parseFloat(value);
-        setRows(rows.map(r => {
-            if (r.id === rowId) {
-                return {
-                    ...r,
-                    hours: {
-                        ...r.hours,
-                        [dateStr]: isNaN(numValue) ? 0 : numValue
+                    if (isBillable) {
+                        initialSplits[dateStr] = dayEntries
+                            .filter(e => e.project?.id || e.project_id)
+                            .map(e => ({
+                                project_id: (e.project?.id || e.project_id || '').toString(),
+                                hours: Number(e.hours),
+                                notes: e.notes || ''
+                            }));
+                    } else {
+                        // If not billable but has entry, it's a standard entry
+                        // Prefer the saved hours from DB for accuracy
+                        initialSplits[dateStr] = [{
+                            project_id: '',
+                            hours: Number(dayEntries[0].hours),
+                            notes: dayEntries[0].notes || ''
+                        }];
                     }
-                };
-            }
-            return r;
+
+                    // Collect notes as overtime reason if needed (combine all entry notes)
+                    const combinedNotes = dayEntries.map(e => e.notes).filter(Boolean).join('. ');
+                    if (combinedNotes) initialOvertime[dateStr] = combinedNotes;
+                } else {
+                    // Default for new days
+                    initialBillable[dateStr] = false;
+                    initialSplits[dateStr] = [{
+                        project_id: '',
+                        hours: getDailyHours(dateStr),
+                        notes: ''
+                    }];
+                }
+            });
+
+            setBillableDays(initialBillable);
+            setDaySplits(initialSplits);
+            setOvertimeReasons(initialOvertime);
+        }
+    }, [attendanceHours, existingEntries, weekStart]);
+
+    // Check if any existing entry is in a state that prevents editing
+    const isReadOnly = existingEntries?.some(e => e.status === 'APPROVED' || e.status === 'SUBMITTED');
+    const timesheetStatus = existingEntries?.[0]?.status || 'DRAFT';
+
+    useEffect(() => {
+        if (attendanceError) {
+            toast.error("Failed to load attendance hours");
+        }
+    }, [attendanceError]);
+
+    // Get daily data from attendance
+    const getDailyData = (dateStr: string) => {
+        return attendanceHours?.daily_data?.[dateStr] || null;
+    };
+
+    // Get daily hours from attendance data
+    const getDailyHours = (dateStr: string): number => {
+        return getDailyData(dateStr)?.hours || 0;
+    };
+
+    // Check if day is on leave
+    const isOnLeave = (dateStr: string): boolean => {
+        return getDailyData(dateStr)?.status === 'LEAVE';
+    };
+
+    // Get leave type name
+    const getLeaveType = (dateStr: string): string => {
+        return getDailyData(dateStr)?.leave_type || 'Leave';
+    };
+
+    // Check if a day has overtime (beyond max + grace period)
+    const hasOvertime = (dateStr: string): boolean => {
+        const hours = getDailyHours(dateStr);
+        return hours > OVERTIME_THRESHOLD;
+    };
+
+    // Count days with overtime that need reasons
+    const daysNeedingReason = dates.filter(d => hasOvertime(d) && !overtimeReasons[d]?.trim());
+
+    // Handle overtime reason change
+    const handleOvertimeReasonChange = (dateStr: string, reason: string) => {
+        setOvertimeReasons(prev => ({ ...prev, [dateStr]: reason }));
+    };
+
+    // Handle billable toggle
+    const handleBillableToggle = (dateStr: string, isBillable: boolean) => {
+        setBillableDays(prev => ({ ...prev, [dateStr]: isBillable }));
+    };
+
+    // Handle adding a split
+    const addSplit = (dateStr: string) => {
+        const dailyHours = getDailyHours(dateStr);
+        const currentSplits = daySplits[dateStr] || [];
+        const currentTotal = currentSplits.reduce((acc, s) => acc + s.hours, 0);
+        const remainingHours = Math.max(0, dailyHours - currentTotal);
+
+        setDaySplits(prev => ({
+            ...prev,
+            [dateStr]: [
+                ...(prev[dateStr] || []),
+                { project_id: '', hours: remainingHours, notes: '' }
+            ]
         }));
     };
 
-    // Calculate totals
-    const getDayTotal = (dateStr: string) => {
-        return rows.reduce((acc, row) => acc + (row.hours[dateStr] || 0), 0);
+    // Handle removing a split
+    const removeSplit = (dateStr: string, index: number) => {
+        setDaySplits(prev => ({
+            ...prev,
+            [dateStr]: prev[dateStr].filter((_, i) => i !== index)
+        }));
     };
 
-    const getRowTotal = (row: TimesheetRow) => {
-        return Object.values(row.hours).reduce((acc, h) => acc + h, 0);
-    };
-
-    const getWeekTotal = () => {
-        return rows.reduce((acc, row) => acc + getRowTotal(row), 0);
-    };
-
-    const validate = () => {
-        if (rows.length === 0) {
-            toast.error("Please add at least one project");
-            return false;
-        }
-        for (const row of rows) {
-            if (!row.projectId) {
-                toast.error("A project ID is missing for one or more rows."); // Should not happen with new flow
-                return false;
+    // Handle split update
+    const updateSplit = (dateStr: string, index: number, updates: Partial<DaySplit>) => {
+        // Validation: Project Uniqueness
+        if (updates.project_id) {
+            const currentSplits = daySplits[dateStr] || [];
+            const isDuplicate = currentSplits.some((s, i) => i !== index && s.project_id === updates.project_id);
+            if (isDuplicate) {
+                toast.error('This project is already selected for this day.');
+                return;
             }
         }
-        if (getWeekTotal() === 0) {
-            toast.error("Please enter some hours");
-            return false;
+
+        // Validation: Split hours cannot exceed total daily hours
+        if (updates.hours !== undefined) {
+            const dailyTotal = getDailyHours(dateStr);
+            if (updates.hours > dailyTotal) {
+                toast.error(`Individual split cannot exceed daily total of ${dailyTotal} hrs`);
+                return;
+            }
+        }
+
+        setDaySplits(prev => {
+            const current = [...(prev[dateStr] || [])];
+            current[index] = { ...current[index], ...updates };
+            return { ...prev, [dateStr]: current };
+        });
+    };
+
+    // Copy one day's configuration to all other days with attendance
+    const copyDaySetupToAll = (sourceDateStr: string) => {
+        const sourceSplits = daySplits[sourceDateStr] || [];
+        if (sourceSplits.length === 0 || sourceSplits.every(s => !s.project_id)) {
+            toast.error("Please select at least one project first.");
+            return;
+        }
+
+        const sourceTotal = getDailyHours(sourceDateStr);
+
+        setDaySplits(prev => {
+            const next = { ...prev };
+            dates.forEach(targetDateStr => {
+                if (targetDateStr === sourceDateStr) return;
+
+                const targetHours = getDailyHours(targetDateStr);
+                if (targetHours > 0 && !isOnLeave(targetDateStr)) {
+                    // Proportionally scale hours if daily totals differ
+                    const scaledSplits = sourceSplits.map(s => ({
+                        ...s,
+                        hours: Number(((s.hours / sourceTotal) * targetHours).toFixed(1))
+                    }));
+
+                    next[targetDateStr] = scaledSplits;
+                    setBillableDays(b => ({ ...b, [targetDateStr]: true }));
+                }
+            });
+            return next;
+        });
+        toast.success("Applied to all working days!");
+    };
+
+    // Validate before submit
+    const validate = () => {
+        for (const dateStr of dates) {
+            const dailyHours = getDailyHours(dateStr);
+            const onLeave = isOnLeave(dateStr);
+
+            if (onLeave) continue;
+
+            if (hasOvertime(dateStr) && !overtimeReasons[dateStr]?.trim()) {
+                toast.error(`Please provide a reason for overtime on ${format(new Date(dateStr), 'MMM d')}`);
+                return false;
+            }
+
+            if (billableDays[dateStr]) {
+                const splits = daySplits[dateStr] || [];
+                if (splits.length === 0) {
+                    toast.error(`Please add at least one project for ${format(new Date(dateStr), 'MMM d')}`);
+                    return false;
+                }
+
+                const projectsSeen = new Set<string>();
+                let splitTotal = 0;
+                for (const split of splits) {
+                    if (!split.project_id) {
+                        toast.error(`Please select a project for all splits on ${format(new Date(dateStr), 'MMM d')}`);
+                        return false;
+                    }
+
+                    if (projectsSeen.has(split.project_id)) {
+                        toast.error(`Duplicate project selected for ${format(new Date(dateStr), 'MMM d')}`);
+                        return false;
+                    }
+                    projectsSeen.add(split.project_id);
+
+                    if (split.hours <= 0) {
+                        toast.error(`Hours must be greater than 0 for all splits on ${format(new Date(dateStr), 'MMM d')}`);
+                        return false;
+                    }
+                    splitTotal += split.hours;
+                }
+
+                // Small tolerance for floating point precision
+                if (Math.abs(splitTotal - dailyHours) > 0.01) {
+                    toast.error(`Total split hours (${splitTotal.toFixed(1)}) must match attendance hours (${dailyHours.toFixed(1)}) for ${format(new Date(dateStr), 'MMM d')}`);
+                    return false;
+                }
+            }
         }
         return true;
     };
@@ -145,58 +311,66 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSu
         setIsSubmitting(true);
 
         try {
-            // Flatten rows into entries
-            const entries = [];
-            for (const row of rows) {
-                for (const [dateStr, hours] of Object.entries(row.hours)) {
-                    if (hours > 0) {
+            // Create entries from attendance hours and splits
+            const entries: any[] = [];
+
+            dates.forEach(dateStr => {
+                const dailyHours = getDailyHours(dateStr);
+                if (dailyHours <= 0) return;
+
+                if (billableDays[dateStr]) {
+                    const splits = daySplits[dateStr] || [];
+                    splits.forEach(split => {
                         entries.push({
-                            project_id: row.projectId,
-                            // taskId is no longer selected per row, so it's not included here
                             work_date: dateStr,
-                            hours: hours,
-                            notes: row.description // Description is not currently in the UI, but kept for data structure
+                            hours: split.hours,
+                            notes: (overtimeReasons[dateStr] ? `${overtimeReasons[dateStr]}. ${split.notes || ''}` : split.notes) || undefined,
+                            project_id: split.project_id
+                        });
+                    });
+                } else {
+                    // Non-billable day: only create entry if there are actual attendance hours
+                    if (dailyHours > 0) {
+                        entries.push({
+                            work_date: dateStr,
+                            hours: dailyHours,
+                            notes: overtimeReasons[dateStr] || undefined,
+                            project_id: undefined
                         });
                     }
                 }
-            }
+            });
 
             if (entries.length === 0) {
-                toast.error("No hours to submit");
+                toast.error("No attendance hours to submit");
                 setIsSubmitting(false);
                 return;
             }
 
-            // Check if all rows belong to the same project
-            const uniqueProjects = new Set(rows.map(r => r.projectId).filter(Boolean));
-            const commonProjectId = uniqueProjects.size === 1 ? Array.from(uniqueProjects)[0] : undefined;
-
             await timesheetService.createWeeklyTimesheet({
-                project_id: commonProjectId, // Pass common project ID to header if all entries are for one project
                 week_start_date: format(weekStart, 'yyyy-MM-dd'),
                 week_end_date: format(weekEnd, 'yyyy-MM-dd'),
                 entries
             });
 
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
+            queryClient.invalidateQueries({ queryKey: ['attendance', 'weekly-hours'] });
             toast.success("Timesheet submitted successfully");
             if (onSuccess) onSuccess();
-            // Reset form after successful submission
-            setRows([]);
-            setSelectedProjectToAdd('');
+            setOvertimeReasons({});
         } catch (error: any) {
             console.error(error);
-            toast.error("Failed to submit timesheet");
+            toast.error(error?.response?.data?.message || "Failed to submit timesheet");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoadingProjects || isLoadingTasks) {
+    if (isLoadingAttendance || isLoadingEntries) {
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4 h-[400px]">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-                <p className="text-sm font-medium text-gray-400 animate-pulse">Loading assigned projects...</p>
+                <p className="text-sm font-medium text-gray-400 animate-pulse">Syncing timesheet data...</p>
             </div>
         );
     }
@@ -228,161 +402,326 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSu
                 </div>
             </div>
 
-            {/* Project Selector */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700/50">
-                <div className="mb-6 flex gap-4 items-end">
-                    <div className="flex-1 max-w-md">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Select Project to Log Time
-                        </label>
-                        <select
-                            value={selectedProjectToAdd}
-                            onChange={(e) => {
-                                setSelectedProjectToAdd(e.target.value);
-                                handleAddProject(e.target.value);
-                            }}
-                            className="w-full h-10 px-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm"
-                            disabled={isLoadingProjects}
-                        >
-                            <option value="">Select an assigned project...</option>
-                            {assignedProjects.map((project: any) => (
-                                <option key={project.id} value={project.id}>
-                                    {project.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
+            {/* Attendance Days List */}
+            <div className="p-6 space-y-4">
+                {dates.map(dateStr => {
+                    const hours = getDailyHours(dateStr);
+                    const onLeave = isOnLeave(dateStr);
+                    const leaveType = getLeaveType(dateStr);
+                    const isOvertime = hasOvertime(dateStr);
+                    const needsReason = isOvertime && !overtimeReasons[dateStr]?.trim();
+                    const dayDate = new Date(dateStr);
+                    const isToday = isSameDay(dayDate, new Date());
+                    const dayIsLogged = existingEntries?.some(e => e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr)));
 
-            {/* Grid */}
-            <div className="overflow-x-auto">
-                <div className="min-w-[1000px] p-6">
-                    {/* Grid Header */}
-                    <div className="grid grid-cols-[250px_1fr_40px] gap-4 mb-2 px-4">
-                        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Project</div>
-                        <div className="grid grid-cols-7 gap-2">
-                            {weekDays.map(day => (
-                                <div key={day.toString()} className="text-center">
-                                    <div className="text-[10px] text-gray-400 font-bold uppercase">{format(day, 'EEE')}</div>
-                                    <div className={cn("text-xs font-bold mt-1", isSameDay(day, new Date()) ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300')}>
-                                        {format(day, 'd')}
+                    return (
+                        <div
+                            key={dateStr}
+                            className={cn(
+                                "group relative bg-white dark:bg-gray-800/40 rounded-2xl border transition-all duration-300",
+                                isToday ? "border-indigo-200 dark:border-indigo-500/30 shadow-md shadow-indigo-500/5 ring-1 ring-indigo-50/50" : "border-gray-100 dark:border-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600 shadow-sm"
+                            )}
+                        >
+                            <div className="flex flex-col md:flex-row p-4 gap-6">
+                                {/* Left Side: Day Identity */}
+                                <div className="flex items-center gap-4 min-w-[140px]">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black transition-colors",
+                                        isToday ? "bg-indigo-600 text-white" : "bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-gray-700"
+                                    )}>
+                                        <span className="text-[10px] uppercase tracking-tighter leading-none mb-0.5">{format(dayDate, 'EEE')}</span>
+                                        <span className="text-lg leading-none">{format(dayDate, 'd')}</span>
+                                    </div>
+                                    <div>
+                                        <p className={cn("text-xs font-bold uppercase tracking-widest leading-none mb-1", isToday ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400")}>
+                                            {format(dayDate, 'MMMM')}
+                                        </p>
+                                        {onLeave ? (
+                                            <div className="flex items-center gap-1 text-amber-500">
+                                                <span className="text-[10px] font-extrabold uppercase truncate max-w-[80px]">{leaveType}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-1">
+                                                {hours > 0 ? (
+                                                    <div className={cn("flex items-center gap-1", isOvertime ? "text-orange-500" : "text-green-500")}>
+                                                        <Clock size={12} />
+                                                        <span className="text-xs font-black">{hours.toFixed(1)} hrs</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-gray-300 dark:text-gray-600 uppercase italic">No Entry</span>
+                                                )}
+                                                {existingEntries?.some(e => e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr))) && (
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-md border border-green-100 dark:border-green-500/20 w-fit">
+                                                        <span className="text-[8px] font-black uppercase">Logged</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                        <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            Total
-                        </div>
-                    </div>
 
-                    <div className="space-y-3">
-                        <AnimatePresence>
-                            {rows.map((row) => (
-                                <motion.div
-                                    key={row.id}
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="grid grid-cols-[250px_1fr_40px] gap-4 items-start group"
-                                >
-                                    {/* Project Name Display */}
-                                    <div className="flex items-center h-full">
-                                        <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-semibold w-full">
-                                            {row.projectName || 'Unknown Project'}
+                                {/* Middle Section: Billable Toggle or Logged Status */}
+                                <div className="flex items-center md:px-6 md:border-l md:border-r border-gray-100 dark:border-gray-700/50">
+                                    {!onLeave && (
+                                        dayIsLogged ? (
+                                            <div className="flex flex-row md:flex-col items-center gap-1">
+                                                <div className="px-2.5 py-1 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/20">
+                                                    <span className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest">Saved</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-row md:flex-col items-center gap-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:block">Billable</span>
+                                                <button
+                                                    disabled={hours === 0 || isReadOnly}
+                                                    onClick={() => handleBillableToggle(dateStr, !billableDays[dateStr])}
+                                                    className={cn(
+                                                        "w-10 h-5 rounded-full transition-all relative focus:outline-none ring-offset-2 focus:ring-2",
+                                                        billableDays[dateStr] ? "bg-indigo-600 ring-indigo-500" : "bg-gray-200 dark:bg-gray-700 ring-gray-200 dark:ring-gray-700",
+                                                        (hours === 0 || isReadOnly) && "opacity-30 cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
+                                                        billableDays[dateStr] ? "left-5.5" : "left-0.5"
+                                                    )} />
+                                                </button>
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest md:hidden">Billable</span>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+
+                                {/* Right Section: Splits / Projects */}
+                                <div className="flex-1 min-w-0">
+                                    {!onLeave && !dayIsLogged && billableDays[dateStr] ? (
+                                        <div className="space-y-3">
+                                            <div className="flex flex-wrap gap-3">
+                                                {daySplits[dateStr]?.map((split, idx) => (
+                                                    <div key={idx} className="flex-1 min-w-[240px] bg-gray-50/50 dark:bg-gray-900/40 p-3 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3 group/split transition-all hover:bg-white dark:hover:bg-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900/30">
+                                                        <div className="flex-1 min-w-0">
+                                                            <select
+                                                                value={split.project_id}
+                                                                onChange={(e) => updateSplit(dateStr, idx, { project_id: e.target.value })}
+                                                                disabled={isReadOnly}
+                                                                className={cn(
+                                                                    "w-full text-[11px] font-bold bg-transparent border-none outline-none text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:cursor-default",
+                                                                    !split.project_id ? "text-orange-500" : ""
+                                                                )}
+                                                            >
+                                                                <option value="" disabled className="text-gray-400">Select Project...</option>
+                                                                {projects?.map((p: any) => (
+                                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700">
+                                                            <input
+                                                                type="number"
+                                                                step="0.5"
+                                                                min="0"
+                                                                max={hours}
+                                                                value={split.hours || ''}
+                                                                onChange={(e) => updateSplit(dateStr, idx, { hours: parseFloat(e.target.value) || 0 })}
+                                                                disabled={isReadOnly}
+                                                                className="w-8 text-xs bg-transparent outline-none font-black text-indigo-600 dark:text-indigo-400 text-center"
+                                                                placeholder="0"
+                                                            />
+                                                            <span className="text-[9px] text-gray-400 font-black uppercase">hrs</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            {daySplits[dateStr].length > 1 && !isReadOnly && (
+                                                                <button
+                                                                    onClick={() => removeSplit(dateStr, idx)}
+                                                                    className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                                                    title="Remove Split"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {!isReadOnly && (
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => addSplit(dateStr)}
+                                                            disabled={isReadOnly}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50/50 dark:bg-indigo-500/5 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all border border-indigo-100/50 dark:border-indigo-500/20"
+                                                        >
+                                                            <Plus size={14} /> ADD PROJECT SPLIT
+                                                        </button>
+                                                        <button
+                                                            onClick={() => copyDaySetupToAll(dateStr)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-gray-500 hover:text-indigo-600 bg-gray-50 dark:bg-gray-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all border border-gray-100 dark:border-gray-700/50"
+                                                            title="Apply this project setup to all working days this week"
+                                                        >
+                                                            <Copy size={13} /> COPY TO ALL DAYS
+                                                        </button>
+                                                    </div>
+
+                                                    {daySplits[dateStr]?.length > 1 && (
+                                                        <div className={cn(
+                                                            "px-3 py-1 font-black text-[10px] rounded-lg border",
+                                                            Math.abs((daySplits[dateStr]?.reduce((acc, s) => acc + s.hours, 0) || 0) - hours) < 0.01
+                                                                ? "bg-green-50 dark:bg-green-900/10 text-green-600 border-green-100 dark:border-green-900/30"
+                                                                : "bg-orange-50 dark:bg-orange-900/10 text-orange-600 border-orange-100 dark:border-orange-900/30"
+                                                        )}>
+                                                            TOTAL: {daySplits[dateStr].reduce((acc, s) => acc + s.hours, 0).toFixed(1)} / {hours.toFixed(1)} HRS
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-
-                                    {/* Hours Inputs */}
-                                    <div className="grid grid-cols-7 gap-2">
-                                        {dates.map(dateStr => {
-                                            return (
-                                                <div key={dateStr} className="h-full">
+                                    ) : (
+                                        <div className="h-full flex flex-col justify-center">
+                                            {isOvertime && needsReason ? (
+                                                <div className="flex-1 animate-pulse">
                                                     <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="24"
-                                                        step="0.5"
-                                                        value={row.hours[dateStr] === 0 ? '' : row.hours[dateStr]}
-                                                        onChange={(e) => handleHourChange(row.id, dateStr, e.target.value)}
-                                                        className="w-full h-full min-h-[4rem] text-center text-sm font-bold bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-transparent hover:bg-gray-50 dark:hover:bg-gray-800"
-                                                        placeholder="0"
+                                                        type="text"
+                                                        placeholder={`Reason for extended hours (${hours.toFixed(1)} hrs)...`}
+                                                        value={overtimeReasons[dateStr] || ''}
+                                                        onChange={(e) => handleOvertimeReasonChange(dateStr, e.target.value)}
+                                                        className="w-full px-4 py-3 text-xs rounded-xl border-2 border-orange-300 dark:border-orange-500/50 bg-orange-50/50 dark:bg-orange-900/10 focus:ring-2 focus:ring-orange-500 outline-none placeholder:text-orange-400 font-bold"
                                                     />
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Row Actions/Total */}
-                                    <div className="flex flex-col items-center justify-between h-full py-1">
-                                        <span className="text-sm font-black text-gray-700 dark:text-gray-200">{getRowTotal(row)}</span>
-                                        <button
-                                            onClick={() => handleRemoveRow(row.id)}
-                                            className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-
-                        {rows.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                                <Layers className="w-8 h-8 mb-2 opacity-50" />
-                                <p className="text-sm">No projects added yet.</p>
-                                <p className="text-xs">Select a project above to start logging time.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Removed the old "Add Row" button */}
-
-                    {/* Daily Totals Footer Row */}
-                    <div className="grid grid-cols-[250px_1fr_40px] gap-4 mt-6 pt-4 border-t border-dashed border-gray-200 dark:border-gray-700">
-                        <div className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider self-center">
-                            Daily Totals
-                        </div>
-                        <div className="grid grid-cols-7 gap-2">
-                            {dates.map(dateStr => {
-                                const total = getDayTotal(dateStr);
-                                return (
-                                    <div key={dateStr} className="text-center">
-                                        <div className={cn("text-sm font-black", total > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-300 dark:text-gray-700')}>
-                                            {total > 0 ? total : '-'}
+                                            ) : onLeave ? (
+                                                <p className="text-xs text-amber-500/60 font-bold italic tracking-wide">Leave entries are automatically excluded from timesheets.</p>
+                                            ) : dayIsLogged ? (
+                                                <div className="bg-green-50/30 dark:bg-green-500/5 p-3 rounded-xl border border-green-100/50 dark:border-green-500/10">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">Logged Detail</p>
+                                                        <span className="text-[10px] font-bold text-green-600/60 tabular-nums">
+                                                            {existingEntries
+                                                                ?.filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
+                                                                .reduce((sum, e) => sum + Number(e.hours), 0).toFixed(1)} HRS
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        {existingEntries
+                                                            ?.filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
+                                                            .map((entry, idx) => (
+                                                                <div key={idx} className="flex items-start gap-2">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1" />
+                                                                    <div className="flex-1">
+                                                                        <p className="text-[11px] font-bold text-green-800 dark:text-green-300">
+                                                                            {entry.project?.name || entry.project_name || "Standard Attendance Record"}
+                                                                            <span className="ml-2 text-green-600/50">({Number(entry.hours).toFixed(1)} hrs)</span>
+                                                                        </p>
+                                                                        {entry.notes && (
+                                                                            <p className="text-[9px] text-green-600/70 font-medium italic line-clamp-1">{entry.notes}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                    <p className="mt-2 text-[9px] text-green-500 font-bold uppercase tracking-tight cursor-default">✓ Timesheet saved</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {existingEntries?.some(e => isSameDay(new Date(e.work_date), new Date(dateStr))) ? (
+                                                        <div className="bg-green-50/30 dark:bg-green-500/5 p-3 rounded-xl border border-green-100/50 dark:border-green-500/10">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">Logged Detail</p>
+                                                                <span className="text-[10px] font-bold text-green-600/60 tabular-nums">
+                                                                    {existingEntries
+                                                                        .filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
+                                                                        .reduce((sum, e) => sum + Number(e.hours), 0).toFixed(1)} HRS
+                                                                </span>
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                {existingEntries
+                                                                    .filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
+                                                                    .map((entry, idx) => (
+                                                                        <div key={idx} className="flex items-start gap-2">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1" />
+                                                                            <div className="flex-1">
+                                                                                <p className="text-[11px] font-bold text-green-800 dark:text-green-300">
+                                                                                    {entry.project_name || "Standard Attendance Record"}
+                                                                                    <span className="ml-2 text-green-600/50">({Number(entry.hours).toFixed(1)} hrs)</span>
+                                                                                </p>
+                                                                                {entry.notes && (
+                                                                                    <p className="text-[9px] text-green-600/70 font-medium italic line-clamp-1">{entry.notes}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))
+                                                                }
+                                                            </div>
+                                                            <p className="mt-2 text-[9px] text-indigo-500 font-bold uppercase tracking-tight cursor-default">
+                                                                {isReadOnly ? "Timesheet is locked" : "Enable billable to edit projects"}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 font-bold tracking-wide italic">
+                                                            {hours > 0 ? "Standard work entry. Enable billable to split by projects." : "No activity recorded for this date."}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div></div>
-                    </div>
-                </div>
+                    );
+                })}
             </div>
 
             {/* Footer / Totals */}
-            <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                    <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Hours</p>
-                        <p className="text-2xl font-black text-gray-900 dark:text-white">{getWeekTotal()}</p>
+            <div className="p-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 flex items-center gap-8">
+                    {/* Total Attendance Hours */}
+                    <div className="flex flex-col">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Weekly Total</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                                {attendanceHours?.total_hours?.toFixed(1) ?? '0'}
+                            </span>
+                            <span className="text-xs font-black text-gray-400 uppercase">hrs</span>
+                        </div>
+                    </div>
+
+                    {/* Pending Actions Tracker */}
+                    <div className="hidden lg:flex flex-col gap-2">
+                        {daysNeedingReason.length > 0 && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/10 rounded-full border border-orange-100 dark:border-orange-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-tight"> {daysNeedingReason.length} OVERTIME REASONS NEEDED</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 w-full md:w-auto">
                     {onCancel && (
-                        <Button variant="ghost" onClick={onCancel} className="text-gray-500">Cancel</Button>
+                        <Button variant="ghost" onClick={onCancel} className="text-gray-500 font-black text-xs uppercase tracking-widest hover:bg-gray-50 flex-1 md:flex-none h-12">Cancel</Button>
                     )}
-                    <Button
-                        onClick={handleSubmit}
-                        isLoading={isSubmitting}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-lg shadow-indigo-500/20"
-                    >
-                        Submit Timesheet
-                    </Button>
+                    {isReadOnly ? (
+                        <div className={cn(
+                            "px-8 h-12 flex items-center justify-center rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border-2",
+                            timesheetStatus === 'APPROVED'
+                                ? "bg-green-50 text-green-600 border-green-200"
+                                : "bg-blue-50 text-blue-600 border-blue-200"
+                        )}>
+                            {timesheetStatus}
+                        </div>
+                    ) : (
+                        <Button
+                            onClick={handleSubmit}
+                            isLoading={isSubmitting}
+                            disabled={daysNeedingReason.length > 0 || (attendanceHours?.total_hours ?? 0) === 0}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-12 h-12 rounded-xl shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all hover:-translate-y-0.5 active:translate-y-0 flex-1 md:flex-none uppercase tracking-widest text-xs"
+                        >
+                            Submit Timesheet
+                        </Button>
+                    )}
                 </div>
             </div>
-        </Card>
+        </Card >
     );
 };

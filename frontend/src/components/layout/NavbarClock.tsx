@@ -17,8 +17,16 @@ export const NavbarClock: React.FC = () => {
 
     const { data: todayAttendance, isLoading: isLoadingAttendance, isError } = useQuery({
         queryKey: ['attendance', 'today'],
-        queryFn: () => attendanceService.getTodayAttendance(),
-        staleTime: 1000 * 60, // 1 minute stale time to prevent flickering on every nav change
+        queryFn: async () => {
+            try {
+                return await attendanceService.getTodayAttendance();
+            } catch (error) {
+                console.error("Failed to fetch attendance", error);
+                return null;
+            }
+        },
+        staleTime: 1000 * 60, // 1 minute stale time
+        retry: 1,
     });
 
     const { data: geoSettings } = useQuery({
@@ -166,9 +174,9 @@ export const NavbarClock: React.FC = () => {
     };
 
     const status = todayAttendance?.status || 'NOT_CHECKED_IN';
-    const canClockOut = status === 'PRESENT' || status === 'HALF_DAY' || status === 'PENDING_CHECKOUT';
+    const canClockOut = !!todayAttendance?.check_in_time && !todayAttendance?.check_out_time;
 
-    // Don't render anything while loading initial state to avoid jumpiness
+    // Loading state
     if (isLoadingAttendance) {
         return (
             <div className="flex items-center mr-2">
@@ -179,12 +187,14 @@ export const NavbarClock: React.FC = () => {
         );
     }
 
+
     const activeBreak = todayAttendance?.active_break;
 
     // Admins and Super Admins don't clock in/out
     if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
         return null;
     }
+
 
     // Failed to load attendance
     if (isError) {
@@ -196,6 +206,7 @@ export const NavbarClock: React.FC = () => {
             </div>
         );
     }
+
 
     // Already clocked out for the day
     if (todayAttendance?.check_out_time) {

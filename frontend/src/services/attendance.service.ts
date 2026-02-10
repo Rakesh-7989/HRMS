@@ -329,6 +329,18 @@ export const attendanceService = {
     const response = await api.get<{ status: string; data: CurrentBreakStatus[] }>('/attendance/break/current');
     return response.data.data || [];
   },
+
+  // ============================================================================
+  // TIMESHEET INTEGRATION
+  // ============================================================================
+
+  getWeeklyAttendanceHours: async (params: {
+    week_start: string;
+    week_end: string;
+  }): Promise<WeeklyAttendanceHours> => {
+    const response = await api.get<{ status: string; data: WeeklyAttendanceHours }>('/attendance/my-weekly-hours', { params });
+    return response.data.data!;
+  },
 };
 
 export interface BreakRecord {
@@ -369,5 +381,19 @@ export interface RegularizationRequest {
   department_name?: string;
   designation_name?: string;
   created_at: string;
+}
+
+export interface DailyAttendanceData {
+  hours: number;
+  status: 'PRESENT' | 'LEAVE' | 'ABSENT';
+  leave_type: string | null;
+}
+
+export interface WeeklyAttendanceHours {
+  employee_id: string;
+  week_start: string;
+  week_end: string;
+  daily_data: Record<string, DailyAttendanceData>;
+  total_hours: number;
 }
 
