@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { PieChart } from '@/components/charts/PieChart';
-import { Users, CreditCard, FileText, PlayCircle, Settings, Timer } from 'lucide-react';
+import { Users, CreditCard, FileText, PlayCircle, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatINR = (amount: number | null | undefined) =>
