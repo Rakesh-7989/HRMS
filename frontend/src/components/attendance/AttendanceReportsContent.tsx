@@ -87,12 +87,7 @@ export const AttendanceReportsContent: React.FC = () => {
         queryFn: () => adminService.getTenantProfile(),
     });
 
-    const isCheckInLate = (checkInTime: string | null | undefined) => {
-        if (!checkInTime || !tenantProfile?.settings?.workingHours?.startTime) return false;
-        const checkIn = checkInTime.substring(0, 5);
-        const target = tenantProfile.settings.workingHours.startTime;
-        return checkIn > target;
-    };
+
 
     const isCheckOutEarly = (checkOutTime: string | null | undefined) => {
         if (!checkOutTime || !tenantProfile?.settings?.workingHours?.endTime) return false;

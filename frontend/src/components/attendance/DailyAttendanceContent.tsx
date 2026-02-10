@@ -6,7 +6,7 @@ import { attendanceService } from '@/services/attendance.service';
 import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, MapPin, Search, Coffee } from 'lucide-react';
+import { Clock, MapPin, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';

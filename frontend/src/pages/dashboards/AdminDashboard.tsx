@@ -11,7 +11,7 @@ import {
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
+  PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
@@ -213,22 +213,18 @@ export const AdminDashboard: React.FC = () => {
 
   const roleDist = data?.roleDistribution || [];
   const deptAnalytics = data?.departmentAnalytics || [];
-  const attendanceData = data?.attendanceMetrics || [];
+
   const leaveStats = data?.leaveStatistics || [];
 
   // Process data for charts
-  const attendanceChartData = attendanceData.map((d: any) => ({
-    date: format(new Date(d.date), 'MMM dd'),
-    'Check-ins': Number(d.total_checkins),
-    'Late': Number(d.late_arrivals),
-  }));
+
 
   const roleChartData = roleDist.map((r: any) => ({
     name: r.role,
     value: Number(r.count),
   }));
 
-  const taskChartData = (data?.taskMetrics || []).map((t: any) => ({
+  const taskChartData = ((data as any)?.taskMetrics || []).map((t: any) => ({
     status: t.column_key.replace('_', ' '),
     count: Number(t.count),
   }));
@@ -325,7 +321,7 @@ export const AdminDashboard: React.FC = () => {
           />
           <StatCard
             title="Total Projects"
-            value={metrics.total_projects || 0}
+            value={(metrics as any).total_projects || 0}
             change={5}
             trend="up"
             icon={Folder}
@@ -374,7 +370,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]}>
-                    {taskChartData.map((entry: any, index: number) => (
+                    {taskChartData.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Bar>
