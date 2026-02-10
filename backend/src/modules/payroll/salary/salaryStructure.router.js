@@ -78,6 +78,13 @@ router.delete(
     controller.deleteStructure
 );
 
+// Migrate active employees to a specific salary structure
+router.post(
+    '/structures/:id/migrate',
+    requireRole(['HR', 'ADMIN']),
+    controller.migrateStructure
+);
+
 // =====================================================
 // CTC CALCULATOR
 // =====================================================
@@ -112,6 +119,24 @@ router.get(
     '/employees/:employeeId/salary/history',
     requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']),
     controller.getEmployeeSalaryHistory
+);
+
+// =====================================================
+// TEMPLATES
+// =====================================================
+
+// List available structure templates
+router.get(
+    '/templates',
+    requireRole(['HR', 'ADMIN']),
+    controller.listTemplates
+);
+
+// Create structure from template
+router.post(
+    '/structures/from-template',
+    requireRole(['HR', 'ADMIN']),
+    controller.createFromTemplate
 );
 
 // =====================================================

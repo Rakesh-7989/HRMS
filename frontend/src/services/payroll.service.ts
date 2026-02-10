@@ -316,6 +316,24 @@ export const payrollService = {
     }
   },
 
+  // Void a payrun (keeps data for audit trail)
+  voidPayRun: async (payrunId: string) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/payrun/${payrunId}/void`);
+    return response.data.data!;
+  },
+
+  // Delete a single payslip item from a payrun
+  deletePayslipItem: async (payrunId: string, itemId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/payrun/${payrunId}/items/${itemId}`);
+    return response.data.data!;
+  },
+
+  // Delete an entire payrun (DRAFT/CALCULATED/PENDING_APPROVAL only)
+  deletePayRun: async (payrunId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/payrun/${payrunId}`);
+    return response.data.data!;
+  },
+
   // Loan payments and closure
   createLoanPayment: async (loanId: string, payload: { amount: number; tx_date?: string; note?: string }) => {
     const response = await api.post<ApiResponse<any>>(`/payroll/loans/${loanId}/payments`, payload);
@@ -713,6 +731,11 @@ export const payrollService = {
     await api.delete(`/payroll/salary-structures/structures/${id}`);
   },
 
+  migrateEmployeesToStructure: async (id: string) => {
+    const response = await api.post<ApiResponse<any>>(`/payroll/salary-structures/structures/${id}/migrate`);
+    return response.data; // Return the whole report object
+  },
+
   // CTC Calculator
   calculateCTC: async (structureId: string, annualCTC: number) => {
     const response = await api.post<ApiResponse<CTCBreakdown>>('/payroll/salary-structures/calculate-ctc', {
@@ -741,6 +764,19 @@ export const payrollService = {
   // Seed defaults
   seedSalaryDefaults: async () => {
     const response = await api.post<ApiResponse<{ structure_id: string }>>('/payroll/salary-structures/seed-defaults');
+    return response.data.data!;
+  },
+
+  // Structure Templates
+  listStructureTemplates: async () => {
+    const response = await api.get<ApiResponse<SalaryStructureTemplate[]>>('/payroll/salary-structures/templates');
+    return response.data.data || [];
+  },
+
+  createStructureFromTemplate: async (templateId: string) => {
+    const response = await api.post<ApiResponse<SalaryStructure>>('/payroll/salary-structures/structures/from-template', {
+      template_id: templateId
+    });
     return response.data.data!;
   }
 };
@@ -809,6 +845,23 @@ export interface CreateSalaryStructurePayload {
     min_value?: number;
     max_value?: number;
     display_order?: number;
+  }[];
+}
+
+export interface SalaryStructureTemplate {
+  id: string;
+  name: string;
+  description: string;
+  country: string;
+  tags: string[];
+  components: {
+    code: string;
+    name: string;
+    calculation_type: string;
+    percentage?: number;
+    fixed_amount?: number;
+    max_value?: number;
+    description: string;
   }[];
 }
 

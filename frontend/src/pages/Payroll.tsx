@@ -28,25 +28,27 @@ export const Payroll: React.FC = () => {
 
 
       {/* ===== CATEGORY CONTROLS ===== */}
-      <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700">
-        {PAYROLL_TABS.map((tab) => {
-          if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
+      {PAYROLL_TABS.filter(t => (t.roles as readonly string[]).includes(user?.role || '')).length > 1 && (
+        <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700">
+          {PAYROLL_TABS.map((tab) => {
+            if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
 
-          const isActive = tab.id === activeTab;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${isActive
-                ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
-                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-700/50'
-                }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+            const isActive = tab.id === activeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${isActive
+                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
+                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* ===== CONTENT FOR TABS ===== */}
       <div className="min-h-[500px]">

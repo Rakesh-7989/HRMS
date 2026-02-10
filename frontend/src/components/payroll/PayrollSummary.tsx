@@ -104,7 +104,6 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                         <div className="space-y-3">
                             {[
                                 { label: 'Process Monthly Payroll', icon: PlayCircle, color: 'primary', action: 'payslips' },
-                                { label: 'Time & Attendance', icon: Timer, color: 'blue', action: 'timesheets' },
                                 { label: 'Manage Salary Structures', icon: Settings, color: 'purple', action: 'salary_details', roles: ['ADMIN', 'HR'] },
                             ].map((item) => {
                                 if (item.roles && !item.roles.includes(user?.role || '')) return null;

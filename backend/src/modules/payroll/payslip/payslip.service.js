@@ -90,14 +90,14 @@ const getPayslipById = async (tenantId, payslipId) => {
 const getEmployeePayslips = async (tenantId, employeeId) => {
     const result = await db.query(
         `SELECT 
-        pri.id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
+        pri.id, pri.payroll_run_id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
         pr.period_month, pr.period_year, TO_CHAR(pr.pay_date, 'YYYY-MM-DD') as date, pr.status as payrun_status, pr.run_number,
         u.email as employee_email
      FROM payroll_run_items pri
      JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
      JOIN employees e ON e.id = pri.employee_id
      JOIN users u ON u.id = e.user_id
-     WHERE pri.tenant_id = $1 AND pri.employee_id = $2 AND pr.status IN ('APPROVED', 'PAID')
+     WHERE pri.tenant_id = $1 AND pri.employee_id = $2 AND pr.status IN ('APPROVED', 'PAID') AND pr.status != 'VOIDED'
      ORDER BY pr.period_year DESC, pr.period_month DESC`,
         [tenantId, employeeId]
     );
@@ -108,7 +108,7 @@ const getEmployeePayslips = async (tenantId, employeeId) => {
 const listAllPayslips = async (tenantId, filters = {}) => {
     let query = `
         SELECT 
-            pri.id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
+            pri.id, pri.payroll_run_id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
             pr.period_month, pr.period_year, TO_CHAR(pr.pay_date, 'YYYY-MM-DD') as date, pr.status as payrun_status, pr.run_number,
             e.first_name || ' ' || e.last_name as employee_name, e.employee_id as emp_code,
             u.email as employee_email
@@ -116,7 +116,7 @@ const listAllPayslips = async (tenantId, filters = {}) => {
          JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
          JOIN employees e ON e.id = pri.employee_id
          JOIN users u ON u.id = e.user_id
-         WHERE pri.tenant_id = $1
+         WHERE pri.tenant_id = $1 AND pr.status != 'VOIDED'
     `;
 
     const params = [tenantId];

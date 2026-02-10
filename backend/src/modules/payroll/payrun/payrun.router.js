@@ -103,11 +103,25 @@ router.patch(
     controller.revokePayrun
 );
 
-// Delete payrun (only DRAFT)
+// Delete payrun (DRAFT, CALCULATED, PENDING_APPROVAL)
 router.delete(
     "/:id",
     requireRole(["ADMIN"]),
     controller.deletePayrun
+);
+
+// Void payrun (APPROVED/PAID — keeps data for audit)
+router.patch(
+    "/:id/void",
+    requireRole(["ADMIN"]),
+    controller.voidPayrun
+);
+
+// Delete a single payslip item from a payrun
+router.delete(
+    "/:id/items/:itemId",
+    requireRole(["ADMIN", "HR"]),
+    controller.deletePayslipItem
 );
 
 // Lock payrun

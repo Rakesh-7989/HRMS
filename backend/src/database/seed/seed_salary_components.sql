@@ -120,3 +120,91 @@ BEGIN
     RETURN v_structure_id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to seed Indian Standard CTC Structure (India-Compliant)
+CREATE OR REPLACE FUNCTION seed_indian_salary_structure(p_tenant_id UUID)
+RETURNS UUID AS $$
+DECLARE
+    v_structure_id UUID;
+    v_basic_id UUID;
+    v_hra_id UUID;
+    v_da_id UUID;
+    v_conveyance_id UUID;
+    v_medical_id UUID;
+    v_special_id UUID;
+    v_pf_ee_id UUID;
+    v_pf_er_id UUID;
+    v_gratuity_id UUID;
+BEGIN
+    -- Ensure all required components exist
+    INSERT INTO salary_components (tenant_id, name, code, component_type, category, is_taxable, is_pro_rata, is_statutory, display_order, description)
+    VALUES 
+        (p_tenant_id, 'Dearness Allowance', 'DA', 'EARNING', 'ALLOWANCE', TRUE, TRUE, FALSE, 3, 'Cost of living adjustment allowance'),
+        (p_tenant_id, 'Conveyance Allowance', 'CONVEYANCE', 'EARNING', 'ALLOWANCE', FALSE, TRUE, FALSE, 5, 'Transport allowance (tax-exempt up to limit)'),
+        (p_tenant_id, 'Medical Allowance', 'MEDICAL', 'EARNING', 'ALLOWANCE', FALSE, TRUE, FALSE, 6, 'Medical expense allowance')
+    ON CONFLICT (tenant_id, code) DO NOTHING;
+
+    -- Create Indian Standard CTC Structure
+    INSERT INTO salary_structures (tenant_id, name, description, is_default, is_active)
+    VALUES (p_tenant_id, 'Indian Standard CTC Structure', 'India-compliant CTC structure with Basic (40%), HRA, DA, Conveyance, Medical, PF, Gratuity as per Indian labor laws', FALSE, TRUE)
+    RETURNING id INTO v_structure_id;
+
+    -- Get component IDs
+    SELECT id INTO v_basic_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'BASIC';
+    SELECT id INTO v_hra_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'HRA';
+    SELECT id INTO v_da_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'DA';
+    SELECT id INTO v_conveyance_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'CONVEYANCE';
+    SELECT id INTO v_medical_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'MEDICAL';
+    SELECT id INTO v_special_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'SPECIAL';
+    SELECT id INTO v_pf_ee_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'PF_EE';
+    SELECT id INTO v_pf_er_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'PF_ER';
+    SELECT id INTO v_gratuity_id FROM salary_components WHERE tenant_id = p_tenant_id AND code = 'GRATUITY';
+
+    -- EARNINGS
+    -- Basic: 40% of CTC (recommended minimum as per Wage Code 2019)
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_basic_id, 'PERCENTAGE_OF_CTC', 40, 1);
+
+    -- HRA: 50% of Basic (metro cities) / can be changed to 40% for non-metro
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_hra_id, 'PERCENTAGE_OF_BASIC', 50, 2);
+
+    -- DA: 5% of Basic
+    IF v_da_id IS NOT NULL THEN
+        INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, display_order)
+        VALUES (p_tenant_id, v_structure_id, v_da_id, 'PERCENTAGE_OF_BASIC', 5, 3);
+    END IF;
+
+    -- Conveyance: Fixed ₹1,600/month
+    IF v_conveyance_id IS NOT NULL THEN
+        INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, fixed_amount, display_order)
+        VALUES (p_tenant_id, v_structure_id, v_conveyance_id, 'FIXED', 1600, 4);
+    END IF;
+
+    -- Medical: Fixed ₹1,250/month
+    IF v_medical_id IS NOT NULL THEN
+        INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, fixed_amount, display_order)
+        VALUES (p_tenant_id, v_structure_id, v_medical_id, 'FIXED', 1250, 5);
+    END IF;
+
+    -- DEDUCTIONS
+    -- PF Employee: 12% of Basic (max ₹1,800/month based on ₹15,000 cap)
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, max_value, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_pf_ee_id, 'PERCENTAGE_OF_BASIC', 12, 1800, 6);
+
+    -- EMPLOYER CONTRIBUTIONS
+    -- PF Employer: 12% of Basic (max ₹1,800/month based on ₹15,000 cap)
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, max_value, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_pf_er_id, 'PERCENTAGE_OF_BASIC', 12, 1800, 7);
+
+    -- Gratuity: 4.81% of Basic
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, percentage, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_gratuity_id, 'PERCENTAGE_OF_BASIC', 4.81, 8);
+
+    -- Special Allowance: Remaining amount to balance CTC
+    INSERT INTO salary_structure_components (tenant_id, structure_id, component_id, calculation_type, display_order)
+    VALUES (p_tenant_id, v_structure_id, v_special_id, 'REMAINING', 9);
+
+    RETURN v_structure_id;
+END;
+$$ LANGUAGE plpgsql;

@@ -254,3 +254,64 @@ exports.seedDefaults = async (req, res) => {
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
+
+// =====================================================
+// TEMPLATES
+// =====================================================
+
+exports.listTemplates = async (req, res) => {
+    try {
+        const templates = salaryStructureService.listTemplates();
+        res.json({ status: 'success', data: templates });
+    } catch (err) {
+        console.error('List templates error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+};
+
+exports.createFromTemplate = async (req, res) => {
+    try {
+        const { template_id } = req.body;
+
+        if (!template_id) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'template_id is required'
+            });
+        }
+
+        const data = await salaryStructureService.createStructureFromTemplate(
+            req.user.tenantId,
+            req.user.id,
+            template_id
+        );
+
+        res.status(201).json({
+            status: 'success',
+            message: 'Structure created from template successfully',
+            data
+        });
+    } catch (err) {
+        console.error('Create from template error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+};
+
+exports.migrateStructure = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await salaryStructureService.migrateEmployeesToStructure(
+            req.user.tenantId,
+            id,
+            req.user.id
+        );
+
+        res.json({
+            status: 'success',
+            data: result
+        });
+    } catch (err) {
+        console.error('Migrate structure error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+};

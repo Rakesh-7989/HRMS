@@ -5,9 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '@/services/payroll.service';
+import { payrollService, SalaryStructure, SalaryComponent, SalaryStructureTemplate, CTCBreakdown } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, DollarSign, Wallet } from 'lucide-react';
+import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, DollarSign, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
 
 export const SalaryStructuresContent: React.FC = () => {
     const queryClient = useQueryClient();
@@ -16,6 +16,7 @@ export const SalaryStructuresContent: React.FC = () => {
     // Dialogs
     const [structureDialogOpen, setStructureDialogOpen] = useState(false);
     const [componentDialogOpen, setComponentDialogOpen] = useState(false);
+    const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
     const [editingStructure, setEditingStructure] = useState<SalaryStructure | null>(null);
     const [editingComponent, setEditingComponent] = useState<SalaryComponent | null>(null);
 
@@ -31,6 +32,21 @@ export const SalaryStructuresContent: React.FC = () => {
         queryKey: ['salary-components'],
         queryFn: () => payrollService.listSalaryComponentsV2(),
         enabled: activeTab === 'components' || activeTab === 'calculator' || structureDialogOpen
+    });
+
+    // Templates
+    const { data: templates = [], isLoading: templatesLoading } = useQuery({
+        queryKey: ['salary-structure-templates'],
+        queryFn: () => payrollService.listStructureTemplates(),
+        enabled: templateDialogOpen
+    });
+
+    const createFromTemplateMut = useMutation({
+        mutationFn: (templateId: string) => payrollService.createStructureFromTemplate(templateId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['salary-structures'] });
+            setTemplateDialogOpen(false);
+        }
     });
 
     // Form states
@@ -75,6 +91,20 @@ export const SalaryStructuresContent: React.FC = () => {
     const deleteStructureMut = useMutation({
         mutationFn: (id: string) => payrollService.deleteSalaryStructure(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['salary-structures'] })
+    });
+
+    const migrateMut = useMutation({
+        mutationFn: (id: string) => payrollService.migrateEmployeesToStructure(id),
+        onSuccess: (res: any) => {
+            const result = res.data;
+            if (result.successCount > 0) {
+                // Use a custom toast or just success
+                alert(result.message); // Simple alert for detailed message
+            } else {
+                alert('No eligible active employees found to migrate (must have existing assignments or legacy data with CTC > 0).');
+            }
+        },
+        onError: (err: any) => alert(err.message || 'Migration failed')
     });
 
     const createComponentMut = useMutation({
@@ -447,7 +477,17 @@ export const SalaryStructuresContent: React.FC = () => {
                         <p className="text-xs text-gray-500 mt-1 font-medium">Configure and manage organizational compensation frameworks</p>
                     </div>
                     <div className="flex items-center gap-2">
-
+                        {activeTab === 'structures' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs font-bold uppercase tracking-tight border-primary/30 text-primary hover:bg-primary/5 dark:border-primary/50 dark:hover:bg-primary/10"
+                                onClick={() => setTemplateDialogOpen(true)}
+                            >
+                                <Sparkles className="mr-2" size={14} />
+                                From Template
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             className="bg-primary hover:bg-primary/90 text-white text-xs font-bold uppercase tracking-tight shadow-lg shadow-primary/20"
@@ -557,9 +597,20 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 )}
                                             </TableCell>
                                             <TableCell className="px-6 py-4 text-right">
-                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex gap-2 justify-end">
                                                     <Button variant="outline" size="sm" onClick={() => handleEditStructure(s)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-primary">
                                                         <Edit size={14} />
+                                                    </Button>
+                                                    <Button variant="outline" size="sm"
+                                                        title="Migrate All Employees to this Structure"
+                                                        onClick={() => {
+                                                            if (confirm(`Bulk migrate ALL active employees to '${s.name}'? This will recalculate their salary components based on their current CTC.`)) {
+                                                                migrateMut.mutate(s.id);
+                                                            }
+                                                        }}
+                                                        className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:border-blue-200"
+                                                    >
+                                                        <Users size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm" onClick={() => {
                                                         if (confirm('Delete this structure?')) deleteStructureMut.mutate(s.id);
@@ -882,6 +933,130 @@ export const SalaryStructuresContent: React.FC = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Template Selection Dialog */}
+            {templateDialogOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-3xl mx-4 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl ring-1 ring-black/10 overflow-hidden">
+                        {/* Dialog Header */}
+                        <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 text-primary rounded-2xl flex items-center justify-center shadow-inner">
+                                    <FileText size={24} className="stroke-[2px]" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Structure Templates</h2>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-0.5">Pre-built Compliance-Ready Structures</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setTemplateDialogOpen(false)}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-all"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Dialog Body */}
+                        <div className="p-8 max-h-[70vh] overflow-y-auto">
+                            {templatesLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                    <Loader2 className="animate-spin text-primary" size={32} />
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Templates...</p>
+                                </div>
+                            ) : templates.length === 0 ? (
+                                <div className="text-center py-20">
+                                    <FileText size={48} className="mx-auto text-gray-200 mb-4" />
+                                    <p className="text-sm font-bold text-gray-400">No templates available</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {templates.map(tmpl => (
+                                        <div
+                                            key={tmpl.id}
+                                            className="group relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
+                                        >
+                                            {/* Template Header */}
+                                            <div className="p-6 pb-4 flex items-start justify-between">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
+                                                        <Globe size={24} className="text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight group-hover:text-primary transition-colors">{tmpl.name}</h3>
+                                                        <p className="text-xs text-gray-500 mt-1 max-w-md leading-relaxed">{tmpl.description}</p>
+                                                        <div className="flex items-center gap-2 mt-3">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-500/10 text-orange-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-orange-500/20">
+                                                                <Globe size={10} />
+                                                                {tmpl.country}
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-emerald-500/20">
+                                                                <Shield size={10} />
+                                                                Compliant
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-gray-800 text-gray-500 rounded-full text-[9px] font-bold uppercase tracking-tight ring-1 ring-black/5">
+                                                                {tmpl.components.length} Components
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    disabled={createFromTemplateMut.isPending}
+                                                    onClick={() => createFromTemplateMut.mutate(tmpl.id)}
+                                                    className="px-6 h-10 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2 shrink-0"
+                                                >
+                                                    {createFromTemplateMut.isPending ? (
+                                                        <Loader2 className="animate-spin" size={14} />
+                                                    ) : (
+                                                        <ArrowRight size={14} className="stroke-[2.5px]" />
+                                                    )}
+                                                    Use Template
+                                                </Button>
+                                            </div>
+
+                                            {/* Components Preview */}
+                                            <div className="px-6 pb-6">
+                                                <div className="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                                                    <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-950/30 border-b border-gray-100 dark:border-gray-800">
+                                                        <div className="grid grid-cols-12 gap-2 text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                                            <div className="col-span-4">Component</div>
+                                                            <div className="col-span-4">Calculation Rule</div>
+                                                            <div className="col-span-4">Value</div>
+                                                        </div>
+                                                    </div>
+                                                    {tmpl.components.map((c, idx) => (
+                                                        <div key={c.code} className={`px-4 py-2.5 grid grid-cols-12 gap-2 items-center text-[11px] ${idx % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-gray-800/10'} ${idx < tmpl.components.length - 1 ? 'border-b border-gray-50 dark:border-gray-800/50' : ''}`}>
+                                                            <div className="col-span-4">
+                                                                <span className="font-bold text-gray-700 dark:text-gray-200">{c.name}</span>
+                                                                <span className="ml-2 text-[9px] text-gray-400 font-medium">{c.code}</span>
+                                                            </div>
+                                                            <div className="col-span-4">
+                                                                <span className={`inline-flex px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.calculation_type === 'REMAINING' ? 'bg-blue-50/50 text-blue-600 dark:bg-blue-500/10' :
+                                                                    c.calculation_type === 'FIXED' ? 'bg-amber-50/50 text-amber-600 dark:bg-amber-500/10' :
+                                                                        'bg-gray-50 text-gray-500 dark:bg-gray-800'
+                                                                    }`}>
+                                                                    {c.calculation_type.replace(/_/g, ' ')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="col-span-4 text-gray-500 font-medium text-[10px]">
+                                                                {c.calculation_type === 'REMAINING' ? 'Balance Amount' :
+                                                                    c.calculation_type === 'FIXED' ? `₹${c.fixed_amount?.toLocaleString('en-IN')}/mo` :
+                                                                        `${c.percentage}%${c.max_value ? ` (max ₹${c.max_value.toLocaleString('en-IN')}/mo)` : ''}`
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

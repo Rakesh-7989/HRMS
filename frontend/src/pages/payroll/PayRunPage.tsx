@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { Play, Lock, FileText, CheckCircle, RefreshCw } from 'lucide-react';
+import { Play, Lock, FileText, CheckCircle, RefreshCw, Trash2, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const PayRunPage: React.FC = () => {
@@ -48,6 +48,44 @@ const PayRunPage: React.FC = () => {
         mutationFn: (id: string) => payrollService.lockPayRun(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'runs'] }),
     });
+
+    const deleteMut = useMutation({
+        mutationFn: (id: string) => payrollService.deletePayRun(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['payroll', 'runs'] });
+            setDeleteConfirmOpen(false);
+            setTargetRun(null);
+        },
+        onError: (err: any) => {
+            alert(`Failed to delete payrun: ${err?.response?.data?.message || err?.message}`);
+        }
+    });
+
+    const voidMut = useMutation({
+        mutationFn: (id: string) => payrollService.voidPayRun(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['payroll', 'runs'] });
+            setVoidConfirmOpen(false);
+            setTargetRun(null);
+        },
+        onError: (err: any) => {
+            alert(`Failed to void payrun: ${err?.response?.data?.message || err?.message}`);
+        }
+    });
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [voidConfirmOpen, setVoidConfirmOpen] = useState(false);
+    const [targetRun, setTargetRun] = useState<PayRun | null>(null);
+
+    const checkDelete = (run: PayRun) => {
+        setTargetRun(run);
+        setDeleteConfirmOpen(true);
+    };
+
+    const checkVoid = (run: PayRun) => {
+        setTargetRun(run);
+        setVoidConfirmOpen(true);
+    };
 
     const handleCreate = () => {
         createMut.mutate({ periodMonth: Number(month), periodYear: Number(year) });
@@ -121,6 +159,23 @@ const PayRunPage: React.FC = () => {
                                                     <FileText size={16} />
                                                 </Button>
                                             </div>
+                                            {/* Second Row of Actions (Delete/Void) */}
+                                            <div className="flex gap-2 mt-1">
+                                                {/* Delete Action (Draft/Calculated/Pending) */}
+                                                {(run.status === 'DRAFT' || run.status === 'CALCULATED' || run.status === 'PENDING_APPROVAL') && (
+                                                    <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => checkDelete(run)} title="Delete Pay Run">
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                )}
+
+                                                {/* Void Action (Approved/Paid) */}
+                                                {(run.status === 'APPROVED' || run.status === 'PAID') && (
+                                                    <Button size="sm" variant="ghost" className="text-orange-500 hover:text-orange-700 hover:bg-orange-50" onClick={() => checkVoid(run)} title="Void Pay Run">
+                                                        <Ban size={16} />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -151,7 +206,50 @@ const PayRunPage: React.FC = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </DashboardLayout>
+
+            {/* Delete Confirmation Dialog */ }
+    <Dialog open={deleteConfirmOpen} onOpenChange={(open) => { setDeleteConfirmOpen(open); if (!open) setTargetRun(null); }}>
+        <DialogContent>
+            <DialogHeader><DialogTitle className="text-red-600">Delete Pay Run?</DialogTitle></DialogHeader>
+            <div className="py-4">
+                <p className="text-gray-700">
+                    Are you sure you want to <strong>delete</strong> the pay run for
+                    <span className="font-bold"> {targetRun ? new Date(targetRun.period_year, targetRun.period_month - 1).toLocaleString('default', { month: 'long', year: 'numeric' }) : ''}</span>?
+                </p>
+                <p className="text-sm text-red-500 mt-2 font-semibold">
+                    This will permanently remove all payslip data, calculations, and component records for this month.
+                    This action cannot be undone.
+                </p>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+                <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => targetRun && deleteMut.mutate(targetRun.id)} isLoading={deleteMut.isPending}>Delete Permanently</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    {/* Void Confirmation Dialog */ }
+    <Dialog open={voidConfirmOpen} onOpenChange={(open) => { setVoidConfirmOpen(open); if (!open) setTargetRun(null); }}>
+        <DialogContent>
+            <DialogHeader><DialogTitle className="text-orange-600">Void Pay Run?</DialogTitle></DialogHeader>
+            <div className="py-4">
+                <p className="text-gray-700">
+                    Are you sure you want to <strong>void</strong> the pay run for
+                    <span className="font-bold"> {targetRun ? new Date(targetRun.period_year, targetRun.period_month - 1).toLocaleString('default', { month: 'long', year: 'numeric' }) : ''}</span>?
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                    This will mark the pay run as <strong>VOIDED</strong>.
+                    The data will be preserved for audit purposes, but payslips will be removed from reports and employee portals.
+                    You can then create a new pay run for this month.
+                </p>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setVoidConfirmOpen(false)}>Cancel</Button>
+                <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => targetRun && voidMut.mutate(targetRun.id)} isLoading={voidMut.isPending}>Void Pay Run</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+        </DashboardLayout >
     );
 };
 

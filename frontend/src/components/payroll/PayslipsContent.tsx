@@ -6,7 +6,7 @@ import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { payrollService } from '@/services/payroll.service';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
-import { Download, Filter, FileText, Mail } from 'lucide-react';
+import { Download, Filter, FileText, Mail, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -70,7 +70,10 @@ export const PayslipsContent: React.FC = () => {
 
     const exportCSV = (rows: any[], filename = 'export.csv') => {
         if (!rows?.length) return;
-        const headers = Object.keys(rows[0]);
+        // Exclude internal IDs and technical fields
+        const excludeFields = ['id', 'tenant_id', 'payroll_run_id', 'payrun_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'employee_id', 'assignment_id'];
+        const headers = Object.keys(rows[0]).filter(h => !excludeFields.includes(h));
+
         const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -160,33 +163,70 @@ export const PayslipsContent: React.FC = () => {
         enabled: !!historyEmployee && historyDialogOpen,
     });
 
+    // Delete payslip confirmation
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetPayslip, setDeleteTargetPayslip] = useState<any | null>(null);
+
+    const deletePayslipMut = useMutation({
+        mutationFn: ({ payrunId, itemId }: { payrunId: string; itemId: string }) =>
+            payrollService.deletePayslipItem(payrunId, itemId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['payslips'] });
+            setDeleteConfirmOpen(false);
+            setDeleteTargetPayslip(null);
+        },
+        onError: (err: any) => {
+            alert(`Failed to delete payslip: ${err?.response?.data?.message || err?.message || 'Unknown error'}`);
+        }
+    });
+
+    const confirmDeletePayslip = (p: any) => {
+        setDeleteTargetPayslip(p);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeletePayslip = () => {
+        if (!deleteTargetPayslip) return;
+        const payrunId = deleteTargetPayslip.payroll_run_id || deleteTargetPayslip.payrollRunId || deleteTargetPayslip.payrun_id;
+        if (!payrunId) {
+            alert('Unable to determine the pay run for this payslip. Please refresh the page and try again.');
+            return;
+        }
+        deletePayslipMut.mutate({ payrunId, itemId: deleteTargetPayslip.id });
+    };
+
 
 
     return (
         <div className="space-y-6">
             {/* Top controls: Navigation and Actions */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
-                    {[
-                        { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-                        { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
-                    ].map((b) => {
-                        if (!b.roles.includes(user?.role || '')) return null;
-                        return (
-                            <button
-                                key={b.id}
-                                onClick={() => setActiveSection(b.id as any)}
-                                className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
-                                    ? 'bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5'
-                                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                                    }`}
-                            >
-                                {b.icon && <b.icon className="mr-1.5" size={14} />}
-                                {b.label}
-                            </button>
-                        );
-                    })}
-                </div>
+                {[
+                    { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                    { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                ].filter(b => b.roles.includes(user?.role || '')).length > 1 && (
+                        <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                            {[
+                                { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                                { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                            ].map((b) => {
+                                if (!b.roles.includes(user?.role || '')) return null;
+                                return (
+                                    <button
+                                        key={b.id}
+                                        onClick={() => setActiveSection(b.id as any)}
+                                        className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
+                                            ? 'bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5'
+                                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                            }`}
+                                    >
+                                        {b.icon && <b.icon className="mr-1.5" size={14} />}
+                                        {b.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
 
                 <div className="flex flex-wrap gap-2">
                     {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
@@ -264,7 +304,7 @@ export const PayslipsContent: React.FC = () => {
                         )}
 
                         {/* placeholders for more filters */}
-                        <div className="md:col-span-3 text-sm text-muted-foreground">You can add employee, department and export filters here.</div>
+
                     </div>
                 </Card>
             )}
@@ -327,6 +367,11 @@ export const PayslipsContent: React.FC = () => {
                                                     )}
                                                     {activeSubSection === 'staff' && (
                                                         <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                    )}
+                                                    {activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => confirmDeletePayslip(p)} title="Delete payslip">
+                                                            <Trash2 size={14} />
+                                                        </Button>
                                                     )}
                                                 </div>
                                             </TableCell>
@@ -453,6 +498,34 @@ export const PayslipsContent: React.FC = () => {
             {activeSection === 'settings' && (
                 <PayrollSettings />
             )}
+
+            {/* Delete Payslip Confirmation Dialog */}
+            <Dialog open={deleteConfirmOpen} onOpenChange={(open) => { setDeleteConfirmOpen(open); if (!open) setDeleteTargetPayslip(null); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Payslip</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Are you sure you want to permanently delete{' '}
+                            <span className="font-bold text-gray-900 dark:text-white">{deleteTargetPayslip?.employee_name}'s</span>{' '}
+                            payslip for <span className="font-bold text-gray-900 dark:text-white">{deleteTargetPayslip?.date}</span>?
+                        </p>
+                        <p className="text-xs text-red-500 mt-2 font-semibold">This action cannot be undone. The payslip and all its component data will be permanently removed.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="primary"
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={handleDeletePayslip}
+                            isLoading={deletePayslipMut.isPending}
+                        >
+                            Delete Permanently
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

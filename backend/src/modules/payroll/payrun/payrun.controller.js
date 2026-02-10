@@ -61,6 +61,16 @@ const deletePayrun = async (req, res) => {
     res.json({ status: "success", data });
 };
 
+const voidPayrun = async (req, res) => {
+    const data = await payrunService.voidPayrun(req.user.tenantId, req.params.id, req.user.id);
+    res.json({ status: "success", data, message: "Payrun voided successfully" });
+};
+
+const deletePayslipItem = async (req, res) => {
+    const data = await payrunService.deletePayslipItem(req.user.tenantId, req.params.id, req.params.itemId);
+    res.json({ status: "success", data, message: "Payslip deleted successfully" });
+};
+
 const lockPayrun = async (req, res) => {
     const data = await payrunService.lockPayrun(req.user.tenantId, req.params.id, req.user.id);
     res.json({ status: "success", data, message: "Payroll locked" });
@@ -77,5 +87,7 @@ module.exports = {
     rejectPayrun,
     revokePayrun,
     deletePayrun,
+    voidPayrun,
+    deletePayslipItem,
     lockPayrun
 };

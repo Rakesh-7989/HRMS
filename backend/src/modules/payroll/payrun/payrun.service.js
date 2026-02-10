@@ -468,14 +468,16 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     });
 
     // Map to standard variables for legacy compatibility
+    // Note: Check for multiple code variants to handle different naming conventions
     const basic = compMap['BASIC'] || 0;
     const hra = compMap['HRA'] || 0;
     const da = compMap['DA'] || 0;
-    const specialAllowance = compMap['SPECIAL_ALLOWANCE'] || 0;
+    // Special Allowance can be coded as 'SPECIAL_ALLOWANCE', 'SPECIAL', or 'SA'
+    const specialAllowance = compMap['SPECIAL_ALLOWANCE'] || compMap['SPECIAL'] || compMap['SA'] || 0;
 
     // Only sum EARNING type components for otherAllowance (excluding major ones)
     const otherAllowance = compDetails
-        .filter(c => c.type === 'EARNING' && !['BASIC', 'HRA', 'DA', 'SPECIAL_ALLOWANCE'].includes(c.code))
+        .filter(c => c.type === 'EARNING' && !['BASIC', 'HRA', 'DA', 'SPECIAL_ALLOWANCE', 'SPECIAL', 'SA'].includes(c.code))
         .reduce((sum, c) => sum + c.amount, 0);
 
     // Gross should strictly be the sum of all EARNING type components
@@ -525,14 +527,46 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
 
     // Total calculations
     // Use values from structure if they exist (overrides), otherwise use calculated values
-    const finalPfEmployee = (compMap['PF_EE'] || compMap['PF_EMPLOYEE']) ?? pfEmployee;
-    const finalEsiEmployee = (compMap['ESI_EE'] || compMap['ESI_EMPLOYEE']) ?? esiEmployee;
-    const finalProfessionalTax = (compMap['PT'] || compMap['PROFESSIONAL_TAX']) ?? professionalTax;
-    const finalLwfEmployee = (compMap['LWF'] || compMap['LWF_EMPLOYEE']) ?? lwfEmployee;
+    // CRITICAL FIX: Use ?? (nullish coalescing) instead of || to properly handle 0 values
+    // Also check all possible code variants to ensure we don't miss the component
+
+    // Helper to get first defined value from compMap for given codes
+    const getStructureValue = (...codes) => {
+        for (const code of codes) {
+            if (compMap[code] !== undefined && compMap[code] !== null) {
+                return compMap[code];
+            }
+        }
+        return undefined;
+    };
+
+    // Get deduction values from structure (if present) or fall back to statutory calculated values
+    // IMPORTANT: Include ALL possible code variants including 'PF(EMPLOYEE)' which is used in your DB
+    const structurePfEmployee = getStructureValue('PF_EE', 'PF_EMPLOYEE', 'PF', 'PROVIDENT_FUND', 'PF(EMPLOYEE)');
+    const structureEsiEmployee = getStructureValue('ESI_EE', 'ESI_EMPLOYEE', 'ESI', 'ESI(EMPLOYEE)');
+    const structurePT = getStructureValue('PT', 'PROFESSIONAL_TAX');
+    const structureLwf = getStructureValue('LWF', 'LWF_EMPLOYEE');
+
+    // DEBUG LOGGING - Remove after fixing
+    console.log('[PAYROLL DEBUG] Employee:', emp.first_name, emp.last_name);
+    console.log('[PAYROLL DEBUG] compMap keys:', Object.keys(compMap));
+    console.log('[PAYROLL DEBUG] compMap PF values:', { 'PF_EE': compMap['PF_EE'], 'PF_EMPLOYEE': compMap['PF_EMPLOYEE'], 'PF': compMap['PF'], 'PF(EMPLOYEE)': compMap['PF(EMPLOYEE)'] });
+    console.log('[PAYROLL DEBUG] structurePfEmployee:', structurePfEmployee, 'statutory pfEmployee:', pfEmployee);
+    console.log('[PAYROLL DEBUG] structurePT:', structurePT, 'statutory professionalTax:', professionalTax);
+
+    // Use structure value if defined (even if 0), otherwise use statutory calculated value
+    const finalPfEmployee = structurePfEmployee !== undefined ? structurePfEmployee : pfEmployee;
+    const finalEsiEmployee = structureEsiEmployee !== undefined ? structureEsiEmployee : esiEmployee;
+    const finalProfessionalTax = structurePT !== undefined ? structurePT : professionalTax;
+    const finalLwfEmployee = structureLwf !== undefined ? structureLwf : lwfEmployee;
+
+    console.log('[PAYROLL DEBUG] FINAL VALUES - PF:', finalPfEmployee, 'ESI:', finalEsiEmployee, 'PT:', finalProfessionalTax, 'LWF:', finalLwfEmployee);
 
     const totalEarnings = gross + reimbursementTotal;
     const totalDeductions = finalPfEmployee + finalEsiEmployee + finalProfessionalTax + finalLwfEmployee + tds + loanDeduction + lopDeduction;
     const netSalary = totalEarnings - totalDeductions;
+
+    console.log('[PAYROLL DEBUG] TOTAL DEDUCTIONS:', totalDeductions, '= PF:', finalPfEmployee, '+ ESI:', finalEsiEmployee, '+ PT:', finalProfessionalTax, '+ LWF:', finalLwfEmployee, '+ TDS:', tds, '+ Loan:', loanDeduction, '+ LOP:', lopDeduction);
 
     // ================================================================
     // ADD STATUTORY DEDUCTIONS TO COMPONENTS FOR PAYSLIP DISPLAY
@@ -542,8 +576,13 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
 
     // Check for existing components using both standard codes and potential variations
     // The DB uses PF_EE, PF_ER, ESI_EE, ESI_ER
+    // IMPORTANT: Check for all code variants to prevent duplicate entries
 
-    if (pfEmployee > 0 && !compMap['PF_EMPLOYEE'] && !compMap['PF_EE']) {
+    // Helper to check if a component code exists in compMap (with non-zero value)
+    const hasComponent = (...codes) => codes.some(code => compMap[code] !== undefined && compMap[code] !== null);
+
+    // Include 'PF(EMPLOYEE)' code variant used in your database
+    if (pfEmployee > 0 && !hasComponent('PF_EMPLOYEE', 'PF_EE', 'PF', 'PF(EMPLOYEE)')) {
         compDetails.push({
             component_id: null,
             name: 'Provident Fund (Employee)',
@@ -553,7 +592,7 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         });
     }
 
-    if (pfEmployer > 0 && !compMap['PF_EMPLOYER'] && !compMap['PF_ER']) {
+    if (pfEmployer > 0 && !hasComponent('PF_EMPLOYER', 'PF_ER')) {
         compDetails.push({
             component_id: null,
             name: 'Provident Fund (Employer)',
@@ -563,7 +602,7 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         });
     }
 
-    if (esiEmployee > 0 && !compMap['ESI_EMPLOYEE'] && !compMap['ESI_EE']) {
+    if (esiEmployee > 0 && !hasComponent('ESI_EMPLOYEE', 'ESI_EE', 'ESI')) {
         compDetails.push({
             component_id: null,
             name: 'ESI (Employee)',
@@ -573,7 +612,7 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         });
     }
 
-    if (esiEmployer > 0 && !compMap['ESI_EMPLOYER'] && !compMap['ESI_ER']) {
+    if (esiEmployer > 0 && !hasComponent('ESI_EMPLOYER', 'ESI_ER')) {
         compDetails.push({
             component_id: null,
             name: 'ESI (Employer)',
@@ -583,7 +622,8 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         });
     }
 
-    if (professionalTax > 0 && !compMap['PT']) {
+    // CRITICAL FIX: Check both 'PT' and 'PROFESSIONAL_TAX' codes to prevent duplicate PT entries
+    if (professionalTax > 0 && !hasComponent('PT', 'PROFESSIONAL_TAX')) {
         compDetails.push({
             component_id: null,
             name: 'Professional Tax',
@@ -593,7 +633,7 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         });
     }
 
-    if (lwfEmployee > 0 && !compMap['LWF']) {
+    if (lwfEmployee > 0 && !hasComponent('LWF', 'LWF_EMPLOYEE')) {
         compDetails.push({
             component_id: null,
             name: 'Labour Welfare Fund',
@@ -854,19 +894,112 @@ const deletePayrun = async (tenantId, payrunId) => {
         throw new Error('Payrun not found');
     }
 
-    if (payrun.status !== 'DRAFT') {
-        throw new Error('Can only delete DRAFT payruns');
+    if (!['DRAFT', 'CALCULATED', 'PENDING_APPROVAL'].includes(payrun.status)) {
+        throw new Error('Can only delete DRAFT, CALCULATED, or PENDING_APPROVAL payruns. Use Void for approved/paid runs.');
     }
 
-    // Delete items first
+    if (payrun.is_locked) {
+        throw new Error('Cannot delete a locked payrun');
+    }
+
+    // Delete components first (child of items)
+    await db.query(
+        `DELETE FROM payroll_run_item_components WHERE payroll_run_item_id IN (
+            SELECT id FROM payroll_run_items WHERE payroll_run_id = $1
+        )`,
+        [payrunId]
+    );
+
+    // Delete items
     await db.query(
         `DELETE FROM payroll_run_items WHERE payroll_run_id = $1`,
         [payrunId]
     );
 
+    // Delete the payrun itself
     await db.query(
         `DELETE FROM payroll_runs WHERE id = $1`,
         [payrunId]
+    );
+
+    return { deleted: true };
+};
+
+// Void a payrun (for APPROVED/PAID — keeps data for audit trail)
+const voidPayrun = async (tenantId, payrunId, userId) => {
+    const payrun = await getPayrunById(tenantId, payrunId);
+
+    if (!payrun) {
+        throw new Error('Payrun not found');
+    }
+
+    if (payrun.is_locked) {
+        throw new Error('Cannot void a locked payrun');
+    }
+
+    if (!['APPROVED', 'PAID', 'PENDING_APPROVAL', 'CALCULATED'].includes(payrun.status)) {
+        throw new Error(`Cannot void payrun with status ${payrun.status}. Use delete for DRAFT payruns.`);
+    }
+
+    const result = await db.query(
+        `UPDATE payroll_runs 
+         SET status = 'VOIDED', voided_by = $1, voided_at = now(), updated_at = now()
+         WHERE tenant_id = $2 AND id = $3
+         RETURNING *`,
+        [userId, tenantId, payrunId]
+    );
+
+    return result.rows[0];
+};
+
+// Delete a single payslip item (payroll_run_item + its components)
+const deletePayslipItem = async (tenantId, payrunId, itemId) => {
+    const payrun = await getPayrunById(tenantId, payrunId);
+
+    if (!payrun) {
+        throw new Error('Payrun not found');
+    }
+
+    if (payrun.is_locked) {
+        throw new Error('Cannot delete payslip from a locked payrun');
+    }
+
+    // Verify the item belongs to this payrun and tenant
+    const itemCheck = await db.query(
+        `SELECT id FROM payroll_run_items WHERE id = $1 AND payroll_run_id = $2 AND tenant_id = $3`,
+        [itemId, payrunId, tenantId]
+    );
+
+    if (itemCheck.rowCount === 0) {
+        throw new Error('Payslip item not found in this payrun');
+    }
+
+    // Delete components first
+    await db.query(
+        `DELETE FROM payroll_run_item_components WHERE payroll_run_item_id = $1 AND tenant_id = $2`,
+        [itemId, tenantId]
+    );
+
+    // Delete the item
+    await db.query(
+        `DELETE FROM payroll_run_items WHERE id = $1 AND tenant_id = $2`,
+        [itemId, tenantId]
+    );
+
+    // Update payrun totals
+    const totals = await db.query(
+        `SELECT COUNT(*) as total_employees, 
+                COALESCE(SUM(gross_salary), 0) as total_gross,
+                COALESCE(SUM(total_deductions), 0) as total_deductions,
+                COALESCE(SUM(net_salary), 0) as total_net
+         FROM payroll_run_items WHERE payroll_run_id = $1`,
+        [payrunId]
+    );
+
+    const t = totals.rows[0];
+    await db.query(
+        `UPDATE payroll_runs SET total_employees = $1, total_gross = $2, total_deductions = $3, total_net = $4, updated_at = now() WHERE id = $5`,
+        [t.total_employees, t.total_gross, t.total_deductions, t.total_net, payrunId]
     );
 
     return { deleted: true };
@@ -905,5 +1038,7 @@ module.exports = {
     rejectPayrun,
     revokePayrun,
     deletePayrun,
+    voidPayrun,
+    deletePayslipItem,
     lockPayrun
 };

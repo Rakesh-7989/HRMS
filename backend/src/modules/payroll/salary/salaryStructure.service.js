@@ -627,6 +627,66 @@ exports.ensureEmployeeAssignments = async (tenantId, userId) => {
     return { count, message: `Auto-assigned structures to ${count} employees` };
 };
 
+exports.migrateEmployeesToStructure = async (tenantId, structureId, userId) => {
+    // Check if structure exists and is active
+    const structureRes = await db.query(
+        `SELECT * FROM salary_structures WHERE id = $1 AND tenant_id = $2 AND is_active = TRUE`,
+        [structureId, tenantId]
+    );
+    if (!structureRes.rows[0]) throw new Error('Structure not found or inactive');
+    const structure = structureRes.rows[0];
+
+    // Find all active employees with valid CTC
+    // We prioritize current assignment CTC, then legacy details CTC
+    const employeesRes = await db.query(
+        `SELECT e.id, 
+                COALESCE(esa.annual_ctc, esd.ctc) as ctc
+         FROM employees e
+         LEFT JOIN employee_salary_assignments esa ON esa.employee_id = e.id AND esa.is_current = TRUE
+         LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = TRUE
+         WHERE e.tenant_id = $1 AND e.status = 'ACTIVE' AND e.is_deleted = FALSE
+           AND (esa.annual_ctc > 0 OR esd.ctc > 0)`,
+        [tenantId]
+    );
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+
+    console.log(`[MigrateStructure] Found ${employeesRes.rowCount} employees eligible for migration to ${structure.name}`);
+
+    for (const emp of employeesRes.rows) {
+        try {
+            const ctc = parseFloat(emp.ctc);
+            if (!ctc || ctc <= 0) continue;
+
+            await exports.assignEmployeeSalary(
+                tenantId,
+                emp.id,
+                {
+                    structure_id: structureId,
+                    annual_ctc: ctc,
+                    effective_from: new Date().toISOString().split('T')[0], // Today
+                    revision_reason: `Bulk Migration to ${structure.name}`
+                },
+                userId
+            );
+            successCount++;
+        } catch (err) {
+            console.error(`[MigrateStructure] Failed for employee ${emp.id}:`, err);
+            failCount++;
+            errors.push({ employeeId: emp.id, error: err.message });
+        }
+    }
+
+    return {
+        successCount,
+        failCount,
+        total: employeesRes.rowCount,
+        message: `Successfully migrated ${successCount} employees to ${structure.name}. Failed: ${failCount}`
+    };
+};
+
 exports.getEmployeeSalaryHistory = async (tenantId, employeeId) => {
     const result = await db.query(
         `SELECT esa.*, ss.name as structure_name, u.email as created_by_email
@@ -656,4 +716,88 @@ exports.seedDefaultReimbursementTypes = async (tenantId) => {
 exports.seedDefaultStructure = async (tenantId) => {
     const result = await db.query(`SELECT seed_default_salary_structure($1) as structure_id`, [tenantId]);
     return result.rows[0]?.structure_id;
+};
+
+exports.seedIndianStructure = async (tenantId) => {
+    const result = await db.query(`SELECT seed_indian_salary_structure($1) as structure_id`, [tenantId]);
+    return result.rows[0]?.structure_id;
+};
+
+// =====================================================
+// SALARY STRUCTURE TEMPLATES
+// =====================================================
+
+const TEMPLATES = [
+    {
+        id: 'indian-standard-ctc',
+        name: 'Indian Standard CTC Structure',
+        description: 'India-compliant CTC structure as per Wage Code 2019, Provident Fund Act, ESI Act, and Payment of Gratuity Act',
+        country: 'India',
+        tags: ['india', 'ctc', 'statutory', 'compliant'],
+        components: [
+            { code: 'BASIC', name: 'Basic Salary', calculation_type: 'PERCENTAGE_OF_CTC', percentage: 40, description: '40% of CTC (Wage Code 2019 minimum)' },
+            { code: 'HRA', name: 'House Rent Allowance', calculation_type: 'PERCENTAGE_OF_BASIC', percentage: 50, description: '50% of Basic (metro) / 40% (non-metro)' },
+            { code: 'DA', name: 'Dearness Allowance', calculation_type: 'PERCENTAGE_OF_BASIC', percentage: 5, description: '5% of Basic' },
+            { code: 'CONVEYANCE', name: 'Conveyance Allowance', calculation_type: 'FIXED', fixed_amount: 1600, description: '₹1,600/month (standard)' },
+            { code: 'MEDICAL', name: 'Medical Allowance', calculation_type: 'FIXED', fixed_amount: 1250, description: '₹1,250/month (standard)' },
+            { code: 'PF_EE', name: 'Provident Fund (Employee)', calculation_type: 'PERCENTAGE_OF_BASIC', percentage: 12, max_value: 1800, description: '12% of Basic (capped at ₹15,000 Basic)' },
+            { code: 'PF_ER', name: 'Provident Fund (Employer)', calculation_type: 'PERCENTAGE_OF_BASIC', percentage: 12, max_value: 1800, description: '12% of Basic (capped at ₹15,000 Basic)' },
+            { code: 'GRATUITY', name: 'Gratuity', calculation_type: 'PERCENTAGE_OF_BASIC', percentage: 4.81, description: '4.81% of Basic (Payment of Gratuity Act)' },
+            { code: 'SPECIAL', name: 'Special Allowance', calculation_type: 'REMAINING', description: 'Balancing figure to complete CTC' }
+        ]
+    }
+];
+
+exports.listTemplates = () => {
+    return TEMPLATES;
+};
+
+exports.createStructureFromTemplate = async (tenantId, userId, templateId) => {
+    const template = TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+        throw new Error(`Template '${templateId}' not found`);
+    }
+
+    // Ensure default components exist first
+    await exports.seedDefaultComponents(tenantId);
+
+    // Fetch tenant's components to map template codes to IDs
+    const componentsResult = await db.query(
+        `SELECT id, code FROM salary_components WHERE tenant_id = $1 AND is_active = TRUE`,
+        [tenantId]
+    );
+    const codeToId = {};
+    for (const row of componentsResult.rows) {
+        codeToId[row.code] = row.id;
+    }
+
+    // Map template components to component IDs
+    const mappedComponents = [];
+    for (let i = 0; i < template.components.length; i++) {
+        const tc = template.components[i];
+        const componentId = codeToId[tc.code];
+        if (!componentId) {
+            console.warn(`Template component code '${tc.code}' not found in tenant's components, skipping`);
+            continue;
+        }
+        mappedComponents.push({
+            component_id: componentId,
+            calculation_type: tc.calculation_type,
+            percentage: tc.percentage,
+            fixed_amount: tc.fixed_amount,
+            max_value: tc.max_value,
+            display_order: i + 1
+        });
+    }
+
+    // Create structure using existing function
+    const structureData = {
+        name: template.name,
+        description: template.description,
+        is_default: false,
+        is_active: true,
+        components: mappedComponents
+    };
+
+    return await exports.createSalaryStructure(tenantId, userId, structureData);
 };
