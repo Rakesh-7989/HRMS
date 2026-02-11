@@ -7,8 +7,8 @@ import { documentsService } from '@/services/documents.service';
 import { usersService } from '@/services/users.service';
 import { FileText, Upload, Trash2, Download, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
 
 export const EmployeeDocumentsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -36,7 +36,11 @@ export const EmployeeDocumentsPage: React.FC = () => {
         mutationFn: (docId: string) => documentsService.deleteDocument(docId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-documents', id] });
-            toast.success('Document deleted');
+            showToast.success('Document deleted');
+        },
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to delete';
+            showToast.error(message);
         }
     });
 
@@ -45,12 +49,12 @@ export const EmployeeDocumentsPage: React.FC = () => {
             documentsService.uploadDocument(id!, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-documents', id] });
-            toast('Document uploaded successfully', { icon: '✅' });
+            showToast.success('Document uploaded successfully');
         },
         onError: (error: any) => {
             console.error('Upload failed:', error);
-            const msg = error?.response?.data?.message || 'Failed to upload document';
-            toast(msg, { icon: '⚠️' });
+            const msg = error?.response?.data?.message || error.message || 'Failed to upload document';
+            showToast.error(msg);
         }
     });
 
@@ -64,7 +68,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
 
         // Check file size (limit to ~8MB to safely fit in 10MB JSON body with Base64 overhead)
         if (file.size > 8 * 1024 * 1024) {
-            toast('File size too large (max 8MB)', { icon: '⚠️' });
+            showToast.error('File size too large (max 8MB)');
             e.currentTarget.value = '';
             return;
         }

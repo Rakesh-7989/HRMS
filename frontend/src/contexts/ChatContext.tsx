@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
 import api from '@/services/api';
+import toast from 'react-hot-toast';
 
 interface ParticipantInfo {
     name: string;
@@ -97,6 +98,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
     useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
+
+    const handleMediaError = useCallback((err: any) => {
+        console.error("Media access error:", err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            toast.error("Permission denied. Please allow access to your microphone/camera.");
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            toast.error("No microphone or camera found. Please connect a device.");
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+            toast.error("Device is currently in use by another application.");
+        } else {
+            toast.error("Failed to access media devices: " + (err.message || "Unknown error"));
+        }
+    }, []);
 
     const fetchTotalUnread = useCallback(async () => {
         try {
@@ -228,7 +242,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-        const s = io(API_BASE_URL.replace('/api', ''), {
+        const socketUrl = API_BASE_URL.endsWith('/api') 
+            ? API_BASE_URL.slice(0, -4) 
+            : API_BASE_URL.replace(/\/api$/, '');
+            
+        const s = io(socketUrl, {
             auth: { token },
             transports: ['websocket'],
             reconnectionAttempts: 5
@@ -400,14 +418,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initiateCall = useCallback(async (to: string, name: string, type: 'audio' | 'video', conversationId?: string, isGroup?: boolean) => {
         if (!socketRef.current) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const constraints = {
+                audio: true,
+                video: type === 'video'
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
             setLocalStream(stream);
             localStreamRef.current = stream;
             const callObj = { to, name, type, conversationId, isGroup };
             setActiveCall(callObj);
             activeCallRef.current = callObj;
             setIsCalling(true);
-            setIsVideoOff(true);
+            setIsVideoOff(type !== 'video');
             callStartTime.current = Date.now();
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -431,18 +454,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 socketRef.current.emit('call-user', { to, offer, type, conversationId });
                 fetchParticipantInfo(to);
             }
-        } catch (err) { console.error("Initiate failed", err); cleanupCall(); }
-    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo]);
+        } catch (err) {
+            handleMediaError(err);
+            cleanupCall();
+        }
+    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError]);
 
     const acceptCall = useCallback(async () => {
         if (!incomingCall || !socketRef.current) return;
         const callData = { ...incomingCall };
         setIncomingCall(null);
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const constraints = {
+                audio: true,
+                video: callData.type === 'video'
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
             setLocalStream(stream);
             localStreamRef.current = stream;
-            setIsVideoOff(true);
+            setIsVideoOff(callData.type !== 'video');
 
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -484,16 +515,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 socketRef.current.emit('answer-call', { to: callData.from, answer });
             }
             fetchParticipantInfo(callData.from);
-        } catch (err) { console.error("Accept failed", err); cleanupCall(); }
-    }, [user, incomingCall, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo]);
+        } catch (err) {
+            handleMediaError(err);
+            cleanupCall();
+        }
+    }, [user, incomingCall, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError]);
 
     const joinActiveCall = useCallback(async (conversationId: string, type: 'audio' | 'video') => {
         if (!socketRef.current) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const constraints = {
+                audio: true,
+                video: type === 'video'
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
             setLocalStream(stream);
             localStreamRef.current = stream;
-            setIsVideoOff(true);
+            setIsVideoOff(type !== 'video');
 
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -512,8 +551,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             activeCallRef.current = callObj;
             socketRef.current.emit('join_room', conversationId);
             socketRef.current.emit('group-call-started', { conversationId, type });
-        } catch (err) { console.error("Join call failed", err); cleanupCall(); }
-    }, [user, monitorAudioLevel, cleanupCall]);
+        } catch (err) {
+            handleMediaError(err);
+            cleanupCall();
+        }
+    }, [user, monitorAudioLevel, cleanupCall, handleMediaError]);
 
     const toggleVideo = useCallback(async () => {
         if (!localStreamRef.current || !socketRef.current) return;
@@ -531,7 +573,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     socketRef.current?.emit('call-user', { to: tid, offer, type: 'video', conversationId: activeCallRef.current?.conversationId });
                 });
                 setIsVideoOff(false);
-            } catch (e) { console.error("Video enable failed", e); }
+            } catch (e) {
+                handleMediaError(e);
+            }
         } else {
             vt.enabled = !vt.enabled;
             setIsVideoOff(!vt.enabled);
@@ -640,7 +684,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     } catch (e) { console.error("[ScreenShare] PC sync failed", e); }
                 });
             } catch (e) {
-                console.error("Screen share failed", e);
+                handleMediaError(e);
                 setIsScreenSharing(false);
             }
         }

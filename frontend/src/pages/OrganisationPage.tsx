@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -20,13 +21,29 @@ import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/Un
 
 export const OrganisationPage: React.FC = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>('directory');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as any) || 'directory';
+  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>(initialTab);
+
+  // Sync tab state with URL
+  const handleTabChange = (newTab: typeof tab) => {
+    setTab(newTab);
+    setSearchParams({ tab: newTab });
+  };
 
   // If user is SUPER_ADMIN, ensure tree tab is not active
   useEffect(() => {
-    if (user?.role === 'SUPER_ADMIN' && tab === 'tree') setTab('directory');
-    if (user?.role === 'EMPLOYEE' && tab === 'directory') setTab('tree');
+    if (user?.role === 'SUPER_ADMIN' && tab === 'tree') handleTabChange('directory');
+    if (user?.role === 'EMPLOYEE' && tab === 'directory') handleTabChange('tree');
   }, [user?.role, tab]);
+
+  // Sync state if URL changes externally
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== tab) {
+      setTab(urlTab as any);
+    }
+  }, [searchParams]);
   const [selectedDept, setSelectedDept] = useState<string>('all');
 
 
@@ -126,7 +143,7 @@ export const OrganisationPage: React.FC = () => {
           <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
             <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => setTab('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
                   {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
                 </button>
               )}
@@ -134,12 +151,12 @@ export const OrganisationPage: React.FC = () => {
 
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
+                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => setTab('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
-                      <button onClick={() => setTab('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
-                      <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
+                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
+                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                     </>
                   )}
                 </>

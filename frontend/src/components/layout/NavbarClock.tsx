@@ -9,6 +9,7 @@ import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 
 export const NavbarClock: React.FC = () => {
@@ -127,6 +128,7 @@ export const NavbarClock: React.FC = () => {
                 message: serverMessage || 'Failed to clock in. Please try again.',
                 confirmText: 'OK'
             });
+            showToast.error(error);
         },
     });
 
@@ -146,6 +148,7 @@ export const NavbarClock: React.FC = () => {
                 message: serverMessage || 'Failed to clock out. Please try again.',
                 confirmText: 'OK'
             });
+            showToast.error(error);
         },
 
     });
@@ -164,6 +167,7 @@ export const NavbarClock: React.FC = () => {
                 message: serverMessage || 'Failed to start break. Please try again.',
                 confirmText: 'OK'
             });
+            showToast.error(error);
         }
     });
 
@@ -181,6 +185,7 @@ export const NavbarClock: React.FC = () => {
                 message: serverMessage || 'Failed to end break. Please try again.',
                 confirmText: 'OK'
             });
+            showToast.error(error);
         }
     });
 
@@ -193,7 +198,6 @@ export const NavbarClock: React.FC = () => {
                     message: check.errorMessage || 'You are outside the permitted work area.',
                     confirmText: 'OK'
                 });
-                return;
             }
             clockInMutation.mutate({
                 latitude: check.position?.coords.latitude!,

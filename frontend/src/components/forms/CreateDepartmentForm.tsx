@@ -5,7 +5,9 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { departmentService, CreateDepartmentData, Department } from '@/services/department.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
+import { Input } from '@/components/ui/Input';
+import { FormError } from '@/components/ui/FormError';
 
 interface CreateDepartmentFormProps {
   open: boolean;
@@ -32,10 +34,10 @@ export const CreateDepartmentForm: React.FC<CreateDepartmentFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['departments'] });
       formik.resetForm();
       onOpenChange(false);
-      toast.success('Department created successfully');
+      showToast.success('Department created successfully');
     },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to create department');
+    onError: (err: any) => {
+      showToast.error(err);
     }
   });
 
@@ -46,10 +48,10 @@ export const CreateDepartmentForm: React.FC<CreateDepartmentFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['departments'] });
       formik.resetForm();
       onOpenChange(false);
-      toast.success('Department updated successfully');
+      showToast.success('Department updated successfully');
     },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to update department');
+    onError: (err: any) => {
+      showToast.error(err);
     }
   });
 
@@ -88,18 +90,16 @@ export const CreateDepartmentForm: React.FC<CreateDepartmentFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Department Name *
           </label>
-          <input
+          <Input
             type="text"
             name="name"
             value={formik.values.name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. Engineering"
+            error={formik.touched.name && Boolean(formik.errors.name)}
           />
-          {formik.touched.name && formik.errors.name && (
-            <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
-          )}
+          <FormError message={formik.touched.name ? formik.errors.name : undefined} />
         </div>
 
         <div>

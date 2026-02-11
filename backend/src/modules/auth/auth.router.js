@@ -26,4 +26,10 @@ router.post("/logout", validate(logoutSchema), ctrl.logout);
 router.post("/logout-all", verifyJwt, ctrl.logoutAllOtherDevices);
 router.get("/sessions", verifyJwt, ctrl.listActiveSessions);
 
+// 2FA Routes
+router.post("/2fa/setup", verifyJwt, ctrl.setup2FA);
+router.post("/2fa/enable", verifyJwt, ctrl.enable2FA);
+router.post("/2fa/disable", verifyJwt, ctrl.disable2FA);
+router.post("/2fa/verify", ctrl.verify2FALogin); // Public because it uses preAuthToken
+
 module.exports = router;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2, Clock } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -94,11 +94,12 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.createProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project created successfully');
             handleCloseModal();
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to create project');
+            showToast.error(error.response?.data?.message || 'Failed to create project');
         },
     });
 
@@ -107,11 +108,12 @@ export const ProjectsPage: React.FC = () => {
             projectsService.updateProject(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project updated successfully');
             handleCloseModal();
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to update project');
+            showToast.error(error.response?.data?.message || 'Failed to update project');
         },
     });
 
@@ -120,10 +122,11 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.deleteProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project deleted successfully');
             setProjectToDelete(null);
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to delete project. It may have linked tasks.');
+            showToast.error(error.response?.data?.message || 'Failed to delete project. It may have linked tasks.');
             setProjectToDelete(null);
         },
     });
@@ -170,7 +173,7 @@ export const ProjectsPage: React.FC = () => {
 
         // Date validation
         if (new Date(formData.end_date) < new Date(formData.start_date)) {
-            toast.error('End date cannot be earlier than start date');
+            showToast.error('End date cannot be earlier than start date');
             return;
         }
 

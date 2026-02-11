@@ -22,6 +22,8 @@ import { designationService } from '@/services/designation.service';
 import { documentsService } from '@/services/documents.service';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
+import { FormError } from '@/components/ui/FormError';
 
 const profileValidationSchema = Yup.object({
   first_name: Yup.string()
@@ -408,10 +410,10 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           onInput={handleInput}
-          className={isError ? 'border-red-500' : ''}
+          error={Boolean(isError)}
         />
       )}
-      {isError && <p className="text-xs text-red-500 font-medium">{formik.errors[id]}</p>}
+      <FormError message={isError ? formik.errors[id] : undefined} />
     </div>
   );
 };
@@ -444,7 +446,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
     mutationFn: (docId: string) => documentsService.deleteDocument(docId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-documents', employeeId] });
-      toast.success('Document deleted');
+      showToast.success('Document deleted');
     }
   });
 
@@ -453,12 +455,12 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
       documentsService.uploadDocument(employeeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-documents', employeeId] });
-      toast.success('Document uploaded successfully');
+      showToast.success('Document uploaded successfully');
     },
     onError: (error: any) => {
       console.error('Upload failed:', error);
       const msg = error?.response?.data?.message || 'Failed to upload document';
-      toast.error(msg);
+      showToast.error(msg);
     }
   });
 
@@ -468,7 +470,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
 
     // Limit to 7MB to be safe with Base64 overhead (Server limit 10MB)
     if (file.size > 7 * 1024 * 1024) {
-      toast.error('File size too large (max 7MB)');
+      showToast.error('File size too large (max 7MB)');
       e.currentTarget.value = '';
       return;
     }

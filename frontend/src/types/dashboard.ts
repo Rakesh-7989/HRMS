@@ -41,6 +41,8 @@ export interface OrganizationDashboard {
     active_employee_growth: number;
     department_growth: number;
     designation_growth: number;
+    on_leave_today: number;
+    late_today: number;
   };
   roleDistribution: Array<{ role: string; count: number }>;
   departmentAnalytics: Array<{

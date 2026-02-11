@@ -7,6 +7,8 @@ const pool = require("../../config/db");
 const env = require("../../config/env");
 const mailer = require("../../config/mailer");
 const logAudit = require("../../utils/auditLogger");
+const otplib = require("otplib");
+const QRCode = require("qrcode");
 
 exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
@@ -22,6 +24,7 @@ exports.login = async (req, res) => {
           u.role,
           u.is_active,
           u.must_change_password,
+          u.two_factor_enabled,
           u.last_login_at,
           e.id AS employee_id,
           t.is_active AS tenant_is_active
@@ -51,6 +54,31 @@ exports.login = async (req, res) => {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if 2FA is enabled
+    if (user.two_factor_enabled) {
+      // Return a temporary token or just a signal that 2FA is required
+      // We don't want to give full tokens yet.
+      // We generate a short-lived "pre-auth" token
+      const preAuthToken = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          tenantId: user.tenant_id,
+          role: user.role,
+          employeeId: user.employee_id,
+          type: '2FA_PRE_AUTH'
+        },
+        env.JWT_ACCESS_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return res.json({
+        status: "2FA_REQUIRED",
+        preAuthToken,
+        message: "Please enter your 2FA code to continue"
+      });
     }
 
     // Update last login timestamp
@@ -378,5 +406,169 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     console.error("CHANGE PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to change password" });
+  }
+};
+
+
+// ========================================================================
+// TWO-FACTOR AUTHENTICATION (2FA)
+// ========================================================================
+
+exports.setup2FA = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const user = userRes.rows[0];
+    const secret = otplib.generateSecret();
+    const otpauth = otplib.generateURI({
+      label: user.email,
+      issuer: "HRMS GIGGLE",
+      secret
+    });
+    const qrCodeDataURL = await QRCode.toDataURL(otpauth);
+
+    // Save secret temporarily (maybe don't enable yet)
+    await pool.query(
+      "UPDATE users SET two_factor_secret = $1 WHERE id = $2",
+      [secret, userId]
+    );
+
+    return res.json({
+      status: "success",
+      qrCodeDataURL,
+      secret
+    });
+  } catch (error) {
+    console.error("SETUP 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to setup 2FA" });
+  }
+};
+
+exports.enable2FA = async (req, res) => {
+  const userId = req.user.id;
+  const { token } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT two_factor_secret FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const secret = userRes.rows[0].two_factor_secret;
+    const { valid: isValid } = otplib.verifySync({ token, secret });
+
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid 2FA token" });
+    }
+
+    // Generate recovery codes
+    const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(4).toString("hex"));
+
+    await pool.query(
+      "UPDATE users SET two_factor_enabled = true, two_factor_recovery_codes = $1 WHERE id = $2",
+      [JSON.stringify(recoveryCodes), userId]
+    );
+
+    return res.json({
+      status: "success",
+      message: "2FA enabled successfully",
+      recoveryCodes
+    });
+  } catch (error) {
+    console.error("ENABLE 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to enable 2FA" });
+  }
+};
+
+exports.disable2FA = async (req, res) => {
+  const userId = req.user.id;
+  const { password } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT password_hash FROM users WHERE id = $1", [userId]);
+    const user = userRes.rows[0];
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    await pool.query(
+      "UPDATE users SET two_factor_enabled = false, two_factor_secret = null, two_factor_recovery_codes = null WHERE id = $1",
+      [userId]
+    );
+
+    return res.json({
+      status: "success",
+      message: "2FA disabled successfully"
+    });
+  } catch (error) {
+    console.error("DISABLE 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to disable 2FA" });
+  }
+};
+
+exports.verify2FALogin = async (req, res) => {
+  const { token, preAuthToken, rememberMe } = req.body;
+
+  try {
+    const decoded = jwt.verify(preAuthToken, env.JWT_ACCESS_SECRET);
+    if (decoded.type !== '2FA_PRE_AUTH') {
+      return res.status(401).json({ message: "Invalid pre-auth token" });
+    }
+
+    const userId = decoded.id;
+    const userRes = await pool.query(
+      `SELECT u.*, e.id AS employee_id FROM users u 
+       LEFT JOIN employees e ON e.user_id = u.id
+       WHERE u.id = $1`,
+      [userId]
+    );
+    const user = userRes.rows[0];
+
+    const { valid: isValid } = otplib.verifySync({ token, secret: user.two_factor_secret });
+
+    // Check recovery codes if token fails
+    let isRecovery = false;
+    if (!isValid && user.two_factor_recovery_codes) {
+      const idx = user.two_factor_recovery_codes.indexOf(token);
+      if (idx !== -1) {
+        isRecovery = true;
+        user.two_factor_recovery_codes.splice(idx, 1);
+        await pool.query(
+          "UPDATE users SET two_factor_recovery_codes = $1 WHERE id = $2",
+          [JSON.stringify(user.two_factor_recovery_codes), userId]
+        );
+      }
+    }
+
+    if (!isValid && !isRecovery) {
+      return res.status(400).json({ message: "Invalid 2FA token or recovery code" });
+    }
+
+    // Update last login timestamp
+    await pool.query(
+      `UPDATE users SET last_login_at = now(), updated_at = now()
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    // Generate tokens
+    user.ip = req.ip;
+    user.ua = req.headers["user-agent"];
+    const tokens = await authService.generateTokens(user, rememberMe);
+
+    return res.json({
+      status: "success",
+      role: user.role,
+      tenantId: user.tenant_id,
+      mustChangePassword: user.must_change_password,
+      ...tokens
+    });
+
+  } catch (error) {
+    console.error("VERIFY 2FA LOGIN ERROR:", error);
+    return res.status(500).json({ message: "2FA verification failed" });
   }
 };

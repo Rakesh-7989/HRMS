@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { designationService, Designation } from '@/services/designation.service';
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
@@ -41,9 +41,12 @@ export const DesignationsContent: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast('Designation deleted', { icon: '✅' });
+            showToast.success('Designation deleted');
         },
-        onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to delete';
+            showToast.error(message);
+        },
     });
 
     const toggleStatusMutation = useMutation({
@@ -51,9 +54,12 @@ export const DesignationsContent: React.FC = () => {
             designationService.updateDesignation(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+            showToast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`);
         },
-        onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to update status';
+            showToast.error(message);
+        },
     });
 
     // --------------------------------------------------------------------------

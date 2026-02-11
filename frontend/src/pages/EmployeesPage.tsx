@@ -25,8 +25,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
 
 const ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
 const PAGE_SIZE = 10;
@@ -89,18 +89,24 @@ export const EmployeesPage: React.FC = () => {
         queryClient.setQueryData(['employee', userId], updatedUser);
       }
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast('Employee status updated', { icon: '✅' });
+      showToast.success('Employee status updated');
     },
-    onError: (err: Error) => toast(err.message, { icon: '⚠️' }),
+    onError: (err: any) => {
+      const message = err.response?.data?.message || err.message || 'Failed to update status';
+      showToast.error(message);
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => usersService.softDeleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast('Employee deleted successfully', { icon: '✅' });
+      showToast.success('Employee deleted successfully');
     },
-    onError: (err: Error) => toast(err.message, { icon: '⚠️' }),
+    onError: (err: any) => {
+      const message = err.response?.data?.message || err.message || 'Failed to delete';
+      showToast.error(message);
+    },
   });
 
   // Implement client-side filtering and pagination since backend ignores some params

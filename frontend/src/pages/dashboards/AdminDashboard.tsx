@@ -6,7 +6,7 @@ import { dashboardService } from '@/services/dashboard.service';
 import { eventsService } from '@/services/events.service';
 import {
   Users, Building2, Briefcase, TrendingUp, TrendingDown,
-  Calendar, Clock, Activity, Sparkles, Award, UserCheck
+  Calendar, Clock, Activity, Sparkles, Award, UserCheck, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
@@ -207,13 +207,41 @@ export const AdminDashboard: React.FC = () => {
     total_users: 0,
     total_projects: 0,
     active_employees: 0,
+    inactive_employees: 0,
+    inactive_users: 0,
     total_departments: 0,
     total_designations: 0,
     employee_growth: 0,
     active_employee_growth: 0,
     department_growth: 0,
     designation_growth: 0,
+    on_leave_today: 0,
+    late_today: 0,
   };
+
+  const attendanceRate = React.useMemo(() => {
+    if (!data?.attendanceMetrics || data.attendanceMetrics.length === 0) return '0%';
+    const totalEmployees = data.orgMetrics?.total_employees || 1;
+    const avgCheckins = data.attendanceMetrics.reduce((acc, curr) => acc + Number(curr.unique_employees), 0) / data.attendanceMetrics.length;
+    const rate = Math.round((avgCheckins / totalEmployees) * 100);
+    return `${Math.min(100, rate)}%`;
+  }, [data]);
+
+  const performanceScore = React.useMemo(() => {
+    const tasks = (data as any)?.taskMetrics || [];
+    const doneTasks = tasks.find((t: any) => t.column_key.toLowerCase().includes('done'))?.count || 0;
+    const totalTasks = tasks.reduce((acc: number, curr: any) => acc + Number(curr.count), 0);
+    const taskCompletionRate = totalTasks > 0 ? (doneTasks / totalTasks) : 0.5; // Default 0.5 if no tasks
+
+    const attRate = parseFloat(attendanceRate) / 100;
+
+    const score = (taskCompletionRate * 0.5 + attRate * 0.5) * 100;
+    if (score > 90) return 'A+';
+    if (score > 80) return 'A';
+    if (score > 70) return 'B+';
+    if (score > 60) return 'B';
+    return 'C';
+  }, [data, attendanceRate]);
 
   const roleDist = data?.roleDistribution || [];
   const deptAnalytics = data?.departmentAnalytics || [];
@@ -313,30 +341,31 @@ export const AdminDashboard: React.FC = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard
             title="Total Employees"
             value={metrics.total_employees}
-            change={metrics.employee_growth}
-            trend={metrics.employee_growth >= 0 ? 'up' : 'down'}
             icon={Users}
             gradient={COLORS.gradients.purple}
             delay={0.1}
           />
           <StatCard
             title="Active Employees"
-            value={metrics.active_employees || metrics.total_employees}
-            change={metrics.active_employee_growth}
-            trend={metrics.active_employee_growth >= 0 ? 'up' : 'down'}
+            value={metrics.active_employees || (metrics.total_employees - (metrics.inactive_employees || 0))}
             icon={UserCheck}
             gradient={COLORS.gradients.green}
             delay={0.2}
           />
           <StatCard
+            title="Inactive Employees"
+            value={metrics.inactive_employees || 0}
+            icon={UserX}
+            gradient={COLORS.gradients.pink}
+            delay={0.25}
+          />
+          <StatCard
             title="Departments"
             value={metrics.total_departments}
-            change={metrics.department_growth}
-            trend={metrics.department_growth >= 0 ? 'up' : 'down'}
             icon={Building2}
             gradient={COLORS.gradients.blue}
             delay={0.3}
@@ -344,8 +373,6 @@ export const AdminDashboard: React.FC = () => {
           <StatCard
             title="Designations"
             value={metrics.total_designations}
-            change={metrics.designation_growth}
-            trend={metrics.designation_growth >= 0 ? 'up' : 'down'}
             icon={Briefcase}
             gradient={COLORS.gradients.orange}
             delay={0.4}
@@ -599,10 +626,10 @@ export const AdminDashboard: React.FC = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
-            { label: 'Avg. Attendance Rate', value: '94%', icon: Activity, color: '#6366f1' },
-            { label: 'On Leave Today', value: '12', icon: Calendar, color: '#f59e0b' },
-            { label: 'Late Arrivals Today', value: '5', icon: Clock, color: '#ef4444' },
-            { label: 'Performance Score', value: 'A+', icon: Award, color: '#10b981' },
+            { label: 'Avg. Attendance Rate', value: attendanceRate, icon: Activity, color: '#6366f1' },
+            { label: 'On Leave Today', value: metrics.on_leave_today || 0, icon: Calendar, color: '#f59e0b' },
+            { label: 'Late Arrivals Today', value: metrics.late_today || 0, icon: Clock, color: '#ef4444' },
+            { label: 'Performance Score', value: performanceScore, icon: Award, color: '#10b981' },
           ].map((stat) => (
             <div
               key={stat.label}

@@ -1,6 +1,7 @@
 const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
 const asyncContext = require("../../utils/asyncContext");
+const { BadRequestError, NotFoundError, ForbiddenError } = require("../../utils/customErrors");
 
 const getQuery = (db) => {
   if (db && typeof db.query === "function") return db.query;
@@ -11,7 +12,7 @@ exports.createDepartment = async (db, data, actor) => {
   const query = getQuery(db);
 
   if (!["ADMIN", "HR"].includes(actor.role)) {
-    throw new Error("Not allowed to create departments");
+    throw new ForbiddenError("Not allowed to create departments");
   }
 
   const tenantId = actor.tenantId;
@@ -64,7 +65,7 @@ exports.updateDepartment = async (db, deptId, updates, actor) => {
   const query = getQuery(db);
 
   if (!["ADMIN", "HR"].includes(actor.role)) {
-    throw new Error("Not allowed to update departments");
+    throw new ForbiddenError("Not allowed to update departments");
   }
 
   const fields = [];
@@ -79,7 +80,7 @@ exports.updateDepartment = async (db, deptId, updates, actor) => {
   }
 
   if (fields.length === 0) {
-    throw new Error("No valid fields to update");
+    throw new BadRequestError("No valid fields to update");
   }
 
   params.push(actor.userId);
@@ -101,7 +102,7 @@ exports.deleteDepartment = async (db, deptId, actor) => {
   const query = getQuery(db);
 
   if (!["ADMIN", "HR"].includes(actor.role)) {
-    throw new Error("Not allowed to delete departments");
+    throw new ForbiddenError("Not allowed to delete departments");
   }
 
   // Check if any employees are in this department
@@ -111,7 +112,7 @@ exports.deleteDepartment = async (db, deptId, actor) => {
   );
 
   if (check.rowCount > 0) {
-    throw new Error("Cannot delete department. Employees are assigned to it.");
+    throw new BadRequestError("Cannot delete department. Employees are assigned to it.");
   }
 
   const res = await query(
@@ -124,7 +125,7 @@ exports.deleteDepartment = async (db, deptId, actor) => {
   );
 
   if (!res.rowCount) {
-    throw new Error("Department not found");
+    throw new NotFoundError("Department not found");
   }
 
   return res.rows[0];

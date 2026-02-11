@@ -8,8 +8,9 @@ import type { User, LoginCredentials } from '@/types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<any>;
   logout: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthenticated: boolean;
   hasActivePlan: boolean;
 }
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               is_active: profile.is_active ?? storedUser.is_active,
               subscription_status: profile.subscription_status,
               subscription_plan_name: profile.subscription_plan_name,
+              two_factor_enabled: profile.two_factor_enabled ?? storedUser.two_factor_enabled,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
             setUser(merged);
@@ -83,16 +85,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
+
+    // Check if 2FA is required
+    if ((response as any).status === '2FA_REQUIRED') {
+      return response; // Return the response so LoginPage can handle the next step
+    }
+
     // Tokens and user are already stored by authService.login()
 
     // Check if user must change password first - DON'T set user yet
-    // so isAuthenticated stays false and LoginPage doesn't redirect to dashboard
     if (response.mustChangePassword) {
       navigate('/change-password');
-      return;
+      return response;
     }
 
-    // Set minimal user now (after password change check)
     setUser(response.user);
 
     // Try to fetch full profile and merge into user object
@@ -110,6 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           is_active: profile.is_active ?? response.user.is_active,
           subscription_status: profile.subscription_status,
           subscription_plan_name: profile.subscription_plan_name,
+          two_factor_enabled: profile.two_factor_enabled ?? response.user.two_factor_enabled,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
         setUser(merged);
@@ -121,6 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Navigate to appropriate dashboard based on role
     const dashboard = ROLE_DASHBOARDS[response.user.role] || '/dashboard/personal';
     navigate(dashboard);
+    return response;
   };
 
   const logout = async () => {
@@ -136,6 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,
         login,
         logout,
+        setUser,
         isAuthenticated: !!user,
         hasActivePlan: user?.role === 'SUPER_ADMIN' || user?.subscription_status === 'ACTIVE' || user?.subscription_status === 'TRIAL' || user?.subscription_status === 'CANCEL_AT_PERIOD_END',
       }}

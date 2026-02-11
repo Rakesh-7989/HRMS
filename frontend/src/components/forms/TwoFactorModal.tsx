@@ -1,213 +1,274 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import React, { useState, useEffect } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Shield, Smartphone, ArrowRight, CheckCircle2, Copy, RefreshCw, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Label } from '@/components/ui/Label';
+import { authService } from '@/services/auth.service';
+import { showToast } from '@/utils/toast';
+import { Shield, Copy, Check, AlertTriangle, Key, X } from 'lucide-react';
 
 interface TwoFactorModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    isTwoFactorEnabled: boolean;
+    onStatusChange: (enabled: boolean) => void;
 }
 
-export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({ isOpen, onClose, onSuccess }) => {
-    const [step, setStep] = useState(1);
-    const [code, setCode] = useState('');
-    const [isVerifying, setIsVerifying] = useState(false);
-    const [error, setError] = useState('');
+export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
+    isOpen,
+    onClose,
+    isTwoFactorEnabled,
+    onStatusChange,
+}) => {
+    const [step, setStep] = useState<'setup' | 'verify' | 'recovery' | 'disable'>('setup');
+    const [qrCode, setQrCode] = useState('');
+    const [secret, setSecret] = useState('');
+    const [token, setToken] = useState('');
+    const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [password, setPassword] = useState('');
+    const [copied, setCopied] = useState(false);
 
-    const handleNext = () => setStep(step + 1);
-    const handleBack = () => setStep(step - 1);
-
-    const handleVerify = () => {
-        setIsVerifying(true);
-        setError('');
-
-        // Simulate verification delay
-        setTimeout(() => {
-            if (code === '123456' || code.length === 6) {
-                setStep(4);
-                onSuccess();
-            } else {
-                setError('Invalid verification code. Please try again.');
+    useEffect(() => {
+        if (isOpen) {
+            if (isTwoFactorEnabled && step === 'setup') {
+                setStep('disable');
+            } else if (!isTwoFactorEnabled) {
+                handleSetup();
             }
-            setIsVerifying(false);
-        }, 1500);
+        } else {
+            resetState();
+        }
+    }, [isOpen]);
+
+    const resetState = () => {
+        setStep('setup');
+        setQrCode('');
+        setSecret('');
+        setToken('');
+        setRecoveryCodes([]);
+        setPassword('');
+        setCopied(false);
     };
 
-    const reset = () => {
-        setStep(1);
-        setCode('');
-        setError('');
+    const handleSetup = async () => {
+        try {
+            setLoading(true);
+            const data = await authService.setup2FA();
+            setQrCode(data.qrCodeDataURL);
+            setSecret(data.secret);
+            setStep('setup');
+        } catch (error) {
+            showToast.error('Failed to initialize 2FA setup');
+            onClose();
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleClose = () => {
-        reset();
-        onClose();
+    const handleEnable = async () => {
+        if (!token) return;
+        try {
+            setLoading(true);
+            const data = await authService.enable2FA(token);
+            setRecoveryCodes(data.recoveryCodes);
+            setStep('recovery');
+            onStatusChange(true);
+            showToast.success('Two-factor authentication enabled!');
+        } catch (error: any) {
+            showToast.error(error.response?.data?.message || 'Verification failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDisable = async () => {
+        if (!password) return;
+        try {
+            setLoading(true);
+            await authService.disable2FA(password);
+            onStatusChange(false);
+            showToast.success('Two-factor authentication disabled');
+            onClose();
+        } catch (error: any) {
+            showToast.error(error.response?.data?.message || 'Failed to disable 2FA');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copyRecoveryCodes = () => {
+        const text = recoveryCodes.join('\n');
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[450px]">
-                <DialogHeader className="flex items-start justify-between">
-                    <DialogTitle>Two-Factor Authentication (2FA)</DialogTitle>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader className="relative pr-8">
                     <button
-                        onClick={handleClose}
+                        onClick={onClose}
+                        className="absolute right-0 top-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
                         aria-label="Close"
-                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
                     >
-                        <X size={18} />
+                        <X size={20} />
                     </button>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Shield className="text-primary" size={20} />
+                        Two-Factor Authentication
+                    </DialogTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {isTwoFactorEnabled
+                            ? 'Securing your account with a secondary verification method.'
+                            : 'Protect your account with an extra layer of security.'}
+                    </p>
                 </DialogHeader>
 
                 <div className="py-4">
-                    <AnimatePresence mode="wait">
-                        {step === 1 && (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="space-y-4"
-                            >
-                                <div className="flex justify-center py-4">
-                                    <div className="p-4 rounded-full bg-primary/10">
-                                        <Shield size={64} className="text-primary" />
-                                    </div>
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Secure Your Account</h3>
-                                    <p className="mt-2 text-gray-600 dark:text-muted">
-                                        Two-factor authentication adds an extra layer of security to your account. To log in, you'll need to provide a 6-digit code from your authenticator app.
-                                    </p>
-                                </div>
-                                <div className="pt-4 flex gap-3">
-                                    <Button variant="outline" className="flex-1" onClick={handleClose}>
-                                        Cancel
-                                    </Button>
-                                    <Button className="flex-1" onClick={handleNext}>
-                                        Get Started
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 2 && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="space-y-4"
-                            >
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white">Scan QR Code</h3>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-muted">
-                                    Scan this QR code with your authenticator app (e.g., Google Authenticator, Authy).
-                                </p>
-                                <div className="flex justify-center py-4 bg-white rounded-lg border dark:border-gray-800">
-                                    <div className="w-40 h-40 bg-gray-100 flex items-center justify-center relative group">
-                                        <div className="grid grid-cols-4 gap-1 p-2">
-                                            {Array.from({ length: 16 }).map((_, i) => (
-                                                <div key={i} className={`w-8 h-8 ${Math.random() > 0.5 ? 'bg-black' : 'bg-transparent'}`} />
-                                            ))}
+                    {step === 'setup' && (
+                        <div className="space-y-6 text-center">
+                            <div className="flex justify-center">
+                                <div className="p-4 bg-white rounded-xl shadow-inner border border-gray-100">
+                                    {qrCode ? (
+                                        <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                                    ) : (
+                                        <div className="w-48 h-48 flex items-center justify-center bg-gray-50">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                                         </div>
-                                        <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Smartphone className="text-gray-400" size={32} />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                                <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-between border dark:border-gray-800">
-                                    <div className="truncate mr-2">
-                                        <p className="text-[10px] uppercase text-gray-500 font-bold">Account Key</p>
-                                        <p className="font-mono text-sm select-all">HRMS-DS-2A-SIM-KEY-2026</p>
-                                    </div>
-                                    <Button variant="ghost" size="sm" type="button" onClick={() => navigator.clipboard.writeText('HRMS-DS-2A-SIM-KEY-2026')}>
-                                        <Copy size={14} />
-                                    </Button>
-                                </div>
-                                <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" className="flex-1" type="button" onClick={handleBack}>Back</Button>
-                                    <Button className="flex-1" type="button" onClick={handleNext}>Next <ArrowRight className="ml-2" size={16} /></Button>
-                                </div>
-                            </motion.div>
-                        )}
+                            </div>
 
-                        {step === 3 && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="space-y-4"
-                            >
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white">Verify Setup</h3>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                                <p>1. Install an authenticator app (e.g., Google Authenticator, Authy, or Microsoft Authenticator).</p>
+                                <p>2. Scan the QR code above or enter the code manually.</p>
+                                <div className="flex items-center justify-center gap-2 mt-2">
+                                    <code className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded text-xs font-mono select-all">
+                                        {secret}
+                                    </code>
                                 </div>
-                                <p className="text-sm text-gray-600 dark:text-muted">
-                                    Enter the 6-digit verification code generated by your authenticator app.
+                            </div>
+
+                            <Button
+                                onClick={() => setStep('verify')}
+                                className="w-full"
+                                disabled={!qrCode}
+                            >
+                                Next Step
+                            </Button>
+                        </div>
+                    )}
+
+                    {step === 'verify' && (
+                        <div className="space-y-4">
+                            <div className="text-center space-y-2 mb-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Enter the 6-digit code from your authenticator app to complete setup.
                                 </p>
-                                <div className="space-y-2">
-                                    <Input
-                                        placeholder="Enter 6-digit code (Use 123456)"
-                                        value={code}
-                                        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        className="text-center text-2xl tracking-[0.5em] font-bold py-6"
-                                        disabled={isVerifying}
-                                    />
-                                    {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
-                                </div>
-                                <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" className="flex-1" type="button" onClick={handleBack} disabled={isVerifying}>Back</Button>
-                                    <Button
-                                        className="flex-1"
-                                        type="button"
-                                        onClick={handleVerify}
-                                        disabled={code.length !== 6 || isVerifying}
-                                        isLoading={isVerifying}
-                                    >
-                                        Confirm
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        )}
+                            </div>
 
-                        {step === 4 && (
-                            <motion.div
-                                key="step4"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="space-y-6 text-center py-6"
-                            >
-                                <div className="flex justify-center">
-                                    <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                        <CheckCircle2 size={40} className="text-green-500" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">2FA Enabled!</h3>
-                                    <p className="mt-2 text-gray-600 dark:text-muted">
-                                        Your account is now more secure. You've successfully simulated the 2FA setup process.
-                                    </p>
-                                </div>
-                                <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-100 dark:border-yellow-900/20 text-left">
-                                    <p className="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase flex items-center gap-2 mb-1">
-                                        <RefreshCw size={12} /> Persisted Locally
-                                    </p>
-                                    <p className="text-xs text-yellow-600 dark:text-yellow-600/80">
-                                        This status is saved in your browser's local storage and will persist even after page refresh.
-                                    </p>
-                                </div>
-                                <Button className="w-full" type="button" onClick={handleClose}>
+                            <div className="space-y-2">
+                                <Label htmlFor="2fa-token">Verification Code</Label>
+                                <Input
+                                    id="2fa-token"
+                                    placeholder="000000"
+                                    value={token}
+                                    onChange={(e) => setToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    className="text-center text-2xl tracking-[1em] font-mono h-14"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <Button variant="outline" className="flex-1" onClick={() => setStep('setup')}>
+                                    Back
+                                </Button>
+                                <Button
+                                    className="flex-1"
+                                    onClick={handleEnable}
+                                    isLoading={loading}
+                                >
+                                    Verify & Enable
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 'recovery' && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 flex gap-3">
+                                <AlertTriangle className="text-amber-600 shrink-0" size={20} />
+                                <p className="text-xs text-amber-800 dark:text-amber-300">
+                                    Save these recovery codes in a safe place. They are the <b>only way</b> to access your account if you lose your device.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 font-mono text-sm">
+                                {recoveryCodes.map((code, i) => (
+                                    <div key={i} className="text-center py-1 select-all">{code}</div>
+                                ))}
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4">
+                                <Button variant="outline" className="w-full gap-2" onClick={copyRecoveryCodes}>
+                                    {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                    {copied ? 'Copied!' : 'Copy Recovery Codes'}
+                                </Button>
+                                <Button className="w-full" onClick={onClose}>
                                     Done
                                 </Button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 'disable' && (
+                        <div className="space-y-4">
+                            <div className="text-center space-y-2 mb-4">
+                                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-2 text-red-600">
+                                    <Shield size={32} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Disable 2FA?</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Are you sure you want to disable two-factor authentication? This will significantly decrease your account security.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="current-password">Enter Password to Confirm</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="current-password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <Button variant="outline" className="flex-1" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    className="flex-1"
+                                    onClick={handleDisable}
+                                    isLoading={loading}
+                                >
+                                    Disable 2FA
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

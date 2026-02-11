@@ -13,7 +13,7 @@ import {
   XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Sector
 } from 'recharts';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -287,22 +287,18 @@ export const ManagerDashboard: React.FC = () => {
     mutationFn: (id: string) => leaveService.approveLeave(id, 'Approved from Dashboard'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
-      toast.success('Leave approved', {
-        style: { borderRadius: '20px', background: '#0f172a', color: '#fff' }
-      });
+      showToast.success('Leave approved');
     },
-    onError: (err: any) => toast.error(err.message || 'Approval failed'),
+    onError: (err: any) => showToast.error(err.message || 'Approval failed'),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveService.rejectLeave(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
-      toast.success('Leave rejected', {
-        style: { borderRadius: '20px', background: '#0f172a', color: '#fff' }
-      });
+      showToast.success('Leave rejected');
     },
-    onError: (err: any) => toast.error(err.message || 'Rejection failed'),
+    onError: (err: any) => showToast.error(err.message || 'Rejection failed'),
   });
 
   // --- Data Processing ---

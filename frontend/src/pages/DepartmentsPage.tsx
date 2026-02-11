@@ -7,8 +7,8 @@ import { departmentService, Department } from '@/services/department.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
 
 export const DepartmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -42,9 +42,13 @@ export const DepartmentsPage: React.FC = () => {
     mutationFn: (id: string) => departmentService.deleteDepartment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast.success('Department deleted successfully');
+      showToast.success('Department deleted successfully');
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to delete'),
+    onError: (err: any) => {
+      const backendMessage = err.response?.data?.message;
+      const axiosMessage = err.message;
+      showToast.error(backendMessage || `Error: ${axiosMessage}`);
+    },
   });
 
   const toggleStatusMutation = useMutation({
@@ -52,9 +56,11 @@ export const DepartmentsPage: React.FC = () => {
       departmentService.updateDepartment(item.id, { is_active: !item.is_active }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
+      showToast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to update status'),
+    onError: (err: any) => {
+      showToast.error(err.response?.data?.message || err.message || 'Failed to update department status');
+    },
   });
 
   // --------------------------------------------------------------------------
@@ -111,7 +117,7 @@ export const DepartmentsPage: React.FC = () => {
             {canManage && (
               <Button onClick={() => setCreateBit(true)}>
                 <Plus className="mr-2" size={18} />
-                Add Department
+                Add New Department
               </Button>
             )}
           </div>

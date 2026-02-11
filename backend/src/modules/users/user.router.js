@@ -42,7 +42,7 @@ router.get(
 router.get("/tree", verifyJwt, controller.getOrgTree);
 
 // GET USER BY ID
-router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER"]), controller.getUserById);
+router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]), controller.getUserById);
 
 // UPDATE BASIC USER (email + status)
 router.put(

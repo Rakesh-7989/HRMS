@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { designationService, Designation } from '@/services/designation.service';
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
 
 export const DesignationsPage: React.FC = () => {
     const queryClient = useQueryClient();
@@ -39,9 +39,13 @@ export const DesignationsPage: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast.success('Designation deleted successfully');
+            showToast.success('Designation deleted successfully');
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to delete'),
+        onError: (err: any) => {
+            const backendMessage = err.response?.data?.message;
+            const axiosMessage = err.message;
+            showToast.error(backendMessage || `Error: ${axiosMessage}`);
+        },
     });
 
     const toggleStatusMutation = useMutation({
@@ -49,9 +53,11 @@ export const DesignationsPage: React.FC = () => {
             designationService.updateDesignation(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
+            showToast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to update status'),
+        onError: (err: any) => {
+            showToast.error(err.response?.data?.message || err.message || 'Failed to update designation status');
+        },
     });
 
     // --------------------------------------------------------------------------
@@ -108,7 +114,7 @@ export const DesignationsPage: React.FC = () => {
 
                         <Button onClick={() => setCreateBit(true)}>
                             <Plus className="mr-2" size={18} />
-                            Add Designation
+                            Add New Designation
                         </Button>
                     </div>
                 </div>

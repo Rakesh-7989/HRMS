@@ -1,6 +1,6 @@
 const service = require("./designation.service");
 
-exports.createDesignation = async (req, res) => {
+exports.createDesignation = async (req, res, next) => {
   try {
     const result = await service.createDesignation(
       req.db,
@@ -11,11 +11,11 @@ exports.createDesignation = async (req, res) => {
 
     res.status(201).json({ status: "success", result });
   } catch (err) {
-    res.status(400).json({ status: "error", message: err.message });
+    next(err);
   }
 };
 
-exports.getDesignations = async (req, res) => {
+exports.getDesignations = async (req, res, next) => {
   try {
     const { limit, offset, search } = req.query;
 
@@ -27,11 +27,11 @@ exports.getDesignations = async (req, res) => {
 
     res.json({ status: "success", list });
   } catch (err) {
-    res.status(400).json({ status: "error", message: err.message });
+    next(err);
   }
 };
 
-exports.getDesignationById = async (req, res) => {
+exports.getDesignationById = async (req, res, next) => {
   try {
     const designation = await service.getDesignationById(
       req.db,
@@ -45,11 +45,11 @@ exports.getDesignationById = async (req, res) => {
 
     res.json({ status: "success", designation });
   } catch (err) {
-    res.status(400).json({ status: "error", message: err.message });
+    next(err);
   }
 };
 
-exports.updateDesignation = async (req, res) => {
+exports.updateDesignation = async (req, res, next) => {
   try {
     const updated = await service.updateDesignation(
       req.db,
@@ -61,13 +61,13 @@ exports.updateDesignation = async (req, res) => {
 
     res.json({ status: "success", updated });
   } catch (err) {
-    res.status(400).json({ status: "error", message: err.message });
+    next(err);
   }
 };
 
-exports.deleteDesignation = async (req, res) => {
+exports.deleteDesignation = async (req, res, next) => {
   try {
-    const result = await service.deleteDesignation(
+    await service.deleteDesignation(
       req.db,
       req.params.id,
       req.user.tenantId
@@ -75,6 +75,6 @@ exports.deleteDesignation = async (req, res) => {
 
     res.status(204).send();
   } catch (err) {
-    res.status(400).json({ status: "error", message: err.message });
+    next(err);
   }
 };

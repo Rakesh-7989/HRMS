@@ -17,6 +17,7 @@ export interface User {
   profile_photo_url?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
+  two_factor_enabled?: boolean;
 }
 
 export interface AuthResponse {

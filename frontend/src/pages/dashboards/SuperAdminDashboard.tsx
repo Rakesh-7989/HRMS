@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, Activity, Users, Shield, ChevronRight,
   Server, Database, Zap, Globe, Settings, Plus, BarChart3,
-  Sparkles, Clock, Tag
+  Sparkles, Clock, Tag, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -140,7 +140,8 @@ export const SuperAdminDashboard: React.FC = () => {
   const systemMetrics = useMemo(() => ({
     total_tenants: metrics.total_tenants || 0,
     total_users: metrics.total_users || 0,
-    active_users: health.active_users || metrics.active_users_24h || 0,
+    active_users: metrics.active_users !== undefined ? metrics.active_users : 0,
+    inactive_users: metrics.inactive_users !== undefined ? metrics.inactive_users : 0,
     system_health: health.status || 'healthy',
   }), [metrics, health]);
 
@@ -298,9 +299,9 @@ export const SuperAdminDashboard: React.FC = () => {
               shadow: 'shadow-amber-500/30'
             },
             {
-              title: 'System Health',
-              value: systemMetrics.system_health === 'healthy' ? '99.9%' : '95%',
-              icon: Zap,
+              title: 'Inactive Users',
+              value: systemMetrics.inactive_users,
+              icon: UserX,
               gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
               shadow: 'shadow-pink-500/30'
             },

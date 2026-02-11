@@ -17,7 +17,7 @@ const userRouter = require('../modules/users/user.router');
 const attendanceRouter = require('../modules/attendance/attendance.router');
 const leaveRouter = require('../modules/leave/index.router');
 const payrollRouter = require('../modules/payroll/payroll.router');
-const subscriptionRouter = require('../modules/subscriptions/billing.routes');
+//const subscriptionRouter = require('../modules/subscriptions/billing.routes');
 const inboxRouter = require('../modules/inbox/inbox.router');
 const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
@@ -29,7 +29,8 @@ const geoFencingRouter = require('../modules/geo_fencing/geoFencing.router');
 const calendarRouter = require('../modules/calendar/calendar.router');
 const wfhRouter = require('../modules/wfh/wfh.router');
 const shiftRouter = require('../modules/shifts/shift.router');
-
+const billingRouter = require('../modules/subscriptions/billing.routes');
+const subscriptionAdminRouter = require('../modules/subscriptions/subscriptions.routes');
 
 
 const chatRouter = require('../modules/chat/chat.router');
@@ -50,7 +51,9 @@ router.use('/tenants', tenantRouter);
 router.use('/audit-logs', auditRouter);
 
 // Subscriptions module
-router.use('/subscriptions', subscriptionRouter);
+//router.use('/subscriptions', subscriptionRouter);
+router.use('/subscriptions', billingRouter);
+router.use('/subscriptions', subscriptionAdminRouter);
 
 // Everything below requires authentication
 router.use(verifyJwt);
@@ -87,7 +90,7 @@ router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRoute
 // Events module
 router.use('/events', eventsRouter);
 
-// Payroll module (includes: salary, payrun, statutory, settlement, 
+// Payroll module (includes: salary, payrun, statutory, settlement,
 // consultants, payslips, expenses, loans, merchants)
 router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
 

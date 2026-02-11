@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import {
     Plus,
     Search,
@@ -196,7 +196,7 @@ export const TasksPage: React.FC = () => {
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to create task');
+            showToast.error(error.response?.data?.message || 'Failed to create task');
         },
     });
 
@@ -205,7 +205,11 @@ export const TasksPage: React.FC = () => {
             projectsService.updateTaskStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+            showToast.success('Status updated');
         },
+        onError: (error: any) => {
+            showToast.error(error.response?.data?.message || 'Failed to update status');
+        }
     });
 
     const updateTaskMutation = useMutation({
@@ -216,10 +220,11 @@ export const TasksPage: React.FC = () => {
             setEditingTask(null);
             setIsEditModalOpen(false);
             setIsSubmitting(false);
+            showToast.success('Task updated');
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to update task');
+            showToast.error(error.response?.data?.message || 'Failed to update task');
         },
     });
 
@@ -228,9 +233,10 @@ export const TasksPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
             setTaskToDelete(null);
+            showToast.success('Task deleted');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to delete task');
+            showToast.error(error.response?.data?.message || 'Failed to delete task');
             setTaskToDelete(null);
         },
     });

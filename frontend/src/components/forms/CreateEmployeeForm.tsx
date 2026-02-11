@@ -14,6 +14,10 @@ import { toast } from 'react-hot-toast';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { tenantService } from '@/services/tenant.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { ValidationAlert } from '@/components/ui/ValidationAlert';
+import { FormError } from '@/components/ui/FormError';
+import { Input } from '@/components/ui/Input';
+import { showToast } from '@/utils/toast';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -260,7 +264,7 @@ export const CreateEmployeeForm = ({
         formik.setFieldTouched('email', true, false);
       }
 
-      toast(err.message, { icon: '⚠️' });
+      showToast.error(err.message);
     },
   });
 
@@ -285,7 +289,7 @@ export const CreateEmployeeForm = ({
         formik.setFieldError('employee_id', err.message);
         formik.setFieldTouched('employee_id', true, false);
       }
-      toast(err.message, { icon: '⚠️' });
+      showToast.error(err.message);
     },
   });
 
@@ -350,7 +354,7 @@ export const CreateEmployeeForm = ({
         if (validationError.inner && validationError.inner.length > 0) {
           const errorMessages = validationError.inner.map((err: any) => err.message).join(', ');
           setError(`Please fix the following errors: ${errorMessages}`);
-          toast.error('Please fix all validation errors before submitting');
+          showToast.error('Please fix all validation errors before submitting');
           setSubmitting(false);
           return;
         }
@@ -532,25 +536,29 @@ export const CreateEmployeeForm = ({
       </div>
 
       {/* API Error Alert */}
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-        </div>
-      )}
+      <ValidationAlert message={error} type="error" className="mb-4" />
 
       {/* Validation Errors Summary (Only for current step) */}
       {validationErrors && validationErrors.length > 0 && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+        <ValidationAlert
+          type="warning"
+          className="mb-4"
+          message={
             <div className="flex-1">
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-1">
-                Please fix the validation errors
+              <p className="text-sm font-medium mb-2">
+                Please fix the following validation errors:
               </p>
+              <ul className="list-disc list-inside text-xs space-y-1">
+                {validationErrors.slice(0, 5).map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+                {validationErrors.length > 5 && (
+                  <li className="font-medium">...and {validationErrors.length - 5} more errors</li>
+                )}
+              </ul>
             </div>
-          </div>
-        </div>
+          }
+        />
       )}
 
       {/* Step 1: Basic Information */}
@@ -572,18 +580,17 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Email *
             </label>
-            <input
+            <Input
               type="email"
               name="email"
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              error={formik.touched.email && Boolean(formik.errors.email)}
               placeholder="employee@company.com"
             />
-            {formik.touched.email && formik.errors.email && (
-              <p className="mt-1 text-sm text-red-600">{formik.errors.email}</p>
-            )}
+            <FormError message={formik.touched.email ? formik.errors.email : undefined} />
           </div>
         )}
 
@@ -592,7 +599,7 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               First Name *
             </label>
-            <input
+            <Input
               type="text"
               name="first_name"
               value={formik.values.first_name}
@@ -601,17 +608,16 @@ export const CreateEmployeeForm = ({
               onInput={handleInput}
               placeholder="John"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              error={formik.touched.first_name && Boolean(formik.errors.first_name)}
             />
-            {formik.touched.first_name && formik.errors.first_name && (
-              <p className="mt-1 text-sm text-red-600">{formik.errors.first_name}</p>
-            )}
+            <FormError message={formik.touched.first_name ? formik.errors.first_name : undefined} />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Last Name *
             </label>
-            <input
+            <Input
               type="text"
               name="last_name"
               value={formik.values.last_name}
@@ -620,10 +626,9 @@ export const CreateEmployeeForm = ({
               onInput={handleInput}
               placeholder="Doe"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              error={formik.touched.last_name && Boolean(formik.errors.last_name)}
             />
-            {formik.touched.last_name && formik.errors.last_name && (
-              <p className="mt-1 text-sm text-red-600">{formik.errors.last_name}</p>
-            )}
+            <FormError message={formik.touched.last_name ? formik.errors.last_name : undefined} />
           </div>
         </div>
 
@@ -632,19 +637,18 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Phone *
             </label>
-            <input
+            <Input
               type="tel"
               name="phone"
               value={formik.values.phone}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               onInput={handleInput}
+              error={formik.touched.phone && Boolean(formik.errors.phone)}
               placeholder="+91 9876543210"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
             />
-            {formik.touched.phone && formik.errors.phone && (
-              <p className="mt-1 text-sm text-red-600">{formik.errors.phone}</p>
-            )}
+            <FormError message={formik.touched.phone ? formik.errors.phone : undefined} />
           </div>
 
           <div>
@@ -729,9 +733,7 @@ export const CreateEmployeeForm = ({
             placeholder="123 Main Street, City, State, PIN"
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
           />
-          {formik.touched.address && formik.errors.address && (
-            <p className="mt-1 text-sm text-red-600">{formik.errors.address}</p>
-          )}
+          <FormError message={formik.touched.address ? formik.errors.address : undefined} />
         </div>
       </div>
 
@@ -1115,19 +1117,16 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Annual CTC (INR) *
             </label>
-            <input
+            <Input
               type="number"
               name="ctc"
               value={formik.values.ctc}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              placeholder="600000"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              placeholder="e.g., 600000"
+              error={formik.touched.ctc && Boolean(formik.errors.ctc)}
             />
-            <p className="mt-1 text-xs text-gray-500">Enter the total annual package amount.</p>
-            {formik.touched.ctc && formik.errors.ctc && (
-              <p className="mt-1 text-sm text-red-600">{(formik.errors as any).ctc}</p>
-            )}
+            <FormError message={formik.touched.ctc ? (formik.errors.ctc as string) : undefined} />
           </div>
         </div>
       </div>
@@ -1290,5 +1289,4 @@ export const CreateEmployeeForm = ({
     </>
   );
 };
-
 export default CreateEmployeeForm;

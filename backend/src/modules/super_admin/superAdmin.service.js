@@ -15,10 +15,11 @@ exports.getAllTenants = async (db) => {
         s.is_trial
       FROM tenants t
       LEFT JOIN (
-        SELECT tenant_id, COUNT(*) AS count 
-        FROM users 
-        WHERE is_deleted = false
-        GROUP BY tenant_id
+        SELECT e.tenant_id, COUNT(*)::int AS count 
+        FROM employees e
+        JOIN users u ON e.user_id = u.id
+        WHERE u.is_deleted = false
+        GROUP BY e.tenant_id
       ) usr ON usr.tenant_id = t.id
       LEFT JOIN subscriptions s ON s.tenant_id = t.id AND s.status IN ('ACTIVE', 'TRIAL', 'CANCEL_AT_PERIOD_END', 'PENDING_PAYMENT')
       LEFT JOIN plans p ON p.id = s.plan_id
@@ -37,7 +38,12 @@ exports.getTenantCount = async (db) => {
 
 exports.getEmployeeCount = async (db) => {
   const query = getQuery(db);
-  const res = await query(`SELECT COUNT(*) AS count FROM employees`);
+  const res = await query(`
+    SELECT COUNT(*)::INTEGER AS count 
+    FROM employees e 
+    JOIN users u ON e.user_id = u.id 
+    WHERE u.is_deleted = false
+  `);
   return Number(res.rows[0].count);
 };
 
@@ -60,7 +66,7 @@ exports.getUsersByTenant = async (db, tenantId) => {
     `
       SELECT id, email, role, is_active, created_at
       FROM users
-      WHERE tenant_id = $1
+      WHERE tenant_id = $1 AND is_deleted = false
       ORDER BY created_at DESC
     `,
     [tenantId]
@@ -86,7 +92,12 @@ exports.updateTenantStatus = async (db, tenantId, isActive) => {
 exports.getTenantEmployeeCount = async (db, tenantId) => {
   const query = getQuery(db);
   const res = await query(
-    `SELECT COUNT(*) AS count FROM users WHERE tenant_id = $1 AND is_deleted = false`,
+    `
+      SELECT COUNT(*)::INTEGER AS count 
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.tenant_id = $1 AND u.is_deleted = false
+    `,
     [tenantId]
   );
   return Number(res.rows[0]?.count || 0);

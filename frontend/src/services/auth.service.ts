@@ -2,12 +2,14 @@ import api from './api';
 import type { LoginCredentials, AuthResponse, User } from '@/types';
 
 interface LoginResponse {
-  status: 'success';
-  accessToken: string;
-  refreshToken: string;
-  role: string;
+  status: 'success' | '2FA_REQUIRED';
+  accessToken?: string;
+  refreshToken?: string;
+  role?: string;
   tenantId?: string;
-  mustChangePassword: boolean;
+  mustChangePassword?: boolean;
+  preAuthToken?: string;
+  message?: string;
 }
 
 interface RefreshResponse {
@@ -43,11 +45,18 @@ export const authService = {
     // Backend returns data at top level, not nested
     const response = await api.post<LoginResponse>('/auth/login', credentials);
 
+    if (response.data.status === '2FA_REQUIRED') {
+      return {
+        status: '2FA_REQUIRED',
+        preAuthToken: response.data.preAuthToken,
+      } as any;
+    }
+
     if (response.data.status !== 'success') {
       throw new Error('Login failed');
     }
 
-    const { accessToken, refreshToken, role, tenantId } = response.data;
+    const { accessToken, refreshToken, role, tenantId } = response.data as Required<LoginResponse>;
 
     // Decode JWT to get user ID and other info
     const decoded = decodeJWT(accessToken);
@@ -188,6 +197,54 @@ export const authService = {
       role: currentUser.role,
       tenant_id: currentUser.tenant_id,
       is_active: profile.is_active ?? true,
+    };
+  },
+
+  setup2FA: async (): Promise<{ qrCodeDataURL: string; secret: string }> => {
+    const response = await api.post<{ status: string; qrCodeDataURL: string; secret: string }>('/auth/2fa/setup');
+    return response.data;
+  },
+
+  enable2FA: async (token: string): Promise<{ recoveryCodes: string[] }> => {
+    const response = await api.post<{ status: string; recoveryCodes: string[] }>('/auth/2fa/enable', { token });
+    return response.data;
+  },
+
+  disable2FA: async (password: string): Promise<void> => {
+    await api.post('/auth/2fa/disable', { password });
+  },
+
+  verify2FALogin: async (token: string, preAuthToken: string, rememberMe: boolean = false): Promise<AuthResponse> => {
+    const response = await api.post<LoginResponse>('/auth/2fa/verify', { token, preAuthToken, rememberMe });
+
+    if (response.data.status !== 'success') {
+      throw new Error('2FA verification failed');
+    }
+
+    const { accessToken, refreshToken, role, tenantId, mustChangePassword } = response.data as Required<LoginResponse>;
+    const decoded = decodeJWT(accessToken);
+    if (!decoded) throw new Error('Failed to decode authentication token');
+
+    const user: User = {
+      id: decoded.id,
+      email: '', // will be filled by profile fetch or from preAuthToken if we decoded it
+      first_name: '',
+      role: role as User['role'],
+      tenant_id: tenantId || decoded.tenantId,
+      employee_id: decoded.employeeId,
+      is_active: true,
+    };
+
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem('accessToken', accessToken);
+    storage.setItem('refreshToken', refreshToken);
+    storage.setItem('user', JSON.stringify(user));
+
+    return {
+      accessToken,
+      refreshToken,
+      user,
+      mustChangePassword: !!mustChangePassword,
     };
   },
 };

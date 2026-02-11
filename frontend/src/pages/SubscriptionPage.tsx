@@ -7,7 +7,7 @@ import { subscriptionService, Plan } from '@/services/subscription.service';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 declare global {
     interface Window {
@@ -58,10 +58,10 @@ export const SubscriptionPage: React.FC = () => {
                             billing_cycle: billingCycle,
                         });
 
-                        toast.success('Subscription upgraded successfully!');
+                        showToast.success('Subscription upgraded successfully!');
                         queryClient.invalidateQueries({ queryKey: ['subscription'] });
                     } catch (error: any) {
-                        toast.error(error.message || 'Payment verification failed');
+                        showToast.error(error.message || 'Payment verification failed');
                     }
                 },
                 prefill: {
@@ -77,7 +77,7 @@ export const SubscriptionPage: React.FC = () => {
             const rzp = new window.Razorpay(options);
             rzp.open();
         } catch (error: any) {
-            toast(error.message || 'Error creating payment order', { icon: '⚠️' });
+            showToast.error(error.message || 'Error creating payment order');
         }
     };
 

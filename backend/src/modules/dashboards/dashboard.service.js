@@ -18,10 +18,12 @@ exports.getSuperAdminDashboard = async (db) => {
     SELECT
       (SELECT COUNT(*)::INTEGER FROM tenants WHERE is_active = true) AS active_tenants,
       (SELECT COUNT(*)::INTEGER FROM tenants) AS total_tenants,
-      (SELECT COUNT(*)::INTEGER FROM users) AS total_users,
-      (SELECT COUNT(*)::INTEGER FROM employees) AS total_employees,
-      (SELECT COUNT(DISTINCT tenant_id)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours') AS active_tenants_24h,
-      (SELECT COUNT(*)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours') AS active_users_24h
+      (SELECT COUNT(*)::INTEGER FROM users WHERE is_deleted = false) AS total_users,
+      (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = true AND is_deleted = false) AS active_users,
+      (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = false AND is_deleted = false) AS inactive_users,
+      (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE u.is_deleted = false) AS total_employees,
+      (SELECT COUNT(DISTINCT tenant_id)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours' AND is_deleted = false) AS active_tenants_24h,
+      (SELECT COUNT(*)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours' AND is_deleted = false) AS active_users_24h
     `
   );
 
@@ -60,14 +62,14 @@ exports.getSuperAdminDashboard = async (db) => {
       t.id,
       t.name,
       t.domain,
-      (SELECT COUNT(*)::INTEGER FROM users u WHERE u.tenant_id = t.id) AS user_count,
-      (SELECT COUNT(*)::INTEGER FROM employees e WHERE e.tenant_id = t.id) AS employee_count,
+      (SELECT COUNT(*)::INTEGER FROM users u WHERE u.tenant_id = t.id AND u.is_deleted = false) AS user_count,
+      (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE e.tenant_id = t.id AND u.is_deleted = false) AS employee_count,
       (SELECT COUNT(*)::INTEGER FROM departments d WHERE d.tenant_id = t.id) AS department_count,
       COALESCE((
         SELECT ROUND(COALESCE(u2.active_count, 0) * 100.0 / NULLIF(p.max_employees, 0), 2)
         FROM subscriptions s
         JOIN plans p ON s.plan_id = p.id
-        LEFT JOIN (SELECT tenant_id, COUNT(*)::INTEGER as active_count FROM users WHERE is_active=true GROUP BY tenant_id) u2 ON u2.tenant_id = t.id
+        LEFT JOIN (SELECT tenant_id, COUNT(*)::INTEGER as active_count FROM users WHERE is_active=true AND is_deleted=false GROUP BY tenant_id) u2 ON u2.tenant_id = t.id
         WHERE s.tenant_id = t.id AND s.status = 'ACTIVE'
         LIMIT 1
       ), 0) AS utilization
@@ -83,9 +85,9 @@ exports.getSuperAdminDashboard = async (db) => {
     `
     SELECT
       (SELECT COUNT(*)::INTEGER FROM tenants WHERE is_active = true) AS active_orgs,
-      (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = true) AS active_users,
-      (SELECT COUNT(*)::INTEGER FROM users WHERE must_change_password = true) AS pending_pwd_change,
-      (SELECT COUNT(*)::INTEGER FROM users WHERE last_login_at < NOW() - INTERVAL '30 days' OR last_login_at IS NULL) AS inactive_users
+      (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = true AND is_deleted = false) AS active_users,
+      (SELECT COUNT(*)::INTEGER FROM users WHERE must_change_password = true AND is_deleted = false) AS pending_pwd_change,
+      (SELECT COUNT(*)::INTEGER FROM users WHERE (last_login_at < NOW() - INTERVAL '30 days' OR last_login_at IS NULL) AND is_deleted = false) AS stale_users
     `
   );
 
@@ -267,6 +269,22 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
           WHERE e.tenant_id = $1 AND u.is_active = false AND u.is_deleted = false
         ) AS inactive_employees,
         (SELECT COUNT(*)::INTEGER FROM users WHERE tenant_id = $1 AND is_active = true AND is_deleted = false) AS active_users,
+        
+        -- Today's Stats
+        (
+          SELECT COUNT(*)::INTEGER 
+          FROM leave_applications 
+          WHERE tenant_id = $1 
+          AND status = 'APPROVED' 
+          AND CURRENT_DATE BETWEEN start_date AND end_date
+        ) AS on_leave_today,
+        (
+          SELECT COUNT(*)::INTEGER 
+          FROM attendance 
+          WHERE tenant_id = $1 
+          AND date = CURRENT_DATE 
+          AND is_late = true
+        ) AS late_today,
 
         --Previous Month Counts(30 days ago)
         (

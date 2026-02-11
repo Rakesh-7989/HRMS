@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
+const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
 
 const getQuery = (db) => {
   if (db && typeof db.query === "function") return db.query;
@@ -16,7 +17,7 @@ exports.createDesignation = async (db, tenantId, data, actor) => {
   );
 
   if (dup.rowCount > 0) {
-    throw new Error("Designation already exists");
+    throw new BadRequestError("Designation already exists");
   }
 
   const res = await query(
@@ -118,7 +119,7 @@ exports.updateDesignation = async (db, id, tenantId, data, actor) => {
     ]
   );
 
-  if (!res.rowCount) throw new Error("Designation not found");
+  if (!res.rowCount) throw new NotFoundError("Designation not found");
   return res.rows[0];
 };
 
@@ -132,7 +133,7 @@ exports.deleteDesignation = async (db, id, tenantId) => {
   );
 
   if (using.rowCount > 0) {
-    throw new Error("Cannot delete designation. It is assigned to employees.");
+    throw new BadRequestError("Cannot delete designation. It is assigned to employees.");
   }
 
   const res = await query(
@@ -143,6 +144,6 @@ exports.deleteDesignation = async (db, id, tenantId) => {
     [id, tenantId]
   );
 
-  if (!res.rowCount) throw new Error("Designation not found");
+  if (!res.rowCount) throw new NotFoundError("Designation not found");
   return { deleted: true };
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -9,7 +10,10 @@ import { AnimatedText } from '@/components/ui/AnimatedText';
 import {
   ArrowRight, Clock, Shield,
   Smartphone, Tablet, Globe, LayoutDashboard, Briefcase, UserCheck,
-  MapPin, Columns, ClipboardList, Calendar, DollarSign, Loader2, Star, Check
+  MapPin, Columns, ClipboardList, Calendar, IndianRupee, Loader2, Star, Check,
+  MessageCircle, Video, Zap,
+  Package, Network, BarChart3, Users, Fingerprint,
+  Twitter, Linkedin, Github, Youtube, Mail, Phone
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { plansService, Plan } from '@/services/plans.service';
@@ -18,28 +22,25 @@ import { cn } from '@/utils/cn';
 const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, colorConfig }) => {
   const Icon = feature.icon;
 
-  if (feature.image) {
-    return (
-      <motion.div
-        whileHover={{ scale: 1.05, rotate: 1 }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="relative z-10 rounded-xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/10 h-full"
-      >
-        <img
-          src={feature.image}
-          alt={feature.title}
-          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-        />
-      </motion.div>
-    );
-  }
-
   return (
     <div className={cn(
       "relative z-10 rounded-xl overflow-hidden border border-black/5 dark:border-white/10 h-full bg-gradient-to-br flex flex-col items-center justify-center p-4 transition-all duration-500 group-hover:bg-black/[0.05] dark:group-hover:bg-white/[0.05]",
       colorConfig.gradient
     )}>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
+
+      {feature.id === 'geofencing' && (
+        <div className="relative flex items-center justify-center">
+          <div className="relative">
+            <MapPin size={48} className={colorConfig.text} />
+            <motion.div
+              animate={{ scale: [1, 2], opacity: [0.5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className={cn("absolute top-0 left-0 w-full h-full rounded-full border-2", colorConfig.text.replace('text', 'border'))}
+            />
+          </div>
+        </div>
+      )}
 
       {feature.id === 'timesheets' && (
         <div className="w-full space-y-3 px-2">
@@ -125,7 +126,144 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
         </div>
       )}
 
-      {!['timesheets', 'attendance', 'leave', 'security'].includes(feature.id) && (
+      {feature.id === 'kanban' && (
+        <div className="flex gap-2 h-24 items-center justify-center">
+          {[0, 1, 2].map((col) => (
+            <div key={col} className="w-12 h-24 bg-white/5 border border-white/10 rounded-lg p-1.5 space-y-2">
+              <div className="h-1 w-6 bg-white/10 rounded-full mb-1" />
+              {[0, 1].map((card) => (
+                <motion.div
+                  key={card}
+                  animate={{ opacity: [0.2, 0.4, 0.2] }}
+                  transition={{ duration: 2, delay: (col + card) * 0.4, repeat: Infinity }}
+                  className="h-6 w-full bg-white/10 rounded-md"
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {feature.id === 'payroll' && (
+        <div className="relative flex flex-col items-center justify-center">
+          <motion.div
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <IndianRupee size={52} className={colorConfig.text} />
+          </motion.div>
+          <div className="flex gap-1.5 mt-4">
+            {[0, 1, 2, 3].map(i => (
+              <motion.div
+                key={i}
+                animate={{ scaleY: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, delay: i * 0.15, repeat: Infinity }}
+                className={cn("w-2 h-6 rounded-full", colorConfig.glow, "opacity-40")}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {feature.id === 'collaboration' && (
+        <div className="relative flex items-center justify-center gap-4">
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl"
+          >
+            <MessageCircle size={28} className={colorConfig.text} />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl"
+          >
+            <Video size={28} className={colorConfig.text} />
+          </motion.div>
+          <div className="absolute inset-0 bg-primary/20 blur-[40px] -z-10" />
+        </div>
+      )}
+
+      {feature.id === 'assets' && (
+        <div className="grid grid-cols-2 gap-2 w-full max-w-[100px]">
+          {[1, 2, 3, 4].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ scale: 0.8, opacity: 0.3 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1, delay: i * 0.2, repeat: Infinity, repeatType: 'reverse' }}
+              className="aspect-square bg-white/5 border border-white/10 rounded-lg flex items-center justify-center"
+            >
+              <Package size={16} className={colorConfig.text} />
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {feature.id === 'hierarchy' && (
+        <div className="relative w-24 h-24 flex items-center justify-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 border border-dashed border-white/10 rounded-full"
+          />
+          <div className="flex flex-col gap-3 items-center">
+            <div className="p-2 bg-white/10 rounded-lg border border-white/20"><Network size={20} className={colorConfig.text} /></div>
+            <div className="flex gap-4">
+              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-6 h-6 rounded-full bg-white/10 border border-white/20" />
+              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity, delay: 0.5 }} className="w-6 h-6 rounded-full bg-white/10 border border-white/20" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {feature.id === 'reports' && (
+        <div className="flex items-end gap-1.5 h-16">
+          {[40, 70, 45, 90, 60].map((h, i) => (
+            <motion.div
+              key={i}
+              initial={{ height: 0 }}
+              whileInView={{ height: `${h}%` }}
+              transition={{ duration: 1, delay: i * 0.1 }}
+              className={cn("w-3 rounded-t-sm", colorConfig.glow, "opacity-60")}
+            />
+          ))}
+        </div>
+      )}
+
+      {feature.id === '2fa' && (
+        <div className="relative">
+          <div className="p-5 bg-white/5 rounded-full border border-white/10">
+            <Fingerprint size={32} className={cn("opacity-80", colorConfig.text)} />
+          </div>
+          <motion.div
+            animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className={cn("absolute inset-0 rounded-full border-2", colorConfig.text.replace('text', 'border'))}
+          />
+        </div>
+      )}
+
+      {feature.id === 'shifts' && (
+        <div className="relative w-20 h-20">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Users size={28} className={cn("opacity-60", colorConfig.text)} />
+          </div>
+          <motion.div
+            className="absolute h-0.5 w-8 bg-primary origin-left left-1/2 top-1/2"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+      )}
+
+      {!['geofencing', 'timesheets', 'kanban', 'payroll', 'attendance', 'leave', 'security', 'collaboration', 'assets', 'hierarchy', 'reports', '2fa', 'shifts'].includes(feature.id) && (
         <Icon size={52} className={cn("relative z-20 opacity-40 group-hover:opacity-90 transition-opacity duration-500", colorConfig.text)} />
       )}
 
@@ -143,16 +281,12 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
 
 // Assets
 import rolesVisual from '@/assets/hrms_roles.png';
-import geofencingVisual from '@/assets/geofencing_visual.png';
-import kanbanVisual from '@/assets/kanban_visual.png';
-import payrollVisual from '@/assets/payroll_visual.png';
 
 const keyFeatures = [
   {
     id: 'geofencing',
     title: 'Geo-Fencing Attendance',
     icon: MapPin,
-    image: geofencingVisual,
     color: 'emerald',
     points: [
       'Location-based check-in and check-out',
@@ -179,7 +313,6 @@ const keyFeatures = [
     id: 'kanban',
     title: 'Kanban Boards',
     icon: Columns,
-    image: kanbanVisual,
     color: 'purple',
     points: [
       'Visual task management with drag-and-drop workflow',
@@ -218,8 +351,7 @@ const keyFeatures = [
   {
     id: 'payroll',
     title: 'Payroll Management',
-    icon: DollarSign,
-    image: payrollVisual,
+    icon: IndianRupee,
     color: 'indigo',
     points: [
       'Automated salary calculation',
@@ -241,6 +373,89 @@ const keyFeatures = [
       'Cloud-ready architecture'
     ],
     description: "Enterprise-grade protection for your most sensitive data, ensuring full compliance and peace of mind at every scale with role-based access control."
+  },
+  {
+    id: 'collaboration',
+    title: 'Instant Collaboration',
+    icon: Zap,
+    color: 'blue',
+    points: [
+      'Real-time Chat & Private Direct Messages',
+      'High-Definition Video Conferencing',
+      'Instant Screen Sharing & Presentations',
+      'Secure File Transfers within Team'
+    ],
+    description: "Bridge the distance between your team members. With integrated video calls and real-time messaging, communication is fluid, fast, and secure."
+  },
+  {
+    id: 'assets',
+    title: 'Asset Management',
+    icon: Package,
+    color: 'amber',
+    isLarge: false,
+    points: [
+      'Centralized hardware & software inventory',
+      'Digital asset request & return workflows',
+      'Condition tracking and assignment history',
+      'Automated notifications for returns'
+    ],
+    description: "Master your company inventory. Track everything from laptops to licenses with a transparent lifecycle management system that reduces loss and improves accountability."
+  },
+  {
+    id: 'hierarchy',
+    title: 'Visual Hierarchy',
+    icon: Network,
+    color: 'purple',
+    isLarge: true,
+    points: [
+      'Interactive Organizational Tree View',
+      'Explore reporting lines and departments',
+      'Role-based visual indicators',
+      'Search and filter by team or employee'
+    ],
+    description: "Visualize your entire workforce in high resolution. Our interactive org chart gives you immediate clarity on reporting structures and departmental distributions."
+  },
+  {
+    id: 'reports',
+    title: 'Advanced Analytics',
+    icon: BarChart3,
+    color: 'emerald',
+    isLarge: false,
+    points: [
+      'Customizable HR & Payroll reports',
+      'Headcount and churn trend analysis',
+      'Compliance and audit-ready exports',
+      'Visual performance and distribution charts'
+    ],
+    description: "Turn HR data into strategic insights. Generate professional reports in seconds that help you make informed decisions about your workforce and operations."
+  },
+  {
+    id: '2fa',
+    title: 'Premium Security',
+    icon: Fingerprint,
+    color: 'slate',
+    isLarge: false,
+    points: [
+      'Multi-Factor Authentication (MFA/2FA)',
+      'TOTP-based secure secondary login',
+      'Encrypted sensitive data storage',
+      'Full audit logs for all administrative actions'
+    ],
+    description: "Enterprise-grade protection for your most sensitive data. We implement multi-layered security protocols to ensure your organization's records remain private and secure."
+  },
+  {
+    id: 'shifts',
+    title: 'Shift & Roster Planning',
+    icon: Users,
+    color: 'indigo',
+    isLarge: true,
+    points: [
+      'Multiple shift timing configurations',
+      'Automated rotation and roster management',
+      'Late-in and early-out policy enforcement',
+      'Night shift and weekend premium tracking'
+    ],
+    description: "Manage complex work schedules with ease. Whether you have 24/7 operations or flexible timings, our engine handles shifts with mathematical precision."
   }
 ];
 
@@ -332,6 +547,7 @@ const categoryLabels: Record<string, string> = {
   performance_management: 'Performance Management',
   payroll_automation: 'Payroll Automation',
   mobile_application: 'Mobile Solutions',
+  chats_video_calls: 'Real-time Chat & Video Calls',
   other_features: 'Additional Capabilities',
 };
 
@@ -391,6 +607,7 @@ export const LandingPage: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [billingCycle, setBillingCycle] = React.useState<'monthly' | 'annual'>('monthly');
+  const [highlightedFeature, setHighlightedFeature] = React.useState<string | null>(null);
 
   const { data: plansData, isLoading } = useQuery({
     queryKey: ['landing-plans'],
@@ -424,6 +641,15 @@ export const LandingPage: React.FC = () => {
 
   const scrollToFeatures = () => {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToFeature = (featureId: string) => {
+    const el = document.getElementById(`feature-${featureId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedFeature(featureId);
+      setTimeout(() => setHighlightedFeature(null), 2500);
+    }
   };
 
   const scrollToPricing = () => {
@@ -669,7 +895,9 @@ export const LandingPage: React.FC = () => {
           >
             {keyFeatures.map((feature) => {
               const Icon = feature.icon;
-              const isLarge = feature.id === 'geofencing' || feature.id === 'payroll';
+              const isLarge = feature.isLarge === undefined
+                ? (feature.id === 'geofencing' || feature.id === 'payroll' || feature.id === 'collaboration')
+                : feature.isLarge;
 
               const colorConfig = {
                 emerald: { text: 'text-emerald-500', dot: 'bg-emerald-500/40', glow: 'bg-emerald-500', gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent' },
@@ -684,33 +912,35 @@ export const LandingPage: React.FC = () => {
               return (
                 <motion.div
                   key={feature.id}
+                  id={`feature-${feature.id}`}
                   variants={fadeInUp}
                   className={cn(
-                    "relative group rounded-[2rem] overflow-hidden border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.02] backdrop-blur-xl transition-all duration-500 hover:border-black/10 dark:hover:border-white/20 hover:bg-black/[0.03] dark:hover:bg-white/[0.05]",
-                    isLarge ? "md:col-span-2" : "col-span-1"
+                    "relative group rounded-[1.5rem] overflow-hidden border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.02] backdrop-blur-xl transition-all duration-500 hover:border-black/10 dark:hover:border-white/20 hover:bg-black/[0.03] dark:hover:bg-white/[0.05]",
+                    isLarge ? "md:col-span-2" : "col-span-1",
+                    highlightedFeature === feature.id && "ring-2 ring-primary ring-offset-2 ring-offset-light-bg dark:ring-offset-dark-bg scale-[1.02] shadow-[0_0_40px_rgba(var(--primary),0.15)]"
                   )}
                 >
-                  <div className="p-8 h-full flex flex-col">
-                    <div className="flex items-center gap-4 mb-6">
+                  <div className="p-5 h-full flex flex-col">
+                    <div className="flex items-center gap-3 mb-3">
                       <div className={cn(
-                        "p-3 rounded-xl bg-black/5 dark:bg-white/5 shadow-inner group-hover:scale-110 transition-transform duration-500",
+                        "p-2 rounded-xl bg-black/5 dark:bg-white/5 shadow-inner group-hover:scale-110 transition-transform duration-500",
                         colorConfig.text
                       )}>
-                        <Icon size={24} />
+                        <Icon size={18} />
                       </div>
-                      <h3 className="text-xl font-bold tracking-tight">{feature.title}</h3>
+                      <h3 className="text-base font-bold tracking-tight">{feature.title}</h3>
                     </div>
 
                     <div className={cn(
                       "flex flex-col gap-6 h-full",
                       isLarge ? "lg:flex-row" : ""
                     )}>
-                      <div className="flex-1 space-y-4">
-                        <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                      <div className="flex-1 space-y-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                           {feature.description}
                         </p>
                         <div className="space-y-3">
-                          {feature.points.map((point, pIdx) => (
+                          {feature.points.map((point: string, pIdx: number) => (
                             <div key={pIdx} className="flex gap-3 text-gray-700 dark:text-muted/90 leading-relaxed group-hover:text-black dark:group-hover:text-white transition-colors duration-300">
                               <div className={cn("mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 opacity-60", colorConfig.dot)} />
                               <p className="text-sm font-medium">{point}</p>
@@ -936,17 +1166,33 @@ export const LandingPage: React.FC = () => {
                   <p className="mt-4 text-sm text-muted font-medium italic">{plan.description}</p>
                 </div>
 
-                <div className="space-y-4 mb-10">
-                  {plan.features.slice(0, 6).map((feature: string, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                        <Check size={10} className="text-primary" />
+                <div className="space-y-4 mb-10 h-[280px] overflow-y-auto custom-scrollbar">
+                  {plan.features.map((feature: string, idx: number) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0.6 }}
+                      whileHover={{ opacity: 1, x: 2 }}
+                      className="flex items-center gap-3 py-1 border-b border-black/[0.03] dark:border-white/[0.03] last:border-0"
+                    >
+                      <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Check size={12} className="text-primary" />
                       </div>
-                      <span className="text-xs font-bold text-muted/80 group-hover:text-white transition-colors capitalize">
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors capitalize">
                         {feature}
                       </span>
-                    </div>
+                    </motion.div>
                   ))}
+                  {/* Suggestion: Always show collaboration if it's a good feature */}
+                  {plan.name !== 'FREE' && (
+                    <div className="flex items-center gap-3 py-1 border-b border-black/[0.03] dark:border-white/[0.03] last:border-0">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                        <Zap size={10} className="text-emerald-500 fill-emerald-500" />
+                      </div>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-tighter">
+                        Chats & Video Calls Incl.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -957,17 +1203,20 @@ export const LandingPage: React.FC = () => {
                   )}
                   onClick={() => {
                     if ((plan.price as any) === 'Custom') {
-                      window.open('mailto:sales@WellZo.com');
+                      // Navigate to a dedicated contact section or show a modal
+                      document.getElementById('final-cta')?.scrollIntoView({ behavior: 'smooth' });
+                      toast.success("Redirecting to Partner support...");
+                      setTimeout(() => {
+                        window.open('https://WellZo.com/partner-contact', '_blank') || window.open('mailto:partnership@WellZo.com');
+                      }, 1000);
                     } else if (tenantId) {
-                      // Existing tenant flow - go to login with return params
                       navigate(`/login?tenantId=${tenantId}&plan_id=${plan.id}&cycle=${billingCycle.toUpperCase()}&redirect=/billing`);
                     } else {
-                      // New user flow
                       navigate(`/register?plan_id=${plan.id}&cycle=${billingCycle.toUpperCase()}`);
                     }
                   }}
                 >
-                  {plan.price === 'Custom' ? 'Contact Partner' : 'Start Trial Now'}
+                  {plan.price === 'Custom' ? 'Connect with Partner' : 'Activate Plan'}
                   <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
@@ -976,7 +1225,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* Final CTA */}
-        <section className="rounded-[3rem] bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-white/10 p-12 md:p-20 text-center relative overflow-hidden">
+        <section id="final-cta" className="rounded-[3rem] bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-white/10 p-12 md:p-20 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-radial opacity-30 pointer-events-none" />
           <motion.div
             animate={{
@@ -1067,6 +1316,147 @@ export const LandingPage: React.FC = () => {
           </motion.div>
         </section>
       </main>
+
+      {/* Footer */}
+      <footer className="mt-32 border-t border-light-border dark:border-dark-border bg-gradient-to-b from-transparent via-primary/[0.03] to-primary/[0.05] backdrop-blur-3xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none" />
+
+        <div className="max-w-[90rem] mx-auto px-8 py-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 mb-20">
+            {/* Brand Column */}
+            <div className="lg:col-span-4 space-y-8">
+              <div className="flex items-center gap-4">
+                <AnimatedLogo className="w-16 h-16" />
+                <span className="text-4xl font-black tracking-tighter text-gradient leading-none">WellZo</span>
+              </div>
+              <p className="text-gray-600 dark:text-muted/80 leading-relaxed text-base max-w-sm">
+                Engineering the next generation of workforce management. Empowering teams with intelligent automation, real-time collaboration, and data-driven insights.
+              </p>
+              <div className="flex gap-5">
+                {[
+                  { icon: Linkedin, href: 'https://linkedin.com/company/WellZo' },
+                  { icon: Twitter, href: 'https://twitter.com/WellZo' },
+                  { icon: Github, href: 'https://github.com/WellZo' },
+                  { icon: Youtube, href: 'https://youtube.com/@WellZo' }
+                ].map((social, i) => (
+                  <motion.a
+                    key={i}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.15, y: -4 }}
+                    className="p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-primary hover:bg-primary/10 hover:text-primary-hover shadow-lg transition-all duration-300"
+                  >
+                    <social.icon size={20} />
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+
+            {/* Product Links */}
+            <div className="lg:col-span-2">
+              <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-8 text-gray-900 dark:text-white/90">Solution</h4>
+              <ul className="space-y-4">
+                {[
+                  { label: 'Core HRMS', featureId: 'attendance' },
+                  { label: 'Payroll Automation', featureId: 'payroll' },
+                  { label: 'Asset Tracking', featureId: 'assets' },
+                  { label: 'Org Visualizer', featureId: 'hierarchy' },
+                  { label: 'Collaboration Hub', featureId: 'collaboration' },
+                  { label: 'Shift Planning', featureId: 'shifts' }
+                ].map((link) => (
+                  <li key={link.label}>
+                    <button
+                      onClick={() => scrollToFeature(link.featureId)}
+                      className="text-sm text-gray-600 dark:text-muted/70 hover:text-primary transition-all flex items-center group font-medium"
+                    >
+                      <ArrowRight size={14} className="mr-0 w-0 opacity-0 group-hover:mr-2 group-hover:w-3 group-hover:opacity-100 transition-all duration-300" />
+                      {link.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Company Links */}
+            <div className="lg:col-span-2">
+              <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-8 text-gray-900 dark:text-white/90">Company</h4>
+              <ul className="space-y-4">
+                {['About Us', 'Success Stories', 'Platform Updates', 'Partner Program', 'Security Trust', 'Career'].map((link) => (
+                  <li key={link}>
+                    <a href="#" className="text-sm text-gray-600 dark:text-muted/70 hover:text-primary transition-all flex items-center group font-medium">
+                      <ArrowRight size={14} className="mr-0 w-0 opacity-0 group-hover:mr-2 group-hover:w-3 group-hover:opacity-100 transition-all duration-300" />
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div className="lg:col-span-4 lg:pl-12">
+              <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-8 text-gray-900 dark:text-white/90">Get in Touch</h4>
+              <ul className="space-y-8">
+                <li>
+                  <a href="mailto:support@WellZo.com" className="flex items-center gap-4 group">
+                    <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
+                      <Mail size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-primary tracking-widest uppercase mb-0.5 opacity-60">Email Us</p>
+                      <p className="text-base text-gray-900 dark:text-white/90 font-semibold group-hover:text-primary transition-colors">support@WellZo.com</p>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <div className="flex items-center gap-4 group">
+                    <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shadow-sm">
+                      <Phone size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-emerald-500 tracking-widest uppercase mb-0.5 opacity-60">Call Sales</p>
+                      <p className="text-base text-gray-900 dark:text-white/90 font-semibold">+91 98765 43210</p>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="flex items-center gap-4 group">
+                    <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-500 shadow-sm">
+                      <MapPin size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-orange-500 tracking-widest uppercase mb-0.5 opacity-60">Corporate HQ</p>
+                      <p className="text-base text-gray-900 dark:text-white/90 font-semibold">Madhapur, Hyderabad</p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-12 border-t border-light-border dark:border-dark-border flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-4">
+              <p className="text-xs text-gray-500 dark:text-muted/60 font-medium tracking-wide">
+                &copy; {new Date().getFullYear()} WellZo Technologies Pvt Ltd.
+              </p>
+              <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-primary/20" />
+              <p className="hidden md:block text-[10px] text-primary font-bold uppercase tracking-widest opacity-40">Made with Precision</p>
+            </div>
+
+            <div className="flex items-center gap-10">
+              <div className="flex items-center gap-8">
+                {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link) => (
+                  <a key={link} href="#" className="text-xs text-gray-500 dark:text-muted hover:text-primary transition-all font-semibold border-b border-transparent hover:border-primary/30 pb-0.5">
+                    {link}
+                  </a>
+                ))}
+              </div>
+              <div className="h-4 w-px bg-white/10 hidden sm:block" />
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

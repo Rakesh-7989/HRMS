@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { departmentService, Department } from '@/services/department.service';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
@@ -41,9 +41,12 @@ export const DepartmentsContent: React.FC = () => {
         mutationFn: (id: string) => departmentService.deleteDepartment(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['departments'] });
-            toast('Department deleted', { icon: '✅' });
+            showToast.success('Department deleted');
         },
-        onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to delete';
+            showToast.error(message);
+        },
     });
 
     const toggleStatusMutation = useMutation({
@@ -51,9 +54,12 @@ export const DepartmentsContent: React.FC = () => {
             departmentService.updateDepartment(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['departments'] });
-            toast(`Department ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+            showToast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'}`);
         },
-        onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to update status';
+            showToast.error(message);
+        },
     });
 
     // --------------------------------------------------------------------------

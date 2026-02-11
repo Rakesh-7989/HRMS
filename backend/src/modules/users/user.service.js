@@ -582,7 +582,7 @@ exports.getMyProfile = async (db, user) => {
   const res = await query(
     `
     SELECT
-      u.id, u.email, u.role, u.is_active, u.created_at, u.updated_at,
+      u.id, u.email, u.role, u.is_active, u.two_factor_enabled, u.created_at, u.updated_at,
       COALESCE(e.first_name, '') as first_name,
       COALESCE(e.last_name, '') as last_name,
       e.phone,
