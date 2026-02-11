@@ -584,6 +584,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                             {canViewOrgAnalytics && <th className="text-left">Department</th>}
                                             <th className="text-left">Check In</th>
                                             <th className="text-left">Check Out</th>
+                                            <th className="text-left">Late Duration</th>
                                             <th className="text-left">Status</th>
                                             <th className="text-left">Device</th>
                                             <th className="text-left">Work Hours</th>
@@ -612,11 +613,6 @@ export const AttendanceReportsContent: React.FC = () => {
                                                             <span className={report.is_late ? 'text-yellow-500 font-medium' : ''}>
                                                                 {report.check_in_time}
                                                             </span>
-                                                            {report.is_late && (
-                                                                <span className="flex items-center text-[10px] text-yellow-600 font-bold bg-yellow-50 px-1 rounded border border-yellow-200" title="Late Arrival">
-                                                                    LATE
-                                                                </span>
-                                                            )}
                                                         </div>
                                                     ) : '-'}
                                                 </td>
@@ -635,6 +631,13 @@ export const AttendanceReportsContent: React.FC = () => {
                                                     ) : '-'}
                                                 </td>
                                                 <td className="py-3">
+                                                    {report.is_late && report.late_by ? (
+                                                        <span className="text-red-600 dark:text-red-400 font-medium">
+                                                            {report.late_by}
+                                                        </span>
+                                                    ) : '-'}
+                                                </td>
+                                                <td className="py-3">
                                                     <span className={`px-2 py-1 rounded text-xs ${report.status === 'PRESENT' ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
                                                         report.status === 'HALF_DAY' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' :
                                                             report.status === 'ABSENT' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
@@ -644,15 +647,15 @@ export const AttendanceReportsContent: React.FC = () => {
                                                     </span>
                                                 </td>
                                                 <td className="py-3">
-                                                    <div className="flex gap-1">
+                                                    <div className="flex flex-col gap-1">
                                                         {report.check_in_device && (
-                                                            <span className="text-[10px] px-1 rounded bg-gray-100 dark:bg-gray-800" title={`In: ${report.check_in_device}`}>
-                                                                {report.check_in_device.charAt(0)}
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium whitespace-nowrap w-fit">
+                                                                IN: {report.check_in_device}
                                                             </span>
                                                         )}
-                                                        {report.check_out_device && report.check_out_device !== report.check_in_device && (
-                                                            <span className="text-[10px] px-1 rounded bg-gray-100 dark:bg-gray-800" title={`Out: ${report.check_out_device}`}>
-                                                                {report.check_out_device.charAt(0)}
+                                                        {report.check_out_device && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 font-medium whitespace-nowrap w-fit">
+                                                                OUT: {report.check_out_device}
                                                             </span>
                                                         )}
                                                     </div>

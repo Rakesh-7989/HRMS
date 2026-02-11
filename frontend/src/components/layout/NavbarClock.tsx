@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,9 +9,7 @@ import { Clock, MapPin, Coffee } from 'lucide-react';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
-import { toast } from 'react-hot-toast';
 import { showToast } from '@/utils/toast';
-
 
 export const NavbarClock: React.FC = () => {
     const { user } = useAuth();

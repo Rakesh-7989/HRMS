@@ -83,6 +83,8 @@ export const ShiftsPage = () => {
             setIsAssignModalOpen(false);
             setSelectedEmployeeIds([]);
             setAssignToAll(false);
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
             const count = data?.data?.updatedCount || data?.updatedCount || 'users';
             toast.success(`Shift assigned to ${count} successfully`);
         },
@@ -239,7 +241,7 @@ export const ShiftsPage = () => {
                         </div>
                         <div>
                             <Label>Grace Period (Minutes)</Label>
-                            <Input type="number" value={formData.grace_period_minutes} onChange={(e) => setFormData({ ...formData, grace_period_minutes: parseInt(e.target.value) || 0 })} />
+                            <Input type="number" min={0} value={formData.grace_period_minutes} onChange={(e) => setFormData({ ...formData, grace_period_minutes: Math.max(0, parseInt(e.target.value) || 0) })} />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
@@ -290,18 +292,18 @@ export const ShiftsPage = () => {
                                     <Label>Select Employees</Label>
                                     <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1">
                                         {employees
-                                            .filter((emp: any) => !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(emp.role))
+                                            .filter((emp: any) => !['ADMIN'].includes(emp.role) && emp.employee_uuid)
                                             .map((emp: any) => (
                                                 <div key={emp.id} className="flex items-center space-x-2">
                                                     <input
                                                         type="checkbox"
                                                         id={`emp-${emp.id}`}
-                                                        checked={selectedEmployeeIds.includes(emp.id)}
+                                                        checked={selectedEmployeeIds.includes(emp.employee_uuid!)}
                                                         onChange={(e) => {
                                                             if (e.target.checked) {
-                                                                setSelectedEmployeeIds([...selectedEmployeeIds, emp.id]);
+                                                                setSelectedEmployeeIds([...selectedEmployeeIds, emp.employee_uuid!]);
                                                             } else {
-                                                                setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.id));
+                                                                setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.employee_uuid));
                                                             }
                                                         }}
                                                     />

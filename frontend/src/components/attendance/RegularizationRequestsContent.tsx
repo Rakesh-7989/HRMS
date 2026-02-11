@@ -275,7 +275,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                            Are you sure you want to {reviewAction?.toLowerCase()} the regularization request for <b>{selectedRequest?.first_name}</b> on <b>{selectedRequest?.date}</b>?
+                            Are you sure you want to {reviewAction?.toLowerCase()} the regularization request for <b>{selectedRequest?.first_name}</b> on <b>{selectedRequest?.date ? format(new Date(selectedRequest.date), 'MMM dd, yyyy') : ''}</b>?
                         </p>
                         {reviewAction === 'REJECTED' && (
                             <div>

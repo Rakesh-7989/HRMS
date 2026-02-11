@@ -4,6 +4,7 @@ import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { Calendar, Settings } from 'lucide-react';
 
+
 export const UnifiedShiftsContent: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTab = (searchParams.get('subtab') as any) || 'roster';
@@ -43,19 +44,21 @@ export const UnifiedShiftsContent: React.FC = () => {
                     <Calendar size={16} />
                     Shift Roster
                 </button>
-                <button
-                    onClick={() => handleTabChange('manage')}
-                    className={`
+                {['ADMIN', 'HR'].includes(user?.role || '') && (
+                    <button
+                        onClick={() => setActiveTab('manage')}
+                        className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
                         ${activeTab === 'manage'
-                            ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-                        }
+                                ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+                                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                            }
                     `}
-                >
-                    <Settings size={16} />
-                    Manage Shifts
-                </button>
+                    >
+                        <Settings size={16} />
+                        Manage Shifts
+                    </button>
+                )}
             </div>
 
             {/* Content Area */}

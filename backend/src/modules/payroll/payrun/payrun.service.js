@@ -275,9 +275,9 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                     gross_salary, basic, hra, da, special_allowance, other_allowance,
                     reimbursements, total_earnings,
                     pf_employee, pf_employer, esi_employee, esi_employer,
-                    professional_tax, tds, loan_deduction, lop_deduction, total_deductions,
+                    professional_tax, tds, loan_deduction, lop_deduction, lwf_employee, total_deductions,
                     net_salary, status
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'PENDING')
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 'PENDING')
                 RETURNING id`,
                 [
                     tenantId, payrunId, emp.emp_id,
@@ -286,7 +286,7 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                     result.gross, result.basic, result.hra, result.da, result.specialAllowance, result.otherAllowance,
                     result.reimbursements, result.totalEarnings,
                     result.pfEmployee, result.pfEmployer, result.esiEmployee, result.esiEmployer,
-                    result.professionalTax, result.tds, result.loanDeduction, result.lopDeduction, result.totalDeductions,
+                    result.professionalTax, result.tds, result.loanDeduction, result.lopDeduction, result.lwfEmployee, result.totalDeductions,
                     result.netSalary
                 ]
             );
@@ -367,9 +367,13 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
 
     const attData = attendance.rows[0] || { present_days: 0, half_days: 0, absent_days: 0 };
 
-    // Get approved leaves
+    // Get approved leaves — compute actual overlap with this pay period
     const leaves = await client.query(
-        `SELECT SUM(days_count) as leave_days
+        `SELECT SUM(
+            GREATEST(0, 
+                LEAST(end_date, $4::date) - GREATEST(start_date, $3::date) + 1
+            )
+        ) as leave_days
          FROM leave_applications 
          WHERE tenant_id = $1 AND employee_id = $2 
            AND status = 'APPROVED'
@@ -379,9 +383,13 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
 
     const leaveDays = parseFloat(leaves.rows[0]?.leave_days || 0);
 
-    // Get unpaid leaves (LOP)
+    // Get unpaid leaves (LOP) — compute actual overlap with this pay period
     const lopLeaves = await client.query(
-        `SELECT SUM(la.days_count) as lop_days
+        `SELECT SUM(
+            GREATEST(0, 
+                LEAST(la.end_date, $4::date) - GREATEST(la.start_date, $3::date) + 1
+            )
+        ) as lop_days
          FROM leave_applications la
          JOIN leave_types lt ON lt.id = la.leave_type_id
          WHERE la.tenant_id = $1 AND la.employee_id = $2 
@@ -436,9 +444,12 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const totalDaysInMonth = new Date(payrun.period_year, payrun.period_month, 0).getDate();
     const totalWorkingDays = totalDaysInMonth - holidays - weekends;
 
-    const presentDays = parseInt(attData.present_days) + (parseInt(attData.half_days) * 0.5);
+    const halfDays = parseInt(attData.half_days) || 0;
+    const presentDays = parseInt(attData.present_days) + (halfDays * 0.5);
     const absentDays = parseInt(attData.absent_days);
-    const payableDays = totalWorkingDays - lopDays;
+    // Half-days from attendance count as 0.5 LOP each (if not already covered by a leave)
+    const attendanceBasedLop = halfDays * 0.5;
+    const payableDays = totalWorkingDays - lopDays - attendanceBasedLop;
 
     // Calculate salary components from dynamic structure
     const monthlyCtc = parseFloat(emp.ctc) / 12;
@@ -547,26 +558,15 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const structurePT = getStructureValue('PT', 'PROFESSIONAL_TAX');
     const structureLwf = getStructureValue('LWF', 'LWF_EMPLOYEE');
 
-    // DEBUG LOGGING - Remove after fixing
-    console.log('[PAYROLL DEBUG] Employee:', emp.first_name, emp.last_name);
-    console.log('[PAYROLL DEBUG] compMap keys:', Object.keys(compMap));
-    console.log('[PAYROLL DEBUG] compMap PF values:', { 'PF_EE': compMap['PF_EE'], 'PF_EMPLOYEE': compMap['PF_EMPLOYEE'], 'PF': compMap['PF'], 'PF(EMPLOYEE)': compMap['PF(EMPLOYEE)'] });
-    console.log('[PAYROLL DEBUG] structurePfEmployee:', structurePfEmployee, 'statutory pfEmployee:', pfEmployee);
-    console.log('[PAYROLL DEBUG] structurePT:', structurePT, 'statutory professionalTax:', professionalTax);
-
     // Use structure value if defined (even if 0), otherwise use statutory calculated value
     const finalPfEmployee = structurePfEmployee !== undefined ? structurePfEmployee : pfEmployee;
     const finalEsiEmployee = structureEsiEmployee !== undefined ? structureEsiEmployee : esiEmployee;
     const finalProfessionalTax = structurePT !== undefined ? structurePT : professionalTax;
     const finalLwfEmployee = structureLwf !== undefined ? structureLwf : lwfEmployee;
 
-    console.log('[PAYROLL DEBUG] FINAL VALUES - PF:', finalPfEmployee, 'ESI:', finalEsiEmployee, 'PT:', finalProfessionalTax, 'LWF:', finalLwfEmployee);
-
     const totalEarnings = gross + reimbursementTotal;
     const totalDeductions = finalPfEmployee + finalEsiEmployee + finalProfessionalTax + finalLwfEmployee + tds + loanDeduction + lopDeduction;
     const netSalary = totalEarnings - totalDeductions;
-
-    console.log('[PAYROLL DEBUG] TOTAL DEDUCTIONS:', totalDeductions, '= PF:', finalPfEmployee, '+ ESI:', finalEsiEmployee, '+ PT:', finalProfessionalTax, '+ LWF:', finalLwfEmployee, '+ TDS:', tds, '+ Loan:', loanDeduction, '+ LOP:', lopDeduction);
 
     // ================================================================
     // ADD STATUTORY DEDUCTIONS TO COMPONENTS FOR PAYSLIP DISPLAY
@@ -664,12 +664,12 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
         otherAllowance,
         reimbursements: reimbursementTotal,
         totalEarnings,
-        pfEmployee,
+        pfEmployee: finalPfEmployee,
         pfEmployer,
-        esiEmployee,
+        esiEmployee: finalEsiEmployee,
         esiEmployer,
-        professionalTax,
-        lwfEmployee,
+        professionalTax: finalProfessionalTax,
+        lwfEmployee: finalLwfEmployee,
         tds,
         loanDeduction,
         lopDeduction,
@@ -679,150 +679,8 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     };
 };
 
-const calculateEmployeePayroll = async (tenantId, emp, payrun, statutory, periodStart, periodEnd) => {
-    // Get attendance summary
-    const attendance = await db.query(
-        `SELECT 
-       COUNT(*) FILTER (WHERE status = 'PRESENT') as present_days,
-       COUNT(*) FILTER (WHERE status = 'HALF_DAY') as half_days,
-       COUNT(*) FILTER (WHERE status = 'ABSENT') as absent_days
-     FROM attendance 
-     WHERE tenant_id = $1 AND employee_id = $2 
-       AND date BETWEEN $3 AND $4`,
-        [tenantId, emp.emp_id, periodStart, periodEnd]
-    );
-
-    const attData = attendance.rows[0] || { present_days: 0, half_days: 0, absent_days: 0 };
-
-    // Get approved leaves
-    const leaves = await db.query(
-        `SELECT SUM(days_count) as leave_days
-     FROM leave_applications 
-     WHERE tenant_id = $1 AND employee_id = $2 
-       AND status = 'APPROVED'
-       AND start_date <= $4 AND end_date >= $3`,
-        [tenantId, emp.emp_id, periodStart, periodEnd]
-    );
-
-    const leaveDays = parseFloat(leaves.rows[0]?.leave_days || 0);
-
-    // Get unpaid leaves (LOP)
-    const lopLeaves = await db.query(
-        `SELECT SUM(la.days_count) as lop_days
-     FROM leave_applications la
-     JOIN leave_types lt ON lt.id = la.leave_type_id
-     WHERE la.tenant_id = $1 AND la.employee_id = $2 
-       AND la.status = 'APPROVED' AND lt.is_paid = FALSE
-       AND la.start_date <= $4 AND la.end_date >= $3`,
-        [tenantId, emp.emp_id, periodStart, periodEnd]
-    );
-
-    const lopDays = parseFloat(lopLeaves.rows[0]?.lop_days || 0);
-
-    // Get loan deductions
-    const loanDeductions = await db.query(
-        `SELECT SUM(installment_amount) as total
-     FROM employee_loan_installments
-     WHERE tenant_id = $1 AND employee_id = $2 
-       AND payment_status = 'PENDING'
-       AND due_month <= $3`,
-        [tenantId, emp.emp_id, periodEnd]
-    );
-
-    const loanDeduction = parseFloat(loanDeductions.rows[0]?.total || 0);
-
-    // Get approved reimbursement claims
-    const reimbursements = await db.query(
-        `SELECT SUM(amount) as total
-     FROM reimbursement_claims
-     WHERE tenant_id = $1 AND employee_id = $2 
-       AND status = 'APPROVED'
-       AND paid_in_payrun_id IS NULL`,
-        [tenantId, emp.emp_id]
-    );
-
-    const reimbursementTotal = parseFloat(reimbursements.rows[0]?.total || 0);
-
-    // Calculate days
-    const totalDaysInMonth = new Date(payrun.period_year, payrun.period_month, 0).getDate();
-    const holidays = 0; // TODO: Get from holidays table
-    const weekends = 8; // Approximate
-    const totalWorkingDays = totalDaysInMonth - holidays - weekends;
-
-    const presentDays = parseInt(attData.present_days) + (parseInt(attData.half_days) * 0.5);
-    const absentDays = parseInt(attData.absent_days);
-    const payableDays = totalWorkingDays - lopDays;
-
-    // Calculate salary components
-    const monthlyCtc = parseFloat(emp.ctc) / 12;
-    const perDaySalary = monthlyCtc / totalDaysInMonth;
-
-    const gross = monthlyCtc;
-    const basic = parseFloat(emp.basic) / 12;
-    const hra = parseFloat(emp.hra) / 12;
-    const da = parseFloat(emp.da) / 12;
-    const specialAllowance = parseFloat(emp.special_allowance) / 12;
-    const otherAllowance = parseFloat(emp.other_allowance) / 12;
-
-    // Calculate statutory deductions
-    let pfEmployee = 0, pfEmployer = 0;
-    if (statutory.pf_enabled && basic <= (statutory.pf_wage_ceiling || 15000)) {
-        pfEmployee = (basic * (statutory.pf_employee_rate || 12)) / 100;
-        pfEmployer = (basic * (statutory.pf_employer_rate || 12)) / 100;
-    }
-
-    let esiEmployee = 0, esiEmployer = 0;
-    if (statutory.esi_enabled && gross <= (statutory.esi_wage_ceiling || 21000)) {
-        esiEmployee = (gross * (statutory.esi_employee_rate || 0.75)) / 100;
-        esiEmployer = (gross * (statutory.esi_employer_rate || 3.25)) / 100;
-    }
-
-    // Professional Tax (simplified)
-    let professionalTax = 0;
-    if (statutory.pt_enabled && gross > 15000) {
-        professionalTax = gross > 20000 ? 200 : 150;
-    }
-
-    // LOP Deduction
-    const lopDeduction = lopDays * perDaySalary;
-
-    // TDS (simplified - actual calculation is complex)
-    const tds = 0; // TODO: Implement based on tax declarations
-
-    // Total calculations
-    const totalEarnings = gross + reimbursementTotal;
-    const totalDeductions = pfEmployee + esiEmployee + professionalTax + tds + loanDeduction + lopDeduction;
-    const netSalary = totalEarnings - totalDeductions;
-
-    return {
-        totalWorkingDays,
-        payableDays,
-        presentDays,
-        absentDays,
-        leaveDays,
-        lopDays,
-        holidays,
-        weekends,
-        gross,
-        basic,
-        hra,
-        da,
-        specialAllowance,
-        otherAllowance,
-        reimbursements: reimbursementTotal,
-        totalEarnings,
-        pfEmployee,
-        pfEmployer,
-        esiEmployee,
-        esiEmployer,
-        professionalTax,
-        tds,
-        loanDeduction,
-        lopDeduction,
-        totalDeductions,
-        netSalary
-    };
-};
+// NOTE: Legacy calculateEmployeePayroll function removed — it was dead code.
+// All payrun calculations use calculateEmployeePayrollWithClient (transactional) above.
 
 // ===================================================================
 // PAYRUN WORKFLOW
@@ -879,9 +737,9 @@ const revokePayrun = async (tenantId, payrunId, userId) => {
     const result = await db.query(
         `UPDATE payroll_runs 
      SET status = 'REVOKED', updated_at = now()
-     WHERE id = $1
+     WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
-        [payrunId]
+        [tenantId, payrunId]
     );
 
     return result.rows[0];
@@ -902,25 +760,37 @@ const deletePayrun = async (tenantId, payrunId) => {
         throw new Error('Cannot delete a locked payrun');
     }
 
-    // Delete components first (child of items)
-    await db.query(
-        `DELETE FROM payroll_run_item_components WHERE payroll_run_item_id IN (
-            SELECT id FROM payroll_run_items WHERE payroll_run_id = $1
-        )`,
-        [payrunId]
-    );
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
 
-    // Delete items
-    await db.query(
-        `DELETE FROM payroll_run_items WHERE payroll_run_id = $1`,
-        [payrunId]
-    );
+        // Delete components first (child of items)
+        await client.query(
+            `DELETE FROM payroll_run_item_components WHERE payroll_run_item_id IN (
+                SELECT id FROM payroll_run_items WHERE payroll_run_id = $1
+            )`,
+            [payrunId]
+        );
 
-    // Delete the payrun itself
-    await db.query(
-        `DELETE FROM payroll_runs WHERE id = $1`,
-        [payrunId]
-    );
+        // Delete items
+        await client.query(
+            `DELETE FROM payroll_run_items WHERE payroll_run_id = $1`,
+            [payrunId]
+        );
+
+        // Delete the payrun itself
+        await client.query(
+            `DELETE FROM payroll_runs WHERE tenant_id = $1 AND id = $2`,
+            [tenantId, payrunId]
+        );
+
+        await client.query('COMMIT');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
 
     return { deleted: true };
 };

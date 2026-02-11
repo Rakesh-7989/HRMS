@@ -8,11 +8,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, Activity, Users, Shield, ChevronRight,
   Server, Database, Zap, Globe, Settings, Plus, BarChart3,
-  Sparkles, Clock, Tag, UserX
+  Sparkles, Tag, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
+  AreaChart, Area, PieChart, Pie, Cell, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
@@ -132,6 +132,7 @@ export const SuperAdminDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'system'],
     queryFn: () => dashboardService.getSystemDashboard(),
+    refetchInterval: 5000, // Refresh every 5s for live resources
   });
 
   const metrics = (data as any)?.metrics || {};
@@ -147,29 +148,31 @@ export const SuperAdminDashboard: React.FC = () => {
 
   const tenantList = (data as any)?.recentTenants || (data as any)?.tenants || (data as any)?.topActiveTenants || [];
 
-  // Dynamic Infra Simulation
+  // Current Time State
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [infraStats, setInfraStats] = useState({
-    uptime: 99.98,
-    latency: 12,
-    queue: 0
-  });
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setInfraStats(prev => ({
-        uptime: Math.min(99.99, prev.uptime + (Math.random() * 0.002 - 0.001)),
-        latency: Math.max(8, Math.floor(prev.latency + (Math.random() * 4 - 2))),
-        queue: Math.max(0, Math.floor(Math.random() * 2))
-      }));
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
+  // Format uptime seconds to string
+  const formatUptime = (seconds: number) => {
+    if (!seconds) return '0s';
+    const d = Math.floor(seconds / (3600 * 24));
+    const h = Math.floor((seconds % (3600 * 24)) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m ${Math.floor(seconds % 60)}s`;
+  };
+
+  const systemStats = useMemo(() => ({
+    uptime: formatUptime((data as any)?.systemHealth?.uptime || 0),
+    latency: (data as any)?.systemHealth?.latency || 0,
+    memory: (data as any)?.systemHealth?.memoryUsage || 0,
+    status: (data as any)?.systemHealth?.status || 'healthy'
+  }), [data]);
 
   // Stable Chart data (reversed to show time progressing L to R)
   const growthChartData = useMemo(() => {
@@ -195,12 +198,32 @@ export const SuperAdminDashboard: React.FC = () => {
     ].filter(d => d.value > 0 || (d.name === 'Active' && total === 0)); // Show at least active if everything is 0
   }, [data]);
 
-  const resourceUsageData = [
-    { name: 'CPU', value: 35, color: '#6366f1' },
-    { name: 'Memory', value: 62, color: '#8b5cf6' },
-    { name: 'Storage', value: 48, color: '#ec4899' },
-    { name: 'Network', value: 25, color: '#10b981' },
-  ];
+  // Resource History for Line Chart
+  const [resourceHistory, setResourceHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!data?.systemHealth?.resources) return;
+
+    const res = data.systemHealth.resources;
+    const timestamp = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    setResourceHistory(prev => {
+      // Avoid duplicate timestamp points (React Strict Mode double-invoke)
+      if (prev.length > 0 && prev[prev.length - 1].time === timestamp) {
+        return prev;
+      }
+
+      const newPoint = {
+        time: timestamp,
+        cpu: res.cpu || 0,
+        memory: res.memory || 0,
+        storage: res.storage || 0,
+        network: res.network || 0,
+      };
+      const newHistory = [...prev, newPoint];
+      return newHistory.slice(-20); // Keep last 20 points
+    });
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -327,7 +350,7 @@ export const SuperAdminDashboard: React.FC = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Growth Chart */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -370,80 +393,103 @@ export const SuperAdminDashboard: React.FC = () => {
           </motion.div>
 
           {/* Tenant Distribution & Resource Usage */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.55 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
-            >
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Tenant Status</h4>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={tenantStatusData}
-                      innerRadius={40}
-                      outerRadius={60}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {tenantStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex justify-center gap-4 mt-2">
-                {tenantStatusData.map(item => (
-                  <div key={item.name} className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-gray-500">{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.55 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+          >
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Tenant Status</h4>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={tenantStatusData}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {tenantStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-4 mt-2">
+              {tenantStatusData.map(item => (
+                <div key={item.name} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-xs text-gray-500">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
-            >
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">System Resources</h4>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={resourceUsageData}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {resourceUsageData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+          >
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">System Resources History</h4>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={resourceHistory}>
+                  <defs>
+                    <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorMemory" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorStorage" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorNetwork" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
+                    iconType="circle"
+                    wrapperStyle={{ top: -10, right: 0, fontSize: '12px' }}
+                  />
+                  <Area type="monotone" dataKey="cpu" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" name="CPU %" />
+                  <Area type="monotone" dataKey="memory" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMemory)" name="Memory %" />
+                  <Area type="monotone" dataKey="storage" stroke="#ec4899" strokeWidth={2} fillOpacity={1} fill="url(#colorStorage)" name="Storage %" />
+                  <Area type="monotone" dataKey="network" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNetwork)" name="Network %" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
         </div>
 
         {/* System Status Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SystemStatusCard
-            title="API Server"
+            title="API Uptime"
             status="healthy"
-            value={`${infraStats.uptime.toFixed(2)}% Uptime`}
+            value={systemStats.uptime}
             icon={Server}
             gradient="linear-gradient(135deg, #10b981, #059669)"
             delay={0.6}
           />
           <SystemStatusCard
-            title="Database"
-            status="healthy"
-            value={`${infraStats.latency}ms Latency`}
+            title="Database Latency"
+            status={systemStats.latency > 100 ? 'warning' : 'healthy'}
+            value={`${systemStats.latency}ms`}
             icon={Database}
             gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
             delay={0.7}
@@ -457,10 +503,10 @@ export const SuperAdminDashboard: React.FC = () => {
             delay={0.8}
           />
           <SystemStatusCard
-            title="Queue Status"
+            title="Memory Usage"
             status="healthy"
-            value={`${infraStats.queue} Pending`}
-            icon={Clock}
+            value={`${systemStats.memory} MB Used`}
+            icon={Activity}
             gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
             delay={0.9}
           />
@@ -547,6 +593,6 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
         </motion.div>
       </motion.div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

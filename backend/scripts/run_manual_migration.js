@@ -12,8 +12,8 @@ async function runMigration() {
         console.log('Connecting to DB...');
         await client.connect();
 
-        console.log('Reading migration file: 20260203_chat_advanced_schema.sql');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260203_add_project_id_to_timesheet_entries.sql');
+        console.log('Reading migration file: 20260211_add_two_factor_auth.sql');
+        const migrationPath = path.join(__dirname, '../src/database/migrations/20260211_add_two_factor_auth.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

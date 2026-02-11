@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { TeamAttendanceContent } from '@/components/attendance/TeamAttendanceContent';
 import { WFHApprovalsContent } from '@/components/wfh/WFHApprovalsContent';
 import { MyWFHRequestsContent } from '@/components/wfh/MyWFHRequestsContent';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,13 +30,6 @@ export const UnifiedApprovalsContent: React.FC = () => {
                 {canSeeApprovals && (
                     <>
                         <Button
-                            variant={activeSubTab === 'team' ? 'primary' : 'outline'}
-                            onClick={() => setActiveSubTab('team')}
-                            className="rounded-full"
-                        >
-                            Team Attendance
-                        </Button>
-                        <Button
                             variant={activeSubTab === 'wfh-approvals' ? 'primary' : 'outline'}
                             onClick={() => setActiveSubTab('wfh-approvals')}
                             className="rounded-full"
@@ -56,7 +48,6 @@ export const UnifiedApprovalsContent: React.FC = () => {
             </div>
 
             <div className="min-h-[400px]">
-                {activeSubTab === 'team' && canSeeApprovals && <TeamAttendanceContent />}
                 {activeSubTab === 'wfh-approvals' && canSeeApprovals && <WFHApprovalsContent />}
                 {activeSubTab === 'my-wfh' && <MyWFHRequestsContent />}
 

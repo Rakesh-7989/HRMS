@@ -14,7 +14,7 @@ const getPayslipData = async (tenantId, payrollRunId, employeeId) => {
         `SELECT 
         pri.*,
         pr.period_month, pr.period_year, pr.period_start, pr.period_end, pr.pay_date, pr.run_number,
-        e.first_name, e.last_name, e.employee_id as emp_code, u.email,
+        e.first_name, e.last_name, e.employee_id as emp_code, e.gender, e.join_date, u.email,
         e.bank_name, e.account_number as bank_account_number, e.ifsc_code as bank_ifsc, e.tax_id,
         e.uan, e.pf_account, e.esi_number,
         esa.annual_ctc as ctc,
@@ -53,7 +53,7 @@ const getPayslipById = async (tenantId, payslipId) => {
         `SELECT 
         pri.*,
         pr.period_month, pr.period_year, pr.period_start, pr.period_end, pr.pay_date, pr.run_number,
-        e.first_name, e.last_name, e.employee_id as emp_code, u.email,
+        e.first_name, e.last_name, e.employee_id as emp_code, e.gender, e.join_date, u.email,
         e.bank_name, e.account_number as bank_account_number, e.ifsc_code as bank_ifsc, e.tax_id,
         e.uan, e.pf_account, e.esi_number,
         esa.annual_ctc as ctc,
@@ -295,8 +295,8 @@ const generatePDFFromData = async (data) => {
         let currentY = boxTop + 20;
         drawInfoRow('Associate Id', data.emp_code, 'Location', data.city || 'N/A', currentY); currentY += infoRowHeight;
         drawInfoRow('Designation', data.designation_name, 'PAN', data.tax_id || '-', currentY); currentY += infoRowHeight;
-        drawInfoRow('Gender', 'Male', 'Bank A/C', maskAccountNumber(data.bank_account_number), currentY); currentY += infoRowHeight;
-        drawInfoRow('Date Of Joining', 'N/A', 'ESI Number', data.esi_number || '-', currentY); currentY += infoRowHeight;
+        drawInfoRow('Gender', data.gender || 'N/A', 'Bank A/C', maskAccountNumber(data.bank_account_number), currentY); currentY += infoRowHeight;
+        drawInfoRow('Date Of Joining', data.join_date ? new Date(data.join_date).toLocaleDateString('en-IN') : 'N/A', 'ESI Number', data.esi_number || '-', currentY); currentY += infoRowHeight;
         drawInfoRow('PF A/C', data.pf_account || '-', 'Status', 'Salary Credited', currentY); currentY += infoRowHeight;
         drawInfoRow('UAN', data.uan || '-', 'Calendar Days', calendarDays.toString(), currentY); currentY += infoRowHeight;
         drawInfoRow('Paid Days', paidDays.toString(), 'LOP Days', data.lop_days || '0', currentY);

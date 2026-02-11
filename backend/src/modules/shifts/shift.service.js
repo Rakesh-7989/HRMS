@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const logger = require("../../config/logger");
+const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
 
 const getQuery = (db) => {
     if (db && typeof db.query === "function") return db.query;
@@ -11,6 +12,21 @@ exports.createShift = async (db, tenantId, data, creatorId) => {
     const query = getQuery(db);
     const { name, code, description, start_time, end_time, break_start_time, break_end_time, grace_period_minutes } = data;
 
+    if (!code) throw new BadRequestError("Shift Code is required.");
+
+    // Validate Break Times (Mandatory)
+    if (!break_start_time) throw new BadRequestError("Break Start Time is required.");
+    if (!break_end_time) throw new BadRequestError("Break End Time is required.");
+
+    if (break_start_time >= break_end_time) {
+        // Basic check, might need more robust time comparison if crossing midnight
+        // For now, assuming breaks are within the same day or handled by frontend validation too
+        // throw new BadRequestError("Break Start Time must be before Break End Time."); 
+    }
+
+    if (grace_period_minutes !== undefined && grace_period_minutes < 0) {
+        throw new BadRequestError("Grace Period cannot be negative.");
+    }
     // 1. Validate Uniqueness (Name, Code, Time Slot)
     const existing = await query(
         `SELECT name, code, start_time::text, end_time::text FROM shifts 
@@ -21,8 +37,8 @@ exports.createShift = async (db, tenantId, data, creatorId) => {
 
     if (existing.rowCount > 0) {
         for (const found of existing.rows) {
-            if (found.name === name) throw new Error(`Shift with name '${name}' already exists.`);
-            if (found.code === code) throw new Error(`Shift with code '${code}' already exists.`);
+            if (found.name === name) throw new BadRequestError(`Shift with name '${name}' already exists.`);
+            if (found.code === code) throw new BadRequestError(`Shift with code '${code}' already exists.`);
 
             // Normalize times to HH:mm for comparison (handles 09:30 vs 09:30:00)
             const dbStart = found.start_time.substring(0, 5);
@@ -31,7 +47,7 @@ exports.createShift = async (db, tenantId, data, creatorId) => {
             const inputEnd = end_time.substring(0, 5);
 
             if (dbStart === inputStart && dbEnd === inputEnd) {
-                throw new Error(`A shift with the same timing (${formatTime(start_time)} - ${formatTime(end_time)}) already exists.`);
+                throw new BadRequestError(`A shift with the same timing (${formatTime(start_time)} - ${formatTime(end_time)}) already exists.`);
             }
         }
     }
@@ -81,6 +97,9 @@ exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
     const { name, code, description, start_time, end_time, break_start_time, break_end_time, grace_period_minutes, is_active } = data;
 
     // 1. Validate Uniqueness (Name, Code, Time Slot)
+    if (grace_period_minutes !== undefined && grace_period_minutes < 0) {
+        throw new BadRequestError("Grace Period cannot be negative.");
+    }
     if (name || code || (start_time && end_time)) {
         // Build dynamic check? For simplicity, we fetch all potentially conflicting shifts
         // Note: Logic here is tricky if only one field is updated. 
@@ -89,7 +108,7 @@ exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
 
         // Get current shift state to fill in blanks for strict time check
         const currentShiftRes = await query(`SELECT * FROM shifts WHERE id=$1 AND tenant_id=$2`, [shiftId, tenantId]);
-        if (currentShiftRes.rowCount === 0) throw new Error("Shift not found.");
+        if (currentShiftRes.rowCount === 0) throw new NotFoundError("Shift not found.");
         const currentShift = currentShiftRes.rows[0];
 
         const checkName = name || currentShift.name;
@@ -107,8 +126,8 @@ exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
 
         if (existing.rowCount > 0) {
             for (const found of existing.rows) {
-                if (found.name === checkName) throw new Error(`Shift with name '${checkName}' already exists.`);
-                if (found.code === checkCode) throw new Error(`Shift with code '${checkCode}' already exists.`);
+                if (found.name === checkName) throw new BadRequestError(`Shift with name '${checkName}' already exists.`);
+                if (found.code === checkCode) throw new BadRequestError(`Shift with code '${checkCode}' already exists.`);
 
                 const dbStart = found.start_time.substring(0, 5);
                 const inputStart = checkStart.substring(0, 5);
@@ -116,7 +135,7 @@ exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
                 const inputEnd = checkEnd.substring(0, 5);
 
                 if (dbStart === inputStart && dbEnd === inputEnd) {
-                    throw new Error(`A shift with the same timing (${inputStart} - ${inputEnd}) already exists.`);
+                    throw new BadRequestError(`A shift with the same timing (${inputStart} - ${inputEnd}) already exists.`);
                 }
             }
         }

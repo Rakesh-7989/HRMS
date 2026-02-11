@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +12,7 @@ import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
-import { toast } from 'react-hot-toast';
+
 import {
     Dialog,
     DialogContent,
@@ -166,11 +167,15 @@ export const DailyAttendanceContent: React.FC = () => {
 
             let message = serverMessage || 'Failed to clock in. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                message = 'Your employee profile is not complete. Please contact HR to set up your employee details.';
+                toast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
             } else if (serverMessage.includes('on approved leave')) {
-                message = 'You are on approved leave today and cannot clock in.';
+                toast.error('You are on approved leave today and cannot clock in.');
             } else if (serverMessage.includes('Already clocked in')) {
-                message = 'You have already clocked in today.';
+                toast.error('You have already clocked in today.');
+            } else if (serverMessage.includes('Location validation failed')) {
+                toast.error(serverMessage);
+            } else {
+                toast.error(serverMessage || 'Failed to clock in. Please try again.');
             }
 
             showAlert({
@@ -195,11 +200,15 @@ export const DailyAttendanceContent: React.FC = () => {
 
             let message = serverMessage || 'Failed to clock out. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                message = 'Your employee profile is not complete. Please contact HR to set up your employee details.';
+                toast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
             } else if (serverMessage.includes('No check-in found')) {
-                message = 'No check-in record found for today. Please clock in first.';
+                toast.error('No check-in record found for today. Please clock in first.');
             } else if (serverMessage.includes('Already clocked out')) {
-                message = 'You have already clocked out today.';
+                toast.error('You have already clocked out today.');
+            } else if (serverMessage.includes('Location validation failed')) {
+                toast.error(serverMessage);
+            } else {
+                toast.error(serverMessage || 'Failed to clock out. Please try again.');
             }
 
             showAlert({
@@ -464,7 +473,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4">
                                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                         }`}>
-                                                        {att.is_late ? `Late ${att.late_by ? '(' + att.late_by + ')' : ''}` : 'On Time'}
+                                                        {att.is_late ? `Late ${att.late_by ? `(${att.late_by})` : ''}` : 'On Time'}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -569,16 +578,23 @@ export const DailyAttendanceContent: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <span
-                                                        className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
-                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                            : att.status === 'REJECTED'
-                                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                            }`}
-                                                    >
-                                                        {att.status.replace('_', ' ')}
-                                                    </span>
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span
+                                                            className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
+                                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                                : att.status === 'REJECTED'
+                                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                                }`}
+                                                        >
+                                                            {att.status.replace('_', ' ')}
+                                                        </span>
+                                                        {att.is_late && (
+                                                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                                Late {att.late_by ? `(${att.late_by})` : ''}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

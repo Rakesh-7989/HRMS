@@ -126,11 +126,23 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     const shift = empShiftRes.rows[0];
     shiftId = shift.id;
 
-    // Calculate Late By
+    // Calculate Late By and Validate Early Clock-in
     if (shift.start_time) {
       const todayStr = new Date().toISOString().split('T')[0];
       const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
       const actualIn = new Date(`${todayStr}T${now}`);
+
+      // EARLY CLOCK-IN VALIDATION
+      // Allow 15 minutes buffer before shift starts
+      const EARLY_BUFFER_MINUTES = 15;
+      const earlyLimit = new Date(shiftStart.getTime() - EARLY_BUFFER_MINUTES * 60000);
+
+      if (actualIn < earlyLimit) {
+        // Format time for display (simple slice if HH:mm:ss)
+        const displayTime = shift.start_time.substring(0, 5);
+        throw new Error(`Please clock in at your shift time (${displayTime}). You can clock in ${EARLY_BUFFER_MINUTES} mins early.`);
+      }
+
       // Grace period default 0 if null
       const graceLimit = new Date(shiftStart.getTime() + (shift.grace_period_minutes || 0) * 60000);
 
@@ -1253,7 +1265,10 @@ e.first_name,
       a.date,
       a.check_in_time,
       a.check_out_time,
+      a.check_in_device,
+      a.check_out_device,
       a.is_late,
+      a.late_by,
       a.status,
       CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
 ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
@@ -1338,7 +1353,10 @@ e.first_name,
     a.date,
     a.check_in_time,
     a.check_out_time,
+    a.check_in_device,
+    a.check_out_device,
     a.is_late,
+    a.late_by,
     a.status,
     CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
 ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
@@ -1403,7 +1421,10 @@ SELECT
 a.date,
   a.check_in_time,
   a.check_out_time,
+  a.check_in_device,
+  a.check_out_device,
   a.is_late,
+  a.late_by,
   a.status,
   CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
 ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
