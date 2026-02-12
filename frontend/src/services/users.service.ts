@@ -37,6 +37,8 @@ export interface User {
   uan?: string;
   pf_account?: string;
   esi_number?: string;
+  aadhar_number?: string;
+  branch_name?: string;
   // Emergency Contact
   emergency_name?: string;
   emergency_phone?: string;
@@ -93,6 +95,7 @@ export interface CreateUserData {
   uan?: string;
   pf_account?: string;
   esi_number?: string;
+  aadhar_number?: string;
   ctc?: number;
 }
 
@@ -129,6 +132,7 @@ export interface UpdateEmployeeData {
   uan?: string;
   pf_account?: string;
   esi_number?: string;
+  aadhar_number?: string;
   ctc?: number;
   profile_photo_url?: string;
 }

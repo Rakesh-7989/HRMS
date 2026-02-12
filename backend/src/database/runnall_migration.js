@@ -7,7 +7,7 @@ const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 const dbConfig = {
     host: "localhost",
     user: "hrms_user",
-    password: "root",
+    password: "postgres",
     database: "hrms_saas_db",
     port: 5432
 };

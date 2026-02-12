@@ -408,6 +408,18 @@ exports.setEmployeeIdPrefix = async (tenantId, prefix) => {
     throw new Error("Employee ID prefix is already configured and cannot be changed");
   }
 
+  // Check if prefix is already used by another tenant
+  // Note: We need to check inside result -> settings -> employee_id_prefix
+  // Since settings is JSONB, we can query it directly
+  const duplicateCheck = await pool.query(
+    `SELECT id FROM tenants WHERE settings->>'employee_id_prefix' = $1 LIMIT 1`,
+    [prefix]
+  );
+
+  if (duplicateCheck.rowCount > 0) {
+    throw new Error(`Prefix '${prefix}' is already in use by another organization. Please choose a different one.`);
+  }
+
   // Set the prefix and initialize counter to 0
   const newSettings = {
     ...settings,

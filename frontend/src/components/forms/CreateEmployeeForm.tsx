@@ -84,12 +84,14 @@ const createValidationSchema = Yup.object({
     })
     .required('Account number is required'),
   ifsc_code: Yup.string()
-    .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC Code format')
     .required('IFSC code is required'),
 
   tax_id: Yup.string()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
     .required('Tax ID is required'),
+  aadhar_number: Yup.string()
+    .matches(/^[0-9]{12}$/, 'Aadhaar number must be exactly 12 digits')
+    .required('Aadhaar number is required'),
   annual_salary: Yup.number()
     .positive('Salary must be positive')
     .nullable(),
@@ -163,7 +165,6 @@ const editValidationSchema = Yup.object({
     })
     .required('Account number is required'),
   ifsc_code: Yup.string()
-    .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC Code format')
     .required('IFSC code is required'),
 
   tax_id: Yup.string()
@@ -323,6 +324,7 @@ export const CreateEmployeeForm = ({
       shift_id: editEmployee?.shift_id || '',
       address: editEmployee?.address || '',
       bank_name: editEmployee?.bank_name || '',
+      branch_name: editEmployee?.branch_name || '',
       account_name: editEmployee?.account_name || '',
       account_number: editEmployee?.account_number || '',
       ifsc_code: editEmployee?.ifsc_code || '',
@@ -330,6 +332,7 @@ export const CreateEmployeeForm = ({
       uan: editEmployee?.uan || '',
       pf_account: editEmployee?.pf_account || '',
       esi_number: editEmployee?.esi_number || '',
+      aadhar_number: editEmployee?.aadhar_number || '',
       emergency_name: editEmployee?.emergency_name || '',
       emergency_phone: editEmployee?.emergency_phone || '',
       emergency_relation: editEmployee?.emergency_relation || '',
@@ -400,6 +403,33 @@ export const CreateEmployeeForm = ({
     if (error) setError(null);
   }, [formik.values]);
 
+  // Auto-fetch Bank Details from IFSC
+  useEffect(() => {
+    const fetchBankDetails = async () => {
+      const ifsc = formik.values.ifsc_code;
+      if (ifsc && ifsc.length === 11) {
+        try {
+          const response = await fetch(`https://ifsc.razorpay.com/${ifsc}`);
+          if (response.ok) {
+            const data = await response.json();
+            formik.setFieldValue('bank_name', data.BANK);
+            formik.setFieldValue('branch_name', data.BRANCH);
+            toast.success(`Bank details fetched: ${data.BANK}`);
+          }
+        } catch (err) {
+          // Silent fail or optional toast
+          console.error("Failed to fetch bank details", err);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      fetchBankDetails();
+    }, 500); // Debounce slightly to avoid rapid calls while typing last char
+
+    return () => clearTimeout(timeoutId);
+  }, [formik.values.ifsc_code]);
+
   // Helper to check if form has validation errors
   const hasValidationErrors = Object.keys(formik.errors).length > 0 && formik.submitCount > 0;
 
@@ -426,8 +456,10 @@ export const CreateEmployeeForm = ({
 
     if (name === 'first_name' || name === 'last_name' || name === 'emergency_name') {
       target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
-    } else if (name === 'phone' || name === 'emergency_phone') {
-      target.value = target.value.replace(/[^0-9+]/g, '');
+    } else if (name === 'phone' || name === 'emergency_phone' || name === 'account_number' || name === 'uan' || name === 'aadhar_number') {
+      target.value = target.value.replace(/[^0-9]/g, '');
+    } else if (name === 'ifsc_code' || name === 'tax_id') {
+      target.value = target.value.toUpperCase();
     }
   };
 
@@ -598,7 +630,7 @@ export const CreateEmployeeForm = ({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               First Name *
@@ -636,7 +668,7 @@ export const CreateEmployeeForm = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Phone *
@@ -665,10 +697,13 @@ export const CreateEmployeeForm = ({
               placeholder="e.g. 1995-05-20"
               maxDate={maxDob}
             />
+            {formik.touched.date_of_birth && formik.errors.date_of_birth && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.date_of_birth as string}</p>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Gender *
@@ -754,7 +789,7 @@ export const CreateEmployeeForm = ({
             <Briefcase className="w-4 h-4 text-primary" /> Employment Details
           </h3>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {!isEditMode && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
@@ -836,7 +871,7 @@ export const CreateEmployeeForm = ({
             {isEditMode && <div></div>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Department *
@@ -880,7 +915,7 @@ export const CreateEmployeeForm = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Reports To (Manager)
@@ -915,7 +950,7 @@ export const CreateEmployeeForm = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Employment Type
@@ -978,7 +1013,66 @@ export const CreateEmployeeForm = ({
             <Building2 className="w-4 h-4 text-primary" /> Financial Details
           </h3>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 1: Aadhaar Number | PAN */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                Aadhaar Number *
+              </label>
+              <input
+                type="text"
+                name="aadhar_number"
+                value={formik.values.aadhar_number}
+                onChange={formik.handleChange}
+                onInput={handleInput}
+                maxLength={12}
+                placeholder="123456789012"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              />
+              {formik.touched.aadhar_number && formik.errors.aadhar_number && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.aadhar_number}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                Tax ID (PAN) *
+              </label>
+              <input
+                type="text"
+                name="tax_id"
+                value={formik.values.tax_id}
+                onChange={formik.handleChange}
+                onInput={handleInput}
+                maxLength={10}
+                placeholder="ABCDE1234F"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm uppercase"
+              />
+              {formik.touched.tax_id && formik.errors.tax_id && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.tax_id}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: IFSC Code | Bank Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                IFSC Code *
+              </label>
+              <input
+                type="text"
+                name="ifsc_code"
+                value={formik.values.ifsc_code}
+                onChange={formik.handleChange}
+                onInput={handleInput}
+                maxLength={11}
+                placeholder="HDFC0001234"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm uppercase"
+              />
+              {formik.touched.ifsc_code && formik.errors.ifsc_code && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.ifsc_code}</p>
+              )}
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Bank Name *
@@ -988,16 +1082,22 @@ export const CreateEmployeeForm = ({
                 name="bank_name"
                 value={formik.values.bank_name}
                 onChange={formik.handleChange}
-                placeholder="HDFC Bank"
+                placeholder="e.g. State Bank of India"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
               />
+              {formik.values.branch_name && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Branch: <span className="font-medium text-gray-700 dark:text-gray-300">{formik.values.branch_name}</span>
+                </p>
+              )}
               {formik.touched.bank_name && formik.errors.bank_name && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.bank_name}</p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 3: Account Name | Account Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Account Name *
@@ -1014,9 +1114,6 @@ export const CreateEmployeeForm = ({
                 <p className="mt-1 text-sm text-red-600">{formik.errors.account_name}</p>
               )}
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Account Number *
@@ -1026,6 +1123,7 @@ export const CreateEmployeeForm = ({
                 name="account_number"
                 value={formik.values.account_number}
                 onChange={formik.handleChange}
+                onInput={handleInput}
                 placeholder="1234567890123456"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
               />
@@ -1033,41 +1131,10 @@ export const CreateEmployeeForm = ({
                 <p className="mt-1 text-sm text-red-600">{formik.errors.account_number}</p>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                IFSC Code *
-              </label>
-              <input
-                type="text"
-                name="ifsc_code"
-                value={formik.values.ifsc_code}
-                onChange={formik.handleChange}
-                placeholder="HDFC0001234"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
-              />
-              {formik.touched.ifsc_code && formik.errors.ifsc_code && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.ifsc_code}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Tax ID (PAN) *
-              </label>
-              <input
-                type="text"
-                name="tax_id"
-                value={formik.values.tax_id}
-                onChange={formik.handleChange}
-                placeholder="ABCDE1234F"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
-              />
-              {formik.touched.tax_id && formik.errors.tax_id && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.tax_id}</p>
-              )}
-            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* Row 4: UAN | PF A/C Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 UAN
@@ -1077,9 +1144,13 @@ export const CreateEmployeeForm = ({
                 name="uan"
                 value={formik.values.uan}
                 onChange={formik.handleChange}
+                onInput={handleInput}
                 placeholder="12-digit UAN"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
               />
+              {formik.touched.uan && formik.errors.uan && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.uan}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
@@ -1094,6 +1165,10 @@ export const CreateEmployeeForm = ({
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
               />
             </div>
+          </div>
+
+          {/* Row 5: ESI Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 ESI Number
@@ -1109,7 +1184,7 @@ export const CreateEmployeeForm = ({
             </div>
           </div>
 
-          <div>
+          <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Annual CTC (INR) *
             </label>
@@ -1142,7 +1217,7 @@ export const CreateEmployeeForm = ({
             <Phone className="w-4 h-4 text-primary" /> Emergency Contact
           </h3>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Contact Name *
@@ -1218,7 +1293,7 @@ export const CreateEmployeeForm = ({
             }, 250);
           }}
           disabled={currentStep === 1}
-          className={`${currentStep === 1 ? 'invisible' : ''} h-11 px-6 text-base border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
+          className={`${currentStep === 1 ? 'invisible' : ''} h-11 px-6 text-base border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white transition-colors`}
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>

@@ -105,7 +105,7 @@ exports.createUser = async (db, data, actor) => {
          emergency_name, emergency_phone, emergency_relation,
          employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift, shift_id,
          bank_name, account_name, account_number, ifsc_code, tax_id, address,
-         uan, pf_account, esi_number, created_by)
+         uan, pf_account, esi_number, created_by, aadhar_number)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$30,
          $20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
       RETURNING id
@@ -140,7 +140,8 @@ exports.createUser = async (db, data, actor) => {
         data.pf_account || null,
         data.esi_number || null,
         actor.id,
-        data.shift_id || null // New parameter at index 30
+        data.shift_id || null, // New parameter at index 30
+        data.aadhar_number || null // New parameter at index 31
       ]
     );
 
@@ -410,7 +411,7 @@ exports.getUserById = async (db, id, tenantId) => {
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
             e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
-            e.uan, e.pf_account, e.esi_number, e.profile_photo_url,
+            e.uan, e.pf_account, e.esi_number, e.profile_photo_url, e.aadhar_number,
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
             esd.ctc
      FROM users u 
@@ -479,7 +480,8 @@ exports.updateEmployee = async (db, id, updates, actor) => {
 
     // Address
     "address",
-    "profile_photo_url"
+    "profile_photo_url",
+    "aadhar_number"
   ];
 
   const fields = [];
@@ -610,6 +612,7 @@ exports.getMyProfile = async (db, user) => {
       e.uan,
       e.pf_account,
       e.esi_number,
+      e.aadhar_number,
       e.reports_to,
       e.profile_photo_url,
       s.status as subscription_status,
