@@ -8,12 +8,18 @@ export interface EmployeeIdSettings {
     prefix: string | null;
     counter: number;
     nextId: string | null;
+    usePrefix: boolean;
     isConfigured: boolean;
 }
 
 export interface SetPrefixResponse {
     prefix: string;
     nextId: string;
+    message: string;
+}
+
+export interface ToggleModeResponse {
+    usePrefix: boolean;
     message: string;
 }
 
@@ -43,6 +49,18 @@ export const tenantService = {
             return response.data.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to set employee ID prefix');
+        }
+    },
+
+    /**
+     * Toggle employee ID mode (auto-prefix vs manual entry)
+     */
+    toggleEmployeeIdMode: async (usePrefix: boolean): Promise<ToggleModeResponse> => {
+        try {
+            const response = await api.put('/tenants/employee-id-mode', { usePrefix });
+            return response.data.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Failed to toggle employee ID mode');
         }
     },
 };

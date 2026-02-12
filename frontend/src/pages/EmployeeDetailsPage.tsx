@@ -391,6 +391,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 <InfoRow icon={Calendar} label="Join Date" value={employee.join_date ? format(new Date(employee.join_date), 'MMM dd, yyyy') : 'Not provided'} />
                                 <InfoRow icon={Briefcase} label="Employment Type" value={employee.employment_type || 'Full-time'} />
                                 <InfoRow icon={Clock} label="Shift" value={getShiftName(employee.shift_id, employee.shift)} />
+                                <InfoRow icon={MapPin} label="Job Location" value={employee.job_location || 'Not provided'} />
                             </div>
                         </Card>
 
@@ -428,6 +429,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 </h3>
                                 <div className="space-y-4">
                                     <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
+                                    <InfoRow icon={Building2} label="Branch Name" value={employee.branch_name || 'Not provided'} />
                                     <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
                                     <InfoRow icon={Wallet} label="Account Number" value={employee.account_number ? `****${employee.account_number.slice(-4)}` : 'Not provided'} />
                                     <InfoRow icon={Wallet} label="IFSC Code" value={employee.ifsc_code || 'Not provided'} />
@@ -439,6 +441,12 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 </h3>
                                 <div className="space-y-4">
                                     <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
+                                    <InfoRow icon={FileText} label="Aadhaar Number" value={employee.aadhar_number || 'Not provided'} />
+                                    <InfoRow icon={Wallet} label="Annual Salary (CTC)" value={
+                                        employee.annual_salary
+                                            ? `₹${Number(employee.annual_salary).toLocaleString('en-IN')}`
+                                            : (employee.ctc ? `₹${Number(employee.ctc).toLocaleString('en-IN')}` : 'Not provided')
+                                    } />
                                     <InfoRow icon={FileText} label="UAN" value={employee.uan || 'Not provided'} />
                                     <InfoRow icon={Wallet} label="PF A/C Number" value={employee.pf_account || 'Not provided'} />
                                     <InfoRow icon={FileText} label="ESI Number" value={employee.esi_number || 'Not provided'} />

@@ -487,11 +487,12 @@ exports.calculateCTCBreakdown = async (tenantId, structureId, annualCTC) => {
 // EMPLOYEE SALARY ASSIGNMENT
 // =====================================================
 
-exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId) => {
-    const client = await db.connect();
+exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId, existingClient = null) => {
+    const client = existingClient || await db.connect();
+    const isNewClient = !existingClient;
 
     try {
-        await client.query('BEGIN');
+        if (isNewClient) await client.query('BEGIN');
 
         // Mark previous assignments as not current
         await client.query(
@@ -525,7 +526,7 @@ exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId) => {
             );
         }
 
-        await client.query('COMMIT');
+        if (isNewClient) await client.query('COMMIT');
 
         return {
             ...assignment,
@@ -538,10 +539,10 @@ exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId) => {
             }
         };
     } catch (err) {
-        await client.query('ROLLBACK');
+        if (isNewClient) await client.query('ROLLBACK');
         throw err;
     } finally {
-        client.release();
+        if (isNewClient) client.release();
     }
 };
 

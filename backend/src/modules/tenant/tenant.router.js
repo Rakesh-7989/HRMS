@@ -15,5 +15,6 @@ router.post("/register", validate(tenantRegisterSchema), controller.registerTena
 // Employee ID Settings (requires authentication)
 router.get("/employee-id-settings", verifyJwt, controller.getEmployeeIdSettings);
 router.post("/employee-id-prefix", verifyJwt, controller.setEmployeeIdPrefix);
+router.put("/employee-id-mode", verifyJwt, controller.toggleEmployeeIdMode);
 
 module.exports = router;

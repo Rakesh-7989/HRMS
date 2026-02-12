@@ -67,6 +67,7 @@ const createValidationSchema = Yup.object({
   gender: Yup.string().required('Gender is required'),
   marital_status: Yup.string().required('Marital status is required'),
   address: Yup.string().required('Address is required'),
+  job_location: Yup.string().nullable(),
   bank_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters')
     .required('Bank name is required'),
@@ -302,6 +303,17 @@ export const CreateEmployeeForm = ({
     }
   };
 
+  const toggleModeMutation = useMutation({
+    mutationFn: (usePrefix: boolean) => tenantService.toggleEmployeeIdMode(usePrefix),
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -328,6 +340,7 @@ export const CreateEmployeeForm = ({
       account_name: editEmployee?.account_name || '',
       account_number: editEmployee?.account_number || '',
       ifsc_code: editEmployee?.ifsc_code || '',
+      job_location: editEmployee?.job_location || '',
       tax_id: editEmployee?.tax_id || '',
       uan: editEmployee?.uan || '',
       pf_account: editEmployee?.pf_account || '',
@@ -809,16 +822,61 @@ export const CreateEmployeeForm = ({
             )}
 
             <div>
-              {/* Employee ID Logic: Check configuration */
-                !isEditMode && idSettings && !idSettings.isConfigured ? (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      {user?.role === 'ADMIN' ? 'Set Employee ID Prefix (Required)' : 'Configuration Required'}
+              {isEditMode ? (
+                /* Edit mode: simple editable employee ID field */
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                    Employee ID *
+                  </label>
+                  <input
+                    type="text"
+                    name="employee_id"
+                    value={formik.values.employee_id}
+                    onChange={formik.handleChange}
+                    placeholder="Employee ID"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                  />
+                  {formik.touched.employee_id && formik.errors.employee_id && (
+                    <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
+                  )}
+                </div>
+              ) : (
+                /* Create mode: toggle between auto-prefix and manual */
+                <div>
+                  {/* Label row with inline toggle */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                      Employee ID {!(idSettings?.usePrefix ?? true) && <span className="text-red-500">*</span>}
+                      {(idSettings?.usePrefix ?? true) && idSettings?.isConfigured && (
+                        <span className="text-xs font-normal text-gray-500 ml-1">(Auto)</span>
+                      )}
                     </label>
+                    {['ADMIN', 'HR', 'SUPER_ADMIN'].includes(user?.role || '') && (
+                      <button
+                        type="button"
+                        role="switch"
+                        title={`${(idSettings?.usePrefix ?? true) ? 'Switch to manual entry' : 'Switch to auto-generate'}`}
+                        aria-checked={idSettings?.usePrefix ?? true}
+                        onClick={() => toggleModeMutation.mutate(!(idSettings?.usePrefix ?? true))}
+                        disabled={toggleModeMutation.isPending}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0 ${(idSettings?.usePrefix ?? true)
+                          ? 'bg-primary'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${(idSettings?.usePrefix ?? true) ? 'translate-x-[18px]' : 'translate-x-[3px]'
+                            }`}
+                        />
+                      </button>
+                    )}
+                  </div>
 
-                    {user?.role === 'ADMIN' ? (
-                      <>
+                  {/* Input area */}
+                  {(idSettings?.usePrefix ?? true) ? (
+                    idSettings && !idSettings.isConfigured ? (
+                      /* Prefix not yet set - show setup */
+                      ['ADMIN', 'HR', 'SUPER_ADMIN'].includes(user?.role || '') ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
@@ -832,40 +890,44 @@ export const CreateEmployeeForm = ({
                             type="button"
                             onClick={handleSetPrefix}
                             disabled={!prefixInput || prefixInput.length < 2}
-                            className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap"
+                            className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap text-xs px-3 py-2.5"
                           >
-                            Save Prefix
+                            Save
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          Define a 2-5 letter prefix (e.g., TCS, INF) for automated IDs.
-                        </p>
-                      </>
+                      ) : (
+                        <div className="p-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400">
+                          Prefix not configured. Contact admin.
+                        </div>
+                      )
                     ) : (
-                      <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
-                        Employee ID prefix is not configured. Only an Administrator can configure this setting. Please contact your admin.
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                      Employee ID {!isEditMode && <span className="text-xs font-normal text-gray-500">(Next Available)</span>} {isEditMode && '*'}
-                    </label>
-                    <input
-                      type="text"
-                      name="employee_id"
-                      value={!isEditMode ? (idSettings?.nextId || 'Auto-generated') : formik.values.employee_id}
-                      onChange={formik.handleChange}
-                      disabled={!isEditMode}
-                      placeholder={!isEditMode ? (idSettings?.nextId || 'Auto-generated') : 'Employee ID'}
-                      className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm ${!isEditMode ? 'opacity-70 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''}`}
-                    />
-                    {formik.touched.employee_id && formik.errors.employee_id && (
-                      <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
-                    )}
-                  </div>
-                )}
+                      /* Prefix configured - show auto-generated preview */
+                      <input
+                        type="text"
+                        value={idSettings?.nextId || 'Auto-generated'}
+                        disabled
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white opacity-70 cursor-not-allowed shadow-sm"
+                      />
+                    )
+                  ) : (
+                    /* Manual mode */
+                    <>
+                      <input
+                        type="text"
+                        name="employee_id"
+                        value={formik.values.employee_id}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder="Enter employee ID (e.g., EMP001)"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                      />
+                      {formik.touched.employee_id && formik.errors.employee_id && (
+                        <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {isEditMode && <div></div>}
@@ -991,6 +1053,26 @@ export const CreateEmployeeForm = ({
                   </option>
                 ))}
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                Work Location
+              </label>
+              <input
+                type="text"
+                name="job_location"
+                value={formik.values.job_location}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                placeholder="e.g. New York, Remote"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              />
+              {formik.touched.job_location && formik.errors.job_location && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.job_location}</p>
+              )}
             </div>
           </div>
         </div>

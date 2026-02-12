@@ -63,6 +63,14 @@ exports.createUser = async (db, data, actor) => {
       throw new Error(err.message || "Failed to generate employee ID. Please configure the employee ID prefix first.");
     }
 
+    // If null, manual mode is active - use employee_id from request
+    if (generatedEmployeeId === null) {
+      if (!data.employee_id || !data.employee_id.trim()) {
+        throw new Error("Employee ID is required when auto-prefix is disabled. Please enter an employee ID.");
+      }
+      generatedEmployeeId = data.employee_id.trim();
+    }
+
     // Validate department belongs to same tenant
     if (data.department_id) {
       const deptCheck = await client.query(
@@ -105,45 +113,49 @@ exports.createUser = async (db, data, actor) => {
          emergency_name, emergency_phone, emergency_relation,
          employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift, shift_id,
          bank_name, account_name, account_number, ifsc_code, tax_id, address,
-         uan, pf_account, esi_number, created_by, aadhar_number)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$30,
-         $20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
+         uan, pf_account, esi_number, created_by, aadhar_number, annual_salary, branch_name, job_location)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+         $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34)
       RETURNING id
       `,
       [
-        actor.tenantId,
-        userRes.rows[0].id,
-        data.first_name,
-        data.last_name || null,
-        data.phone || null,
-        data.date_of_birth || null,
-        data.gender || null,
-        data.marital_status || null,
-        data.nationality || null,
-        data.emergency_name || null,
-        data.emergency_phone || null,
-        data.emergency_relation || null,
-        generatedEmployeeId, // Use auto-generated ID
-        data.department_id || null,
-        data.designation_id || null,
-        data.reports_to || null,
-        data.join_date || null,
-        data.employment_type || null,
-        data.shift || null, // Keep legacy string if provided, or maybe we should fetch name? For now, keep as is.
-        data.bank_name || null,
-        data.account_name || null,
-        data.account_number || null,
-        data.ifsc_code || null,
-        data.tax_id || null,
-        data.address || null,
-        data.uan || null,
-        data.pf_account || null,
-        data.esi_number || null,
-        actor.id,
-        data.shift_id || null, // New parameter at index 30
-        data.aadhar_number || null // New parameter at index 31
+        actor.tenantId,           // $1
+        userRes.rows[0].id,       // $2
+        data.first_name,          // $3
+        data.last_name || null,   // $4
+        data.phone || null,       // $5
+        data.date_of_birth || null, // $6
+        data.gender || null,      // $7
+        data.marital_status || null, // $8
+        data.nationality || null, // $9
+        data.emergency_name || null, // $10
+        data.emergency_phone || null, // $11
+        data.emergency_relation || null, // $12
+        generatedEmployeeId,      // $13
+        data.department_id || null, // $14
+        data.designation_id || null, // $15
+        data.reports_to || null,  // $16
+        data.join_date || null,   // $17
+        data.employment_type || null, // $18
+        data.shift || null,       // $19
+        data.shift_id || null,    // $20
+        data.bank_name || null,   // $21
+        data.account_name || null, // $22
+        data.account_number || null, // $23
+        data.ifsc_code || null,   // $24
+        data.tax_id || null,      // $25
+        data.address || null,     // $26
+        data.uan || null,         // $27
+        data.pf_account || null,  // $28
+        data.esi_number || null,  // $29
+        actor.id,                 // $30
+        data.aadhar_number || null, // $31
+        data.ctc || 0,            // $32 (annual_salary)
+        data.branch_name || null, // $33
+        data.job_location || null // $34
       ]
     );
+
 
     // Create initial salary details if CTC is provided
     if (data.ctc) {
@@ -188,7 +200,8 @@ exports.createUser = async (db, data, actor) => {
               effective_from: data.join_date || new Date().toISOString().split('T')[0],
               revision_reason: 'Initial assignment (Onboarding)'
             },
-            actor.id
+            actor.id,
+            client
           );
         }
       } catch (err) {
@@ -411,7 +424,7 @@ exports.getUserById = async (db, id, tenantId) => {
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
             e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
-            e.uan, e.pf_account, e.esi_number, e.profile_photo_url, e.aadhar_number,
+            e.uan, e.pf_account, e.esi_number, e.profile_photo_url, e.aadhar_number, e.branch_name, e.annual_salary, e.job_location,
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
             esd.ctc
      FROM users u 

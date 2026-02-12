@@ -31,6 +31,8 @@ exports.createUserSchema = z.object({
     join_date: dateOrNull,
     employment_type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]).optional().or(z.literal("").transform(() => null)),
     shift: stringOrNull,
+    shift_id: uuidOrNull,
+    job_location: stringOrNull,
 
     // Finance
     bank_name: stringOrNull,
@@ -41,9 +43,11 @@ exports.createUserSchema = z.object({
     uan: stringOrNull,
     pf_account: stringOrNull,
     esi_number: stringOrNull,
+    aadhar_number: stringOrNull,
 
     // Address
     address: stringOrNull,
+    branch_name: stringOrNull,
     ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0))
   })
 });

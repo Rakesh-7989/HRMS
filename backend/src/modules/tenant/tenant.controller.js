@@ -127,11 +127,11 @@ exports.setEmployeeIdPrefix = async (req, res) => {
       });
     }
 
-    // Only ADMIN can set the prefix
-    if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
+    // ADMIN and HR can set the prefix
+    if (!["ADMIN",  "SUPER_ADMIN"].includes(req.user.role)) {
       return res.status(403).json({
         status: "error",
-        message: "Only Admin can configure employee ID prefix"
+        message: "Only Admin  can configure employee ID prefix"
       });
     }
 
@@ -145,6 +145,50 @@ exports.setEmployeeIdPrefix = async (req, res) => {
     res.status(400).json({
       status: "error",
       message: err.message || "Failed to set employee ID prefix"
+    });
+  }
+};
+
+/**
+ * Toggle employee ID mode (auto-prefix vs manual)
+ */
+exports.toggleEmployeeIdMode = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { usePrefix } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        status: "error",
+        message: "Tenant ID is required"
+      });
+    }
+
+    // Only ADMIN and HR can toggle
+    if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Only Admin or HR can configure employee ID settings"
+      });
+    }
+
+    if (typeof usePrefix !== "boolean") {
+      return res.status(400).json({
+        status: "error",
+        message: "usePrefix must be a boolean value"
+      });
+    }
+
+    const result = await tenantService.toggleEmployeeIdMode(tenantId, usePrefix);
+
+    res.json({
+      status: "success",
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "error",
+      message: err.message || "Failed to toggle employee ID mode"
     });
   }
 };

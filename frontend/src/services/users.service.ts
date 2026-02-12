@@ -27,6 +27,7 @@ export interface User {
   employment_type?: string;
   shift?: string;
   shift_id?: string;
+  job_location?: string;
   address?: string;
   // Financial
   bank_name?: string;
@@ -48,6 +49,7 @@ export interface User {
   termination_reason?: string;
   is_terminated?: boolean;
   ctc?: number;
+  annual_salary?: number;
   // Metadata
   created_at?: string;
   updated_at?: string;

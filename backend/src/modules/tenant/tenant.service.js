@@ -368,6 +368,8 @@ exports.getEmployeeIdSettings = async (tenantId) => {
   const settings = result.rows[0].settings || {};
   const prefix = settings.employee_id_prefix || null;
   const counter = settings.employee_id_counter || 0;
+  // Default to true for backward compatibility
+  const usePrefix = settings.use_employee_id_prefix !== false;
 
   // Generate next ID preview
   let nextId = null;
@@ -380,7 +382,8 @@ exports.getEmployeeIdSettings = async (tenantId) => {
     prefix,
     counter,
     nextId,
-    isConfigured: !!prefix
+    usePrefix,
+    isConfigured: usePrefix ? !!prefix : true
   };
 };
 
@@ -440,21 +443,73 @@ exports.setEmployeeIdPrefix = async (tenantId, prefix) => {
 };
 
 /**
- * Generate next employee ID (atomically increment counter)
- * This should be called within a transaction when creating an employee
+ * Toggle employee ID mode (prefix auto-generation vs manual entry)
  */
-exports.generateNextEmployeeId = async (tenantId, client = null) => {
-  const executor = client || pool;
-
-  // Use FOR UPDATE to lock the row during counter increment
-  const result = await executor.query(
-    `SELECT settings FROM tenants WHERE id = $1 FOR UPDATE`,
+exports.toggleEmployeeIdMode = async (tenantId, usePrefix) => {
+  const result = await pool.query(
+    `SELECT settings FROM tenants WHERE id = $1`,
     [tenantId]
   );
 
   if (result.rowCount === 0) {
     throw new Error("Tenant not found");
   }
+
+  const settings = result.rows[0].settings || {};
+
+  // If turning ON prefix mode and no prefix is set, inform user
+  if (usePrefix && !settings.employee_id_prefix) {
+    // Just toggle the flag, prefix can be set separately
+  }
+
+  const newSettings = {
+    ...settings,
+    use_employee_id_prefix: usePrefix
+  };
+
+  await pool.query(
+    `UPDATE tenants SET settings = $1, updated_at = NOW() WHERE id = $2`,
+    [JSON.stringify(newSettings), tenantId]
+  );
+
+  return {
+    usePrefix,
+    message: usePrefix
+      ? "Employee ID mode set to auto-generate with prefix"
+      : "Employee ID mode set to manual entry"
+  };
+};
+
+/**
+ * Generate next employee ID (atomically increment counter)
+ * This should be called within a transaction when creating an employee
+ */
+exports.generateNextEmployeeId = async (tenantId, client = null) => {
+  const executor = client || pool;
+
+  // 1. First check settings without locking
+  const checkRes = await executor.query(
+    `SELECT settings FROM tenants WHERE id = $1`,
+    [tenantId]
+  );
+
+  if (checkRes.rowCount === 0) {
+    throw new Error("Tenant not found");
+  }
+
+  const initialSettings = checkRes.rows[0].settings || {};
+  const usePrefix = initialSettings.use_employee_id_prefix !== false; // Default to true
+
+  // If manual mode, return null immediately (no lock needed)
+  if (!usePrefix) {
+    return null;
+  }
+
+  // 2. If auto-mode, re-fetch with lock to safely increment
+  const result = await executor.query(
+    `SELECT settings FROM tenants WHERE id = $1 FOR UPDATE`,
+    [tenantId]
+  );
 
   const settings = result.rows[0].settings || {};
   const prefix = settings.employee_id_prefix;
