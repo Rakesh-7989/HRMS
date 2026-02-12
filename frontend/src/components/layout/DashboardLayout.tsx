@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Sidebar } from './Sidebar';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolveImageUrl } from '@/utils/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -350,8 +351,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   onClick={() => setProfileOpen((p) => !p)}
                   className="flex items-center gap-2 px-3 py-2 rounded-md hover:opacity-90 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white">
-                    {user?.first_name?.charAt(0) || 'U'}
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white overflow-hidden">
+                    {user?.profile_photo_url ? (
+                      <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      user?.first_name?.charAt(0) || 'U'
+                    )}
                   </div>
                   <div className="hidden sm:block text-left leading-tight">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">

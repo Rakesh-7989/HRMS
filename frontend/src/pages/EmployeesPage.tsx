@@ -8,6 +8,7 @@ import { usersService, EmployeeFilters } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolveImageUrl } from '@/utils/image';
 import { cn } from '@/utils/cn';
 import {
   Plus,
@@ -334,10 +335,14 @@ export const EmployeesPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className={cn(
-                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white',
+                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white overflow-hidden',
                             emp.is_active ? 'bg-gradient-to-br from-primary to-primary-dark' : 'bg-gray-400'
                           )}>
-                            {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
+                            {emp.profile_photo_url ? (
+                              <img src={resolveImageUrl(emp.profile_photo_url)} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <>{emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}</>
+                            )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900 dark:text-white">

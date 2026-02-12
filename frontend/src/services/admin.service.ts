@@ -108,6 +108,45 @@ export const adminService = {
                 'Content-Type': 'multipart/form-data',
             },
         });
-        return response.data.data;
+
+        const logoData = response.data.data;
+
+        // Sync local storage fallback
+        const existingRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (existingRaw) {
+            try {
+                const existing = JSON.parse(existingRaw);
+                const updated = {
+                    ...existing,
+                    settings: {
+                        ...(existing.settings || {}),
+                        logo_url: logoData.logo_url
+                    }
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            } catch (e) { }
+        }
+
+        return logoData;
+    },
+
+    deleteTenantLogo: async (): Promise<void> => {
+        await api.delete('/admin/tenant/logo');
+
+        // Sync local storage fallback
+        const existingRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (existingRaw) {
+            try {
+                const existing = JSON.parse(existingRaw);
+                const updated = {
+                    ...existing,
+                    settings: {
+                        ...(existing.settings || {}),
+                        logo_url: null
+                    }
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            } catch (e) { }
+        }
     }
 };

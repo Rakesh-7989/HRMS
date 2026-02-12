@@ -17,6 +17,7 @@ router.put("/tenant/profile", requireRole(["ADMIN", "HR"]), validate(updateTenan
 
 const { uploadImage } = require("../../utils/fileUpload");
 router.put("/tenant/logo", requireRole(["ADMIN", "HR"]), uploadImage.single('logo'), controller.uploadLogo);
+router.delete("/tenant/logo", requireRole(["ADMIN", "HR"]), controller.deleteLogo);
 
 // Audit logs (admin only) - for audit trail feature (future use)
 router.get("/audit-logs", requireRole(["ADMIN"]), controller.getAuditLogs);

@@ -52,10 +52,15 @@ export interface User {
   subscription_status?: string;
   subscription_plan_name?: string;
   two_factor_enabled?: boolean;
+  profile_photo_url?: string;
   // Joined data
   department?: { id: string; name: string };
   designation?: { id: string; name: string };
   manager?: { id: string; first_name: string; last_name: string };
+  tenant_settings?: {
+    logo_url?: string;
+    [key: string]: any;
+  };
 }
 
 export interface CreateUserData {
@@ -125,6 +130,7 @@ export interface UpdateEmployeeData {
   pf_account?: string;
   esi_number?: string;
   ctc?: number;
+  profile_photo_url?: string;
 }
 
 export interface TerminateEmployeeData {

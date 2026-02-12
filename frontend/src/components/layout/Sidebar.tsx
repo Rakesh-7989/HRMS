@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { cn } from '@/utils/cn';
+import { resolveImageUrl } from '@/utils/image';
 import logo from '../../../Assests/logo.png';
 import {
   LayoutDashboard,
@@ -115,7 +116,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
              bg-primary-gradient
              shadow-sm p-2"
         >
-          <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+          <img
+            src={resolveImageUrl(user?.tenant_settings?.logo_url) || logo}
+            alt="Logo"
+            className="w-full h-full object-contain"
+          />
         </div>
 
         {/* Navigation */}

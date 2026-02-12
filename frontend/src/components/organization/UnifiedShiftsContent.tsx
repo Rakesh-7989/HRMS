@@ -3,9 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { Calendar, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export const UnifiedShiftsContent: React.FC = () => {
+    const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTab = (searchParams.get('subtab') as any) || 'roster';
     const [activeTab, setActiveTab] = useState<'roster' | 'manage'>(initialTab);

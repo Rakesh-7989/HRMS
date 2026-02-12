@@ -1,4 +1,6 @@
 const adminService = require("./admin.service");
+const { deleteFile } = require("../../utils/fileUpload");
+const path = require("path");
 
 // Tenant company profile (for settings page - future use)
 exports.getTenantProfile = async (req, res) => {
@@ -39,8 +41,28 @@ exports.uploadLogo = async (req, res) => {
     // Let's keep it simple: /uploads/documents/filename
 
     const filePath = `/uploads/documents/${req.file.filename}`;
+    const result = await adminService.updateTenantLogo(req.db, req.user.tenantId, filePath);
 
-    await adminService.updateTenantLogo(req.db, req.user.tenantId, filePath);
+    // If there was an old logo, try to delete the file
+    if (result.oldLogoUrl) {
+      try {
+        const projectRoot = process.cwd();
+        let oldPath = "";
+
+        if (result.oldLogoUrl.startsWith('/uploads')) {
+          oldPath = path.join(projectRoot, result.oldLogoUrl);
+        } else if (result.oldLogoUrl.includes('uploads')) {
+          const relativePart = result.oldLogoUrl.substring(result.oldLogoUrl.indexOf('uploads'));
+          oldPath = path.join(projectRoot, relativePart);
+        }
+
+        if (oldPath) {
+          deleteFile(oldPath);
+        }
+      } catch (e) {
+        console.error('Failed to delete old logo file:', e);
+      }
+    }
 
     res.json({
       status: 'success',
@@ -49,6 +71,42 @@ exports.uploadLogo = async (req, res) => {
     });
   } catch (err) {
     console.error('Logo upload error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+
+exports.deleteLogo = async (req, res) => {
+  try {
+    const result = await adminService.updateTenantLogo(req.db, req.user.tenantId, null);
+
+    // Try to delete the old file
+    if (result.oldLogoUrl) {
+      try {
+        const projectRoot = process.cwd();
+        let oldPath = "";
+
+        if (result.oldLogoUrl.startsWith('/uploads')) {
+          oldPath = path.join(projectRoot, result.oldLogoUrl);
+        } else if (result.oldLogoUrl.includes('uploads')) {
+          const relativePart = result.oldLogoUrl.substring(result.oldLogoUrl.indexOf('uploads'));
+          oldPath = path.join(projectRoot, relativePart);
+        }
+
+        if (oldPath) {
+          deleteFile(oldPath);
+        }
+      } catch (e) {
+        console.error('Failed to delete old logo file:', e);
+      }
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Logo removed successfully',
+      data: { logo_url: null }
+    });
+  } catch (err) {
+    console.error('Logo delete error:', err);
     res.status(500).json({ status: 'error', message: err.message });
   }
 };

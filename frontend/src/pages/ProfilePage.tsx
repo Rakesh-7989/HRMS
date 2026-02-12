@@ -11,8 +11,9 @@ import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { User } from '@/types';
 import {
-  User, Mail, Phone, Building2, Briefcase,
+  User as UserIcon, Mail, Phone, Building2, Briefcase,
   CreditCard, GraduationCap,
   Edit, Save, X, UserCircle, FileText, Upload, Trash2, Download, Search
 } from 'lucide-react';
@@ -22,6 +23,7 @@ import { designationService } from '@/services/designation.service';
 import { documentsService } from '@/services/documents.service';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
 import { FormError } from '@/components/ui/FormError';
 
@@ -97,10 +99,18 @@ export const ProfilePage: React.FC = () => {
     enabled: !!profile?.email,
   });
 
+  const { user, setUser: setAuthUser } = useAuth();
+
   const updateMutation = useMutation({
     mutationFn: (data: any) => usersService.updateMyProfile(data),
-    onSuccess: () => {
+    onSuccess: (updatedProfile) => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Update global auth state if current user updated their own profile
+      if (user && updatedProfile && updatedProfile.id === user.id) {
+        const merged = { ...user, ...updatedProfile } as User;
+        localStorage.setItem('user', JSON.stringify(merged));
+        setAuthUser(merged);
+      }
       setIsEditing(false);
       toast.success('Profile updated successfully');
     },
@@ -171,11 +181,49 @@ export const ProfilePage: React.FC = () => {
         {/* HEADER CARD */}
         <Card className="p-6 border-none shadow-md bg-white dark:bg-gray-800">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="relative">
-              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-lg ring-4 ring-white dark:ring-gray-700">
-                {profile.first_name?.[0]}{profile.last_name?.[0]}
+            <div className="relative group">
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-lg ring-4 ring-white dark:ring-gray-700 overflow-hidden">
+                {profile.profile_photo_url ? (
+                  <img src={resolveImageUrl(profile.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{profile.first_name?.[0]}{profile.last_name?.[0]}</span>
+                )}
               </div>
               <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+
+              {/* Upload Button Overlay */}
+              <label
+                htmlFor="profile-photo-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <div className="flex flex-col items-center">
+                  <Upload size={20} />
+                  <span className="text-[10px] font-bold mt-1">UPDATE</span>
+                </div>
+                <input
+                  type="file"
+                  id="profile-photo-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    // Limit to 2MB
+                    if (file.size > 2 * 1024 * 1024) {
+                      showToast.error('Image size too large (max 2MB)');
+                      return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64String = reader.result as string;
+                      updateMutation.mutate({ profile_photo_url: base64String });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+              </label>
             </div>
 
             <div className="flex-1 text-center md:text-left space-y-2">
@@ -238,7 +286,7 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="personal">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <User className="text-primary" /> Personal Information
+                <UserIcon className="text-primary" /> Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label="First Name" id="first_name" formik={formik} isEditing={isEditing} required />

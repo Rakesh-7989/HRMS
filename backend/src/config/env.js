@@ -22,5 +22,14 @@ module.exports = {
 
     LOG_LEVEL: (process.env.LOG_LEVEL || 'debug').toLowerCase(),
 
-    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173'
+    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+
+    // Email config
+    SMTP_HOST: process.env.SMTP_HOST || 'smtp.hostinger.com',
+    SMTP_PORT: parseInt(process.env.SMTP_PORT || '465', 10),
+    SMTP_SECURE: process.env.SMTP_SECURE === 'true',
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS,
+    EMAIL_FROM: process.env.EMAIL_FROM || 'noreply.hrms@WellZo.com',
+    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HR WellZo'
 };

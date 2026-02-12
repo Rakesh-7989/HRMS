@@ -1,4 +1,8 @@
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE';
+export interface TenantSettings {
+  logo_url?: string;
+  [key: string]: any;
+}
 
 export interface User {
   id: string;
@@ -18,6 +22,7 @@ export interface User {
   subscription_status?: string;
   subscription_plan_name?: string;
   two_factor_enabled?: boolean;
+  tenant_settings?: TenantSettings;
 }
 
 export interface AuthResponse {

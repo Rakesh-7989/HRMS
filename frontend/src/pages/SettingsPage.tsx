@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
   Building2, Bell, Shield, Key, Moon, Sun,
-  RefreshCw, ImagePlus, Upload, Clock,
-  FileText, ExternalLink, CreditCard
+  RefreshCw, Upload, Clock,
+  FileText, ExternalLink, CreditCard, Trash2
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +27,9 @@ import { TwoFactorModal } from '@/components/forms/TwoFactorModal';
 
 import { SuccessModal } from '@/components/ui/SuccessModal';
 
+import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
+import defaultLogo from '../../Assests/logo.png';
 
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -582,13 +584,28 @@ const OrganizationProfileSection: React.FC<{
     enabled: userRole === 'ADMIN' || userRole === 'HR' || userRole === 'MANAGER',
   });
 
+  const { user, setUser: setAuthUser } = useAuth();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const logoMutation = useMutation({
     mutationFn: (file: File) => adminService.uploadTenantLogo(file),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
+
+      // Update global auth state with new logo
+      if (user && data?.logo_url) {
+        const updatedUser = {
+          ...user,
+          tenant_settings: {
+            ...(user.tenant_settings || {}),
+            logo_url: data.logo_url
+          }
+        };
+        setAuthUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+
       setSuccessConfig({
         isOpen: true,
         title: 'Logo Updated',
@@ -600,6 +617,31 @@ const OrganizationProfileSection: React.FC<{
     onError: (err: any) => {
       showToast.error(err.response?.data?.message || 'Failed to upload logo');
       setUploading(false);
+    }
+  });
+
+  const deleteLogoMutation = useMutation({
+    mutationFn: () => adminService.deleteTenantLogo(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
+
+      // Update global auth state
+      if (user) {
+        const updatedUser = {
+          ...user,
+          tenant_settings: {
+            ...(user.tenant_settings || {}),
+            logo_url: undefined
+          }
+        };
+        setAuthUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+
+      showToast.success('Logo removed successfully');
+    },
+    onError: (err: any) => {
+      showToast.error(err.message || 'Failed to remove logo');
     }
   });
 
@@ -668,20 +710,37 @@ const OrganizationProfileSection: React.FC<{
         <div className="flex flex-col items-center gap-3">
           <div className="relative group">
             <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-sm">
-              {profile?.settings?.logo_url ? (
-                <img src={profile.settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
-              ) : (
-                <ImagePlus className="text-gray-400" size={32} />
-              )}
+              <img
+                src={profile?.settings?.logo_url ? resolveImageUrl(profile.settings.logo_url) : defaultLogo}
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             {isTenantAdmin && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl disabled:cursor-not-allowed"
-              >
-                {uploading ? <RefreshCw size={20} className="animate-spin" /> : <Upload size={20} />}
-              </button>
+              <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-3">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  title="Update Logo"
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:cursor-not-allowed"
+                >
+                  {uploading ? <RefreshCw size={20} className="animate-spin" /> : <Upload size={20} />}
+                </button>
+                {profile?.settings?.logo_url && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to remove the logo?')) {
+                        deleteLogoMutation.mutate();
+                      }
+                    }}
+                    disabled={deleteLogoMutation.isPending}
+                    title="Remove Logo"
+                    className="p-2 hover:bg-red-500/40 rounded-lg transition-colors disabled:cursor-not-allowed text-red-200"
+                  >
+                    {deleteLogoMutation.isPending ? <RefreshCw size={20} className="animate-spin" /> : <Trash2 size={20} />}
+                  </button>
+                )}
+              </div>
             )}
           </div>
           <input

@@ -23,6 +23,12 @@ export interface SystemDashboard {
     active_users: number;
     pending_pwd_change: number;
     inactive_users: number;
+    resources?: {
+      cpu: number;
+      memory: number;
+      storage?: number;
+      network?: number;
+    };
   };
   generatedAt: string;
 }

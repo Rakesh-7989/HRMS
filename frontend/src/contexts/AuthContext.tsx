@@ -53,6 +53,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               subscription_status: profile.subscription_status,
               subscription_plan_name: profile.subscription_plan_name,
               two_factor_enabled: profile.two_factor_enabled ?? storedUser.two_factor_enabled,
+              profile_photo_url: profile.profile_photo_url,
+              tenant_settings: profile.tenant_settings,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
             setUser(merged);
@@ -117,6 +119,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           subscription_status: profile.subscription_status,
           subscription_plan_name: profile.subscription_plan_name,
           two_factor_enabled: profile.two_factor_enabled ?? response.user.two_factor_enabled,
+          profile_photo_url: profile.profile_photo_url,
+          tenant_settings: profile.tenant_settings,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
         setUser(merged);

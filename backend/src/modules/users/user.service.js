@@ -387,7 +387,7 @@ exports.getUsers = async (db, opts, actor) => {
   const sql = `
     SELECT u.id, u.email, u.role, u.is_active, u.tenant_id, u.created_at,
            e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id,
-           e.shift, e.shift_id
+           e.shift, e.shift_id, e.profile_photo_url
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = u.tenant_id
     ${where}
@@ -410,7 +410,7 @@ exports.getUserById = async (db, id, tenantId) => {
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
             e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
-            e.uan, e.pf_account, e.esi_number,
+            e.uan, e.pf_account, e.esi_number, e.profile_photo_url,
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
             esd.ctc
      FROM users u 
@@ -478,7 +478,8 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     "ctc", // support both aliases
 
     // Address
-    "address"
+    "address",
+    "profile_photo_url"
   ];
 
   const fields = [];
@@ -610,10 +611,13 @@ exports.getMyProfile = async (db, user) => {
       e.pf_account,
       e.esi_number,
       e.reports_to,
+      e.profile_photo_url,
       s.status as subscription_status,
-      p.name as subscription_plan_name
+      p.name as subscription_plan_name,
+      t.settings as tenant_settings
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id
+    LEFT JOIN tenants t ON t.id = u.tenant_id
     LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id AND s.status != 'CANCELLED'
     LEFT JOIN plans p ON s.plan_id = p.id
     WHERE u.id=$1

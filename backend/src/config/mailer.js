@@ -20,12 +20,12 @@ const createTransporter = () => {
 
     // Production SMTP configuration
     return nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_SECURE === 'true',
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
+        secure: env.SMTP_SECURE,
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
+            user: env.SMTP_USER,
+            pass: env.SMTP_PASS
         }
     });
 };
@@ -40,7 +40,7 @@ const transporter = createTransporter();
 exports.sendMail = async (mailOptions) => {
 
     try {
-        const defaultFrom = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@hrms.com';
+        const defaultFrom = `"${env.EMAIL_FROM_NAME}" <${env.EMAIL_FROM}>`;
 
         const options = {
             from: mailOptions.from || defaultFrom,
