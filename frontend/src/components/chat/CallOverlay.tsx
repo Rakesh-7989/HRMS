@@ -4,9 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Minus, Maximize2, Monitor, UserPlus, Search, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import api from '@/services/api';
+import { formatDuration } from '@/utils/format';
+
 
 // Move RemoteVideo outside the main component to prevent unmounting on every render
-const RemoteVideo = ({ stream, userId, isTalking, participant }: { stream: MediaStream, userId: string, isTalking: boolean, participant?: { name: string, designation: string, avatar?: string } }) => {
+const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare }: { stream: MediaStream, userId: string, isTalking: boolean, participant?: { name: string, designation: string, avatar?: string }, isScreenShare?: boolean }) => {
     const ref = useRef<HTMLVideoElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasVideo, setHasVideo] = useState(false);
@@ -77,7 +79,8 @@ const RemoteVideo = ({ stream, userId, isTalking, participant }: { stream: Media
                 autoPlay
                 playsInline
                 className={cn(
-                    "w-full h-full object-cover transition-opacity duration-1000",
+                    "w-full h-full transition-opacity duration-1000",
+                    isScreenShare ? "object-contain" : "object-cover",
                     hasVideo ? "opacity-100" : "opacity-0"
                 )}
             />
@@ -135,8 +138,9 @@ export const CallOverlay: React.FC = () => {
         acceptCall, rejectCall, endCall,
         isMuted, isVideoOff, toggleAudio, toggleVideo,
         isScreenSharing, toggleScreenShare, addParticipantToCall,
-        speakingUsers
+        speakingUsers, callDuration
     } = useChat();
+
     const { user: currentUser } = useAuth();
 
     const [isMinimized, setIsMinimized] = useState(false);
@@ -286,11 +290,14 @@ export const CallOverlay: React.FC = () => {
                         </button>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-2xl">
+                                <span className="text-primary font-black text-sm tracking-widest">{formatDuration(callDuration)}</span>
+                                <div className="w-px h-4 bg-white/10 mx-1" />
                                 <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
                                 <span className="text-[10px] font-black tracking-[0.2em] text-white/60 uppercase">
                                     {remoteUserIds.length + 1} ACTIVE PARTICIPANTS
                                 </span>
                             </div>
+
                         </div>
                     </div>
 
@@ -312,9 +319,10 @@ export const CallOverlay: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-center">
-                                    <h2 className="text-6xl font-black tracking-tighter mb-4 animate-pulse bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent italic">Waiting for others...</h2>
+                                    <h2 className="text-2xl font-black tracking-tighter mb-4 animate-pulse bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent italic">Waiting for others to join workspace...</h2>
                                     <p className="text-primary font-black text-2xl uppercase tracking-[0.4em] opacity-80">{activeCall?.name}</p>
                                 </div>
+
                             </div>
                         ) : (
                             <div className={cn(
@@ -331,6 +339,7 @@ export const CallOverlay: React.FC = () => {
                                             userId={uid}
                                             isTalking={speakingUsers.has(uid)}
                                             participant={callParticipants[uid]}
+                                            isScreenShare={isScreenSharing} // Note: This assumes only one person can share at a time or we treat all remotes as contain if sharing is active
                                         />
                                     </div>
                                 ))}
@@ -410,7 +419,11 @@ export const CallOverlay: React.FC = () => {
                                 autoPlay
                                 muted
                                 playsInline
-                                className={cn("w-full h-full object-cover mirror transition-all duration-1000 hover:scale-105", isVideoOff && "opacity-0")}
+                                className={cn(
+                                    "w-full h-full mirror transition-all duration-1000",
+                                    isScreenSharing ? "object-contain" : "object-cover hover:scale-105",
+                                    isVideoOff && "opacity-0"
+                                )}
                             />
                             {isVideoOff && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-xl">

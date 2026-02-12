@@ -30,7 +30,21 @@ const getErrorMessage = (error: AxiosError<ApiResponse>): string => {
 
   const status = error.response.status;
   const data = error.response.data as any;
-  const backendMessage = data?.message || data?.error;
+  let backendMessage = data?.message || data?.error;
+
+  // Extract specific validation message if available
+  if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
+    const firstDetail = data.details[0];
+    if (firstDetail.message) {
+      // If the message is just "Required", try to be more specific based on path
+      if (firstDetail.message === 'Required' && firstDetail.path) {
+        const field = firstDetail.path.join('.');
+        backendMessage = `${field} is required`;
+      } else {
+        backendMessage = firstDetail.message;
+      }
+    }
+  }
 
   switch (status) {
     case 400:

@@ -45,22 +45,33 @@ export const RegisterPage: React.FC = () => {
             zip_code: '',
         },
         validationSchema: Yup.object({
-            email: Yup.string().email('Invalid email').required('Email is required'),
-            name: Yup.string().min(2, 'Min 2 characters').max(255).required('Organization name is required'),
-            domain: Yup.string().max(255).required('Domain is required'),
+            email: Yup.string().email('Invalid email address').required('Email is required'),
+            name: Yup.string()
+                .min(2, 'Organization name must be at least 2 characters')
+                .max(255, 'Organization name is too long')
+                .matches(/^[a-zA-Z0-9\s\-.]+$/, 'Organization name can only contain letters, numbers, spaces, hyphens and dots')
+                .required('Organization name is required'),
+            domain: Yup.string()
+                .matches(/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/, 'Invalid domain format (e.g. example.com)')
+                .max(255, 'Domain is too long'),
             phone: Yup.string()
-                .matches(/^[\d\s\-\+\(\)]+$/, 'Invalid phone format')
-                .test('digits', 'At least 10 digits', (val) => !val || val.replace(/\D/g, '').length >= 10)
-                .max(20)
+                .matches(/^(\+\d{1,3}[- ]?)?\d{10}$/, 'Invalid phone number format (e.g. +91 9876543210)')
                 .required('Phone number is required'),
-            address: Yup.string().max(500).required('Address is required'),
-            city: Yup.string().max(100).required('City is required'),
-            state: Yup.string().max(100).required('State is required'),
-            country: Yup.string().max(100).required('Country is required'),
+            address: Yup.string().max(500, 'Address is too long'),
+            city: Yup.string()
+                .matches(/^[a-zA-Z\s]+$/, 'City can only contain letters and spaces')
+                .max(100, 'City name is too long')
+                .required('City is required'),
+            state: Yup.string()
+                .matches(/^[a-zA-Z\s]+$/, 'State can only contain letters and spaces')
+                .max(100, 'State name is too long')
+                .required('State is required'),
+            country: Yup.string()
+                .matches(/^[a-zA-Z\s]+$/, 'Country can only contain letters and spaces')
+                .max(100, 'Country name is too long')
+                .required('Country is required'),
             zip_code: Yup.string()
-                .matches(/^\d+$/, 'Invalid zip code (digits only)')
-                .min(5, 'Invalid zip code (min 5 digits)')
-                .max(10, 'Invalid zip code')
+                .matches(/^\d{5,6}$/, 'Zip code must be 5 or 6 digits')
                 .required('Zip code is required'),
         }),
         onSubmit: async (values) => {
@@ -121,12 +132,8 @@ export const RegisterPage: React.FC = () => {
 
     const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
         const target = e.target as HTMLInputElement;
-        // Text-only fields (Name, City, State, Country) - No numbers or special chars (except simple punctuation)
-        if (['name', 'city', 'state', 'country'].includes(target.name)) {
-            target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
-        }
-        if (target.name === 'phone') target.value = target.value.replace(/[^0-9+\-()\s\.]/g, '');
-        if (target.name === 'zip_code') target.value = target.value.replace(/[^0-9]/g, '');
+        if (target.name === 'name') target.value = target.value.replace(/[^A-Za-z0-9\s\-\.]/g, '');
+        // Phone input handling remains loose to allow user to type, validation is strict on blur/submit
     };
 
     if (isAuthenticated) return <Navigate to="/dashboard" replace />;
@@ -146,69 +153,69 @@ export const RegisterPage: React.FC = () => {
                                 <h1 className="text-xl font-bold mb-1 text-gray-900 dark:text-white">Create account</h1>
                                 <p className="text-sm text-gray-600 dark:text-muted">Register your organization to get started</p>
                             </div>
-                            {error && <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-sm text-red-600 dark:text-red-400">{error}</div>}
+                            {error && <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-sm text-red-500">{error}</div>}
                             <form onSubmit={formik.handleSubmit} className="space-y-4">
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Organization Name *</label>
                                             <input name="name" value={formik.values.name} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Acme Inc." />
-                                            {formik.touched.name && formik.errors.name && <p className="text-xs text-red-400 mt-1">{formik.errors.name}</p>}
+                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.name && formik.errors.name ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Acme Innovations Pvt Ltd" />
+                                            {formik.touched.name && formik.errors.name && <p className="text-xs text-red-500 mt-1">{formik.errors.name}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Admin Email *</label>
                                             <input name="email" type="email" value={formik.values.email} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="admin@company.com" />
-                                            {formik.touched.email && formik.errors.email && <p className="text-xs text-red-400 mt-1">{formik.errors.email}</p>}
+                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.email && formik.errors.email ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="admin@acme.com" />
+                                            {formik.touched.email && formik.errors.email && <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Domain *</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Domain</label>
                                             <input name="domain" value={formik.values.domain} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.domain && formik.errors.domain ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="yourcompany.com" />
-                                            {formik.touched.domain && formik.errors.domain && <p className="text-xs text-red-400 mt-1">{formik.errors.domain}</p>}
+                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.domain && formik.errors.domain ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="acme.com" />
+                                            {formik.touched.domain && formik.errors.domain && <p className="text-xs text-red-500 mt-1">{formik.errors.domain}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Phone *</label>
-                                            <input name="phone" value={formik.values.phone} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.phone && formik.errors.phone ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="+1 234 567 890" />
-                                            {formik.touched.phone && formik.errors.phone && <p className="text-xs text-red-400 mt-1">{formik.errors.phone}</p>}
+                                            <input name="phone" value={formik.values.phone} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.phone && formik.errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="+91 98765 43210" />
+                                            {formik.touched.phone && formik.errors.phone && <p className="text-xs text-red-500 mt-1">{formik.errors.phone}</p>}
                                         </div>
                                     </div>
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">City *</label>
-                                                <input name="city" value={formik.values.city} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.city && formik.errors.city ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="e.g. New York" />
-                                                {formik.touched.city && formik.errors.city && <p className="text-xs text-red-400 mt-1">{formik.errors.city}</p>}
+                                                <input name="city" value={formik.values.city} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.city && formik.errors.city ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Hyderabad" />
+                                                {formik.touched.city && formik.errors.city && <p className="text-xs text-red-500 mt-1">{formik.errors.city}</p>}
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">State *</label>
-                                                <input name="state" value={formik.values.state} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.state && formik.errors.state ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="e.g. NY" />
-                                                {formik.touched.state && formik.errors.state && <p className="text-xs text-red-400 mt-1">{formik.errors.state}</p>}
+                                                <input name="state" value={formik.values.state} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.state && formik.errors.state ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Telangana" />
+                                                {formik.touched.state && formik.errors.state && <p className="text-xs text-red-500 mt-1">{formik.errors.state}</p>}
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Country *</label>
-                                                <input name="country" value={formik.values.country} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.country && formik.errors.country ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="United States" />
-                                                {formik.touched.country && formik.errors.country && <p className="text-xs text-red-400 mt-1">{formik.errors.country}</p>}
+                                                <input name="country" value={formik.values.country} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.country && formik.errors.country ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="India" />
+                                                {formik.touched.country && formik.errors.country && <p className="text-xs text-red-500 mt-1">{formik.errors.country}</p>}
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Zip *</label>
-                                                <input name="zip_code" value={formik.values.zip_code} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
-                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.zip_code && formik.errors.zip_code ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="10001" />
-                                                {formik.touched.zip_code && formik.errors.zip_code && <p className="text-xs text-red-400 mt-1">{formik.errors.zip_code}</p>}
+                                                <input name="zip_code" value={formik.values.zip_code} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                                                    className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.zip_code && formik.errors.zip_code ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="500081" />
+                                                {formik.touched.zip_code && formik.errors.zip_code && <p className="text-xs text-red-500 mt-1">{formik.errors.zip_code}</p>}
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Address *</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Address</label>
                                             <input name="address" value={formik.values.address} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.address && formik.errors.address ? 'border-red-400' : 'border-gray-300 dark:border-dark-border'} focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="123 Main St" />
-                                            {formik.touched.address && formik.errors.address && <p className="text-xs text-red-400 mt-1">{formik.errors.address}</p>}
+                                                className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.address && formik.errors.address ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Hitech City, Madhapur" />
+                                            {formik.touched.address && formik.errors.address && <p className="text-xs text-red-500 mt-1">{formik.errors.address}</p>}
                                         </div>
                                     </div>
                                 </div>

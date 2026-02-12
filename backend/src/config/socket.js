@@ -64,10 +64,23 @@ const initSocket = (httpServer) => {
         // Join tenant room automatically
         socket.join(`tenant_${socket.user.tenant_id}`);
 
-        // Join user's own room for direct notifications
         const userRoom = `user_${String(socket.user.id)}`;
         socket.join(userRoom);
         logger.info(`User ${socket.user.id} joined own room: ${userRoom}`);
+
+        // Update status to ONLINE if this is the first connection
+        const userSockets = io.sockets.adapter.rooms.get(userRoom);
+        if (userSockets && userSockets.size === 1) {
+            (async () => {
+                try {
+                    await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['ONLINE', socket.user.id]);
+                    io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'ONLINE' });
+                    logger.info(`User ${socket.user.id} status updated to ONLINE`);
+                } catch (err) {
+                    logger.error(`Failed to update status for user ${socket.user.id}`, err);
+                }
+            })();
+        }
 
         socket.on("join_room", (roomId) => {
             socket.join(roomId);
@@ -216,8 +229,21 @@ const initSocket = (httpServer) => {
             });
         });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
             logger.info(`User disconnected: ${socket.user.id}`);
+
+            // Update status to OFFLINE if this was the last connection
+            const userRoom = `user_${String(socket.user.id)}`;
+            const userSockets = io.sockets.adapter.rooms.get(userRoom);
+            if (!userSockets || userSockets.size === 0) {
+                try {
+                    await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
+                    io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'OFFLINE' });
+                    logger.info(`User ${socket.user.id} status updated to OFFLINE`);
+                } catch (err) {
+                    logger.error(`Failed to update disconnect status for user ${socket.user.id}`, err);
+                }
+            }
         });
     });
 

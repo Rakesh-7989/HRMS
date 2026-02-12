@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { Select } from '@/components/ui/Select';
 import { usersService, CreateUserData, UpdateEmployeeData, User } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ import { toast } from 'react-hot-toast';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { tenantService } from '@/services/tenant.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormGuard } from '@/hooks/useFormGuard';
 import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
@@ -202,6 +204,8 @@ export const CreateEmployeeForm = ({
 
 
 
+
+
   // Fetch departments
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],
@@ -230,7 +234,6 @@ export const CreateEmployeeForm = ({
   const { data: idSettings } = useQuery({
     queryKey: ['employee-id-settings'],
     queryFn: () => tenantService.getEmployeeIdSettings(),
-    staleTime: Infinity,
   });
 
   // Create mutation
@@ -240,16 +243,13 @@ export const CreateEmployeeForm = ({
       // Invalidate both employees and new-joiners so lists refetch and show the newly created employee
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['new-joiners'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
       const employeeName = `${formik.values.first_name} ${formik.values.last_name}`;
       formik.resetForm();
       onOpenChange(false);
       setCreatedEmployeeName(employeeName);
       toast.success('Employee created successfully!');
-      if (asPage) {
-        onSuccess?.();
-      } else {
-        setShowSuccessModal(true);
-      }
+      setShowSuccessModal(true);
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -277,11 +277,7 @@ export const CreateEmployeeForm = ({
       onOpenChange(false);
       setCreatedEmployeeName(`${formik.values.first_name} ${formik.values.last_name}`);
       toast.success('Employee profile updated!');
-      if (asPage) {
-        onSuccess?.();
-      } else {
-        setShowSuccessModal(true);
-      }
+      setShowSuccessModal(true);
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -371,6 +367,12 @@ export const CreateEmployeeForm = ({
       }
     },
   });
+
+  // --- Navigation Guard ---
+  const blocker = useFormGuard(formik.dirty);
+
+
+
 
   const maxDob = useMemo(() => {
     const d = new Date();
@@ -575,6 +577,8 @@ export const CreateEmployeeForm = ({
           <UserIcon className="w-4 h-4 text-primary" /> Basic Information
         </h3>
 
+
+
         {!isEditMode && (
           <div className="mb-2">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
@@ -669,17 +673,16 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Gender *
             </label>
-            <select
+            <Select
               name="gender"
               value={formik.values.gender}
               onChange={formik.handleChange}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              placeholder="Select Gender"
             >
-              <option value="">Select</option>
               <option value="MALE">Male</option>
               <option value="FEMALE">Female</option>
               <option value="OTHER">Other</option>
-            </select>
+            </Select>
             {formik.touched.gender && formik.errors.gender && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.gender}</p>
             )}
@@ -689,18 +692,17 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Marital Status *
             </label>
-            <select
+            <Select
               name="marital_status"
               value={formik.values.marital_status}
               onChange={formik.handleChange}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              placeholder="Select Status"
             >
-              <option value="">Select</option>
               <option value="SINGLE">Single</option>
               <option value="MARRIED">Married</option>
               <option value="DIVORCED">Divorced</option>
               <option value="WIDOWED">Widowed</option>
-            </select>
+            </Select>
             {formik.touched.marital_status && formik.errors.marital_status && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.marital_status}</p>
             )}
@@ -758,17 +760,16 @@ export const CreateEmployeeForm = ({
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                   Role *
                 </label>
-                <select
+                <Select
                   name="role"
                   value={formik.values.role}
                   onChange={formik.handleChange}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                 >
                   <option value="EMPLOYEE">Employee</option>
                   <option value="MANAGER">Manager</option>
                   <option value="HR">HR</option>
                   <option value="ADMIN">Admin</option>
-                </select>
+                </Select>
               </div>
             )}
 
@@ -840,19 +841,18 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Department *
               </label>
-              <select
+              <Select
                 name="department_id"
                 value={formik.values.department_id}
                 onChange={formik.handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                placeholder="Select Department"
               >
-                <option value="">Select Department</option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
                     {dept.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {formik.touched.department_id && formik.errors.department_id && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.department_id}</p>
               )}
@@ -862,19 +862,18 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Designation *
               </label>
-              <select
+              <Select
                 name="designation_id"
                 value={formik.values.designation_id}
                 onChange={formik.handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                placeholder="Select Designation"
               >
-                <option value="">Select Designation</option>
                 {designations.map((des) => (
                   <option key={des.id} value={des.id}>
                     {des.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {formik.touched.designation_id && formik.errors.designation_id && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.designation_id}</p>
               )}
@@ -886,19 +885,18 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Reports To (Manager)
               </label>
-              <select
+              <Select
                 name="reports_to"
                 value={formik.values.reports_to}
                 onChange={formik.handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                placeholder="No Manager"
               >
-                <option value="">No Manager</option>
                 {managers.filter(m => m.id !== editEmployee?.id).map((mgr) => (
                   <option key={mgr.id} value={mgr.employee_uuid || mgr.id}>
                     {mgr.first_name} {mgr.last_name} ({mgr.role})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
@@ -922,25 +920,24 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Employment Type
               </label>
-              <select
+              <Select
                 name="employment_type"
                 value={formik.values.employment_type}
                 onChange={formik.handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
               >
                 <option value="FULL_TIME">Full-time</option>
                 <option value="PART_TIME">Part-time</option>
                 <option value="CONTRACT">Contract</option>
                 <option value="INTERN">Intern</option>
                 <option value="TEMP">Temporary</option>
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Shift
               </label>
-              <select
+              <Select
                 name="shift_id"
                 value={formik.values.shift_id}
                 onChange={(e) => {
@@ -951,15 +948,14 @@ export const CreateEmployeeForm = ({
                     formik.setFieldValue('shift', selectedShift.name);
                   }
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                placeholder="Select Shift"
               >
-                <option value="">Select Shift</option>
                 {shifts.map((s: any) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         </div>
@@ -1187,20 +1183,19 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Relationship *
               </label>
-              <select
+              <Select
                 name="emergency_relation"
                 value={formik.values.emergency_relation}
                 onChange={formik.handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                placeholder="Select Relation"
               >
-                <option value="">Select</option>
                 <option value="SPOUSE">Spouse</option>
                 <option value="PARENT">Parent</option>
                 <option value="SIBLING">Sibling</option>
                 <option value="CHILD">Child</option>
                 <option value="FRIEND">Friend</option>
                 <option value="OTHER">Other</option>
-              </select>
+              </Select>
               {formik.touched.emergency_relation && formik.errors.emergency_relation && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_relation}</p>
               )}
@@ -1246,26 +1241,59 @@ export const CreateEmployeeForm = ({
     </div>
   );
 
-  if (asPage) {
-    return (
-      <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
-        {formFields}
-      </form>
-    );
-  }
+  const unsavedChangesDialog = (
+    <Dialog open={blocker?.state === 'blocked'} onOpenChange={(open) => { if (!open) blocker?.reset?.(); }}>
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4 text-amber-600">
+          <AlertCircle className="w-6 h-6" />
+          <h3 className="text-lg font-semibold">Unsaved Changes</h3>
+        </div>
+
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          You have unsaved changes in the form. Are you sure you want to leave? All progress will be lost.
+        </p>
+
+        <div className="flex gap-2 w-full">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => blocker?.reset?.()}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            onClick={() => {
+              blocker?.proceed?.();
+            }}
+          >
+            Discard Changes
+          </Button>
+        </div>
+      </div>
+    </Dialog>
+  );
+
 
   return (
     <>
-      <Dialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title={isEditMode ? 'Edit Employee' : 'Add New Employee'}
-        className="max-w-3xl max-h-[90vh] overflow-y-auto"
-      >
-        <form onSubmit={formik.handleSubmit}>
+      {asPage ? (
+        <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
           {formFields}
         </form>
-      </Dialog>
+      ) : (
+        <Dialog
+          open={open}
+          onOpenChange={onOpenChange}
+          title={isEditMode ? 'Edit Employee' : 'Add New Employee'}
+          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        >
+          <form onSubmit={formik.handleSubmit}>
+            {formFields}
+          </form>
+        </Dialog>
+      )}
 
       {/* Success Modal */}
       <SuccessModal
@@ -1286,6 +1314,7 @@ export const CreateEmployeeForm = ({
           onSuccess?.();
         }}
       />
+      {unsavedChangesDialog}
     </>
   );
 };

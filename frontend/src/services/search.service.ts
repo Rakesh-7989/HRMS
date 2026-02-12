@@ -27,7 +27,7 @@ const navigationItems: SearchResult[] = [
     { id: 'dashboard-personal', type: 'page', title: 'Personal Dashboard', subtitle: 'My overview', url: '/dashboard/personal', keywords: ['dashboard', 'personal', 'my', 'employee'] },
 
     // Employees
-    { id: 'employees', type: 'page', title: 'Employees', subtitle: 'View all employees', url: '/employees', keywords: ['employees', 'staff', 'people', 'team', 'users'] },
+    { id: 'employees', type: 'page', title: 'Employees', subtitle: 'View all employees', url: '/dashboard/employees', keywords: ['employees', 'staff', 'people', 'team', 'users'] },
     { id: 'profile', type: 'page', title: 'My Profile', subtitle: 'View and edit your profile', url: '/profile', keywords: ['profile', 'my', 'account', 'settings'] },
 
     // Attendance

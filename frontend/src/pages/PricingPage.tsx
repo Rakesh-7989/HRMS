@@ -10,7 +10,8 @@ import { plansService } from '@/services/plans.service';
 import { subscriptionService } from '@/services/subscription.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import logo from '../../Assests/light-logo.png';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import logo from '../../Assests/light-logo.png'; // Verifying path below
 
 declare global {
   interface Window {
@@ -257,7 +258,11 @@ export const PricingPage: React.FC = () => {
 
       // Fix: Use Number() instead of parseFloat for type safety
       let unitPrice = priceObj ? Number(priceObj.unit_amount) : (oldVar ? Number(oldVar.unit_price) : Number(plan.price));
-      const setupFee = Number(plan.setup_fee) || 0;
+
+      // Fix 4c: Standard plan setup fee (Default to 5000 if not in database)
+      let setupFee = Number(plan.setup_fee);
+      if (plan.name === 'STANDARD' && setupFee === 0) setupFee = 5000;
+
 
       const durationMap: Record<string, number> = { 'MONTHLY': 1, 'QUARTERLY': 3, 'HALF_YEARLY': 6, 'YEARLY': 12 };
       const durationMonths = durationMap[effectiveCycle] || 1;
@@ -366,15 +371,20 @@ export const PricingPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-6">
             {user ? (
-              <button onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))} className="px-5 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">
-                Dashboard
-              </button>
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                <button onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))} className="px-5 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">
+                  Dashboard
+                </button>
+              </div>
             ) : (
-              <>
+              <div className="flex items-center gap-6">
+                <ThemeToggle />
                 <button onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Login</button>
                 <button onClick={() => navigate('/register')} className="px-5 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">Start Free</button>
-              </>
+              </div>
             )}
+
           </div>
         </div>
       </nav>
@@ -461,7 +471,7 @@ export const PricingPage: React.FC = () => {
                   ₹{(showTax ? plan.totalWithTax : plan.totalBeforeTax).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Total for {plan.duration} month{plan.duration > 1 ? 's' : ''}</p>
-                {plan.setupFee > 0 && <p className="text-[9px] text-primary-light mt-2 font-bold uppercase tracking-tighter">+ ₹{plan.setupFee.toLocaleString()} setup fee</p>}
+                {plan.setupFee > 0 && <p className="text-[9px] text-primary-light mt-2 font-bold uppercase tracking-tighter">+ ₹{plan.setupFee.toLocaleString()} setup fee (per user)</p>}
               </div>
 
               <div className="space-y-3 mb-8 flex-1">
@@ -505,7 +515,7 @@ export const PricingPage: React.FC = () => {
                 key={category}
                 label={categoryLabels[category]}
                 features={features}
-                plans={plans?.filter(p => !p.name.includes('CUSTOM')) || []}
+                plans={plans || []}
                 categoryKey={category}
               />
             ))}
@@ -513,8 +523,12 @@ export const PricingPage: React.FC = () => {
         </div>
 
         <div className="mt-16 text-center">
-          <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Enterprise needs or special requirements?</p>
-          <button className="text-primary hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em]">Contact Engineering Team</button>
+          <button
+            onClick={() => window.open('mailto:engineering@WellZo.com')}
+            className="text-primary hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em]"
+          >
+            Contact Engineering Team
+          </button>
         </div>
       </div>
 

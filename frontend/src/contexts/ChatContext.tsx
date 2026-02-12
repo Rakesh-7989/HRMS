@@ -51,7 +51,9 @@ interface ChatContextType {
     toggleScreenShare: () => Promise<void>;
     addParticipantToCall: (userId: string, userName: string) => void;
     speakingUsers: Set<string>;
+    callDuration: number;
 }
+
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -242,10 +244,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-        const socketUrl = API_BASE_URL.endsWith('/api') 
-            ? API_BASE_URL.slice(0, -4) 
+        const socketUrl = API_BASE_URL.endsWith('/api')
+            ? API_BASE_URL.slice(0, -4)
             : API_BASE_URL.replace(/\/api$/, '');
-            
+
         const s = io(socketUrl, {
             auth: { token },
             transports: ['websocket'],
@@ -418,19 +420,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initiateCall = useCallback(async (to: string, name: string, type: 'audio' | 'video', conversationId?: string, isGroup?: boolean) => {
         if (!socketRef.current) return;
         try {
-            const constraints = {
-                audio: true,
-                video: type === 'video'
-            };
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
+            const isVideo = type === 'video';
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
             setLocalStream(stream);
             localStreamRef.current = stream;
             const callObj = { to, name, type, conversationId, isGroup };
             setActiveCall(callObj);
             activeCallRef.current = callObj;
             setIsCalling(true);
-            setIsVideoOff(type !== 'video');
+            setIsVideoOff(!isVideo);
             callStartTime.current = Date.now();
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -465,15 +463,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const callData = { ...incomingCall };
         setIncomingCall(null);
         try {
-            const constraints = {
-                audio: true,
-                video: callData.type === 'video'
-            };
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
+            const isVideo = callData.type === 'video';
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
             setLocalStream(stream);
             localStreamRef.current = stream;
-            setIsVideoOff(callData.type !== 'video');
+            setIsVideoOff(!isVideo);
 
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -524,15 +518,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const joinActiveCall = useCallback(async (conversationId: string, type: 'audio' | 'video') => {
         if (!socketRef.current) return;
         try {
-            const constraints = {
-                audio: true,
-                video: type === 'video'
-            };
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
+            const isVideo = type === 'video';
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
             setLocalStream(stream);
             localStreamRef.current = stream;
-            setIsVideoOff(type !== 'video');
+            setIsVideoOff(!isVideo);
 
             if (user) {
                 monitorAudioLevel(user.id, stream);
@@ -559,6 +549,21 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const toggleVideo = useCallback(async () => {
         if (!localStreamRef.current || !socketRef.current) return;
+
+        // If screen sharing is active, stop it first so we don't conflict tracks
+        if (isScreenSharing) {
+            console.log("[toggleVideo] Stopping active screen share before toggling camera");
+            if (screenStreamRef.current) {
+                screenStreamRef.current.getTracks().forEach(t => t.stop());
+                screenStreamRef.current = null;
+            }
+            setIsScreenSharing(false);
+            // Force localStream refresh
+            if (localStreamRef.current) {
+                setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+            }
+        }
+
         let vt = localStreamRef.current.getVideoTracks()[0];
         if (!vt) {
             try {
@@ -567,10 +572,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 localStreamRef.current.addTrack(track);
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
                 peerConnections.current.forEach(async (pc, tid) => {
-                    pc.addTrack(track, localStreamRef.current!);
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    socketRef.current?.emit('call-user', { to: tid, offer, type: 'video', conversationId: activeCallRef.current?.conversationId });
+                    // Replace the video sender if one exists, otherwise add track
+                    const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+                    if (sender) {
+                        await sender.replaceTrack(track);
+                    } else {
+                        pc.addTrack(track, localStreamRef.current!);
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        socketRef.current?.emit('call-user', { to: tid, offer, type: 'video', conversationId: activeCallRef.current?.conversationId });
+                    }
                 });
                 setIsVideoOff(false);
             } catch (e) {
@@ -580,7 +591,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             vt.enabled = !vt.enabled;
             setIsVideoOff(!vt.enabled);
         }
-    }, []);
+    }, [isScreenSharing]);
 
     const endCall = useCallback(() => {
         const active = activeCallRef.current;
@@ -641,14 +652,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         setIsScreenSharing(false);
 
+        // Force localStream state update so React re-renders the video element
+        if (localStreamRef.current) {
+            setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+        }
+
         const vt = localStreamRef.current?.getVideoTracks()[0];
         peerConnections.current.forEach(async (pc) => {
             try {
-                const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-                if (sender) {
-                    await sender.replaceTrack(vt || null);
+                const senders = pc.getSenders();
+                const videoSender = senders.find(s => s.track?.kind === 'video');
+                if (videoSender) {
+                    await videoSender.replaceTrack(vt || null);
+                } else if (vt) {
+                    pc.addTrack(vt, localStreamRef.current!);
                 }
-            } catch (e) { console.warn("[ScreenShare] Failed to revert track", e); }
+            } catch (e) {
+                console.warn("[ScreenShare] Failed to revert track", e);
+            }
         });
     }, [isScreenSharing]);
 
@@ -690,6 +711,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [isScreenSharing, stopScreenShare]);
 
+    const [callDuration, setCallDuration] = useState(0);
+
+    useEffect(() => {
+        let interval: any;
+        if (activeCall && !isCalling) { // Timer starts when it's an active call (accepted) and NOT in calling state
+            interval = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
+        } else {
+            setCallDuration(0);
+        }
+        return () => clearInterval(interval);
+    }, [activeCall, isCalling]);
+
     const contextValue = useMemo(() => ({
         socket, isConnected, sendMessage, joinRoom,
         isCalling, activeCall, incomingCall, localStream, remoteStreams,
@@ -698,15 +733,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         endCall, isMuted, isVideoOff,
         toggleAudio: () => { if (localStreamRef.current) { const t = localStreamRef.current.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setIsMuted(!t.enabled); } } },
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus, sendTypingStatus,
-        isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers
+        isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
+        callDuration
     }), [
         socket, isConnected, sendMessage, joinRoom,
         isCalling, activeCall, incomingCall, localStream, remoteStreams,
         callParticipants, activeRoomCall,
         initiateCall, acceptCall, joinActiveCall, endCall, isMuted, isVideoOff,
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus,
-        sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers
+        sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
+        callDuration
     ]);
+
 
     return (
         <ChatContext.Provider value={contextValue}>

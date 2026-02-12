@@ -40,6 +40,13 @@
     --accent-purple: #E3E8F0;
     --accent-indigo: #BABCC2;
     --accent-teal: #BABCC2;
+    color-scheme: dark;
+  }
+
+  /* Global cursor fix for dark mode */
+  .dark input,
+  .dark textarea {
+    caret-color: var(--foreground);
   }
 
   html,
@@ -105,6 +112,13 @@
     -webkit-text-fill-color: var(--foreground);
     -webkit-box-shadow: 0 0 0px 1000px var(--card) inset;
     transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Dropdown option styling */
+  select option {
+    background-color: var(--card);
+    color: var(--foreground);
+    padding: 10px;
   }
 }
 

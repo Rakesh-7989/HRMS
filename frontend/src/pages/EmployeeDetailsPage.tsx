@@ -116,7 +116,7 @@ export const EmployeeDetailsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             setTerminateDialogOpen(false);
             toast.success(result.message);
-            navigate('/employees');
+            navigate('/dashboard/employees');
         },
         onError: (err: Error) => toast.error(err.message),
     });
@@ -191,7 +191,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                             The employee you're looking for doesn't exist or has been removed.
                         </p>
-                        <Button onClick={() => navigate('/employees')}>
+                        <Button onClick={() => navigate('/dashboard/employees')}>
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Employees
                         </Button>
@@ -208,7 +208,7 @@ export const EmployeeDetailsPage: React.FC = () => {
             title="Employee Details"
             breadcrumbs={[
                 { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Employees', href: '/employees' },
+                { label: 'Employees', href: '/dashboard/employees' },
                 { label: `${employee.first_name} ${employee.last_name}` },
             ]}
         >
@@ -257,7 +257,7 @@ export const EmployeeDetailsPage: React.FC = () => {
 
                         {canManage && (
                             <div className="flex items-center gap-2 flex-wrap">
-                                <Button variant="outline" onClick={() => navigate(`/employees/${id}/edit`)}>
+                                <Button variant="outline" onClick={() => navigate(`/dashboard/employees/${id}/edit`)}>
                                     <Edit size={16} className="mr-2" />
                                     Edit
                                 </Button>
@@ -458,7 +458,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Documents
                             </h3>
-                            <Button onClick={() => navigate(`/employees/${id}/documents`)}>
+                            <Button onClick={() => navigate(`/dashboard/employees/${id}/documents`)}>
                                 <FileText size={16} className="mr-2" />
                                 View All Documents
                             </Button>

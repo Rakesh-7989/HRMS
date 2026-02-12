@@ -213,7 +213,7 @@ export const EmployeesPage: React.FC = () => {
           {canManage && (
             <div className="flex flex-col items-end">
               <Button
-                onClick={() => navigate('/employees/new')}
+                onClick={() => navigate('/dashboard/employees/new')}
                 disabled={isLimitReached}
                 title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
                 className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
@@ -330,7 +330,7 @@ export const EmployeesPage: React.FC = () => {
                     <tr
                       key={emp.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/employees/${emp.id}`)}
+                      onClick={() => navigate(`/dashboard/employees/${emp.id}`)}
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -394,7 +394,7 @@ export const EmployeesPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/employees/${emp.id}`)}
+                            onClick={() => navigate(`/dashboard/employees/${emp.id}`)}
                             title="View Details"
                           >
                             <Eye size={16} />
@@ -404,7 +404,7 @@ export const EmployeesPage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => navigate(`/employees/${emp.id}/edit`)}
+                                onClick={() => navigate(`/dashboard/employees/${emp.id}/edit`)}
                                 title="Edit"
                               >
                                 <Edit size={16} />

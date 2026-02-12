@@ -165,6 +165,17 @@ export const authService = {
     }
   },
 
+  resetPassword: async (token: string, password: string): Promise<void> => {
+    const response = await api.post<{ status: string; message: string }>('/auth/reset-password', {
+      token,
+      newPassword: password,
+      confirmPassword: password,
+    });
+    if (response.data.status !== 'success') {
+      throw new Error(response.data.message || 'Failed to reset password');
+    }
+  },
+
   listActiveSessions: async (): Promise<any[]> => {
     const response = await api.get<{ status: 'success'; sessions: any[] }>('/auth/sessions');
     if (response.data.status !== 'success') {

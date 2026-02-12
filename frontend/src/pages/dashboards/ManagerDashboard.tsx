@@ -1166,7 +1166,7 @@ export const ManagerDashboard: React.FC = () => {
                   key={member.id}
                   member={member}
                   delay={0.8 + i * 0.05}
-                  onClick={() => navigate(`/employees/${member.user_id}`)}
+                  onClick={() => navigate(`/dashboard/employees/${member.user_id}`)}
                 />
               ))}
             </div>

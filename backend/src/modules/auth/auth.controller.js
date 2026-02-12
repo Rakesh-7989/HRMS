@@ -31,8 +31,8 @@ exports.login = async (req, res) => {
        FROM users u
        LEFT JOIN employees e ON e.user_id = u.id
        LEFT JOIN tenants t ON t.id = u.tenant_id
-       WHERE u.email = $1`,
-      [email]
+       WHERE LOWER(u.email) = LOWER($1)`,
+      [email.toLowerCase()]
     );
 
     if (userRes.rowCount === 0) {
@@ -259,7 +259,7 @@ exports.forgotPassword = async (req, res) => {
     await pool.query(
       `INSERT INTO password_resets (email, token, expires_at)
        VALUES ($1, $2, now() + interval '15 minutes')`,
-      [email, token]
+      [email.toLowerCase(), token]
     );
 
     try {
@@ -314,15 +314,19 @@ exports.resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // 4. Update user's password
-    await pool.query(
+    const updateRes = await pool.query(
       `UPDATE users
        SET password_hash = $1,
            must_change_password = false,
            last_password_change = now(),
            updated_at = now()
-       WHERE email = $2`,
+       WHERE LOWER(email) = LOWER($2)`,
       [hashedPassword, email]
     );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ message: "User not found for password reset" });
+    }
 
     // 5. Delete reset token so it cannot be reused
     await pool.query(`DELETE FROM password_resets WHERE token = $1`, [token]);

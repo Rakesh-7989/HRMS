@@ -12,12 +12,13 @@ import {
   Smartphone, Tablet, Globe, LayoutDashboard, Briefcase, UserCheck,
   MapPin, Columns, ClipboardList, Calendar, IndianRupee, Loader2, Star, Check,
   MessageCircle, Video, Zap,
-  Package, Network, BarChart3, Users, Fingerprint,
+  Package, Network, Users,
   Twitter, Linkedin, Github, Youtube, Mail, Phone
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { plansService, Plan } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
+import rolesVisual from '@/assets/hrms_roles.png';
 
 const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, colorConfig }) => {
   const Icon = feature.icon;
@@ -235,7 +236,7 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
       {feature.id === '2fa' && (
         <div className="relative">
           <div className="p-5 bg-white/5 rounded-full border border-white/10">
-            <Fingerprint size={32} className={cn("opacity-80", colorConfig.text)} />
+            <Shield size={32} className={cn("opacity-80", colorConfig.text)} />
           </div>
           <motion.div
             animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
@@ -280,7 +281,7 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
 };
 
 // Assets
-import rolesVisual from '@/assets/hrms_roles.png';
+// import moved to top
 
 const keyFeatures = [
   {
@@ -373,89 +374,6 @@ const keyFeatures = [
       'Cloud-ready architecture'
     ],
     description: "Enterprise-grade protection for your most sensitive data, ensuring full compliance and peace of mind at every scale with role-based access control."
-  },
-  {
-    id: 'collaboration',
-    title: 'Instant Collaboration',
-    icon: Zap,
-    color: 'blue',
-    points: [
-      'Real-time Chat & Private Direct Messages',
-      'High-Definition Video Conferencing',
-      'Instant Screen Sharing & Presentations',
-      'Secure File Transfers within Team'
-    ],
-    description: "Bridge the distance between your team members. With integrated video calls and real-time messaging, communication is fluid, fast, and secure."
-  },
-  {
-    id: 'assets',
-    title: 'Asset Management',
-    icon: Package,
-    color: 'amber',
-    isLarge: false,
-    points: [
-      'Centralized hardware & software inventory',
-      'Digital asset request & return workflows',
-      'Condition tracking and assignment history',
-      'Automated notifications for returns'
-    ],
-    description: "Master your company inventory. Track everything from laptops to licenses with a transparent lifecycle management system that reduces loss and improves accountability."
-  },
-  {
-    id: 'hierarchy',
-    title: 'Visual Hierarchy',
-    icon: Network,
-    color: 'purple',
-    isLarge: true,
-    points: [
-      'Interactive Organizational Tree View',
-      'Explore reporting lines and departments',
-      'Role-based visual indicators',
-      'Search and filter by team or employee'
-    ],
-    description: "Visualize your entire workforce in high resolution. Our interactive org chart gives you immediate clarity on reporting structures and departmental distributions."
-  },
-  {
-    id: 'reports',
-    title: 'Advanced Analytics',
-    icon: BarChart3,
-    color: 'emerald',
-    isLarge: false,
-    points: [
-      'Customizable HR & Payroll reports',
-      'Headcount and churn trend analysis',
-      'Compliance and audit-ready exports',
-      'Visual performance and distribution charts'
-    ],
-    description: "Turn HR data into strategic insights. Generate professional reports in seconds that help you make informed decisions about your workforce and operations."
-  },
-  {
-    id: '2fa',
-    title: 'Premium Security',
-    icon: Fingerprint,
-    color: 'slate',
-    isLarge: false,
-    points: [
-      'Multi-Factor Authentication (MFA/2FA)',
-      'TOTP-based secure secondary login',
-      'Encrypted sensitive data storage',
-      'Full audit logs for all administrative actions'
-    ],
-    description: "Enterprise-grade protection for your most sensitive data. We implement multi-layered security protocols to ensure your organization's records remain private and secure."
-  },
-  {
-    id: 'shifts',
-    title: 'Shift & Roster Planning',
-    icon: Users,
-    color: 'indigo',
-    isLarge: true,
-    points: [
-      'Multiple shift timing configurations',
-      'Automated rotation and roster management',
-      'Late-in and early-out policy enforcement',
-      'Night shift and weekend premium tracking'
-    ],
-    description: "Manage complex work schedules with ease. Whether you have 24/7 operations or flexible timings, our engine handles shifts with mathematical precision."
   }
 ];
 
@@ -762,8 +680,8 @@ export const LandingPage: React.FC = () => {
               <Button size="lg" className="rounded-xl px-8 py-5 text-base group" onClick={() => navigate('/pricing')}>
                 Begin Your Journey <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
               </Button>
-              <Button variant="outline" size="lg" className="rounded-xl px-8 py-5 text-base" onClick={scrollToFeatures}>
-                Explore Capabilities
+              <Button variant="outline" size="lg" className="rounded-xl px-8 py-5 text-base" onClick={() => window.location.href = '#partner'}>
+                Contact Partner
               </Button>
             </motion.div>
           </motion.div>
@@ -895,9 +813,9 @@ export const LandingPage: React.FC = () => {
           >
             {keyFeatures.map((feature) => {
               const Icon = feature.icon;
-              const isLarge = feature.isLarge === undefined
+              const isLarge = (feature as any).isLarge === undefined
                 ? (feature.id === 'geofencing' || feature.id === 'payroll' || feature.id === 'collaboration')
-                : feature.isLarge;
+                : (feature as any).isLarge;
 
               const colorConfig = {
                 emerald: { text: 'text-emerald-500', dot: 'bg-emerald-500/40', glow: 'bg-emerald-500', gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent' },

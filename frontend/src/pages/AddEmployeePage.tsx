@@ -9,7 +9,7 @@ export const AddEmployeePage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate('/employees');
+    navigate('/dashboard/employees');
   };
 
   // Subscription Query for Limit Check
@@ -40,7 +40,7 @@ export const AddEmployeePage: React.FC = () => {
         title="Add Employee"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard/organization' },
-          { label: 'Employees', href: '/employees' },
+          { label: 'Employees', href: '/dashboard/employees' },
           { label: 'Add Employee' },
         ]}
       >
@@ -55,7 +55,7 @@ export const AddEmployeePage: React.FC = () => {
           </p>
           <div className="flex gap-3 mt-4">
             <button
-              onClick={() => navigate('/employees')}
+              onClick={() => navigate('/dashboard/employees')}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors"
             >
               Back to Employees
@@ -77,7 +77,7 @@ export const AddEmployeePage: React.FC = () => {
       title="Add Employee"
       breadcrumbs={[
         { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Employees', href: '/employees' },
+        { label: 'Employees', href: '/dashboard/employees' },
         { label: 'Add Employee' },
       ]}
     >

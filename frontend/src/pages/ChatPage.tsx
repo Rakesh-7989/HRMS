@@ -223,6 +223,8 @@ export const ChatPage = () => {
     const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null); // Message ID for reaction picker
     const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
     const [showPins, setShowPins] = useState(false);
+    const [isViewingGroupProfile, setIsViewingGroupProfile] = useState(false);
+
 
     const handleStatusChange = async (status: 'ONLINE' | 'AWAY' | 'DND' | 'BUSY' | 'OFFLINE') => {
         setUserStatus(status);
@@ -358,6 +360,19 @@ export const ChatPage = () => {
                         )
                     }));
                 });
+
+                // Also update the active conversation cache if this user is a participant
+                if (selectedConversationId) {
+                    queryClient.setQueryData(['conversation', selectedConversationId], (old: Conversation | undefined) => {
+                        if (!old) return old;
+                        return {
+                            ...old,
+                            participants: old.participants.map(p =>
+                                p.id === userId ? { ...p, status } : p
+                            )
+                        };
+                    });
+                }
             });
 
             socket.on('message_updated', (updatedMessage: Message) => {
@@ -566,8 +581,10 @@ export const ChatPage = () => {
             );
             setEditingMessageId(null);
             setEditContent('');
-        } catch (err) {
+            import('react-hot-toast').then(({ toast }) => toast.success('Message updated'));
+        } catch (err: any) {
             console.error("Failed to update", err);
+            import('react-hot-toast').then(({ toast }) => toast.error(err.message || 'Failed to update message'));
         }
     };
 
@@ -1015,7 +1032,13 @@ export const ChatPage = () => {
                                     >
                                         <Search size={20} />
                                     </button>
-                                    <button className="hover:text-gray-600 dark:hover:text-gray-200"><MoreVertical size={20} /></button>
+                                    <button
+                                        onClick={() => activeConversation?.type === 'GROUP' && setIsViewingGroupProfile(true)}
+                                        className="hover:text-gray-600 dark:hover:text-gray-200"
+                                        title="Group Info"
+                                    >
+                                        <MoreVertical size={20} />
+                                    </button>
                                 </div>
                             </div>
 
@@ -1170,7 +1193,7 @@ export const ChatPage = () => {
                                                         <>
                                                             {msg.type === 'FILE' ? (
                                                                 <a
-                                                                    href={`${API_BASE_URL.replace('/api', '')}${msg.file_url}`}
+                                                                    href={msg.file_url?.startsWith('http') ? msg.file_url : `${API_BASE_URL.replace('/api', '')}${msg.file_url}`}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     className={cn(
@@ -1178,6 +1201,7 @@ export const ChatPage = () => {
                                                                         isMe ? "bg-white/10 hover:bg-white/20" : "bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700"
                                                                     )}
                                                                 >
+
                                                                     <div className={cn("p-2 rounded-lg", isMe ? "bg-white/20" : "bg-primary/10 text-primary")}>
                                                                         <Paperclip size={20} />
                                                                     </div>
@@ -1362,10 +1386,12 @@ export const ChatPage = () => {
                                                 <Smile size={20} />
                                             </button>
                                             {showEmojiPicker && (
-                                                <EmojiPicker
-                                                    onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
-                                                    onClose={() => setShowEmojiPicker(false)}
-                                                />
+                                                <div className="absolute bottom-full mb-4 right-0 z-[100]">
+                                                    <EmojiPicker
+                                                        onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
+                                                        onClose={() => setShowEmojiPicker(false)}
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -1409,6 +1435,50 @@ export const ChatPage = () => {
                 message={forwardingMessage}
                 onForward={(targetId) => forwardingMessage && handleForward(forwardingMessage, targetId)}
             />
+            {isViewingGroupProfile && activeConversation && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                            <h3 className="font-black uppercase tracking-widest text-sm text-gray-900 dark:text-white">Group Intelligence</h3>
+                            <button onClick={() => setIsViewingGroupProfile(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"><X size={18} /></button>
+                        </div>
+                        <div className="p-8 text-center bg-gradient-to-b from-primary/5 to-transparent">
+                            <div className="w-24 h-24 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
+                                {getConversationDetails(activeConversation).initials}
+                            </div>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation).name}</h2>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation.participants?.length || 0} Operatives Enrolled</p>
+                        </div>
+                        <div className="p-6">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Roster Management</h4>
+                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                {activeConversation.participants?.map((p: any) => (
+                                    <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
+                                                {p.first_name?.[0]}{p.last_name?.[0]}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
+                                                <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
+                                            </div>
+                                        </div>
+                                        {p.id === user?.id && <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 mt-2">
+                            <button
+                                onClick={() => setIsViewingGroupProfile(false)}
+                                className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <CreateGroupModal
                 isOpen={isGroupModalOpen}
                 onClose={() => setIsGroupModalOpen(false)}

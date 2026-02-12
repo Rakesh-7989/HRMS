@@ -5,6 +5,7 @@ import { Users, UserPlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
+import { Select } from '@/components/ui/Select';
 import {
     Table,
     TableHeader,
@@ -124,11 +125,10 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex-1">
                                 <Label htmlFor="employee" className="sr-only">Select Employee</Label>
-                                <select
+                                <Select
                                     id="employee"
                                     value={selectedEmployee}
                                     onChange={(e) => setSelectedEmployee(e.target.value)}
-                                    className="h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 >
                                     <option value="">Select an employee...</option>
                                     {availableEmployees.map(emp => (
@@ -136,19 +136,18 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                                             {emp.first_name} {emp.last_name} ({emp.email})
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </div>
                             <div className="w-full sm:w-32">
                                 <Label htmlFor="role" className="sr-only">Role</Label>
-                                <select
+                                <Select
                                     id="role"
                                     value={selectedRole}
                                     onChange={(e) => setSelectedRole(e.target.value as ProjectMemberRole)}
-                                    className="h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 >
                                     <option value="MEMBER">Member</option>
                                     <option value="LEAD">Lead</option>
-                                </select>
+                                </Select>
                             </div>
                             <Button
                                 onClick={handleAddMember}

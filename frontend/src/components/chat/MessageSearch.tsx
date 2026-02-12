@@ -61,9 +61,11 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                         autoFocus
                         className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') goToNext();
+                            if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); goToNext(); }
+                            if (e.key === 'ArrowUp') { e.preventDefault(); goPrevious(); }
                             if (e.key === 'Escape') onClose();
                         }}
+
                     />
                 </div>
 

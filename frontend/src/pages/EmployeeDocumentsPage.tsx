@@ -98,7 +98,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
             title={`Documents: ${employee ? `${employee.first_name} ${employee.last_name}` : 'Loading...'}`}
             breadcrumbs={[
                 { label: 'Dashboard', href: '/' },
-                { label: 'Employees', href: '/employees' },
+                { label: 'Employees', href: '/dashboard/employees' },
                 { label: 'Documents' }
             ]}
         >

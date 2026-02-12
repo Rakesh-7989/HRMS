@@ -40,7 +40,7 @@ export const EditEmployeePage: React.FC = () => {
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                             The employee you're trying to edit doesn't exist.
                         </p>
-                        <Button onClick={() => navigate('/employees')}>
+                        <Button onClick={() => navigate('/dashboard/employees')}>
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Employees
                         </Button>
@@ -55,24 +55,24 @@ export const EditEmployeePage: React.FC = () => {
             title={`Edit ${employee.first_name} ${employee.last_name}`}
             breadcrumbs={[
                 { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Employees', href: '/employees' },
-                { label: `${employee.first_name} ${employee.last_name}`, href: `/employees/${id}` },
+                { label: 'Employees', href: '/dashboard/employees' },
+                { label: `${employee.first_name} ${employee.last_name}`, href: `/dashboard/employees/${id}` },
                 { label: 'Edit' },
             ]}
         >
             <Card className="p-6">
                 <div className="mb-6">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/employees/${id}`)}>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/employees/${id}`)}>
                         <ArrowLeft size={16} className="mr-2" />
                         Back to Details
                     </Button>
                 </div>
                 <CreateEmployeeForm
                     open={true}
-                    onOpenChange={() => navigate(`/employees/${id}`)}
+                    onOpenChange={() => navigate(`/dashboard/employees/${id}`)}
                     asPage
                     editEmployee={employee}
-                    onSuccess={() => navigate(`/employees/${id}`)}
+                    onSuccess={() => navigate(`/dashboard/employees/${id}`)}
                 />
             </Card>
         </DashboardLayout>
