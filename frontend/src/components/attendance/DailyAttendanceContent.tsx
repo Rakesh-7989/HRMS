@@ -544,7 +544,9 @@ export const DailyAttendanceContent: React.FC = () => {
                                             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
                                             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
                                             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Duration</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Eff. Hours</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Overtime</th>
                                             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
                                             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                         </tr>
@@ -562,6 +564,14 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
                                                 <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                                                     {calculateWorkDuration(att.check_in_time, att.check_out_time)}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 font-mono">
+                                                    {att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-'}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 font-mono">
+                                                    {att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
+                                                        <span className="text-green-600 font-semibold">+{att.overtime_hours} hrs</span>
+                                                    ) : '-'}
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <div className="flex flex-col gap-1">

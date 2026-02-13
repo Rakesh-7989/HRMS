@@ -29,16 +29,16 @@ exports.createUser = async (db, data, actor) => {
       }
     }
 
-    // ADMIN can create EMPLOYEE, MANAGER, HR
+    // ADMIN can create EMPLOYEE, MANAGER, HR, ADMIN
     if (actor.role === "ADMIN") {
-      if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
-        throw new Error("ADMIN can only create EMPLOYEE, MANAGER, or HR roles");
+      if (!["EMPLOYEE", "MANAGER", "HR", "ADMIN"].includes(data.role)) {
+        throw new Error("ADMIN can only create EMPLOYEE, MANAGER, HR, or ADMIN roles");
       }
     }
 
-    // Only SUPER_ADMIN can create ADMIN role
-    if (data.role === "ADMIN" && actor.role !== "SUPER_ADMIN") {
-      throw new Error("Only SUPER_ADMIN can create ADMIN role");
+    // Only SUPER_ADMIN or ADMIN can create ADMIN role
+    if (data.role === "ADMIN" && !["SUPER_ADMIN", "ADMIN"].includes(actor.role)) {
+      throw new Error("Only SUPER_ADMIN or ADMIN can create ADMIN role");
     }
 
     // Check employee limit
@@ -422,16 +422,19 @@ exports.getUserById = async (db, id, tenantId) => {
      SELECT u.*, 
             e.id AS employee_uuid,
             e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
-             e.employee_id, e.join_date, e.employment_type, e.shift, e.shift_id,
+             e.employee_id, e.join_date, e.employment_type, e.shift_id,
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
-            e.bank_name, e.account_name, e.account_number, e.ifsc_code, e.tax_id,
+            e.emergency_name, e.emergency_phone, e.emergency_relation,
+            COALESCE(esd.bank_name, e.bank_name) as bank_name, e.account_name, COALESCE(esd.bank_account_number, e.account_number) as account_number, COALESCE(esd.bank_ifsc, e.ifsc_code) as ifsc_code, e.tax_id,
             e.uan, e.pf_account, e.esi_number, e.profile_photo_url, e.aadhar_number, e.branch_name, e.annual_salary, e.job_location,
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
+            COALESCE(sh.name, e.shift) as shift,
             esd.ctc
      FROM users u 
      LEFT JOIN employees e ON e.user_id = u.id
      LEFT JOIN employees m ON m.id = e.reports_to
+     LEFT JOIN shifts sh ON sh.id = e.shift_id
      LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
      WHERE u.id=$1 AND u.tenant_id=$2
      `,
@@ -639,24 +642,32 @@ exports.getMyProfile = async (db, user) => {
       e.emergency_relation,
       e.join_date,
       e.employment_type,
-      e.shift,
+      COALESCE(sh.name, e.shift) as shift,
+      sh.start_time as shift_start_time,
+      sh.end_time as shift_end_time,
+      sh.end_time as shift_end_time,
       e.shift_id,
-      e.bank_name,
+      COALESCE(esd.bank_name, e.bank_name) as bank_name,
+      COALESCE(esd.bank_account_number, e.account_number) as account_number,
+      COALESCE(esd.bank_ifsc, e.ifsc_code) as ifsc_code,
       e.account_name,
-       e.account_number,
-      e.ifsc_code,
       e.tax_id,
       e.uan,
       e.pf_account,
       e.esi_number,
       e.aadhar_number,
       e.reports_to,
+      m.first_name as manager_first_name,
+      m.last_name as manager_last_name,
       e.profile_photo_url,
       s.status as subscription_status,
       p.name as subscription_plan_name,
       t.settings as tenant_settings
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id
+    LEFT JOIN employees m ON m.id = e.reports_to
+    LEFT JOIN shifts sh ON sh.id = e.shift_id
+    LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
     LEFT JOIN tenants t ON t.id = u.tenant_id
     LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id AND s.status != 'CANCELLED'
     LEFT JOIN plans p ON s.plan_id = p.id

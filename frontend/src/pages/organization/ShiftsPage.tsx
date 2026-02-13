@@ -98,7 +98,11 @@ export const ShiftsPage = () => {
         end_time: '',
         break_start_time: '',
         break_end_time: '',
-        grace_period_minutes: 0
+        grace_period_minutes: 0,
+        work_hours: 9.0,
+        half_day_threshold_hours: 4.0,
+        overtime_enabled: false,
+        week_offs: [] as string[]
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -119,7 +123,11 @@ export const ShiftsPage = () => {
             end_time: shift.end_time,
             break_start_time: shift.break_start_time || '',
             break_end_time: shift.break_end_time || '',
-            grace_period_minutes: shift.grace_period_minutes || 0
+            grace_period_minutes: shift.grace_period_minutes || 0,
+            work_hours: shift.work_hours || 9.0,
+            half_day_threshold_hours: shift.half_day_threshold_hours || 4.0,
+            overtime_enabled: shift.overtime_enabled || false,
+            week_offs: shift.week_offs || []
         });
         setIsModalOpen(true);
     };
@@ -242,6 +250,50 @@ export const ShiftsPage = () => {
                         <div>
                             <Label>Grace Period (Minutes)</Label>
                             <Input type="number" min={0} value={formData.grace_period_minutes} onChange={(e) => setFormData({ ...formData, grace_period_minutes: Math.max(0, parseInt(e.target.value) || 0) })} />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Work Hours (Full Day)</Label>
+                                <Input type="number" step="0.5" value={formData.work_hours} onChange={(e) => setFormData({ ...formData, work_hours: parseFloat(e.target.value) || 0 })} />
+                            </div>
+                            <div>
+                                <Label>Half Day Threshold (Hours)</Label>
+                                <Input type="number" step="0.5" value={formData.half_day_threshold_hours} onChange={(e) => setFormData({ ...formData, half_day_threshold_hours: parseFloat(e.target.value) || 0 })} />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="ot_enabled"
+                                checked={formData.overtime_enabled}
+                                onChange={(e) => setFormData({ ...formData, overtime_enabled: e.target.checked })}
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="ot_enabled">Enable Overtime Calculation</Label>
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block">Week Offs</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                    <label key={day} className="flex items-center space-x-1 border px-2 py-1 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.week_offs.includes(day)}
+                                            onChange={(e) => {
+                                                const newWeekOffs = e.target.checked
+                                                    ? [...formData.week_offs, day]
+                                                    : formData.week_offs.filter(d => d !== day);
+                                                setFormData({ ...formData, week_offs: newWeekOffs });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{day.slice(0, 3)}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>

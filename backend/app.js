@@ -9,7 +9,7 @@ const dbSessionContext = require('./src/middleware/dbSessionContext');
 const logger = require('./src/config/logger');
 const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 const requestLogger = require('./src/middleware/requestLogger');
-const { generalLimiter } = require('./src/middleware/rateLimiter');
+
 
 const app = express();
 
@@ -25,7 +25,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(requestLogger);
 
 // Apply Rate Limiting
-app.use(generalLimiter);
+
 
 // Initialize DB session context for RLS
 app.use(dbSessionContext);

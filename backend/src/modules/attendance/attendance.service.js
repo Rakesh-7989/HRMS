@@ -3,7 +3,7 @@ const logger = require("../../config/logger");
 const geoFencingService = require("../geo_fencing/geoFencing.service");
 
 const getQuery = (db) => {
-  if (db && typeof db.query === "function") return db.query;
+  if (db && typeof db.query === "function") return db.query.bind(db);
   return pool.query.bind(pool);
 };
 
@@ -127,20 +127,36 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     shiftId = shift.id;
 
     // Calculate Late By and Validate Early Clock-in
+    // Calculate Late By and Validate Early/Late Clock-in
     if (shift.start_time) {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = todayDate(); // Use local date, not UTC
       const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
       const actualIn = new Date(`${todayStr}T${now}`);
 
       // EARLY CLOCK-IN VALIDATION
       // Allow 15 minutes buffer before shift starts
-      const EARLY_BUFFER_MINUTES = 15;
+      const EARLY_BUFFER_MINUTES = 30;
       const earlyLimit = new Date(shiftStart.getTime() - EARLY_BUFFER_MINUTES * 60000);
 
       if (actualIn < earlyLimit) {
-        // Format time for display (simple slice if HH:mm:ss)
+        // Format time for display
         const displayTime = shift.start_time.substring(0, 5);
-        throw new Error(`Please clock in at your shift time (${displayTime}). You can clock in ${EARLY_BUFFER_MINUTES} mins early.`);
+        throw new Error(`You are too early! Your shift starts at ${displayTime}. You can clock in from ${earlyLimit.toTimeString().substring(0, 5)} onwards (${EARLY_BUFFER_MINUTES} mins early).`);
+      }
+
+      // LATE CLOCK-IN VALIDATION (After Shift End)
+      if (shift.end_time) {
+        const shiftEnd = new Date(`${todayStr}T${shift.end_time}`);
+        // Handle overnight shifts if needed (start > end implies overnight)
+        if (shiftEnd < shiftStart) {
+          shiftEnd.setDate(shiftEnd.getDate() + 1);
+        }
+
+        // If current time is past shift end (plus maybe a small buffer? Stick to strict for now per user request)
+        if (actualIn > shiftEnd) {
+          const displayEndTime = shift.end_time.substring(0, 5);
+          throw new Error(`Shift ended at ${displayEndTime}. Clock-in is not allowed after shift hours.`);
+        }
       }
 
       // Grace period default 0 if null
@@ -216,13 +232,16 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
   const { calculateHoursDifference } = require('../../utils/dateHelper');
   const { eod_report } = meta; // Extract eod_report from meta
 
+  // Join with shifts to get configuration
   const existing = await query(
     `
-    SELECT *
-    FROM attendance
-    WHERE employee_id = $1
-      AND tenant_id = $2
-      AND date = $3
+    SELECT a.*, 
+           s.work_hours, s.half_day_threshold_hours, s.overtime_enabled
+    FROM attendance a
+    LEFT JOIN shifts s ON a.shift_id = s.id
+    WHERE a.employee_id = $1
+      AND a.tenant_id = $2
+      AND a.date = $3
     `,
     [employeeId, actor.tenantId, today]
   );
@@ -280,15 +299,40 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
   const totalBreakMinutes = parseInt(breakRes.rows[0].total_break || 0);
   const totalBreakHours = totalBreakMinutes / 60;
 
-  const actualWorkHours = workingHours - totalBreakHours;
+  // Effective Work Hours (Actual productive time)
+  const effectiveWorkHours = Math.max(0, workingHours - totalBreakHours);
 
-  // Determine status based on 10-hour rule (adjusted for shifts later if needed)
-  let finalStatus = attendance.status;
-  if (actualWorkHours < 9) { // Assuming 9 hours work + 1 hour break = 10 hours span
-    finalStatus = 'INCOMPLETE_HOURS';
+  // Get Shift Configuration (Defaults if no shift assigned)
+  const requiredWorkHours = parseFloat(attendance.work_hours || 9.0);
+  const halfDayThreshold = parseFloat(attendance.half_day_threshold_hours || 4.0);
+  const isOvertimeEnabled = attendance.overtime_enabled === true;
+
+  // Determine Status and Overtime
+  let finalStatus = attendance.status; // Default to existing (e.g. PRESENT)
+  let overtimeHours = 0;
+
+  if (effectiveWorkHours < halfDayThreshold) {
+    // Less than half day threshold -> Mark as ABSENT or Short Hours
+    // User requirement: "Most HRMS systems support Half Day auto-detection"
+    // If very short, maybe it's just Absent? Let's use 'INCOMPLETE_HOURS' as a safe fallback or 'ABSENT'
+    // Deciding on 'ABSENT' for < threshold, 'HALF_DAY' for > threshold but < full
+    finalStatus = 'ABSENT';
+    // Or keep 'INCOMPLETE_HOURS' if they want to distinguish? 
+    // Let's stick to standard statuses. If it's effectively 2 hours, it's Absent.
+  } else if (effectiveWorkHours < requiredWorkHours) {
+    // More than half day, but less than full day
+    finalStatus = 'HALF_DAY';
   } else {
+    // Met the required hours
     finalStatus = 'PRESENT';
+
+    // Calculate Overtime only if enabled and worked MORE than required
+    if (isOvertimeEnabled && effectiveWorkHours > requiredWorkHours) {
+      overtimeHours = effectiveWorkHours - requiredWorkHours;
+    }
   }
+
+  // Preserve manual override if any? (Not implemented yet, assuming auto-calc for now)
 
   const result = await query(
     `
@@ -297,11 +341,13 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
         check_out_ip   = $2,
         check_out_device = $3,
         status         = $4,
-        updated_by     = $5,
-        eod_report     = $6,
+        effective_work_hours = $5,
+        overtime_hours = $6,
+        updated_by     = $7,
+        eod_report     = $8,
         updated_at     = now()
-    WHERE id = $7
-      AND tenant_id = $8
+    WHERE id = $9
+      AND tenant_id = $10
     RETURNING *
     `,
     [
@@ -309,6 +355,8 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
       meta.ip || "Unknown",
       meta.device || "Browser",
       finalStatus,
+      effectiveWorkHours.toFixed(2),
+      overtimeHours.toFixed(2),
       actor.id,
       eod_report || null, // Save EOD report
       attendance.id,
@@ -798,6 +846,12 @@ exports.getAttendanceSummary = async (db, tenantId, filters) => {
     --Attendance - based
   COUNT(DISTINCT att.date) AS present_days,
     SUM(CASE WHEN att.is_late THEN 1 ELSE 0 END) AS late_days,
+    
+    -- Holiday Count (Global for tenant in range)
+    (SELECT COUNT(*) FROM public_holidays ph 
+     WHERE ph.tenant_id = e.tenant_id 
+     AND ph.date BETWEEN $${fromDate ? p : 2} AND $${fromDate ? p + 1 : 3}
+    ) AS holiday_days,
 
       --Leave - based(full days + 0.5 for half - days)
     COALESCE(
@@ -1247,6 +1301,177 @@ ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 36
   };
 };
 
+/**
+ * GET INDIVIDUAL EMPLOYEE ATTENDANCE REPORT (Detailed)
+ * Includes: Daily Logs, Holidays, Week Offs, Leaves, Overtime
+ */
+exports.getIndividualEmployeeReport = async (db, tenantId, employeeId, filters) => {
+  const query = getQuery(db);
+  const fromDate = filters.from_date;
+  const toDate = filters.to_date;
+
+  if (!fromDate || !toDate) {
+    throw new Error("From Date and To Date are required.");
+  }
+
+  // 1. Fetch Employee & Shift Details
+  const empRes = await query(
+    `SELECT e.id, e.first_name, e.last_name, e.join_date,
+            s.work_hours, s.week_offs, s.half_day_threshold_hours
+     FROM employees e
+     LEFT JOIN shifts s ON e.shift_id = s.id
+     WHERE e.id = $1 AND e.tenant_id = $2`,
+    [employeeId, tenantId]
+  );
+
+  if (empRes.rowCount === 0) throw new Error("Employee not found.");
+  const employee = empRes.rows[0];
+
+  // 2. Fetch Attendance Records
+  const attRes = await query(
+    `SELECT *, date::text as date_str FROM attendance 
+     WHERE employee_id = $1 AND tenant_id = $2 
+     AND date BETWEEN $3 AND $4
+     ORDER BY date ASC`,
+    [employeeId, tenantId, fromDate, toDate]
+  );
+  const attendanceMap = new Map();
+  attRes.rows.forEach(r => {
+    // Use date_str from query to ensure exact date match without timezone shifts
+    const dStr = r.date_str;
+    attendanceMap.set(dStr, r);
+  });
+
+  // 3. Fetch Approved Leaves
+  const leaveRes = await query(
+    `SELECT * FROM leave_applications 
+     WHERE employee_id = $1 AND tenant_id = $2 
+     AND status = 'APPROVED'
+     AND (start_date <= $4 AND end_date >= $3)`,
+    [employeeId, tenantId, fromDate, toDate]
+  );
+
+  // 4. Fetch Public Holidays
+  const holidayRes = await query(
+    `SELECT *, date::text as date_str FROM public_holidays 
+     WHERE tenant_id = $1 
+     AND date BETWEEN $2 AND $3`,
+    [tenantId, fromDate, toDate]
+  );
+  const holidayMap = new Map();
+  holidayRes.rows.forEach(h => {
+    const dStr = h.date_str;
+    holidayMap.set(dStr, h.name);
+  });
+
+  // 5. Generate Calendar Series and Merged Report
+  const report = [];
+  // const { dateDifference, addDays } = require('../../utils/dateHelper'); // Unused
+
+  let currentDate = new Date(fromDate);
+  const end = new Date(toDate);
+
+  let summary = {
+    total_days: 0,
+    present: 0,
+    absent: 0,
+    late: 0,
+    half_day: 0,
+    holidays: 0,
+    week_offs: 0,
+    leaves: 0,
+    total_overtime_hours: 0,
+    total_work_hours: 0
+  };
+
+  while (currentDate <= end) {
+    const dStr = currentDate.toISOString().split('T')[0];
+    const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }); // e.g. "Monday"
+
+    // Default Day Object
+    let dayStatus = 'ABSENT'; // Default assumption
+    let remarks = '';
+    let workHours = 0;
+    let otHours = 0;
+    let checkIn = null;
+    let checkOut = null;
+
+    // Check checks
+    const attRecord = attendanceMap.get(dStr);
+    const isHoliday = holidayMap.has(dStr);
+    const isWeekOff = employee.week_offs && employee.week_offs.includes(dayName);
+
+    // Leave Check
+    const onLeave = leaveRes.rows.find(l => {
+      const start = new Date(l.start_date);
+      const end = new Date(l.end_date); // Parse properly
+      const cur = new Date(dStr);
+      return cur >= start && cur <= end;
+    });
+
+    if (attRecord) {
+      dayStatus = attRecord.status; // PRESENT, HALF_DAY, ETC
+      checkIn = attRecord.check_in_time;
+      checkOut = attRecord.check_out_time;
+      workHours = parseFloat(attRecord.effective_work_hours || 0);
+      otHours = parseFloat(attRecord.overtime_hours || 0);
+
+      if (attRecord.is_late) remarks += `Late by ${attRecord.late_by}. `;
+
+      if (dayStatus === 'PRESENT') summary.present++;
+      else if (dayStatus === 'HALF_DAY') summary.half_day++;
+      else if (dayStatus === 'ABSENT') summary.absent++; // Explicit absent record
+
+      if (attRecord.is_late) summary.late++;
+      summary.total_overtime_hours += otHours;
+      summary.total_work_hours += workHours;
+
+    } else {
+      // No attendance record found
+      if (onLeave) {
+        dayStatus = 'LEAVE';
+        remarks = `On Leave (${onLeave.leave_type_id})`; // Could join leave type name
+        summary.leaves += (onLeave.is_half_day ? 0.5 : 1);
+      } else if (isHoliday) {
+        dayStatus = 'HOLIDAY';
+        remarks = holidayMap.get(dStr);
+        summary.holidays++;
+      } else if (isWeekOff) {
+        dayStatus = 'WEEK_OFF';
+        summary.week_offs++;
+      } else {
+        // Truly Absent
+        dayStatus = 'ABSENT';
+        summary.absent++;
+      }
+    }
+
+    report.push({
+      date: dStr,
+      day: dayName,
+      status: dayStatus,
+      check_in: checkIn,
+      check_out: checkOut,
+      work_hours: workHours.toFixed(2),
+      overtime_hours: otHours.toFixed(2),
+      remarks: remarks.trim()
+    });
+
+    summary.total_days++;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return {
+    employee: {
+      name: `${employee.first_name} ${employee.last_name}`,
+      join_date: employee.join_date,
+      designation: 'N/A' // Could fetch if needed
+    },
+    summary,
+    daily_report: report
+  };
+};
+
 /* ==================== ROLE-BASED ATTENDANCE REPORTS ==================== */
 
 /**
@@ -1270,8 +1495,12 @@ e.first_name,
       a.is_late,
       a.late_by,
       a.status,
-      CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
+      a.effective_work_hours,
+      a.overtime_hours,
+      CASE WHEN a.effective_work_hours IS NOT NULL THEN a.effective_work_hours::text
+           WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
+             ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)::text
+           ELSE NULL
       END AS work_hours
     FROM employees e
     JOIN users u ON e.user_id = u.id
@@ -1358,9 +1587,13 @@ e.first_name,
     a.is_late,
     a.late_by,
     a.status,
-    CASE WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
-ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)
-      END AS work_hours
+    a.effective_work_hours,
+    a.overtime_hours,
+    CASE WHEN a.effective_work_hours IS NOT NULL THEN a.effective_work_hours::text
+         WHEN a.check_in_time IS NOT NULL AND a.check_out_time IS NOT NULL THEN
+           ROUND(EXTRACT(EPOCH FROM(a.check_out_time:: time - a.check_in_time:: time)) / 3600, 2)::text
+         ELSE NULL
+    END AS work_hours
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN attendance a ON e.id = a.employee_id

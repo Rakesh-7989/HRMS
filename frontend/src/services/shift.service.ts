@@ -11,6 +11,10 @@ export interface Shift {
     break_end_time?: string;
     grace_period_minutes?: number;
     is_active: boolean;
+    work_hours?: number;
+    half_day_threshold_hours?: number;
+    week_offs?: string[];
+    overtime_enabled?: boolean;
 }
 
 export const getShifts = async (): Promise<Shift[]> => {

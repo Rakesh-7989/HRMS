@@ -331,8 +331,22 @@ export const ProfilePage: React.FC = () => {
                 <DisplayField label="Date of Joining" value={profile.join_date ? format(new Date(profile.join_date), 'PPP') : '-'} />
                 <DisplayField label="Employment Type" value={profile.employment_type} />
 
-                <DisplayField label="Shift" value={profile.shift} />
-                <DisplayField label="Reports To" value={profile.reports_to || 'N/A'} />
+                <DisplayField
+                  label="Shift"
+                  value={
+                    profile.shift
+                      ? `${profile.shift} ${profile.shift_start_time && profile.shift_end_time ? `(${profile.shift_start_time.slice(0, 5)} - ${profile.shift_end_time.slice(0, 5)})` : ''}`
+                      : '-'
+                  }
+                />
+                <DisplayField
+                  label="Reports To"
+                  value={
+                    profile.manager_first_name
+                      ? `${profile.manager_first_name} ${profile.manager_last_name || ''}`
+                      : (profile.reports_to || 'N/A')
+                  }
+                />
               </div>
 
               <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">

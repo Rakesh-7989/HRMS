@@ -1,28 +1,51 @@
-const db = require('../src/config/db');
+require('dotenv').config();
+const { Pool } = require('pg');
+
+const pool = new Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
+});
 
 async function checkData() {
     try {
-        console.log('--- Employee Salary Details Columns ---');
-        const cols = await db.query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'employee_salary_details'`);
-        console.log(cols.rows.map(r => r.column_name).join(', '));
+        // 1. Check total records
+        const resCount = await pool.query('SELECT COUNT(*) FROM attendance');
+        console.log("Total attendance records:", resCount.rows[0].count);
 
-        console.log('\n--- Employees Data Check ---');
-        const countAll = await db.query('SELECT COUNT(*) FROM employees');
-        console.log('Total Employees (no filter):', countAll.rows[0].count);
+        // 2. Check recent records
+        const resRecent = await pool.query(`
+      SELECT date, employee_id, check_in_time, status, effective_work_hours, overtime_hours 
+      FROM attendance 
+      ORDER BY date DESC 
+      LIMIT 5
+    `);
+        console.log("Recent 5 records:");
+        console.table(resRecent.rows);
 
-        if (parseInt(countAll.rows[0].count) > 0) {
-            const sample = await db.query('SELECT id, tenant_id, status FROM employees LIMIT 3');
-            console.log('Sample Employees:', JSON.stringify(sample.rows, null, 2));
+        // 3. Check for specific date range (last 7 days approx)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const dateStr = sevenDaysAgo.toISOString().split('T')[0];
 
-            // Check status distinct values
-            const statuses = await db.query('SELECT DISTINCT status FROM employees');
-            console.log('Distinct Statuses:', statuses.rows.map(r => r.status).join(', '));
-        }
+        console.log(`Checking records since ${dateStr}...`);
+        const resRange = await pool.query(`
+        SELECT count(*) 
+        FROM attendance 
+        WHERE date >= $1
+    `, [dateStr]);
+        console.log("Records in last 7 days:", resRange.rows[0].count);
 
-        process.exit(0);
-    } catch (e) {
-        console.error(e);
-        process.exit(1);
+        // 4. Check if tenant_id might be an issue (list unique tenant_ids)
+        const resTenants = await pool.query('SELECT DISTINCT tenant_id FROM attendance');
+        console.log("Tenant IDs in attendance:", resTenants.rows.map(r => r.tenant_id));
+
+    } catch (err) {
+        console.error("Error querying data:", err);
+    } finally {
+        await pool.end();
     }
 }
 

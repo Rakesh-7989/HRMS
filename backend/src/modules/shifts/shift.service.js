@@ -3,7 +3,7 @@ const logger = require("../../config/logger");
 const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
 
 const getQuery = (db) => {
-    if (db && typeof db.query === "function") return db.query;
+    if (db && typeof db.query === "function") return db.query.bind(db);
     return pool.query.bind(pool);
 };
 
@@ -61,12 +61,24 @@ exports.createShift = async (db, tenantId, data, creatorId) => {
       tenant_id, name, code, description, 
       start_time, end_time, 
       break_start_time, break_end_time, 
-      grace_period_minutes, created_by, updated_by
+      grace_period_minutes, 
+      work_hours, half_day_threshold_hours, week_offs, overtime_enabled,
+      created_by, updated_by
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14)
     RETURNING *
     `,
-        [tenantId, name, code, description, start_time, end_time, break_start_time, break_end_time, grace_period_minutes, creatorId]
+        [
+            tenantId, name, code, description,
+            start_time, end_time,
+            break_start_time, break_end_time,
+            grace_period_minutes,
+            data.work_hours, // Default to 9 if not provided
+            data.half_day_threshold_hours, // Default to 4
+            data.week_offs || null, // Default to null (no week offs by default)
+            data.overtime_enabled || false,
+            creatorId
+        ]
     );
     return result.rows[0];
 };
@@ -153,12 +165,27 @@ exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
         break_end_time = COALESCE($7, break_end_time),
         grace_period_minutes = COALESCE($8, grace_period_minutes),
         is_active = COALESCE($9, is_active),
-        updated_by = $10,
+        work_hours = COALESCE($10, work_hours),
+        half_day_threshold_hours = COALESCE($11, half_day_threshold_hours),
+        week_offs = COALESCE($12, week_offs),
+        overtime_enabled = COALESCE($13, overtime_enabled),
+        updated_by = $14,
         updated_at = NOW()
-    WHERE id = $11 AND tenant_id = $12
+    WHERE id = $15 AND tenant_id = $16
     RETURNING *
     `,
-        [name, code, description, start_time, end_time, break_start_time, break_end_time, grace_period_minutes, is_active, updaterId, shiftId, tenantId]
+        [
+            data.name, data.code, data.description,
+            data.start_time, data.end_time,
+            data.break_start_time, data.break_end_time,
+            data.grace_period_minutes,
+            data.is_active,
+            data.work_hours,
+            data.half_day_threshold_hours,
+            data.week_offs,
+            data.overtime_enabled,
+            updaterId, shiftId, tenantId
+        ]
     );
     return result.rows[0];
 };

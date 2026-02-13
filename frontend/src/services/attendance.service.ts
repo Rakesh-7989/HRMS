@@ -29,6 +29,8 @@ export interface Attendance {
   shift_start?: string;
   shift_end?: string;
   total_break_seconds?: number;
+  effective_work_hours?: string;
+  overtime_hours?: string;
 }
 
 export interface AttendanceSummaryRow {
@@ -144,6 +146,8 @@ export interface AttendanceReports {
     late_by?: string;
     status: string;
     work_hours: number;
+    effective_work_hours?: number | string;
+    overtime_hours?: number | string;
   }>;
   summary: {
     total_employees?: number;
@@ -282,6 +286,14 @@ export const attendanceService = {
   endBreak: async (): Promise<any> => {
     const response = await api.post('/attendance/break/end');
     return response.data;
+  },
+
+  getIndividualEmployeeReport: async (
+    employeeId: string,
+    params: { from_date: string; to_date: string }
+  ): Promise<any> => {
+    const response = await api.get<{ status: string; data: any }>(`/attendance/report/individual/${employeeId}`, { params });
+    return response.data.data;
   },
 
   // ============================================================================

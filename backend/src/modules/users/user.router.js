@@ -33,7 +33,7 @@ router.post(
 router.get(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
   validate(getUsersSchema),
   controller.getUsers
 );

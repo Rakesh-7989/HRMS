@@ -159,6 +159,13 @@ router.get(
   controller.getAttendanceReports
 );
 
+// ===== INDIVIDUAL REPORT =====
+router.get(
+  "/report/individual/:employeeId",
+  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  controller.getIndividualEmployeeReport
+);
+
 // ===== WEEKLY HOURS FOR TIMESHEET =====
 // Get weekly attendance hours (for timesheet display)
 router.get(
