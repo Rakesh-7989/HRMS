@@ -1,4 +1,5 @@
 import { createBrowserRouter, createRoutesFromElements, Route, Navigate } from 'react-router-dom';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RootLayout } from '@/layouts/RootLayout';
 import { LandingPage } from '@/pages/LandingPage';
@@ -30,6 +31,8 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { TenantsPage } from '@/pages/TenantsPage';
 import { DesignationsPage } from '@/pages/DesignationsPage';
 import Payroll from '@/pages/Payroll';
+import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
+import { RiverProcess } from '@/pages/payroll/RiverProcess';
 import { AssetsPage } from '@/pages/AssetsPage';
 import { AddAssetPage } from '@/pages/AddAssetPage';
 import { AssetDetailsPage } from '@/pages/AssetDetailsPage';
@@ -503,6 +506,24 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+        <Route
+          path="/payroll/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+              <DashboardLayout title="Payroll Command Center">
+                <PayrollDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payroll/process/:runId"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+              <RiverProcess />
+            </ProtectedRoute>
+          }
+        />
       {/* Redirect /dashboard to appropriate role dashboard */}
       <Route path="/dashboard" element={<Navigate to="/dashboard/personal" replace />} />
 

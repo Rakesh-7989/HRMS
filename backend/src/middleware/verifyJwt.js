@@ -4,15 +4,7 @@ const env = require("../config/env");
 const { UnauthorizedError } = require("../utils/customErrors");
 
 module.exports = async function verifyJwt(req, res, next) {
-  // Allow unauthenticated read-only access to public payroll placeholder endpoints
-  // but ONLY when the client does not send an Authorization header.
-  // This avoids skipping authentication when a token is present (which caused 403s
-  // because subsequent requireRole middleware expects req.user to be set).
-  const originalPath = req.originalUrl || req.url || '';
   const header = req.headers.authorization;
-  if (req.method === 'GET' && /^\/api\/payroll(\/|$)/.test(originalPath) && !header) {
-    return next();
-  }
 
   if (!header || !header.startsWith("Bearer ")) {
     return next(new UnauthorizedError("Missing or invalid Authorization header"));
@@ -28,16 +20,10 @@ module.exports = async function verifyJwt(req, res, next) {
   }
 
   try {
-    // Set minimal RLS variables for the initial user lookup, if possible
-    // (We rely on decoded token having tenantId or simply bypassing for this lookup if needed)
-    // Actually, let's update the store right away if we have the decoded tenant ID
+    // Set minimal RLS variables for the initial user lookup
     const store = require("../utils/asyncContext").getStore();
     if (store && decoded.tenantId) {
       store.set("tenantId", decoded.tenantId);
-      // We don't have role yet, but maybe tenantId is enough for RLS access to 'users' table?
-      // If users table is RLS protected by tenant_id, this is crucial.
-    } else if (store) {
-      // If we don't have tenantId (SUPER ADMIN?), we might need to be careful.
     }
 
     // Fetch full user details INCLUDING employee id (join employees table)
@@ -80,36 +66,25 @@ module.exports = async function verifyJwt(req, res, next) {
       }
     }
 
-    // SECURITY FIX: Check if the SPECIFIC session from the token is active
-    // Previously: checked if ANY session was active, allowing revoked tokens to work
-    if (decoded.sessionId) {
-      // New tokens have sessionId - validate it specifically
-      const sessionRes = await pool.query(
-        `SELECT id, is_revoked FROM user_sessions 
-         WHERE id = $1 AND user_id = $2`,
-        [decoded.sessionId, decoded.id]
-      );
+    // SECURITY FIX: Enforce session validation
+    // All valid tokens MUST have a sessionId. Legacy tokens are rejected.
+    if (!decoded.sessionId) {
+      return next(new UnauthorizedError("Invalid token format - please login again"));
+    }
 
-      if (sessionRes.rowCount === 0) {
-        return next(new UnauthorizedError("Session not found - please login again"));
-      }
+    // Validate the specific session
+    const sessionRes = await pool.query(
+      `SELECT id, is_revoked FROM user_sessions 
+       WHERE id = $1 AND user_id = $2`,
+      [decoded.sessionId, decoded.id]
+    );
 
-      if (sessionRes.rows[0].is_revoked) {
-        return next(new UnauthorizedError("Session has been revoked - please login again"));
-      }
-    } else {
-      // Legacy tokens without sessionId - use old check (backwards compatibility)
-      // TODO: Remove this fallback after all users have re-logged in
-      const sessionRes = await pool.query(
-        `SELECT id, is_revoked FROM user_sessions 
-         WHERE user_id = $1 AND is_revoked = false
-         ORDER BY created_at DESC LIMIT 1`,
-        [decoded.id]
-      );
+    if (sessionRes.rowCount === 0) {
+      return next(new UnauthorizedError("Session not found - please login again"));
+    }
 
-      if (sessionRes.rowCount === 0) {
-        return next(new UnauthorizedError("Session has been revoked - please login again"));
-      }
+    if (sessionRes.rows[0].is_revoked) {
+      return next(new UnauthorizedError("Session has been revoked - please login again"));
     }
 
     // Build req.user for controllers

@@ -379,8 +379,8 @@ exports.calculateCTCBreakdown = async (tenantId, structureId, annualCTC) => {
                 // Calculate after basic is known
                 continue;
             case 'FORMULA':
-                // TODO: Implement formula parser
-                break;
+                // Formulas are calculated in a later pass to ensure dependencies are resolved
+                continue;
         }
 
         // Apply min/max constraints

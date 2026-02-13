@@ -144,8 +144,8 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
         throw new Error('Payrun not found');
     }
 
-    if (payrun.status !== 'DRAFT') {
-        throw new Error('Can only calculate DRAFT payruns');
+    if (!['DRAFT', 'PENDING_APPROVAL', 'CALCULATED', 'APPROVED', 'RELEASED'].includes(payrun.status)) {
+        throw new Error(`Can only calculate DRAFT, PENDING_APPROVAL, CALCULATED, APPROVED or RELEASED payruns (Current: ${payrun.status})`);
     }
 
     // 1. Auto-Repair block: Ensure all active employees with CTC have a salary assignment if a default structure exists.
@@ -534,7 +534,31 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const lopDeduction = lopDays * perDaySalary;
 
     // TDS (simplified - actual calculation is complex)
-    const tds = 0; // TODO: Implement based on tax declarations
+    // TDS Calculation
+    // 1. Determine Financial Year
+    const fyStartYear = payrun.period_month >= 4 ? payrun.period_year : payrun.period_year - 1;
+    const financialYear = `${fyStartYear}-${fyStartYear + 1}`;
+
+    // 2. Fetch Tax Declaration
+    const taxDeclRes = await client.query(
+        `SELECT * FROM employee_tax_declarations 
+         WHERE tenant_id = $1 AND employee_id = $2 AND financial_year = $3`,
+        [tenantId, emp.emp_id, financialYear]
+    );
+    const taxDecl = taxDeclRes.rows[0] || { regime: 'NEW' }; // Default to New Regime if no declaration
+
+    // 3. Calculate TDS
+    // Use the Annual CTC from assignment as the base for projection
+    const annualGross = parseFloat(emp.ctc) || 0;
+    const age = calculateAge(emp.date_of_birth);
+
+    // Call the calculator
+    const tdsCalc = statutoryCalculator.calculateTDS(annualGross, taxDecl, age);
+
+    // 4. Set monthly TDS value
+    const tds = tdsCalc.monthlyTDS;
+
+
 
     // Total calculations
     // Use values from structure if they exist (overrides), otherwise use calculated values
@@ -558,15 +582,20 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const structurePT = getStructureValue('PT', 'PROFESSIONAL_TAX');
     const structureLwf = getStructureValue('LWF', 'LWF_EMPLOYEE');
 
+
     // Use structure value if defined (even if 0), otherwise use statutory calculated value
     const finalPfEmployee = structurePfEmployee !== undefined ? structurePfEmployee : pfEmployee;
     const finalEsiEmployee = structureEsiEmployee !== undefined ? structureEsiEmployee : esiEmployee;
     const finalProfessionalTax = structurePT !== undefined ? structurePT : professionalTax;
     const finalLwfEmployee = structureLwf !== undefined ? structureLwf : lwfEmployee;
 
+
+
     const totalEarnings = gross + reimbursementTotal;
     const totalDeductions = finalPfEmployee + finalEsiEmployee + finalProfessionalTax + finalLwfEmployee + tds + loanDeduction + lopDeduction;
     const netSalary = totalEarnings - totalDeductions;
+
+
 
     // ================================================================
     // ADD STATUTORY DEDUCTIONS TO COMPONENTS FOR PAYSLIP DISPLAY

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { PieChart } from '@/components/charts/PieChart';
 import { Users, CreditCard, FileText, PlayCircle, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatINR = (amount: number | null | undefined) =>
@@ -18,6 +19,7 @@ interface PayrollSummaryProps {
 
 export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const { data: orgData, isLoading: orgLoading } = useQuery({
         queryKey: ['dashboard', 'organization'],
@@ -111,7 +113,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                 return (
                                     <button
                                         key={item.label}
-                                        onClick={() => onNavigate(item.action)}
+                                        onClick={() => item.action === 'payslips' ? navigate('/payroll/dashboard') : onNavigate(item.action)}
                                         className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/5 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">

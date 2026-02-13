@@ -6,20 +6,26 @@ import { PayrollSummary } from '@/components/payroll/PayrollSummary';
 import { PayslipsContent } from '@/components/payroll/PayslipsContent';
 import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresContent';
 
+import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
+import { TaxDeclaration } from '@/pages/payroll/TaxDeclaration';
+
 const PAYROLL_TABS = [
+  { id: 'dashboard', label: 'Overview', roles: ['ADMIN', 'HR'] },
   { id: 'summary', label: 'Summary', roles: ['ADMIN', 'HR'] },
-  { id: 'payslips', label: 'Payslips & Tax', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'payslips', label: 'Payslips', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { id: 'tax', label: 'Tax & Compliance', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR'] },
 ] as const;
 
 export const Payroll: React.FC = () => {
   const { user } = useAuth();
   const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
-  const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'summary' : 'payslips');
+  // Default to Dashboard for Admin/HR, Payslips for others
+  const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'dashboard' : 'payslips');
 
   return (
     <DashboardLayout
-      title="Payroll"
+      title="Payroll Management"
       breadcrumbs={[
         { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Payroll' },
@@ -52,10 +58,12 @@ export const Payroll: React.FC = () => {
 
       {/* ===== CONTENT FOR TABS ===== */}
       <div className="min-h-[500px]">
+        {activeTab === 'dashboard' && <PayrollDashboard />}
         {activeTab === 'summary' && (
           <PayrollSummary onNavigate={(tab) => setActiveTab(tab as any)} />
         )}
         {activeTab === 'payslips' && <PayslipsContent />}
+        {activeTab === 'tax' && <TaxDeclaration />}
         {activeTab === 'salary_details' && <SalaryStructuresContent />}
       </div>
     </DashboardLayout>

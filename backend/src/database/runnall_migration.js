@@ -1,15 +1,16 @@
 const fs = require("fs");
 const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 const { Client } = require("pg");
 
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
 const dbConfig = {
-    host: "localhost",
-    user: "hrms_user",
-    password: "postgres",
-    database: "hrms_saas_db",
-    port: 5432
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "postgres",
+    database: process.env.DB_NAME || "hrms_saas_db",
+    port: process.env.DB_PORT || 5432
 };
 
 // Postgres "already exists" errors

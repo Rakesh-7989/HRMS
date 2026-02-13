@@ -4,6 +4,8 @@ const router = express.Router();
 const verifyJwt = require('../../middleware/verifyJwt');
 const requireRole = require('../../middleware/requireRole');
 
+const riverController = require('./river/river.controller'); // Import RiVeR Controller
+
 // Import sub-module routers
 const salaryRouter = require('./salary/salary.router');
 const salaryStructureRouter = require('./salary/salaryStructure.router');
@@ -15,6 +17,7 @@ const payslipRouter = require('./payslip/payslip.router');
 const expensesRouter = require('./Expenses/expenses.router');
 const loansRouter = require('./loans/loans.router');
 const merchantsRouter = require('./Merchants/Merchants.router');
+const taxRouter = require('./tax/tax.router');
 
 // Import services for summary data
 const payrunService = require('./payrun/payrun.service');
@@ -24,6 +27,7 @@ const statutoryService = require('./statutory/statutory.service');
 // ===================================================================
 // MOUNT SUB-MODULE ROUTERS
 // ===================================================================
+router.use('/river', riverController); // Mount RiVeR routes
 router.use('/salary', salaryRouter);
 router.use('/salary-structures', salaryStructureRouter); // New Keka-style salary structures
 router.use('/payrun', payrunRouter);
@@ -34,6 +38,7 @@ router.use('/payslips', payslipRouter);
 router.use('/expenses', expensesRouter);
 router.use('/loans', loansRouter);
 router.use('/merchants', merchantsRouter);
+router.use('/tax', taxRouter);
 
 // ===================================================================
 // PAYROLL SUMMARY (Dashboard Data)

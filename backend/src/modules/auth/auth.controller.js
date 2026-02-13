@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 const env = require("../../config/env");
 const mailer = require("../../config/mailer");
 const logAudit = require("../../utils/auditLogger");
-const otplib = require("otplib");
+const { authenticator } = require("otplib");
 const QRCode = require("qrcode");
 
 exports.login = async (req, res) => {
@@ -426,12 +426,8 @@ exports.setup2FA = async (req, res) => {
     if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
 
     const user = userRes.rows[0];
-    const secret = otplib.generateSecret();
-    const otpauth = otplib.generateURI({
-      label: user.email,
-      issuer: "HRMS GIGGLE",
-      secret
-    });
+    const secret = authenticator.generateSecret();
+    const otpauth = authenticator.keyuri(user.email, "HRMS GIGGLE", secret);
     const qrCodeDataURL = await QRCode.toDataURL(otpauth);
 
     // Save secret temporarily (maybe don't enable yet)
@@ -460,7 +456,7 @@ exports.enable2FA = async (req, res) => {
     if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
 
     const secret = userRes.rows[0].two_factor_secret;
-    const { valid: isValid } = otplib.verifySync({ token, secret });
+    const isValid = authenticator.verify({ token, secret });
 
     if (!isValid) {
       return res.status(400).json({ message: "Invalid 2FA token" });
@@ -531,7 +527,7 @@ exports.verify2FALogin = async (req, res) => {
     );
     const user = userRes.rows[0];
 
-    const { valid: isValid } = otplib.verifySync({ token, secret: user.two_factor_secret });
+    const isValid = authenticator.verify({ token, secret: user.two_factor_secret });
 
     // Check recovery codes if token fails
     let isRecovery = false;
