@@ -12,6 +12,7 @@ interface DialogProps {
   title?: string;
   description?: string;
   className?: string;
+  footer?: React.ReactNode;
 }
 
 import { createPortal } from 'react-dom';
@@ -23,6 +24,7 @@ export const Dialog: React.FC<DialogProps> = ({
   title,
   description,
   className,
+  footer
 }) => {
   // Use a portal to render the dialog at the document body level
   // This ensures it sits on top of everything regardless of stacking contexts
@@ -80,6 +82,13 @@ export const Dialog: React.FC<DialogProps> = ({
               <div className={cn('flex-1 overflow-y-auto w-full px-6 py-4', !className && 'px-6 py-4')}>
                 {children}
               </div>
+
+              {/* Footer */}
+              {footer && (
+                <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
+                  {footer}
+                </div>
+              )}
             </motion.div>
           </div>
         </>

@@ -523,7 +523,7 @@ export const CreateEmployeeForm = ({
   };
 
   const formFields = (
-    <div className="flex flex-col h-full space-y-3">
+    <div className="flex flex-col h-full space-y-3 pb-6">
       {/* Progress Indicator */}
       <div className="mb-2 px-4">
         <div className="flex items-center justify-between relative">
@@ -1376,40 +1376,7 @@ export const CreateEmployeeForm = ({
         </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-6 pb-2 mt-8 border-t border-gray-100 dark:border-gray-800">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setSlideDirection('left');
-            setIsTransitioning(true);
-            setTimeout(() => {
-              setCurrentStep(prev => Math.max(prev - 1, 1));
-              setIsTransitioning(false);
-            }, 250);
-          }}
-          disabled={currentStep === 1}
-          className={`${currentStep === 1 ? 'invisible' : ''} h-11 px-6 text-base border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white transition-colors`}
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-        </Button>
 
-        {currentStep < 4 ? (
-          <Button type="button" onClick={handleNext} className="h-11 px-8 text-base bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5">
-            Next <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            type="submit"
-            isLoading={isLoading}
-            disabled={isLoading}
-            className="h-11 px-8 text-base bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/25 transition-all hover:-translate-y-0.5"
-          >
-            {isEditMode ? 'Update Employee' : 'Create Employee'} <Check className="w-4 h-4 ml-2" />
-          </Button>
-        )}
-      </div>
     </div>
   );
 
@@ -1448,20 +1415,67 @@ export const CreateEmployeeForm = ({
   );
 
 
+  const footerContent = (
+    <div className="flex items-center justify-between p-6">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          setSlideDirection('left');
+          setIsTransitioning(true);
+          setTimeout(() => {
+            setCurrentStep(prev => Math.max(prev - 1, 1));
+            setIsTransitioning(false);
+          }, 250);
+        }}
+        disabled={currentStep === 1}
+        className={`${currentStep === 1 ? 'invisible' : ''} h-11 px-6 text-base border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white transition-colors`}
+      >
+        <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+      </Button>
+
+      {currentStep < 4 ? (
+        <Button
+          type="button"
+          onClick={handleNext}
+          className="h-11 px-8 text-base bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5"
+        >
+          Next <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          onClick={() => formik.handleSubmit()}
+          isLoading={isLoading}
+          disabled={isLoading}
+          className="h-11 px-8 text-base bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/25 transition-all hover:-translate-y-0.5"
+        >
+          {isEditMode ? 'Update Employee' : 'Create Employee'} <Check className="w-4 h-4 ml-2" />
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <>
       {asPage ? (
         <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
-          {formFields}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {formFields}
+          </div>
+          <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 bg-white dark:bg-gray-900 z-10">
+            {footerContent}
+          </div>
         </form>
       ) : (
         <Dialog
           open={open}
           onOpenChange={onOpenChange}
           title={isEditMode ? 'Edit Employee' : 'Add New Employee'}
-          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          className="max-w-3xl"
+          footer={footerContent}
         >
-          <form onSubmit={formik.handleSubmit}>
+          <form onSubmit={formik.handleSubmit} id="create-employee-form">
             {formFields}
           </form>
         </Dialog>
