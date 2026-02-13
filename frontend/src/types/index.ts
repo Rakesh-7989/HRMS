@@ -23,6 +23,35 @@ export interface User {
   subscription_plan_name?: string;
   two_factor_enabled?: boolean;
   tenant_settings?: TenantSettings;
+
+  // Professional
+  shift?: string;
+  shift_start_time?: string; // HH:mm:ss
+  shift_end_time?: string; // HH:mm:ss
+  manager_first_name?: string;
+  manager_last_name?: string;
+  reports_to?: string;
+  join_date?: string;
+  employment_type?: string;
+
+  // Personal
+  date_of_birth?: string;
+  gender?: string;
+  marital_status?: string;
+  nationality?: string;
+  address?: string;
+
+  // Emergency
+  emergency_name?: string;
+  emergency_phone?: string;
+  emergency_relation?: string;
+
+  // Financial
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+  ifsc_code?: string;
+  tax_id?: string;
 }
 
 export interface AuthResponse {

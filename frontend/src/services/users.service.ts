@@ -23,10 +23,14 @@ export interface User {
   designation_id?: string;
   reports_to?: string;
   manager_id?: string;
+  manager_first_name?: string;
+  manager_last_name?: string;
   join_date?: string;
   employment_type?: string;
   shift?: string;
   shift_id?: string;
+  shift_start_time?: string;
+  shift_end_time?: string;
   job_location?: string;
   address?: string;
   // Financial

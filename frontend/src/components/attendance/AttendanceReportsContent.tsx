@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
+import { adminService } from '@/services/admin.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays } from 'date-fns';
-import { BarChart } from '@/components/charts/BarChart';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { PieChart } from '@/components/charts/PieChart';
 import { Select } from '@/components/ui/Select';
@@ -24,7 +24,6 @@ import {
     PieChart as PieChartIcon,
     LineChart as LineChartIcon,
     FileText,
-    AlertTriangle,
     CheckCircle,
     XCircle
 } from 'lucide-react';
@@ -36,12 +35,12 @@ export const AttendanceReportsContent: React.FC = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
-    const [reportType, setReportType] = useState<'summary' | 'detailed' | 'trends' | 'compliance'>('summary');
+    const [reportType] = useState<'summary' | 'detailed' | 'trends' | 'compliance'>('summary');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedView, setSelectedView] = useState<'analytics' | 'reports' | 'individual'>('analytics');
 
     // Employee Search Config
-    const [employeeSearch, setEmployeeSearch] = useState('');
+    const [employeeSearch] = useState('');
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
     const { data: employees = [] } = useQuery({
         queryKey: ['users', 'list', employeeSearch],
@@ -93,24 +92,14 @@ export const AttendanceReportsContent: React.FC = () => {
         enabled: selectedView === 'reports'
     });
 
-    const { data: tenantProfile } = useQuery({
+    useQuery({
         queryKey: ['tenant-profile'],
         queryFn: () => adminService.getTenantProfile(),
     });
 
-
-
-    const isCheckOutEarly = (checkOutTime: string | null | undefined) => {
-        if (!checkOutTime || !tenantProfile?.settings?.workingHours?.endTime) return false;
-        const checkOut = checkOutTime.substring(0, 5);
-        const target = tenantProfile.settings.workingHours.endTime;
-        return checkOut < target;
-    };
-
     // Role-based access control
     const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
     const canViewTeamAnalytics = user?.role === 'MANAGER';
-    const showEmployeeColumn = canViewOrgAnalytics || canViewTeamAnalytics;
 
 
     // Prepare chart data based on user role

@@ -1,18 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
 import { attendanceService } from '@/services/attendance.service';
-import { usersService } from '@/services/users.service'; // Kept if needed, otherwise remove
-import { useAuth } from '@/contexts/AuthContext';
-// import { format, startOfMonth, endOfMonth } from 'date-fns'; // Unused now
+import { format } from 'date-fns';
 import {
     FileText,
-    Search,
     Download,
     Calendar,
     CheckCircle,
@@ -27,11 +21,8 @@ interface IndividualAttendanceReportProps {
 }
 
 export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProps> = ({ employeeId, fromDate, toDate }) => {
-    const { user } = useAuth();
-    // Removed internal state for employee selection and date range
-
     // Fetch Report
-    const { data: reportData, isLoading, refetch } = useQuery({
+    const { data: reportData, isLoading } = useQuery({
         queryKey: ['attendance', 'individual-report', employeeId, fromDate, toDate],
         queryFn: () => attendanceService.getIndividualEmployeeReport(employeeId, { from_date: fromDate, to_date: toDate }),
         enabled: !!employeeId && !!fromDate && !!toDate,
