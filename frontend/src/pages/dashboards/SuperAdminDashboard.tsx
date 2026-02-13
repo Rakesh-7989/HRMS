@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  ComposedChart, AreaChart, Area, Bar, PieChart, Pie, Cell, Legend,
+  AreaChart, Area, PieChart, Pie, Cell, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 

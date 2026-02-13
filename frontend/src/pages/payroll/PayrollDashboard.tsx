@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+
 import api from '@/services/api';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
     Users, UserCheck, UserMinus, AlertCircle,
-    PlayCircle, Clock, TrendingUp, TrendingDown,
+    PlayCircle, Clock,
     DollarSign, Shield, ArrowRight, BarChart3,
     FileText, AlertTriangle, CheckCircle2, Building2,
     Calendar, Wallet, Receipt, Activity
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
+    XAxis, YAxis, CartesianGrid, Tooltip,
+    ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 
 interface DashboardStats {
@@ -91,7 +90,6 @@ const cardClass = "bg-white dark:bg-gray-800 border border-gray-100 dark:border-
 
 export const PayrollDashboard = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);

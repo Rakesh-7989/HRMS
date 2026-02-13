@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { taxService, TaxSection, TaxRegime, ITDeclaration } from '@/services/tax.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,13 +7,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { FileText, Download, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export const TaxDeclaration: React.FC = () => {
-    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('regime');
-    const [fy, setFy] = useState('2024-2025'); // Default FY, could be dynamic
+    const [fy] = useState('2024-2025'); // Default FY, could be dynamic
     const [regime, setRegime] = useState<TaxRegime | null>(null);
     const [sections, setSections] = useState<TaxSection[]>([]);
     const [declarations, setDeclarations] = useState<ITDeclaration[]>([]);

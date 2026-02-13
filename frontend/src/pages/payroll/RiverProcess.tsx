@@ -3,20 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/Card';
 import {
-    Check, Send, Lock, ThumbsUp, ThumbsDown,
+    Check, Send, Lock, ThumbsUp,
     Users, Calendar, DollarSign, AlertTriangle,
     ChevronDown, ChevronUp, Search, Download,
     FileText, Building2, Shield, BarChart3,
     Wallet, ArrowLeft, Zap, CheckCircle2,
     XCircle, TrendingUp, TrendingDown, Eye,
-    Loader2, PartyPopper, Receipt, Clock
+    Loader2, Receipt, Clock
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, PieChart, Pie, Cell
+    ResponsiveContainer, Cell
 } from 'recharts';
 
 const STAGES = ['REVIEW', 'INITIATE', 'VERIFY', 'RELEASE'];
@@ -383,7 +382,6 @@ const ReviewStage = ({ data, onNext }: any) => {
 // INITIATE STAGE (Enhanced)
 // =============================================================================
 const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
-    const totalEmployees = data?.categories?.headcount?.newJoiners || 0;
 
     return (
         <div className="max-w-6xl mx-auto">
