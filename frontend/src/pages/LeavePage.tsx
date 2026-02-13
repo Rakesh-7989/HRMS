@@ -56,7 +56,7 @@ export const LeavePage: React.FC = () => {
       ]}
     >
       {/* ===== TAB NAVIGATION ===== */}
-      <div className="flex flex-wrap items-center gap-2 mb-6 overflow-x-auto pb-2">
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-3 px-1 custom-scrollbar flex-nowrap w-full snap-x">
         {LEAVE_TABS.map((tab) => {
           if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
 
@@ -65,9 +65,9 @@ export const LeavePage: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${isActive
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0 snap-start ${isActive
                 ? 'bg-primary text-white border-primary'
-                : 'bg-white border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
+                : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
                 }`}
             >
               {tab.label}

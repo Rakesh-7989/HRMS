@@ -113,6 +113,7 @@ const createValidationSchema = Yup.object({
 
 // Edit mode has less strict validation
 const editValidationSchema = Yup.object({
+  employee_id: Yup.string(),
   role: Yup.string(),
   first_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
@@ -329,7 +330,7 @@ export const CreateEmployeeForm = ({
       department_id: editEmployee?.department_id || '',
       designation_id: editEmployee?.designation_id || '',
       reports_to: editEmployee?.reports_to || editEmployee?.manager?.id || editEmployee?.manager_id || '',
-      employee_id: editEmployee?.employee_id || '',
+      employee_id: editEmployee?.employee_id || (!isEditMode ? (idSettings?.nextId || '') : ''),
       join_date: editEmployee?.join_date?.split('T')[0] || '',
       employment_type: editEmployee?.employment_type || 'FULL_TIME',
       shift: editEmployee?.shift || '',
@@ -442,6 +443,13 @@ export const CreateEmployeeForm = ({
 
     return () => clearTimeout(timeoutId);
   }, [formik.values.ifsc_code]);
+
+  // Initialize employee ID from settings in Create Mode
+  useEffect(() => {
+    if (!isEditMode && idSettings?.nextId && !formik.values.employee_id && (idSettings?.usePrefix ?? true)) {
+      formik.setFieldValue('employee_id', idSettings.nextId);
+    }
+  }, [idSettings?.nextId, isEditMode, formik.values.employee_id, idSettings?.usePrefix]);
 
   // Helper to check if form has validation errors
   const hasValidationErrors = Object.keys(formik.errors).length > 0 && formik.submitCount > 0;
@@ -811,12 +819,16 @@ export const CreateEmployeeForm = ({
                 name="role"
                 value={formik.values.role}
                 onChange={formik.handleChange}
-                disabled={!['ADMIN'].includes(user?.role || '')}
+                disabled={!['ADMIN', 'SUPER_ADMIN', 'HR'].includes(user?.role || '')}
               >
                 <option value="EMPLOYEE">Employee</option>
                 <option value="MANAGER">Manager</option>
                 <option value="HR">HR</option>
-                <option value="ADMIN">Admin</option>
+                {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && (
+                  <>
+                    <option value="ADMIN">Admin</option>
+                  </>
+                )}
               </Select>
             </div>
 
@@ -833,7 +845,8 @@ export const CreateEmployeeForm = ({
                     value={formik.values.employee_id}
                     onChange={formik.handleChange}
                     placeholder="Employee ID"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                    disabled={!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '')}
+                    className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm ${!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                   {formik.touched.employee_id && formik.errors.employee_id && (
                     <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
@@ -900,12 +913,15 @@ export const CreateEmployeeForm = ({
                         </div>
                       )
                     ) : (
-                      /* Prefix configured - show auto-generated preview */
+                      /* Prefix configured - show auto-generated preview but allow edit */
                       <input
                         type="text"
-                        value={idSettings?.nextId || 'Auto-generated'}
-                        disabled
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white opacity-70 cursor-not-allowed shadow-sm"
+                        name="employee_id"
+                        value={formik.values.employee_id || idSettings?.nextId || ''}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder={idSettings?.nextId || 'Auto-generated'}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       />
                     )
                   ) : (

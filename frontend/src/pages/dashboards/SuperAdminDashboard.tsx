@@ -7,12 +7,12 @@ import { dashboardService } from '@/services/dashboard.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, Activity, Users, Shield, ChevronRight,
-  Server, Database, Zap, Globe, Settings, Plus, BarChart3,
+  Server, Database, Zap, Globe, Settings, Plus,
   Sparkles, Tag, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  AreaChart, Area, PieChart, Pie, Cell, Legend,
+  ComposedChart, AreaChart, Area, Bar, PieChart, Pie, Cell, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
@@ -20,13 +20,21 @@ import {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700">
-        <p className="text-xs text-gray-400 mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} className="text-sm font-semibold" style={{ color: entry.color }}>
-            {entry.name}: {entry.value}
-          </p>
-        ))}
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-white/10 p-3 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] min-w-[140px] ring-1 ring-black/5">
+        <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em] mb-2 border-b border-gray-50 dark:border-white/5 pb-1">{label}</p>
+        <div className="space-y-2">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: entry.color }} />
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{entry.name}</span>
+              </div>
+              <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums">
+                {entry.value}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -174,15 +182,22 @@ export const SuperAdminDashboard: React.FC = () => {
     status: (data as any)?.systemHealth?.status || 'healthy'
   }), [data]);
 
-  // Stable Chart data (reversed to show time progressing L to R)
+  // Platform Growth Data (Cumulative Breakdown)
   const growthChartData = useMemo(() => {
     const tGrowth = [...((data as any)?.tenantGrowth || [])].reverse();
-    const uGrowth = [...((data as any)?.userGrowth || [])].reverse();
-    return tGrowth.map((t: any, index: number) => ({
-      date: t.month || t.date ? format(new Date(t.month || t.date), 'MMM dd') : 'Day ' + index,
-      Tenants: t.count || t.tenants || t.new_tenants || 0,
-      Users: uGrowth[index]?.count || uGrowth[index]?.users || uGrowth[index]?.new_users || 0,
-    }));
+    const eGrowth = [...((data as any)?.employeeGrowth || [])].reverse();
+
+    return tGrowth.map((t: any, index: number) => {
+      const tenants = Number(t.count || 0);
+      const employees = Number(eGrowth[index]?.count || 0);
+
+      return {
+        date: t.month || t.date ? format(new Date(t.month || t.date), 'MMM dd') : 'Day ' + index,
+        Tenants: tenants,
+        Employees: employees,
+        Total: tenants + employees
+      };
+    });
   }, [data]);
 
   const tenantStatusData = useMemo(() => {
@@ -358,37 +373,133 @@ export const SuperAdminDashboard: React.FC = () => {
             transition={{ delay: 0.5 }}
             className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-indigo-600" />
                   Growth Analytics
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Platform expansion trends</p>
+                <p className="text-xs text-gray-500 font-medium">Organizations & Population growth</p>
+              </div>
+              <div className="flex gap-4">
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tenants</p>
+                  <p className="text-xl font-black text-indigo-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
+                </div>
+                <div className="text-right border-l border-gray-100 dark:border-gray-800 pl-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Employees</p>
+                  <p className="text-xl font-black text-emerald-500 leading-none">{(data as any)?.metrics?.total_employees || 0}</p>
+                </div>
               </div>
             </div>
 
-            <div className="h-64">
+            <div className="h-64 mt-4 relative">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={growthChartData}>
+                <AreaChart data={growthChartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorTenants" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    <linearGradient id="tenantGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.02} />
                     </linearGradient>
-                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <linearGradient id="employeeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="Tenants" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorTenants)" />
-                  <Area type="monotone" dataKey="Users" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} strokeOpacity={0.2} />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }}
+                    minTickGap={60}
+                    dy={10}
+                  />
+                  <YAxis
+                    yAxisId="tenants"
+                    mirror={true}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#4f46e5', fontSize: 10, fontWeight: 800 }}
+                    allowDecimals={false}
+                    domain={[0, 'auto']}
+                  />
+                  <YAxis
+                    yAxisId="employees"
+                    orientation="right"
+                    mirror={true}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#10b981', fontSize: 10, fontWeight: 800 }}
+                    allowDecimals={false}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    content={({ active, payload }: any) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white dark:bg-gray-900 px-4 py-3 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/5 min-w-[170px]">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-50 dark:border-white/5 pb-2">
+                              {payload[0].payload.date}
+                            </p>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                  <span className="text-xs font-bold text-gray-500">Tenants</span>
+                                </div>
+                                <span className="text-xs font-black text-indigo-600">{payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span className="text-xs font-bold text-gray-500">Employees</span>
+                                </div>
+                                <span className="text-xs font-black text-emerald-600">{payload.find((p: any) => p.dataKey === 'Employees')?.value || 0}</span>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-2 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                              <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">Total Scale</span>
+                              <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
+                                {Number(payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0) +
+                                  Number(payload.find((p: any) => p.dataKey === 'Employees')?.value || 0)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    yAxisId="tenants"
+                    type="monotone"
+                    dataKey="Tenants"
+                    stroke="#4f46e5"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#tenantGradient)"
+                    activeDot={{ r: 5, strokeWidth: 0, fill: '#4f46e5' }}
+                  />
+                  <Area
+                    yAxisId="employees"
+                    type="monotone"
+                    dataKey="Employees"
+                    stroke="#10b981"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#employeeGradient)"
+                    activeDot={{ r: 5, strokeWidth: 0, fill: '#10b981' }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
+
+              <div className="absolute top-0 left-0 pointer-events-none">
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Live Sync</span>
+                </div>
+              </div>
             </div>
           </motion.div>
 

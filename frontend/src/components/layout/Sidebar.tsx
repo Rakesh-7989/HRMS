@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
-import logo from '../../assets/logo.png';
+import logo from '../../../Assests/logo.png';
 import {
   LayoutDashboard,
   Users,

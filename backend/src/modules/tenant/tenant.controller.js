@@ -168,7 +168,7 @@ exports.toggleEmployeeIdMode = async (req, res) => {
     if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
       return res.status(403).json({
         status: "error",
-        message: "Only Admin or HR can configure employee ID settings"
+        message: "Only Admin can configure employee ID settings"
       });
     }
 

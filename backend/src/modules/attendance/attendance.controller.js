@@ -4,6 +4,20 @@ const logger = require("../../config/logger");
 /**
  * CLOCK IN
  */
+const getDeviceFromUA = (req) => {
+  const ua = req.headers['user-agent'] || '';
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+    return 'Tablet';
+  }
+  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(ua)) {
+    return 'Mobile';
+  }
+  return 'Desktop';
+};
+
+/**
+ * CLOCK IN
+ */
 exports.clockIn = async (req, res) => {
   try {
     const clientIp =
@@ -12,11 +26,13 @@ exports.clockIn = async (req, res) => {
       req.connection?.remoteAddress ||
       "Unknown";
 
+    const device = req.body.device || getDeviceFromUA(req);
+
     const result = await attendanceService.clockIn(
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
+      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device }
     );
 
     res.status(201).json({
@@ -41,6 +57,8 @@ exports.clockOut = async (req, res) => {
       req.connection?.remoteAddress ||
       "Unknown";
 
+    const device = req.body.device || getDeviceFromUA(req);
+
     const result = await attendanceService.clockOut(
       req.db,
       req.user.employeeId,
@@ -49,7 +67,7 @@ exports.clockOut = async (req, res) => {
         ip: clientIp,
         latitude: req.body.latitude,
         longitude: req.body.longitude,
-        device: req.body.device,
+        device,
         eod_report: req.body.eod_report // Pass EOD report
       }
     );

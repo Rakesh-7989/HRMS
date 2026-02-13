@@ -9,8 +9,8 @@ export interface SystemDashboard {
     active_tenants_24h: number;
     active_users_24h: number;
   };
-  tenantGrowth: Array<{ date: string; new_tenants: number }>;
-  userGrowth: Array<{ date: string; new_users: number }>;
+  tenantGrowth: Array<{ date: string; count: number }>;
+  employeeGrowth: Array<{ date: string; count: number }>;
   topActiveTenants: Array<{
     id: string;
     name: string;
@@ -115,6 +115,8 @@ export interface HRDashboard {
     unique_employees: number;
     late_count: number;
     late_percentage: number;
+    total_employees: number;
+    not_clocked_in: number;
   };
   employeesOnLeaveToday: Array<{
     id: string;

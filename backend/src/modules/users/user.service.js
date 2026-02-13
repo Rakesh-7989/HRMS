@@ -63,8 +63,10 @@ exports.createUser = async (db, data, actor) => {
       throw new Error(err.message || "Failed to generate employee ID. Please configure the employee ID prefix first.");
     }
 
-    // If null, manual mode is active - use employee_id from request
-    if (generatedEmployeeId === null) {
+    // If null, manual mode is active or user overrode it
+    if (data.employee_id && data.employee_id.trim()) {
+      generatedEmployeeId = data.employee_id.trim();
+    } else if (generatedEmployeeId === null) {
       if (!data.employee_id || !data.employee_id.trim()) {
         throw new Error("Employee ID is required when auto-prefix is disabled. Please enter an employee ID.");
       }
@@ -593,11 +595,25 @@ exports.updateEmployee = async (db, id, updates, actor) => {
         [updates.role, result.rows[0].user_id, tenantId]
       );
     }
-  } catch (salaryDetailsError) {
-    logger.warn("Salary details update failed in updateEmployee. Tables might be missing.", salaryDetailsError.message);
-  }
 
-  return result.rows[0];
+    return result.rows[0];
+
+  } catch (err) {
+    // Handle database unique constraint violations
+    if (err.code === '23505') {
+      if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
+        throw new Error(`Employee ID "${updates.employee_id}" is already assigned to another employee`);
+      }
+      if (err.constraint === 'users_email_per_tenant' || err.message.includes('email')) {
+        throw new Error("An employee with this email address already exists in your organization");
+      }
+    }
+
+    // Check if it was just a salary detail error (which we logged and continued)
+    // Actually we want to rethrow critical errors, but salary detail errors were already caught in inner try/catch blocks
+
+    throw err;
+  }
 };
 
 /* ---------------------------- ESS: MY PROFILE ---------------------------- */

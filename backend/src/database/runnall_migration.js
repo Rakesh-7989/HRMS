@@ -49,7 +49,7 @@ async function runMigrations() {
         const files = fs
             .readdirSync(MIGRATIONS_DIR)
             .filter(f => f.endsWith(".sql"))
-            .sort();
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
         console.log(`🔍 Found ${files.length} migration files`);
 

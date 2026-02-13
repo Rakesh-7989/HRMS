@@ -29,31 +29,55 @@ exports.getSuperAdminDashboard = async (db) => {
     `
   );
 
-  // Get tenant growth (last 30 days)
+  // Get tenant growth (cumulative last 30 days)
   const tenantGrowth = await query(
     `
-    SELECT
-      DATE(created_at) AS date,
-      COUNT(*)::INTEGER AS new_tenants
-    FROM tenants
-    WHERE created_at > NOW() - INTERVAL '30 days'
-    GROUP BY DATE(created_at)
-    ORDER BY date DESC
-    LIMIT 30
+    WITH dates AS (
+      SELECT generate_series(
+        DATE_TRUNC('day', NOW() - INTERVAL '29 days'),
+        DATE_TRUNC('day', NOW()),
+        '1 day'::interval
+      )::date AS date
+    ),
+    daily_new AS (
+      SELECT DATE(created_at) as date, COUNT(*)::INTEGER as new_count
+      FROM tenants
+      GROUP BY 1
+    )
+    SELECT 
+      d.date,
+      (SELECT COUNT(*)::INTEGER FROM tenants WHERE created_at < DATE_TRUNC('day', NOW() - INTERVAL '29 days')) + 
+      SUM(COALESCE(dn.new_count, 0)) OVER (ORDER BY d.date) as count
+    FROM dates d
+    LEFT JOIN daily_new dn ON d.date = dn.date
+    ORDER BY d.date DESC
     `
   );
 
-  // Get user growth (last 30 days)
-  const userGrowth = await query(
+  // Get employee growth (cumulative last 30 days)
+  const employeeGrowth = await query(
     `
-    SELECT
-      DATE(created_at) AS date,
-      COUNT(*)::INTEGER AS new_users
-    FROM users
-    WHERE created_at > NOW() - INTERVAL '30 days' AND role != 'SUPER_ADMIN'
-    GROUP BY DATE(created_at)
-    ORDER BY date DESC
-    LIMIT 30
+    WITH dates AS (
+      SELECT generate_series(
+        DATE_TRUNC('day', NOW() - INTERVAL '29 days'),
+        DATE_TRUNC('day', NOW()),
+        '1 day'::interval
+      )::date AS date
+    ),
+    daily_new AS (
+      SELECT DATE(e.created_at) as date, COUNT(*)::INTEGER as new_count
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE u.is_deleted = false
+      GROUP BY 1
+    )
+    SELECT 
+      d.date,
+      (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE e.created_at < DATE_TRUNC('day', NOW() - INTERVAL '29 days') AND u.is_deleted = false) + 
+      SUM(COALESCE(dn.new_count, 0)) OVER (ORDER BY d.date) as count
+    FROM dates d
+    LEFT JOIN daily_new dn ON d.date = dn.date
+    ORDER BY d.date DESC
     `
   );
 
@@ -119,7 +143,7 @@ exports.getSuperAdminDashboard = async (db) => {
   return {
     metrics: systemMetrics.rows[0],
     tenantGrowth: tenantGrowth.rows,
-    userGrowth: userGrowth.rows,
+    employeeGrowth: employeeGrowth.rows,
     recentTenants: topActiveTenants.rows, // Map to recentTenants for frontend
     systemHealth: {
       ...systemHealth.rows[0],
@@ -360,7 +384,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
     `
       SELECT role, COUNT(*):: INTEGER as count
       FROM users
-      WHERE tenant_id = $1
+      WHERE tenant_id = $1 AND is_deleted = false
       GROUP BY role
       ORDER BY count DESC
     `,
@@ -560,7 +584,7 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
     ) as utilization_percentage
     FROM leave_types lt
     LEFT JOIN leave_balances lb ON lt.id = lb.leave_type_id AND lb.year = EXTRACT(YEAR FROM CURRENT_DATE)
-    WHERE lt.tenant_id = $1
+    WHERE lt.tenant_id = $1 AND lt.is_active = true
     GROUP BY lt.id, lt.name
     ORDER BY count DESC
     `,
@@ -570,18 +594,32 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   // Get attendance overview
   const attendanceOverview = await query(
     `
-  SELECT
+    WITH stats AS(
+      SELECT
+        COUNT(*):: INTEGER AS total_checkins,
+      COUNT(DISTINCT employee_id):: INTEGER AS unique_employees,
+      COUNT(CASE WHEN is_late THEN 1 END):: INTEGER AS late_count
+      FROM attendance
+      WHERE tenant_id = $1 AND date = CURRENT_DATE
+    ),
+    totals AS(
+      SELECT COUNT(*):: INTEGER AS total_employees
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.tenant_id = $1 AND u.is_active = true AND u.is_deleted = false
+    )
+    SELECT
       CURRENT_DATE AS date,
-    COUNT(*)::INTEGER AS total_checkins,
-      COUNT(DISTINCT employee_id)::INTEGER AS unique_employees,
-        COUNT(CASE WHEN is_late THEN 1 END)::INTEGER AS late_count,
-          CASE
-          WHEN COUNT(*) = 0 THEN 0
-          ELSE ROUND(100.0 * COUNT(CASE WHEN is_late THEN 1 END) / COUNT(*), 2)
-      END AS late_percentage
-    FROM attendance
-    WHERE tenant_id = $1
-    AND date = CURRENT_DATE
+    s.total_checkins,
+    s.unique_employees,
+    s.late_count,
+    CASE
+        WHEN s.total_checkins = 0 THEN 0
+        ELSE ROUND(100.0 * s.late_count / s.total_checkins, 2)
+      END AS late_percentage,
+    t.total_employees,
+    GREATEST(0, t.total_employees - s.unique_employees) AS not_clocked_in
+    FROM stats s, totals t
     `,
     [tenantId]
   );
@@ -594,9 +632,9 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
     e.first_name,
     e.last_name,
     d.name AS department,
-      COALESCE(lt.name, 'Unknown') AS leave_type,
-        la.is_half_day,
-        la.half_day_session
+    COALESCE(lt.name, 'Unknown') AS leave_type,
+    la.is_half_day,
+    la.half_day_session
     FROM leave_applications la
     JOIN employees e ON la.employee_id = e.id
     LEFT JOIN departments d ON e.department_id = d.id
@@ -616,8 +654,8 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   e.id,
     e.first_name,
     e.last_name,
-    COUNT(la.id)::INTEGER AS total_leave_days,
-      COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END)::INTEGER AS approved_days
+    COUNT(la.id):: INTEGER AS total_leave_days,
+    COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END):: INTEGER AS approved_days
     FROM employees e
     LEFT JOIN leave_applications la ON la.employee_id = e.id AND la.tenant_id = $1
     WHERE e.tenant_id = $1
@@ -676,7 +714,7 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
   SELECT
   COUNT(*) AS direct_reports,
     COUNT(CASE WHEN u.is_active THEN 1 END) AS active_employees,
-      COUNT(CASE WHEN u.is_active = false THEN 1 END) AS inactive_employees
+    COUNT(CASE WHEN u.is_active = false THEN 1 END) AS inactive_employees
     FROM employees e
     JOIN users u ON u.id = e.user_id
     WHERE e.reports_to = $1
@@ -690,14 +728,14 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     `
     SELECT
       e.id,
-      e.user_id,
-      e.first_name,
-      e.last_name,
-      u.email,
-      u.is_active,
-      d.name AS department,
-      des.name AS designation,
-        (SELECT COUNT(*) FROM leave_applications 
+    e.user_id,
+    e.first_name,
+    e.last_name,
+    u.email,
+    u.is_active,
+    d.name AS department,
+    des.name AS designation,
+    (SELECT COUNT(*) FROM leave_applications 
        WHERE employee_id = e.id AND status = 'APPROVED' 
        AND CURRENT_DATE BETWEEN start_date AND end_date
        AND tenant_id = $2) AS on_leave_today
@@ -980,10 +1018,10 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
   // Get weekly activity for Hours Graph
   const weeklyActivityRes = await query(
     `
-    SELECT
-      date,
-      check_in_time,
-      check_out_time
+  SELECT
+  date,
+    check_in_time,
+    check_out_time
     FROM attendance
     WHERE employee_id = $1 AND tenant_id = $2
     AND date >= CURRENT_DATE - INTERVAL '7 days'
@@ -1009,13 +1047,13 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
   // Get task metrics (My Projects)
   const taskMetricsRes = await query(
     `
-    SELECT column_key, COUNT(*)::INTEGER as count
+    SELECT column_key, COUNT(*):: INTEGER as count
     FROM tasks t
-    WHERE t.tenant_id = $1 
-    AND (
-      t.assigned_to = $2 
-      OR EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
-    )
+    WHERE t.tenant_id = $1
+  AND(
+    t.assigned_to = $2 
+      OR EXISTS(SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
+  )
     GROUP BY column_key
     `,
     [tenantId, employeeId]
@@ -1027,11 +1065,11 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     SELECT t.id, t.title, t.priority, t.column_key, t.due_date, p.name as project_name
     FROM tasks t
     LEFT JOIN projects p ON t.project_id = p.id
-    WHERE t.tenant_id = $1 
-    AND (
-      t.assigned_to = $2 
-      OR EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
-    )
+    WHERE t.tenant_id = $1
+  AND(
+    t.assigned_to = $2 
+      OR EXISTS(SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $2)
+  )
     ORDER BY t.created_at DESC
     LIMIT 5
     `,

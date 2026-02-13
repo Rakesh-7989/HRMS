@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { dashboardService } from '@/services/dashboard.service';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
-  Calendar, Clock, UserX, CheckCircle, TrendingUp,
+  Calendar, Clock, UserX, CheckCircle,
   Users, AlertCircle, UserCheck, Timer, Sparkles, ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -244,6 +244,8 @@ export const HRDashboard: React.FC = () => {
     unique_employees: 0,
     late_count: 0,
     late_percentage: 0,
+    total_employees: 0,
+    not_clocked_in: 0,
   };
   const employeesOnLeave = baseData?.employeesOnLeaveToday || [];
 
@@ -573,6 +575,7 @@ export const HRDashboard: React.FC = () => {
               </div>
             }
           >
+
             {isUtilizationLoading ? (
               <div className="h-72 flex flex-col gap-4 justify-center">
                 {Array(4).fill(0).map((_, i) => (
@@ -582,47 +585,61 @@ export const HRDashboard: React.FC = () => {
                   </div>
                 ))}
               </div>
+            ) : leaveDistData.length === 0 ? (
+              <div className="h-72 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                <div className="p-4 rounded-full bg-slate-50 dark:bg-slate-800/50 mb-3">
+                  <Timer className="w-8 h-8 text-slate-300" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest">No Leave Types Found</p>
+                <p className="text-[10px] mt-1">Configure leave types in settings</p>
+              </div>
             ) : (
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={leaveDistData} layout="vertical" barSize={20}>
+                  <BarChart data={leaveDistData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} barSize={16}>
                     <defs>
-                      <linearGradient id="barGradientHR" x1="0" y1="0" x2="1" y2="0">
+                      <linearGradient id="barGradient1" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#6366f1" />
                         <stop offset="100%" stopColor="#8b5cf6" />
                       </linearGradient>
+                      <linearGradient id="barGradient2" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#ec4899" />
+                        <stop offset="100%" stopColor="#d946ef" />
+                      </linearGradient>
+                      <linearGradient id="barGradient3" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                      <linearGradient id="barGradient4" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#d97706" />
+                      </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} unit="%" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={true} vertical={true} opacity={0.3} />
+                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }} unit="%" />
                     <YAxis
                       type="category"
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#374151', fontSize: 12, fontWeight: 500 }}
-                      width={120}
+                      tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 600 }}
+                      width={100}
                     />
                     <Tooltip
+                      cursor={{ fill: 'transparent' }}
                       content={<CustomTooltip />}
-                      formatter={(value: any) => [`${value}% Utilization`]}
                     />
                     <Bar
                       dataKey="value"
-                      fill="url(#barGradientHR)"
-                      radius={[0, 8, 8, 0]}
+                      radius={[0, 4, 4, 0]}
                       isAnimationActive={true}
-                      animationBegin={300}
-                      animationDuration={1800}
-                      animationEasing="ease-in-out"
-                      label={{
-                        position: 'right',
-                        formatter: (val: any) => `${val}%`,
-                        fill: '#6366f1',
-                        fontSize: 10,
-                        fontWeight: 'black',
-                        offset: 10
-                      }}
-                    />
+                      animationBegin={0}
+                      animationDuration={1500}
+                    >
+                      {leaveDistData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={`url(#barGradient${(index % 4) + 1})`} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -658,45 +675,55 @@ export const HRDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {[
                 {
-                  label: 'Total Logs',
-                  desc: 'Total check-in events today',
-                  value: attendanceOverview.total_checkins,
+                  label: 'Total Employees',
+                  desc: 'Active workforce',
+                  value: attendanceOverview.total_employees || 0,
+                  icon: Users,
+                  accent: 'text-indigo-400',
+                  bg: 'bg-indigo-500/15',
+                  glow: 'shadow-indigo-500/10'
+                },
+                {
+                  label: 'Total Present',
+                  desc: 'Employees clocked in',
+                  value: attendanceOverview.unique_employees,
                   icon: UserCheck,
                   accent: 'text-cyan-400',
                   bg: 'bg-cyan-500/15',
                   glow: 'shadow-cyan-500/10'
                 },
                 {
-                  label: 'Team Present',
-                  desc: 'Unique staff in office',
-                  value: attendanceOverview.unique_employees,
-                  icon: Users,
+                  label: 'Not Clocked In',
+                  desc: 'Yet to check in',
+                  value: attendanceOverview.not_clocked_in || 0,
+                  icon: UserX,
+                  accent: 'text-slate-400',
+                  bg: 'bg-slate-500/15',
+                  glow: 'shadow-slate-500/10'
+                },
+                {
+                  label: 'On Time',
+                  desc: 'Arrived within schedule',
+                  value: Math.max(0, attendanceOverview.total_checkins - attendanceOverview.late_count),
+                  icon: CheckCircle,
                   accent: 'text-emerald-400',
                   bg: 'bg-emerald-500/15',
                   glow: 'shadow-emerald-500/10'
                 },
                 {
-                  label: 'Late Entries',
-                  desc: 'Clock-ins after schedule',
+                  label: 'Late Arrivals',
+                  desc: 'Clocked in after schedule',
                   value: attendanceOverview.late_count,
                   icon: Timer,
                   accent: 'text-amber-400',
                   bg: 'bg-amber-500/15',
                   glow: 'shadow-amber-500/10'
                 },
-                {
-                  label: 'Caution Rate',
-                  desc: 'Risk of late trends',
-                  value: `${attendanceOverview.late_percentage}%`,
-                  icon: TrendingUp,
-                  accent: 'text-rose-400',
-                  bg: 'bg-rose-500/15',
-                  glow: 'shadow-rose-500/10'
-                },
               ].map((item, index) => (
+
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, y: 20 }}
