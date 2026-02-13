@@ -113,6 +113,7 @@ const createValidationSchema = Yup.object({
 
 // Edit mode has less strict validation
 const editValidationSchema = Yup.object({
+  role: Yup.string(),
   first_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('First name is required'),
@@ -248,7 +249,6 @@ export const CreateEmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
       const employeeName = `${formik.values.first_name} ${formik.values.last_name}`;
       formik.resetForm();
-      onOpenChange(false);
       setCreatedEmployeeName(employeeName);
       toast.success('Employee created successfully!');
       setShowSuccessModal(true);
@@ -276,7 +276,7 @@ export const CreateEmployeeForm = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['employee', editEmployee?.id] });
-      onOpenChange(false);
+      formik.resetForm(); // Clear dirty state
       setCreatedEmployeeName(`${formik.values.first_name} ${formik.values.last_name}`);
       toast.success('Employee profile updated!');
       setShowSuccessModal(true);
@@ -373,10 +373,10 @@ export const CreateEmployeeForm = ({
       }
 
       if (isEditMode) {
-        // Remove email and role from update payload (can't change these)
+        // Remove email from update payload (can't change this)
         const updateData = { ...values } as Partial<CreateUserData>;
         delete updateData.email;
-        delete updateData.role;
+        // Role is now editable for admins
         updateMutation.mutate(updateData as UpdateEmployeeData);
       } else {
         createMutation.mutate(values as CreateUserData);
@@ -803,23 +803,22 @@ export const CreateEmployeeForm = ({
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {!isEditMode && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                  Role *
-                </label>
-                <Select
-                  name="role"
-                  value={formik.values.role}
-                  onChange={formik.handleChange}
-                >
-                  <option value="EMPLOYEE">Employee</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="HR">HR</option>
-                  <option value="ADMIN">Admin</option>
-                </Select>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                Role *
+              </label>
+              <Select
+                name="role"
+                value={formik.values.role}
+                onChange={formik.handleChange}
+                disabled={!['ADMIN'].includes(user?.role || '')}
+              >
+                <option value="EMPLOYEE">Employee</option>
+                <option value="MANAGER">Manager</option>
+                <option value="HR">HR</option>
+                <option value="ADMIN">Admin</option>
+              </Select>
+            </div>
 
             <div>
               {isEditMode ? (
@@ -1457,6 +1456,7 @@ export const CreateEmployeeForm = ({
         isOpen={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
+          onOpenChange(false);
           onSuccess?.();
         }}
         type="success"
@@ -1468,6 +1468,7 @@ export const CreateEmployeeForm = ({
         buttonText="Continue"
         onButtonClick={() => {
           setShowSuccessModal(false);
+          onOpenChange(false);
           onSuccess?.();
         }}
       />

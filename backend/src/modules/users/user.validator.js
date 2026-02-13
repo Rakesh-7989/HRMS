@@ -107,7 +107,8 @@ const employeeUpdateBody = z.object({
 
   // Address
   address: stringOrNull,
-  ctc: z.coerce.number().optional().or(z.literal("").transform(() => undefined))
+  ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0)),
+  role: z.enum(["ADMIN", "HR", "MANAGER", "EMPLOYEE", "SUPER_ADMIN"]).optional()
 });
 
 /* EMPLOYEE UPDATE (By Admin/HR) */

@@ -585,6 +585,14 @@ exports.updateEmployee = async (db, id, updates, actor) => {
         }
       }
     }
+
+    // Role Change Logic
+    if (updates.role) {
+      await query(
+        `UPDATE users SET role = $1, updated_at = now() WHERE id = $2 AND tenant_id = $3`,
+        [updates.role, result.rows[0].user_id, tenantId]
+      );
+    }
   } catch (salaryDetailsError) {
     logger.warn("Salary details update failed in updateEmployee. Tables might be missing.", salaryDetailsError.message);
   }
