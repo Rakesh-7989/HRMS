@@ -222,7 +222,30 @@ export const authService = {
   },
 
   disable2FA: async (password: string): Promise<void> => {
+    const response = await api.post('/auth/verify-password', { password });
+    if (response.data.status !== 'success') {
+      throw new Error('Password verification failed');
+    }
+    // Also disable 2FA
     await api.post('/auth/2fa/disable', { password });
+  },
+
+  verifyPassword: async (password: string): Promise<boolean> => {
+    try {
+      const response = await api.post('/auth/verify-password', { password });
+      return response.data.status === 'success';
+    } catch {
+      return false;
+    }
+  },
+
+  verifyDBAPassword: async (password: string): Promise<boolean> => {
+    try {
+      const response = await api.post('/dba/verify-password', { password });
+      return response.data.status === 'success';
+    } catch {
+      return false;
+    }
   },
 
   verify2FALogin: async (token: string, preAuthToken: string, rememberMe: boolean = false): Promise<AuthResponse> => {

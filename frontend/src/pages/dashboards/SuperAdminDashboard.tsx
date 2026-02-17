@@ -151,6 +151,9 @@ export const SuperAdminDashboard: React.FC = () => {
     total_users: metrics.total_users || 0,
     active_users: metrics.active_users !== undefined ? metrics.active_users : 0,
     inactive_users: metrics.inactive_users !== undefined ? metrics.inactive_users : 0,
+    total_employees: metrics.total_employees || 0,
+    active_employees: metrics.active_employees !== undefined ? metrics.active_employees : 0,
+    inactive_employees: metrics.inactive_employees !== undefined ? metrics.inactive_employees : 0,
     system_health: health.status || 'healthy',
   }), [metrics, health]);
 
@@ -323,22 +326,22 @@ export const SuperAdminDashboard: React.FC = () => {
               shadow: 'shadow-indigo-500/30'
             },
             {
-              title: 'Total Users',
-              value: systemMetrics.total_users,
+              title: 'Total Employees',
+              value: systemMetrics.total_employees,
               icon: Users,
               gradient: 'linear-gradient(135deg, #10b981, #059669)',
               shadow: 'shadow-emerald-500/30'
             },
             {
-              title: 'Active Users',
-              value: systemMetrics.active_users,
+              title: 'Active Employees',
+              value: systemMetrics.active_employees,
               icon: Activity,
               gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
               shadow: 'shadow-amber-500/30'
             },
             {
-              title: 'Inactive Users',
-              value: systemMetrics.inactive_users,
+              title: 'Inactive Employees',
+              value: systemMetrics.inactive_employees,
               icon: UserX,
               gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
               shadow: 'shadow-pink-500/30'

@@ -12,6 +12,7 @@ import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
 import { PaymentFailurePage } from '@/pages/PaymentFailurePage';
 import { BillingPortalPage } from '@/pages/BillingPortalPage';
 import { SuperAdminDashboard } from '@/pages/dashboards/SuperAdminDashboard';
+import { DBADashboard } from '@/pages/dashboards/DBADashboard';
 import { AdminDashboard } from '@/pages/dashboards/AdminDashboard';
 import { HRDashboard } from '@/pages/dashboards/HRDashboard';
 import { ManagerDashboard } from '@/pages/dashboards/ManagerDashboard';
@@ -58,6 +59,23 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { PlansPage } from '@/pages/PlansPage';
 import { CouponsPage } from '@/pages/CouponsPage';
+import { useAuth } from '@/contexts/AuthContext';
+import { ROLE_DASHBOARDS } from '@/utils/constants';
+
+// Smart redirect component
+const DashboardRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Use the role mapping to find the correct dashboard, default to personal if not found
+  const targetDashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
+  return <Navigate to={targetDashboard} replace />;
+};
 
 
 
@@ -79,6 +97,14 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
             <SuperAdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/dba"
+        element={
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+            <DBADashboard />
           </ProtectedRoute>
         }
       />
@@ -159,6 +185,16 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* DBA Dashboard (Separate from standard layouts) */}
+      <Route
+        path="/dba-control-panel-access"
+        element={
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+            <DBADashboard />
           </ProtectedRoute>
         }
       />
@@ -506,26 +542,26 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
-        <Route
-          path="/payroll/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-              <DashboardLayout title="Payroll Command Center">
-                <PayrollDashboard />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/payroll/process/:runId"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
-              <RiverProcess />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/payroll/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+            <DashboardLayout title="Payroll Command Center">
+              <PayrollDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/process/:runId"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+            <RiverProcess />
+          </ProtectedRoute>
+        }
+      />
       {/* Redirect /dashboard to appropriate role dashboard */}
-      <Route path="/dashboard" element={<Navigate to="/dashboard/personal" replace />} />
+      <Route path="/dashboard" element={<DashboardRedirect />} />
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />

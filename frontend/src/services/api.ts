@@ -12,9 +12,11 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - Add auth token
 api.interceptors.request.use(
   (config) => {
+    // Check both storages
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },

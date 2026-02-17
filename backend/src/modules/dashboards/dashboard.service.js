@@ -24,6 +24,8 @@ exports.getSuperAdminDashboard = async (db) => {
       (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = true AND is_deleted = false) AS active_users,
       (SELECT COUNT(*)::INTEGER FROM users WHERE is_active = false AND is_deleted = false) AS inactive_users,
       (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE u.is_deleted = false) AS total_employees,
+      (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE u.is_active = true AND u.is_deleted = false) AS active_employees,
+      (SELECT COUNT(*)::INTEGER FROM employees e JOIN users u ON e.user_id = u.id WHERE u.is_active = false AND u.is_deleted = false) AS inactive_employees,
       (SELECT COUNT(DISTINCT tenant_id)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours' AND is_deleted = false) AS active_tenants_24h,
       (SELECT COUNT(*)::INTEGER FROM users WHERE last_login_at > NOW() - INTERVAL '24 hours' AND is_deleted = false) AS active_users_24h
     `

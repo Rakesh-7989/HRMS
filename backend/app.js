@@ -12,7 +12,7 @@ const requestLogger = require('./src/middleware/requestLogger');
 
 
 const app = express();
-
+app.set('trust proxy', 1); 
 // Security + parsers
 app.use(helmet());
 app.use(cors({ origin: '*', credentials: true }));

@@ -2,6 +2,8 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+
+
 const required = (key, fallback) => {
     const value = process.env[key] ?? fallback;
     if (value === undefined) {
@@ -31,5 +33,6 @@ module.exports = {
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASS: process.env.SMTP_PASS,
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply.hrms@WellZo.com',
-    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HR WellZo'
+    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HR WellZo',
+    DBA_PASSWORD: process.env.DBA_PASSWORD || 'dba_secret'
 };

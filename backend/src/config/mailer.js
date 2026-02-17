@@ -114,7 +114,7 @@ const emailWrapper = (content, preheader = '') => `
           
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);padding:32px 40px;text-align:center;">
+            <td style="background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);padding:32px 40px;text-align:center;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
@@ -174,7 +174,7 @@ exports.sendWelcomeEmail = async (to, name, tempPassword) => {
             <h1 style="margin:0 0 8px;font-size:26px;color:#1a1a2e;font-weight:700;">Welcome, ${name}!</h1>
             <p style="margin:0 0 24px;font-size:15px;color:#666;line-height:1.6;">Your account has been set up successfully. You're all set to get started with WellZo HR.</p>
             
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:12px;border:1px solid #e8ddf0;margin-bottom:24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:12px;border:1px solid #e8ddf0;margin-bottom:24px;">
               <tr>
                 <td style="padding:24px;">
                   <p style="margin:0 0 4px;font-size:11px;color:#42275a;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Your Temporary Password</p>
@@ -195,7 +195,7 @@ exports.sendWelcomeEmail = async (to, name, tempPassword) => {
 
             <table role="presentation" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="border-radius:10px;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
                   <a href="${env.FRONTEND_URL}/login" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Sign In to Your Account →</a>
                 </td>
               </tr>
@@ -217,7 +217,7 @@ exports.sendVerificationOTP = async (to, code) => {
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
               <tr>
-                <td align="center" style="background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);border-radius:14px;padding:32px;">
+                <td align="center" style="background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);border-radius:14px;padding:32px;">
                   <p style="margin:0 0 8px;font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:2px;">Your Verification Code</p>
                   <p style="margin:0;font-size:42px;font-weight:800;color:#ffffff;letter-spacing:10px;font-family:monospace;">${code}</p>
                 </td>
@@ -256,7 +256,7 @@ exports.sendPasswordResetEmail = async (to, resetToken) => {
                 <td align="center">
                   <table role="presentation" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="border-radius:10px;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                      <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
                         <a href="${resetUrl}" style="display:inline-block;padding:14px 40px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Reset My Password →</a>
                       </td>
                     </tr>
@@ -300,7 +300,7 @@ exports.sendLeaveNotification = async (to, employeeName, leaveType, startDate, e
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;border:1px solid #e8ddf0;overflow:hidden;margin-bottom:24px;">
               <tr>
-                <td style="background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);padding:20px 24px;border-bottom:1px solid #e8ddf0;">
+                <td style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);padding:20px 24px;border-bottom:1px solid #e8ddf0;">
                   <p style="margin:0;font-size:18px;font-weight:700;color:#42275a;">${employeeName}</p>
                 </td>
               </tr>
@@ -324,7 +324,7 @@ exports.sendLeaveNotification = async (to, employeeName, leaveType, startDate, e
 
             <table role="presentation" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="border-radius:10px;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
                   <a href="${env.FRONTEND_URL}/dashboard" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Review Request →</a>
                 </td>
               </tr>
@@ -381,7 +381,7 @@ exports.sendSubscriptionPricingEmail = async (to, tenantName, tenantId) => {
             <h1 style="margin:0 0 8px;font-size:24px;color:#1a1a2e;font-weight:700;">Hello, ${tenantName}!</h1>
             <p style="margin:0 0 28px;font-size:15px;color:#666;line-height:1.6;">A Super Admin has enabled your organization's subscription access. Select a plan below to unlock all features.</p>
 
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:12px;border:1px solid #e8ddf0;margin-bottom:24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:12px;border:1px solid #e8ddf0;margin-bottom:24px;">
               <tr>
                 <td style="padding:24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -405,7 +405,7 @@ exports.sendSubscriptionPricingEmail = async (to, tenantName, tenantId) => {
                 <td align="center">
                   <table role="presentation" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="border-radius:10px;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                      <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
                         <a href="${pricingUrl}" style="display:inline-block;padding:14px 40px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">View Pricing Plans →</a>
                       </td>
                     </tr>
@@ -479,7 +479,7 @@ exports.sendDailyReport = async (to, reportData) => {
             </table>
 
             <!-- Summary Bar -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:10px;border:1px solid #e8ddf0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:10px;border:1px solid #e8ddf0;">
               <tr>
                 <td style="padding:16px 20px;">
                   <p style="margin:0;font-size:13px;color:#42275a;">

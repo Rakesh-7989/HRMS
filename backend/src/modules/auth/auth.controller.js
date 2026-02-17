@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 const env = require("../../config/env");
 const mailer = require("../../config/mailer");
 const logAudit = require("../../utils/auditLogger");
-const { authenticator } = require("otplib");
+const { generateSecret, generateURI, verifySync } = require("otplib");
 const QRCode = require("qrcode");
 
 exports.login = async (req, res) => {
@@ -426,8 +426,8 @@ exports.setup2FA = async (req, res) => {
     if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
 
     const user = userRes.rows[0];
-    const secret = authenticator.generateSecret();
-    const otpauth = authenticator.keyuri(user.email, "HRMS GIGGLE", secret);
+    const secret = generateSecret();
+    const otpauth = generateURI({ secret, issuer: "HRMS GIGGLE", label: user.email });
     const qrCodeDataURL = await QRCode.toDataURL(otpauth);
 
     // Save secret temporarily (maybe don't enable yet)
@@ -456,7 +456,7 @@ exports.enable2FA = async (req, res) => {
     if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
 
     const secret = userRes.rows[0].two_factor_secret;
-    const isValid = authenticator.verify({ token, secret });
+    const isValid = verifySync({ token, secret });
 
     if (!isValid) {
       return res.status(400).json({ message: "Invalid 2FA token" });
@@ -509,6 +509,32 @@ exports.disable2FA = async (req, res) => {
   }
 };
 
+
+// ========================================================================
+// VERIFY PASSWORD
+// ========================================================================
+exports.verifyPassword = async (req, res) => {
+  const userId = req.user.id;
+  const { password } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT password_hash FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const user = userRes.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    return res.json({ status: "success", message: "Password verified" });
+  } catch (error) {
+    console.error("VERIFY PASSWORD ERROR:", error);
+    return res.status(500).json({ message: "Failed to verify password" });
+  }
+};
+
 exports.verify2FALogin = async (req, res) => {
   const { token, preAuthToken, rememberMe } = req.body;
 
@@ -527,7 +553,7 @@ exports.verify2FALogin = async (req, res) => {
     );
     const user = userRes.rows[0];
 
-    const isValid = authenticator.verify({ token, secret: user.two_factor_secret });
+    const isValid = verifySync({ token, secret: user.two_factor_secret });
 
     // Check recovery codes if token fails
     let isRecovery = false;

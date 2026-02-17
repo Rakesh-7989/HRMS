@@ -22,10 +22,10 @@ exports.createUser = async (db, data, actor) => {
       throw new Error("Not allowed to create users");
     }
 
-    // HR users can create EMPLOYEE and MANAGER only
+    // HR users can create EMPLOYEE, MANAGER and HR
     if (actor.role === "HR") {
-      if (!["EMPLOYEE", "MANAGER"].includes(data.role)) {
-        throw new Error("HR can only create EMPLOYEE or MANAGER roles");
+      if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
+        throw new Error("HR can only create EMPLOYEE, MANAGER or HR roles");
       }
     }
 

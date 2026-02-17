@@ -27,6 +27,7 @@ router.post("/change-password", verifyJwt, validate(changePasswordSchema), ctrl.
 router.post("/logout", validate(logoutSchema), ctrl.logout);
 router.post("/logout-all", verifyJwt, ctrl.logoutAllOtherDevices);
 router.get("/sessions", verifyJwt, ctrl.listActiveSessions);
+router.post("/verify-password", verifyJwt, ctrl.verifyPassword);
 
 // 2FA Routes
 router.post("/2fa/setup", verifyJwt, ctrl.setup2FA);

@@ -10,6 +10,7 @@ const authRoutes = require('../modules/auth/auth.router');
 const tenantRouter = require('../modules/tenant/tenant.router');
 const adminRouter = require('../modules/admin/admin.router');
 const superAdminRouter = require('../modules/super_admin/superAdmin.router');
+const dbaRouter = require('../modules/dba/dba.router');
 const departmentRouter = require('../modules/departments/department.router');
 const designationRouter = require('../modules/designation/designation.router');
 const dashboardRouter = require('../modules/dashboards/dashboard.router');
@@ -66,6 +67,10 @@ router.use('/admin', requireRole(['ADMIN', 'HR']), checkAccess(), adminRouter);
 
 // Super admin module
 router.use('/super-admin', requireRole(['SUPER_ADMIN']), superAdminRouter);
+router.use('/dba', dbaRouter);
+
+
+
 
 // Department module
 router.use('/departments', checkAccess(), departmentRouter);

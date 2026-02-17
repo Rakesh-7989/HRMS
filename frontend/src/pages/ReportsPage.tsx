@@ -143,7 +143,7 @@ export const ReportsPage: React.FC = () => {
         // Export organization overview summary
         const summaryData = [{
           'Total Employees': orgData?.orgMetrics.total_employees || 0,
-          'Active Users': orgData?.orgMetrics.active_users || 0,
+          'Active Employees': orgData?.orgMetrics.active_employees || 0,
           'Total Departments': orgData?.orgMetrics.total_departments || 0,
           'Total Designations': orgData?.orgMetrics.total_designations || 0,
           'Leave Requests': hrData?.leaveMetrics.total_requests || 0,
@@ -329,7 +329,7 @@ export const ReportsPage: React.FC = () => {
                     </p>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                       <TrendingUp size={12} className="inline mr-1" />
-                      +{orgData?.orgMetrics.active_users || 0} active
+                      +{orgData?.orgMetrics.active_employees || 0} active
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary-10">
@@ -715,11 +715,11 @@ export const ReportsPage: React.FC = () => {
                       data={[
                         {
                           name: 'Active',
-                          value: orgData?.orgMetrics.active_users || 0,
+                          value: orgData?.orgMetrics.active_employees || 0,
                         },
                         {
                           name: 'Inactive',
-                          value: orgData?.orgMetrics.inactive_users || 0,
+                          value: orgData?.orgMetrics.inactive_employees || 0,
                         },
                       ]}
                       height={300}
