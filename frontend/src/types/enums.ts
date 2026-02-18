@@ -126,8 +126,6 @@ export type EmployeeStatus = (typeof EMPLOYEE_STATUS)[keyof typeof EMPLOYEE_STAT
 export const USER_ROLE = {
     SUPER_ADMIN: 'SUPER_ADMIN',
     ADMIN: 'ADMIN',
-    HR: 'HR',
-    MANAGER: 'MANAGER',
     EMPLOYEE: 'EMPLOYEE',
 } as const;
 

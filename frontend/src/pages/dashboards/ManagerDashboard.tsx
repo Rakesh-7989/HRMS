@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { useNavigate } from 'react-router-dom';
 import {
   Users, UserCheck, Calendar, ChevronRight, ChevronLeft, Sparkles, UserX,
-  CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, CheckSquare,
+  CheckCircle, XCircle, CheckSquare,
   Filter, ExternalLink, Folder
 } from 'lucide-react';
 import { format, isAfter, parseISO, eachDayOfInterval, subDays, getDay, differenceInDays } from 'date-fns';
@@ -13,6 +13,9 @@ import {
   XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Sector
 } from 'recharts';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { CustomTooltip } from '@/components/dashboard/CustomTooltip';
+import { DASHBOARD_GRADIENTS } from '@/utils/constants';
 import { showToast } from '@/utils/toast';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -53,21 +56,20 @@ const ChartCard = ({
   headerAction?: React.ReactNode;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300 ${className}`}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`bg-[#111827]/60 dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-6 border border-white/5 shadow-2xl ${className}`}
   >
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 md:gap-0">
-      <div className="w-full md:w-auto">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight break-words">{title}</h3>
-        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{subtitle}</p>}
+    <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="min-w-0">
+        <h3 className="text-xl font-black text-white truncate tracking-tight">{title}</h3>
+        {subtitle && <p className="text-xs font-bold text-gray-500 mt-1 truncate">{subtitle}</p>}
       </div>
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-start sm:justify-end">
+      <div className="flex items-center gap-3 shrink-0">
         {headerAction}
         {badge && (
-          <span className="px-2 sm:px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm shrink-0 whitespace-nowrap">
+          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 text-white/80 border border-white/5 backdrop-blur-md">
             {badge}
           </span>
         )}
@@ -77,78 +79,7 @@ const ChartCard = ({
   </motion.div>
 );
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 min-w-[150px]">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-4 py-1">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-              <span className="text-xs font-medium text-slate-300">{entry.name}</span>
-            </div>
-            <span className="text-xs font-black">{entry.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
-const StatCard = ({
-  title, value, subtitle, icon: Icon, gradient, delay = 0, trend
-}: {
-  title: string;
-  value: number | string;
-  subtitle?: string;
-  icon: any;
-  gradient: string;
-  delay?: number;
-  trend?: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    whileHover={{ y: -5, scale: 1.02 }}
-    className="relative group"
-  >
-    <div
-      className="relative overflow-hidden rounded-[1.5rem] p-5 h-full text-white shadow-2xl"
-      style={{ background: gradient }}
-    >
-      {/* Decorative Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <circle cx="80" cy="20" r="40" fill="white" fillOpacity="0.3" />
-          <circle cx="10" cy="80" r="20" fill="white" fillOpacity="0.2" />
-        </svg>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/10">
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-          {trend !== undefined && (
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black backdrop-blur-md ${trend >= 0 ? 'bg-white/20 text-white' : 'bg-rose-500/20 text-rose-100'}`}>
-              {trend >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-              {Math.abs(trend)}%
-            </div>
-          )}
-        </div>
-        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-        </h3>
-        <p className="text-white font-black text-[10px] uppercase tracking-[0.2em] opacity-80">{title}</p>
-        {subtitle && <p className="text-white/60 text-[10px] mt-2 font-medium bg-black/10 px-2 py-0.5 rounded-full w-fit tracking-wide">{subtitle}</p>}
-      </div>
-    </div>
-  </motion.div>
-);
 
 const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?: number; onClick?: () => void }) => (
   <motion.div
@@ -187,7 +118,7 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
 // --- Main Dashboard Implementation ---
 
 export const ManagerDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activePieIndex, setActivePieIndex] = useState<number | undefined>(undefined);
@@ -226,7 +157,7 @@ export const ManagerDashboard: React.FC = () => {
   const { data: teamData, isLoading: isTeamLoading } = useQuery({
     queryKey: ['dashboard', 'team'],
     queryFn: () => dashboardService.getTeamDashboard(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('view_team_employees'),
   });
 
   // Attendance Analytics with dynamic date range
@@ -236,7 +167,7 @@ export const ManagerDashboard: React.FC = () => {
       from_date: attendanceDateRange.start,
       to_date: attendanceDateRange.end
     }),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('view_team_attendance'),
     placeholderData: keepPreviousData,
     refetchInterval: 5000,
   });
@@ -261,25 +192,25 @@ export const ManagerDashboard: React.FC = () => {
       to_date: attendanceDateRange.end,
       limit: 1000
     }),
-    enabled: !!gridFetchStart && !!attendanceDateRange.end && user?.role === 'MANAGER',
+    enabled: !!gridFetchStart && !!attendanceDateRange.end && hasPermission('view_team_attendance'),
   });
 
   const { data: taskData, isLoading: isTasksLoading } = useQuery({
     queryKey: ['dashboard', 'team-tasks'],
     queryFn: () => projectsService.getTasks(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('view_projects'),
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsService.getProjects(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('view_projects'),
   });
 
   const { data: pendingRequests } = useQuery({
     queryKey: ['dashboard', 'pending-leaves'],
     queryFn: () => leaveService.getPendingApprovals(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('view_team_leave'),
   });
 
   // --- Mutations ---
@@ -696,69 +627,63 @@ export const ManagerDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title="Manager Dashboard">
-      <motion.div
-        className="space-y-5 pb-10 px-4 lg:px-6 mt-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        {/* --- Welcome Banner --- */}
+      <motion.div className="space-y-6 pb-6 mt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2rem] p-6 lg:p-8 text-white border border-white/5 shadow-2xl shadow-indigo-500/15"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/20"
           style={{
             background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)',
           }}
         >
-          {/* Decorative Elements */}
-          <div className="absolute inset-0 opacity-10">
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute inset-0" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 mb-1"
+                className="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
-                <span className="text-white/80 text-xs font-black uppercase tracking-widest">
+                <span className="text-white text-[10px] font-bold uppercase tracking-widest">
                   {greeting}
                 </span>
               </motion.div>
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}! 👋
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter">
+                Welcome back, {user?.first_name}! <span className="inline-block animate-bounce-slow">👋</span>
               </h1>
-              <p className="text-white/70 text-base font-medium">
+              <p className="text-white/80 text-lg font-medium max-w-xl leading-relaxed">
                 {totalPending > 0 ? (
-                  <>You have <span className="text-white font-bold">{totalPending} pending requests</span> to review today.</>
+                  <>You have <span className="text-white font-bold">{totalPending} pending requests</span> to review today. Keep your team on track!</>
                 ) : (
-                  <>You're all caught up! No pending actions for today.</>
+                  <>You're all caught up! Your team coordination looks excellent today.</>
                 )}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
-              >
-                <div className="text-center px-3 border-r border-white/20 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
-                </div>
-                <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">W{format(new Date(), 'w')}</p>
-                </div>
-              </motion.div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-6 bg-black/20 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/10 min-w-fit shadow-inner"
+            >
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-4xl font-black text-white tabular-nums">{format(new Date(), 'dd')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">{format(new Date(), 'MMM yyyy')}</p>
+              </div>
+              <div className="text-center px-4 min-w-[120px]">
+                <p className="text-2xl font-black text-white leading-tight">{format(new Date(), 'EEEE')}</p>
+                <p className="text-lg font-bold text-white/80 tabular-nums mt-0.5">{format(new Date(), 'hh:mm a')}</p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -768,7 +693,7 @@ export const ManagerDashboard: React.FC = () => {
             title="Total Direct Reports"
             value={metrics.total_members}
             icon={Users}
-            gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
+            gradient={DASHBOARD_GRADIENTS.purple}
             delay={0.1}
             subtitle="Overall Team Strength"
           />
@@ -776,7 +701,7 @@ export const ManagerDashboard: React.FC = () => {
             title="Active Workforce"
             value={metrics.active_now}
             icon={UserCheck}
-            gradient="linear-gradient(135deg, #10b981, #059669)"
+            gradient={DASHBOARD_GRADIENTS.green}
             delay={0.2}
             trend={metrics.total_members > 0 ? Math.round((metrics.active_now / metrics.total_members) * 100) : 0}
             subtitle="Currently Working"
@@ -785,7 +710,7 @@ export const ManagerDashboard: React.FC = () => {
             title="Current Absentees"
             value={metrics.on_leave}
             icon={UserX}
-            gradient="linear-gradient(135deg, #f59e0b, #d87706)"
+            gradient={DASHBOARD_GRADIENTS.orange}
             delay={0.3}
             subtitle="Staff on Leave"
           />
@@ -793,7 +718,7 @@ export const ManagerDashboard: React.FC = () => {
             title="Task Efficiency"
             value={`${metrics.completion_rate}%`}
             icon={CheckSquare}
-            gradient="linear-gradient(135deg, #ec4899, #db2777)"
+            gradient={DASHBOARD_GRADIENTS.pink}
             delay={0.4}
             trend={metrics.completion_rate > 80 ? 12 : -5}
             subtitle="Sprint Progress"

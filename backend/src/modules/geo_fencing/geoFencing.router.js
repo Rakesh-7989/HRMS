@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 const validate = require("../../middleware/validate");
 
 const controller = require("./geoFencing.controller");
@@ -17,13 +17,13 @@ router.use(verifyJwt);
 
 router.get(
     "/settings",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN", "EMPLOYEE", "MANAGER"]),
+    requireAnyPermission(["view_all_employees", "manage_attendance_policies"]),
     controller.getSettings
 );
 
 router.put(
     "/settings",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("manage_attendance_policies"),
     validate(validator.updateSettingsSchema),
     controller.updateSettings
 );
@@ -34,33 +34,33 @@ router.put(
 
 router.get(
     "/locations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requireAnyPermission(["manage_attendance_policies", "manage_organization"]),
     controller.getLocations
 );
 
 router.get(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requireAnyPermission(["manage_attendance_policies", "manage_organization"]),
     controller.getLocation
 );
 
 router.post(
     "/locations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("manage_attendance_policies"),
     validate(validator.createLocationSchema),
     controller.createLocation
 );
 
 router.put(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("manage_attendance_policies"),
     validate(validator.updateLocationSchema),
     controller.updateLocation
 );
 
 router.delete(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("manage_attendance_policies"),
     controller.deleteLocation
 );
 
@@ -80,7 +80,7 @@ router.post(
 
 router.get(
     "/violations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requireAnyPermission(["view_all_employees", "manage_attendance_policies"]),
     controller.getViolations
 );
 

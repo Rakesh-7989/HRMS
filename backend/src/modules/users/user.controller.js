@@ -1,5 +1,6 @@
 const userService = require("./user.service");
 const logAudit = require('../../utils/auditLogger');
+const logger = require('../../config/logger');
 
 exports.createUser = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ exports.createUser = async (req, res) => {
     try {
       await logAudit(req, 'users', result.user.id, 'CREATE', null, { email: result.user.email, role: result.user.role });
     } catch (e) {
-      console.error('Audit failed', e);
+      logger.error({ err: e }, 'Audit log failed for user creation');
     }
 
     res.status(201).json({
@@ -234,7 +235,7 @@ exports.updateMyProfile = async (req, res) => {
     // Audit Log
     try {
       await logAudit(req, 'employees', req.user.id, 'UPDATE_PROFILE', null, req.body);
-    } catch (e) { console.error(e); }
+    } catch (e) { logger.error({ err: e }, 'Audit log failed for profile update'); }
 
     res.json({ status: "success", updated });
   } catch (err) {

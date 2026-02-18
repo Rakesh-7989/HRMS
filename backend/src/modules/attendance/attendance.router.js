@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
+
 const validate = require("../../middleware/validate");
 
 const controller = require("./attendance.controller");
@@ -11,20 +12,18 @@ const validator = require("./attendance.validator");
 // All routes require authentication
 router.use(verifyJwt);
 
-// ===== EMPLOYEE, MANAGER & HR ENDPOINTS (Not for ADMIN/SUPER_ADMIN) =====
-
-// Clock in (EMPLOYEE, MANAGER, and HR can clock in)
+// Clock in (All users with attendance.mark_own permission)
 router.post(
   "/clock-in",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   validate(validator.clockInSchema),
   controller.clockIn
 );
 
-// Clock out (EMPLOYEE, MANAGER, and HR can clock out)
+// Clock out
 router.post(
   "/clock-out",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   validate(validator.clockOutSchema),
   controller.clockOut
 );
@@ -32,53 +31,53 @@ router.post(
 // Start Break
 router.post(
   "/break/start",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   controller.startBreak
 );
 
 // End Break
 router.post(
   "/break/end",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   controller.endBreak
 );
 
 // Get Break History
 router.get(
   "/break/history",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.view_own"),
   controller.getBreakHistory
 );
 
 // Get Currently On Break (Manager/HR/Admin)
 router.get(
   "/break/current",
-  requireRole(["MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   controller.getCurrentBreaks
 );
 
 // Get today's attendance (All authenticated users can view)
 router.get("/today", controller.getTodayAttendance);
 
-// Get my attendance history (EMPLOYEE, MANAGER, and HR)
+// Get my attendance history
 router.get(
   "/my-attendance",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.view_own"),
   validate(validator.myAttendanceQuerySchema),
   controller.getMyAttendance
 );
 
-// Get my pending checkouts (EMPLOYEE, MANAGER, and HR)
+// Get my pending checkouts
 router.get(
   "/pending/my",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.view_own"),
   controller.getPendingCheckouts
 );
 
-// Confirm checkout (EMPLOYEE, MANAGER, and HR)
+// Confirm checkout
 router.post(
   "/:id/confirm-checkout",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   validate(validator.confirmCheckoutSchema),
   controller.confirmCheckout
 );
@@ -88,7 +87,7 @@ router.post(
 // Get team attendance (direct reports of manager)
 router.get(
   "/team/attendance",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.teamAttendanceQuerySchema),
   controller.getTeamAttendance
 );
@@ -98,7 +97,7 @@ router.get(
 // Get all attendance records
 router.get(
   "/records",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.attendanceRecordsQuerySchema),
   controller.getAttendanceRecords
 );
@@ -106,7 +105,7 @@ router.get(
 // Approve attendance
 router.put(
   "/:id/approve",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.approveAttendanceSchema),
   controller.approveAttendance
 );
@@ -114,7 +113,7 @@ router.put(
 // Reject attendance
 router.put(
   "/:id/reject",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.rejectAttendanceSchema),
   controller.rejectAttendance
 );
@@ -122,7 +121,7 @@ router.put(
 // Get attendance summary for payroll period
 router.get(
   "/summary",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["attendance.manage"]),
   validate(validator.summaryQuerySchema),
   controller.getAttendanceSummary
 );
@@ -130,7 +129,7 @@ router.get(
 // Get all pending checkouts (HR/Admin/Manager view)
 router.get(
   "/pending",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.pendingCheckoutsQuerySchema),
   controller.getPendingCheckouts
 );
@@ -138,7 +137,7 @@ router.get(
 // Auto-approve all pending checkouts older than 24 hours
 router.post(
   "/pending/auto-approve",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["attendance.manage"]),
   validate(validator.autoApprovePendingSchema),
   controller.autoApprovePendingCheckouts
 );
@@ -162,7 +161,7 @@ router.get(
 // ===== INDIVIDUAL REPORT =====
 router.get(
   "/report/individual/:employeeId",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["attendance.view_own", "attendance.view_all", "attendance.manage", "attendance.approve"]),
   controller.getIndividualEmployeeReport
 );
 
@@ -170,31 +169,31 @@ router.get(
 // Get weekly attendance hours (for timesheet display)
 router.get(
   "/my-weekly-hours",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.view_own"),
   controller.getWeeklyAttendanceHours
 );
 
 // ===== REGULARIZATION ENDPOINTS =====
 
-// Apply for regularization (EMPLOYEE)
+// Apply for regularization
 router.post(
   "/regularize",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.mark_own"),
   validate(validator.regularizationRequestSchema),
   controller.createRegularization
 );
 
-// Get my regularization requests (EMPLOYEE)
+// Get my regularization requests
 router.get(
   "/regularize/my",
-  requireRole(["EMPLOYEE", "MANAGER", "HR"]),
+  requirePermission("attendance.view_own"),
   controller.getMyRegularizations
 );
 
 // Get pending regularization requests for team (MANAGER / HR / ADMIN)
 router.get(
   "/regularize/pending",
-  requireRole(["MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.pendingRegularizationQuerySchema),
   controller.getPendingRegularizations
 );
@@ -202,7 +201,7 @@ router.get(
 // Review regularization (Approve/Reject) (MANAGER / HR / ADMIN)
 router.put(
   "/regularize/:id/review",
-  requireRole(["MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["attendance.manage", "attendance.approve"]),
   validate(validator.regularizationReviewSchema),
   controller.reviewRegularization
 );

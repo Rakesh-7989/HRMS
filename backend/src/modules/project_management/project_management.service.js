@@ -217,27 +217,21 @@ exports.createProject = async (tenantId, userId, data) => {
  * Others: sees only projects they are members of
  */
 exports.listProjects = async (tenantId, filters = {}) => {
-  const { client_id, status, search, skip = 0, limit = 20, userRole, userEmployeeId, userId } = filters;
-
-  const canViewAll = ['ADMIN'].includes(userRole);
-  const isManager = userRole === 'MANAGER';
+  const permissions = filters.userPermissions || [];
+  const canViewAll = permissions.includes('manage_all_projects') || permissions.includes('platform.manage_tenants');
+  const isManager = permissions.includes('manage_all_projects'); // In this context, anyone who can manage all is treated as high-privilege
 
   let query = `SELECT DISTINCT p.*, c.name as client_name FROM projects p
                LEFT JOIN clients c ON p.client_id = c.id`;
 
   // Filter for non-privileged users
   if (!canViewAll) {
-    if (isManager) {
-      // Managers see projects they created OR projects they are members of
-      query += ` LEFT JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
-                 WHERE p.tenant_id = $1 AND (p.created_by = $3 OR pm.id IS NOT NULL)`;
-    } else {
-      // Employees only see projects they are members of
-      query += ` INNER JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
-                 WHERE p.tenant_id = $1`;
-    }
+    // For everyone else, they see projects they are members of
+    // Managers (who don't have manage_all but might have view_projects) see their created ones too
+    query += ` LEFT JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
+               WHERE p.tenant_id = $1 AND (pm.id IS NOT NULL OR p.created_by = $3)`;
   } else {
-    // Admin/HR see all
+    // Admin/Manage-All see all in tenant
     query += ` WHERE p.tenant_id = $1`;
   }
 
@@ -247,11 +241,8 @@ exports.listProjects = async (tenantId, filters = {}) => {
   if (!canViewAll) {
     params.push(userEmployeeId);
     paramCount++;
-
-    if (isManager) {
-      params.push(userId);
-      paramCount++;
-    }
+    params.push(userId);
+    paramCount++;
   }
 
   if (client_id) {
@@ -323,24 +314,17 @@ exports.getProjectById = async (tenantId, projectId, userContext = null) => {
 
   // SECURITY FIX: Validate user access if userContext is provided
   if (userContext) {
-    const { role, employeeId, userId } = userContext;
-    const canViewAll = ['ADMIN', 'SUPER_ADMIN'].includes(role);
+    const { permissions = [], employeeId, userId } = userContext;
+    const canViewAll = permissions.includes('manage_all_projects') || permissions.includes('platform.manage_tenants');
 
     if (!canViewAll) {
-      // Managers can view projects they created OR are members of
-      // Employees can only view projects they are members of
+      // Users with manage_all_projects can see everything.
+      // Others see projects they created OR are members of.
       const isCreator = project.created_by === userId;
       const isMember = employeeId ? await this.isProjectMember(tenantId, projectId, employeeId) : false;
 
-      if (role === 'MANAGER') {
-        if (!isCreator && !isMember) {
-          throw new ForbiddenError("You do not have access to this project");
-        }
-      } else {
-        // EMPLOYEE, HR
-        if (!isMember) {
-          throw new ForbiddenError("You do not have access to this project");
-        }
+      if (!isCreator && !isMember) {
+        throw new ForbiddenError("You do not have access to this project");
       }
     }
   }
@@ -593,8 +577,7 @@ exports.checkKanbanExists = async (tenantId, projectId, userContext = null) => {
 exports.createKanbanBoard = async (tenantId, userId, projectId, options = {}) => {
   const { useDefault = true, customColumns = [], forceReset = false } = options;
 
-  console.log('[createKanbanBoard] Service called with:', { useDefault, customColumnsCount: customColumns.length, forceReset, projectId });
-  console.log('[createKanbanBoard] Custom columns data:', JSON.stringify(customColumns));
+  logger.debug({ useDefault, customColumnsCount: customColumns.length, forceReset, projectId }, 'createKanbanBoard called');
 
   // Verify project exists
   await this.getProjectById(tenantId, projectId);
@@ -866,9 +849,8 @@ exports.createTask = async (tenantId, userId, data) => {
  * Returns tasks with assignees array from task_assignees table
  */
 exports.listTasks = async (tenantId, filters = {}) => {
-  const { project_id, assigned_to, column_key, priority, search, skip = 0, limit = 20, userRole, userEmployeeId } = filters;
-
-  const canViewAll = ['ADMIN', 'HR'].includes(userRole);
+  const permissions = filters.userPermissions || [];
+  const canViewAll = permissions.includes('manage_all_projects') || permissions.includes('platform.manage_tenants');
 
   let query = `SELECT t.*, p.name as project_name,
                e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email,
@@ -1059,24 +1041,21 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
   const { role } = options;
   const existingTask = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check - Hybrid approach:
-  // 1. Task creator can always edit their own task
-  // 2. Higher roles can edit tasks created by lower roles
-  // 3. Assigned employees can update their task status
-  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
-  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
-
+  // Permission Check:
+  // 1. Task creator can edit.
+  // 2. Users with 'manage_all_projects' can edit.
+  // 3. Assigned employees can update their task (usually status).
+  const permissions = options.permissions || [];
+  const canManageAll = permissions.includes('manage_all_projects') || permissions.includes('platform.manage_tenants');
   const isCreator = existingTask.created_by === userId;
-  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
-  const creatorRoleLevel = ROLE_HIERARCHY[existingTask.creator_role] || 0;
 
   // Check if employee is assigned to this task
   const { employeeId } = options;
-  const isAssignedEmployee = role === 'EMPLOYEE' && employeeId &&
+  const isAssignedEmployee = employeeId &&
     (existingTask.assignees?.some(a => a.id === employeeId) || existingTask.assigned_to === employeeId);
 
-  // Allow if: creator OR higher role than creator OR assigned employee
-  if (!isCreator && userRoleLevel <= creatorRoleLevel && !isAssignedEmployee) {
+  // Allow if: creator OR manage-all OR assigned employee
+  if (!isCreator && !canManageAll && !isAssignedEmployee) {
     throw new ForbiddenError("You don't have permission to edit this task.");
   }
 
@@ -1136,18 +1115,21 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
  * MOVE TASK TO ANOTHER COLUMN
  */
 exports.updateTaskColumn = async (tenantId, userId, taskId, columnKey, orderIndex, options = {}) => {
-  const { role, employeeId } = options;
+  const { employeeId } = options;
+  const permissions = options.permissions || [];
   const task = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check: Employees can only move tasks assigned to them
-  if (role === 'EMPLOYEE') {
+  // Permission Check: Users without manage_all_projects can only move tasks assigned to them
+  const canManageAll = permissions.includes('manage_all_projects') || permissions.includes('platform.manage_tenants');
+  if (!canManageAll && employeeId) {
     // Check if employee is in the assignees list
     const isAssigned = task.assignees && task.assignees.some(a => a.id === employeeId);
 
-    // Check legacy assigned_to field if no assignees array (though getTaskById should return it)
+    // Check legacy assigned_to field if no assignees array
     const isLegacyAssigned = task.assigned_to === employeeId;
+    const isCreator = task.created_by === userId;
 
-    if (!isAssigned && !isLegacyAssigned) {
+    if (!isAssigned && !isLegacyAssigned && !isCreator) {
       throw new ForbiddenError("You can only move tasks assigned to you.");
     }
   }
@@ -1180,18 +1162,15 @@ exports.deleteTask = async (tenantId, taskId, options = {}) => {
   const { role, userId } = options;
   const task = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check - Hybrid approach:
-  // 1. Task creator can always delete their own task
-  // 2. Higher roles can delete tasks created by lower roles
-  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
-  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
-
+  const permissions = options.permissions || [];
   const isCreator = task.created_by === userId;
-  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
-  const creatorRoleLevel = ROLE_HIERARCHY[task.creator_role] || 0;
 
-  // Allow if: creator OR higher role than creator
-  if (!isCreator && userRoleLevel <= creatorRoleLevel) {
+  // Permission Check:
+  // 1. Task creator can always delete their own task
+  // 2. Users with platform.manage_tenants or projects.manage_tasks (or similar) can delete
+  const canDeleteAny = permissions.includes("platform.manage_tenants") || permissions.includes("projects.manage_tasks");
+
+  if (!isCreator && !canDeleteAny) {
     throw new ForbiddenError("You don't have permission to delete this task.");
   }
 
@@ -1647,7 +1626,10 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
     throw new BadRequestError("User not found");
   }
 
-  const { role, employee_id: managerEmployeeId } = userResult.rows[0];
+  const { permissions = [], employee_id: managerEmployeeId } = userResult.rows[0];
+
+  const canApproveAll = permissions.includes('projects.approve_timesheet') || permissions.includes('platform.manage_tenants');
+  const canApproveTeam = permissions.includes('projects.approve_timesheet'); // For now, same permission name, we'll check reports_to below
 
   // First get the submitted timesheets (week-level)
   let tsQuery = `SELECT ts.*, 
@@ -1661,11 +1643,12 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
                  WHERE ts.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
   const params = [tenantId];
 
-  // If user is a MANAGER, only show timesheets for their direct reports
-  if (role === 'MANAGER' && managerEmployeeId) {
+  // If user can only approve for their team, filter by reports_to
+  if (!canApproveAll && canApproveTeam && managerEmployeeId) {
     tsQuery += ` AND e.reports_to = $2`;
     params.push(managerEmployeeId);
-  } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
+  } else if (!canApproveAll) {
+    // If no permission to approve, show nothing
     tsQuery += ` AND 1=0`;
   }
 
@@ -1777,7 +1760,7 @@ exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
     throw new BadRequestError("Approver not found");
   }
 
-  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+  const { permissions = [], employee_id: approverEmployeeId } = approverResult.rows[0];
 
   const results = [];
   const errors = [];
@@ -1797,8 +1780,9 @@ exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
         continue;
       }
 
-      // If approver is a MANAGER, ensure they are the reporting manager
-      if (approverRole === 'MANAGER') {
+      // If approver can only approve for their team, ensure same
+      const canApproveAll = permissions.includes('projects.approve_timesheet') || permissions.includes('platform.manage_tenants');
+      if (!canApproveAll && approverEmployeeId) {
         const employeeResult = await pool.query(
           `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
           [timesheet.employee_id, tenantId]
@@ -1846,15 +1830,16 @@ exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
     throw new BadRequestError("Approver not found");
   }
 
-  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+  const { permissions = [], employee_id: approverEmployeeId } = approverResult.rows[0];
 
   // Prevent self-approval
   if (approverEmployeeId && timesheet.employee_id === approverEmployeeId) {
     throw new BadRequestError("You cannot approve your own timesheet");
   }
 
-  // If approver is a MANAGER, ensure they are the reporting manager
-  if (approverRole === 'MANAGER') {
+  // If approver can only approve for their team, ensure same
+  const canApproveAll = permissions.includes('projects.approve_timesheet') || permissions.includes('platform.manage_tenants');
+  if (!canApproveAll && approverEmployeeId) {
     const employeeResult = await pool.query(
       `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
       [timesheet.employee_id, tenantId]
@@ -1892,10 +1877,11 @@ exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason)
     [userId, tenantId]
   );
 
-  const { role: processorRole, employee_id: processorEmployeeId } = processorResult.rows[0];
+  const { permissions = [], employee_id: processorEmployeeId } = processorResult.rows[0];
 
-  // If processor is a MANAGER, ensure they are the reporting manager
-  if (processorRole === 'MANAGER') {
+  // If processor can only reject for their team, ensure same
+  const canApproveAll = permissions.includes('projects.approve_timesheet') || permissions.includes('platform.manage_tenants');
+  if (!canApproveAll && processorEmployeeId) {
     const employeeResult = await pool.query(
       `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
       [timesheet.employee_id, tenantId]

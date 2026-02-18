@@ -60,6 +60,7 @@ export interface User {
   updated_at?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
+  cancel_at_period_end?: boolean;
   two_factor_enabled?: boolean;
   profile_photo_url?: string;
   // Joined data

@@ -8,14 +8,16 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
+
+import { usePermission } from '@/contexts/PermissionContext';
 import { subscriptionService } from '@/services/subscription.service';
 
 import { load } from '@cashfreepayments/cashfree-js';
 
 
 export const BillingPortalPage: React.FC = () => {
-    const { user } = useAuth();
+
+    const { hasPermission } = usePermission();
     const navigate = useNavigate();
 
     const [errorConfig, setErrorConfig] = React.useState<{
@@ -70,7 +72,7 @@ export const BillingPortalPage: React.FC = () => {
         <DashboardLayout
             title="Billing & Subscriptions"
             breadcrumbs={[
-                { label: 'Dashboard', href: user?.role === 'ADMIN' ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: 'Dashboard', href: hasPermission('roles.manage') ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Settings', href: '/settings' },
                 { label: 'Billing' },
             ]}

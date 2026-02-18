@@ -141,10 +141,12 @@ exports.getBreakHistory = async (req, res) => {
     // Let's implement basics: EMPLOYEE sees self. ADMIN/HR sees all. MANAGER sees self (or could be team if we added that logic).
     // For safety: if EMPLOYEE, force employee_id.
 
-    if (req.user.role === 'EMPLOYEE') {
+    const canViewOthers = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('attendance.manage') || req.user.permissions.includes('admin.manage_tenant');
+
+    if (!canViewOthers) {
       filters.employee_id = req.user.employeeId;
     } else {
-      // ADMIN/HR/MANAGER can filter by specific employee if they want
+      // Authorized users can filter by specific employee
       if (req.query.employee_id) {
         filters.employee_id = req.query.employee_id;
       }
@@ -414,15 +416,18 @@ exports.getAttendanceAnalytics = async (req, res) => {
 
     let analytics;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
-      // HR/Admin: Organization-wide analytics
+    const canViewAll = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('admin.manage_tenant');
+    const canViewTeam = req.user.permissions.includes('attendance.manage');
+
+    if (canViewAll) {
+      // Organization-wide analytics
       analytics = await attendanceService.getOrganizationAttendanceAnalytics(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
-      // Manager: Self + team analytics
+    } else if (canViewTeam) {
+      // Self + team analytics
       analytics = await attendanceService.getManagerAttendanceAnalytics(
         req.db,
         req.user.employeeId,
@@ -430,7 +435,7 @@ exports.getAttendanceAnalytics = async (req, res) => {
         filters
       );
     } else {
-      // Employee: Self-only analytics
+      // Self-only analytics
       analytics = await attendanceService.getEmployeeAttendanceAnalytics(
         req.db,
         req.user.employeeId,
@@ -469,15 +474,18 @@ exports.getAttendanceReports = async (req, res) => {
 
     let reports;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
-      // HR/Admin: Organization-wide reports
+    const canViewAll = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('admin.manage_tenant');
+    const canViewTeam = req.user.permissions.includes('attendance.manage');
+
+    if (canViewAll) {
+      // Organization-wide reports
       reports = await attendanceService.getOrganizationAttendanceReports(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
-      // Manager: Self + team reports
+    } else if (canViewTeam) {
+      // Self + team reports
       reports = await attendanceService.getManagerAttendanceReports(
         req.db,
         req.user.employeeId,
@@ -485,7 +493,7 @@ exports.getAttendanceReports = async (req, res) => {
         filters
       );
     } else {
-      // Employee: Self-only reports
+      // Self-only reports
       reports = await attendanceService.getEmployeeAttendanceReports(
         req.db,
         req.user.employeeId,
@@ -555,7 +563,7 @@ exports.getPendingRegularizations = async (req, res) => {
     const result = await attendanceService.getPendingRegularizations(
       req.db,
       req.user.employeeId, // Viewer (Manager/HR)
-      req.user.role,
+      req.user.permissions,
       req.user.tenantId,
       { limit, offset }
     );
@@ -619,16 +627,11 @@ exports.getIndividualEmployeeReport = async (req, res) => {
     }
 
     // Permission Check: 
-    // Employee can see own logic. Manager/Admin can see others.
-    // If not self, verify role.
-    if (req.user.role === 'EMPLOYEE' && req.user.employeeId !== employeeId) {
+    // Users without view_all_attendance can only see own report
+    const canViewAll = req.user.permissions.includes('view_all_attendance') || req.user.permissions.includes('attendance.view_all');
+    const canViewTeam = req.user.permissions.includes('attendance.manage') || req.user.permissions.includes('attendance.approve');
+    if (!canViewAll && !canViewTeam && req.user.employeeId !== employeeId) {
       return res.status(403).json({ status: "error", message: "Access denied" });
-    }
-    // Managers should ideally check if employee is in team. 
-    // For now assuming Manager/Admin/HR can view any employee's report for simplicity or rely on service/middleware.
-    // Service doesn't check role ownership for this report yet, so let's stick to simple role check here.
-    if (req.user.role === 'MANAGER') {
-      // Ideally check logic here, but let's assume if they have the ID, they can see it or relying on frontend to not show links.
     }
 
     const result = await attendanceService.getIndividualEmployeeReport(

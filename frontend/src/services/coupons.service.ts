@@ -32,5 +32,15 @@ export const couponService = {
     validateCoupon: async (code: string) => {
         const response = await api.post('/subscriptions/coupons/validate', { code });
         return response.data;
+    },
+
+    deleteCoupon: async (id: string) => {
+        const response = await api.delete(`/subscriptions/coupons/${id}`);
+        return response.data;
+    },
+
+    updateCoupon: async (id: string, data: Partial<Coupon>) => {
+        const response = await api.put(`/subscriptions/coupons/${id}`, data);
+        return response.data;
     }
 };

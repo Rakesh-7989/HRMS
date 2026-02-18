@@ -17,28 +17,18 @@ exports.createUser = async (db, data, actor) => {
   try {
     await client.query("BEGIN");
 
-    // SUPER_ADMIN can create anyone, ADMIN/HR have role restrictions
-    if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
+    const permissions = actor.permissions || [];
+
+    // Check creation permission
+    if (!permissions.includes("employees.create") && !permissions.includes("platform.manage_tenants")) {
       throw new Error("Not allowed to create users");
     }
 
-    // HR users can create EMPLOYEE, MANAGER and HR
-    if (actor.role === "HR") {
-      if (!["EMPLOYEE", "MANAGER", "HR"].includes(data.role)) {
-        throw new Error("HR can only create EMPLOYEE, MANAGER or HR roles");
-      }
-    }
-
-    // ADMIN can create EMPLOYEE, MANAGER, HR, ADMIN
-    if (actor.role === "ADMIN") {
-      if (!["EMPLOYEE", "MANAGER", "HR", "ADMIN"].includes(data.role)) {
-        throw new Error("ADMIN can only create EMPLOYEE, MANAGER, HR, or ADMIN roles");
-      }
-    }
-
-    // Only SUPER_ADMIN or ADMIN can create ADMIN role
-    if (data.role === "ADMIN" && !["SUPER_ADMIN", "ADMIN"].includes(actor.role)) {
-      throw new Error("Only SUPER_ADMIN or ADMIN can create ADMIN role");
+    // Role assignment logic:
+    // We allow any role as long as the actor has permission to manage it.
+    // For now, we'll keep a check that only platform admins can assign "SUPER_ADMIN"
+    if (data.role === "SUPER_ADMIN" && !permissions.includes("platform.manage_tenants")) {
+      throw new Error("Only Platform Admins can assign SUPER_ADMIN roles");
     }
 
     // Check employee limit
@@ -107,6 +97,26 @@ exports.createUser = async (db, data, actor) => {
       `,
       [actor.tenantId, data.email, hash, data.role, actor.id]
     );
+
+    const user = userRes.rows[0];
+
+    // RBAC: Assign role in user_roles table
+    // Try to find tenant-specific role first, then system template
+    const roleIdRes = await client.query(
+      `SELECT id FROM roles 
+       WHERE (tenant_id = $1 OR tenant_id IS NULL) AND name = $2
+       ORDER BY tenant_id NULLS LAST LIMIT 1`,
+      [actor.tenantId, user.role]
+    );
+
+    if (roleIdRes.rowCount > 0) {
+      await client.query(
+        `INSERT INTO user_roles (user_id, role_id, tenant_id, assigned_by)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT DO NOTHING`,
+        [user.id, roleIdRes.rows[0].id, actor.tenantId, actor.id]
+      );
+    }
 
     const empRes = await client.query(
       `
@@ -257,9 +267,10 @@ exports.createUser = async (db, data, actor) => {
 exports.softDeleteUser = async (db, id, actor) => {
   const query = getQuery(db);
 
-  // Only ADMIN/SUPER_ADMIN can delete
-  if (!["SUPER_ADMIN", "ADMIN"].includes(actor.role)) {
-    throw new Error("Only admins can delete users");
+  const permissions = actor.permissions || [];
+  // Only those with delete_employee or platform.manage_tenants can delete
+  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
+    throw new Error("Only authorized users can delete employees");
   }
 
   // Set is_deleted = true in both tables
@@ -280,7 +291,8 @@ exports.softDeleteUser = async (db, id, actor) => {
 exports.terminateEmployee = async (db, id, data, actor) => {
   const query = getQuery(db);
 
-  if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
+  const permissions = actor.permissions || [];
+  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
     throw new Error("Not allowed to terminate employees");
   }
 
@@ -321,7 +333,8 @@ exports.terminateEmployee = async (db, id, data, actor) => {
 exports.rehireEmployee = async (db, id, actor) => {
   const query = getQuery(db);
 
-  if (!["SUPER_ADMIN", "ADMIN", "HR"].includes(actor.role)) {
+  const permissions = actor.permissions || [];
+  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
     throw new Error("Not allowed to rehire employees");
   }
 
@@ -351,9 +364,11 @@ exports.getUsers = async (db, opts, actor) => {
   const params = [];
   let i = 1;
 
+  const permissions = actor.permissions || [];
+
   // Tenant filtering logic
-  if (actor.role === 'SUPER_ADMIN' && !actor.tenantId) {
-    // Super Admin can see all, or filter by specific tenant if provided
+  if (permissions.includes('platform.manage_tenants') && !actor.tenantId) {
+    // Platform Admin can see all, or filter by specific tenant if provided
     if (opts.tenant_id) {
       filter.push(`u.tenant_id = $${i}`);
       params.push(opts.tenant_id);
@@ -366,15 +381,25 @@ exports.getUsers = async (db, opts, actor) => {
     i++;
   }
 
-  // Manager filtering: Only show their direct reports (or hierarchical, but direct for now)
-  if (actor.role === 'MANAGER') {
-    if (!actor.employeeId) {
-      console.warn(`[getUsers] MANAGER ${actor.id} has no employeeId linked. Returning empty list.`);
-      return []; // Return empty if manager has no employee record to link reports_to
+  // Permission-based filtering:
+  const canViewAll = permissions.includes("employees.view") || permissions.includes('platform.manage_tenants');
+  const canViewTeam = permissions.includes('attendance.manage');
+
+  if (!canViewAll) {
+    if (canViewTeam) {
+      if (!actor.employeeId) {
+        console.warn(`[getUsers] User ${actor.id} lacks employeeId but has attendance.manage. Returning empty.`);
+        return [];
+      }
+      filter.push(`e.reports_to = $${i}`);
+      params.push(actor.employeeId);
+      i++;
+    } else {
+      // If neither view_all nor view_team, only show self
+      filter.push(`u.id = $${i}`);
+      params.push(actor.id);
+      i++;
     }
-    filter.push(`e.reports_to = $${i}`);
-    params.push(actor.employeeId);
-    i++;
   }
 
   if (opts.role) {
@@ -402,7 +427,10 @@ exports.getUsers = async (db, opts, actor) => {
 
   const sql = `
     SELECT u.id, u.email, u.role, u.is_active, u.tenant_id, u.created_at,
-           e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id,
+           e.id AS employee_uuid, e.employee_id AS employee_code, 
+           COALESCE(e.first_name, '') as first_name, 
+           COALESCE(e.last_name, '') as last_name, 
+           e.department_id, e.designation_id,
            e.shift, e.shift_id, e.profile_photo_url
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = u.tenant_id
@@ -421,7 +449,9 @@ exports.getUserById = async (db, id, tenantId) => {
     `
      SELECT u.*, 
             e.id AS employee_uuid,
-            e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
+            COALESCE(e.first_name, '') as first_name, 
+            COALESCE(e.last_name, '') as last_name, 
+            e.phone, e.department_id, e.designation_id, e.reports_to,
              e.employee_id, e.join_date, e.employment_type, e.shift_id,
             e.date_of_birth, e.gender, e.marital_status, e.nationality, e.address,
             e.emergency_name, e.emergency_phone, e.emergency_relation,
@@ -662,6 +692,7 @@ exports.getMyProfile = async (db, user) => {
       m.last_name as manager_last_name,
       e.profile_photo_url,
       s.status as subscription_status,
+      s.cancel_at_period_end,
       p.name as subscription_plan_name,
       t.settings as tenant_settings
     FROM users u
@@ -670,10 +701,17 @@ exports.getMyProfile = async (db, user) => {
     LEFT JOIN shifts sh ON sh.id = e.shift_id
     LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
     LEFT JOIN tenants t ON t.id = u.tenant_id
-    LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id AND s.status != 'CANCELLED'
+    LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id
     LEFT JOIN plans p ON s.plan_id = p.id
     WHERE u.id=$1
-    ORDER BY s.created_at DESC
+    ORDER BY 
+      CASE s.status 
+        WHEN 'ACTIVE' THEN 1 
+        WHEN 'TRIAL' THEN 2 
+        WHEN 'CANCELLED' THEN 3 
+        ELSE 4 
+      END ASC, 
+      s.created_at DESC
     LIMIT 1
     `,
     [user.id]
@@ -683,7 +721,20 @@ exports.getMyProfile = async (db, user) => {
     throw new Error('User not found');
   }
 
-  return res.rows[0];
+  const profile = res.rows[0];
+
+  // Load user permissions from RBAC system
+  const permRes = await query(
+    `SELECT DISTINCT p.name
+     FROM user_roles ur
+     JOIN role_permissions rp ON rp.role_id = ur.role_id
+     JOIN permissions p ON p.id = rp.permission_id
+     WHERE ur.user_id = $1`,
+    [user.id]
+  );
+  profile.permissions = permRes.rows.map(r => r.name);
+
+  return profile;
 };
 
 exports.updateMyProfile = async (db, user, updates) => {
@@ -793,9 +844,9 @@ exports.changeRole = async (db, id, newRole, actor) => {
 exports.changeManager = async (db, id, managerEmployeeId, actor) => {
   const query = getQuery(db);
 
-  // Validate that manager exists and has MANAGER role
+  // Ensure the person exists in the organization
   const managerCheck = await query(
-    `SELECT u.id, u.role FROM users u
+    `SELECT u.id, u.role, e.id as employee_id FROM users u
      JOIN employees e ON e.user_id = u.id
      WHERE e.id = $1 AND u.tenant_id = $2`,
     [managerEmployeeId, actor.tenantId]
@@ -803,11 +854,6 @@ exports.changeManager = async (db, id, managerEmployeeId, actor) => {
 
   if (managerCheck.rowCount === 0) {
     throw new Error("Manager not found in your organization");
-  }
-
-  const manager = managerCheck.rows[0];
-  if (manager.role !== "MANAGER") {
-    throw new Error("Only MANAGER role users can be assigned as reporting manager");
   }
 
   // Get the employee's ID (not user ID)
@@ -957,7 +1003,7 @@ exports.getOrgTree = async (db, actor) => {
 
   // Refinement: Sort roots so that Admin/Manager roles come first
   roots.sort((a, b) => {
-    const rolePriority = { 'SUPER_ADMIN': 0, 'ADMIN': 1, 'HR': 2, 'MANAGER': 3, 'EMPLOYEE': 4 };
+    const rolePriority = { 'SUPER_ADMIN': 0, 'ADMIN': 1, 'EMPLOYEE': 2 };
     return (rolePriority[a.role] || 99) - (rolePriority[b.role] || 99);
   });
 

@@ -12,15 +12,15 @@ import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
 import { PayrollSettings } from './PayrollSettings';
 import { Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 
 export const PayslipsContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasAnyPermission } = usePermission();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
 
-    const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+    const isHRorAdmin = hasAnyPermission(['manage_payroll_components', 'process_payroll']);
     const [activeSection, setActiveSection] = useState<'payslips' | 'settings'>('payslips');
     const [activeSubSection, setActiveSubSection] = useState<'personal' | 'staff'>('personal');
     const [showFilters, setShowFilters] = useState(false);
@@ -50,9 +50,9 @@ export const PayslipsContent: React.FC = () => {
     }, [selectedPeriod, customFromDate, customToDate]);
 
     const { data: payslips = [], isLoading: payslipsLoading } = useQuery({
-        queryKey: ['payslips', dateRange, user?.role, activeSubSection],
+        queryKey: ['payslips', dateRange, isHRorAdmin, activeSubSection],
         queryFn: () => {
-            if (activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR')) {
+            if (activeSubSection === 'staff' && isHRorAdmin) {
                 return payrollService.listPayslips(dateRange);
             }
             return payrollService.getMyPayslips();
@@ -202,15 +202,15 @@ export const PayslipsContent: React.FC = () => {
             {/* Top controls: Navigation and Actions */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
                 {[
-                    { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-                    { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
-                ].filter(b => b.roles.includes(user?.role || '')).length > 1 && (
+                    { id: 'payslips', label: 'Payslips Report', visible: true },
+                    { id: 'settings', label: 'Settings', icon: Settings, visible: isHRorAdmin },
+                ].filter(b => b.visible).length > 1 && (
                         <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
                             {[
-                                { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-                                { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                                { id: 'payslips', label: 'Payslips Report', visible: true },
+                                { id: 'settings', label: 'Settings', icon: Settings, visible: isHRorAdmin },
                             ].map((b) => {
-                                if (!b.roles.includes(user?.role || '')) return null;
+                                if (!b.visible) return null;
                                 return (
                                     <button
                                         key={b.id}
@@ -229,7 +229,7 @@ export const PayslipsContent: React.FC = () => {
                     )}
 
                 <div className="flex flex-wrap gap-2">
-                    {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
+                    {isHRorAdmin && activeSection === 'payslips' && activeSubSection === 'staff' && (
                         <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)} className="shadow-sm">
                             <FileText className="mr-2" size={14} />Generate Monthly
                         </Button>
@@ -253,7 +253,7 @@ export const PayslipsContent: React.FC = () => {
             </div>
 
             {/* Sub-tabs for HR/Admin under Payslips Report */}
-            {activeSection === 'payslips' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+            {activeSection === 'payslips' && isHRorAdmin && (
                 <div className="flex gap-2 p-1 bg-white/50 dark:bg-gray-800/30 rounded-lg w-fit border border-gray-100 dark:border-gray-800/50">
                     <button
                         onClick={() => setActiveSubSection('personal')}
@@ -362,13 +362,13 @@ export const PayslipsContent: React.FC = () => {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => viewPayslip(p)}>Audit</Button>
                                                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
-                                                    {user?.role === 'HR' && (
+                                                    {isHRorAdmin && (
                                                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
                                                     )}
                                                     {activeSubSection === 'staff' && (
                                                         <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
                                                     )}
-                                                    {activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+                                                    {activeSubSection === 'staff' && isHRorAdmin && (
                                                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => confirmDeletePayslip(p)} title="Delete payslip">
                                                             <Trash2 size={14} />
                                                         </Button>

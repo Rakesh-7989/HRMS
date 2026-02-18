@@ -66,6 +66,7 @@ exports.login = async (req, res) => {
           id: user.id,
           email: user.email,
           tenantId: user.tenant_id,
+          permissions,
           role: user.role,
           employeeId: user.employee_id,
           type: '2FA_PRE_AUTH'
@@ -92,8 +93,11 @@ exports.login = async (req, res) => {
     user.ip = req.ip;
     user.ua = req.headers["user-agent"];
 
+    // Fetch permissions
+    const permissions = await authService.getUserPermissions(user.id);
+
     // Generate JWT + Refresh Token
-    const tokens = await authService.generateTokens(user, rememberMe);
+    const tokens = await authService.generateTokens(user, rememberMe, permissions);
 
     // Audit Login (Async, don't await)
     // We construct a mock req where user is populated for logAudit
@@ -104,6 +108,7 @@ exports.login = async (req, res) => {
       status: "success",
       role: user.role,
       tenantId: user.tenant_id,
+      permissions,
       mustChangePassword: user.must_change_password,
       ...tokens
     });
@@ -143,6 +148,7 @@ exports.refreshToken = async (req, res) => {
       {
         id: user.id,
         tenantId: user.tenant_id,
+        permissions,
         role: user.role,
         employeeId: user.employee_id
       },
@@ -382,7 +388,7 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: "Old password incorrect" });
     }
 
-    const hash = await bcrypt.hash(newPassword, 10);
+    const hash = await bcrypt.hash(newPassword, Number(process.env.BCRYPT_SALT_ROUNDS) || 10);
 
     await pool.query(
       `UPDATE users 
@@ -580,15 +586,17 @@ exports.verify2FALogin = async (req, res) => {
       [user.id]
     );
 
-    // Generate tokens
-    user.ip = req.ip;
-    user.ua = req.headers["user-agent"];
-    const tokens = await authService.generateTokens(user, rememberMe);
+    // Fetch permissions
+    const permissions = await authService.getUserPermissions(user.id);
+
+    // Generate JWT + Refresh Token
+    const tokens = await authService.generateTokens(user, rememberMe, permissions);
 
     return res.json({
       status: "success",
       role: user.role,
       tenantId: user.tenant_id,
+      permissions,
       mustChangePassword: user.must_change_password,
       ...tokens
     });

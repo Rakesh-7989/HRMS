@@ -1,4 +1,5 @@
 const salaryStructureService = require('./salaryStructure.service');
+const logger = require('../../../config/logger');
 
 // =====================================================
 // SALARY COMPONENTS
@@ -15,7 +16,7 @@ exports.listComponents = async (req, res) => {
         const data = await salaryStructureService.listSalaryComponents(req.user.tenantId, filters);
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('List components error:', err);
+        logger.error('List components error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -25,7 +26,7 @@ exports.createComponent = async (req, res) => {
         const data = await salaryStructureService.createSalaryComponent(req.user.tenantId, req.body);
         res.status(201).json({ status: 'success', data });
     } catch (err) {
-        console.error('Create component error:', err);
+        logger.error('Create component error:', err);
         if (err.code === '23505') { // Unique constraint violation
             return res.status(400).json({ status: 'error', message: 'Component with this code already exists' });
         }
@@ -45,7 +46,7 @@ exports.updateComponent = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Update component error:', err);
+        logger.error('Update component error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -58,7 +59,7 @@ exports.deleteComponent = async (req, res) => {
         }
         res.json({ status: 'success', message: 'Component deactivated successfully' });
     } catch (err) {
-        console.error('Delete component error:', err);
+        logger.error('Delete component error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -72,7 +73,7 @@ exports.listStructures = async (req, res) => {
         const data = await salaryStructureService.listSalaryStructures(req.user.tenantId);
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('List structures error:', err);
+        logger.error('List structures error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -85,7 +86,7 @@ exports.getStructure = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Get structure error:', err);
+        logger.error('Get structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -99,7 +100,7 @@ exports.createStructure = async (req, res) => {
         );
         res.status(201).json({ status: 'success', data });
     } catch (err) {
-        console.error('Create structure error:', err);
+        logger.error('Create structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -116,7 +117,7 @@ exports.updateStructure = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Update structure error:', err);
+        logger.error('Update structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -129,7 +130,7 @@ exports.deleteStructure = async (req, res) => {
         }
         res.json({ status: 'success', message: 'Structure deleted successfully' });
     } catch (err) {
-        console.error('Delete structure error:', err);
+        logger.error('Delete structure error:', err);
         if (err.message.includes('Cannot delete')) {
             return res.status(400).json({ status: 'error', message: err.message });
         }
@@ -160,7 +161,7 @@ exports.calculateCTC = async (req, res) => {
 
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Calculate CTC error:', err);
+        logger.error('Calculate CTC error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -174,14 +175,15 @@ exports.getEmployeeSalary = async (req, res) => {
         const { employeeId } = req.params;
 
         // IDOR check
-        if (req.user.employeeId !== employeeId && !['HR', 'ADMIN'].includes(req.user.role)) {
+        const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+        if (req.user.employeeId !== employeeId && !canViewAll) {
             return res.status(403).json({ status: 'error', message: 'Access denied' });
         }
 
         const data = await salaryStructureService.getEmployeeSalary(req.user.tenantId, employeeId);
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Get employee salary error:', err);
+        logger.error('Get employee salary error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -212,7 +214,7 @@ exports.assignEmployeeSalary = async (req, res) => {
 
         res.status(201).json({ status: 'success', data, message: 'Salary assigned successfully' });
     } catch (err) {
-        console.error('Assign salary error:', err);
+        logger.error('Assign salary error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -222,14 +224,15 @@ exports.getEmployeeSalaryHistory = async (req, res) => {
         const { employeeId } = req.params;
 
         // IDOR check
-        if (req.user.employeeId !== employeeId && !['HR', 'ADMIN'].includes(req.user.role)) {
+        const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+        if (req.user.employeeId !== employeeId && !canViewAll) {
             return res.status(403).json({ status: 'error', message: 'Access denied' });
         }
 
         const data = await salaryStructureService.getEmployeeSalaryHistory(req.user.tenantId, employeeId);
         res.json({ status: 'success', data });
     } catch (err) {
-        console.error('Get salary history error:', err);
+        logger.error('Get salary history error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -250,7 +253,7 @@ exports.seedDefaults = async (req, res) => {
             data: { structure_id: structureId }
         });
     } catch (err) {
-        console.error('Seed defaults error:', err);
+        logger.error('Seed defaults error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -264,7 +267,7 @@ exports.listTemplates = async (req, res) => {
         const templates = salaryStructureService.listTemplates();
         res.json({ status: 'success', data: templates });
     } catch (err) {
-        console.error('List templates error:', err);
+        logger.error('List templates error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -292,7 +295,7 @@ exports.createFromTemplate = async (req, res) => {
             data
         });
     } catch (err) {
-        console.error('Create from template error:', err);
+        logger.error('Create from template error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };
@@ -311,7 +314,7 @@ exports.migrateStructure = async (req, res) => {
             data: result
         });
     } catch (err) {
-        console.error('Migrate structure error:', err);
+        logger.error('Migrate structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };

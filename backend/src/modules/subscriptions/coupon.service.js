@@ -105,10 +105,26 @@ class CouponService {
     }
 
     async updateCoupon(id, data) {
-        const { is_active } = data;
+        const { code, discount_type, discount_value, max_redemptions, expires_at, is_active } = data;
+
+        // If code is being changed, check for uniqueness
+        if (code) {
+            const existing = await db.query('SELECT id FROM coupons WHERE code = $1 AND id != $2', [code.toUpperCase(), id]);
+            if (existing.rowCount > 0) throw new Error('Coupon code already exists');
+        }
+
         const result = await db.query(`
-            UPDATE coupons SET is_active = $1, updated_at = NOW() WHERE id = $2 RETURNING *
-         `, [is_active, id]);
+            UPDATE coupons 
+            SET code = COALESCE($1, code),
+                discount_type = COALESCE($2, discount_type),
+                discount_value = COALESCE($3, discount_value),
+                max_redemptions = COALESCE($4, max_redemptions),
+                expires_at = COALESCE($5, expires_at),
+                is_active = COALESCE($6, is_active),
+                updated_at = NOW()
+            WHERE id = $7
+            RETURNING *
+         `, [code?.toUpperCase(), discount_type, discount_value, max_redemptions, expires_at, is_active, id]);
         return result.rows[0];
     }
 }

@@ -1,9 +1,11 @@
 const loanService = require("./loans.service.js");
-const { createLoanSchema, approveLoanSchema , createLoanTypeSchema} = require("./loans.validator.js");
+const { createLoanSchema, approveLoanSchema, createLoanTypeSchema } = require("./loans.validator.js");
 
 const createLoan = async (req, res) => {
-  // Employees use the detailed flow (validated schema). Admin/HR may create loans via simplified payload from UI.
-  if (req.user && (req.user.role === 'ADMIN' || req.user.role === 'HR')) {
+  const permissions = req.user.permissions || [];
+  const canManagePayroll = permissions.includes('manage_payroll') || permissions.includes('platform.manage_tenants');
+
+  if (req.user && canManagePayroll) {
     // accept simplified payload from frontend: { employee_id, amount, outstanding, type }
     const payload = req.body;
     const loan = await loanService.createLoanAdmin(req.user.tenantId, req.user.id, payload);
@@ -36,7 +38,7 @@ const getLoanById = async (req, res) => {
     req.user.tenantId,
     req.params.loanId
   )
-  
+
 
   if (!loan) {
     return res.status(404).json({ message: "Loan not found" });
@@ -95,12 +97,12 @@ const getLoanTypeById = async (req, res) => {
     req.params.loantypeid // ✅ CORRECT
   );
 
-    if (!loanType) {
-      // If not found or tenant mismatch, deny access (403) to avoid leaking existence
-      return res.status(403).json({
-        status: "error",
-        message: "Loan type not found or access denied"
-      });
+  if (!loanType) {
+    // If not found or tenant mismatch, deny access (403) to avoid leaking existence
+    return res.status(403).json({
+      status: "error",
+      message: "Loan type not found or access denied"
+    });
   }
 
   res.json({
@@ -134,9 +136,9 @@ module.exports = {
   getLoanById,
   approveLoan,
   deleteLoanType,
-   updateLoanType,
-   getLoanTypeById,
-   getLoanTypes,
-   createLoanType,
-    closeLoan,
+  updateLoanType,
+  getLoanTypeById,
+  getLoanTypes,
+  createLoanType,
+  closeLoan,
 };

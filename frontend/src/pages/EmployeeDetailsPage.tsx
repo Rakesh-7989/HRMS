@@ -11,6 +11,7 @@ import { designationService } from '@/services/designation.service';
 import { leaveService } from '@/services/leave.service';
 import { getShifts } from '@/services/shift.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { cn } from '@/utils/cn';
 import {
     User as UserIcon,
@@ -51,7 +52,8 @@ export const EmployeeDetailsPage: React.FC = () => {
         termination_reason: '',
     });
 
-    const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
+    const { hasAnyPermission } = usePermission();
+    const canManage = hasAnyPermission(['employees.edit', 'employees.delete', 'employees.manage_status']);
 
     // Queries
     const { data: employee, isLoading, error } = useQuery({
@@ -209,7 +211,7 @@ export const EmployeeDetailsPage: React.FC = () => {
             breadcrumbs={[
                 { label: 'Dashboard', href: '/dashboard/organization' },
                 { label: 'Employees', href: '/dashboard/employees' },
-                { label: `${employee.first_name} ${employee.last_name}` },
+                { label: (employee.first_name || employee.last_name) ? `${employee.first_name || ''} ${employee.last_name || ''}`.trim() : employee.email },
             ]}
         >
             <div className="space-y-6">
@@ -221,20 +223,20 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 'w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg',
                                 isTerminated ? 'bg-gray-400' : 'bg-gradient-to-br from-primary to-primary-dark'
                             )}>
-                                {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+                                {(employee.first_name?.charAt(0) || employee.last_name?.charAt(0)) || employee.email?.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {employee.first_name} {employee.last_name}
-                                </h2>
+                                {(employee.first_name || employee.last_name)
+                                    ? `${employee.first_name || ''} ${employee.last_name || ''}`.trim()
+                                    : employee.email}
                                 <p className="text-gray-500 dark:text-gray-400">{employee.email}</p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className={cn(
                                         'px-3 py-1 rounded-full text-xs font-medium',
+                                        employee.role === 'SUPER_ADMIN' && 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
                                         employee.role === 'ADMIN' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                                        employee.role === 'HR' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                                        employee.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
                                         employee.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+                                        !['SUPER_ADMIN', 'ADMIN', 'EMPLOYEE'].includes(employee.role) && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                     )}>
                                         {employee.role?.replace('_', ' ')}
                                     </span>
@@ -379,7 +381,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 <InfoRow icon={Briefcase} label="Employee ID" value={employee.employee_id || 'Not assigned'} />
                                 <InfoRow icon={Building2} label="Department" value={getDepartmentName(employee.department_id)} />
                                 <InfoRow icon={Briefcase} label="Designation" value={getDesignationName(employee.designation_id)} />
-                                <InfoRow icon={UserIcon} label="Reports To" value={employee.manager?.first_name ? `${employee.manager.first_name} ${employee.manager.last_name}` : 'Not assigned'} />
+                                <InfoRow icon={UserIcon} label="Reports To" value={(employee.manager?.first_name || employee.manager?.last_name) ? `${employee.manager.first_name || ''} ${employee.manager.last_name || ''}`.trim() : 'Not assigned'} />
                             </div>
                         </Card>
 

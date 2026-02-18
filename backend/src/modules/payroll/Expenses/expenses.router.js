@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 const requireExpenseApprover = require("../../../middleware/requireExpenseApprover");
 
@@ -24,7 +24,7 @@ router.use(verifyJwt);
 // Create category → HR, ADMIN only
 router.post(
   "/createcategories",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["payroll.manage"]),
   validate(createCategorySchema),
   controller.createCategory
 );
@@ -32,7 +32,7 @@ router.post(
 // Get categories → EMPLOYEE, MANAGER, HR, ADMIN
 router.get(
   "/getcategories",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["payroll.view_own"]),
   controller.getCategories
 );
 
@@ -43,7 +43,7 @@ router.get(
 // Create expense → EMPLOYEE, MANAGER
 router.post(
   "/createexpense",
-  requireRole(["EMPLOYEE", "MANAGER"]),
+  requireAnyPermission(["payroll.view_own"]),
   validate(createExpenseSchema),
   controller.createExpense
 );
@@ -54,14 +54,14 @@ router.post(
 // HR, ADMIN → all
 router.get(
   "/getexpenses",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["payroll.view_own"]),
   controller.getExpenses
 );
 
 // Update expense → HR, ADMIN
 router.put(
   "/:updateId",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["payroll.manage"]),
   validate(createExpenseSchema),
   controller.updateExpense
 );
@@ -69,14 +69,14 @@ router.put(
 // Delete expense (soft delete) → HR, ADMIN
 router.delete(
   "/:updateId",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["payroll.manage"]),
   controller.deleteExpense
 );
 
 // Approve / Reject expense → MANAGER, HR, ADMIN
 router.patch(
   "/:expenseId/approve",
-  requireRole(["MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["payroll.manage", "payroll.view_own"]),
   requireExpenseApprover,
   validate(approveExpenseSchema),
   controller.approveExpense
@@ -85,7 +85,7 @@ router.patch(
 // Toggle payroll inclusion → HR, ADMIN
 router.patch(
   "/:expenseId/payroll",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["payroll.manage"]),
   validate(payrollToggleSchema),
   controller.togglePayroll
 );

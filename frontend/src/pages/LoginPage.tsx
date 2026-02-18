@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/Input';
 import { authService } from '@/services/auth.service';
 import { Shield } from 'lucide-react';
 import { usersService } from '@/services/users.service';
-import { ROLE_DASHBOARDS } from '@/utils/constants';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Please enter a valid email address').required('Email is required'),
@@ -100,7 +99,16 @@ export const LoginPage: React.FC = () => {
       }
       setUser(user);
 
-      const dashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
+      // Determine redirect path based on permissions
+      let dashboard = '/dashboard/personal';
+      const perms = user.permissions || [];
+
+      if (perms.includes('manage_platform')) {
+        dashboard = '/dashboard/system';
+      } else if (perms.includes('view_admin_dashboard')) {
+        dashboard = '/dashboard/organization';
+      }
+
       window.location.href = dashboard; // Force redirect to ensure state is clean
     } catch (err: any) {
       setError(err.response?.data?.message || '2FA verification failed');

@@ -4,12 +4,16 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { designationService, Designation } from '@/services/designation.service';
+import { useAuth } from '@/contexts/AuthContext';
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 
 export const DesignationsPage: React.FC = () => {
+    const { hasPermission } = useAuth();
+    const canManage = hasPermission('manage_designations');
+    const canViewOrgDashboard = hasPermission('view_admin_dashboard');
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog
@@ -85,7 +89,7 @@ export const DesignationsPage: React.FC = () => {
         <DashboardLayout
             title="Designations"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
+                { label: 'Dashboard', href: canViewOrgDashboard ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Designations' },
             ]}
         >
@@ -112,10 +116,12 @@ export const DesignationsPage: React.FC = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         </div>
 
-                        <Button onClick={() => setCreateBit(true)}>
-                            <Plus className="mr-2" size={18} />
-                            Add New Designation
-                        </Button>
+                        {canManage && (
+                            <Button onClick={() => setCreateBit(true)}>
+                                <Plus className="mr-2" size={18} />
+                                Add New Designation
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -150,7 +156,7 @@ export const DesignationsPage: React.FC = () => {
                                 ? `We couldn't find any designation matching "${searchTerm}".`
                                 : "Create your first designation to structure your organization."}
                         </p>
-                        {!searchTerm && (
+                        {!searchTerm && canManage && (
                             <Button variant="outline" onClick={() => setCreateBit(true)}>
                                 <Plus className="mr-2" size={16} />
                                 Create Designation
@@ -166,29 +172,31 @@ export const DesignationsPage: React.FC = () => {
                                         <div className={`p-2 rounded-lg ${d.is_active ? 'bg-primary/5 text-primary' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
                                             <Briefcase size={20} />
                                         </div>
-                                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleEdit(d)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit3 size={15} />
-                                            </button>
-                                            <button
-                                                onClick={() => toggleStatusMutation.mutate(d)}
-                                                className={`p-1.5 rounded-md transition-colors ${d.is_active ? 'text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
-                                                title={d.is_active ? "Deactivate" : "Activate"}
-                                            >
-                                                {d.is_active ? <X size={15} /> : <Check size={15} />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(d.id)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={15} />
-                                            </button>
-                                        </div>
+                                        {canManage && (
+                                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleEdit(d)}
+                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit3 size={15} />
+                                                </button>
+                                                <button
+                                                    onClick={() => toggleStatusMutation.mutate(d)}
+                                                    className={`p-1.5 rounded-md transition-colors ${d.is_active ? 'text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+                                                    title={d.is_active ? "Deactivate" : "Activate"}
+                                                >
+                                                    {d.is_active ? <X size={15} /> : <Check size={15} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(d.id)}
+                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={15} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1" title={d.name}>{d.name}</h3>

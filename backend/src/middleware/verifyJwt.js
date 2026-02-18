@@ -87,14 +87,29 @@ module.exports = async function verifyJwt(req, res, next) {
       return next(new UnauthorizedError("Session has been revoked - please login again"));
     }
 
+    // Load user permissions from RBAC tables
+    const permRes = await pool.query(
+      `SELECT DISTINCT p.name
+       FROM user_roles ur
+       JOIN role_permissions rp ON rp.role_id = ur.role_id
+       JOIN permissions p ON p.id = rp.permission_id
+       WHERE ur.user_id = $1`,
+      [user.id]
+    );
+    const permissions = permRes.rows.map(r => r.name);
+
     // Build req.user for controllers
     req.user = {
       id: user.id,
       tenantId: user.tenant_id,
       employeeId: user.employee_id || null,
       role: user.role,
+      permissions: permissions,
       mustChangePassword: user.must_change_password
     };
+
+    console.log(`[AUTH DEBUG] User: ${user.email} (${user.id}), Role: ${user.role}, Permissions Count: ${permissions.length}`);
+    if (permissions.length < 5) console.log(`[AUTH DEBUG] Permissions: ${JSON.stringify(permissions)}`);
 
     // Set PostgreSQL RLS session variables
     // We update the async context store so that the db middleware (src/middleware/db.js)

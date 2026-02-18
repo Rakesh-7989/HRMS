@@ -6,7 +6,7 @@ INSERT INTO roles (name, description)
 VALUES
     ('SUPER_ADMIN', 'Global platform controller'),
     ('ADMIN', 'Tenant-level administrator'),
-    ('HR', 'Human resource manager'),
-    ('MANAGER', 'Team manager'),
+    ('SUPER_ADMIN', 'Global platform controller'),
+    ('ADMIN', 'Tenant-level administrator'),
     ('EMPLOYEE', 'Regular employee')
 ON CONFLICT (name) DO NOTHING;

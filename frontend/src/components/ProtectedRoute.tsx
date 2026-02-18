@@ -1,16 +1,26 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_DASHBOARDS } from '@/utils/constants';
-import type { UserRole } from '@/types';
+import { usePermission } from '@/contexts/PermissionContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  /** permission-based access control */
+  requiredPermissions?: string[];
+  /** roles-based access control */
+  requiredRoles?: string[];
+  /** If true, user needs ALL permissions. If false (default), ANY permission is sufficient */
+  requireAll?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredPermissions,
+  requiredRoles,
+  requireAll = false,
+}) => {
   const { isAuthenticated, user, loading } = useAuth();
+  const { hasAnyPermission, hasAllPermissions } = usePermission();
   const location = useLocation();
 
   if (loading) {
@@ -49,12 +59,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     );
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to user's role dashboard
-    const dashboard = ROLE_DASHBOARDS[user.role] || '/dashboard';
-    return <Navigate to={dashboard} replace />;
+  // Role-based check
+  if (requiredRoles && requiredRoles.length > 0) {
+    if (!requiredRoles.includes(user.role)) {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  // Permission-based check
+  if (requiredPermissions && requiredPermissions.length > 0) {
+    const hasAccess = requireAll
+      ? hasAllPermissions(requiredPermissions)
+      : hasAnyPermission(requiredPermissions);
+
+    if (!hasAccess) {
+      // Redirect to appropriate dashboard based on role
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
 };
-

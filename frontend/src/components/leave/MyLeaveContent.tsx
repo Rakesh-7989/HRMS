@@ -3,20 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
-import { useAuth } from '@/contexts/AuthContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, Search, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const MyLeaveContent: React.FC = () => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
-    const canApply = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR' || user?.role === 'ADMIN';
+    const canApply = true; // All authenticated users can apply for leave
 
     // Fetch leave types dynamically
     const { data: leaveTypes = [] } = useQuery<LeaveType[]>({

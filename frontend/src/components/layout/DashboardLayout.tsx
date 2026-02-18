@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NavbarClock } from './NavbarClock';
+import { usePermission } from '@/contexts/PermissionContext';
 
 interface BreadcrumbItem {
   label: string;
@@ -29,7 +30,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   breadcrumbs,
   actions
 }) => {
-  const { user, logout, hasActivePlan } = useAuth();
+  const { user, logout, loading, hasActivePlan } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -43,10 +44,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const canAccessSettings =
-    user?.role === 'ADMIN' ||
-    user?.role === 'HR' ||
-    user?.role === 'SUPER_ADMIN';
+  const { hasPermission, hasAnyPermission } = usePermission();
+
+  const canAccessSettings = user?.role !== 'SUPER_ADMIN' && hasAnyPermission(['roles.manage', 'platform.manage_tenants', 'reports.view']);
 
   // Debounce search
   useEffect(() => {
@@ -92,8 +92,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       ...searchResults.projects.slice(0, 3),
     ];
 
-    // Filter out settings for managers
-    if (user?.role === 'MANAGER') {
+    // Filter out settings for restricted roles via permissions
+    if (!hasAnyPermission(['roles.manage', 'platform.manage_tenants'])) {
       results = results.filter(r =>
         !r.url.startsWith('/settings') &&
         !r.url.startsWith('/leave/settings')
@@ -101,7 +101,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
 
     // Filter out results if no active plan
-    if (!hasActivePlan && user?.role !== 'SUPER_ADMIN') {
+    if (!hasActivePlan && !hasPermission('platform.manage_tenants')) {
       const restrictedPrefixes = ['/payroll', '/attendance', '/leave', '/assets', '/projects', '/wfh', '/chat'];
       results = results.filter(r =>
         !restrictedPrefixes.some(prefix => r.url.startsWith(prefix))
@@ -363,7 +363,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       {user?.first_name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user?.role}
+                      {user?.role?.replace('_', ' ')}
                     </p>
                   </div>
                 </button>
@@ -412,18 +412,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Subscription Warning Banner */}
-        {/* Subscription Warning Banner */}
-        {!hasActivePlan && user?.role !== 'SUPER_ADMIN' && (
+        {!loading && !!user && !hasActivePlan && !hasPermission('platform.manage_tenants') && (
           <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium animate-in slide-in-from-top duration-300">
             <div className="flex items-center gap-2">
               <AlertTriangle size={16} />
               <span>
-                {user?.role === 'ADMIN'
+                {hasPermission('billing.manage')
                   ? "No active subscription found. Restore access to your features now."
                   : "No active subscription found. Some features are restricted. Please contact your administrator."}
               </span>
             </div>
-            {user?.role === 'ADMIN' && (
+            {hasPermission('billing.manage') && (
               <button
                 onClick={() => navigate('/pricing')}
                 className="bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
@@ -435,7 +434,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
 
         {/* Main Content */}
-        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
+        <main className="p-3 md:p-4 flex-1 overflow-auto overscroll-contain flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
           {children}
         </main>
       </div>

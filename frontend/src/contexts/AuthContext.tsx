@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
 import { usersService } from '@/services/users.service';
-import { ROLE_DASHBOARDS } from '@/utils/constants';
 import type { User, LoginCredentials } from '@/types';
 
 interface AuthContextType {
@@ -13,6 +12,7 @@ interface AuthContextType {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthenticated: boolean;
   hasActivePlan: boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,9 +52,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               is_active: profile.is_active ?? storedUser.is_active,
               subscription_status: profile.subscription_status,
               subscription_plan_name: profile.subscription_plan_name,
+              cancel_at_period_end: profile.cancel_at_period_end,
               two_factor_enabled: profile.two_factor_enabled ?? storedUser.two_factor_enabled,
               profile_photo_url: profile.profile_photo_url,
               tenant_settings: profile.tenant_settings,
+              permissions: (profile as any).permissions || (storedUser as any).permissions || [],
               shift_week_offs: profile.shift_week_offs || storedUser.shift_week_offs,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
@@ -119,9 +121,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           is_active: profile.is_active ?? response.user.is_active,
           subscription_status: profile.subscription_status,
           subscription_plan_name: profile.subscription_plan_name,
+          cancel_at_period_end: profile.cancel_at_period_end,
           two_factor_enabled: profile.two_factor_enabled ?? response.user.two_factor_enabled,
           profile_photo_url: profile.profile_photo_url,
           tenant_settings: profile.tenant_settings,
+          permissions: (profile as any).permissions || (response.user as any).permissions || [],
           shift_week_offs: profile.shift_week_offs || response.user.shift_week_offs,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
@@ -131,9 +135,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // ignore, keep minimal user
     }
 
-    // Navigate to appropriate dashboard based on role
-    const dashboard = ROLE_DASHBOARDS[response.user.role] || '/dashboard/personal';
-    navigate(dashboard);
     return response;
   };
 
@@ -152,7 +153,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         setUser,
         isAuthenticated: !!user,
-        hasActivePlan: user?.role === 'SUPER_ADMIN' || user?.subscription_status === 'ACTIVE' || user?.subscription_status === 'TRIAL' || user?.subscription_status === 'CANCEL_AT_PERIOD_END',
+        hasActivePlan: user?.role === 'SUPER_ADMIN' ||
+          user?.subscription_status === 'ACTIVE' ||
+          user?.subscription_status === 'TRIAL' ||
+          (user?.subscription_status === 'CANCELLED' && user?.cancel_at_period_end === true),
+        hasPermission: (permission: string) => {
+          if (user?.role === 'SUPER_ADMIN') return true;
+          return user?.permissions?.includes(permission) || false;
+        },
       }}
     >
       {children}

@@ -4,19 +4,19 @@ import { cn } from '@/utils/cn';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType } from '@/services/leave.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
 export const TeamLeaveContent: React.FC = () => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
     const rangeTo = format(new Date(), 'yyyy-MM-dd');
     const rangeFrom = format(subDays(new Date(), 29), 'yyyy-MM-dd');
 
-    const canApprove = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+    const { hasAnyPermission } = usePermission();
+    const canApprove = hasAnyPermission(['approve_leaves']);
 
     // Fetch leave types dynamically
     const { data: leaveTypes = [] } = useQuery<LeaveType[]>({

@@ -3,7 +3,11 @@ const router = require("express").Router();
 const controller = require("./tenant.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
-const { tenantRegisterSchema } = require("./tenant.validator");
+const tenantRegisterSchema = require("./tenant.validator").tenantRegisterSchema;
+const updateTenantSchema = require("./tenant.validator").updateTenantSchema;
+const { requirePermission } = require("../../middleware/requirePermission");
+const { requirePlatformAdmin } = require("../../middleware/requirePlatformAdmin");
+const { uploadImage } = require("../../utils/fileUpload");
 
 // OTP verification routes (no auth required)
 router.post("/send-otp", controller.sendOtp);
@@ -12,9 +16,25 @@ router.post("/verify-otp", controller.verifyOtp);
 // Registration (requires verified email)
 router.post("/register", validate(tenantRegisterSchema), controller.registerTenant);
 
-// Employee ID Settings (requires authentication)
-router.get("/employee-id-settings", verifyJwt, controller.getEmployeeIdSettings);
-router.post("/employee-id-prefix", verifyJwt, controller.setEmployeeIdPrefix);
+// Middleware for authenticated tenant routes
+router.use(verifyJwt);
+
+router.get("/profile", controller.getTenantProfile);
+router.put("/profile", requirePermission("admin.manage_tenant"), validate(updateTenantSchema), controller.updateTenantProfile);
+router.put("/logo", requirePermission("admin.manage_tenant"), uploadImage.single('logo'), controller.uploadLogo);
+router.delete("/logo", requirePermission("admin.manage_tenant"), controller.deleteLogo);
+
+// Employee ID Settings
+router.get("/employee-id-settings", controller.getEmployeeIdSettings);
+router.post("/employee-id-prefix", controller.setEmployeeIdPrefix);
+
+router.get("/platform/tenants", requirePlatformAdmin("platform.manage_tenants"), controller.getAllTenants);
+router.get("/platform/tenants/:id", requirePlatformAdmin("platform.manage_tenants"), controller.getPlatformTenantById);
+router.patch("/platform/tenants/:id/activate", requirePlatformAdmin("platform.manage_tenants"), controller.activateTenant);
+router.patch("/platform/tenants/:id/deactivate", requirePlatformAdmin("platform.manage_tenants"), controller.deactivateTenant);
+router.get("/platform/tenants/:id/users", requirePlatformAdmin("platform.manage_tenants"), controller.getUsersByTenant);
+router.get("/platform/tenants/:id/employee-count", requirePlatformAdmin("platform.manage_tenants"), controller.getPlatformTenantEmployeeCount);
+
 router.put("/employee-id-mode", verifyJwt, controller.toggleEmployeeIdMode);
 
 module.exports = router;

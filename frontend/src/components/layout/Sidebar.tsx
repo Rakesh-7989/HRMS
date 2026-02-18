@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useChat } from '@/contexts/ChatContext';
 import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
@@ -19,47 +20,72 @@ import {
   Wallet,
   MessageSquare,
   CreditCard,
+  Shield,
+  Tag,
+  Settings,
 } from 'lucide-react';
-import type { UserRole } from '@/types';
+
 
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
-  roles: UserRole[];
+  permissions: string[];  // User must have at least ONE of these
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal', roles: ['EMPLOYEE'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team', roles: ['MANAGER'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr', roles: ['HR'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization', roles: ['ADMIN'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system', roles: ['SUPER_ADMIN'] },
-  { label: 'Tenants', icon: Building2, path: '/tenants', roles: ['SUPER_ADMIN'] },
-  { label: 'Plans', icon: CreditCard, path: '/plans', roles: ['SUPER_ADMIN'] },
-  { label: 'Employees', icon: Users, path: '/dashboard/employees', roles: ['ADMIN', 'HR', 'MANAGER'] },
-  { label: 'Organisation', icon: Building2, path: '/organisation', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-
-  { label: 'Attendance', icon: Clock, path: '/attendance', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
-  { label: 'Calendar', icon: CalendarRange, path: '/calendar', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'] },
-  { label: 'Leave', icon: Calendar, path: '/leave', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
-  { label: 'Reports', icon: BarChart3, path: '/reports', roles: ['ADMIN', 'HR'] },
-  //{ label: 'Inbox', icon: Inbox, path: '/inbox', roles: ['HR', 'MANAGER', 'EMPLOYEE'] },
+  // Dashboards — shown based on role via permissions
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system', permissions: ['platform.manage_tenants'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization', permissions: ['admin.view_dashboard'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr', permissions: ['reports.view'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team', permissions: ['attendance.approve', 'leave.approve'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal', permissions: ['attendance.view_own', 'leave.view_own'] },
 
 
-  // Asset Management
-  { label: 'Assets', icon: Package, path: '/assets', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+
+  // Super Admin - strictly restricted to platform owners
+  { label: 'Tenants', icon: Building2, path: '/tenants', permissions: ['platform.manage_tenants'] },
+  { label: 'Plans', icon: CreditCard, path: '/plans', permissions: ['platform.manage_tenants'] },
+  { label: 'Coupons', icon: Tag, path: '/coupons', permissions: ['platform.manage_tenants'] },
+
+  // Employees
+  { label: 'Employees', icon: Users, path: '/dashboard/employees', permissions: ['employees.view', 'employees.create'] },
+
+  // Organisation
+  { label: 'Organisation', icon: Building2, path: '/organisation', permissions: ['organisation.view', 'organisation.manage_departments'] },
+
+  // Attendance
+  { label: 'Attendance', icon: Clock, path: '/attendance', permissions: ['attendance.view_own', 'attendance.view_all'] },
+
+  // Calendar
+  { label: 'Calendar', icon: CalendarRange, path: '/calendar', permissions: ['organisation.view'] },
+
+  // Leave
+  { label: 'Leave', icon: Calendar, path: '/leave', permissions: ['leave.view_own', 'leave.approve', 'leave.manage_settings'] },
+
+  // Reports
+  { label: 'Reports', icon: BarChart3, path: '/reports', permissions: ['reports.view', 'payroll.view_all'] },
+
+  // Assets
+  { label: 'Assets', icon: Package, path: '/assets', permissions: ['assets.view', 'assets.request', 'assets.manage'] },
 
   // Payroll
-  { label: 'Payroll', icon: Wallet, path: '/Payroll', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
+  { label: 'Payroll', icon: Wallet, path: '/Payroll', permissions: ['payroll.view_own', 'payroll.view_all', 'payroll.manage'] },
 
-  // Project Management
-  { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'] },
-  //{ label: 'Clients', icon: Building2, path: '/projects/clients', roles: ['ADMIN', 'MANAGER', 'HR'] },
+  // Projects
+  { label: 'Projects', icon: FolderKanban, path: '/projects', permissions: ['projects.view'] },
 
-  // System
-  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-  { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'] },
+  // Chat
+  { label: 'Chat', icon: MessageSquare, path: '/chat', permissions: ['organisation.view'] },
+
+  // Activity/Audit
+  { label: 'Activity', icon: Activity, path: '/activity', permissions: ['admin.view_audit_logs', 'admin.view_dashboard', 'platform.manage_tenants'] },
+
+  // Roles & Permissions management
+  { label: 'Roles', icon: Shield, path: '/roles', permissions: ['roles.manage'] },
+
+  // Settings
+  { label: 'Settings', icon: Settings, path: '/settings', permissions: ['roles.manage'] },
 ];
 
 interface SidebarProps {
@@ -69,14 +95,56 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { hasAnyPermission } = usePermission();
   const { totalUnreadCount } = useChat();
   const { pathname } = useLocation();
 
   if (!user) return null;
 
-  const visibleItems = NAV_ITEMS.filter(item =>
-    item.roles.includes(user.role)
-  );
+  // Filter to show only ONE dashboard based on highest privilege
+  const dashboardPaths = [
+    '/dashboard/system',
+    '/dashboard/organization',
+    '/dashboard/hr',
+    '/dashboard/team',
+    '/dashboard/personal',
+  ];
+
+  let dashboardShown = false;
+
+  // Strict Whitelist for Super Admin (Platform Owner)
+  const superAdminAllowedPaths = [
+    '/dashboard/system',
+    '/tenants',
+    '/plans',
+    '/coupons',
+    '/activity',
+    '/roles'
+  ];
+
+  const visibleItems = NAV_ITEMS.filter(item => {
+    // Permission check
+    if (!hasAnyPermission(item.permissions)) return false;
+
+    // Strict Guard for Platform level routes
+    const platformPaths = ['/dashboard/system', '/tenants', '/plans', '/coupons'];
+    if (platformPaths.includes(item.path) && !user.permissions?.includes('platform.manage_tenants')) {
+      return false;
+    }
+
+    // STRICT SEPARATION: Super Admin sees ONLY Platform routes
+    if (user.role === 'SUPER_ADMIN') {
+      if (!superAdminAllowedPaths.includes(item.path)) return false;
+    }
+
+    // Only show the first matching (highest privilege) dashboard
+    if (dashboardPaths.includes(item.path)) {
+      if (dashboardShown) return false;
+      dashboardShown = true;
+    }
+
+    return true;
+  });
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(`${path}/`);
@@ -98,58 +166,66 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 bg-primary-gradient text-white flex flex-col items-center z-50 w-[90px] transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          'fixed top-0 left-0 z-50 h-full w-24 bg-gradient-to-b from-[#4a3a60] via-[#3a2a50] to-[#2a1a40] border-r border-white/5 flex flex-col transition-transform duration-300',
+          'lg:translate-x-0',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Logo */}
-        <div
-          className="relative h-16 w-full flex items-center justify-center
-             border-b border-white/10
-             bg-primary-gradient
-             shadow-sm p-2"
-        >
-          <img
-            src={resolveImageUrl(user?.tenant_settings?.logo_url) || logo}
-            alt="Logo"
-            className="w-full h-full object-contain"
-          />
+        {/* Logo Section */}
+        <div className="h-16 flex items-center justify-center border-b border-white/5 bg-white/5">
+          <Link to="/dashboard" className="flex items-center justify-center w-full h-full">
+            <img
+              src={
+                user?.tenant_settings?.logo_url
+                  ? resolveImageUrl(user.tenant_settings.logo_url)
+                  : logo
+              }
+              alt="logo"
+              className="h-10 w-auto object-contain brightness-0 invert opacity-95"
+            />
+          </Link>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Items */}
         <nav className="flex-1 w-full py-4 flex flex-col items-center gap-1 overflow-y-auto sidebar-scroll">
-          {visibleItems.map(({ path, label, icon: Icon }, index) => (
-            <Link
-              key={`${path}-${index}`}
-              to={path}
-              onClick={() => onClose?.()}
-              className={cn(
-                'w-full flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors',
-                isActive(path)
-                  ? 'bg-white/20 text-white shadow-sm'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              )}
-            >
-              <div className="relative">
-                <Icon size={20} />
-                {label === 'Chat' && totalUnreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-primary-gradient">
-                    {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+          {visibleItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+                className={cn(
+                  'w-full flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors',
+                  active
+                    ? 'bg-white/20 text-white shadow-sm'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                )}
+              >
+                <div className="relative">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-center leading-tight px-1 max-w-[72px]">
+                  {item.label}
+                </span>
+
+                {item.label === 'Chat' && totalUnreadCount > 0 && (
+                  <span className="absolute top-2 right-4 bg-red-500 text-white text-[8px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-1 font-extrabold shadow-sm">
+                    {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
                   </span>
                 )}
-              </div>
-              <span className="text-center leading-tight px-1 max-w-[72px]">
-                {label}
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
     </>

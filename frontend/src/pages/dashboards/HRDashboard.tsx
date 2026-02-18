@@ -8,7 +8,8 @@ import { dashboardService } from '@/services/dashboard.service';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
   Calendar, Clock, UserX, CheckCircle,
-  Users, AlertCircle, UserCheck, Timer, Sparkles, ExternalLink
+  Users, AlertCircle, UserCheck, Timer, Sparkles, ExternalLink,
+  TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,89 +17,11 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Sector,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { CustomTooltip } from '@/components/dashboard/CustomTooltip';
+import { DASHBOARD_GRADIENTS } from '@/utils/constants';
 
-// Custom Tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700 min-w-[140px]">
-        <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-extrabold border-b border-gray-700 pb-1">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const isUtilization = entry.dataKey === 'value' && entry.payload.count !== undefined;
-          return (
-            <div key={index} className="space-y-1 py-1">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                  <span className="text-sm font-medium text-gray-300">
-                    {isUtilization ? 'Taken' : entry.name}
-                  </span>
-                </div>
-                <span className="text-sm font-bold">
-                  {entry.value}{isUtilization ? '%' : ''}
-                </span>
-              </div>
-              {isUtilization && (
-                <div className="flex items-center justify-between text-[10px] text-gray-500 ml-4 font-bold uppercase tracking-tighter">
-                  <span>Req. Count</span>
-                  <span>{entry.payload.count}</span>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
-};
 
-// Stat Card Component
-const StatCard = ({
-  title, value, subtitle, icon: Icon, gradient, delay = 0
-}: {
-  title: string;
-  value: number | string;
-  subtitle?: string;
-  icon: any;
-  gradient: string;
-  delay?: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    whileHover={{ y: -5, scale: 1.02 }}
-    className="relative group"
-  >
-    <div
-      className="relative overflow-hidden rounded-3xl p-5 h-full text-white"
-      style={{ background: gradient }}
-    >
-      {/* Decorative Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <circle cx="80" cy="20" r="40" fill="white" fillOpacity="0.3" />
-          <circle cx="10" cy="80" r="20" fill="white" fillOpacity="0.2" />
-        </svg>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Icon className="w-5 h-5 text-white" />
-          </div>
-        </div>
-        <h3 className="text-3xl font-bold mb-0.5 tracking-tight">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-        </h3>
-        <p className="text-white font-bold text-sm tracking-wide">{title}</p>
-        {subtitle && <p className="text-white/60 text-[10px] mt-0.5 uppercase tracking-wider">{subtitle}</p>}
-      </div>
-    </div>
-  </motion.div>
-);
 
 // Leave Request Card - Enhanced Informational Layout
 const LeaveRequestCard = ({ request, index }: { request: any; index: number }) => (
@@ -108,7 +31,7 @@ const LeaveRequestCard = ({ request, index }: { request: any; index: number }) =
     transition={{ delay: index * 0.1 }}
     className="group"
   >
-    <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-lg transition-all duration-300">
+    <div className="relative overflow-hidden p-3 border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-all duration-300">
       <div className="flex items-center gap-3">
         {/* Avatar with soft glow */}
         <div className="relative shrink-0">
@@ -175,21 +98,20 @@ const ChartCard = ({
   headerAction?: React.ReactNode;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-gray-900 rounded-3xl p-4 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-gray-200/60 dark:hover:shadow-indigo-500/5 transition-all duration-300 ${className}`}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`bg-[#111827]/60 dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-2xl ${className}`}
   >
-    <div className="flex items-center justify-between mb-3">
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
+    <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="min-w-0">
+        <h3 className="text-xl font-black text-white truncate tracking-tight">{title}</h3>
+        {subtitle && <p className="text-xs font-bold text-gray-500 mt-1 truncate">{subtitle}</p>}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         {headerAction}
         {badge && (
-          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 text-white/80 border border-white/5 backdrop-blur-md">
             {badge}
           </span>
         )}
@@ -296,72 +218,66 @@ export const HRDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title="HR Dashboard">
-      <motion.div
-        className="space-y-8"
-        initial="initial"
-        animate="animate"
-      >
+      <motion.div className="space-y-6 pb-6" initial="initial" animate="animate">
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-6"
+          className="relative overflow-hidden rounded-2xl p-8 shadow-2xl shadow-indigo-500/20"
           style={{
             background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #6366f1 100%)',
           }}
         >
           {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute inset-0" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 mb-1"
+                className="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md"
               >
                 <Sparkles className="w-4 h-4 text-yellow-300" />
-                <span className="text-white/80 text-xs font-medium uppercase tracking-wider">
+                <span className="text-white text-[10px] font-bold uppercase tracking-widest">
                   Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}
                 </span>
               </motion.div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}! 👋
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter">
+                Welcome back, {user?.first_name}! <span className="inline-block animate-bounce-slow">👋</span>
               </h1>
-              <p className="text-white/70 text-base font-medium">
-                Here's what's happening with your people today
+              <p className="text-white/80 text-lg font-medium max-w-xl leading-relaxed">
+                Here's what's happening with your people today. Monitor attendance and leaves at a glance.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
-              >
-                <div className="text-center px-3 border-r border-white/20">
-                  <p className="text-2xl font-bold text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
-                </div>
-                <div className="text-center px-3">
-                  <p className="text-2xl font-bold text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Today</p>
-                </div>
-              </motion.div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-6 backdrop-blur-2xl rounded-2xl p-6 border border-white/10 min-w-fit shadow-inner"
+            >
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-4xl font-black text-white tabular-nums">{format(new Date(), 'dd')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">{format(new Date(), 'MMM yyyy')}</p>
+              </div>
+              <div className="text-center px-4 min-w-[120px]">
+                <p className="text-2xl font-black text-white leading-tight">{format(new Date(), 'EEEE')}</p>
+                <p className="text-lg font-bold text-white/80 tabular-nums mt-0.5">{format(new Date(), 'hh:mm a')}</p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
 
 
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {isBaseLoading ? (
             Array(4).fill(0).map((_, i) => <StatSkeleton key={i} />)
           ) : (
@@ -371,7 +287,7 @@ export const HRDashboard: React.FC = () => {
                 value={statsMetrics.pending}
                 subtitle="Awaiting review"
                 icon={AlertCircle}
-                gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+                gradient={DASHBOARD_GRADIENTS.orange}
                 delay={0.1}
               />
               <StatCard
@@ -379,7 +295,7 @@ export const HRDashboard: React.FC = () => {
                 value={employeesOnLeave.length}
                 subtitle="Employees absent"
                 icon={UserX}
-                gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
+                gradient={DASHBOARD_GRADIENTS.purple}
                 delay={0.2}
               />
               <StatCard
@@ -387,7 +303,7 @@ export const HRDashboard: React.FC = () => {
                 value={attendanceOverview.total_checkins}
                 subtitle={`${attendanceOverview.late_count} late arrivals`}
                 icon={UserCheck}
-                gradient="linear-gradient(135deg, #10b981, #059669)"
+                gradient={DASHBOARD_GRADIENTS.green}
                 delay={0.3}
               />
               <StatCard
@@ -395,7 +311,7 @@ export const HRDashboard: React.FC = () => {
                 value={statsMetrics.approved}
                 subtitle="All time total"
                 icon={CheckCircle}
-                gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+                gradient={DASHBOARD_GRADIENTS.purple}
                 delay={0.4}
               />
             </>
@@ -404,7 +320,7 @@ export const HRDashboard: React.FC = () => {
 
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Leave Status Radial Chart */}
           <ChartCard
             title="Leave Request Status"
@@ -490,21 +406,24 @@ export const HRDashboard: React.FC = () => {
                         {leaveStatusData.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={entry.color.includes('#') ? entry.color : `url(#${entry.color})`}
+                            fill={entry.color}
                             strokeWidth={2}
                             stroke="rgba(255,255,255,0.05)"
                           />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                   {/* Subtle pulse effect in the center */}
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55px] h-[55px] rounded-full bg-indigo-500/5 dark:bg-indigo-400/5 animate-pulse-slow" />
                 </div>
 
-                {/* Premium Animated Legend - Right Side */}
-                <div className="w-full lg:w-1/2 flex flex-col gap-3">
+                {/* Legend - Right Side */}
+                <div className="w-full lg:w-1/2 flex flex-col gap-2">
                   {leaveStatusData.map((item, index) => (
                     <motion.div
                       key={item.name}
@@ -513,28 +432,28 @@ export const HRDashboard: React.FC = () => {
                       transition={{ delay: 0.8 + index * 0.1 }}
                       onMouseEnter={() => setActivePieIndex(index)}
                       onMouseLeave={() => setActivePieIndex(undefined)}
-                      className={`flex flex-col gap-2 p-3 rounded-2xl transition-all duration-300 ${activePieIndex === index ? 'bg-indigo-50/50 dark:bg-indigo-500/10 ring-1 ring-indigo-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                      className={`flex flex-col gap-2 p-3 rounded-2xl transition-all duration-300 ${activePieIndex === index ? 'bg-white/10 ring-1 ring-white/10' : 'hover:bg-white/5'
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div
                             className="w-2.5 h-2.5 rounded-full shadow-sm"
-                            style={{ background: item.color.includes('#') ? item.color : `linear-gradient(to bottom right, ${item.color.includes('Green') ? '#10b981, #059669' : item.color.includes('Yellow') ? '#f59e0b, #d97706' : '#ef4444, #dc2626'})` }}
+                            style={{ background: item.color }}
                           />
-                          <span className="text-[11px] font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest leading-none">{item.name}</span>
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">{item.name}</span>
                         </div>
-                        <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded-md min-w-[28px] text-center">
+                        <span className="text-[10px] font-black text-white bg-white/10 px-2 py-0.5 rounded-md min-w-[28px] text-center">
                           {item.value}
                         </span>
                       </div>
-                      <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${(item.value / totalRequests) * 100}%` }}
                           transition={{ duration: 1.5, delay: 1 }}
                           className="h-full rounded-full"
-                          style={{ background: item.color.includes('#') ? item.color : (item.name === 'Approved' ? '#10b981' : item.name === 'Pending' ? '#f59e0b' : '#ef4444') }}
+                          style={{ background: item.color }}
                         />
                       </div>
                     </motion.div>
@@ -628,6 +547,8 @@ export const HRDashboard: React.FC = () => {
                     <Tooltip
                       cursor={{ fill: 'transparent' }}
                       content={<CustomTooltip />}
+                      contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      formatter={(value: any) => [`${value}% Utilization`]}
                     />
                     <Bar
                       dataKey="value"
@@ -647,12 +568,12 @@ export const HRDashboard: React.FC = () => {
           </ChartCard>
         </div>
 
-        {/* Attendance Overview - Twilight Aura Palette */}
+        {/* Attendance Overview */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.7 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a] rounded-3xl p-6 text-white border border-white/5 shadow-2xl"
+          className="relative overflow-hidden bg-[#111827]/60 dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-2xl p-8 text-white border border-white/5 shadow-2xl"
         >
           {/* Decorative Glows */}
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
@@ -675,7 +596,7 @@ export const HRDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
                   label: 'Total Employees',
@@ -684,16 +605,15 @@ export const HRDashboard: React.FC = () => {
                   icon: Users,
                   accent: 'text-indigo-400',
                   bg: 'bg-indigo-500/15',
-                  glow: 'shadow-indigo-500/10'
+                  glow: 'shadow-indigo-500/10',
+                  gradient: ['#6366f1', '#4f46e5']
                 },
                 {
                   label: 'Total Present',
                   desc: 'Employees clocked in',
                   value: attendanceOverview.unique_employees,
                   icon: UserCheck,
-                  accent: 'text-cyan-400',
-                  bg: 'bg-cyan-500/15',
-                  glow: 'shadow-cyan-500/10'
+                  gradient: ['#22d3ee', '#0891b2'],
                 },
                 {
                   label: 'Not Clocked In',
@@ -702,58 +622,60 @@ export const HRDashboard: React.FC = () => {
                   icon: UserX,
                   accent: 'text-slate-400',
                   bg: 'bg-slate-500/15',
-                  glow: 'shadow-slate-500/10'
+                  glow: 'shadow-slate-500/10',
+                  gradient: ['#94a3b8', '#475569']
                 },
                 {
                   label: 'On Time',
                   desc: 'Arrived within schedule',
                   value: Math.max(0, attendanceOverview.total_checkins - attendanceOverview.late_count),
                   icon: CheckCircle,
-                  accent: 'text-emerald-400',
-                  bg: 'bg-emerald-500/15',
-                  glow: 'shadow-emerald-500/10'
+                  gradient: ['#34d399', '#059669'],
                 },
                 {
                   label: 'Late Arrivals',
                   desc: 'Clocked in after schedule',
                   value: attendanceOverview.late_count,
                   icon: Timer,
-                  accent: 'text-amber-400',
-                  bg: 'bg-amber-500/15',
-                  glow: 'shadow-amber-500/10'
+                  gradient: ['#fbbf24', '#d97706'],
+                },
+                {
+                  label: 'Caution Rate',
+                  desc: 'Risk of late trends',
+                  value: `${attendanceOverview.late_percentage}%`,
+                  icon: TrendingUp,
+                  gradient: ['#f87171', '#dc2626'],
                 },
               ].map((item, index) => (
 
                 <motion.div
                   key={item.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.8 + index * 0.1 }}
-                  className={`group relative p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-xl ${item.glow}`}
+                  className="group relative p-5 rounded-2xl transition-all duration-300 border border-transparent hover:border-white/5"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform`}>
-                      <item.icon className={`w-5 h-5 ${item.accent}`} />
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                      style={{ background: `linear-gradient(135deg, ${item.gradient[0]}, ${item.gradient[1]})` }}
+                    >
+                      <item.icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
                   <div>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <p className="text-3xl font-black tracking-tighter">{item.value}</p>
-                    </div>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${item.accent}`}>{item.label}</p>
-                    <p className="text-white/40 text-[10px] font-medium leading-tight group-hover:text-white/60 transition-colors">{item.desc}</p>
+                    <h4 className="text-3xl font-black tracking-tighter mb-1">{item.value}</h4>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">{item.label}</p>
+                    <p className="text-gray-600 text-[10px] font-bold leading-tight line-clamp-1">{item.desc}</p>
                   </div>
-
-                  {/* Internal Glow Effect */}
-                  <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`} />
                 </motion.div>
               ))}
             </div>
           </div>
         </motion.div>
 
-        {/* Pending Requests and Employees on Leave Side-by-Side - Enhanced Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+        {/* Pending Requests and Employees on Leave Side-by-Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-8">
           {/* Pending Leave Requests */}
           <ChartCard
             title="Pending Leave Requests"
@@ -763,7 +685,7 @@ export const HRDashboard: React.FC = () => {
             headerAction={
               <button
                 onClick={() => navigate('/leave?tab=team-requests')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100/50"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5"
               >
                 Manage
                 <ExternalLink className="w-2.5 h-2.5" />
@@ -795,7 +717,7 @@ export const HRDashboard: React.FC = () => {
             headerAction={
               <button
                 onClick={() => navigate('/attendance')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100/50"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5"
               >
                 Logs
                 <ExternalLink className="w-2.5 h-2.5" />
@@ -810,7 +732,7 @@ export const HRDashboard: React.FC = () => {
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800/50 hover:border-blue-300 transition-all shadow-sm"
+                    className="group rounded-xl p-3 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-all"
                   >
                     <div className="relative shrink-0">
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm group-hover:scale-105 transition-transform">

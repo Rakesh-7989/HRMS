@@ -20,6 +20,7 @@ export interface TenantProfile {
         workingHours?: WorkingHours;
         logo_url?: string;
         primary_color?: string;
+        employment_types?: string[];
     };
 }
 
@@ -28,7 +29,7 @@ const LOCAL_STORAGE_KEY = 'hrms_tenant_profile_fallback';
 export const adminService = {
     getTenantProfile: async (): Promise<TenantProfile> => {
         try {
-            const response = await api.get('/admin/tenant/profile');
+            const response = await api.get('/tenants/profile');
             const backendData = response.data.data;
 
             // Merge with local storage fallback for simulated fields (like workingHours or edited name)
@@ -88,7 +89,7 @@ export const adminService = {
 
         try {
             // Still attempt calling the backend
-            await api.put('/admin/tenant/profile', data);
+            await api.put('/tenants/profile', data);
         } catch (err) {
             console.warn('Backend profile update failed, used localStorage fallback.', err);
             // Suppress error if it's a 404/405/501 (not implemented) to avoid user frustration
@@ -103,7 +104,7 @@ export const adminService = {
     uploadTenantLogo: async (file: File): Promise<{ logo_url: string }> => {
         const formData = new FormData();
         formData.append('logo', file);
-        const response = await api.put<any>('/admin/tenant/logo', formData, {
+        const response = await api.put<any>('/tenants/logo', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -131,7 +132,7 @@ export const adminService = {
     },
 
     deleteTenantLogo: async (): Promise<void> => {
-        await api.delete('/admin/tenant/logo');
+        await api.delete('/tenants/logo');
 
         // Sync local storage fallback
         const existingRaw = localStorage.getItem(LOCAL_STORAGE_KEY);

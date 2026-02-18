@@ -9,6 +9,7 @@ interface LoginResponse {
   tenantId?: string;
   mustChangePassword?: boolean;
   preAuthToken?: string;
+  permissions?: string[];
   message?: string;
 }
 
@@ -71,6 +72,7 @@ export const authService = {
       role: role as User['role'],
       tenant_id: tenantId || decoded.tenantId,
       employee_id: decoded.employeeId,
+      permissions: response.data.permissions || [],
       is_active: true,
     };
 
@@ -208,6 +210,9 @@ export const authService = {
       role: currentUser.role,
       tenant_id: currentUser.tenant_id,
       is_active: profile.is_active ?? true,
+      subscription_status: profile.subscription_status,
+      subscription_plan_name: profile.subscription_plan_name,
+      cancel_at_period_end: profile.cancel_at_period_end,
     };
   },
 
@@ -266,6 +271,7 @@ export const authService = {
       role: role as User['role'],
       tenant_id: tenantId || decoded.tenantId,
       employee_id: decoded.employeeId,
+      permissions: response.data.permissions || [],
       is_active: true,
     };
 

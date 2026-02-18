@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 const validate = require("../../middleware/validate");
 
 const controller = require("./calendar.controller");
@@ -27,27 +27,27 @@ router.get(
 // Company Holidays Management (Admin/HR only)
 router.get(
     "/company/holidays",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("calendar.manage"),
     controller.getCompanyHolidays
 );
 
 router.post(
     "/company/holidays",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("calendar.manage"),
     validate(validator.companyHolidaySchema),
     controller.createCompanyHoliday
 );
 
 router.delete(
     "/company/holidays/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("calendar.manage"),
     controller.deleteCompanyHoliday
 );
 
 // State Holidays Management (Mainly for Super Admin / Setup)
 router.post(
     "/state/holidays",
-    requireRole(["SUPER_ADMIN"]),
+    requirePermission("platform.manage_tenants"),
     validate(validator.stateHolidaySchema),
     controller.createStateHoliday
 );
@@ -60,13 +60,13 @@ router.get(
 
 router.post(
     "/announcements",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["calendar.manage", "announcements.manage"]),
     controller.createAnnouncement
 );
 
 router.delete(
     "/announcements/:id",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["calendar.manage", "announcements.manage"]),
     controller.deleteAnnouncement
 );
 

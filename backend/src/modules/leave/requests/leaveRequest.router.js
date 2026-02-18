@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 const { uploadDocument } = require("../../../utils/fileUpload");
 
@@ -20,11 +20,11 @@ router.get("/my-leaves", controller.getMyLeaves);
 router.post("/:id/cancel", validate(v.cancelLeaveSchema), controller.cancelApprovedLeave);
 
 // Manager/Admin/HR routes
-router.get("/approvals", requireRole(["MANAGER", "HR", "ADMIN"]), controller.getPendingApprovals);
-router.put("/:id/approve", requireRole(["MANAGER", "HR", "ADMIN"]), validate(v.approveLeaveSchema), controller.approveLeave);
-router.put("/:id/reject", requireRole(["MANAGER", "HR", "ADMIN"]), validate(v.rejectLeaveSchema), controller.rejectLeave);
+router.get("/approvals", requireAnyPermission(["leave.manage_settings", "leave.approve"]), controller.getPendingApprovals);
+router.put("/:id/approve", requireAnyPermission(["leave.manage_settings", "leave.approve"]), validate(v.approveLeaveSchema), controller.approveLeave);
+router.put("/:id/reject", requireAnyPermission(["leave.manage_settings", "leave.approve"]), validate(v.rejectLeaveSchema), controller.rejectLeave);
 
 // Admin/HR summary
-router.get("/summary", requireRole(["ADMIN", "HR", "MANAGER"]), controller.getLeaveSummary);
+router.get("/summary", requireAnyPermission(["leave.manage_settings", "leave.approve", "reports.view"]), controller.getLeaveSummary);
 
 module.exports = router;

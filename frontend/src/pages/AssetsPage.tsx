@@ -28,8 +28,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import type { Asset, AssetStatus, AssetCategory } from '@/types';
 
+
 export const AssetsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AssetStatus | 'All'>('All');
@@ -70,7 +71,7 @@ export const AssetsPage: React.FC = () => {
   const { data: employees = [] } = useQuery<Array<import('@/services/users.service').User & { employee_uuid?: string }>>({
     queryKey: ['users', 'employees'],
     queryFn: () => usersService.getUsers({ is_active: true }),
-    enabled: showAssignModal && ['ADMIN', 'HR'].includes(user?.role || ''),
+    enabled: showAssignModal && hasPermission('manage_all_assets'),
   });
 
   const assignMutation = useMutation({
@@ -80,8 +81,6 @@ export const AssetsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
     },
   });
-
-
 
   // Filter assets based on search and filters
   const filteredAssets = assets.filter((asset) => {
@@ -93,10 +92,10 @@ export const AssetsPage: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const canManage = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canViewDetails = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
-  const canRequestAsset = ['HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
-  const canViewBarcode = ['ADMIN', 'HR'].includes(user?.role || '');
+  const canManage = hasPermission('manage_all_assets');
+  const canViewDetails = hasPermission('view_assets');
+  const canRequestAsset = hasPermission('request_asset');
+  const canViewBarcode = hasPermission('manage_all_assets');
 
   const handleAssign = (assetId: string) => {
     setAssignForm({ assetId, employeeId: '' });
@@ -234,12 +233,11 @@ export const AssetsPage: React.FC = () => {
     <DashboardLayout
       title={canManage ? 'Asset Management' : 'My Assets'}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
+        { label: 'Dashboard', href: hasPermission('view_admin_dashboard') ? '/dashboard/organization' : '/dashboard/personal' },
         { label: canManage ? 'Assets' : 'My Assets' },
       ]}
     >
       <div className="space-y-6">
-        {/* Header */}
         {/* Header */}
         <div className="flex flex-col xl:flex-row gap-4 xl:items-center xl:justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
@@ -308,7 +306,7 @@ export const AssetsPage: React.FC = () => {
                 <span className="sm:hidden">Assign</span>
               </Button>
             )}
-            {canManage || user?.role === 'HR' ? (
+            {canManage ? (
               <Button
                 onClick={() => navigate('/assets/requests')}
                 variant="outline"
@@ -329,7 +327,7 @@ export const AssetsPage: React.FC = () => {
                 <span className="sm:hidden">My Reqs</span>
               </Button>
             )}
-            {user?.role === 'ADMIN' && (
+            {hasPermission('create_assets') && (
               <Button onClick={() => navigate('/assets/new')} className="flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none">
                 <Plus size={18} />
                 <span className="hidden sm:inline">Add Asset</span>
@@ -495,7 +493,7 @@ export const AssetsPage: React.FC = () => {
 
                           {canManage ? (
                             <>
-                              {user?.role === 'ADMIN' && (
+                              {hasPermission('create_assets') && (
                                 <button
                                   onClick={() => navigate(`/assets/${asset.id}/edit`)}
                                   className="text-blue-600 hover:text-blue-800"
@@ -660,7 +658,7 @@ export const AssetsPage: React.FC = () => {
       {/* Assign Asset Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-md mx-4 overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500/10 to-primary/10">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -716,13 +714,10 @@ export const AssetsPage: React.FC = () => {
                   <option value="">-- Select an employee --</option>
                   {employees
                     .filter((employee) => {
-                      // Always exclude ADMIN from assignment
-                      if (employee.role === 'ADMIN') return false;
-
-                      // If logged-in user is HR, exclude HR role (only show MANAGER and EMPLOYEE)
-                      if (user?.role === 'HR' && employee.role === 'HR') return false;
-
-                      // Show all other employees
+                      // Hide Super Admin from assignment choices
+                      if (employee.role === 'SUPER_ADMIN') return false;
+                      // Don't show the logged in user themselves for assignment
+                      if (user?.id === employee.id) return false;
                       return true;
                     })
                     .map((employee) => (

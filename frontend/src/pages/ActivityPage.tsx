@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/Card';
 import { Activity, RefreshCw, Search, History, Clock } from 'lucide-react';
 import { auditService, AuditLog } from '@/services/audit.service';
@@ -28,6 +29,15 @@ export const ActivityPage: React.FC = () => {
   const [isLive, setIsLive] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [now, setNow] = useState<Date>(new Date());
+  const { hasPermission } = useAuth();
+
+  const getDashboardPath = () => {
+    if (hasPermission('platform.manage_tenants')) return '/dashboard/system';
+    if (hasPermission('admin.view_dashboard')) return '/dashboard/organization';
+    if (hasPermission('reports.view')) return '/dashboard/hr';
+    if (hasPermission('attendance.approve')) return '/dashboard/team';
+    return '/dashboard/personal';
+  };
 
   // Ticking clock for "Live" feel
   useEffect(() => {
@@ -149,8 +159,8 @@ export const ActivityPage: React.FC = () => {
     <DashboardLayout
       title="Audit Activity"
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/system' },
-        { label: 'Audit Activity' },
+        { label: 'Dashboard', href: getDashboardPath() },
+        { label: 'Activity' },
       ]}
     >
       <div className="space-y-6">

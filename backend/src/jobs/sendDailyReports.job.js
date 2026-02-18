@@ -11,7 +11,7 @@ const moment = require('moment');
  * Runs daily at 6:00 AM
  */
 const sendDailyReports = cron.schedule(
-    '0 6 * * *', 
+    '0 6 * * *',
     async () => {
         try {
             logger.info('Running daily attendance reports job...');
@@ -47,7 +47,12 @@ const sendDailyReports = cron.schedule(
                          FROM users u
                          INNER JOIN employees e ON u.employee_id = e.id
                          WHERE u.tenant_id = $1 
-                           AND u.role IN ('ADMIN', 'HR')
+                           AND (u.role IN ('ADMIN', 'SUPER_ADMIN') OR EXISTS (
+                               SELECT 1 FROM user_roles ur 
+                               JOIN role_permissions rp ON ur.role_id = rp.role_id
+                               JOIN permissions p ON rp.permission_id = p.id
+                               WHERE ur.user_id = u.id AND p.name = 'view_all_employees'
+                           ))
                            AND u.is_active = true`,
                         [tenant.id]
                     );

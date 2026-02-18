@@ -4,13 +4,13 @@ import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const TimesheetPage: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = useAuth();
 
     return (
         <DashboardLayout
             title="Timesheets"
             breadcrumbs={[
-                { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: 'Dashboard', href: hasPermission('view_admin_dashboard') ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Projects', href: '/projects' },
                 { label: 'Timesheets' },
             ]}

@@ -1,5 +1,7 @@
 
 const tenantService = require("./tenant.service");
+const { deleteFile } = require("../../utils/fileUpload");
+const path = require("path");
 
 exports.registerTenant = async (req, res) => {
   try {
@@ -128,7 +130,7 @@ exports.setEmployeeIdPrefix = async (req, res) => {
     }
 
     // ADMIN and HR can set the prefix
-    if (!["ADMIN",  "SUPER_ADMIN"].includes(req.user.role)) {
+    if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
       return res.status(403).json({
         status: "error",
         message: "Only Admin  can configure employee ID prefix"
@@ -150,7 +152,7 @@ exports.setEmployeeIdPrefix = async (req, res) => {
 };
 
 /**
- * Toggle employee ID mode (auto-prefix vs manual)
+ * Toggle employee ID mode
  */
 exports.toggleEmployeeIdMode = async (req, res) => {
   try {
@@ -161,21 +163,6 @@ exports.toggleEmployeeIdMode = async (req, res) => {
       return res.status(400).json({
         status: "error",
         message: "Tenant ID is required"
-      });
-    }
-
-    // Only ADMIN and HR can toggle
-    if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
-      return res.status(403).json({
-        status: "error",
-        message: "Only Admin can configure employee ID settings"
-      });
-    }
-
-    if (typeof usePrefix !== "boolean") {
-      return res.status(400).json({
-        status: "error",
-        message: "usePrefix must be a boolean value"
       });
     }
 
@@ -190,5 +177,155 @@ exports.toggleEmployeeIdMode = async (req, res) => {
       status: "error",
       message: err.message || "Failed to toggle employee ID mode"
     });
+  }
+};
+
+exports.getTenantProfile = async (req, res) => {
+  try {
+    const data = await tenantService.getTenantProfile(req.user.tenantId);
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.updateTenantProfile = async (req, res) => {
+  try {
+    const data = await tenantService.updateTenantProfile(req.user.tenantId, req.body);
+    res.json({ status: "success", data, message: "Organization details updated successfully" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.uploadLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No file uploaded' });
+    }
+
+    const filePath = `/uploads/documents/${req.file.filename}`;
+    const result = await tenantService.updateTenantLogo(req.user.tenantId, filePath);
+
+    // If there was an old logo, try to delete the file
+    if (result.oldLogoUrl) {
+      try {
+        const projectRoot = process.cwd();
+        let oldPath = "";
+
+        if (result.oldLogoUrl.startsWith('/uploads')) {
+          oldPath = path.join(projectRoot, result.oldLogoUrl);
+        } else if (result.oldLogoUrl.includes('uploads')) {
+          const relativePart = result.oldLogoUrl.substring(result.oldLogoUrl.indexOf('uploads'));
+          oldPath = path.join(projectRoot, relativePart);
+        }
+
+        if (oldPath) {
+          deleteFile(oldPath);
+        }
+      } catch (e) {
+        console.error('Failed to delete old logo file:', e);
+      }
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Logo uploaded successfully',
+      data: { logo_url: filePath }
+    });
+  } catch (err) {
+    console.error('Logo upload error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+
+exports.deleteLogo = async (req, res) => {
+  try {
+    const result = await tenantService.updateTenantLogo(req.user.tenantId, null);
+
+    // Try to delete the old file
+    if (result.oldLogoUrl) {
+      try {
+        const projectRoot = process.cwd();
+        let oldPath = "";
+
+        if (result.oldLogoUrl.startsWith('/uploads')) {
+          oldPath = path.join(projectRoot, result.oldLogoUrl);
+        } else if (result.oldLogoUrl.includes('uploads')) {
+          const relativePart = result.oldLogoUrl.substring(result.oldLogoUrl.indexOf('uploads'));
+          oldPath = path.join(projectRoot, relativePart);
+        }
+
+        if (oldPath) {
+          deleteFile(oldPath);
+        }
+      } catch (e) {
+        console.error('Failed to delete old logo file:', e);
+      }
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Logo removed successfully',
+      data: { logo_url: null }
+    });
+  } catch (err) {
+    console.error('Logo delete error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+
+
+exports.getAllTenants = async (req, res) => {
+  try {
+    const tenants = await tenantService.getAllTenants();
+    res.json({ status: "success", tenants });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.getPlatformTenantById = async (req, res) => {
+  try {
+    const tenant = await tenantService.getTenantById(req.params.id);
+    res.json({ status: "success", tenant });
+  } catch (err) {
+    res.status(404).json({ status: "error", message: err.message });
+  }
+};
+
+exports.activateTenant = async (req, res) => {
+  try {
+    const data = await tenantService.updatePlatformTenantStatus(req.params.id, true);
+    res.json({ status: "success", data, message: "Tenant activated successfully" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.deactivateTenant = async (req, res) => {
+  try {
+    const data = await tenantService.updatePlatformTenantStatus(req.params.id, false);
+    res.json({ status: "success", data, message: "Tenant deactivated successfully" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.getUsersByTenant = async (req, res) => {
+  try {
+    const users = await tenantService.getUsersByTenant(req.params.id);
+    res.json({ status: "success", users });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.getPlatformTenantEmployeeCount = async (req, res) => {
+  try {
+    const count = await tenantService.getPlatformTenantEmployeeCount(req.params.id);
+    res.json({ status: "success", count });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
   }
 };

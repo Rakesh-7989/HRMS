@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const loanController = require("./loans.controller");
@@ -21,29 +21,29 @@ router.use(verifyJwt);
 // Create loan type
 router.post(
   "/loantype",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
   validate(createLoanTypeSchema),
   loanController.createLoanType
 );
 
-// Get loan types (HR / ADMIN only)
+// Get loan types
 router.get(
   "/loantype",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
   loanController.getLoanTypes
 );
 
 // Get loan type by ID
 router.get(
   "/loantype/:loantypeid",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
   loanController.getLoanTypeById
 );
 
 // Update loan type
 router.put(
   "/loantype/:loantypeid",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
   validate(updateLoanTypeSchema),
   loanController.updateLoanType
 );
@@ -51,7 +51,7 @@ router.put(
 // Delete loan type
 router.delete(
   "/loantype/:loantypeid",
-  requireRole(["ADMIN"]),
+  requirePermission("manage_loans"),
   loanController.deleteLoanType
 );
 
@@ -62,50 +62,49 @@ router.delete(
 // Employee applies for loan
 router.post(
   "/",
-  // allow employees and HR/ADMIN to create loans (UI allows Admin to add loans)
-  requireRole(["EMPLOYEE", "HR", "ADMIN"]),
+  requireAnyPermission(["request_loan", "manage_loans"]),
   loanController.createLoan
 );
 
 // Employee: view own loans
 router.get(
   "/getloans",
-  requireRole(["EMPLOYEE"]),
+  requirePermission("view_own_payslip"),
   loanController.getLoans
 );
 
 // Manager: view team loans
 router.get(
   "/team",
-  requireRole(["MANAGER"]),
+  requirePermission("view_team_payroll"),
   loanController.getLoans
 );
 
 // HR / ADMIN: view all loans
 router.get(
   "/all",
-  requireRole(["HR", "ADMIN"]),
+  requireAnyPermission(["manage_loans", "manage_payroll_components"]),
   loanController.getLoanTypes
 );
 
 // Get loan by ID (role-aware inside controller)
 router.get(
   "/:loanId",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requireAnyPermission(["view_own_payslip", "view_team_payroll", "manage_loans"]),
   loanController.getLoanById
 );
 
 // Approve loan
 router.patch(
   "/:loanId/approve",
-  requireRole(["MANAGER", "HR"]),
+  requireAnyPermission(["view_team_payroll", "manage_loans"]),
   loanController.approveLoan
 );
 
 // Close loan
 router.patch(
   "/:loanId/close",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission("manage_loans"),
   loanController.closeLoan
 );
 

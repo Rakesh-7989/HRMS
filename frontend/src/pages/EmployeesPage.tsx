@@ -8,7 +8,9 @@ import { usersService, EmployeeFilters } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { resolveImageUrl } from '@/utils/image';
+import { rbacService } from '@/services/rbac.service';
 import { cn } from '@/utils/cn';
 import {
   Plus,
@@ -28,12 +30,14 @@ import {
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { adminService } from '@/services/admin.service';
 
-const ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
+
 const PAGE_SIZE = 10;
 
 export const EmployeesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission: authHasPermission } = useAuth();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const navigate = useNavigate();
@@ -43,10 +47,13 @@ export const EmployeesPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | 'active' | 'inactive'>('');
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { hasPermission, hasAnyPermission } = usePermission();
+
+  const canManage = hasAnyPermission(['employees.create', 'employees.edit', 'employees.delete']);
 
   // Build filter params
   const filterParams: EmployeeFilters = {
@@ -61,7 +68,7 @@ export const EmployeesPage: React.FC = () => {
   // Reset page when filters or search change
   React.useEffect(() => {
     setPage(0);
-  }, [searchTerm, roleFilter, departmentFilter, statusFilter]);
+  }, [searchTerm, roleFilter, departmentFilter, statusFilter, employmentTypeFilter]);
 
   // Queries
   const { data: employees = [], isLoading } = useQuery({
@@ -78,6 +85,18 @@ export const EmployeesPage: React.FC = () => {
     queryKey: ['designations'],
     queryFn: () => designationService.getDesignations(),
   });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => rbacService.getRoles(),
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: () => adminService.getTenantProfile(),
+  });
+
+  const employmentTypes = profile?.settings?.employment_types || ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMP'];
 
   // Mutations
   const toggleStatusMutation = useMutation({
@@ -123,6 +142,9 @@ export const EmployeesPage: React.FC = () => {
     if (statusFilter === 'active' && !Boolean(emp.is_active)) return false;
     if (statusFilter === 'inactive' && Boolean(emp.is_active)) return false;
 
+    // Employment Type filter
+    if (employmentTypeFilter && emp.employment_type !== employmentTypeFilter) return false;
+
     // Search filter (as fallback)
     if (searchTerm) {
       const searchStr = searchTerm.toLowerCase();
@@ -156,10 +178,11 @@ export const EmployeesPage: React.FC = () => {
     setRoleFilter('');
     setDepartmentFilter('');
     setStatusFilter('');
+    setEmploymentTypeFilter('');
     setPage(0);
   };
 
-  const hasActiveFilters = roleFilter || departmentFilter || statusFilter;
+  const hasActiveFilters = roleFilter || departmentFilter || statusFilter || employmentTypeFilter;
 
   // Subscription Query for Limit Check
   const { data: subscription } = useQuery({
@@ -178,7 +201,7 @@ export const EmployeesPage: React.FC = () => {
     <DashboardLayout
       title="Employees"
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
+        { label: 'Dashboard', href: authHasPermission('admin.view_dashboard') ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Employees' },
       ]}
     >
@@ -236,43 +259,49 @@ export const EmployeesPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <Building2 size={16} className="text-gray-500" />
-                <select
+                <SearchableSelect
+                  className="w-48"
+                  placeholder="All Departments"
+                  options={departments.map(d => ({ value: d.id, label: d.name }))}
                   value={departmentFilter}
-                  onChange={(e) => { setDepartmentFilter(e.target.value); setPage(0); }}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>{dept.name}</option>
-                  ))}
-                </select>
+                  onChange={setDepartmentFilter}
+                />
               </div>
 
               <div className="flex items-center gap-2">
                 <Briefcase size={16} className="text-gray-500" />
-                <select
+                <SearchableSelect
+                  className="w-48"
+                  placeholder="All Roles"
+                  options={roles.map(r => ({ value: r.name, label: r.name.charAt(0) + r.name.slice(1).toLowerCase() }))}
                   value={roleFilter}
-                  onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                >
-                  <option value="">All Roles</option>
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
+                  onChange={setRoleFilter}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Briefcase size={16} className="text-gray-500" />
+                <SearchableSelect
+                  className="w-48"
+                  placeholder="All Employment Types"
+                  options={employmentTypes.map(t => ({ value: t, label: t.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('-') }))}
+                  value={employmentTypeFilter}
+                  onChange={setEmploymentTypeFilter}
+                />
               </div>
 
               <div className="flex items-center gap-2">
                 <UserCheck size={16} className="text-gray-500" />
-                <select
+                <SearchableSelect
+                  className="w-48"
+                  placeholder="All Status"
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' }
+                  ]}
                   value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as any); setPage(0); }}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                  onChange={(val) => setStatusFilter(val as any)}
+                />
               </div>
 
               {hasActiveFilters && (
@@ -315,6 +344,9 @@ export const EmployeesPage: React.FC = () => {
                       Role
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Employment
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
@@ -341,12 +373,14 @@ export const EmployeesPage: React.FC = () => {
                             {emp.profile_photo_url ? (
                               <img src={resolveImageUrl(emp.profile_photo_url)} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <>{emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}</>
+                              <>{(emp.first_name?.charAt(0) || emp.last_name?.charAt(0)) || emp.email?.charAt(0).toUpperCase()}</>
                             )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {emp.first_name} {emp.last_name}
+                              {(emp.first_name || emp.last_name)
+                                ? `${emp.first_name || ''} ${emp.last_name || ''}`.trim()
+                                : emp.email}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {emp.email}
@@ -363,12 +397,16 @@ export const EmployeesPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <span className={cn(
                           'px-2 py-0.5 rounded text-xs font-medium',
-                          emp.role === 'ADMIN' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                          emp.role === 'HR' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                          emp.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                          emp.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+                          emp.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400' :
+                            emp.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                              'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
                         )}>
                           {emp.role?.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {emp.employment_type?.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('-') || '-'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -431,7 +469,7 @@ export const EmployeesPage: React.FC = () => {
                               >
                                 {emp.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
                               </Button>
-                              {user?.role === 'ADMIN' && (
+                              {hasPermission('employees.delete') && (
                                 <Button
                                   variant="ghost"
                                   size="sm"

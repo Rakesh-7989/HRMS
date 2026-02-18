@@ -9,15 +9,15 @@ import { Plus, CheckCircle, XCircle, Search, Filter, Calendar, User, TrendingUp 
 import { format, subDays } from 'date-fns';
 
 export const LeaveContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = useAuth();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
-    const canApply = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
-    const canApprove = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+    const canApply = hasPermission('request_leave');
+    const canApprove = hasPermission('approve_leave');
     const rangeTo = format(new Date(), 'yyyy-MM-dd');
     const rangeFrom = format(subDays(new Date(), 29), 'yyyy-MM-dd');
 

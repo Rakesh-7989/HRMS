@@ -130,13 +130,16 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
     }
 
     // Check authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can approve WFH requests");
+    const permissions = actor.permissions || [];
+    const canApproveAll = permissions.includes('leave.approve') && (permissions.includes('attendance.view_all') || permissions.includes('admin.manage_tenant'));
+    const isTeamManager = permissions.includes('leave.approve') && permissions.includes('attendance.manage');
+
+    if (!canApproveAll && !isTeamManager) {
+        throw new Error("Unauthorized: You do not have permission to approve WFH requests");
     }
 
-    // If MANAGER, verify they manage this employee
-    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
+    // If only team manager, verify they manage this employee
+    if (isTeamManager && !canApproveAll && request.reports_to !== actor.employeeId) {
         throw new Error("You can only approve WFH requests for your direct reports");
     }
 
@@ -184,13 +187,16 @@ exports.rejectWFH = async (db, requestId, actor, reason) => {
     }
 
     // Check authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can reject WFH requests");
+    const permissions = actor.permissions || [];
+    const canRejectAll = permissions.includes('leave.approve') && (permissions.includes('attendance.view_all') || permissions.includes('admin.manage_tenant'));
+    const isTeamManager = permissions.includes('leave.approve') && permissions.includes('attendance.manage');
+
+    if (!canRejectAll && !isTeamManager) {
+        throw new Error("Unauthorized: You do not have permission to reject WFH requests");
     }
 
-    // If MANAGER, verify they manage this employee
-    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
+    // If only team manager, verify they manage this employee
+    if (isTeamManager && !canRejectAll && request.reports_to !== actor.employeeId) {
         throw new Error("You can only reject WFH requests for your direct reports");
     }
 

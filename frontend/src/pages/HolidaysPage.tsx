@@ -10,13 +10,14 @@ import { Calendar, Gift, PartyPopper, RefreshCw, CheckCircle, Clock } from 'luci
 import { format, isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 
 export const HolidaysPage: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = useAuth();
     const queryClient = useQueryClient();
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const today = startOfDay(new Date());
 
-    const isHROrAdmin = user?.role === 'HR' || user?.role === 'ADMIN';
+    const canManageHolidays = hasPermission('manage_leave_policies');
+    const canViewOrgDashboard = hasPermission('view_admin_dashboard');
 
     // Queries
     const { data: publicHolidays = [], isLoading: publicLoading, refetch: refetchPublic } = useQuery({
@@ -76,7 +77,7 @@ export const HolidaysPage: React.FC = () => {
         <DashboardLayout
             title="Holidays"
             breadcrumbs={[
-                { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: 'Dashboard', href: canViewOrgDashboard ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Holidays' },
             ]}
         >
@@ -111,7 +112,7 @@ export const HolidaysPage: React.FC = () => {
                                 <RefreshCw size={16} className="mr-1" />
                                 Refresh
                             </Button>
-                            {isHROrAdmin && (
+                            {canManageHolidays && (
                                 <Button size="sm" onClick={() => window.location.href = '/leave/settings'}>
                                     Manage Holidays
                                 </Button>

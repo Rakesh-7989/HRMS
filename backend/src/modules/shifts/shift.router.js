@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const shiftController = require('./shift.controller');
-const requireRole = require('../../middleware/requireRole');
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 
-// GET methods - Allow Managers and Employees to view shifts
-router.get('/', requireRole(['HR', 'ADMIN', 'MANAGER', 'EMPLOYEE']), shiftController.getShifts);
-router.get('/:id', requireRole(['HR', 'ADMIN', 'MANAGER', 'EMPLOYEE']), shiftController.getShiftById);
+// GET methods - Allow Managers to view shifts
+router.get('/', requireAnyPermission(['employees.view', 'organisation.manage_shifts']), shiftController.getShifts);
+router.get('/:id', requireAnyPermission(['employees.view', 'organisation.manage_shifts']), shiftController.getShiftById);
 
 // Only HR and ADMIN can manage (create/update/delete/assign) shifts
-router.use(requireRole(['HR', 'ADMIN']));
+router.use(requireAnyPermission(["organisation.manage_shifts"]));
 
 router.post('/', shiftController.createShift);
 router.put('/:id', shiftController.updateShift);

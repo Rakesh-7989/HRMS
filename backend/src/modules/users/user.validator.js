@@ -8,7 +8,7 @@ const stringOrNull = z.string().optional().or(z.literal("").transform(() => null
 exports.createUserSchema = z.object({
   body: z.object({
     email: z.string().email(),
-    role: z.enum(["HR", "MANAGER", "EMPLOYEE","ADMIN"]),
+    role: z.string(),
     // Personal
     first_name: z.string().min(1),
     last_name: z.string().optional(),
@@ -29,7 +29,7 @@ exports.createUserSchema = z.object({
     designation_id: uuidOrNull,
     reports_to: uuidOrNull,
     join_date: dateOrNull,
-    employment_type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]).optional().or(z.literal("").transform(() => null)),
+    employment_type: stringOrNull,
     shift: stringOrNull,
     shift_id: uuidOrNull,
     job_location: stringOrNull,
@@ -55,7 +55,7 @@ exports.createUserSchema = z.object({
 /* LIST USERS */
 exports.getUsersSchema = z.object({
   query: z.object({
-    role: z.enum(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]).optional(),
+    role: z.string().optional(),
     search: z.string().optional(),
     limit: z.string().optional(),
     offset: z.string().optional()
@@ -92,7 +92,7 @@ const employeeUpdateBody = z.object({
   designation_id: uuidOrNull,
   reports_to: uuidOrNull,
   join_date: dateOrNull,
-  employment_type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]).optional().or(z.literal("").transform(() => null)),
+  employment_type: stringOrNull,
   shift: stringOrNull,
 
   // Finance
@@ -127,7 +127,7 @@ exports.updateProfileSchema = z.object({
 /* ROLE CHANGE */
 exports.changeRoleSchema = z.object({
   body: z.object({
-    role: z.enum(["ADMIN", "HR", "MANAGER", "EMPLOYEE"])
+    role: z.string()
   })
 });
 
@@ -170,6 +170,26 @@ exports.terminateSchema = z.object({
   body: z.object({
     termination_date: dateOrNull,
     termination_reason: stringOrNull,
-    portal_access_until: dateOrNull
+  })
+});
+
+/* REHIRE */
+exports.rehireSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  })
+});
+
+/* GET USER BY ID */
+exports.getUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  })
+});
+
+/* DELETE USER */
+exports.deleteUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
   })
 });

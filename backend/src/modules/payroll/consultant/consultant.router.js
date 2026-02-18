@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./consultant.controller");
@@ -52,32 +52,32 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createConsultantSchema),
     controller.createConsultant
 );
 
 router.get(
     "/",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getConsultants
 );
 
 router.get(
     "/summary",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getConsultantPayrollSummary
 );
 
 router.get(
     "/:id",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getConsultantById
 );
 
 router.put(
     "/:id",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createConsultantSchema),
     controller.updateConsultant
 );
@@ -87,26 +87,26 @@ router.put(
 // =====================
 router.post(
     "/invoices",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createInvoiceSchema),
     controller.createInvoice
 );
 
 router.get(
     "/invoices/all",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getInvoices
 );
 
 router.patch(
     "/invoices/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     controller.approveInvoice
 );
 
 router.patch(
     "/invoices/:id/pay",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     validate(markPaidSchema),
     controller.markInvoicePaid
 );

@@ -3,7 +3,7 @@ const router = express.Router();
 const controller = require("./user.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 const { checkLimit } = require("../../middleware/subscription.middleware");
 
 const {
@@ -16,14 +16,18 @@ const {
   changeManagerSchema,
   assignDeptSchema,
   assignDesignationSchema,
-  statusSchema
+  statusSchema,
+  terminateSchema,
+  rehireSchema,
+  getUserSchema,
+  deleteUserSchema,
 } = require("./user.validator");
 
-// CREATE EMPLOYEE (Admin + HR)
+// CREATE EMPLOYEE
 router.post(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("employees.create"),
   checkLimit('employees'),
   validate(createUserSchema),
   controller.createUser
@@ -33,7 +37,7 @@ router.post(
 router.get(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requireAnyPermission(["employees.view", "employees.edit"]),
   validate(getUsersSchema),
   controller.getUsers
 );
@@ -42,12 +46,19 @@ router.get(
 router.get("/tree", verifyJwt, controller.getOrgTree);
 
 // GET USER BY ID
-router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]), controller.getUserById);
+router.get(
+  "/:id",
+  verifyJwt,
+  requirePermission("employees.view"),
+  validate(getUserSchema),
+  controller.getUserById
+);
 
 // UPDATE BASIC USER (email + status)
 router.put(
   "/:id",
   verifyJwt,
+  requirePermission("employees.edit"),
   validate(updateUserSchema),
   controller.updateUser
 );
@@ -56,6 +67,7 @@ router.put(
 router.put(
   "/:id/employee",
   verifyJwt,
+  requirePermission("employees.edit"),
   validate(updateEmployeeSchema),
   controller.updateEmployee
 );
@@ -64,16 +76,16 @@ router.put(
 router.put(
   "/:id/role",
   verifyJwt,
-  requireRole(["ADMIN", "SUPER_ADMIN"]),
+  requirePermission("roles.assign"),
   validate(changeRoleSchema),
   controller.changeRole
 );
 
-// CHANGE REPORTING MANAGER (Only HR can assign managers)
+// CHANGE REPORTING MANAGER
 router.put(
   "/:id/manager",
   verifyJwt,
-  requireRole(["HR"]),
+  requirePermission("employees.edit"),
   validate(changeManagerSchema),
   controller.changeManager
 );
@@ -81,6 +93,7 @@ router.put(
 router.put(
   "/:id/department",
   verifyJwt,
+  requirePermission("employees.edit"),
   validate(assignDeptSchema),
   controller.assignDepartment
 );
@@ -89,6 +102,7 @@ router.put(
 router.put(
   "/:id/designation",
   verifyJwt,
+  requirePermission("employees.edit"),
   validate(assignDesignationSchema),
   controller.assignDesignation
 );
@@ -97,7 +111,8 @@ router.put(
 router.post(
   "/:id/terminate",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("employees.delete"),
+  validate(terminateSchema),
   controller.terminateEmployee
 );
 
@@ -105,7 +120,8 @@ router.post(
 router.post(
   "/:id/rehire",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("employees.edit"),
+  validate(rehireSchema),
   controller.rehireEmployee
 );
 
@@ -113,7 +129,8 @@ router.post(
 router.delete(
   "/:id",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("employees.delete"),
+  validate(deleteUserSchema),
   controller.softDeleteUser
 );
 
@@ -121,6 +138,7 @@ router.delete(
 router.put(
   "/:id/status",
   verifyJwt,
+  requirePermission("employees.edit"),
   validate(statusSchema),
   controller.updateUserStatus
 );

@@ -1,7 +1,11 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'HR' | 'EMPLOYEE';
 export interface TenantSettings {
   logo_url?: string;
-  [key: string]: any;
+  company_name?: string;
+  timezone?: string;
+  date_format?: string;
+  currency?: string;
+  [key: string]: string | boolean | number | undefined;
 }
 
 export interface User {
@@ -11,6 +15,7 @@ export interface User {
   last_name?: string;
   phone?: string;
   role: UserRole;
+  permissions?: string[];
   tenant_id?: string;
   employee_id?: string;
   department_id?: string;
@@ -21,6 +26,7 @@ export interface User {
   profile_photo_url?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
+  cancel_at_period_end?: boolean;
   two_factor_enabled?: boolean;
   tenant_settings?: TenantSettings;
 
@@ -74,6 +80,20 @@ export interface ApiResponse<T = any> {
   data?: T;
 }
 
+export interface ActivityItem {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  user?: string;
+}
+
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+  color?: string;
+}
+
 export interface DashboardMetrics {
   totalEmployees?: number;
   activeEmployees?: number;
@@ -83,17 +103,17 @@ export interface DashboardMetrics {
   attendanceRate?: number;
   leaveBalance?: number;
   upcomingHolidays?: number;
-  recentActivity?: any[];
+  recentActivity?: ActivityItem[];
 }
 
 export interface DashboardData {
   metrics: DashboardMetrics;
   charts?: {
-    attendance?: any[];
-    leaves?: any[];
-    department?: any[];
+    attendance?: ChartDataPoint[];
+    leaves?: ChartDataPoint[];
+    department?: ChartDataPoint[];
   };
-  recent?: any[];
+  recent?: ActivityItem[];
 }
 
 export type AssetStatus = 'AVAILABLE' | 'ASSIGNED' | 'UNDER_REPAIR' | 'RETIRED' | 'REQUESTED';

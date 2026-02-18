@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const controller = require("./inbox.controller");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 
 router.use(verifyJwt);
 
@@ -9,7 +9,7 @@ router.use(verifyJwt);
 router.get("/", controller.getTasks);
 
 // CREATE TASK (Admin/HR only usually, but maybe managers too)
-router.post("/", requireRole(["ADMIN", "HR", "MANAGER"]), controller.createTask);
+router.post("/", requireAnyPermission(["notifications.view", "notifications.view"]), controller.createTask);
 
 // UPDATE STATUS
 router.put("/:id/status", controller.updateTaskStatus);

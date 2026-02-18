@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
-import { adminService } from '@/services/admin.service';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays } from 'date-fns';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { PieChart } from '@/components/charts/PieChart';
-import { Select } from '@/components/ui/Select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
@@ -31,7 +31,7 @@ import { usersService } from '@/services/users.service';
 import { IndividualAttendanceReport } from './IndividualAttendanceReport';
 
 export const AttendanceReportsContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -92,15 +92,11 @@ export const AttendanceReportsContent: React.FC = () => {
         enabled: selectedView === 'reports'
     });
 
-    useQuery({
-        queryKey: ['tenant-profile'],
-        queryFn: () => adminService.getTenantProfile(),
-    });
 
-    // Role-based access control
-    const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
-    const canViewTeamAnalytics = user?.role === 'MANAGER';
 
+    // Permission-based access control
+    const canViewOrgAnalytics = hasPermission('view_all_attendance');
+    const canViewTeamAnalytics = hasPermission('view_team_attendance');
 
     // Prepare chart data based on user role
     const chartData = useMemo(() => {
@@ -286,17 +282,15 @@ export const AttendanceReportsContent: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                    {selectedView === 'reports' && (
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowFilters(!showFilters)}
-                            size="sm"
-                        >
-                            <Filter className="mr-2" size={16} />
-                            Filters
-                        </Button>
-                    )}
-                    {selectedView === 'reports' && !selectedEmployeeId && user?.role !== 'EMPLOYEE' && (
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowFilters(!showFilters)}
+                        size="sm"
+                    >
+                        <Filter className="mr-2" size={16} />
+                        Filters
+                    </Button>
+                    {selectedView === 'reports' && hasPermission('export_reports') && (
                         <Button
                             variant="outline"
                             onClick={exportReports}
@@ -340,9 +334,9 @@ export const AttendanceReportsContent: React.FC = () => {
                         {(canViewOrgAnalytics || canViewTeamAnalytics) && (
                             <div className="md:col-span-2">
                                 <Label className="block mb-2">Filter by Employee (Optional)</Label>
-                                <Select
+                                <SearchableSelect
                                     value={selectedEmployeeId}
-                                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                                    onChange={(val) => setSelectedEmployeeId(val)}
                                     options={[
                                         { value: '', label: 'All Employees' },
                                         ...employees.map(emp => ({
@@ -350,6 +344,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                             label: `${emp.first_name} ${emp.last_name}`
                                         }))
                                     ]}
+                                    placeholder="All Employees"
                                 />
                             </div>
                         )}

@@ -15,84 +15,63 @@ import {
   AreaChart, Area, PieChart, Pie, Cell, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { CustomTooltip } from '@/components/dashboard/CustomTooltip';
+import { DASHBOARD_GRADIENTS } from '@/utils/constants';
 
-// Custom Tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-white/10 p-3 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] min-w-[140px] ring-1 ring-black/5">
-        <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em] mb-2 border-b border-gray-50 dark:border-white/5 pb-1">{label}</p>
-        <div className="space-y-2">
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: entry.color }} />
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{entry.name}</span>
-              </div>
-              <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums">
-                {entry.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
 
+
+// Tenant Card Component
 // Tenant Card Component
 const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; onClick: () => void }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
     transition={{ delay: index * 0.05 }}
-    whileHover={{ y: -4, scale: 1.01 }}
-    className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-none cursor-pointer"
+    whileHover={{ scale: 1.01, y: -2 }}
+    className="bg-gray-50 dark:bg-white/5 rounded-[1.5rem] p-5 border border-gray-200 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 hover:shadow-lg transition-all cursor-pointer group"
     onClick={onClick}
   >
     <div className="flex items-center gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
+      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform">
         {tenant.name?.charAt(0)}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-gray-900 dark:text-white truncate">{tenant.name}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{tenant.domain || 'No domain'}</p>
+        <h4 className="text-base font-bold text-gray-900 dark:text-white truncate tracking-tight">{tenant.name}</h4>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">{tenant.domain || 'No domain set'}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${tenant.status === 'ACTIVE'
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+      <div className="flex items-center gap-3">
+        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${tenant.status === 'ACTIVE'
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+          : 'bg-gray-100 dark:bg-white/5 text-gray-500 border border-gray-200 dark:border-white/5'
           }`}>
           {tenant.status}
         </span>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </motion.button>
+        <div className="w-8 h-8 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-transparent flex items-center justify-center text-gray-400 dark:text-white group-hover:bg-gray-50 group-hover:text-primary dark:group-hover:bg-white/10 group-hover:translate-x-1 transition-all">
+          <ChevronRight className="w-4 h-4" />
+        </div>
       </div>
     </div>
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+    <div className="mt-5 pt-5 border-t border-gray-200 dark:border-white/5">
       <div className="grid grid-cols-3 gap-4 text-center">
         <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{tenant.employee_count || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Employees</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-white tracking-tighter tabular-nums">{tenant.employee_count || 0}</p>
+          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Staff</p>
         </div>
         <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{tenant.department_count || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Departments</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-white tracking-tighter tabular-nums">{tenant.department_count || 0}</p>
+          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Depts</p>
         </div>
         <div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{tenant.utilization ? `${tenant.utilization}%` : '0%'}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Utilization</p>
+          <p className="text-xl font-bold text-emerald-500 dark:text-emerald-400 tracking-tighter tabular-nums">{tenant.utilization ? `${tenant.utilization}%` : '0%'}</p>
+          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Usage</p>
         </div>
       </div>
     </div>
   </motion.div>
 );
+
+
 
 // System Status Card
 const SystemStatusCard = ({
@@ -102,35 +81,35 @@ const SystemStatusCard = ({
   status: 'healthy' | 'warning' | 'critical';
   value: string;
   icon: any;
-  gradient: string;
+  gradient: string[];
   delay?: number;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-none"
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+    className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl"
   >
     <div className="flex items-center justify-between mb-4">
       <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center"
-        style={{ background: gradient }}
+        className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform"
+        style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
       >
         <Icon className="w-6 h-6 text-white" />
       </div>
-      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${status === 'healthy'
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md ${status === 'healthy'
+        ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
         : status === 'warning'
-          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-          : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+          ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+          : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'
         }`}>
-        <span className={`w-2 h-2 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
+        <span className={`w-1.5 h-1.5 rounded-full ${status === 'healthy' ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : status === 'warning' ? 'bg-amber-500 dark:bg-amber-400' : 'bg-rose-500 dark:bg-rose-400'
           }`} />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status}
       </div>
     </div>
-    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{title}</p>
+    <p className="text-2xl font-bold text-gray-900 dark:text-white tracking-tighter">{value}</p>
+    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">{title}</p>
   </motion.div>
 );
 
@@ -258,123 +237,108 @@ export const SuperAdminDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title="System Dashboard">
-      <motion.div
-        className="space-y-8"
-        initial="initial"
-        animate="animate"
-      >
+      <motion.div className="space-y-6 pb-6" initial="initial" animate="animate">
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-6"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/20"
           style={{
             background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)',
           }}
         >
-          <div className="absolute inset-0 opacity-20">
-            <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-              <circle cx="350" cy="50" r="150" fill="white" fillOpacity="0.2" />
-              <circle cx="50" cy="150" r="100" fill="white" fillOpacity="0.15" />
-              <circle cx="200" cy="100" r="80" fill="white" fillOpacity="0.1" />
-            </svg>
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 mb-2"
+                className="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md"
               >
-                <Shield className="w-5 h-5 text-indigo-300" />
-                <span className="text-indigo-300 text-sm font-medium">Super Administrator</span>
+                <Shield className="w-4 h-4 text-indigo-300" />
+                <span className="text-white text-[10px] font-bold uppercase tracking-widest">
+                  Super Administrator
+                </span>
               </motion.div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                System Control Center
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tighter">
+                System Control Center <span className="inline-block animate-pulse">⚡</span>
               </h1>
-              <p className="text-indigo-200 text-lg">
-                Monitor tenants, users, and system health across the platform
+              <p className="text-white/80 text-lg font-medium max-w-xl leading-relaxed">
+                Monitor tenants, users, and overall system health across the entire platform ecosystem.
               </p>
             </div>
 
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-right"
+              className="flex items-center gap-6 bg-black/20 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/10 min-w-fit shadow-inner"
             >
-              <div className="text-white text-3xl font-bold mb-1">
-                {format(currentTime, 'HH:mm:ss')}
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-4xl font-bold text-white tabular-nums">{format(currentTime, 'HH:mm')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">{format(currentTime, 'ss')} SECONDS</p>
               </div>
-              <div className="text-indigo-200 text-sm font-medium uppercase tracking-wider">
-                {format(currentTime, 'EEEE, MMMM do')}
+              <div className="text-center px-4 min-w-[120px]">
+                <p className="text-2xl font-bold text-white leading-tight">{format(currentTime, 'EEEE')}</p>
+                <p className="text-lg font-bold text-white/80 tabular-nums mt-0.5">{format(currentTime, 'MMM do')}</p>
               </div>
             </motion.div>
           </div>
         </motion.div>
 
         {/* Main Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               title: 'Total Tenants',
               value: systemMetrics.total_tenants,
               icon: Building2,
-              gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              shadow: 'shadow-indigo-500/30'
+              gradient: DASHBOARD_GRADIENTS.purple,
             },
             {
               title: 'Total Employees',
               value: systemMetrics.total_employees,
               icon: Users,
-              gradient: 'linear-gradient(135deg, #10b981, #059669)',
-              shadow: 'shadow-emerald-500/30'
+              gradient: DASHBOARD_GRADIENTS.green,
             },
             {
               title: 'Active Employees',
               value: systemMetrics.active_employees,
               icon: Activity,
-              gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              shadow: 'shadow-amber-500/30'
+              gradient: DASHBOARD_GRADIENTS.orange,
             },
             {
               title: 'Inactive Employees',
               value: systemMetrics.inactive_employees,
               icon: UserX,
-              gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
-              shadow: 'shadow-pink-500/30'
+              gradient: DASHBOARD_GRADIENTS.pink,
             },
           ].map((stat, index) => (
-            <motion.div
+            <StatCard
               key={stat.title}
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.1 + index * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl ${stat.shadow}`}
-              style={{ background: stat.gradient }}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                  <stat.icon className="w-7 h-7 text-white" />
-                </div>
-                <p className="text-4xl font-bold">{stat.value}</p>
-                <p className="text-white/80 mt-1">{stat.title}</p>
-              </div>
-            </motion.div>
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              delay={0.1 + index * 0.1}
+            />
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Growth Chart */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
+            className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl"
           >
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -387,12 +351,13 @@ export const SuperAdminDashboard: React.FC = () => {
               <div className="flex gap-4">
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tenants</p>
-                  <p className="text-xl font-black text-indigo-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
+                  <p className="text-xl font-bold text-indigo-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
                 </div>
                 <div className="text-right border-l border-gray-100 dark:border-gray-800 pl-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Employees</p>
-                  <p className="text-xl font-black text-emerald-500 leading-none">{(data as any)?.metrics?.total_employees || 0}</p>
+                  <p className="text-xl font-bold text-emerald-500 leading-none">{(data as any)?.metrics?.total_employees || 0}</p>
                 </div>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Platform expansion trends</p>
               </div>
             </div>
 
@@ -409,6 +374,15 @@ export const SuperAdminDashboard: React.FC = () => {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 'bold' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 'bold' }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                  />
+                  <Area type="monotone" dataKey="Tenants" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorTenants)" />
+                  <Area type="monotone" dataKey="Users" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} strokeOpacity={0.2} />
                   <XAxis
                     dataKey="date"
@@ -506,14 +480,14 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Tenant Distribution & Resource Usage */}
+          {/* Tenant Distribution */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.55 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+            className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl"
           >
-            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Tenant Status</h4>
+            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Tenant Status Distribution</h4>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -528,7 +502,10 @@ export const SuperAdminDashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -536,7 +513,7 @@ export const SuperAdminDashboard: React.FC = () => {
               {tenantStatusData.map(item => (
                 <div key={item.name} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs text-gray-500">{item.name}</span>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">{item.name}</span>
                 </div>
               ))}
             </div>
@@ -546,9 +523,9 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+            className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl"
           >
-            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">System Resources History</h4>
+            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">System Resources History</h4>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={resourceHistory}>
@@ -570,20 +547,23 @@ export const SuperAdminDashboard: React.FC = () => {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 8, fontWeight: 'bold' }} />
+                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 8, fontWeight: 'bold' }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                  />
                   <Legend
                     verticalAlign="top"
                     height={36}
                     iconType="circle"
-                    wrapperStyle={{ top: -10, right: 0, fontSize: '12px' }}
+                    wrapperStyle={{ top: -10, right: 0, fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                   />
-                  <Area type="monotone" dataKey="cpu" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" name="CPU %" />
-                  <Area type="monotone" dataKey="memory" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMemory)" name="Memory %" />
-                  <Area type="monotone" dataKey="storage" stroke="#ec4899" strokeWidth={2} fillOpacity={1} fill="url(#colorStorage)" name="Storage %" />
-                  <Area type="monotone" dataKey="network" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNetwork)" name="Network %" />
+                  <Area type="monotone" dataKey="cpu" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" name="CPU" />
+                  <Area type="monotone" dataKey="memory" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMemory)" name="MEM" />
+                  <Area type="monotone" dataKey="storage" stroke="#ec4899" strokeWidth={2} fillOpacity={1} fill="url(#colorStorage)" name="STO" />
+                  <Area type="monotone" dataKey="network" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNetwork)" name="NET" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -597,7 +577,7 @@ export const SuperAdminDashboard: React.FC = () => {
             status="healthy"
             value={systemStats.uptime}
             icon={Server}
-            gradient="linear-gradient(135deg, #10b981, #059669)"
+            gradient={['#10b981', '#059669']}
             delay={0.6}
           />
           <SystemStatusCard
@@ -605,7 +585,7 @@ export const SuperAdminDashboard: React.FC = () => {
             status={systemStats.latency > 100 ? 'warning' : 'healthy'}
             value={`${systemStats.latency}ms`}
             icon={Database}
-            gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
+            gradient={['#6366f1', '#4f46e5']}
             delay={0.7}
           />
           <SystemStatusCard
@@ -613,7 +593,7 @@ export const SuperAdminDashboard: React.FC = () => {
             status="healthy"
             value="Global Active"
             icon={Globe}
-            gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+            gradient={['#f59e0b', '#d97706']}
             delay={0.8}
           />
           <SystemStatusCard
@@ -621,27 +601,27 @@ export const SuperAdminDashboard: React.FC = () => {
             status="healthy"
             value={`${systemStats.memory} MB Used`}
             icon={Activity}
-            gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+            gradient={['#8b5cf6', '#7c3aed']}
             delay={0.9}
           />
         </div>
 
         {/* Tenants List */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.0 }}
-          className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
+          className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-[2rem] p-8 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+                <Building2 className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
                 Recent Tenants
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{tenantList.length} organizations</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">{tenantList.length} organizations registered</p>
             </div>
-            <Button variant="ghost" onClick={() => navigate('/tenants')}>
+            <Button variant="ghost" onClick={() => navigate('/tenants')} className="text-indigo-600 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
               View All
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -660,12 +640,12 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                <Building2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4 border border-gray-200 dark:border-white/5">
+                <Building2 className="w-8 h-8 text-gray-400 dark:text-white/40" />
               </div>
-              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Tenants Yet</h4>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first tenant</p>
-              <Button onClick={() => navigate('/tenants/create')}>
+              <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">No Tenants Registered</h4>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">Get started by creating your first global tenant</p>
+              <Button onClick={() => navigate('/tenants/create')} className="bg-indigo-600 hover:bg-indigo-700 text-white border-0">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Tenant
               </Button>
@@ -675,33 +655,36 @@ export const SuperAdminDashboard: React.FC = () => {
 
         {/* Quick Actions Footer */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.1 }}
-          className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6"
+          className="bg-gradient-to-br from-[#1e1b4b] to-[#0f172a] rounded-[2.5rem] p-8 border border-white/5 shadow-2xl"
         >
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 tracking-tight">
             <Zap className="w-5 h-5 text-amber-400" />
-            Quick Actions
+            System Control Center
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-indigo-500 to-purple-600' },
-              { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-rose-500' },
-              { label: 'System Logs', icon: Activity, path: '/activity', color: 'from-emerald-500 to-teal-500' },
-              { label: 'System Settings', icon: Settings, path: '/settings', color: 'from-amber-500 to-orange-500' },
+              { label: 'Tenants', icon: Building2, path: '/tenants', gradient: ['#6366f1', '#8b5cf6'] },
+              { label: 'Coupons', icon: Tag, path: '/coupons', gradient: ['#ec4899', '#f43f5e'] },
+              { label: 'Logs', icon: Activity, path: '/activity', gradient: ['#10b981', '#06b6d4'] },
+              { label: 'Settings', icon: Settings, path: '/settings', gradient: ['#f59e0b', '#fb923c'] },
             ].map((action) => (
               <motion.button
                 key={action.label}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate(action.path)}
-                className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center gap-3 transition-all"
+                className="p-6 rounded-[2rem] bg-white/5 hover:bg-white/10 border border-white/5 flex flex-col items-center gap-4 transition-all"
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg`}>
-                  <action.icon className="w-6 h-6 text-white" />
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+                  style={{ background: `linear-gradient(135deg, ${action.gradient[0]}, ${action.gradient[1]})` }}
+                >
+                  <action.icon className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-sm font-medium text-white">{action.label}</span>
+                <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest">{action.label}</span>
               </motion.button>
             ))}
           </div>

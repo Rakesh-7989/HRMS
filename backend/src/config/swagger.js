@@ -21,7 +21,7 @@ const swaggerSpec = {
         
         ## Key Features:
         - **Multi-Tenant Architecture**: Complete tenant isolation with Row Level Security
-        - **Role-Based Access Control**: 5 roles (SUPER_ADMIN, ADMIN, HR, MANAGER, EMPLOYEE)
+        - **Role-Based Access Control**: 3 primary roles (SUPER_ADMIN, ADMIN, EMPLOYEE) with dynamic permissions
         - **Security**: JWT authentication, tenant-id validation on all data operations
         - **Attendance Management**: Clock in/out, approval workflow, summaries
         - **Leave Management**: Leave requests, approvals, balance tracking, calendar views
@@ -96,7 +96,7 @@ const swaggerSpec = {
                 properties: {
                     id: { type: 'string', format: 'uuid' },
                     email: { type: 'string', format: 'email' },
-                    role: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                    role: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'EMPLOYEE'] },
                     is_active: { type: 'boolean' },
                     must_change_password: { type: 'boolean' },
                     tenant_id: { type: 'string', format: 'uuid' },

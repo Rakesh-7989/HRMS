@@ -114,10 +114,9 @@ exports.createAsset = async (
  */
 exports.listAssets = async (
   tenantId,
-  filters = {},
-  userRole,
-  employeeId
+  filters = {}
 ) => {
+  const { userPermissions = [], employeeId } = filters;
   let query = `
     SELECT 
       a.*,
@@ -131,9 +130,12 @@ exports.listAssets = async (
   const params = [tenantId];
   let paramCount = 1;
 
-  // Role-based filtering
-  if (userRole === "EMPLOYEE") {
-    // Employees can only see assets assigned to them
+  // Permissions-based visibility
+  const permissions = filters.userPermissions || [];
+  const canViewAll = permissions.includes('manage_assets') || permissions.includes('view_all_employees') || permissions.includes('platform.manage_tenants');
+
+  if (!canViewAll && employeeId) {
+    // Regular employees see only their own assets
     query += ` AND a.assigned_to = $${++paramCount}`;
     params.push(employeeId);
   }
@@ -201,7 +203,7 @@ exports.listAssets = async (
   const countParams = [tenantId];
   let countParamCount = 1;
 
-  if (userRole === "EMPLOYEE") {
+  if (!canViewAll && employeeId) {
     countQuery += ` AND assigned_to = $${++countParamCount}`;
     countParams.push(employeeId);
   }
@@ -216,7 +218,7 @@ exports.listAssets = async (
     countParams.push(filters.category);
   }
 
-  if (filters.assigned_to && userRole !== "EMPLOYEE") {
+  if (filters.assigned_to && canViewAll) {
     countQuery += ` AND assigned_to = $${++countParamCount}`;
     countParams.push(filters.assigned_to);
   }
@@ -242,7 +244,7 @@ exports.listAssets = async (
 exports.getAssetById = async (
   tenantId,
   assetId,
-  userRole,
+  userPermissions = [],
   employeeId
 ) => {
   const result = await pool.query(
@@ -290,8 +292,11 @@ exports.getAssetById = async (
   delete asset.assigned_by_first_name;
   delete asset.assigned_by_last_name;
 
-  // Role-based access control
-  if (userRole === "EMPLOYEE" && asset.assigned_to !== employeeId) {
+  // Permissions-based access control
+  const permissions = userPermissions || [];
+  const canViewAll = permissions.includes('manage_assets') || permissions.includes('view_all_employees') || permissions.includes('platform.manage_tenants');
+
+  if (!canViewAll && asset.assigned_to !== employeeId) {
     throw new ForbiddenError(
       "You do not have permission to view this asset"
     );
@@ -740,7 +745,7 @@ exports.createAssetRequest = async (tenantId, userId, data) => {
 /**
  * LIST ASSET REQUESTS
  */
-exports.listAssetRequests = async (tenantId, userId, role) => {
+exports.listAssetRequests = async (tenantId, userId, userPermissions = []) => {
   let query = `
     SELECT 
       r.*,
@@ -751,8 +756,11 @@ exports.listAssetRequests = async (tenantId, userId, role) => {
   `;
   const params = [tenantId];
 
-  // If not ADMIN/HR, only show personal requests
-  if (role !== 'ADMIN' && role !== 'HR') {
+  const permissions = userPermissions || [];
+  const canViewAll = permissions.includes('manage_assets') || permissions.includes('view_all_employees') || permissions.includes('platform.manage_tenants');
+
+  // If not authorized to view all, only show personal requests
+  if (!canViewAll) {
     query += ` AND e.user_id = $2`;
     params.push(userId);
   }
@@ -766,7 +774,7 @@ exports.listAssetRequests = async (tenantId, userId, role) => {
 /**
  * HANDLE ASSET REQUEST (Approve/Reject)
  */
-exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => {
+exports.handleAssetRequest = async (tenantId, requestId, userId, userPermissions = [], data) => {
   // 1. Get request details
   const requestResult = await pool.query(
     `SELECT r.*, e.user_id 
@@ -782,9 +790,12 @@ exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => 
 
   const request = requestResult.rows[0];
 
-  // 2. Permission check: HR cannot approve own request
-  if (role === 'HR' && request.user_id === userId) {
-    throw new ForbiddenError("HR cannot approve or reject their own asset request");
+  const permissions = userPermissions || [];
+  const isHR = permissions.includes('manage_assets') && !permissions.includes('platform.manage_tenants'); // Simplified check for "functional HR" behavior
+
+  // 2. Permission check: Approvers cannot approve own request (if they are restricted functional staff)
+  if (isHR && request.user_id === userId) {
+    throw new ForbiddenError("You cannot approve or reject your own asset request");
   }
 
   // 3. Update request

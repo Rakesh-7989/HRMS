@@ -23,6 +23,15 @@ class CouponController {
         }
     }
 
+    async updateCoupon(req, res) {
+        try {
+            const coupon = await couponService.updateCoupon(req.params.id, req.body);
+            res.status(200).json({ success: true, data: coupon });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
     // Public or Protected (anyone can check if a code is valid)
     async validateCoupon(req, res) {
         try {
@@ -33,6 +42,15 @@ class CouponController {
             res.status(200).json({ success: true, data: coupon });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
+    async deleteCoupon(req, res) {
+        try {
+            await couponService.deleteCoupon(req.params.id);
+            res.status(200).json({ success: true, message: 'Coupon deleted successfully' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 }

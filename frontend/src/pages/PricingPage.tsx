@@ -9,6 +9,7 @@ import { plansService } from '@/services/plans.service';
 
 import { subscriptionService } from '@/services/subscription.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { toast } from 'react-hot-toast';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
@@ -141,22 +142,30 @@ const BillingCycleSelector: React.FC<{
 }> = ({ current, onChange, availableCycles }) => {
   return (
     <div className="flex justify-center mb-8">
-      <div className="inline-flex p-1 bg-gray-100 dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-white/10">
+      <div className="inline-flex p-1 bg-gray-100 dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-white/10 relative">
         {['MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'].map((cycle) => {
           const isAvailable = availableCycles.includes(cycle);
           if (!isAvailable) return null;
+          const isActive = current === cycle;
 
           return (
             <button
               key={cycle}
               onClick={() => onChange(cycle)}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                current === cycle
-                  ? "bg-white dark:bg-white text-black shadow-lg"
+                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10",
+                isActive
+                  ? "text-black dark:text-black"
                   : "text-gray-500 hover:text-black dark:hover:text-white"
               )}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="activeCycle"
+                  className="absolute inset-0 bg-white dark:bg-white rounded-lg shadow-sm -z-10"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
               {cycle.replace('_', ' ')}
             </button>
           );
@@ -357,6 +366,29 @@ export const PricingPage: React.FC = () => {
   const { user } = useAuth();
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [employeeCount] = React.useState<number>(1);
+  const [couponInput, setCouponInput] = React.useState('');
+  const [appliedCoupon, setAppliedCoupon] = React.useState<any>(null);
+  const [isApplying, setIsApplying] = React.useState(false);
+
+  const handleApplyCoupon = async (code: string) => {
+    if (!code) return;
+    setIsApplying(true);
+    try {
+      const res = await subscriptionService.validateCoupon(code);
+      if (res.success) {
+        setAppliedCoupon(res.data);
+        toast.success('Coupon applied!');
+      } else {
+        toast.error('Invalid coupon');
+        setAppliedCoupon(null);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Invalid or expired coupon');
+      setAppliedCoupon(null);
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
 
 
@@ -372,7 +404,8 @@ export const PricingPage: React.FC = () => {
     message: '',
   });
 
-  const isTenantAdmin = user?.role === 'ADMIN';
+  const { hasPermission } = usePermission();
+  const isTenantAdmin = hasPermission('billing.manage');
 
   const { data: plans } = useQuery({
     queryKey: ['public-plans'],
@@ -500,7 +533,7 @@ export const PricingPage: React.FC = () => {
         planId: plan.id,
         priceId: plan.priceId,
         quantity: employeeCount,
-        couponCode: undefined
+        couponCode: appliedCoupon?.code
       });
 
       if (result.authLink) {
@@ -555,7 +588,7 @@ export const PricingPage: React.FC = () => {
           <div className=" mt-5 flex flex-col items-center gap-4">
             <BillingCycleSelector current={billingCycle} onChange={setBillingCycle} availableCycles={availableCycles} />
 
-            {/* <div className="flex items-center gap-2 p-1 bg-white/50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 max-w-sm w-full backdrop-blur-sm">
+            <div className="flex items-center gap-2 p-1 bg-white/50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 max-w-sm w-full backdrop-blur-sm">
               <input
                 type="text"
                 placeholder="PROMO CODE"
@@ -571,12 +604,12 @@ export const PricingPage: React.FC = () => {
               >
                 {isApplying ? '...' : 'Apply'}
               </button>
-            </div> */}
-            {/* {appliedCoupon && (
+            </div>
+            {appliedCoupon && (
               <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest animate-pulse">
                 ✓ Coupon {appliedCoupon.code} applied ({appliedCoupon.discount_type === 'PERCENT' ? `${appliedCoupon.discount_value}%` : `₹${appliedCoupon.discount_value}`} off)
               </p>
-            )} */}
+            )}
           </div>
         </div>
 
@@ -606,8 +639,13 @@ export const PricingPage: React.FC = () => {
                 )}
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="bg-primary text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-xl shadow-primary/30">
-                      Most Popular
+                    <span className="bg-primary text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-xl shadow-primary/30 relative overflow-hidden">
+                      <span className="relative z-10">Most Popular</span>
+                      <motion.div
+                        className="absolute inset-0 bg-white/20"
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: 'linear', repeatDelay: 2 }}
+                      />
                     </span>
                   </div>
                 )}
@@ -708,11 +746,16 @@ export const PricingPage: React.FC = () => {
                   <button
                     onClick={() => handlePlanSelection(plan)}
                     className={cn(
-                      "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                      "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 relative overflow-hidden group/btn",
                       "bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
                     )}
                   >
-                    {plan.name === 'ELITE' ? 'Go Enterprise' : plan.name === 'PREMIUM' ? 'Start Growing' : 'Get Started'}
+                    <span className="relative z-10">
+                      {plan.name === 'ELITE' ? 'Go Enterprise' : plan.name === 'PREMIUM' ? 'Start Growing' : 'Get Started'}
+                    </span>
+                    {(plan.name === 'PREMIUM' || plan.name === 'ELITE') && (
+                      <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                    )}
                   </button>
                 </div>
               </motion.div>

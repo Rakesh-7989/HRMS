@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import {
   ArrowLeft,
   Edit,
@@ -26,7 +26,7 @@ import type { AssetStatus } from '@/types';
 export const AssetDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+
 
   const { data: asset, isLoading: isLoadingAsset } = useQuery({
     queryKey: ['asset', id],
@@ -54,10 +54,12 @@ export const AssetDetailsPage: React.FC = () => {
     enabled: !!id && historyView === 'usage',
   });
 
-  const canManage = user?.role === 'ADMIN';
-  const canReturn = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canViewBarcode = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canView = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
+  const { hasAnyPermission } = usePermission();
+
+  const canManage = hasAnyPermission(['manage_assets']);
+  const canReturn = hasAnyPermission(['manage_assets', 'manage_asset_assignments']);
+  const canViewBarcode = hasAnyPermission(['manage_assets', 'view_assets']);
+  const canView = true; // All authenticated users can view assets
 
   if (!canView) {
     return (

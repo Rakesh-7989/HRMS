@@ -186,7 +186,7 @@ export const ProfilePage: React.FC = () => {
                 {profile.profile_photo_url ? (
                   <img src={resolveImageUrl(profile.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{profile.first_name?.[0]}{profile.last_name?.[0]}</span>
+                  <span>{(profile.first_name?.charAt(0) || profile.last_name?.charAt(0)) || profile.email?.charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
@@ -228,7 +228,9 @@ export const ProfilePage: React.FC = () => {
 
             <div className="flex-1 text-center md:text-left space-y-2">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {profile.first_name} {profile.last_name}
+                {(profile.first_name || profile.last_name)
+                  ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+                  : profile.email}
               </h1>
               <div className="flex flex-wrap justify-center md:justify-start gap-3 text-sm text-gray-600 dark:text-gray-300">
                 <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
@@ -490,13 +492,13 @@ const DisplayField = ({ label, value }: { label: string, value: string | undefin
 );
 
 const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const canManage = hasPermission('manage_employee_docs');
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['employee-documents', employeeId],

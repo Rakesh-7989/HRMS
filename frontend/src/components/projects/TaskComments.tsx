@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { projectsService } from '@/services/projects.service';
 import { TaskComment, MentionableUser } from '@/types/project.types';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { Button } from '@/components/ui/Button';
 import { MessageSquare, Send, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
@@ -14,6 +15,7 @@ interface TaskCommentsProps {
 
 export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId }) => {
     const { user } = useAuth();
+    const { hasPermission } = usePermission();
     const queryClient = useQueryClient();
     const [newComment, setNewComment] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -179,10 +181,12 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
         });
     };
 
+
+
     // Check if user can edit/delete a comment
     const canModifyComment = (comment: TaskComment) => {
         if (!user) return false;
-        return comment.user_id === user.id || user.role === 'ADMIN';
+        return comment.user_id === user.id || hasPermission('projects.manage');
     };
 
     // Close dropdown when clicking outside

@@ -3,7 +3,7 @@ const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
 const validate = require("../../../middleware/validate");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 
 const controller = require("./Merchants.controller");
 const {
@@ -16,41 +16,41 @@ router.use(verifyJwt);
 /* Vendor / Consultant Payments */
 router.post(
   "/createvendors",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["payroll.manage"]),
   validate(createVendorPaymentSchema),
   controller.createVendorPayment
 );
 
 router.get(
   "/getvendors",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["payroll.manage", "payroll.view_own"]),
   controller.getVendorPayments
 );
 
 /* 3rd Party Payroll Payouts */
 router.post(
   "/createthird-party",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["payroll.manage"]),
   validate(createThirdPartyPayoutSchema),
   controller.createThirdPartyPayout
 );
 
 router.get(
   "/getthird-party",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["payroll.manage"]),
   controller.getThirdPartyPayouts
 );
 
 /* Merchant Transactions */
 router.get(
   "/transactions",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["payroll.manage", "payroll.view_own"]),
   controller.getMerchantTransactions
 );
 
 router.get(
   "/",
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["payroll.manage", "payroll.view_own"]),
   controller.getVendorPayments
 );
 

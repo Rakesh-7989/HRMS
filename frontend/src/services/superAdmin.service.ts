@@ -18,6 +18,10 @@ export interface Tenant {
   plan_name?: string;
   subscription_status?: string;
   is_trial?: boolean;
+  plan_start_date?: string;
+  plan_end_date?: string;
+  plan_type?: string;
+  trial_ends_at?: string;
 }
 
 export interface TenantUser {
@@ -30,32 +34,32 @@ export interface TenantUser {
 
 export const superAdminService = {
   getTenants: async (): Promise<Tenant[]> => {
-    const response = await api.get<{ status: string; tenants: Tenant[] }>('/super-admin/tenants');
+    const response = await api.get<{ status: string; tenants: Tenant[] }>('/tenants/platform/tenants');
     return response.data.tenants || [];
   },
 
   getTenant: async (id: string): Promise<Tenant> => {
-    const response = await api.get<{ status: string; tenant: Tenant }>(`/super-admin/tenants/${id}`);
+    const response = await api.get<{ status: string; tenant: Tenant }>(`/tenants/platform/tenants/${id}`);
     return response.data.tenant!;
   },
 
   activateTenant: async (id: string): Promise<Tenant> => {
-    const response = await api.patch<{ status: string; data: Tenant }>(`/super-admin/tenants/${id}/activate`);
+    const response = await api.patch<{ status: string; data: Tenant }>(`/tenants/platform/tenants/${id}/activate`);
     return response.data.data!;
   },
 
   deactivateTenant: async (id: string): Promise<Tenant> => {
-    const response = await api.patch<{ status: string; data: Tenant }>(`/super-admin/tenants/${id}/deactivate`);
+    const response = await api.patch<{ status: string; data: Tenant }>(`/tenants/platform/tenants/${id}/deactivate`);
     return response.data.data!;
   },
 
   getTenantUsers: async (id: string): Promise<TenantUser[]> => {
-    const response = await api.get<{ status: string; users: TenantUser[] }>(`/super-admin/tenants/${id}/users`);
+    const response = await api.get<{ status: string; users: TenantUser[] }>(`/tenants/platform/tenants/${id}/users`);
     return response.data.users || [];
   },
 
   getTenantEmployeeCount: async (id: string): Promise<number> => {
-    const response = await api.get<{ status: string; count: number }>(`/super-admin/tenants/${id}/employees`);
+    const response = await api.get<{ status: string; count: number }>(`/tenants/platform/tenants/${id}/employee-count`);
     return response.data.count || 0;
   },
 
@@ -90,7 +94,7 @@ export const superAdminService = {
   },
 
   getPlans: async (): Promise<any[]> => {
-    const response = await api.get('/subscriptions/plans');
+    const response = await api.get('/subscriptions/platform/plans');
     return response.data.plans || [];
   },
 };

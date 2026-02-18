@@ -3,26 +3,29 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { couponService, Coupon } from '@/services/coupons.service';
-import { Plus, Copy, Tag, Calendar, Percent, DollarSign, RefreshCw } from 'lucide-react';
+import { Plus, Copy, Tag, Calendar, Percent, DollarSign, RefreshCw, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 // Using a simple Modal if UI components not standard, but let's try to use standard logic or raw HTML for modal if needed.
 // I'll use a custom Modal implementation inside this file if needed to be safe, or just standard HTML fixed div.
 
-const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) => {
+const CreateCouponModal = ({ isOpen, onClose, onSuccess, coupon }: { isOpen: boolean; onClose: () => void; onSuccess: () => void; coupon?: Coupon | null }) => {
     if (!isOpen) return null;
 
     const formik = useFormik({
         initialValues: {
-            code: '',
-            discount_type: 'PERCENT',
-            discount_value: 0,
-            max_redemptions: '',
-            expires_at: ''
+            code: coupon?.code || '',
+            discount_type: coupon?.discount_type || 'PERCENT',
+            discount_value: coupon?.discount_value || 0,
+            max_redemptions: coupon?.max_redemptions || '',
+            expires_at: coupon?.expires_at ? format(new Date(coupon.expires_at), 'yyyy-MM-dd') : '',
+            is_active: coupon ? coupon.is_active : true
         },
+        enableReinitialize: true,
         validationSchema: Yup.object({
             code: Yup.string().required('Code is required').uppercase(),
             discount_type: Yup.string().oneOf(['PERCENT', 'FIXED']).required(),
@@ -32,16 +35,25 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
         }),
         onSubmit: async (values) => {
             try {
-                await couponService.createCoupon({
-                    ...values,
-                    max_redemptions: values.max_redemptions ? Number(values.max_redemptions) : undefined,
-                    expires_at: values.expires_at || undefined
-                } as any);
-                toast.success('Coupon created');
+                if (coupon) {
+                    await couponService.updateCoupon(coupon.id, {
+                        ...values,
+                        max_redemptions: values.max_redemptions ? Number(values.max_redemptions) : null,
+                        expires_at: values.expires_at || null
+                    } as any);
+                    toast.success('Coupon updated');
+                } else {
+                    await couponService.createCoupon({
+                        ...values,
+                        max_redemptions: values.max_redemptions ? Number(values.max_redemptions) : undefined,
+                        expires_at: values.expires_at || undefined
+                    } as any);
+                    toast.success('Coupon created');
+                }
                 onSuccess();
                 onClose();
             } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to create coupon');
+                toast.error(error.response?.data?.message || `Failed to ${coupon ? 'update' : 'create'} coupon`);
             }
         }
     });
@@ -49,7 +61,7 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-2xl">
-                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Create New Coupon</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{coupon ? 'Edit Coupon' : 'Create New Coupon'}</h2>
                 <form onSubmit={formik.handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
@@ -117,9 +129,25 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                         {formik.touched.expires_at && formik.errors.expires_at && <div className="text-red-500 text-xs mt-1">{formik.errors.expires_at as string}</div>}
                     </div>
 
+                    {coupon && (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                id="is_active"
+                                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={formik.values.is_active}
+                                onChange={formik.handleChange}
+                            />
+                            <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Active
+                            </label>
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={formik.isSubmitting}>Create Coupon</Button>
+                        <Button type="submit" disabled={formik.isSubmitting}>{coupon ? 'Update Coupon' : 'Create Coupon'}</Button>
                     </div>
                 </form>
             </div>
@@ -130,6 +158,8 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
 export const CouponsPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [couponToEdit, setCouponToEdit] = useState<Coupon | null>(null);
+    const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
 
     const { data: coupons, isLoading } = useQuery({
         queryKey: ['coupons'],
@@ -140,6 +170,23 @@ export const CouponsPage: React.FC = () => {
         const link = `${window.location.origin}/pricing?coupon=${code}`;
         navigator.clipboard.writeText(link);
         toast.success('Link copied to clipboard');
+    };
+
+    const handleDelete = async (id: string) => {
+        setCouponToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!couponToDelete) return;
+        try {
+            await couponService.deleteCoupon(couponToDelete);
+            toast.success('Coupon deleted');
+            queryClient.invalidateQueries({ queryKey: ['coupons'] });
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to delete');
+        } finally {
+            setCouponToDelete(null);
+        }
     };
 
     return (
@@ -189,18 +236,38 @@ export const CouponsPage: React.FC = () => {
                                             <RefreshCw className="w-4 h-4" />
                                             <span>{coupon.times_redeemed} used {coupon.max_redemptions ? `/ ${coupon.max_redemptions}` : ''}</span>
                                         </div>
-                                        {coupon.expires_at && (
-                                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                                <Calendar className="w-4 h-4" />
-                                                <span>Expires {format(new Date(coupon.expires_at), 'PP')}</span>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                            <Calendar className="w-4 h-4" />
+                                            <span>
+                                                {coupon.expires_at
+                                                    ? `Expires ${format(new Date(coupon.expires_at), 'MMM dd, yyyy')}`
+                                                    : 'No Expiry Date'}
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <Button variant="outline" className="w-full text-xs" onClick={() => copyLink(coupon.code)}>
-                                        <Copy className="w-3 h-3 mr-2" />
-                                        Copy Share Link
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" className="flex-1 text-xs" onClick={() => copyLink(coupon.code)}>
+                                            <Copy className="w-3 h-3 mr-2" />
+                                            Copy Link
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="px-3"
+                                            onClick={() => setCouponToEdit(coupon)}
+                                            title="Edit Coupon"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="px-3 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200 dark:border-red-900/30"
+                                            onClick={() => handleDelete(coupon.id)}
+                                            title="Delete Coupon"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -215,9 +282,23 @@ export const CouponsPage: React.FC = () => {
             </div>
 
             <CreateCouponModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                isOpen={isCreateModalOpen || !!couponToEdit}
+                onClose={() => {
+                    setIsCreateModalOpen(false);
+                    setCouponToEdit(null);
+                }}
                 onSuccess={() => queryClient.invalidateQueries({ queryKey: ['coupons'] })}
+                coupon={couponToEdit}
+            />
+
+            <ConfirmDialog
+                isOpen={!!couponToDelete}
+                onClose={() => setCouponToDelete(null)}
+                onConfirm={() => confirmDelete()}
+                title="Delete Coupon"
+                message="Are you sure you want to delete this coupon? This action cannot be undone."
+                type="destructive"
+                confirmText="Delete Coupon"
             />
         </DashboardLayout>
     );

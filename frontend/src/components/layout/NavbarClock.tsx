@@ -254,7 +254,7 @@ export const NavbarClock: React.FC = () => {
 
     const activeBreak = todayAttendance?.active_break;
 
-    // Admins and Super Admins don't clock in/out
+    // Only ADMIN and SUPER_ADMIN skip the clock widget — HR, MANAGER, EMPLOYEE all see it
     if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
         return null;
     }

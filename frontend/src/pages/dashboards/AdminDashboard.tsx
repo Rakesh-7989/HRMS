@@ -1,127 +1,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { dashboardService } from '@/services/dashboard.service';
 import { eventsService } from '@/services/events.service';
 import {
-  Users, Building2, Briefcase, TrendingUp, TrendingDown,
-  Calendar, Clock, Activity, Sparkles, Award, UserCheck, UserX
+  Users, Building2, Briefcase, Calendar, Clock, Activity,
+  Sparkles, Award, UserCheck, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import {
   PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { CustomTooltip } from '@/components/dashboard/CustomTooltip';
+import { CHART_COLORS, DASHBOARD_GRADIENTS } from '@/utils/constants';
 
-// Modern color palette
-const COLORS = {
-  primary: '#6366f1',
-  secondary: '#8b5cf6',
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#3b82f6',
-  pink: '#ec4899',
-  cyan: '#06b6d4',
-  gradients: {
-    purple: ['#6366f1', '#8b5cf6'],
-    blue: ['#3b82f6', '#06b6d4'],
-    green: ['#10b981', '#34d399'],
-    orange: ['#f59e0b', '#fb923c'],
-    pink: ['#ec4899', '#f472b6'],
-  }
-};
-
-const CHART_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
-
-// Animation variants
+// Stagger animation variant
 const staggerContainer = {
   animate: { transition: { staggerChildren: 0.1 } }
-};
-
-// Custom Tooltip for charts
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700">
-        <p className="text-xs text-gray-400 mb-1">{label}</p>
-        {payload.map((entry: any) => (
-          <p key={entry.name} className="text-sm font-semibold" style={{ color: entry.color }}>
-            {entry.name}: {entry.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-// Stat Card Component
-const StatCard = ({
-  title, value, change, trend, icon: Icon, gradient, delay = 0
-}: {
-  title: string;
-  value: number | string;
-  change?: number;
-  trend?: 'up' | 'down';
-  icon: any;
-  gradient: string[];
-  delay?: number;
-}) => {
-  const isPositive = trend === 'up' || (change && change > 0);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -5, scale: 1.02 }}
-      className="relative group"
-    >
-      <div className="relative overflow-hidden rounded-3xl p-6 h-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none">
-        {/* Gradient Background Orb */}
-        <div
-          className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"
-          style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
-        />
-
-        {/* Icon */}
-        <div
-          className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
-        >
-          <Icon className="w-7 h-7 text-white" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-          <div className="flex items-end justify-between">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-              {typeof value === 'number' ? value.toLocaleString() : value}
-            </h3>
-            {change !== undefined && (
-              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${isPositive
-                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                }`}>
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(change)}%
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Decorative Line */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: `linear-gradient(90deg, ${gradient[0]}, ${gradient[1]})` }}
-        />
-      </div>
-    </motion.div>
-  );
 };
 
 // Chart Card Component
@@ -136,18 +35,18 @@ const ChartCard = ({
   delay?: number;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none ${className}`}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`bg-white dark:bg-[#111827]/60 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-100 dark:border-white/5 shadow-xl dark:shadow-2xl ${className}`}
   >
     <div className="flex items-center justify-between mb-6 gap-4">
       <div className="min-w-0">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
+        <h3 className="text-xl font-black text-gray-900 dark:text-white truncate tracking-tight">{title}</h3>
+        {subtitle && <p className="text-xs font-bold text-gray-500 mt-1 truncate">{subtitle}</p>}
       </div>
       {badge && (
-        <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <span className="shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/80 border border-gray-200 dark:border-white/5 backdrop-blur-md">
           {badge}
         </span>
       )}
@@ -159,28 +58,28 @@ const ChartCard = ({
 // Department Row Component
 const DepartmentRow = ({ name, count, percentage, index }: { name: string; count: number; percentage: number; index: number }) => (
   <motion.div
-    initial={{ opacity: 0, x: -20 }}
+    initial={{ opacity: 0, x: -10 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ delay: 0.1 * index }}
+    transition={{ delay: 0.05 * index }}
     className="group"
   >
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-xs shadow-lg"
           style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
         >
           {name.charAt(0)}
         </div>
-        <span className="font-medium text-gray-900 dark:text-white">{name}</span>
+        <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{name}</span>
       </div>
-      <span className="font-bold text-gray-900 dark:text-white">{count}</span>
+      <span className="text-sm font-black text-white tabular-nums">{count}</span>
     </div>
-    <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${percentage}%` }}
-        transition={{ duration: 1, delay: 0.1 * index, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.8, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] }}
         className="h-full rounded-full"
         style={{ background: `linear-gradient(90deg, ${CHART_COLORS[index % CHART_COLORS.length]}, ${CHART_COLORS[(index + 1) % CHART_COLORS.length]})` }}
       />
@@ -282,7 +181,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <DashboardLayout title="Organization Dashboard">
       <motion.div
-        className="space-y-8"
+        className="space-y-6"
         initial="initial"
         animate="animate"
         variants={staggerContainer}
@@ -291,34 +190,36 @@ export const AdminDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-8"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/20"
           style={{
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
           }}
         >
           {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute inset-0" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 mb-2"
+                className="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md"
               >
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-                <span className="text-white/80 text-sm font-medium">Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}</span>
+                <Sparkles className="w-4 h-4 text-yellow-300" />
+                <span className="text-white text-[10px] font-bold uppercase tracking-widest">
+                  Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}
+                </span>
               </motion.div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Welcome back, {user?.first_name}! 👋
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tighter">
+                Welcome back, {user?.first_name}! <span className="inline-block animate-bounce-slow">👋</span>
               </h1>
-              <p className="text-white/70 text-lg">
-                Here's what's happening in your organization today
+              <p className="text-white/80 text-lg font-medium max-w-xl leading-relaxed">
+                Here's what's happening in your organization today. Monitor growth and productivity at a glance.
               </p>
             </div>
 
@@ -326,61 +227,61 @@ export const AdminDashboard: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 bg-white/10 backdrop-blur-lg rounded-2xl p-4 min-w-fit"
+              className="flex items-center gap-6 bg-black/20 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/10 min-w-fit shadow-inner"
             >
-              <div className="text-center px-4 border-r border-white/20">
-                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'dd')}</p>
-                <p className="text-sm text-white/70">{format(new Date(), 'MMM yyyy')}</p>
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-4xl font-black text-white tabular-nums">{format(new Date(), 'dd')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">{format(new Date(), 'MMM yyyy')}</p>
               </div>
-              <div className="text-center px-4">
-                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'EEEE')}</p>
-                <p className="text-sm text-white/70">{format(new Date(), 'hh:mm a')}</p>
+              <div className="text-center px-4 min-w-[120px]">
+                <p className="text-2xl font-black text-white leading-tight">{format(new Date(), 'EEEE')}</p>
+                <p className="text-lg font-bold text-white/80 tabular-nums mt-0.5">{format(new Date(), 'hh:mm a')}</p>
               </div>
             </motion.div>
           </div>
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             title="Total Employees"
             value={metrics.total_employees}
             icon={Users}
-            gradient={COLORS.gradients.purple}
+            gradient={DASHBOARD_GRADIENTS.purple}
             delay={0.1}
           />
           <StatCard
             title="Active Employees"
             value={metrics.active_employees || (metrics.total_employees - (metrics.inactive_employees || 0))}
             icon={UserCheck}
-            gradient={COLORS.gradients.green}
+            gradient={DASHBOARD_GRADIENTS.green}
             delay={0.2}
           />
           <StatCard
             title="Inactive Employees"
             value={metrics.inactive_employees || 0}
             icon={UserX}
-            gradient={COLORS.gradients.pink}
+            gradient={DASHBOARD_GRADIENTS.pink}
             delay={0.25}
           />
           <StatCard
             title="Departments"
             value={metrics.total_departments}
             icon={Building2}
-            gradient={COLORS.gradients.blue}
+            gradient={DASHBOARD_GRADIENTS.orange}
             delay={0.3}
           />
           <StatCard
             title="Designations"
             value={metrics.total_designations}
             icon={Briefcase}
-            gradient={COLORS.gradients.orange}
+            gradient={DASHBOARD_GRADIENTS.pink}
             delay={0.4}
           />
         </div>
 
         {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Task Overview Chart - Replaces Attendance */}
           <ChartCard
             title="Task Overview"
@@ -465,7 +366,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Leave Statistics Bar Chart */}
           <ChartCard
             title="Leave Policies"
@@ -525,94 +426,94 @@ export const AdminDashboard: React.FC = () => {
 
         {/* People Events Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 0.6 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {/* Birthdays */}
-          <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-3xl p-6 text-white shadow-xl shadow-pink-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+          <div className="bg-gradient-to-br from-pink-500/90 to-rose-600/90 rounded-[2.5rem] p-6 text-white shadow-2xl shadow-pink-500/20 backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center text-2xl shadow-inner">
                 🎂
               </div>
               <div>
-                <h3 className="font-bold text-lg">Birthdays</h3>
-                <p className="text-white/70 text-sm">This month</p>
+                <h3 className="font-black text-xl tracking-tight">Birthdays</h3>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">This month</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.birthdays || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/5 shadow-sm transition-transform hover:scale-[1.02]">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-sm border border-white/10">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-sm truncate uppercase tracking-tight">{person.name}</p>
+                    <p className="text-white/60 text-[10px] font-bold">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.birthdays || peopleEventsData.birthdays.length === 0) && (
-                <p className="text-white/60 text-center py-4">No birthdays this month</p>
+                <p className="text-white/50 text-center py-6 text-xs font-bold uppercase tracking-tighter">No birthdays this month</p>
               )}
             </div>
           </div>
 
           {/* Anniversaries */}
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-6 text-white shadow-xl shadow-amber-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+          <div className="bg-gradient-to-br from-amber-500/90 to-orange-600/90 rounded-[2.5rem] p-6 text-white shadow-2xl shadow-amber-500/20 backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center text-2xl shadow-inner">
                 🎉
               </div>
               <div>
-                <h3 className="font-bold text-lg">Anniversaries</h3>
-                <p className="text-white/70 text-sm">Work anniversaries</p>
+                <h3 className="font-black text-xl tracking-tight">Anniversaries</h3>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Work anniversaries</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.anniversaries || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/5 shadow-sm transition-transform hover:scale-[1.02]">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-sm border border-white/10">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-sm truncate uppercase tracking-tight">{person.name}</p>
+                    <p className="text-white/60 text-[10px] font-bold">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.anniversaries || peopleEventsData.anniversaries.length === 0) && (
-                <p className="text-white/60 text-center py-4">No anniversaries this month</p>
+                <p className="text-white/50 text-center py-6 text-xs font-bold uppercase tracking-tighter">No anniversaries this month</p>
               )}
             </div>
           </div>
 
           {/* New Joiners */}
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                👋
+          <div className="bg-gradient-to-br from-emerald-500/90 to-teal-600/90 rounded-[2.5rem] p-6 text-white shadow-2xl shadow-emerald-500/20 backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center text-2xl shadow-inner">
+                🚀
               </div>
               <div>
-                <h3 className="font-bold text-lg">New Joiners</h3>
-                <p className="text-white/70 text-sm">Recent hires</p>
+                <h3 className="font-black text-xl tracking-tight">New Joiners</h3>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Recent hires</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.joiners || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/5 shadow-sm transition-transform hover:scale-[1.02]">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-sm border border-white/10">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-sm truncate uppercase tracking-tight">{person.name}</p>
+                    <p className="text-white/60 text-[10px] font-bold">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.joiners || peopleEventsData.joiners.length === 0) && (
-                <p className="text-white/60 text-center py-4">No new joiners this month</p>
+                <p className="text-white/50 text-center py-6 text-xs font-bold uppercase tracking-tighter">No new joiners this month</p>
               )}
             </div>
           </div>
@@ -620,9 +521,9 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Quick Stats Footer */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.7 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
@@ -633,17 +534,17 @@ export const AdminDashboard: React.FC = () => {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 flex items-center gap-4"
+              className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-white/5 flex items-center gap-5 shadow-xl dark:shadow-2xl transition-all hover:translate-y-[-2px]"
             >
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: `${stat.color}15` }}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: `${stat.color}20`, border: `1px solid ${stat.color}40` }}
               >
                 <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white tabular-nums">{stat.value}</p>
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{stat.label}</p>
               </div>
             </div>
           ))}

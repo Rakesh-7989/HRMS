@@ -100,14 +100,15 @@ class BillingController {
     async createSubscription(req, res) {
         try {
             const tenantId = req.user.tenantId; // Assumes auth middleware populates this
-            const { planId, priceId, quantity, successUrl, cancelUrl } = req.body;
+            const { planId, priceId, quantity, successUrl, cancelUrl, couponCode } = req.body;
 
             const result = await billingService.createSubscription(tenantId, {
                 planId,
                 priceId,
                 quantity,
                 successUrl,
-                cancelUrl
+                cancelUrl,
+                couponCode
             });
 
             res.status(201).json({ success: true, data: result });

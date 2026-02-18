@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
+const roleService = require("../rbac/role.service");
 
 function getDbFromReq(req) {
   if (req && req.db && typeof req.db.query === "function") {
@@ -249,6 +250,30 @@ exports.registerTenant = async (data, req = null) => {
 
       const user = userInsert.rows[0];
 
+      // RBAC: Seed default roles and assign ADMIN role
+      await roleService.cloneSystemRolesForOrganization(tenant.id, client);
+
+      const adminRoleRes = await client.query(
+        `SELECT id FROM roles WHERE tenant_id = $1 AND name = 'ADMIN'`,
+        [tenant.id]
+      );
+
+      if (adminRoleRes.rowCount > 0) {
+        await client.query(
+          `INSERT INTO user_roles (user_id, role_id, tenant_id)
+           VALUES ($1, $2, $3)`,
+          [user.id, adminRoleRes.rows[0].id, tenant.id]
+        );
+      }
+
+      // Create initial employee record for the admin
+      const employeeId = await exports.generateNextEmployeeId(tenant.id, client);
+      await client.query(
+        `INSERT INTO employees (tenant_id, user_id, first_name, last_name, employee_id, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [tenant.id, user.id, tenant.name, 'Admin', employeeId, null]
+      );
+
       // Create subscription - trial if no plan selected, pending payment if plan selected
       if (data.plan_id) {
         // User selected a specific plan - create pending subscription awaiting payment
@@ -317,6 +342,30 @@ exports.registerTenant = async (data, req = null) => {
     );
 
     const user = userInsert.rows[0];
+
+    // RBAC: Seed default roles and assign ADMIN role
+    await roleService.cloneSystemRolesForOrganization(tenant.id, c);
+
+    const adminRoleRes = await c.query(
+      `SELECT id FROM roles WHERE tenant_id = $1 AND name = 'ADMIN'`,
+      [tenant.id]
+    );
+
+    if (adminRoleRes.rowCount > 0) {
+      await c.query(
+        `INSERT INTO user_roles (user_id, role_id, tenant_id)
+         VALUES ($1, $2, $3)`,
+        [user.id, adminRoleRes.rows[0].id, tenant.id]
+      );
+    }
+
+    // Create initial employee record for the admin
+    const employeeId = await exports.generateNextEmployeeId(tenant.id, c);
+    await c.query(
+      `INSERT INTO employees (tenant_id, user_id, first_name, last_name, employee_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [tenant.id, user.id, tenant.name, 'Admin', employeeId, null]
+    );
 
     // Create subscription - trial if no plan selected, pending payment if plan selected
     if (data.plan_id) {
@@ -536,4 +585,185 @@ exports.generateNextEmployeeId = async (tenantId, client = null) => {
   const employeeId = `${prefix}${String(newCounter).padStart(3, '0')}`;
 
   return employeeId;
+};
+// ========================================================================
+// TENANT PROFILE & LOGO FUNCTIONS (Migrated from legacy admin)
+// ========================================================================
+
+/**
+ * Get full tenant profile details
+ */
+exports.getTenantProfile = async (tenantId) => {
+  const result = await pool.query(
+    `SELECT id, name, domain, email, phone, address, city, state, country, zip_code, settings, created_at, status
+     FROM tenants
+     WHERE id=$1`,
+    [tenantId]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Update tenant profile details
+ */
+exports.updateTenantProfile = async (tenantId, data) => {
+  const updates = [];
+  const params = [tenantId];
+  let i = 2;
+
+  const allowedFields = ['name', 'phone', 'address', 'city', 'state', 'country', 'zip_code'];
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      updates.push(`${field} = $${i}`);
+      params.push(data[field]);
+      i++;
+    }
+  }
+
+  if (data.settings) {
+    // Get current settings first to merge
+    const current = await pool.query(`SELECT settings FROM tenants WHERE id=$1`, [tenantId]);
+    const newSettings = { ...(current.rows[0]?.settings || {}), ...data.settings };
+    updates.push(`settings = $${i}`);
+    params.push(newSettings);
+    i++;
+  }
+
+  if (updates.length === 0) return null;
+
+  const result = await pool.query(
+    `UPDATE tenants
+     SET ${updates.join(", ")}, updated_at = NOW()
+     WHERE id = $1
+     RETURNING id, name, domain, email, phone, address, city, state, country, zip_code, settings`,
+    params
+  );
+  return result.rows[0];
+};
+
+/**
+ * Update tenant logo URL in settings
+ */
+exports.updateTenantLogo = async (tenantId, logoUrl) => {
+  // 1. Get current settings
+  const result = await pool.query(`SELECT settings FROM tenants WHERE id=$1`, [tenantId]);
+  let settings = result.rows[0]?.settings || {};
+  const oldLogoUrl = settings.logo_url;
+
+  // 2. Update logo_url
+  settings.logo_url = logoUrl;
+
+  // 3. Save
+  await pool.query(
+    `UPDATE tenants SET settings=$1, updated_at=NOW() WHERE id=$2`,
+    [settings, tenantId]
+  );
+
+  return { settings, oldLogoUrl };
+};
+
+// ========================================================================
+// PLATFORM MANAGEMENT FUNCTIONS (Migrated from legacy superAdmin)
+// ========================================================================
+
+/**
+ * Get all tenants with subscription and employee counts
+ */
+exports.getAllTenants = async () => {
+  const res = await pool.query(
+    `
+      SELECT 
+        t.id, t.name, t.email, t.is_active, t.created_at, t.updated_at,
+        COALESCE(usr.count, 0)::int AS employee_count,
+        COALESCE(p.name, 'No Plan') AS plan_name,
+        COALESCE(s.status, 'N/A') AS subscription_status,
+        s.is_trial,
+        s.start_date AS plan_start_date,
+        s.end_date AS plan_end_date,
+        s.billing_cycle AS plan_type,
+        s.trial_ends_at AS trial_ends_at
+      FROM tenants t
+      LEFT JOIN (
+        SELECT e.tenant_id, COUNT(*)::int AS count 
+        FROM employees e
+        JOIN users u ON e.user_id = u.id
+        WHERE u.is_deleted = false
+        GROUP BY e.tenant_id
+      ) usr ON usr.tenant_id = t.id
+      LEFT JOIN subscriptions s ON s.tenant_id = t.id AND s.status IN ('ACTIVE', 'TRIAL', 'CANCEL_AT_PERIOD_END', 'PENDING_PAYMENT')
+      LEFT JOIN plans p ON p.id = s.plan_id
+      ORDER BY t.created_at DESC
+    `
+  );
+  return res.rows;
+};
+
+/**
+ * Get platform-wide tenant count
+ */
+exports.getPlatformTenantCount = async () => {
+  const res = await pool.query(`SELECT COUNT(*) AS count FROM tenants`);
+  return Number(res.rows[0].count);
+};
+
+/**
+ * Get platform-wide active employee count
+ */
+exports.getPlatformEmployeeCount = async () => {
+  const res = await pool.query(`
+    SELECT COUNT(*)::INTEGER AS count 
+    FROM employees e 
+    JOIN users u ON e.user_id = u.id 
+    WHERE u.is_deleted = false
+  `);
+  return Number(res.rows[0].count);
+};
+
+/**
+ * Get users belonging to a specific tenant
+ */
+exports.getUsersByTenant = async (tenantId) => {
+  const res = await pool.query(
+    `
+      SELECT id, email, role, is_active, created_at
+      FROM users
+      WHERE tenant_id = $1 AND is_deleted = false
+      ORDER BY created_at DESC
+    `,
+    [tenantId]
+  );
+  return res.rows;
+};
+
+/**
+ * Update tenant active status (Activate/Deactivate)
+ */
+exports.updatePlatformTenantStatus = async (tenantId, isActive) => {
+  const res = await pool.query(
+    `
+      UPDATE tenants
+      SET is_active = $1, updated_at = now()
+      WHERE id = $2
+      RETURNING id, name, is_active
+    `,
+    [isActive, tenantId]
+  );
+  return res.rows[0] || null;
+};
+
+/**
+ * Get employee count for a specific tenant
+ */
+exports.getPlatformTenantEmployeeCount = async (tenantId) => {
+  const res = await pool.query(
+    `
+      SELECT COUNT(*)::INTEGER AS count 
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.tenant_id = $1 AND u.is_deleted = false
+    `,
+    [tenantId]
+  );
+  return Number(res.rows[0]?.count || 0);
 };

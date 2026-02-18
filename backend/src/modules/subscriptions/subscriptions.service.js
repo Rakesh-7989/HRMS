@@ -380,6 +380,92 @@ class SubscriptionService {
         `, [tenantId]);
         return result.rows;
     }
+
+    async getAllPlans() {
+        // Fetch plans with their active monthly price
+        const res = await db.query(`
+            SELECT 
+              p.*,
+              COALESCE(
+                (SELECT unit_amount FROM plan_prices pp 
+                 WHERE pp.plan_id = p.id AND pp.interval = 'MONTHLY' AND pp.is_active = true 
+                 ORDER BY pp.created_at DESC LIMIT 1),
+                p.price
+              ) as current_price
+            FROM plans p 
+            ORDER BY p.name ASC
+        `);
+
+        return res.rows.map(row => ({
+            ...row,
+            price: parseFloat(row.current_price || 0)
+        }));
+    }
+
+    async createPlan(data) {
+        const { name, price, max_employees, features, is_active = true } = data;
+
+        // 1. Insert Plan
+        const res = await db.query(
+            `
+              INSERT INTO plans (name, price, max_employees, features, is_active, code)
+              VALUES ($1, $2, $3, $4, $5, $6)
+              RETURNING *
+            `,
+            [name, price, max_employees, JSON.stringify(features), is_active, name.toUpperCase().replace(/\s+/g, '_')]
+        );
+
+        const plan = res.rows[0];
+
+        // 2. Insert Initial Price
+        await db.query(`
+            INSERT INTO plan_prices (plan_id, interval, interval_count, unit_amount, currency, is_active)
+            VALUES ($1, 'MONTHLY', 1, $2, 'INR', true)
+        `, [plan.id, price]);
+
+        return plan;
+    }
+
+    async updatePlan(id, data) {
+        const { name, price, max_employees, features, is_active } = data;
+
+        // Update the plan table
+        const res = await db.query(
+            `
+              UPDATE plans
+              SET name = $1, price = $2, max_employees = $3, features = $4, is_active = $5, updated_at = now()
+              WHERE id = $6
+              RETURNING *
+            `,
+            [name, price, max_employees, JSON.stringify(features), is_active, id]
+        );
+
+        if (res.rowCount === 0) throw new Error("Plan not found");
+
+        // Handle Price Versioning (If price changed)
+        const currentPriceRes = await db.query(`
+            SELECT * FROM plan_prices 
+            WHERE plan_id = $1 AND interval = 'MONTHLY' AND is_active = true
+        `, [id]);
+
+        const currentPrice = currentPriceRes.rows.length > 0 ? parseFloat(currentPriceRes.rows[0].unit_amount) : null;
+
+        if (currentPrice !== parseFloat(price)) {
+            await db.query(`UPDATE plan_prices SET is_active = false, active_to = NOW() WHERE plan_id = $1 AND interval = 'MONTHLY' AND is_active = true`, [id]);
+            await db.query(`INSERT INTO plan_prices (plan_id, interval, interval_count, unit_amount, currency, is_active, active_from) VALUES ($1, 'MONTHLY', 1, $2, 'INR', true, NOW())`, [id, price]);
+
+            await db.query(`UPDATE plan_prices SET is_active = false, active_to = NOW() WHERE plan_id = $1 AND interval = 'YEARLY' AND is_active = true`, [id]);
+            await db.query(`INSERT INTO plan_prices (plan_id, interval, interval_count, unit_amount, currency, is_active, active_from) VALUES ($1, 'YEARLY', 1, $2, 'INR', true, NOW())`, [id, price * 12]);
+        }
+
+        return res.rows[0];
+    }
+
+    async deletePlan(id) {
+        const res = await db.query(`UPDATE plans SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id`, [id]);
+        await db.query(`UPDATE plan_prices SET is_active = false, active_to = NOW() WHERE plan_id = $1`, [id]);
+        return res.rows[0];
+    }
 }
 
 module.exports = new SubscriptionService();

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./settlement.controller");
@@ -48,26 +48,26 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/reimbursements",
-    requireRole(["EMPLOYEE", "MANAGER"]),
+    requireAnyPermission(["payroll.view_own"]),
     validate(createReimbursementSchema),
     controller.createReimbursement
 );
 
 router.get(
     "/reimbursements/my",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+    requireAnyPermission(["payroll.view_own"]),
     controller.getMyReimbursements
 );
 
 router.get(
     "/reimbursements",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getReimbursements
 );
 
 router.patch(
     "/reimbursements/:id/approve",
-    requireRole(["MANAGER", "HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
     validate(approveReimbursementSchema),
     controller.approveReimbursement
 );
@@ -77,45 +77,45 @@ router.patch(
 // =====================
 router.post(
     "/fnf",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createFnFSchema),
     controller.createFnFSettlement
 );
 
 router.get(
     "/fnf",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getFnFSettlements
 );
 
 router.get(
     "/fnf/:id",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getFnFSettlementById
 );
 
 router.put(
     "/fnf/:id",
-    requireRole(["HR", "ADMIN"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.updateFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/submit",
-    requireRole(["HR"]),
+    requirePermission("payroll.manage"),
     controller.submitFnFForApproval
 );
 
 router.patch(
     "/fnf/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     validate(approveFnFSchema),
     controller.approveFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/pay",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     controller.markFnFPaid
 );
 

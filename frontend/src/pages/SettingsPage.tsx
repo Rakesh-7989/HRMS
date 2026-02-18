@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin.service';
 import { Input } from '@/components/ui/Input';
@@ -34,6 +35,7 @@ import defaultLogo from '../../Assests/logo.png';
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, setUser } = useAuth();
+  const { hasPermission } = usePermission();
   const [isSessionsModalOpen, setIsSessionsModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
@@ -57,7 +59,7 @@ export const SettingsPage: React.FC = () => {
     type: 'success',
   });
 
-  const isTenantAdmin = user?.role === 'ADMIN';
+  const isTenantAdmin = hasPermission('billing.manage');
 
   const { data: subscription, isLoading: isSubLoading } = useQuery({
     queryKey: ['my-subscription'],
@@ -65,7 +67,7 @@ export const SettingsPage: React.FC = () => {
     enabled: isTenantAdmin,
   });
 
-  const canManageOrg = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+  const canManageOrg = hasPermission('roles.manage');
 
   return (
     <DashboardLayout
@@ -74,9 +76,9 @@ export const SettingsPage: React.FC = () => {
         {
           label: 'Dashboard',
           href: user?.role === 'SUPER_ADMIN' ? '/dashboard/system' :
-            user?.role === 'ADMIN' ? '/dashboard/organization' :
-              user?.role === 'HR' ? '/dashboard/hr' :
-                user?.role === 'MANAGER' ? '/dashboard/team' :
+            hasPermission('roles.manage') ? '/dashboard/organization' :
+              hasPermission('reports.view') ? '/dashboard/hr' :
+                hasPermission('leave.approve') ? '/dashboard/team' :
                   '/dashboard/personal'
         },
         { label: 'Settings' },
@@ -96,9 +98,10 @@ export const SettingsPage: React.FC = () => {
               Manage your organization profile and settings.
             </p>
             <div className="space-y-3">
-              <OrganizationProfileSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
+              <OrganizationProfileSection hasPermission={hasPermission} setSuccessConfig={setSuccessConfig} />
 
-              <WorkingHoursSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
+              <WorkingHoursSection hasPermission={hasPermission} setSuccessConfig={setSuccessConfig} />
+
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
                 <div className="flex items-center gap-3">
@@ -409,14 +412,14 @@ export const SettingsPage: React.FC = () => {
 };
 
 const WorkingHoursSection: React.FC<{
-  userRole?: string,
+  hasPermission: (p: string) => boolean,
   setSuccessConfig: React.Dispatch<React.SetStateAction<{
     isOpen: boolean;
     title: string;
     message: string;
     type: 'success' | 'error';
   }>>
-}> = ({ userRole, setSuccessConfig }) => {
+}> = ({ hasPermission, setSuccessConfig }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -424,7 +427,7 @@ const WorkingHoursSection: React.FC<{
   const { data: profile } = useQuery({
     queryKey: ['tenant-profile'],
     queryFn: () => adminService.getTenantProfile(),
-    enabled: userRole === 'ADMIN' || userRole === 'HR' || userRole === 'MANAGER',
+    enabled: hasPermission('roles.manage'),
   });
 
   const workingHours = profile?.settings?.workingHours || {
@@ -462,7 +465,7 @@ const WorkingHoursSection: React.FC<{
     }));
   };
 
-  const isTenantAdmin = userRole === 'ADMIN';
+  const isOrgAdmin = hasPermission('roles.manage');
 
   return (
     <>
@@ -478,7 +481,7 @@ const WorkingHoursSection: React.FC<{
             </p>
           </div>
         </div>
-        {isTenantAdmin && (
+        {isOrgAdmin && (
           <Button variant="outline" size="sm" onClick={() => navigate('/organisation?tab=shifts&subtab=manage')}>
             Configure
           </Button>
@@ -559,14 +562,14 @@ const WorkingHoursSection: React.FC<{
 };
 
 const OrganizationProfileSection: React.FC<{
-  userRole?: string,
+  hasPermission: (p: string) => boolean,
   setSuccessConfig: React.Dispatch<React.SetStateAction<{
     isOpen: boolean;
     title: string;
     message: string;
     type: 'success' | 'error';
   }>>
-}> = ({ userRole, setSuccessConfig }) => {
+}> = ({ hasPermission, setSuccessConfig }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -581,7 +584,7 @@ const OrganizationProfileSection: React.FC<{
   const { data: profile, isLoading } = useQuery({
     queryKey: ['tenant-profile'],
     queryFn: () => adminService.getTenantProfile(),
-    enabled: userRole === 'ADMIN' || userRole === 'HR' || userRole === 'MANAGER',
+    enabled: hasPermission('roles.manage'),
   });
 
   const { user, setUser: setAuthUser } = useAuth();
@@ -699,7 +702,7 @@ const OrganizationProfileSection: React.FC<{
     setIsEditing(true);
   };
 
-  const isTenantAdmin = userRole === 'ADMIN';
+  const isOrgAdmin = hasPermission('manage_organization');
 
   if (isLoading) return <div className="p-3">Loading...</div>;
 
@@ -716,7 +719,7 @@ const OrganizationProfileSection: React.FC<{
                 className="w-full h-full object-contain"
               />
             </div>
-            {isTenantAdmin && (
+            {isOrgAdmin && (
               <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-3">
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -757,7 +760,7 @@ const OrganizationProfileSection: React.FC<{
         <div className="flex-1 w-full space-y-4">
           <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-2">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Profile Details</h4>
-            {isTenantAdmin && (
+            {isOrgAdmin && (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 Edit Profile
               </Button>
@@ -884,3 +887,4 @@ const OrganizationProfileSection: React.FC<{
     </>
   );
 };
+

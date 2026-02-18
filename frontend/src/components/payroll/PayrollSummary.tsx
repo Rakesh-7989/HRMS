@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PieChart } from '@/components/charts/PieChart';
 import { Users, CreditCard, FileText, PlayCircle, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
@@ -18,13 +18,14 @@ interface PayrollSummaryProps {
 }
 
 export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) => {
-    const { user } = useAuth();
+    const { hasAnyPermission } = usePermission();
     const navigate = useNavigate();
+    const isPayrollAdmin = hasAnyPermission(['manage_payroll_components', 'process_payroll']);
 
     const { data: orgData, isLoading: orgLoading } = useQuery({
         queryKey: ['dashboard', 'organization'],
         queryFn: () => dashboardService.getOrganizationDashboard(),
-        enabled: user?.role === 'ADMIN' || user?.role === 'HR',
+        enabled: isPayrollAdmin,
     });
 
     const { data: payrollData, isLoading: payrollLoading } = useQuery({
@@ -46,7 +47,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
     const { data: recentTransactions = [], isLoading: txLoading } = useQuery<Array<{ id: string; employee_id?: string; employee_name?: string; type: string; amount: number; tx_date: string }>>({
         queryKey: ['payroll', 'transactions'],
         queryFn: () => payrollService.listTransactions(),
-        enabled: user?.role === 'ADMIN' || user?.role === 'HR',
+        enabled: isPayrollAdmin,
     });
 
     return (
@@ -106,9 +107,9 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                         <div className="space-y-3">
                             {[
                                 { label: 'Process Monthly Payroll', icon: PlayCircle, color: 'primary', action: 'payslips' },
-                                { label: 'Manage Salary Structures', icon: Settings, color: 'purple', action: 'salary_details', roles: ['ADMIN', 'HR'] },
+                                { label: 'Manage Salary Structures', icon: Settings, color: 'purple', action: 'salary_details', visible: isPayrollAdmin },
                             ].map((item) => {
-                                if (item.roles && !item.roles.includes(user?.role || '')) return null;
+                                if (item.visible === false) return null;
                                 const Icon = item.icon;
                                 return (
                                     <button

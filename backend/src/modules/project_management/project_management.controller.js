@@ -152,8 +152,9 @@ exports.createProject = async (req, res, next) => {
       budget,
     });
 
-    // Hide budget for employees
-    if (req.user.role === "EMPLOYEE") {
+    // Hide budget if they don't have manage or finance permissions
+    const permissions = req.user.permissions || [];
+    if (!permissions.includes("manage_all_projects") && !permissions.includes("view_hr_reports")) {
       delete project.budget;
     }
 
@@ -184,8 +185,8 @@ exports.listProjects = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
-      // Pass user info for role-based filtering
-      userRole: role,
+      // Pass user info and permissions for data filtering
+      userPermissions: req.user.permissions,
       userEmployeeId: employeeId,
       userId: req.user.id,
     });
@@ -221,8 +222,9 @@ exports.updateProject = async (req, res, next) => {
       budget,
     });
 
-    // Hide budget for employees
-    if (req.user.role === "EMPLOYEE") {
+    // Hide budget if they don't have manage or finance permissions
+    const permissions = req.user.permissions || [];
+    if (!permissions.includes("manage_all_projects") && !permissions.includes("view_hr_reports")) {
       delete project.budget;
     }
 
@@ -369,14 +371,9 @@ exports.createKanbanBoard = async (req, res, next) => {
     const { tenantId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    // Explicitly log the entire body to debug
-    console.log('[Controller] Full request body:', JSON.stringify(req.body));
-
     const useDefault = req.body.useDefault !== undefined ? req.body.useDefault : true;
     const columns = req.body.columns || [];
-    const forceReset = req.body.forceReset === true; // Explicit check
-
-    console.log('[Controller] Extracted values:', { useDefault, columnsCount: columns.length, forceReset, project_id });
+    const forceReset = req.body.forceReset === true;
 
     const result = await service.createKanbanBoard(tenantId, userId, project_id, {
       useDefault,

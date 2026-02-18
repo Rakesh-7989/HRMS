@@ -492,4 +492,85 @@ exports.sendDailyReport = async (to, reportData) => {
   });
 };
 
+/**
+ * Send subscription renewal reminder/expiry email
+ */
+exports.sendSubscriptionRenewalEmail = async (to, tenantName, planName, expiryDate, type = 'reminder') => {
+  const billingUrl = `${env.FRONTEND_URL}/dashboard/billing`;
+
+  let subject = `Subscription Renewal Reminder — WellZo HR`;
+  let title = `Renew Your Subscription`;
+  let message = `Your <strong>${planName}</strong> plan is set to expire on <strong>${expiryDate}</strong>. Renew now to ensure uninterrupted access to your HR tools.`;
+  let buttonLabel = `Renew Now →`;
+  let badgeColor = `#42275a`;
+  let badgeText = `REMINDER`;
+
+  if (type === 'urgent') {
+    subject = `URGENT: Your WellZo HR Subscription Expires Soon`;
+    title = `Subscription Expiring Soon`;
+    message = `Your <strong>${planName}</strong> plan will expire in just 3 days on <strong>${expiryDate}</strong>. Please renew immediately to avoid service disruption.`;
+    badgeColor = `#ea580c`;
+    badgeText = `URGENT`;
+  } else if (type === 'expired') {
+    subject = `Your WellZo HR Subscription Has Expired`;
+    title = `Subscription Expired`;
+    message = `Your <strong>${planName}</strong> subscription has expired. Access to some features may be limited until you renew.`;
+    buttonLabel = `Reactivate Plan →`;
+    badgeColor = `#dc2626`;
+    badgeText = `EXPIRED`;
+  }
+
+  return exports.sendMail({
+    to,
+    subject,
+    html: emailWrapper(`
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td>
+                  <span style="display:inline-block;padding:4px 12px;background:${badgeColor};color:#ffffff;font-size:10px;font-weight:700;border-radius:4px;letter-spacing:1px;text-transform:uppercase;">${badgeText}</span>
+                </td>
+              </tr>
+            </table>
+
+            <h1 style="margin:0 0 8px;font-size:24px;color:#1a1a2e;font-weight:700;">Hello, ${tenantName}!</h1>
+            <p style="margin:0 0 28px;font-size:15px;color:#666;line-height:1.6;">${message}</p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f6fa;border-radius:12px;border:1px solid #e8ddf0;margin-bottom:24px;">
+              <tr>
+                <td style="padding:20px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom:12px;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Current Plan</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">${planName}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Expiry Date</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#dc2626;font-weight:600;">${expiryDate}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+              <tr>
+                <td align="center">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="border-radius:10px;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                        <a href="${billingUrl}" style="display:inline-block;padding:14px 40px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">${buttonLabel}</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+        `, subject)
+  });
+};
+
 module.exports.transporter = transporter;

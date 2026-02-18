@@ -10,6 +10,7 @@ const dbSessionContext = async (req, res, next) => {
         if (req.user.role === 'SUPER_ADMIN') {
             store.set('tenantId', null);
             store.set('role', 'SUPER_ADMIN');
+            if (req.user.id) store.set('userId', req.user.id);
         } else {
             // Support both camelCase and snake_case for flexibility
             const tenantId = req.user.tenant_id || req.user.tenantId;

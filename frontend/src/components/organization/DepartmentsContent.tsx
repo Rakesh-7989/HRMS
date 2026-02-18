@@ -6,12 +6,12 @@ import { departmentService, Department } from '@/services/department.service';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { showToast } from '@/utils/toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DepartmentsContent: React.FC = () => {
-    const { user } = useAuth();
-    const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+    const { hasAnyPermission } = usePermission();
+    const canManage = hasAnyPermission(['manage_departments']);
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog

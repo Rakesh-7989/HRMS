@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { format, subDays } from 'date-fns';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { BarChart } from '@/components/charts/BarChart';
@@ -30,7 +30,7 @@ import {
 import { adminService } from '@/services/admin.service';
 
 export const AttendanceReportsContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasAnyPermission } = usePermission();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -102,8 +102,8 @@ export const AttendanceReportsContent: React.FC = () => {
     };
 
     // Role-based access control
-    const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
-    const canViewTeamAnalytics = user?.role === 'MANAGER';
+    const canViewOrgAnalytics = hasAnyPermission(['view_all_attendance', 'attendance.view_all']);
+    const canViewTeamAnalytics = hasAnyPermission(['attendance.manage', 'attendance.approve']);
 
     // Prepare chart data based on user role
     const chartData = useMemo(() => {

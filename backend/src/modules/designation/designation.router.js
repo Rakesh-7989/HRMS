@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 const validate = require("../../middleware/validate");
 
 const controller = require("./designation.controller");
@@ -12,34 +12,34 @@ router.use(verifyJwt);
 
 router.post(
   "/",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["organisation.manage_designations"]),
   validate(validator.createDesignationSchema),
   controller.createDesignation
 );
 
 router.get(
   "/",
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requireAnyPermission(["organisation.view"]),
   validate(validator.getDesignationSchema),
   controller.getDesignations
 );
 
 router.get(
   "/:id",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["organisation.manage_designations"]),
   controller.getDesignationById
 );
 
 router.patch(
   "/:id",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["organisation.manage_designations"]),
   validate(validator.updateDesignationSchema),
   controller.updateDesignation
 );
 
 router.delete(
   "/:id",
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["organisation.manage_designations"]),
   validate(validator.deleteDesignationSchema),
   controller.deleteDesignation
 );

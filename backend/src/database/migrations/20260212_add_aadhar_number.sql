@@ -1,1 +1,0 @@
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS aadhar_number VARCHAR(20);

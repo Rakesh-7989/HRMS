@@ -10,21 +10,17 @@ import { UnifiedBreaksContent } from '@/components/attendance/UnifiedBreaksConte
 import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApprovalsContent';
 
 const ATTENDANCE_TABS = [
-    { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'daily', label: 'Daily Log', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'history', label: 'My History', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'breaks', label: 'Breaks', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'regularization', label: 'Regularization', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  //{ id: 'my-wfh', label: 'My WFH Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] }, // Merged
-  { id: 'approvals', label: 'Approvals & Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  //{ id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
-  //{ id: 'wfh-approvals', label: 'WFH Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
-
-  { id: 'geofence', label: 'Geo-Fencing', roles: ['HR', 'ADMIN'] },
+  { id: 'reports', label: 'Reports & Analytics', permission: 'attendance.view_all' },
+  { id: 'daily', label: 'Daily Log', permission: 'attendance.view_own' },
+  { id: 'history', label: 'My History', permission: 'attendance.view_own' },
+  { id: 'breaks', label: 'Breaks', permission: 'attendance.view_own' },
+  { id: 'regularization', label: 'Regularization', permission: 'attendance.view_own' },
+  { id: 'approvals', label: 'Approvals & Requests', permission: 'attendance.approve' },
+  { id: 'geofence', label: 'Geo-Fencing', permission: 'attendance.manage_settings' },
 ] as const;
 
 export const AttendancePage: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('daily');
 
   return (
@@ -44,7 +40,7 @@ export const AttendancePage: React.FC = () => {
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-nowrap -mb-px gap-6 overflow-x-auto pb-1 scrollbar-hide">
             {ATTENDANCE_TABS.map((tab) => {
-              if (!user?.role || !tab.roles.includes(user.role as any)) return null;
+              if (!hasPermission(tab.permission)) return null;
 
               const isActive = tab.id === activeTab;
               return (

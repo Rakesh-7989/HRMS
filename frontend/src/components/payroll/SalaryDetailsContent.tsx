@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Save } from 'lucide-react';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
 export const SalaryDetailsContent: React.FC = () => {
-    const { user } = useAuth();
-    const isAuthorized = user?.role === 'ADMIN' || user?.role === 'HR';
+    const { hasAnyPermission } = usePermission();
+    const isAuthorized = hasAnyPermission(['manage_payroll_components', 'process_payroll']);
     const queryClient = useQueryClient();
 
     const { data: salaryComponents = [], isLoading: salaryLoading } = useQuery<Array<{ id: string; name: string; amount: number }>>({

@@ -550,3 +550,52 @@ exports.getUtilizationReportSchema = z.object({
     limit: z.string().transform(Number).optional(),
   }),
 });
+
+/**
+ * ============================================================================
+ * COMMENT VALIDATORS
+ * ============================================================================
+ */
+
+exports.createCommentSchema = z.object({
+  params: z.object({
+    task_id: z.string().uuid("Invalid task ID format"),
+  }),
+  body: z.object({
+    content: z
+      .string()
+      .min(1, "Comment content cannot be empty")
+      .max(2000, "Comment must not exceed 2000 characters"),
+    parent_id: z.string().uuid().optional(),
+  }),
+});
+
+exports.listCommentsSchema = z.object({
+  params: z.object({
+    task_id: z.string().uuid("Invalid task ID format"),
+  }),
+});
+
+exports.updateCommentSchema = z.object({
+  params: z.object({
+    comment_id: z.string().uuid("Invalid comment ID format"),
+  }),
+  body: z.object({
+    content: z
+      .string()
+      .min(1, "Comment content cannot be empty")
+      .max(2000, "Comment must not exceed 2000 characters"),
+  }),
+});
+
+exports.deleteCommentSchema = z.object({
+  params: z.object({
+    comment_id: z.string().uuid("Invalid comment ID format"),
+  }),
+});
+
+exports.getMentionableUsersSchema = z.object({
+  params: z.object({
+    project_id: z.string().uuid("Invalid project ID format"),
+  }),
+});

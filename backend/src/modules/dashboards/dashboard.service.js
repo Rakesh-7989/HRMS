@@ -294,7 +294,6 @@ exports.getSuperAdminReports = async (db) => {
  */
 exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   const query = getQuery(db);
-  console.log("DEBUG: Starting getAdminDashboard for tenant:", tenantId, "Date Range:", startDate, endDate);
 
   // Default to 30 days if not provided
   const end = endDate || new Date();
@@ -873,25 +872,32 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
   // Get employee profile
   const employeeProfile = await query(
     `
-  SELECT
-  e.id,
-    e.first_name,
-    e.last_name,
-    u.email,
-    e.phone,
-    d.name AS department,
+    SELECT
+      e.id,
+      e.first_name,
+      e.last_name,
+      u.email,
+      e.phone,
+      d.name AS department,
       des.name AS designation,
-        m.first_name AS manager_first_name,
-          m.last_name AS manager_last_name,
-            u.created_at AS joined_date,
-              u.is_active
+      m.first_name AS manager_first_name,
+      m.last_name AS manager_last_name,
+      u.created_at AS joined_date,
+      u.is_active,
+      s.status AS subscription_status,
+      s.cancel_at_period_end,
+      p.name AS subscription_plan_name
     FROM employees e
     JOIN users u ON u.id = e.user_id
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN designations des ON e.designation_id = des.id
     LEFT JOIN employees m ON e.reports_to = m.id
+    LEFT JOIN subscriptions s ON s.tenant_id = e.tenant_id
+    LEFT JOIN plans p ON s.plan_id = p.id
     WHERE e.id = $1
     AND e.tenant_id = $2
+    ORDER BY s.created_at DESC
+    LIMIT 1
     `,
     [employeeId, tenantId]
   );

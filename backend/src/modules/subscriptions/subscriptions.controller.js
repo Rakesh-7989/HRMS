@@ -282,7 +282,15 @@ class SubscriptionController {
         try {
             const { tenantId } = req.params;
 
-            // Fetch tenant details to send enablement email (Send Pricing)
+            // 1. Check if tenant already has a subscription
+            const existingSub = await subscriptionService.getSubscriptionByTenantId(tenantId);
+
+            if (!existingSub || existingSub.status === 'EXPIRED') {
+                // 2. Enable a 14-day trial (standard plan)
+                await subscriptionService.createTrial(tenantId, null, null, 'MONTHLY');
+            }
+
+            // 3. Fetch tenant details to send enablement email
             const tenantRes = await db.query('SELECT name, email FROM tenants WHERE id = $1', [tenantId]);
             if (tenantRes.rowCount > 0) {
                 const tenant = tenantRes.rows[0];
@@ -291,12 +299,12 @@ class SubscriptionController {
 
             res.status(200).json({
                 success: true,
-                message: 'Pricing email sent successfully to the tenant.'
+                message: '14-day trial enabled and pricing email sent successfully to the tenant.'
             });
         } catch (error) {
             res.status(500).json({
                 success: false,
-                message: 'Failed to send pricing email',
+                message: 'Failed to enable subscription',
                 error: error.message
             });
         }
@@ -375,6 +383,43 @@ class SubscriptionController {
         } catch (error) {
             console.error('Webhook processing error:', error);
             res.status(500).json({ success: false, message: 'Webhook processing failed' });
+        }
+    }
+
+    async getAllPlans(req, res) {
+        try {
+            const plans = await subscriptionService.getAllPlans();
+            res.json({ status: "success", plans });
+        } catch (err) {
+            res.status(500).json({ status: "error", message: err.message });
+        }
+    }
+
+    async updatePlan(req, res) {
+        try {
+            const updated = await subscriptionService.updatePlan(req.params.id, req.body);
+            res.json({ status: "success", data: updated });
+        } catch (err) {
+            res.status(500).json({ status: "error", message: err.message });
+        }
+    }
+
+    async createPlan(req, res) {
+        try {
+            const plan = await subscriptionService.createPlan(req.body);
+            res.json({ status: "success", data: plan });
+        } catch (err) {
+            res.status(500).json({ status: "error", message: err.message });
+        }
+    }
+
+    async deletePlan(req, res) {
+        try {
+            const deleted = await subscriptionService.deletePlan(req.params.id);
+            if (!deleted) return res.status(404).json({ status: "error", message: "Plan not found" });
+            res.json({ status: "success", data: deleted });
+        } catch (err) {
+            res.status(500).json({ status: "error", message: err.message });
         }
     }
 }

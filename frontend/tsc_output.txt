@@ -1,1 +1,5 @@
-src/components/forms/CreateEmployeeForm.tsx(414,9): error TS6133: 'clearDraft' is declared but its value is never read.
+src/components/forms/CreateEmployeeForm.tsx(17,1): error TS6133: 'useAuth' is declared but its value is never read.
+src/contexts/AuthContext.tsx(58,36): error TS2339: Property 'permissions' does not exist on type 'User'.
+src/contexts/AuthContext.tsx(125,32): error TS2339: Property 'permissions' does not exist on type 'User'.
+src/pages/dashboards/AdminDashboard.tsx(8,32): error TS6133: 'TrendingUp' is declared but its value is never read.
+src/pages/dashboards/AdminDashboard.tsx(8,44): error TS6133: 'TrendingDown' is declared but its value is never read.

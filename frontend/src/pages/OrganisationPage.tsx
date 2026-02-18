@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -16,14 +16,18 @@ import { superAdminService } from '@/services/superAdmin.service';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
+import { OrgHierarchyTree } from '@/components/organization/OrgHierarchyTree';
 import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/UnifiedShiftsContent';
+import { RolesContent } from '@/components/organization/RolesContent';
+import { EmploymentTypesContent } from '@/components/organization/EmploymentTypesContent';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { adminService } from '@/services/admin.service';
 
 
 export const OrganisationPage: React.FC = () => {
-  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'directory';
-  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>(initialTab);
+  const [tab, setTab] = useState<'directory' | 'tree' | 'hierarchy' | 'departments' | 'designations' | 'shifts' | 'roster' | 'roles' | 'employment_types'>(initialTab);
 
   // Sync tab state with URL
   const handleTabChange = (newTab: typeof tab) => {
@@ -31,11 +35,13 @@ export const OrganisationPage: React.FC = () => {
     setSearchParams({ tab: newTab });
   };
 
-  // If user is SUPER_ADMIN, ensure tree tab is not active
+  const { hasPermission, hasAnyPermission } = usePermission();
+
+  // If user is platform admin, ensure tree tab is not active
   useEffect(() => {
-    if (user?.role === 'SUPER_ADMIN' && tab === 'tree') handleTabChange('directory');
-    if (user?.role === 'EMPLOYEE' && tab === 'directory') handleTabChange('tree');
-  }, [user?.role, tab]);
+    if (hasPermission('platform.manage_tenants') && (tab === 'tree' || tab === 'hierarchy')) handleTabChange('directory');
+    if (!hasAnyPermission(['employees.view']) && tab === 'directory') handleTabChange('hierarchy');
+  }, [hasPermission, hasAnyPermission, tab]);
 
   // Sync state if URL changes externally
   useEffect(() => {
@@ -45,7 +51,7 @@ export const OrganisationPage: React.FC = () => {
     }
   }, [searchParams]);
   const [selectedDept, setSelectedDept] = useState<string>('all');
-
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState<string>('all');
 
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: departmentService.getDepartments });
 
@@ -60,29 +66,36 @@ export const OrganisationPage: React.FC = () => {
   const { data: allEmployees = [], isLoading: employeesLoading } = useQuery({
     queryKey: ['allEmployees'],
     queryFn: () => usersService.getUsers({ limit: 1000 }),
-    // Enable for MANAGER too
-    enabled: ['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '')
+    // Enable for anyone with view permissions
+    enabled: hasAnyPermission(['employees.view']) || hasPermission('platform.manage_tenants')
   });
 
   // Client-side filtering: apply selected department or fallback on department name
   const filteredEmployees = useMemo(() => {
-    if (selectedDept === 'all') return allEmployees;
-
-    // First try to match by department_id exactly
-    const byId = allEmployees.filter((emp: any) => emp.department_id === selectedDept);
-    if (byId.length > 0) return byId;
-
-    // Fallback to match by department name (handles placeholder departments or inconsistent ids)
-    const selectedLower = String(selectedDept).toLowerCase();
     return allEmployees.filter((emp: any) => {
-      const dep = departments.find((d: Dept) => d.id === emp.department_id);
-      const empDeptName = (dep && dep.name) ? dep.name.toLowerCase() : '';
-      if (empDeptName && empDeptName.includes(selectedLower)) return true;
-      // Also try matching the department_id string itself (in case selectedDept is a name)
-      if (String(emp.department_id || '').toLowerCase().includes(selectedLower)) return true;
-      return false;
+      // Department filtering
+      let isDeptMatch = selectedDept === 'all';
+      if (!isDeptMatch) {
+        if (emp.department_id === selectedDept) isDeptMatch = true;
+        else {
+          const dep = departments.find((d: Dept) => d.id === emp.department_id);
+          const empDeptName = (dep && dep.name) ? dep.name.toLowerCase() : '';
+          const selectedLower = String(selectedDept).toLowerCase();
+          if (empDeptName && empDeptName.includes(selectedLower)) isDeptMatch = true;
+          if (String(emp.department_id || '').toLowerCase().includes(selectedLower)) isDeptMatch = true;
+        }
+      }
+
+      if (!isDeptMatch) return false;
+
+      // Employment type filtering
+      if (selectedEmploymentType !== 'all') {
+        if (emp.employment_type !== selectedEmploymentType) return false;
+      }
+
+      return true;
     });
-  }, [allEmployees, selectedDept, departments]);
+  }, [allEmployees, selectedDept, selectedEmploymentType, departments]);
 
   const deptCounts = useMemo(() => {
     type Emp = { department_id?: string };
@@ -109,7 +122,7 @@ export const OrganisationPage: React.FC = () => {
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ['super-admin', 'tenants'],
     queryFn: () => superAdminService.getTenants(),
-    enabled: user?.role === 'SUPER_ADMIN',
+    enabled: hasPermission('platform.manage_tenants'),
   });
 
   // Activate/deactivate actions removed from UI; mutations can be reintroduced if needed.
@@ -122,18 +135,25 @@ export const OrganisationPage: React.FC = () => {
   const selectedUsersQuery = useQuery({
     queryKey: ['super-admin', 'tenant-users', selectedTenant?.id],
     queryFn: () => superAdminService.getTenantUsers(selectedTenant!.id),
-    enabled: !!selectedTenant && user?.role === 'SUPER_ADMIN',
+    enabled: !!selectedTenant && hasPermission('platform.manage_tenants'),
   });
 
   const tenantEmployeeCountQuery = useQuery({
     queryKey: ['super-admin', 'tenant-employees', selectedTenant?.id],
     queryFn: () => superAdminService.getTenantEmployeeCount(selectedTenant!.id),
-    enabled: !!selectedTenant && user?.role === 'SUPER_ADMIN',
+    enabled: !!selectedTenant && hasPermission('platform.manage_tenants'),
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: () => adminService.getTenantProfile(),
+  });
+
+  const employmentTypes = profile?.settings?.employment_types || ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMP'];
 
 
   return (
-    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/organization' }, { label: 'Organisation' }]}>
+    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: hasAnyPermission(['reports.view', 'employees.view']) ? '/dashboard/organization' : '/dashboard/personal' }, { label: 'Organisation' }]}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
         {/* <div className="bg-white/5 p-3 rounded-md shadow-sm"></div> */}
@@ -142,24 +162,30 @@ export const OrganisationPage: React.FC = () => {
           {/* Subtabs */}
           <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
             <div className="flex items-center gap-6 min-w-max px-2">
-              {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
+              {hasAnyPermission(['employees.view', 'platform.manage_tenants']) && (
                 <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
-                  {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
+                  {hasPermission('platform.manage_tenants') ? 'Tenant Directory' : hasPermission('employees.view') ? 'Employee Directory' : 'My Team'}
                 </button>
               )}
 
 
-              {user?.role !== 'SUPER_ADMIN' && (
+              {!hasPermission('platform.manage_tenants') && (
                 <>
-                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
-                  {['ADMIN', 'HR'].includes(user?.role || '') && (
+                  <button onClick={() => handleTabChange('hierarchy')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'hierarchy' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Hierarchy Structure</button>
+                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Reporting Lines</button>
+                  {hasAnyPermission(['roles.manage', 'reports.view']) && (
                     <>
                       <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
                       <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => handleTabChange('employment_types')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'employment_types' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Employment Types</button>
+                      <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                     </>
                   )}
-                  {['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '') && (
-                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
+                  {hasPermission('shifts.manage') && (
+                    <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
+                  )}
+                  {hasAnyPermission(['roles.view', 'roles.manage']) && (
+                    <button onClick={() => handleTabChange('roles')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'roles' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Roles & Permissions</button>
                   )}
                 </>
               )}
@@ -170,11 +196,14 @@ export const OrganisationPage: React.FC = () => {
             {tab === 'departments' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DepartmentsContent /></div>}
             {tab === 'designations' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DesignationsContent /></div>}
             {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
+            {tab === 'hierarchy' && <OrgHierarchyTree />}
             {tab === 'tree' && <OrgTreeContent />}
+            {tab === 'roles' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><RolesContent /></div>}
+            {tab === 'employment_types' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><EmploymentTypesContent /></div>}
 
             {tab === 'directory' && (
               <div className="h-full overflow-y-auto pr-2">
-                {user?.role === 'SUPER_ADMIN' ? (
+                {hasPermission('platform.manage_tenants') ? (
                   <>
                     <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="w-full md:flex-1 md:max-w-md">
@@ -288,18 +317,36 @@ export const OrganisationPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-start gap-6">
                       <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
-                        <label className="text-sm text-muted">Filter by Department:</label>
-                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
-                          <option value="all">All Departments</option>
-                          {displayDepartments.map((d: Dept) => {
-                            const count = deptCounts.byId.get(d.id || '') || deptCounts.byName.get((d.name || '').toLowerCase()) || 0;
-                            return (
-                              <option key={d.id} value={d.id}>{d.name} ({count})</option>
-                            );
-                          })}
-                        </select>
+                        <label className="text-sm text-muted shrink-0">Filter by Department:</label>
+                        <SearchableSelect
+                          className="w-full md:w-64"
+                          options={[
+                            { value: 'all', label: 'All Departments' },
+                            ...displayDepartments.map((d: Dept) => ({
+                              value: d.id || '',
+                              label: `${d.name} (${deptCounts.byId.get(d.id || '') || deptCounts.byName.get((d.name || '').toLowerCase()) || 0})`
+                            }))
+                          ]}
+                          value={selectedDept}
+                          onChange={setSelectedDept}
+                        />
+                      </div>
+                      <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+                        <label className="text-sm text-muted shrink-0">Filter by Employment Type:</label>
+                        <SearchableSelect
+                          className="w-full md:w-64"
+                          options={[
+                            { value: 'all', label: 'All Types' },
+                            ...employmentTypes.map((type: string) => ({
+                              value: type,
+                              label: type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('-')
+                            }))
+                          ]}
+                          value={selectedEmploymentType}
+                          onChange={setSelectedEmploymentType}
+                        />
                       </div>
                     </div>
 
@@ -315,7 +362,7 @@ export const OrganisationPage: React.FC = () => {
                               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
                               <div className="min-w-0">
                                 <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name} {emp.last_name}</div>
-                                <div className="text-xs text-muted truncate">{emp.role}</div>
+                                <div className="text-xs text-muted truncate">{emp.role?.replace('_', ' ')}</div>
                                 <div className="text-xs text-muted truncate">{emp.email}</div>
                               </div>
                             </div>

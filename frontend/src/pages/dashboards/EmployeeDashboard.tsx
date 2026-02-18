@@ -1,25 +1,25 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { dashboardService } from '@/services/dashboard.service';
-import { attendanceService } from '@/services/attendance.service';
 import { eventsService } from '@/services/events.service';
-import { geoFencingService } from '@/services/geoFencing.service';
-import { detectDeviceType } from '@/utils/deviceDetection';
-import { formatTime12Hour } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
-  Calendar, TrendingUp, Coffee, CheckCircle, LogIn, LogOut,
-  CalendarPlus, Loader2, Sparkles, Timer,
-  Award, ChevronRight, MapPin, Gift, Cake, Activity
+  Calendar, TrendingUp, Coffee, CheckCircle,
+  CalendarPlus, Loader2, Sparkles,
+  Award, ChevronRight, MapPin, Gift, Cake, Shield
 } from 'lucide-react';
-import { format, differenceInMinutes } from 'date-fns';
+import { Button } from '@/components/ui/Button';
+import { format } from 'date-fns';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, ComposedChart, Line
 } from 'recharts';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { DASHBOARD_GRADIENTS } from '@/utils/constants';
+import { ClockWidget } from '../../components/attendance/ClockWidget';
 
 const STATUS_COLORS: Record<string, string> = {
   DONE: '#10b981',
@@ -34,37 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 // --- UI Components ---
 
-const StatCard = ({
-  title, value, subtitle, icon: Icon, gradient, delay = 0
-}: {
-  title: string;
-  value: number | string;
-  subtitle?: string;
-  icon: any;
-  gradient: string;
-  delay?: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay }}
-    whileHover={{ y: -5 }}
-    className="relative group overflow-hidden rounded-[2rem] p-6 text-white shadow-xl"
-    style={{ background: gradient }}
-  >
-    <div className="absolute inset-0 opacity-10 bg-white/10" />
-    <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-all" />
 
-    <div className="relative z-10">
-      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-white" />
-      </div>
-      <h3 className="text-3xl font-black mb-1">{value}</h3>
-      <p className="font-bold text-white/90 text-sm tracking-wide">{title}</p>
-      {subtitle && <p className="text-white/60 text-[10px] uppercase tracking-wider font-medium mt-1">{subtitle}</p>}
-    </div>
-  </motion.div>
-);
 
 const ActionButton = ({
   icon: Icon, title, subtitle, onClick, colorClass, gradientClass, delay = 0
@@ -76,31 +46,45 @@ const ActionButton = ({
     whileHover={{ scale: 1.02, x: 4 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`w-full p-4 rounded-2xl border flex items-center gap-4 group transition-all duration-300 ${colorClass}`}
+    className={`w-full p-6 rounded-2xl border flex items-center gap-5 group transition-all duration-300 ${colorClass}`}
   >
-    <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-lg ${gradientClass}`}>
-      <Icon className="w-6 h-6" />
+    <div className={`w-14 h-14 rounded-2xl text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform shrink-0 ml-1 ${gradientClass}`}>
+      <Icon className="w-7 h-7" />
     </div>
-    <div className="flex-1 text-left">
-      <p className="font-bold text-slate-800 dark:text-white">{title}</p>
-      <p className="text-xs font-medium opacity-60">{subtitle}</p>
+    <div className="flex-1 text-left ml-2">
+      <p className="font-bold text-slate-800 dark:text-white text-lg">{title}</p>
+      <p className="text-sm font-medium opacity-60">{subtitle}</p>
     </div>
-    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+    <ChevronRight className="w-6 h-6 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all mr-2" />
   </motion.button>
 );
 
-const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
+const ChartCard = ({
+  title, subtitle, badge, children, className = '', delay = 0
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) => (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay }}
-    className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none"
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`bg-white dark:bg-[#111827]/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-white/5 shadow-xl dark:shadow-2xl ${className}`}
   >
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h3 className="text-lg font-black text-slate-800 dark:text-white">{title}</h3>
-        {subtitle && <p className="text-sm font-medium text-slate-400 mt-0.5">{subtitle}</p>}
+    <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="min-w-0">
+        <h3 className="text-xl font-black text-gray-900 dark:text-white truncate tracking-tight">{title}</h3>
+        {subtitle && <p className="text-xs font-bold text-gray-500 mt-1 truncate">{subtitle}</p>}
       </div>
+      {badge && (
+        <span className="shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/80 border border-gray-200 dark:border-white/5 backdrop-blur-md">
+          {badge}
+        </span>
+      )}
     </div>
     {children}
   </motion.div>
@@ -111,11 +95,8 @@ const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
 // --- Main Component ---
 
 export const EmployeeDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const canClockIn = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
 
   // Greeting Logic
   const greeting = useMemo(() => {
@@ -137,75 +118,11 @@ export const EmployeeDashboard: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: geoSettings } = useQuery({
-    queryKey: ['geo-fencing-settings'],
-    queryFn: () => geoFencingService.getSettings(),
-  });
-
-  // Mutations
-  const clockInMutation = useMutation({
-    mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockIn(coords),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-    },
-    onError: (error: any) => {
-      const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || 'Failed to clock in');
-    },
-  });
-
-  const clockOutMutation = useMutation({
-    mutationFn: (coords?: { latitude: number; longitude: number; device?: string }) => attendanceService.clockOut(coords),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-    },
-    onError: (error: any) => {
-      const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || 'Failed to clock out');
-    },
-  });
-
-  const handleClockIn = async () => {
-    if (geoSettings?.is_enabled) {
-      const check = await geoFencingService.performGeoFenceCheck(geoSettings);
-      if (!check.allowed) {
-        alert(check.errorMessage || 'Geo-fence validation failed');
-        return;
-      }
-      clockInMutation.mutate({
-        latitude: check.position?.coords.latitude!,
-        longitude: check.position?.coords.longitude!,
-        device: detectDeviceType()
-      });
-    } else {
-      clockInMutation.mutate({ device: detectDeviceType() } as any);
-    }
-  };
-
-  const handleClockOut = async () => {
-    if (geoSettings?.is_enabled) {
-      const check = await geoFencingService.performGeoFenceCheck(geoSettings);
-      if (!check.allowed) {
-        alert(check.errorMessage || 'Geo-fence validation failed');
-        return;
-      }
-      clockOutMutation.mutate({
-        latitude: check.position?.coords.latitude!,
-        longitude: check.position?.coords.longitude!,
-        device: detectDeviceType()
-      });
-    } else {
-      clockOutMutation.mutate({ device: detectDeviceType() } as any);
-    }
-  };
-
   // Data Processing
   const profile = data?.profile;
   const leaveMetrics = data?.leaveMetrics || { pending: 0, approved: 0, rejected: 0, upcoming_leaves: 0 };
   const attendanceSummary = data?.attendanceSummary || { total_days: 0, days_present: 0 };
-  const todayStatus = data?.todayStatus || { check_in_time: null, check_out_time: null, is_late: null, status: 'NOT_CHECKED_IN' };
+
   const monthlyAttendance = data?.monthlyAttendance || [];
   const upcomingLeaves = data?.upcomingLeaves || [];
 
@@ -213,30 +130,6 @@ export const EmployeeDashboard: React.FC = () => {
     ? Math.round((Number(attendanceSummary.days_present) / 30) * 100)
     : 0;
 
-  const getWorkingTime = () => {
-    if (!todayStatus.check_in_time) return null;
-    const checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
-
-    let checkOut: Date;
-    if (todayStatus.check_out_time) {
-      checkOut = new Date(`2000-01-01T${todayStatus.check_out_time}`);
-    } else {
-      const nowStr = format(new Date(), 'HH:mm:ss');
-      checkOut = new Date(`2000-01-01T${nowStr}`);
-    }
-
-    let diffMins = differenceInMinutes(checkOut, checkIn);
-    // Handle overnight shifts (if calculation is negative, add 24 hours)
-    if (diffMins < 0) {
-      diffMins += 24 * 60;
-    }
-
-    const hours = Math.floor(diffMins / 60);
-    const mins = diffMins % 60;
-    return { hours, mins };
-  };
-
-  const workingTime = getWorkingTime();
 
   // Task Data Processing
   const taskChartData = (data?.taskMetrics || []).map((m: any) => ({
@@ -290,132 +183,76 @@ export const EmployeeDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title="My Dashboard">
-      <motion.div className="space-y-8 pb-10" initial="initial" animate="animate">
+      <motion.div className="space-y-6 pb-6" initial="initial" animate="animate">
 
-        {/* --- Welcome Banner (Twilight Theme) --- */}
+        {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2rem] p-6 lg:p-8 text-white border border-white/5 shadow-2xl shadow-indigo-500/15"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/20"
           style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)',
+            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
           }}
         >
-          <div className="absolute inset-0 opacity-10">
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute inset-0" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2 mb-1"
+                className="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span className="text-white/80 text-xs font-black uppercase tracking-widest">
+                <Sparkles className="w-4 h-4 text-yellow-300" />
+                <span className="text-white text-[10px] font-bold uppercase tracking-widest">
                   {greeting}
                 </span>
               </motion.div>
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">
-                Welcome back, {profile?.first_name || user?.first_name}! 👋
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter">
+                Welcome back, {profile?.first_name || user?.first_name}! <span className="inline-block animate-bounce-slow">👋</span>
               </h1>
-              <p className="text-white/70 text-base font-medium flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-indigo-300" />
+              <p className="text-white/80 text-lg font-medium max-w-xl leading-relaxed">
+                <MapPin className="w-4 h-4 inline mr-2 text-indigo-300" />
                 {profile?.designation || 'Team Member'} • {profile?.department || 'General'}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
-              >
-                <div className="text-center px-3 border-r border-white/20 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
-                </div>
-                <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Today</p>
-                </div>
-              </motion.div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-6 bg-black/20 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/10 min-w-fit shadow-inner"
+            >
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-4xl font-black text-white tabular-nums">{format(new Date(), 'dd')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">{format(new Date(), 'MMM yyyy')}</p>
+              </div>
+              <div className="text-center px-4 min-w-[120px]">
+                <p className="text-2xl font-black text-white leading-tight">{format(new Date(), 'EEEE')}</p>
+                <p className="text-lg font-bold text-white/80 tabular-nums mt-0.5">{format(new Date(), 'hh:mm a')}</p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* --- Left Column: Clock In & Actions --- */}
+          {/* --- Left Column: Clock Widget & Actions --- */}
           <div className="space-y-8">
-            {/* Clock Status */}
+            {/* Clock Widget */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none"
+              className="bg-white dark:bg-[#111827]/60 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-100 dark:border-white/5 shadow-xl dark:shadow-2xl"
             >
-              <h3 className="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-indigo-500" />
-                Attendance Status
-              </h3>
-
-              {canClockIn && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    if (todayStatus.status === 'NOT_CHECKED_IN') handleClockIn();
-                    else if (todayStatus.status === 'CHECKED_IN') handleClockOut();
-                  }}
-                  disabled={!!todayStatus.check_out_time || clockInMutation.isPending || clockOutMutation.isPending}
-                  className={`w-full py-6 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all mb-6 ${todayStatus.status === 'NOT_CHECKED_IN'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 hover:shadow-emerald-500/40'
-                    : todayStatus.status === 'CHECKED_IN'
-                      ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-rose-500/30 hover:shadow-rose-500/40'
-                      : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    }`}
-                >
-                  {(clockInMutation.isPending || clockOutMutation.isPending) ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  ) : todayStatus.status === 'NOT_CHECKED_IN' ? (
-                    <> <LogIn className="w-6 h-6" /> CLOCK IN </>
-                  ) : todayStatus.status === 'CHECKED_IN' ? (
-                    <> <LogOut className="w-6 h-6" /> CLOCK OUT </>
-                  ) : (
-                    <> <CheckCircle className="w-6 h-6" /> COMPLETED </>
-                  )}
-                </motion.button>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Check In</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-white">
-                    {formatTime12Hour(todayStatus.check_in_time) || '--:--'}
-                  </p>
-                </div>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Check Out</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-white">
-                    {formatTime12Hour(todayStatus.check_out_time) || '--:--'}
-                  </p>
-                </div>
-                <div className="col-span-2 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Working Hours</p>
-                    <p className="text-xl font-black text-indigo-600 dark:text-indigo-300">
-                      {workingTime ? `${workingTime.hours}h ${workingTime.mins}m` : '--:--'}
-                    </p>
-                  </div>
-                  <Timer className="w-8 h-8 text-indigo-300" />
-                </div>
-              </div>
+              <ClockWidget />
             </motion.div>
 
             {/* Quick Actions */}
@@ -423,23 +260,25 @@ export const EmployeeDashboard: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="space-y-3"
+              className="space-y-4"
             >
-              <h3 className="text-lg font-black text-slate-800 dark:text-white px-2">Quick Actions</h3>
-              <ActionButton
-                icon={CalendarPlus} title="Apply Leave" subtitle="Request Time Off"
-                onClick={() => navigate('/leave')}
-                colorClass="bg-white dark:bg-slate-900 border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-300 dark:hover:border-indigo-500"
-                gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
-                delay={0.4}
-              />
-              <ActionButton
-                icon={Calendar} title="My Attendance" subtitle="View History"
-                onClick={() => navigate('/attendance')}
-                colorClass="bg-white dark:bg-slate-900 border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500"
-                gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
-                delay={0.5}
-              />
+              <h3 className="text-lg font-black text-slate-900 dark:text-white px-2 tracking-tight">Quick Actions</h3>
+              <div className="grid grid-cols-1 gap-5">
+                <ActionButton
+                  icon={CalendarPlus} title="Apply Leave" subtitle="Request Time Off"
+                  onClick={() => navigate('/leave')}
+                  colorClass="bg-white dark:bg-[#111827]/60 backdrop-blur-xl border-gray-100 dark:border-white/5 shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-500/50"
+                  gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
+                  delay={0.4}
+                />
+                <ActionButton
+                  icon={Calendar} title="Attendance" subtitle="View History"
+                  onClick={() => navigate('/attendance')}
+                  colorClass="bg-white dark:bg-[#111827]/60 backdrop-blur-xl border-gray-100 dark:border-white/5 shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-500/50"
+                  gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
+                  delay={0.5}
+                />
+              </div>
             </motion.div>
 
             {/* Celebrations (Moved to Left Column) */}
@@ -447,7 +286,7 @@ export const EmployeeDashboard: React.FC = () => {
               <div className="space-y-3">
                 {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || [])].slice(0, 3).map((evt: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${evt.type === 'BIRTHDAY' ? 'bg-pink-500' : 'bg-amber-500'}`}>
+                    <div className={`w - 10 h - 10 rounded - lg flex items - center justify - center text - white ${evt.type === 'BIRTHDAY' ? 'bg-pink-500' : 'bg-amber-500'} `}>
                       {evt.type === 'BIRTHDAY' ? <Cake className="w-5 h-5" /> : <Award className="w-5 h-5" />}
                     </div>
                     <div>
@@ -469,27 +308,27 @@ export const EmployeeDashboard: React.FC = () => {
           </div>
 
           {/* --- Right Column: Stats & Charts --- */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 title="Total Present" value={attendanceSummary.days_present || 0} icon={CheckCircle}
-                gradient="linear-gradient(135deg, #10b981, #059669)" delay={0.2}
+                gradient={DASHBOARD_GRADIENTS.green} delay={0.2}
               />
               <StatCard
                 title="Leave Balance" value={data?.leaveBalance || 0} subtitle="Days Available" icon={Coffee}
-                gradient="linear-gradient(135deg, #6366f1, #4f46e5)" delay={0.3}
+                gradient={DASHBOARD_GRADIENTS.purple} delay={0.3}
               />
               <StatCard
                 title="Upcoming" value={leaveMetrics.upcoming_leaves || 0} subtitle="Approved Leaves" icon={Calendar}
-                gradient="linear-gradient(135deg, #f59e0b, #d97706)" delay={0.4}
+                gradient={DASHBOARD_GRADIENTS.orange} delay={0.4}
               />
               <StatCard
                 title="On Time Rate" value={`${attendanceRate}%`} icon={TrendingUp}
-                gradient="linear-gradient(135deg, #ec4899, #db2777)" delay={0.5}
+                gradient={DASHBOARD_GRADIENTS.pink} delay={0.5}
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <ChartCard title="Attendance History" subtitle="Status Overview" delay={0.55}>
                 <div className="h-[250px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
@@ -552,7 +391,7 @@ export const EmployeeDashboard: React.FC = () => {
                                   </div>
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">Worked:</span>
-                                    <span className={`font-bold ${Number(actual) >= target ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                    <span className={`font - bold ${Number(actual) >= target ? 'text-emerald-500' : 'text-amber-500'} `}>
                                       {actual} hrs
                                     </span>
                                   </div>
@@ -582,7 +421,7 @@ export const EmployeeDashboard: React.FC = () => {
 
 
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Task Distribution */}
               <ChartCard title="Task Distribution" delay={0.65}>
                 <div className="h-[200px] w-full mt-2">
@@ -601,13 +440,15 @@ export const EmployeeDashboard: React.FC = () => {
                           <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name.replace(' ', '_').toUpperCase()] || '#cbd5e1'} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip
+                        contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                      />
                       <Legend
                         verticalAlign="bottom"
                         height={36}
                         formatter={(value, entry: any) => (
-                          <span className="text-slate-600 dark:text-slate-400 font-bold ml-2">
-                            {value} <span className="text-slate-400 dark:text-slate-500 font-normal">({entry.payload.value})</span>
+                          <span className="text-gray-400 font-bold ml-2 uppercase text-[10px] tracking-widest">
+                            {value} <span className="text-gray-600">({entry.payload.value})</span>
                           </span>
                         )}
                       />
@@ -621,17 +462,17 @@ export const EmployeeDashboard: React.FC = () => {
                 {upcomingLeaves.length > 0 ? (
                   <div className="space-y-3">
                     {upcomingLeaves.slice(0, 3).map((leave: any, i: number) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                      <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                           <Coffee className="w-5 h-5" />
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-800 dark:text-white text-sm">{leave.leave_type}</p>
-                          <p className="text-xs font-semibold text-slate-400">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-white text-sm tracking-tight uppercase">{leave.leave_type}</p>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd')}
                           </p>
                         </div>
-                        <span className="ml-auto px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-[10px] font-bold text-emerald-600">
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-400 uppercase tracking-widest">
                           {leave.status}
                         </span>
                       </div>
@@ -639,15 +480,32 @@ export const EmployeeDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[150px] text-center opacity-60">
-                    <Coffee className="w-10 h-10 text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-400">No upcoming leaves</p>
+                    <Coffee className="w-10 h-10 text-gray-700 mb-2" />
+                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest">No upcoming leaves</p>
                   </div>
                 )}
               </ChartCard>
             </div>
           </div>
-
         </div>
+
+
+        {hasPermission('view_admin_dashboard') && !hasPermission('view_all_employees') && (
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-12 border border-slate-100 dark:border-white/5 shadow-xl text-center">
+            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-10 h-10 text-indigo-500" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Platform Administrator</h3>
+            <p className="text-slate-500 max-w-md mx-auto">
+              You are currently logged in with platform-wide administrative privileges.
+              Please use the <strong>Tenants</strong> and <strong>Plans</strong> sections to manage the platform.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Button onClick={() => navigate('/dashboard/system')}>Go to System Dashboard</Button>
+              <Button variant="ghost" onClick={() => navigate('/tenants')}>View All Tenants</Button>
+            </div>
+          </div>
+        )}
       </motion.div>
     </DashboardLayout>
   );

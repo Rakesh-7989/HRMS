@@ -71,14 +71,68 @@ CREATE INDEX idx_subscriptions_tenant ON subscriptions(tenant_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 
 -- ===================================================================
--- 2. ROLES
+-- 2. ROLES & RBAC
 -- ===================================================================
 CREATE TABLE roles (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id       UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    name            VARCHAR(100) NOT NULL,
+    description     TEXT,
+    role_type       VARCHAR(20) NOT NULL DEFAULT 'CUSTOM',   -- PLATFORM, SYSTEM, CUSTOM
+    is_deletable    BOOLEAN NOT NULL DEFAULT TRUE,
+    is_customizable BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by      UUID,
+    created_at      TIMESTAMP DEFAULT now(),
+    updated_at      TIMESTAMP DEFAULT now()
+);
+
+-- System roles (tenant_id IS NULL) must have unique names
+CREATE UNIQUE INDEX roles_unique_system ON roles(name) WHERE tenant_id IS NULL;
+-- Tenant roles must have unique names within their tenant
+CREATE UNIQUE INDEX roles_unique_per_tenant ON roles(tenant_id, name) WHERE tenant_id IS NOT NULL;
+
+-- 2.1 PERMISSIONS (system-wide, immutable)
+CREATE TABLE permissions (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name        VARCHAR(50) NOT NULL UNIQUE,
+    name        VARCHAR(100) NOT NULL UNIQUE,  -- e.g. 'employees.view', 'leave.approve'
+    category    VARCHAR(50) NOT NULL,           -- e.g. 'employees', 'leave', 'payroll'
     description TEXT,
     created_at  TIMESTAMP DEFAULT now()
 );
+
+-- 2.2 ROLE PERMISSIONS (many-to-many)
+CREATE TABLE role_permissions (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    created_at    TIMESTAMP DEFAULT now(),
+    UNIQUE(role_id, permission_id)
+);
+
+CREATE INDEX idx_role_permissions_role ON role_permissions(role_id);
+CREATE INDEX idx_role_permissions_perm ON role_permissions(permission_id);
+
+-- 2.3 USER ROLES (many-to-many with optional scope)
+CREATE TABLE user_roles (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    scope_type    VARCHAR(30),     -- NULL, 'department', 'location'
+    scope_id      UUID,            -- department_id, location_id, etc.
+    assigned_by   UUID REFERENCES users(id) ON DELETE SET NULL,
+    assigned_at   TIMESTAMP DEFAULT now(),
+    UNIQUE(user_id, role_id, COALESCE(scope_type, ''), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'))
+);
+
+CREATE INDEX idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role_id);
+CREATE INDEX idx_user_roles_tenant ON user_roles(tenant_id);
+
+ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- 3. USERS
@@ -832,6 +886,24 @@ RETURNS TEXT LANGUAGE sql AS $$
     SELECT current_setting('app.role', true);
 $$;
 
+CREATE OR REPLACE FUNCTION current_app_user()
+RETURNS UUID LANGUAGE sql STABLE AS $$
+    SELECT NULLIF(current_setting('app.user_id', true), '')::uuid;
+$$;
+
+-- Check if current user (via app.user_id) has a specific permission
+CREATE OR REPLACE FUNCTION has_permission(perm_name TEXT)
+RETURNS BOOLEAN LANGUAGE sql STABLE AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM user_roles ur
+        JOIN role_permissions rp ON rp.role_id = ur.role_id
+        JOIN permissions p ON p.id = rp.permission_id
+        WHERE ur.user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+          AND p.name = perm_name
+    );
+$$;
+
 -- ===================================================================
 -- 11.Loan 
 -- ===================================================================
@@ -840,22 +912,67 @@ $$;
 -- 12. RLS POLICIES (FINAL)
 -- ===================================================================
 
--- ROLES (readable by all authenticated users, modifiable by SUPER_ADMIN only)
-CREATE POLICY roles_select ON roles
+-- PERMISSIONS (readable by all authenticated, immutable by system)
+CREATE POLICY permissions_select ON permissions
     FOR SELECT
     USING (true);
 
+-- ROLE_PERMISSIONS (readable by all authenticated, managed via service)
+CREATE POLICY role_permissions_select ON role_permissions
+    FOR SELECT
+    USING (true);
+
+CREATE POLICY role_permissions_manage ON role_permissions
+    FOR ALL
+    USING (
+        current_app_role() = 'SUPER_ADMIN'
+        OR has_permission('roles.manage')
+    );
+
+-- USER_ROLES (tenant-isolated, manageable by admins)
+CREATE POLICY user_roles_select ON user_roles
+    FOR SELECT
+    USING (
+        current_app_role() = 'SUPER_ADMIN'
+        OR tenant_id = current_tenant()
+    );
+
+CREATE POLICY user_roles_manage ON user_roles
+    FOR ALL
+    USING (
+        current_app_role() = 'SUPER_ADMIN'
+        OR (tenant_id = current_tenant() AND has_permission('roles.assign'))
+    );
+
+-- ROLES (system roles readable by all, tenant roles by tenant, management by admins)
+CREATE POLICY roles_select ON roles
+    FOR SELECT
+    USING (
+        tenant_id IS NULL
+        OR current_app_role() = 'SUPER_ADMIN'
+        OR tenant_id = current_tenant()
+    );
+
 CREATE POLICY roles_insert ON roles
     FOR INSERT
-    WITH CHECK (current_app_role() = 'SUPER_ADMIN');
+    WITH CHECK (
+        current_app_role() = 'SUPER_ADMIN'
+        OR (tenant_id = current_tenant() AND has_permission('roles.manage'))
+    );
 
 CREATE POLICY roles_update ON roles
     FOR UPDATE
-    USING (current_app_role() = 'SUPER_ADMIN');
+    USING (
+        current_app_role() = 'SUPER_ADMIN'
+        OR (tenant_id = current_tenant() AND has_permission('roles.manage'))
+    );
 
 CREATE POLICY roles_delete ON roles
     FOR DELETE
-    USING (current_app_role() = 'SUPER_ADMIN');
+    USING (
+        current_app_role() = 'SUPER_ADMIN'
+        OR (tenant_id = current_tenant() AND has_permission('roles.manage') AND is_deletable = true)
+    );
 
 -- TENANTS (super admin only)
 CREATE POLICY tenants_select ON tenants

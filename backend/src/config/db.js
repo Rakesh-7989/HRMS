@@ -27,29 +27,21 @@ async function withContext(client) {
 
   // SUPER ADMIN bypasses tenant isolation
   if (role === "SUPER_ADMIN") {
-    await client.query(`SET app.role = 'SUPER_ADMIN'`);
-    // Use RESET to correctly unset the variable so current_setting returns NULL
-    await client.query(`RESET app.tenant_id`);
+    await client.query(`SELECT set_config('app.role', $1, true)`, ['SUPER_ADMIN']);
+    await client.query(`SELECT set_config('app.tenant_id', '', true)`);
   } else {
-    // Escape string values for SET command (quotes must be escaped)
-    if (role) {
-      await client.query(`SET app.role = '${role.replace(/'/g, "''")}'`);
-    } else {
-      // Ensure app.role exists even if empty, to prevent "unrecognized configuration parameter" if policy is strict
-      await client.query(`SET app.role = ''`);
-    }
+    await client.query(`SELECT set_config('app.role', $1, true)`, [role || '']);
 
     if (tenantId) {
-      await client.query(`SET app.tenant_id = '${tenantId.toString()}'`);
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantId.toString()]);
     }
   }
 
-  // Escape string values for SET command
   if (userId) {
-    await client.query(`SET app.user_id = '${userId.toString()}'`);
+    await client.query(`SELECT set_config('app.user_id', $1, true)`, [userId.toString()]);
   }
   if (employeeId) {
-    await client.query(`SET app.employee_id = '${employeeId.toString()}'`);
+    await client.query(`SELECT set_config('app.employee_id', $1, true)`, [employeeId.toString()]);
   }
 }
 
@@ -100,7 +92,7 @@ module.exports = pool;
 // // Log unexpected errors
 // pool.on("error", (err) => {
 //   logger.error("Unexpected PG pool error", err);
-//   // Optional: process.exit(1); 
+//   // Optional: process.exit(1);
 // });
 
 // // ---------- RLS SESSION SETUP ----------
@@ -115,7 +107,7 @@ module.exports = pool;
 
 //   /**
 //    * IMPORTANT: 'SET' command in PostgreSQL does not support bind parameters ($1).
-//    * We use 'SELECT set_config(setting_name, new_value, is_local)' which is a 
+//    * We use 'SELECT set_config(setting_name, new_value, is_local)' which is a
 //    * function and allows parameter binding, making it both safe and functional.
 //    */
 
@@ -145,7 +137,7 @@ module.exports = pool;
 // const originalConnect = pool.connect.bind(pool);
 
 // /**
-//  * Patch pool.connect to automatically apply RLS context 
+//  * Patch pool.connect to automatically apply RLS context
 //  * to every client acquired from the pool.
 //  */
 // pool.connect = async (...args) => {
@@ -173,6 +165,6 @@ module.exports = pool;
 // };
 
 // // ---------- EXPORT ----------
-// // Exporting the pool instance directly ensures compatibility with all 
+// // Exporting the pool instance directly ensures compatibility with all
 // // modules expecting a PgPool (with .on, .connect, .query, etc.)
 // module.exports = pool;

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./salary.controller");
@@ -60,33 +60,33 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/templates",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createTemplateSchema),
     controller.createTemplate
 );
 
 router.get(
     "/templates",
-    requireRole(["ADMIN", "HR", "MANAGER"]),
+    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
     controller.getTemplates
 );
 
 router.get(
     "/templates/:id",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getTemplateById
 );
 
 router.put(
     "/templates/:id",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createTemplateSchema),
     controller.updateTemplate
 );
 
 router.delete(
     "/templates/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     controller.deleteTemplate
 );
 
@@ -95,26 +95,26 @@ router.delete(
 // =====================
 router.post(
     "/assign",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(assignSalarySchema),
     controller.assignSalary
 );
 
 router.get(
     "/all",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getAllEmployeeSalaries
 );
 
 router.get(
     "/employee/:employeeId",
-    requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+    requireAnyPermission(["payroll.view_own"]),
     controller.getEmployeeSalary
 );
 
 router.get(
     "/employee/:employeeId/history",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getEmployeeSalaryHistory
 );
 
@@ -123,20 +123,20 @@ router.get(
 // =====================
 router.post(
     "/revisions",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     validate(createRevisionSchema),
     controller.createRevision
 );
 
 router.get(
     "/revisions",
-    requireRole(["ADMIN", "HR"]),
+    requireAnyPermission(["payroll.manage"]),
     controller.getRevisions
 );
 
 router.patch(
     "/revisions/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll.manage"),
     validate(approveRevisionSchema),
     controller.approveRevision
 );

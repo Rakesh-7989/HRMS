@@ -1,43 +1,38 @@
 import React, { useState } from 'react';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { PayrollSummary } from '@/components/payroll/PayrollSummary';
 import { PayslipsContent } from '@/components/payroll/PayslipsContent';
 import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresContent';
 
-import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
-import { TaxDeclaration } from '@/pages/payroll/TaxDeclaration';
 
 const PAYROLL_TABS = [
-  { id: 'dashboard', label: 'Overview', roles: ['ADMIN', 'HR'] },
-  { id: 'summary', label: 'Summary', roles: ['ADMIN', 'HR'] },
-  { id: 'payslips', label: 'Payslips', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
-  { id: 'tax', label: 'Tax & Compliance', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
-  { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR'] },
+  { id: 'summary', label: 'Summary', permissions: ['payroll.view_all'] },
+  { id: 'payslips', label: 'Payslips & Tax', permissions: ['payroll.view_own', 'payroll.view_all'] },
+  { id: 'salary_details', label: 'Salary Structure', permissions: ['payroll.manage', 'payroll.view_all'] },
 ] as const;
 
 export const Payroll: React.FC = () => {
-  const { user } = useAuth();
-  const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
-  // Default to Dashboard for Admin/HR, Payslips for others
-  const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'dashboard' : 'payslips');
+  const { hasAnyPermission } = usePermission();
+  const isHRorAdmin = hasAnyPermission(['payroll.view_all', 'payroll.manage']);
+  const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'summary' : 'payslips');
 
   return (
     <DashboardLayout
       title="Payroll Management"
       breadcrumbs={[
-        { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
+        { label: 'Dashboard', href: isHRorAdmin ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Payroll' },
       ]}
     >
 
 
       {/* ===== CATEGORY CONTROLS ===== */}
-      {PAYROLL_TABS.filter(t => (t.roles as readonly string[]).includes(user?.role || '')).length > 1 && (
+      {PAYROLL_TABS.filter(t => hasAnyPermission([...t.permissions])).length > 1 && (
         <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700">
           {PAYROLL_TABS.map((tab) => {
-            if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
+            if (!hasAnyPermission([...tab.permissions])) return null;
 
             const isActive = tab.id === activeTab;
             return (
@@ -58,12 +53,10 @@ export const Payroll: React.FC = () => {
 
       {/* ===== CONTENT FOR TABS ===== */}
       <div className="min-h-[500px]">
-        {activeTab === 'dashboard' && <PayrollDashboard />}
         {activeTab === 'summary' && (
           <PayrollSummary onNavigate={(tab) => setActiveTab(tab as any)} />
         )}
         {activeTab === 'payslips' && <PayslipsContent />}
-        {activeTab === 'tax' && <TaxDeclaration />}
         {activeTab === 'salary_details' && <SalaryStructuresContent />}
       </div>
     </DashboardLayout>

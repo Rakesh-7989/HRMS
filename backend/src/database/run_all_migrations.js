@@ -1,17 +1,31 @@
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 const { Client } = require("pg");
+
+// Load environment variables from .env file
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
-const dbConfig = {
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "hrms_saas_db",
-    port: process.env.DB_PORT || 5432
-};
+// Validate required environment variables
+const hasIndividualVars = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME;
+const hasDatabaseUrl = !!process.env.DATABASE_URL;
+if (!hasIndividualVars && !hasDatabaseUrl) {
+    console.error("❌ Missing database configuration.");
+    console.error("   Set either DATABASE_URL or (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) in your .env file.");
+    process.exit(1);
+}
+
+// Support both connection string and individual vars
+const dbConfig = hasDatabaseUrl && !hasIndividualVars
+    ? { connectionString: process.env.DATABASE_URL }
+    : {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: parseInt(process.env.DB_PORT || "5432", 10),
+    };
 
 // Postgres "already exists" errors
 const ALREADY_EXISTS_ERRORS = new Set([
@@ -49,7 +63,7 @@ async function runMigrations() {
         const files = fs
             .readdirSync(MIGRATIONS_DIR)
             .filter(f => f.endsWith(".sql"))
-            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            .sort();
 
         console.log(`🔍 Found ${files.length} migration files`);
 

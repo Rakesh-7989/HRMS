@@ -5,7 +5,7 @@ import { Users, UserPlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
-import { Select } from '@/components/ui/Select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import {
     Table,
     TableHeader,
@@ -125,29 +125,26 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex-1">
                                 <Label htmlFor="employee" className="sr-only">Select Employee</Label>
-                                <Select
-                                    id="employee"
+                                <SearchableSelect
+                                    options={availableEmployees.map(emp => ({
+                                        value: emp.employee_uuid || '',
+                                        label: `${emp.first_name} ${emp.last_name} (${emp.email})`
+                                    }))}
                                     value={selectedEmployee}
-                                    onChange={(e) => setSelectedEmployee(e.target.value)}
-                                >
-                                    <option value="">Select an employee...</option>
-                                    {availableEmployees.map(emp => (
-                                        <option key={emp.employee_uuid} value={emp.employee_uuid}>
-                                            {emp.first_name} {emp.last_name} ({emp.email})
-                                        </option>
-                                    ))}
-                                </Select>
+                                    onChange={(val) => setSelectedEmployee(val)}
+                                    placeholder="Select an employee..."
+                                />
                             </div>
                             <div className="w-full sm:w-32">
                                 <Label htmlFor="role" className="sr-only">Role</Label>
-                                <Select
-                                    id="role"
+                                <SearchableSelect
+                                    options={[
+                                        { value: 'MEMBER', label: 'Member' },
+                                        { value: 'LEAD', label: 'Lead' }
+                                    ]}
                                     value={selectedRole}
-                                    onChange={(e) => setSelectedRole(e.target.value as ProjectMemberRole)}
-                                >
-                                    <option value="MEMBER">Member</option>
-                                    <option value="LEAD">Lead</option>
-                                </Select>
+                                    onChange={(val) => setSelectedRole(val as ProjectMemberRole)}
+                                />
                             </div>
                             <Button
                                 onClick={handleAddMember}

@@ -44,13 +44,16 @@ exports.tenantRegisterSchema = z.object({
  */
 exports.updateTenantSchema = z.object({
   body: z.object({
-    name: z.string().min(2).max(255).optional(),
-    address: z.string().max(500).optional(),
-    city: z.string().max(100).optional(),
-    state: z.string().max(100).optional(),
-    country: z.string().max(100).optional(),
-    zip_code: z.string().max(20).optional(),
-    phone: z.string().max(20).optional(),
-    settings: z.object({}).optional()
+    name: z.string().min(2, "Name must be at least 2 characters").max(255, "Name must not exceed 255 characters").optional(),
+    address: z.string().max(500, "Address must not exceed 500 characters").optional(),
+    city: z.string().max(100, "City must not exceed 100 characters").optional(),
+    state: z.string().max(100, "State must not exceed 100 characters").optional(),
+    country: z.string().max(100, "Country must not exceed 100 characters").optional(),
+    zip_code: z.string().max(20, "Zip code must not exceed 20 characters").optional(),
+    phone: z.string().max(20, "Phone must not exceed 20 characters").optional(),
+    settings: z.object({
+      primary_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format").optional(),
+      logo_url: z.string().optional()
+    }).optional()
   })
 });

@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { projectsService } from '@/services/projects.service';
 import { timesheetService } from '@/services/timesheet.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { cn } from '@/utils/cn';
 
 interface TimesheetEntryFormProps {
@@ -19,6 +20,7 @@ interface TimesheetEntryFormProps {
 
 export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSuccess }) => {
     const { user } = useAuth();
+    const { hasPermission } = usePermission();
     const queryClient = useQueryClient();
     const [projectId, setProjectId] = useState('');
     const [taskId, setTaskId] = useState('');
@@ -36,7 +38,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
         queryKey: ['tasks', projectId, user?.role, user?.employee_id],
         queryFn: () => projectsService.getTasks({
             project_id: projectId,
-            assigned_to: user?.role === 'EMPLOYEE' ? user.employee_id : undefined
+            assigned_to: !hasPermission('tasks.manage') ? user?.employee_id : undefined
         }),
         enabled: !!projectId,
     });

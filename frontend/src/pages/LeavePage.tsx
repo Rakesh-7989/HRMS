@@ -9,17 +9,17 @@ import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
 
 const LEAVE_TABS = [
-  { id: 'my-leave', label: 'My Leave', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'team-requests', label: 'Team Requests', roles: ['MANAGER', 'HR', 'ADMIN'] },
-  { id: 'allocation', label: 'Allocation', roles: ['HR', 'ADMIN'] },
-  { id: 'balances', label: 'Balances', roles: ['HR', 'ADMIN'] },
-  { id: 'settings', label: 'Settings', roles: ['HR', 'ADMIN'] },
+  { id: 'my-leave', label: 'My Leave', permission: 'leave.view_own' },
+  { id: 'team-requests', label: 'Team Requests', permission: 'leave.approve' },
+  { id: 'allocation', label: 'Allocation', permission: 'leave.manage_settings' },
+  { id: 'balances', label: 'Balances', permission: 'leave.manage_settings' },
+  { id: 'settings', label: 'Settings', permission: 'leave.manage_settings' },
 ] as const;
 
 type TabId = typeof LEAVE_TABS[number]['id'];
 
 export const LeavePage: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabId | null;
 
@@ -28,7 +28,7 @@ export const LeavePage: React.FC = () => {
     if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
       // Check if user has access to this tab
       const tab = LEAVE_TABS.find(t => t.id === tabParam);
-      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+      if (tab && hasPermission(tab.permission)) {
         return tabParam;
       }
     }
@@ -41,11 +41,11 @@ export const LeavePage: React.FC = () => {
   useEffect(() => {
     if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
       const tab = LEAVE_TABS.find(t => t.id === tabParam);
-      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+      if (tab && hasPermission(tab.permission)) {
         setActiveTab(tabParam);
       }
     }
-  }, [tabParam, user?.role]);
+  }, [tabParam, hasPermission]);
 
   return (
     <DashboardLayout
@@ -58,7 +58,7 @@ export const LeavePage: React.FC = () => {
       {/* ===== TAB NAVIGATION ===== */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-3 px-1 custom-scrollbar flex-nowrap w-full snap-x">
         {LEAVE_TABS.map((tab) => {
-          if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
+          if (!hasPermission(tab.permission)) return null;
 
           const isActive = tab.id === activeTab;
           return (

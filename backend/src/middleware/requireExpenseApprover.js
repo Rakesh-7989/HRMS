@@ -1,7 +1,7 @@
 module.exports = (req, res, next) => {
-  const role = req.user.role;
+  const permissions = req.user.permissions || [];
 
-  if (role === 'MANAGER' || role === 'HR' || role === 'ADMIN') {
+  if (permissions.includes('approve_expense') || permissions.includes('platform.manage_tenants')) {
     return next();
   }
 

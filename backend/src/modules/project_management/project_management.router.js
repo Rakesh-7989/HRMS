@@ -2,6 +2,7 @@ const express = require("express");
 const ctrl = require("./project_management.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 const requireRole = require("../../middleware/requireRole");
 
 const {
@@ -31,6 +32,11 @@ const {
   getProjectReportSchema,
   getClientReportSchema,
   getUtilizationReportSchema,
+  createCommentSchema,
+  updateCommentSchema,
+  deleteCommentSchema,
+  listCommentsSchema,
+  getMentionableUsersSchema,
 } = require("./project_management.validator");
 
 const router = express.Router();
@@ -49,7 +55,7 @@ const router = express.Router();
 router.post(
   "/clients",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(createClientSchema),
   ctrl.createClient
 );
@@ -62,7 +68,7 @@ router.post(
 router.get(
   "/clients",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listClientsSchema),
   ctrl.listClients
 );
@@ -75,7 +81,7 @@ router.get(
 router.put(
   "/clients/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(updateClientSchema),
   ctrl.updateClient
 );
@@ -88,7 +94,7 @@ router.put(
 router.delete(
   "/clients/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(updateClientSchema),
   ctrl.deleteClient
 );
@@ -107,7 +113,7 @@ router.delete(
 router.post(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(createProjectSchema),
   ctrl.createProject
 );
@@ -120,7 +126,7 @@ router.post(
 router.get(
   "/",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listProjectsSchema),
   ctrl.listProjects
 );
@@ -133,7 +139,7 @@ router.get(
 router.put(
   "/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(updateProjectSchema),
   ctrl.updateProject
 );
@@ -146,7 +152,7 @@ router.put(
 router.delete(
   "/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(updateProjectSchema),
   ctrl.deleteProject
 );
@@ -165,7 +171,7 @@ router.delete(
 router.post(
   "/:id/members",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(addProjectMemberSchema),
   ctrl.addProjectMember
 );
@@ -178,7 +184,7 @@ router.post(
 router.get(
   "/:id/members",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listProjectMembersSchema),
   ctrl.listProjectMembers
 );
@@ -191,7 +197,7 @@ router.get(
 router.delete(
   "/:id/members/:employee_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(removeProjectMemberSchema),
   ctrl.removeProjectMember
 );
@@ -210,7 +216,7 @@ router.delete(
 router.get(
   "/projects/:project_id/board/exists",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(getKanbanBoardSchema),
   ctrl.checkKanbanExists
 );
@@ -223,7 +229,7 @@ router.get(
 router.post(
   "/projects/:project_id/board/setup",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(createKanbanBoardSchema),
   ctrl.createKanbanBoard
 );
@@ -236,7 +242,7 @@ router.post(
 router.get(
   "/projects/:project_id/board",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(getKanbanBoardSchema),
   ctrl.getKanbanBoard
 );
@@ -249,7 +255,7 @@ router.get(
 router.put(
   "/projects/:project_id/board",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(updateKanbanBoardSchema),
   ctrl.updateKanbanBoard
 );
@@ -268,7 +274,7 @@ router.put(
 router.post(
   "/tasks",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(createTaskSchema),
   ctrl.createTask
 );
@@ -281,7 +287,7 @@ router.post(
 router.get(
   "/tasks",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listTasksSchema),
   ctrl.listTasks
 );
@@ -294,7 +300,7 @@ router.get(
 router.put(
   "/tasks/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(updateTaskSchema),
   ctrl.updateTask
 );
@@ -307,7 +313,7 @@ router.put(
 router.patch(
   "/tasks/:id/column",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(updateTaskColumnSchema),
   ctrl.updateTaskColumn
 );
@@ -320,7 +326,7 @@ router.patch(
 router.delete(
   "/tasks/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(updateTaskSchema),
   ctrl.deleteTask
 );
@@ -339,7 +345,7 @@ router.delete(
 router.post(
   "/timesheets/entry",
   verifyJwt,
-  requireRole(["HR", "EMPLOYEE", "MANAGER"]),
+  requirePermission("projects.view"),
   validate(addTimesheetEntrySchema),
   ctrl.addTimesheetEntry
 );
@@ -352,7 +358,7 @@ router.post(
 router.get(
   "/timesheets/my-entries",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listTimesheetEntriesSchema),
   ctrl.getMyTimesheetEntries
 );
@@ -365,7 +371,7 @@ router.get(
 router.post(
   "/timesheets",
   verifyJwt,
-  requireRole(["MANAGER", "HR", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(createTimesheetSchema),
   ctrl.createTimesheet
 );
@@ -379,7 +385,7 @@ router.post(
 router.get(
   "/timesheets/my",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "EMPLOYEE"]),
+  requirePermission("projects.view"),
   validate(listTimesheetsSchema),
   ctrl.getMyTimesheets
 );
@@ -393,7 +399,7 @@ router.get(
 router.get(
   "/timesheets/pending-approvals",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   ctrl.getPendingApprovals
 );
 
@@ -405,7 +411,7 @@ router.get(
 router.post(
   "/timesheets/bulk-approve",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   ctrl.bulkApproveTimesheets
 );
 
@@ -417,7 +423,7 @@ router.post(
 router.put(
   "/timesheets/:id/submit",
   verifyJwt,
-  requireRole(["HR", "EMPLOYEE", "MANAGER"]),
+  requirePermission("projects.view"),
   validate(submitTimesheetSchema),
   ctrl.submitTimesheet
 );
@@ -430,7 +436,7 @@ router.put(
 router.put(
   "/timesheets/:id/approve",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(approveTimesheetSchema),
   ctrl.approveTimesheet
 );
@@ -443,7 +449,7 @@ router.put(
 router.put(
   "/timesheets/:id/reject",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(rejectTimesheetSchema),
   ctrl.rejectTimesheet
 );
@@ -462,7 +468,7 @@ router.put(
 router.get(
   "/reports/project/:project_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(getProjectReportSchema),
   ctrl.getProjectReport
 );
@@ -475,7 +481,7 @@ router.get(
 router.get(
   "/reports/client/:client_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("projects.manage"),
   validate(getClientReportSchema),
   ctrl.getClientReport
 );
@@ -488,7 +494,7 @@ router.get(
 router.get(
   "/reports/utilization",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER"]),
+  requireAnyPermission(["projects.manage", "projects.view"]),
   validate(getUtilizationReportSchema),
   ctrl.getUtilizationReport
 );
@@ -507,7 +513,8 @@ router.get(
 router.post(
   "/tasks/:task_id/comments",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
+  validate(createCommentSchema),
   ctrl.createComment
 );
 
@@ -519,7 +526,8 @@ router.post(
 router.get(
   "/tasks/:task_id/comments",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
+  validate(listCommentsSchema),
   ctrl.listComments
 );
 
@@ -531,7 +539,8 @@ router.get(
 router.put(
   "/tasks/comments/:comment_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
+  validate(updateCommentSchema),
   ctrl.updateComment
 );
 
@@ -543,7 +552,8 @@ router.put(
 router.delete(
   "/tasks/comments/:comment_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
+  validate(deleteCommentSchema),
   ctrl.deleteComment
 );
 
@@ -555,7 +565,8 @@ router.delete(
 router.get(
   "/projects/:project_id/mentionable-users",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("projects.view"),
+  validate(getMentionableUsersSchema),
   ctrl.getMentionableUsers
 );
 

@@ -2,7 +2,7 @@ const express = require("express");
 const ctrl = require("./asset_management.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 
 const {
   createAssetSchema,
@@ -37,7 +37,7 @@ const router = express.Router();
 router.post(
   "/create",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets.manage"),
   validate(createAssetSchema),
   ctrl.createAsset
 );
@@ -54,7 +54,7 @@ router.post(
 router.get(
   "/list",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requireAnyPermission(["assets.view"]),
   validate(listAssetsSchema),
   ctrl.listAssets
 );
@@ -67,7 +67,7 @@ router.get(
 router.get(
   "/list/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requireAnyPermission(["assets.view"]),
   validate(getAssetByIdSchema),
   ctrl.getAssetById
 );
@@ -80,7 +80,7 @@ router.get(
 router.put(
   "/update/:id",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets.manage"),
   validate(updateAssetSchema),
   ctrl.updateAsset
 );
@@ -93,7 +93,7 @@ router.put(
 router.delete(
   "/delete/:id",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets.manage"),
   validate(deleteAssetSchema),
   ctrl.retireAsset
 );
@@ -107,7 +107,7 @@ router.delete(
 router.get(
   "/:id/barcode",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(getBarcodeSchema),
   ctrl.generateBarcode
 );
@@ -120,7 +120,7 @@ router.get(
 router.post(
   "/:id/assign",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(assignAssetSchema),
   ctrl.assignAsset
 );
@@ -133,7 +133,7 @@ router.post(
 router.post(
   "/:id/return",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(returnAssetSchema),
   ctrl.returnAsset
 );
@@ -146,7 +146,7 @@ router.post(
 router.get(
   "/:id/tracking",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(getTrackingSchema),
   ctrl.getAssetTracking
 );
@@ -159,7 +159,7 @@ router.get(
 router.get(
   "/:id/usage-history",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(getTrackingSchema),
   ctrl.getAssetUsageHistory
 );
@@ -199,7 +199,7 @@ router.get(
 router.post(
   "/requests/:id/handle",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireAnyPermission(["assets.manage"]),
   validate(handleAssetRequestSchema),
   ctrl.handleAssetRequest
 );

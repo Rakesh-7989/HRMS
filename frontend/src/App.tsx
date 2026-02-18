@@ -59,25 +59,21 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { PlansPage } from '@/pages/PlansPage';
 import { CouponsPage } from '@/pages/CouponsPage';
+import { RolesPage } from '@/pages/RolesPage';
 import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_DASHBOARDS } from '@/utils/constants';
 
 // Smart redirect component
 const DashboardRedirect = () => {
-  const { user, loading } = useAuth();
-
+  const { user, loading, hasPermission } = useAuth();
   if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Use the role mapping to find the correct dashboard, default to personal if not found
-  const targetDashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
-  return <Navigate to={targetDashboard} replace />;
+  if (hasPermission('platform.manage_tenants')) return <Navigate to="/dashboard/system" replace />;
+  if (hasPermission('admin.view_dashboard')) return <Navigate to="/dashboard/organization" replace />;
+  if (hasPermission('reports.view')) return <Navigate to="/dashboard/hr" replace />;
+  if (hasPermission('attendance.approve')) return <Navigate to="/dashboard/team" replace />;
+  return <Navigate to="/dashboard/personal" replace />;
 };
-
-
 
 // Router Configuration
 const router = createBrowserRouter(
@@ -95,7 +91,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/system"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['platform.manage_tenants']}>
             <SuperAdminDashboard />
           </ProtectedRoute>
         }
@@ -103,7 +99,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/dba"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredRoles={['SUPER_ADMIN']} requiredPermissions={['platform.manage_tenants']}>
             <DBADashboard />
           </ProtectedRoute>
         }
@@ -111,7 +107,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/system/reports"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['platform.manage_tenants']}>
             <SystemReportsPage />
           </ProtectedRoute>
         }
@@ -119,7 +115,7 @@ const router = createBrowserRouter(
       <Route
         path="/tenants"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['platform.manage_tenants']}>
             <TenantsPage />
           </ProtectedRoute>
         }
@@ -127,7 +123,7 @@ const router = createBrowserRouter(
       <Route
         path="/plans"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['platform.manage_tenants']}>
             <PlansPage />
           </ProtectedRoute>
         }
@@ -135,15 +131,23 @@ const router = createBrowserRouter(
       <Route
         path="/coupons"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['platform.manage_tenants']}>
             <CouponsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roles"
+        element={
+          <ProtectedRoute requiredPermissions={['roles.manage']}>
+            <RolesPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/organization"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['admin.view_dashboard']}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -151,7 +155,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/hr"
         element={
-          <ProtectedRoute allowedRoles={['HR', 'ADMIN']}>
+          <ProtectedRoute requiredPermissions={['reports.view']}>
             <HRDashboard />
           </ProtectedRoute>
         }
@@ -159,7 +163,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/team"
         element={
-          <ProtectedRoute allowedRoles={['MANAGER']}>
+          <ProtectedRoute requiredPermissions={['attendance.approve']}>
             <ManagerDashboard />
           </ProtectedRoute>
         }
@@ -193,7 +197,7 @@ const router = createBrowserRouter(
       <Route
         path="/dba-control-panel-access"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+          <ProtectedRoute requiredRoles={['SUPER_ADMIN']} requiredPermissions={['platform.manage_tenants']}>
             <DBADashboard />
           </ProtectedRoute>
         }
@@ -213,7 +217,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['employees.view']}>
             <EmployeesPage />
           </ProtectedRoute>
         }
@@ -221,7 +225,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/new"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['employees.create']}>
             <AddEmployeePage />
           </ProtectedRoute>
         }
@@ -229,7 +233,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/:id"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['employees.view']}>
             <EmployeeDetailsPage />
           </ProtectedRoute>
         }
@@ -237,7 +241,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['employees.edit']}>
             <EditEmployeePage />
           </ProtectedRoute>
         }
@@ -245,7 +249,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/:id/documents"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['employees.view']}>
             <EmployeeDocumentsPage />
           </ProtectedRoute>
         }
@@ -253,7 +257,7 @@ const router = createBrowserRouter(
       <Route
         path="/attendance"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['attendance.view_own']}>
             <AttendancePage />
           </ProtectedRoute>
         }
@@ -261,7 +265,7 @@ const router = createBrowserRouter(
       <Route
         path="/calendar"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute>
             <CalendarPage />
           </ProtectedRoute>
         }
@@ -269,7 +273,7 @@ const router = createBrowserRouter(
       <Route
         path="/inbox"
         element={
-          <ProtectedRoute allowedRoles={['HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute>
             <InboxPage />
           </ProtectedRoute>
         }
@@ -284,90 +288,11 @@ const router = createBrowserRouter(
         }
       />
 
-      <Route
-        path="/leave"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <LeavePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/departments"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DepartmentsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/designations"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DesignationsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/new"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AddAssetPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id/edit"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AddAssetPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id/return"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AssetReturnPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/requests"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetRequestsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Leave, Department, Designation, Assets, Profile routes defined below with full sub-routes */}
       <Route
         path="/reports"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['reports.view', 'payroll.view_all']}>
             <ReportsPage />
           </ProtectedRoute>
         }
@@ -377,7 +302,7 @@ const router = createBrowserRouter(
       <Route
         path="/organisation"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['organisation.view']}>
             <OrganisationPage />
           </ProtectedRoute>
         }
@@ -385,7 +310,7 @@ const router = createBrowserRouter(
       <Route
         path="/organization/shifts"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['shifts.manage']}>
             <ShiftsPage />
           </ProtectedRoute>
         }
@@ -394,7 +319,7 @@ const router = createBrowserRouter(
       <Route
         path="/leave"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['leave.view_own']}>
             <LeavePage />
           </ProtectedRoute>
         }
@@ -402,7 +327,7 @@ const router = createBrowserRouter(
       <Route
         path="/leave/settings"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['leave.manage_settings']}>
             <LeaveSettingsPage />
           </ProtectedRoute>
         }
@@ -410,7 +335,7 @@ const router = createBrowserRouter(
       <Route
         path="/leave/balances"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['leave.manage_settings']}>
             <LeaveBalancesPage />
           </ProtectedRoute>
         }
@@ -418,7 +343,7 @@ const router = createBrowserRouter(
       <Route
         path="/holidays"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute>
             <HolidaysPage />
           </ProtectedRoute>
         }
@@ -426,7 +351,7 @@ const router = createBrowserRouter(
       <Route
         path="/departments"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['organisation.manage_departments']}>
             <DepartmentsPage />
           </ProtectedRoute>
         }
@@ -434,7 +359,7 @@ const router = createBrowserRouter(
       <Route
         path="/designations"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['organisation.manage_departments']}>
             <DesignationsPage />
           </ProtectedRoute>
         }
@@ -442,7 +367,7 @@ const router = createBrowserRouter(
       <Route
         path="/assets"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['assets.view']}>
             <AssetsPage />
           </ProtectedRoute>
         }
@@ -450,7 +375,7 @@ const router = createBrowserRouter(
       <Route
         path="/assets/new"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute requiredPermissions={['assets.manage']}>
             <AddAssetPage />
           </ProtectedRoute>
         }
@@ -458,7 +383,7 @@ const router = createBrowserRouter(
       <Route
         path="/assets/:id"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['assets.view']}>
             <AssetDetailsPage />
           </ProtectedRoute>
         }
@@ -466,8 +391,24 @@ const router = createBrowserRouter(
       <Route
         path="/assets/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute requiredPermissions={['assets.manage']}>
             <AddAssetPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assets/:id/return"
+        element={
+          <ProtectedRoute requiredPermissions={['assets.manage']}>
+            <AssetReturnPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assets/requests"
+        element={
+          <ProtectedRoute requiredPermissions={['assets.request']}>
+            <AssetRequestsPage />
           </ProtectedRoute>
         }
       />
@@ -485,7 +426,7 @@ const router = createBrowserRouter(
       <Route
         path="/projects/reports"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['projects.manage', 'reports.view']}>
             <ProjectReportsPage />
           </ProtectedRoute>
         }
@@ -493,7 +434,7 @@ const router = createBrowserRouter(
       <Route
         path="/projects"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['projects.view']}>
             <ProjectsPage />
           </ProtectedRoute>
         }
@@ -501,7 +442,7 @@ const router = createBrowserRouter(
       <Route
         path="/projects/clients"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['projects.manage']}>
             <ClientsPage />
           </ProtectedRoute>
         }
@@ -509,7 +450,7 @@ const router = createBrowserRouter(
       <Route
         path="/projects/:id/tasks"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermissions={['projects.view']}>
             <TasksPage />
           </ProtectedRoute>
         }
@@ -520,7 +461,7 @@ const router = createBrowserRouter(
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['roles.manage']}>
             <SettingsPage />
           </ProtectedRoute>
         }
@@ -528,7 +469,7 @@ const router = createBrowserRouter(
       <Route
         path="/activity"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermissions={['admin.view_audit_logs', 'roles.manage', 'admin.view_dashboard', 'reports.view']}>
             <ActivityPage />
           </ProtectedRoute>
         }
@@ -537,7 +478,7 @@ const router = createBrowserRouter(
       <Route
         path="/Payroll"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER', 'SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['payroll.view_own', 'payroll.view_all', 'payroll.manage']}>
             <Payroll />
           </ProtectedRoute>
         }
@@ -545,7 +486,7 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermissions={['payroll.manage']}>
             <DashboardLayout title="Payroll Command Center">
               <PayrollDashboard />
             </DashboardLayout>
@@ -555,7 +496,7 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/process/:runId"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute requiredPermissions={['payroll.manage']}>
             <RiverProcess />
           </ProtectedRoute>
         }
@@ -570,5 +511,3 @@ const router = createBrowserRouter(
 );
 
 export default router;
-
-

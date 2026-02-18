@@ -25,7 +25,7 @@ import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 
 export const DailyAttendanceContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = useAuth();
     const queryClient = useQueryClient();
     const { alert: showAlert } = useConfirm();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
@@ -37,7 +37,7 @@ export const DailyAttendanceContent: React.FC = () => {
 
     // For HR/Manager View
     const [searchQuery, setSearchQuery] = useState('');
-    const isHrOrManager = ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || '');
+    const isHrOrManager = hasPermission('view_all_attendance') || hasPermission('view_team_attendance');
 
     const { data: todayAttendance } = useQuery({
         queryKey: ['attendance', 'today'],
@@ -432,7 +432,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     <Card>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Today's Attendance Log {user?.role === 'MANAGER' ? '(My Team)' : '(All Employees)'}
+                                Today's Attendance Log {hasPermission('view_all_attendance') ? '(All Employees)' : '(My Team)'}
                             </h3>
                             <div className="relative w-full sm:w-64">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -487,7 +487,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     {/* HR/MANAGER VIEW: PENDING CHECKOUTS (TEAM/ALL) */}
                     <Card>
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                            Pending Checkout Confirmations {user?.role === 'MANAGER' ? '(My Team)' : '(All)'}
+                            Pending Checkout Confirmations {hasPermission('view_all_attendance') ? '(All)' : '(My Team)'}
                         </h3>
                         {teamPendingCheckouts.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts to review</div>

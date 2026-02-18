@@ -103,3 +103,14 @@ exports.listSessions = async (userId) => {
   );
   return res.rows;
 };
+exports.getUserPermissions = async (userId) => {
+  const res = await pool.query(
+    `SELECT DISTINCT p.name
+     FROM user_roles ur
+     JOIN role_permissions rp ON rp.role_id = ur.role_id
+     JOIN permissions p ON p.id = rp.permission_id
+     WHERE ur.user_id = $1`,
+    [userId]
+  );
+  return res.rows.map(r => r.name);
+};

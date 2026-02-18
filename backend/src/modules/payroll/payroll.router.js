@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const verifyJwt = require('../../middleware/verifyJwt');
-const requireRole = require('../../middleware/requireRole');
+const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 
 const riverController = require('./river/river.controller'); // Import RiVeR Controller
 
@@ -43,7 +43,7 @@ router.use('/tax', taxRouter);
 // ===================================================================
 // PAYROLL SUMMARY (Dashboard Data)
 // ===================================================================
-router.get('/summary', verifyJwt, requireRole(['ADMIN', 'HR']), async (req, res) => {
+router.get('/summary', verifyJwt, requireAnyPermission(["payroll.view_all", "payroll.manage"]), async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
 
@@ -129,7 +129,7 @@ router.get('/cost-centers', verifyJwt, async (req, res) => {
   }
 });
 
-router.post('/cost-centers', verifyJwt, requireRole(['ADMIN']), async (req, res) => {
+router.post('/cost-centers', verifyJwt, requirePermission('payroll.manage'), async (req, res) => {
   try {
     const data = await statutoryService.createCostCentre(req.user.tenantId, req.user.id, req.body);
     res.status(201).json({ status: 'success', data });
@@ -199,10 +199,10 @@ router.get('/payslips', verifyJwt, async (req, res) => {
        FROM payroll_run_items pri
        JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
        JOIN employees e ON e.id = pri.employee_id
-       WHERE pri.tenant_id = $1 ${!['ADMIN', 'HR'].includes(req.user.role) ? 'AND pri.employee_id = $2' : ''}
+       WHERE pri.tenant_id = $1 ${!req.user.permissions?.includes('payroll.view_all') ? 'AND pri.employee_id = $2' : ''}
        ORDER BY pr.period_year DESC, pr.period_month DESC
        LIMIT 100`,
-      !['ADMIN', 'HR'].includes(req.user.role) ? [req.user.tenantId, req.user.employeeId] : [req.user.tenantId]
+      !req.user.permissions?.includes('payroll.view_all') ? [req.user.tenantId, req.user.employeeId] : [req.user.tenantId]
     );
     res.json({ status: 'success', data: result.rows });
   } catch (err) {

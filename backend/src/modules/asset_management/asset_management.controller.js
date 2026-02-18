@@ -80,9 +80,7 @@ exports.listAssets = async (req, res, next) => {
 
     const result = await assetService.listAssets(
       tenantId,
-      filters,
-      role,
-      employeeId
+      { ...filters, userPermissions: req.user.permissions, employeeId }
     );
 
     return res.status(200).json({
@@ -109,7 +107,7 @@ exports.getAssetById = async (req, res, next) => {
     const asset = await assetService.getAssetById(
       tenantId,
       assetId,
-      role,
+      req.user.permissions,
       employeeId
     );
 
@@ -179,7 +177,7 @@ exports.generateBarcode = async (req, res, next) => {
     const { id: assetId } = req.params;
 
     // Verify access to asset
-    await assetService.getAssetById(tenantId, assetId, role, employeeId);
+    await assetService.getAssetById(tenantId, assetId, req.user.permissions, employeeId);
 
     const barcodeData = await assetService.generateBarcode(
       tenantId,
@@ -260,7 +258,7 @@ exports.getAssetTracking = async (req, res, next) => {
     const { id: assetId } = req.params;
 
     // Verify access to asset
-    await assetService.getAssetById(tenantId, assetId, role, employeeId);
+    await assetService.getAssetById(tenantId, assetId, req.user.permissions, employeeId);
 
     const tracking = await assetService.getAssetTracking(tenantId, assetId);
 
@@ -286,7 +284,7 @@ exports.getAssetUsageHistory = async (req, res, next) => {
     const { id: assetId } = req.params;
 
     // Verify access to asset
-    await assetService.getAssetById(tenantId, assetId, role, employeeId);
+    await assetService.getAssetById(tenantId, assetId, req.user.permissions, employeeId);
 
     const usageHistory = await assetService.getAssetUsageHistory(
       tenantId,
@@ -321,8 +319,8 @@ exports.createAssetRequest = async (req, res, next) => {
  */
 exports.listAssetRequests = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role } = req.user;
-    const requests = await assetService.listAssetRequests(tenantId, userId, role);
+    const { tenantId, id: userId, permissions } = req.user;
+    const requests = await assetService.listAssetRequests(tenantId, userId, permissions);
     return success(res, requests, "Asset requests retrieved successfully");
   } catch (error) {
     next(error);
@@ -334,9 +332,9 @@ exports.listAssetRequests = async (req, res, next) => {
  */
 exports.handleAssetRequest = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role } = req.user;
+    const { tenantId, id: userId, permissions } = req.user;
     const { id: requestId } = req.params;
-    const request = await assetService.handleAssetRequest(tenantId, requestId, userId, role, req.body);
+    const request = await assetService.handleAssetRequest(tenantId, requestId, userId, permissions, req.body);
     return success(res, request, `Asset request ${req.body.status.toLowerCase()} successfully`);
   } catch (error) {
     next(error);

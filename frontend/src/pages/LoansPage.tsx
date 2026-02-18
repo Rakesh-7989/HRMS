@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Sidebar } from '@/components/layout/Sidebar';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import { payrollService } from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -19,19 +19,21 @@ const LoansPage: React.FC = () => {
 
 
   // Helper: check if role can create loans (EMPLOYEE, HR, ADMIN)
-  const canCreateLoan = (role?: string) => ['EMPLOYEE','HR','ADMIN'].includes(role || '');
+  const canCreateLoan = (role?: string) => ['EMPLOYEE', 'HR', 'ADMIN'].includes(role || '');
   // Simple UUID v4-ish check used for validating loanTypeId or employee id inputs
   const isUuid = (s: string) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(s);
 
   const queryClient = useQueryClient();
   // Fetch loan types for selection and display (HR/Admin only per backend)
-  const canManage = ['HR','ADMIN'].includes(userRole);
+  const canManage = ['HR', 'ADMIN'].includes(userRole);
   const { data: loanTypes = [] } = useQuery<any[]>({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });
-  const { data: loans = [], isLoading } = useQuery<any[]>({ queryKey: ['payroll', 'loans', userRole], queryFn: () => {
-    if (userRole === 'EMPLOYEE') return payrollService.listLoans('employee');
-    if (userRole === 'MANAGER') return payrollService.listLoans('team');
-    return payrollService.listLoans('all');
-  }});
+  const { data: loans = [], isLoading } = useQuery<any[]>({
+    queryKey: ['payroll', 'loans', userRole], queryFn: () => {
+      if (userRole === 'EMPLOYEE') return payrollService.listLoans('employee');
+      if (userRole === 'MANAGER') return payrollService.listLoans('team');
+      return payrollService.listLoans('all');
+    }
+  });
 
   // Add / create states (admin simplified or employee detailed)
   const [addOpen, setAddOpen] = useState(false);
@@ -222,13 +224,13 @@ const LoansPage: React.FC = () => {
                 const outstanding = l.outstanding_amount ?? l.outstanding ?? 0;
                 return (
                   <TableRow key={l.id}>
-                      <TableCell>{l.employee_name || l.employee_id || '—'}</TableCell>
-                      <TableCell>{(() => { const found = loanTypes.find((t: any) => t.id === (l.loan_type_id || l.loanTypeId)); return found ? found.name : (l.loan_type_name || l.loanTypeName || '—'); })()}</TableCell>
-                      <TableCell>{l.principal_amount ?? l.amount ?? '—'}</TableCell>
-                      <TableCell>{outstanding ?? '—'}</TableCell>
-                      <TableCell>{l.status ?? '—'}</TableCell>
+                    <TableCell>{l.employee_name || l.employee_id || '—'}</TableCell>
+                    <TableCell>{(() => { const found = loanTypes.find((t: any) => t.id === (l.loan_type_id || l.loanTypeId)); return found ? found.name : (l.loan_type_name || l.loanTypeName || '—'); })()}</TableCell>
+                    <TableCell>{l.principal_amount ?? l.amount ?? '—'}</TableCell>
+                    <TableCell>{outstanding ?? '—'}</TableCell>
+                    <TableCell>{l.status ?? '—'}</TableCell>
                     <TableCell>
-                      { (userRole === 'MANAGER' || userRole === 'HR') && (
+                      {(userRole === 'MANAGER' || userRole === 'HR') && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => handleApprove(l.id)} disabled={l.status === 'APPROVED' || approveLoanMut.isPending}>Approve</Button>
                           <Button size="sm" variant="outline" className="ml-2" onClick={() => handleOpenReject(l)} disabled={l.status === 'REJECTED' || approveLoanMut.isPending}>Reject</Button>

@@ -282,13 +282,11 @@ exports.getPendingApprovals = async (db, actor, filters) => {
     let where = `WHERE la.tenant_id = $1 AND ${statusClause}`;
 
     // Visibility Logic: 
-    // - MANAGERS only see their direct reports.
-    // - HR and ADMIN can see all pending requests in the organization (visibility only).
-    // Note: The actual Approve/Reject action is still strictly protected in the approveLeave/rejectLeave functions.
-    if (actor.role === 'MANAGER') {
-        if (!actor.employeeId) {
-            return [];
-        }
+    // - Users with 'view_all_employees' or platform admins see all requests.
+    // - Others with 'view_team_employees' only see their direct reports.
+    const canViewAll = actor.permissions.includes('attendance.view_all') || actor.permissions.includes('admin.manage_tenant');
+
+    if (!canViewAll && actor.employeeId) {
         where += ` AND e.reports_to = $${p}`;
         params.push(actor.employeeId);
         p++;
@@ -338,10 +336,9 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 exports.approveLeave = async (db, actor, leaveId, comment) => {
     const query = getQuery(db);
 
-    // SECURITY FIX: Validate role authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can approve leave requests");
+    // SECURITY FIX: Validate permission authorization
+    if (!actor.permissions.includes('leave.approve') && !actor.permissions.includes('admin.manage_tenant')) {
+        throw new Error("Unauthorized: You do not have permission to approve leave requests");
     }
 
     // Get leave details first
@@ -410,10 +407,9 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 exports.rejectLeave = async (db, actor, leaveId, reason) => {
     const query = getQuery(db);
 
-    // SECURITY FIX: Validate role authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can reject leave requests");
+    // SECURITY FIX: Validate permission authorization
+    if (!actor.permissions.includes('leave.approve') && !actor.permissions.includes('admin.manage_tenant')) {
+        throw new Error("Unauthorized: You do not have permission to reject leave requests");
     }
 
     // For managers, verify the employee reports to them
@@ -525,17 +521,10 @@ exports.getLeaveSummary = async (db, actor, filters) => {
     let p = 2;
     let where = `WHERE la.tenant_id = $1`;
 
-    // Visibility: MANAGER sees only direct reports' summary. HR/ADMIN see whole tenant.
-    if (actor.role === 'MANAGER') {
-        if (!actor.employeeId) {
-            return {
-                approved: 0,
-                pending: 0,
-                rejected: 0,
-                cancelled: 0,
-                total: 0
-            };
-        }
+    // Visibility: 'view_all_employees' see whole tenant. Others see only direct reports (if they have employee profile).
+    const canViewAll = actor.permissions.includes('attendance.view_all') || actor.permissions.includes('admin.manage_tenant');
+
+    if (!canViewAll && actor.employeeId) {
         where += ` AND e.reports_to = $${p}`;
         params.push(actor.employeeId);
         p++;

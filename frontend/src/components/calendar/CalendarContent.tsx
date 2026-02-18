@@ -21,12 +21,13 @@ import {
     Bell
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 export const CalendarContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = usePermission();
     const queryClient = useQueryClient();
+    const canManage = hasPermission('calendar.manage') || hasPermission('announcements.manage');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedState, setSelectedState] = useState<string>('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -57,7 +58,7 @@ export const CalendarContent: React.FC = () => {
     const { data: companyHolidays = [] } = useQuery({
         queryKey: ['company-holidays'],
         queryFn: () => calendarService.getCompanyHolidays(),
-        enabled: user?.role === 'ADMIN' || user?.role === 'HR'
+        enabled: canManage
     });
 
     const { data: announcements = [] } = useQuery({
@@ -131,7 +132,6 @@ export const CalendarContent: React.FC = () => {
         }, {} as Record<string, CalendarDay>);
     }, [calendarData]);
 
-    const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
 
     const variants = {
         enter: (direction: number) => ({
@@ -460,46 +460,44 @@ export const CalendarContent: React.FC = () => {
             </Dialog>
 
             <Dialog open={isAnnouncementModalOpen} onOpenChange={setIsAnnouncementModalOpen}>
-                <DialogContent className="rounded-[3.5rem] border-none shadow-2xl p-12 bg-white dark:bg-[#0a0a0a] max-w-xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-4xl font-bold tracking-tighter text-center mb-10 text-gray-900 dark:text-white">Broadcast Message</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-10">
-                        <div className="space-y-4">
-                            <Label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-2">Broadcast Title</Label>
-                            <Input
-                                placeholder="Important update for all team members"
-                                value={annTitle}
-                                onChange={(e) => setAnnTitle(e.target.value)}
-                                className="h-14 rounded-2xl border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 px-6 font-semibold bg-gray-50/50 dark:bg-white/[0.02] shadow-sm"
-                            />
-                        </div>
-                        <div className="space-y-4">
-                            <Label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-2">Message Details</Label>
-                            <textarea
-                                className="w-full h-44 rounded-[2rem] border border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 p-8 font-semibold bg-gray-50/50 dark:bg-white/[0.02] resize-none outline-none text-[15px] leading-relaxed shadow-sm transition-all"
-                                placeholder="Type your broadcast message here..."
-                                value={annMessage}
-                                onChange={(e) => setAnnMessage(e.target.value)}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-5">
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsAnnouncementModalOpen(false)}
-                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] border-light-border dark:border-white/10"
-                            >
-                                Discard
-                            </Button>
-                            <Button
-                                onClick={() => addAnnouncementMutation.mutate({ title: annTitle, message: annMessage })}
-                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] bg-[#42275a] hover:bg-[#3a214f] text-white shadow-xl shadow-primary/20"
-                            >
-                                Send Board
-                            </Button>
-                        </div>
+                <DialogHeader className='pt-4'>
+                    <DialogTitle className="text-4xl font-bold tracking-tighter text-center mb-10 text-gray-900 dark:text-white">Broadcast Message</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pb-4 px-2">
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-2">Broadcast Title</Label>
+                        <Input
+                            placeholder="Important update for all team members"
+                            value={annTitle}
+                            onChange={(e) => setAnnTitle(e.target.value)}
+                            className="h-12 rounded-xl border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 px-6 font-semibold bg-transparent shadow-sm"
+                        />
                     </div>
-                </DialogContent>
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-2">Message Details</Label>
+                        <textarea
+                            className="w-full h-44 rounded-xl border border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 p-6 font-semibold bg-transparent resize-none outline-none text-[15px] leading-relaxed shadow-sm transition-all"
+                            placeholder="Type your broadcast message here..."
+                            value={annMessage}
+                            onChange={(e) => setAnnMessage(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-5">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsAnnouncementModalOpen(false)}
+                            className="h-14 rounded-xl font-bold uppercase tracking-widest text-[11px] border-light-border dark:border-white/10"
+                        >
+                            Discard
+                        </Button>
+                        <Button
+                            onClick={() => addAnnouncementMutation.mutate({ title: annTitle, message: annMessage })}
+                            className="h-14 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-[#42275a] hover:bg-[#3a214f] text-white shadow-xl shadow-primary/20"
+                        >
+                            Send Board
+                        </Button>
+                    </div>
+                </div>
             </Dialog>
 
             <style>{`

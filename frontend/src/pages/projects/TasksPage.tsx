@@ -42,6 +42,7 @@ import { KanbanSetupCard } from '@/components/projects/KanbanSetupCard';
 import { projectsService } from '@/services/projects.service';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
 
@@ -49,6 +50,7 @@ export const TasksPage: React.FC = () => {
     const { id: projectId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { hasPermission, hasAnyPermission } = usePermission();
     const queryClient = useQueryClient();
 
     const [activeTab, setActiveTab] = useState<'list' | 'board'>('list');
@@ -83,7 +85,7 @@ export const TasksPage: React.FC = () => {
         estimated_hours: '',
     });
 
-    const canManage = ['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '');
+    const canManage = hasAnyPermission(['projects.manage', 'tasks.manage']);
 
     // Queries
     const { data: serverProject, isLoading: projectLoading } = useQuery({
@@ -297,30 +299,12 @@ export const TasksPage: React.FC = () => {
         });
     };
 
-    // Permission check for task edit/delete - Hybrid approach:
-    // 1. Task creator can always edit their own task
-    // 2. Higher roles can edit tasks created by lower roles
-    // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
-    const ROLE_HIERARCHY: Record<string, number> = {
-        'ADMIN': 4,
-        'MANAGER': 3,
-        'HR': 2,
-        'EMPLOYEE': 1,
-    };
-
+    // Permission check for task edit/delete
     const canEditTask = (task: Task) => {
         if (!user) return false;
-
-        // 1. Task creator can always edit their own task
-        if (task.created_by === user.id) return true;
-
-        // 2. Get role levels for comparison
-        const userRoleLevel = ROLE_HIERARCHY[user.role] || 0;
-        const creatorRoleLevel = ROLE_HIERARCHY[(task as any).creator_role] || 0;
-
-        // Higher roles can edit tasks created by lower or equal roles
-        // ADMIN can edit all, MANAGER can edit MANAGER/HR/EMPLOYEE tasks, etc.
-        return userRoleLevel > creatorRoleLevel;
+        // Task creator can always edit their own task
+        // Users with tasks.manage permission can edit any task
+        return task.created_by === user.id || hasPermission('tasks.manage');
     };
 
     // Handlers
@@ -625,22 +609,21 @@ export const TasksPage: React.FC = () => {
                                                             onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
                                                             disabled={(() => {
                                                                 if (!user) return true;
-                                                                // Admins, HR, Managers can move everything
-                                                                if (['ADMIN', 'HR', 'MANAGER'].includes(user.role)) return false;
-                                                                if (user.role === 'EMPLOYEE') {
-                                                                    const userEmployeeId = user.employee_id;
+                                                                // Users with manage permission can move everything
+                                                                if (canManage) return false;
 
-                                                                    // Check if user is one of the assignees
-                                                                    if (task.assignees && task.assignees.length > 0) {
-                                                                        return !task.assignees.some(a => a.id === userEmployeeId);
-                                                                    }
+                                                                // Regular employees can only move if assigned
+                                                                const userEmployeeId = user.employee_id;
 
-                                                                    // Fallback
-                                                                    const taskAssigneeId = task.assignee_id || task.assignee?.id;
-                                                                    if (!userEmployeeId || !taskAssigneeId) return true;
-                                                                    return taskAssigneeId !== userEmployeeId;
+                                                                // Check if user is one of the assignees
+                                                                if (task.assignees && task.assignees.length > 0) {
+                                                                    return !task.assignees.some(a => a.id === userEmployeeId);
                                                                 }
-                                                                return true;
+
+                                                                // Fallback
+                                                                const taskAssigneeId = task.assignee_id || task.assignee?.id;
+                                                                if (!userEmployeeId || !taskAssigneeId) return true;
+                                                                return taskAssigneeId !== userEmployeeId;
                                                             })()}
                                                             className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                             onClick={(e) => e.stopPropagation()}

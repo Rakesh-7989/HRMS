@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { superAdminService, Tenant } from '@/services/superAdmin.service';
 import { format } from 'date-fns';
 import { Eye, BadgeCheck, Ban, Calendar, XCircle, ArrowUp, ShieldAlert, Receipt, MoreVertical } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { UpgradePlanModal } from '@/components/super_admin/UpgradePlanModal';
@@ -172,7 +173,7 @@ export const TenantsPage: React.FC = () => {
       setSuccessConfig({
         isOpen: true,
         title: 'Subscription Enabled',
-        message: 'A 30-day Standard subscription has been enabled for this tenant.',
+        message: 'A 14-day Standard subscription has been enabled for this tenant.',
         type: 'success'
       });
     },
@@ -284,7 +285,7 @@ export const TenantsPage: React.FC = () => {
           ) : tenants.length === 0 ? (
             <div className="py-12 text-center text-muted">No tenants available.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto lg:overflow-visible">
               <table className="w-full">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
@@ -304,7 +305,13 @@ export const TenantsPage: React.FC = () => {
                       Status
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Created
+                      Start Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      End Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Type
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Actions
@@ -312,8 +319,8 @@ export const TenantsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
-                  {tenants.map((tenant) => (
-                    <tr key={tenant.id} className="hover:bg-primary/10 transition-colors">
+                  {tenants.map((tenant, index) => (
+                    <tr key={tenant.id} className="hover:bg-primary/10 transition-colors relative group/row hover:z-20">
                       <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{tenant.name}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">{tenant.email}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -344,8 +351,15 @@ export const TenantsPage: React.FC = () => {
                           {tenant.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
+                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {tenant.plan_start_date ? format(new Date(tenant.plan_start_date), 'MMM dd, yyyy') : 'N/A'}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {tenant.plan_end_date ? format(new Date(tenant.plan_end_date), 'MMM dd, yyyy') :
+                          tenant.trial_ends_at ? format(new Date(tenant.trial_ends_at), 'MMM dd, yyyy') : 'N/A'}
+                      </td>
                       <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                        {format(new Date(tenant.created_at), 'MMM dd, yyyy')}
+                        {tenant.plan_type || 'N/A'}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -367,7 +381,7 @@ export const TenantsPage: React.FC = () => {
                                 setConfirmConfig({
                                   isOpen: true,
                                   title: 'Enable Subscription',
-                                  message: 'Enable a 30-day Standard subscription for this tenant?',
+                                  message: 'Enable a 14-day Standard subscription for this tenant?',
                                   type: 'confirm',
                                   onConfirm: () => enableSubscriptionMutation.mutate(tenant.id)
                                 });
@@ -382,7 +396,7 @@ export const TenantsPage: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-amber-500 text-amber-600 hover:bg-amber-50 h-8 text-xs"
+                                className="border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700 h-8 text-xs"
                                 onClick={() => {
                                   setConfirmConfig({
                                     isOpen: true,
@@ -408,7 +422,10 @@ export const TenantsPage: React.FC = () => {
                                 <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                   <MoreVertical size={16} className="text-gray-500" />
                                 </button>
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 overflow-hidden">
+                                <div className={cn(
+                                  "absolute right-0 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden",
+                                  index >= tenants.length - 2 ? "bottom-full mb-1" : "top-full mt-1"
+                                )}>
                                   <div className="flex flex-col py-1">
                                     <button
                                       onClick={() => {
@@ -418,7 +435,7 @@ export const TenantsPage: React.FC = () => {
                                           currentPlanName: tenant.plan_name || 'No Plan'
                                         });
                                       }}
-                                      className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                                      className="text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
                                     >
                                       <ArrowUp size={14} /> Upgrade Plan
                                     </button>
@@ -431,7 +448,7 @@ export const TenantsPage: React.FC = () => {
                                           tenantName: tenant.name
                                         });
                                       }}
-                                      className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                                      className="text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
                                     >
                                       <Receipt size={14} /> Billing History
                                     </button>
@@ -441,14 +458,14 @@ export const TenantsPage: React.FC = () => {
                                     {tenant.is_active ? (
                                       <button
                                         onClick={() => deactivateMutation.mutate(tenant.id)}
-                                        className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-orange-600 flex items-center gap-2"
+                                        className="text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800 text-orange-600 flex items-center gap-2"
                                       >
                                         <Ban size={14} /> Deactivate Account
                                       </button>
                                     ) : (
                                       <button
                                         onClick={() => activateMutation.mutate(tenant.id)}
-                                        className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-green-600 flex items-center gap-2"
+                                        className="text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800 text-green-600 flex items-center gap-2"
                                       >
                                         <BadgeCheck size={14} /> Activate Account
                                       </button>
@@ -464,7 +481,7 @@ export const TenantsPage: React.FC = () => {
                                           onConfirm: () => cancelSubscriptionMutation.mutate(tenant.id)
                                         });
                                       }}
-                                      className="text-left px-4 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 flex items-center gap-2"
+                                      className="text-left px-3 py-1.5 text-[11px] hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 flex items-center gap-2"
                                     >
                                       <XCircle size={14} /> Cancel Subscription
                                     </button>
@@ -479,7 +496,7 @@ export const TenantsPage: React.FC = () => {
                                           onConfirm: () => suspendMutation.mutate(tenant.id)
                                         });
                                       }}
-                                      className="text-left px-4 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/10 text-red-700 flex items-center gap-2"
+                                      className="text-left px-3 py-1.5 text-[11px] hover:bg-red-50 dark:hover:bg-red-900/10 text-red-700 flex items-center gap-2"
                                     >
                                       <ShieldAlert size={14} /> Suspend Org
                                     </button>

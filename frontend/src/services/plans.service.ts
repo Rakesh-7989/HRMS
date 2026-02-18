@@ -57,27 +57,27 @@ class PlansService {
     }
 
     async getAdminPlans(): Promise<Plan[]> {
-        const response = await api.get('/super-admin/plans');
+        const response = await api.get('/subscriptions/platform/plans');
         return response.data.plans || response.data.data || [];
     }
 
     async getPlanById(id: string): Promise<Plan> {
-        const response = await api.get(`/subscriptions/plans/${id}`);
+        const response = await api.get(`/subscriptions/platform/plans/${id}`);
         return response.data;
     }
 
     async updatePlan(id: string, data: Partial<Plan>): Promise<Plan> {
-        const response = await api.put(`/super-admin/plans/${id}`, data);
+        const response = await api.put(`/subscriptions/platform/plans/${id}`, data);
         return response.data.data;
     }
 
     async createPlan(data: Partial<Plan>): Promise<Plan> {
-        const response = await api.post('/super-admin/plans', data);
+        const response = await api.post('/subscriptions/platform/plans', data);
         return response.data.data;
     }
 
     async deletePlan(id: string): Promise<void> {
-        await api.delete(`/super-admin/plans/${id}`);
+        await api.delete(`/subscriptions/platform/plans/${id}`);
     }
 }
 

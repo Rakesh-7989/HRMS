@@ -4,7 +4,7 @@ import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { Select } from '@/components/ui/Select';
+// import { Select } from '@/components/ui/Select';
 import { usersService, CreateUserData, UpdateEmployeeData, User } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -14,12 +14,15 @@ import { AlertCircle, Briefcase, Building2, Phone, User as UserIcon, Check, Chev
 import { toast } from 'react-hot-toast';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { tenantService } from '@/services/tenant.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { rbacService } from '@/services/rbac.service';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useFormGuard } from '@/hooks/useFormGuard';
 import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
+import { adminService } from '@/services/admin.service';
 import { showToast } from '@/utils/toast';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -43,8 +46,8 @@ const createValidationSchema = Yup.object({
     .min(10, 'Phone number must be at least 10 digits')
     .max(20, 'Phone number cannot exceed 20 digits')
     .required('Phone is required'),
-  department_id: Yup.string().required('Department is required'),
-  designation_id: Yup.string().required('Designation is required'),
+  department_id: Yup.string(),
+  designation_id: Yup.string(),
   employee_id: Yup.string(),
   date_of_birth: Yup.date()
     .required('Date of birth is required')
@@ -187,7 +190,7 @@ export const CreateEmployeeForm = ({
   onSuccess,
 }: CreateEmployeeFormProps) => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { hasPermission } = usePermission();
   const isEditMode = !!editEmployee;
 
   const [error, setError] = React.useState<string | null>(null);
@@ -234,11 +237,30 @@ export const CreateEmployeeForm = ({
     queryFn: () => getShifts(),
   });
 
+  // Fetch all roles from RBAC system
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => rbacService.getRoles(),
+  });
+
+  // Filter out platform-level roles
+  const assignableRoles = roles.filter(role => role.role_type !== 'PLATFORM');
+
   // Fetch employee ID settings
   const { data: idSettings } = useQuery({
     queryKey: ['employee-id-settings'],
     queryFn: () => tenantService.getEmployeeIdSettings(),
   });
+
+  // Fetch tenant profile for dynamic settings (e.g. employment types)
+  const { data: tenantProfile } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: () => adminService.getTenantProfile(),
+  });
+
+  const employmentTypes = useMemo(() => {
+    return tenantProfile?.settings?.employment_types || ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMP'];
+  }, [tenantProfile]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -304,16 +326,6 @@ export const CreateEmployeeForm = ({
     }
   };
 
-  const toggleModeMutation = useMutation({
-    mutationFn: (usePrefix: boolean) => tenantService.toggleEmployeeIdMode(usePrefix),
-    onSuccess: (data) => {
-      toast.success(data.message);
-      queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
-    },
-    onError: (err: Error) => {
-      toast.error(err.message);
-    },
-  });
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -729,16 +741,17 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Gender *
             </label>
-            <Select
-              name="gender"
+            <SearchableSelect
+              options={[
+                { value: 'MALE', label: 'Male' },
+                { value: 'FEMALE', label: 'Female' },
+                { value: 'OTHER', label: 'Other' }
+              ]}
               value={formik.values.gender}
-              onChange={formik.handleChange}
+              onChange={(val) => formik.setFieldValue('gender', val)}
               placeholder="Select Gender"
-            >
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
-            </Select>
+              error={formik.touched.gender && Boolean(formik.errors.gender)}
+            />
             {formik.touched.gender && formik.errors.gender && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.gender}</p>
             )}
@@ -748,17 +761,18 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Marital Status *
             </label>
-            <Select
-              name="marital_status"
+            <SearchableSelect
+              options={[
+                { value: 'SINGLE', label: 'Single' },
+                { value: 'MARRIED', label: 'Married' },
+                { value: 'DIVORCED', label: 'Divorced' },
+                { value: 'WIDOWED', label: 'Widowed' }
+              ]}
               value={formik.values.marital_status}
-              onChange={formik.handleChange}
+              onChange={(val) => formik.setFieldValue('marital_status', val)}
               placeholder="Select Status"
-            >
-              <option value="SINGLE">Single</option>
-              <option value="MARRIED">Married</option>
-              <option value="DIVORCED">Divorced</option>
-              <option value="WIDOWED">Widowed</option>
-            </Select>
+              error={formik.touched.marital_status && Boolean(formik.errors.marital_status)}
+            />
             {formik.touched.marital_status && formik.errors.marital_status && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.marital_status}</p>
             )}
@@ -810,85 +824,34 @@ export const CreateEmployeeForm = ({
             <Briefcase className="w-4 h-4 text-primary" /> Employment Details
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Role *
-              </label>
-              <Select
-                name="role"
-                value={formik.values.role}
-                onChange={formik.handleChange}
-                disabled={!['ADMIN', 'SUPER_ADMIN', 'HR'].includes(user?.role || '')}
-              >
-                <option value="EMPLOYEE">Employee</option>
-                <option value="MANAGER">Manager</option>
-                <option value="HR">HR</option>
-                {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && (
-                  <>
-                    <option value="ADMIN">Admin</option>
-                  </>
-                )}
-              </Select>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            {!isEditMode && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                  Role *
+                </label>
+                <SearchableSelect
+                  options={assignableRoles.map((role) => ({ value: role.name, label: role.name.charAt(0) + role.name.slice(1).toLowerCase() }))}
+                  value={formik.values.role}
+                  onChange={(val) => formik.setFieldValue('role', val)}
+                  placeholder="Select Role"
+                  error={formik.touched.role && Boolean(formik.errors.role)}
+                />
+              </div>
+            )}
 
             <div>
-              {isEditMode ? (
-                /* Edit mode: simple editable employee ID field */
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                    Employee ID *
-                  </label>
-                  <input
-                    type="text"
-                    name="employee_id"
-                    value={formik.values.employee_id}
-                    onChange={formik.handleChange}
-                    placeholder="Employee ID"
-                    disabled={!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '')}
-                    className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm ${!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  />
-                  {formik.touched.employee_id && formik.errors.employee_id && (
-                    <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
-                  )}
-                </div>
-              ) : (
-                /* Create mode: toggle between auto-prefix and manual */
-                <div>
-                  {/* Label row with inline toggle */}
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      Employee ID {!(idSettings?.usePrefix ?? true) && <span className="text-red-500">*</span>}
-                      {(idSettings?.usePrefix ?? true) && idSettings?.isConfigured && (
-                        <span className="text-xs font-normal text-gray-500 ml-1">(Auto)</span>
-                      )}
-                    </label>
-                    {['ADMIN', 'HR', 'SUPER_ADMIN'].includes(user?.role || '') && (
-                      <button
-                        type="button"
-                        role="switch"
-                        title={`${(idSettings?.usePrefix ?? true) ? 'Switch to manual entry' : 'Switch to auto-generate'}`}
-                        aria-checked={idSettings?.usePrefix ?? true}
-                        onClick={() => toggleModeMutation.mutate(!(idSettings?.usePrefix ?? true))}
-                        disabled={toggleModeMutation.isPending}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0 ${(idSettings?.usePrefix ?? true)
-                          ? 'bg-primary'
-                          : 'bg-gray-300 dark:bg-gray-600'
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${(idSettings?.usePrefix ?? true) ? 'translate-x-[18px]' : 'translate-x-[3px]'
-                            }`}
-                        />
-                      </button>
-                    )}
-                  </div>
+              {/* Employee ID Logic: Check configuration */}
+              {!isEditMode && (
+                <div className="space-y-2">
+                  {idSettings && !idSettings.isConfigured ? (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {hasPermission('admin.manage_tenant') ? 'Set Employee ID Prefix (Required)' : 'Configuration Required'}
+                      </label>
 
-                  {/* Input area */}
-                  {(idSettings?.usePrefix ?? true) ? (
-                    idSettings && !idSettings.isConfigured ? (
-                      /* Prefix not yet set - show setup */
-                      ['ADMIN', 'HR', 'SUPER_ADMIN'].includes(user?.role || '') ? (
+                      {hasPermission('admin.manage_tenant') ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
@@ -911,9 +874,14 @@ export const CreateEmployeeForm = ({
                         <div className="p-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400">
                           Prefix not configured. Contact admin.
                         </div>
-                      )
-                    ) : (
-                      /* Prefix configured - show auto-generated preview but allow edit */
+                      )}
+                    </div>
+                  ) : idSettings?.isConfigured ? (
+                    /* Prefix configured - show auto-generated preview but allow edit */
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        Employee ID
+                      </label>
                       <input
                         type="text"
                         name="employee_id"
@@ -923,10 +891,13 @@ export const CreateEmployeeForm = ({
                         placeholder={idSettings?.nextId || 'Auto-generated'}
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       />
-                    )
+                    </div>
                   ) : (
                     /* Manual mode */
-                    <>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        Employee ID *
+                      </label>
                       <input
                         type="text"
                         name="employee_id"
@@ -939,11 +910,12 @@ export const CreateEmployeeForm = ({
                       {formik.touched.employee_id && formik.errors.employee_id && (
                         <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
             </div>
+
 
             {isEditMode && <div></div>}
           </div>
@@ -951,20 +923,14 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Department *
+                Department
               </label>
-              <Select
-                name="department_id"
+              <SearchableSelect
+                options={departments.map((dept) => ({ value: dept.id, label: dept.name }))}
                 value={formik.values.department_id}
-                onChange={formik.handleChange}
+                onChange={(val) => formik.setFieldValue('department_id', val)}
                 placeholder="Select Department"
-              >
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </Select>
+              />
               {formik.touched.department_id && formik.errors.department_id && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.department_id}</p>
               )}
@@ -972,20 +938,14 @@ export const CreateEmployeeForm = ({
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Designation *
+                Designation
               </label>
-              <Select
-                name="designation_id"
+              <SearchableSelect
+                options={designations.map((des) => ({ value: des.id, label: des.name }))}
                 value={formik.values.designation_id}
-                onChange={formik.handleChange}
+                onChange={(val) => formik.setFieldValue('designation_id', val)}
                 placeholder="Select Designation"
-              >
-                {designations.map((des) => (
-                  <option key={des.id} value={des.id}>
-                    {des.name}
-                  </option>
-                ))}
-              </Select>
+              />
               {formik.touched.designation_id && formik.errors.designation_id && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.designation_id}</p>
               )}
@@ -997,18 +957,21 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Reports To (Manager)
               </label>
-              <Select
-                name="reports_to"
+              <SearchableSelect
+                options={managers.filter(m => m.id !== editEmployee?.id).map((mgr) => {
+                  const hasName = mgr.first_name?.trim() || mgr.last_name?.trim();
+                  const displayName = hasName
+                    ? `${mgr.first_name || ''} ${mgr.last_name || ''}`.trim()
+                    : mgr.email;
+                  return {
+                    value: mgr.employee_uuid || mgr.id,
+                    label: `${displayName} (${mgr.role})`
+                  };
+                })}
                 value={formik.values.reports_to}
-                onChange={formik.handleChange}
+                onChange={(val) => formik.setFieldValue('reports_to', val)}
                 placeholder="No Manager"
-              >
-                {managers.filter(m => m.id !== editEmployee?.id).map((mgr) => (
-                  <option key={mgr.id} value={mgr.employee_uuid || mgr.id}>
-                    {mgr.first_name} {mgr.last_name} ({mgr.role})
-                  </option>
-                ))}
-              </Select>
+              />
             </div>
 
             <div>
@@ -1032,42 +995,36 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Employment Type
               </label>
-              <Select
-                name="employment_type"
+              <SearchableSelect
+                options={employmentTypes.map((type) => ({
+                  value: type,
+                  label: type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('-')
+                }))}
                 value={formik.values.employment_type}
-                onChange={formik.handleChange}
-              >
-                <option value="FULL_TIME">Full-time</option>
-                <option value="PART_TIME">Part-time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="INTERN">Intern</option>
-                <option value="TEMP">Temporary</option>
-              </Select>
+                onChange={(val) => formik.setFieldValue('employment_type', val)}
+                placeholder="Select Type"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Shift
               </label>
-              <Select
-                name="shift_id"
+              <SearchableSelect
+                options={shifts.map((s: any) => ({
+                  value: s.id,
+                  label: `${s.name} (${s.start_time.substring(0, 5)} - ${s.end_time.substring(0, 5)})`
+                }))}
                 value={formik.values.shift_id}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  // Also set the shift name for legacy support if needed
-                  const selectedShift = shifts.find((s: any) => s.id === e.target.value);
+                onChange={(val) => {
+                  formik.setFieldValue('shift_id', val);
+                  const selectedShift = shifts.find((s: any) => s.id === val);
                   if (selectedShift) {
                     formik.setFieldValue('shift', selectedShift.name);
                   }
                 }}
                 placeholder="Select Shift"
-              >
-                {shifts.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)})
-                  </option>
-                ))}
-              </Select>
+              />
             </div>
           </div>
 
@@ -1355,19 +1312,20 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Relationship *
               </label>
-              <Select
-                name="emergency_relation"
+              <SearchableSelect
+                options={[
+                  { value: 'SPOUSE', label: 'Spouse' },
+                  { value: 'PARENT', label: 'Parent' },
+                  { value: 'SIBLING', label: 'Sibling' },
+                  { value: 'CHILD', label: 'Child' },
+                  { value: 'FRIEND', label: 'Friend' },
+                  { value: 'OTHER', label: 'Other' }
+                ]}
                 value={formik.values.emergency_relation}
-                onChange={formik.handleChange}
+                onChange={(val) => formik.setFieldValue('emergency_relation', val)}
                 placeholder="Select Relation"
-              >
-                <option value="SPOUSE">Spouse</option>
-                <option value="PARENT">Parent</option>
-                <option value="SIBLING">Sibling</option>
-                <option value="CHILD">Child</option>
-                <option value="FRIEND">Friend</option>
-                <option value="OTHER">Other</option>
-              </Select>
+                error={formik.touched.emergency_relation && Boolean(formik.errors.emergency_relation)}
+              />
               {formik.touched.emergency_relation && formik.errors.emergency_relation && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_relation}</p>
               )}

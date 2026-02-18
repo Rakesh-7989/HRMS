@@ -6,12 +6,12 @@ import { designationService, Designation } from '@/services/designation.service'
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
 import { showToast } from '@/utils/toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DesignationsContent: React.FC = () => {
-    const { user } = useAuth();
-    const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+    const { hasAnyPermission } = usePermission();
+    const canManage = hasAnyPermission(['manage_designations']);
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog

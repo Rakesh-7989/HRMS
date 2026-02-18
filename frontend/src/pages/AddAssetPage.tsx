@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/contexts/PermissionContext';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
@@ -35,7 +35,7 @@ interface AssetFormData {
 }
 
 export const AddAssetPage: React.FC = () => {
-  const { user } = useAuth();
+  const { hasAnyPermission } = usePermission();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
@@ -225,7 +225,7 @@ export const AddAssetPage: React.FC = () => {
     }));
   };
 
-  const canManage = user?.role === 'ADMIN';
+  const canManage = hasAnyPermission(['manage_assets']);
 
   if (!canManage) {
     return (

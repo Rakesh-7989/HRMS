@@ -13,8 +13,9 @@ import { showToast } from '@/utils/toast';
 export const DepartmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
-  const { user } = useAuth();
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission('manage_departments');
+  const canViewOrgDashboard = hasPermission('view_admin_dashboard');
   const [createBit, setCreateBit] = useState(false); // Controls create dialog
   const [editItem, setEditItem] = useState<Department | null>(null); // Controls edit dialog
 
@@ -87,7 +88,7 @@ export const DepartmentsPage: React.FC = () => {
     <DashboardLayout
       title="Departments"
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
+        { label: 'Dashboard', href: canViewOrgDashboard ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Departments' },
       ]}
     >

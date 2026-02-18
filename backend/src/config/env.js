@@ -16,7 +16,12 @@ module.exports = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: parseInt(process.env.PORT || '5000', 10),
 
-    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://hrms_user:root@localhost:5432/hrms_saas_db',
+    DATABASE_URL: process.env.DATABASE_URL || (() => {
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('[HRMS] DATABASE_URL not set — using localhost default. Set this in .env for production.');
+        }
+        return 'postgresql://hrms_user:root@localhost:5432/hrms_saas_db';
+    })(),
     JWT_ACCESS_SECRET: required('JWT_ACCESS_SECRET'),
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
     JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),
@@ -24,7 +29,12 @@ module.exports = {
 
     LOG_LEVEL: (process.env.LOG_LEVEL || 'debug').toLowerCase(),
 
-    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+    FRONTEND_URL: process.env.FRONTEND_URL || (() => {
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('[HRMS] FRONTEND_URL not set — using localhost default. Set this in .env for production.');
+        }
+        return 'http://localhost:5173';
+    })(),
 
     // Email config
     SMTP_HOST: process.env.SMTP_HOST || 'smtp.hostinger.com',
