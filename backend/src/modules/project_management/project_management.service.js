@@ -1344,7 +1344,8 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
                approver_e.first_name as approver_first_name, approver_e.last_name as approver_last_name,
                t.title as task_title, 
                COALESCE(p_entry.name, p_task.name, p_header.name) as project_name,
-               COALESCE(p_entry.id, p_task.id, p_header.id) as real_project_id
+               COALESCE(p_entry.id, p_task.id, p_header.id) as real_project_id,
+               te.is_billable
                FROM timesheet_entries te
                JOIN timesheets ts ON te.timesheet_id = ts.id
                LEFT JOIN tasks t ON te.task_id = t.id
@@ -1418,6 +1419,8 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
       status: row.status,
       week_start_date: row.week_start_date,
       week_end_date: row.week_end_date,
+      project_id: row.real_project_id || row.project_id || null,
+      task_id: row.task_id || null,
       project_name: row.project_name,
       approved_at: row.approved_at,
       rejection_reason: row.rejection_reason,
@@ -1426,7 +1429,8 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
         last_name: row.approver_last_name
       } : null,
       project: row.project_name ? { id: row.real_project_id, name: row.project_name } : null,
-      task: row.task_id ? { id: row.task_id, title: row.task_title } : null
+      task: row.task_id ? { id: row.task_id, title: row.task_title } : null,
+      is_billable: row.is_billable !== false
     })),
     pagination: {
       total,
@@ -1442,7 +1446,7 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
  * - Sets status to SUBMITTED so it enters the approval queue
  */
 exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
-  const { project_id, week_start_date, week_end_date, entries } = data;
+  const { project_id, week_start_date, week_end_date, entries, status } = data;
 
   // Validate Project Members for billable entries
   for (const entry of entries) {
@@ -1475,9 +1479,9 @@ exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
     if (sheet.status === 'APPROVED') {
       throw new BadRequestError('This week\'s timesheet is already approved and cannot be modified');
     }
-    if (sheet.status === 'SUBMITTED') {
-      throw new BadRequestError('This week\'s timesheet is already submitted and pending approval');
-    }
+    // Allow editing SUBMITTED sheets (implicit recall or correction)
+
+
     timesheetId = sheet.id;
     // Delete old entries before inserting fresh ones (prevents duplicates)
     await pool.query(
@@ -1495,23 +1499,35 @@ exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
 
   // Insert fresh entries
   for (const entry of entries) {
+    // Resolve is_billable: entry-level override > project default > true
+    let entryBillable = true;
+    if (typeof entry.is_billable === 'boolean') {
+      entryBillable = entry.is_billable;
+    } else if (entry.project_id) {
+      const projResult = await pool.query('SELECT is_billable FROM projects WHERE id = $1 AND tenant_id = $2', [entry.project_id, tenantId]);
+      if (projResult.rows[0]) entryBillable = projResult.rows[0].is_billable !== false;
+    }
+
     await pool.query(
-      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, project_id, work_date, hours, notes, created_by, updated_by, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
-      [crypto.randomUUID(), tenantId, timesheetId, entry.task_id || null, entry.project_id || null, entry.work_date, entry.hours, entry.notes || null, userId, userId]
+      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, project_id, work_date, hours, notes, is_billable, created_by, updated_by, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+      [crypto.randomUUID(), tenantId, timesheetId, entry.task_id || null, entry.project_id || null, entry.work_date, entry.hours, entry.notes || null, entryBillable, userId, userId]
     );
   }
 
-  // Update total hours and set status to SUBMITTED
+  // Update total hours and set status
+  // Default to SUBMITTED if no status provided (legacy behavior), but strictly use passed status if valid.
+  const finalStatus = status || 'SUBMITTED';
+
   await pool.query(
     `UPDATE timesheets SET 
       total_hours = (SELECT COALESCE(SUM(hours), 0) FROM timesheet_entries WHERE timesheet_id = $1), 
-      status = 'SUBMITTED', 
-      submitted_at = NOW(), 
-      updated_by = $2, 
+      status = $2, 
+      submitted_at = ${finalStatus === 'SUBMITTED' ? 'NOW()' : 'submitted_at'}, 
+      updated_by = $3, 
       updated_at = NOW() 
     WHERE id = $1`,
-    [timesheetId, userId]
+    [timesheetId, finalStatus, userId]
   );
 
   return await exports.getTimesheetById(tenantId, timesheetId);
@@ -1635,11 +1651,12 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
 
   // First get the submitted timesheets (week-level)
   let tsQuery = `SELECT ts.*, 
-                        e.first_name, e.last_name, u.email, u.role as employee_role,
+                        e.first_name, e.last_name, u.email, u.role as employee_role, sh.week_offs as shift_week_offs,
                         p.name as project_name
                  FROM timesheets ts
                  LEFT JOIN employees e ON ts.employee_id = e.id
                  LEFT JOIN users u ON e.user_id = u.id
+                 LEFT JOIN shifts sh ON sh.id = e.shift_id
                  LEFT JOIN projects p ON ts.project_id = p.id
                  WHERE ts.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
   const params = [tenantId];
@@ -1693,13 +1710,16 @@ exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
         first_name: ts.first_name,
         last_name: ts.last_name,
         email: ts.email,
-        role: ts.employee_role
+        role: ts.employee_role,
+        shift_week_offs: ts.shift_week_offs
       },
       entries: entriesResult.rows.map(e => ({
         id: e.id,
         work_date: e.work_date,
         hours: e.hours,
         notes: e.notes,
+        project_id: e.project_id,
+        task_id: e.task_id,
         project_name: e.project_name,
         task_title: e.task_title
       }))
@@ -2219,4 +2239,130 @@ exports.getMentionableUsers = async (tenantId, projectId) => {
     last_name: row.last_name,
     display_name: `${row.first_name} ${row.last_name}`.trim() || row.email
   }));
+};
+
+/**
+ * GET DASHBOARD STATS
+ * Aggregates data server-side for performance and consistency.
+ * Productivity Score Logic: Billable Utilization Rate (Billable Hours / Total Hours * 100)
+ */
+exports.getDashboardStats = async (tenantId, userId, employeeId, role) => {
+  // Determine date range (Last 30 days)
+  const endDate = moment();
+  const startDate = moment().subtract(30, 'days');
+
+  // Base query conditions
+  let query = `
+    SELECT 
+      te.*,
+      p.name as project_name,
+      t.title as task_title
+    FROM timesheet_entries te
+    LEFT JOIN projects p ON te.project_id = p.id
+    LEFT JOIN tasks t ON te.task_id = t.id
+    WHERE te.tenant_id = $1
+      AND te.work_date >= $2
+      AND te.work_date <= $3
+  `;
+  const params = [tenantId, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')];
+
+  // For "My Dashboard" context (Timesheets page), filter by employee_id unless specifically requesting org-wide
+  // Since frontend uses "getMyTimesheetEntries", we assume this is "My Dashboard"
+  query += ` AND te.employee_id = $4`;
+  params.push(employeeId);
+
+  const result = await pool.query(query, params);
+  const entries = result.rows;
+
+  // --- Stats Calculation ---
+  const totalHours = entries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+  // Respect is_billable flag from DB
+  const billableHours = entries.reduce((acc, curr) => acc + (curr.is_billable !== false ? (Number(curr.hours) || 0) : 0), 0);
+
+  const totalWholeHours = Math.floor(totalHours);
+  const totalMinutes = Math.round((totalHours - totalWholeHours) * 60);
+
+  const billableWholeHours = Math.floor(billableHours);
+  const billableMinutes = Math.round((billableHours - billableWholeHours) * 60);
+
+  // --- Charts Calculation (Last 7 Days) ---
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    last7Days.push(moment().subtract(i, 'days').format('YYYY-MM-DD'));
+  }
+
+  const timeLogged = last7Days.map(date => {
+    // Match date string from DB (YYYY-MM-DD)
+    const daysEntries = entries.filter(e => moment(e.work_date).format('YYYY-MM-DD') === date);
+    const hours = daysEntries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    const dateObj = moment(date);
+    return {
+      date: `${dateObj.date()} ${dateObj.format('MMM')}`,
+      time: hours
+    };
+  });
+
+  const billableVsNonBillable = last7Days.map(date => {
+    const daysEntries = entries.filter(e => moment(e.work_date).format('YYYY-MM-DD') === date);
+    const billable = daysEntries.filter(e => e.is_billable !== false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    const nonBillable = daysEntries.filter(e => e.is_billable === false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    return {
+      date: moment(date).date().toString(),
+      billable,
+      nonBillable
+    };
+  });
+
+  // --- Breakdown Calculation ---
+  const projectMap = {};
+  const taskMap = {};
+
+  entries.forEach(e => {
+    const pName = e.project_name || 'Unassigned';
+    projectMap[pName] = (projectMap[pName] || 0) + (Number(e.hours) || 0);
+
+    const tName = e.task_title || (e.project_name ? `${e.project_name} Task` : 'Unknown Task');
+    taskMap[tName] = (taskMap[tName] || 0) + (Number(e.hours) || 0);
+  });
+
+  const projects = Object.keys(projectMap).map((name, i) => ({
+    name,
+    time: `${Math.round(projectMap[name] * 10) / 10}h`,
+    color: ['bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-blue-500'][i % 4]
+  }));
+
+  const task_types = Object.keys(taskMap).slice(0, 5).map((name, i) => ({
+    name,
+    time: `${Math.round(taskMap[name] * 10) / 10}h`,
+    color: ['bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-blue-500'][i % 4]
+  }));
+
+  return {
+    stats: {
+      total_time: {
+        hours: totalWholeHours,
+        minutes: totalMinutes,
+        trend: 0
+      },
+      billable_hours: {
+        hours: billableWholeHours,
+        minutes: billableMinutes,
+        trend: 0,
+        label: `${billableWholeHours}h${billableMinutes.toString().padStart(2, '0')}`
+      },
+      productivity_score: {
+        value: totalHours > 0 ? Math.round((billableHours / totalHours) * 100) : 0,
+        trend: 0
+      }
+    },
+    charts: {
+      time_logged: timeLogged,
+      billable_vs_non_billable: billableVsNonBillable
+    },
+    breakdown: {
+      task_types,
+      projects,
+      plans: projects // Match frontend expectation
+    }
+  };
 };

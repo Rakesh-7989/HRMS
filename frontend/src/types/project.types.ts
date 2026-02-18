@@ -48,6 +48,7 @@ export interface Project {
     status: ProjectStatus;
     description?: string;
     budget?: number;
+    is_billable?: boolean;
     client?: Client;
     created_at?: string;
     updated_at?: string;
@@ -193,11 +194,24 @@ export interface Timesheet {
         last_name: string;
         email?: string;
         role?: string;
+        shift_week_offs?: string[];
     };
     project?: Project;
     task?: Task;
+    is_billable?: boolean;
     created_at?: string;
     updated_at?: string;
+    entries?: {
+        id: string;
+        work_date: string;
+        hours: number;
+        notes?: string;
+        project_name?: string;
+        task_title?: string;
+        project_id?: string;
+        task_id?: string;
+        is_billable?: boolean;
+    }[];
 }
 
 export interface CreateTimesheetData {

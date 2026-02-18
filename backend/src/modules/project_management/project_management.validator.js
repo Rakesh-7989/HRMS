@@ -435,6 +435,9 @@ exports.createTimesheetSchema = z.object({
         })
       )
       .min(1, "Must have at least one entry"),
+    status: z
+      .enum(["DRAFT", "SUBMITTED"])
+      .optional(),
   }),
 });
 

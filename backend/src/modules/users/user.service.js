@@ -430,6 +430,7 @@ exports.getUserById = async (db, id, tenantId) => {
             e.uan, e.pf_account, e.esi_number, e.profile_photo_url, e.aadhar_number, e.branch_name, e.annual_salary, e.job_location,
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
             COALESCE(sh.name, e.shift) as shift,
+            sh.week_offs as shift_week_offs,
             esd.ctc
      FROM users u 
      LEFT JOIN employees e ON e.user_id = u.id
@@ -645,7 +646,7 @@ exports.getMyProfile = async (db, user) => {
       COALESCE(sh.name, e.shift) as shift,
       sh.start_time as shift_start_time,
       sh.end_time as shift_end_time,
-      sh.end_time as shift_end_time,
+      sh.week_offs as shift_week_offs,
       e.shift_id,
       COALESCE(esd.bank_name, e.bank_name) as bank_name,
       COALESCE(esd.bank_account_number, e.account_number) as account_number,

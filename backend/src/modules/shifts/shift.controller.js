@@ -50,6 +50,12 @@ exports.deleteShift = async (req, res, next) => {
         if (!result) return res.status(404).json({ status: 'error', message: 'Shift not found' });
         res.json({ status: 'success', message: 'Shift deleted successfully' });
     } catch (error) {
+        if (error.code === '23503') {
+            return res.status(409).json({
+                status: 'error',
+                message: 'Cannot delete this shift as it is currently assigned to one or more employees.'
+            });
+        }
         next(error);
     }
 };

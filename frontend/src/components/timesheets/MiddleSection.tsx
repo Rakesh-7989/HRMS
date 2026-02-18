@@ -76,10 +76,7 @@ const MainChart: React.FC<{ data: TimesheetDashboardCharts['time_logged'] }> = (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-gray-800">Time logged</h3>
-            <select className="text-xs font-medium text-gray-400 bg-transparent border-none outline-none cursor-pointer hover:text-gray-600">
-                <option>Last 30 days</option>
-                <option>Last 7 days</option>
-            </select>
+            <span className="text-xs font-medium text-gray-400">Last 7 days</span>
         </div>
 
         <div className="flex-1 w-full min-h-[250px]">

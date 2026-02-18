@@ -1,6 +1,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { cn } from '@/utils/cn';
+
 import { TimesheetDashboardCharts, TimesheetDashboardBreakdown, TimesheetDashboardStats } from '@/types/project.types';
 
 // --- Components ---
@@ -15,9 +15,7 @@ const BillableTimeChart: React.FC<{ data: TimesheetDashboardCharts['billable_vs_
                     <span className="flex items-center gap-1 text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-200" />Non-billable</span>
                 </div>
             </div>
-            <select className="text-xs font-medium text-gray-400 bg-transparent border-none outline-none cursor-pointer">
-                <option>Last 30 days</option>
-            </select>
+            <span className="text-xs font-medium text-gray-400">Last 7 days</span>
         </div>
 
         <div className="flex-1 w-full min-h-[200px]">
@@ -109,37 +107,7 @@ const BillableHoursStats: React.FC<{ stats: TimesheetDashboardStats }> = ({ stat
     );
 };
 
-const PlansList: React.FC<{ plans: TimesheetDashboardBreakdown['plans'] }> = ({ plans }) => (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
-        <div className="flex items-center gap-2 mb-6">
-            <h3 className="font-bold text-gray-800">Plans</h3>
-            <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{plans.length}</span>
-        </div>
 
-        {/* Progress Bar */}
-        {plans.length > 0 && (
-            <div className="flex h-1.5 w-full rounded-full overflow-hidden mb-6 gap-0.5">
-                {plans.slice(0, 3).map((plan, i) => (
-                    <div key={i} className={cn(plan.color)} style={{ width: `${100 / Math.min(plans.length, 3)}%` }} />
-                ))}
-            </div>
-        )}
-
-        <ul className="space-y-6">
-            {plans.map((plan, i) => (
-                <li key={i} className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                            <div className={cn("w-1.5 h-1.5 rounded-full", plan.color)} />
-                            <span className="text-gray-600 font-medium truncate max-w-[120px]">{plan.name}</span>
-                        </div>
-                        <span className="text-gray-400 font-medium">{plan.time}</span>
-                    </div>
-                </li>
-            ))}
-        </ul>
-    </div>
-);
 
 interface BottomSectionProps {
     charts: TimesheetDashboardCharts;
@@ -147,22 +115,17 @@ interface BottomSectionProps {
     stats: TimesheetDashboardStats;
 }
 
-export const BottomSection: React.FC<BottomSectionProps> = ({ charts, breakdown, stats }) => {
+export const BottomSection: React.FC<BottomSectionProps> = ({ charts, stats }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[320px]">
-            {/* Billable Bar Chart - 6 cols (Approx half) */}
-            <div className="lg:col-span-6">
+            {/* Billable Bar Chart - 8 cols */}
+            <div className="lg:col-span-8">
                 <BillableTimeChart data={charts.billable_vs_non_billable} />
             </div>
 
-            {/* Billable Donut - 3 cols */}
-            <div className="lg:col-span-3">
+            {/* Billable Donut - 4 cols */}
+            <div className="lg:col-span-4">
                 <BillableHoursStats stats={stats} />
-            </div>
-
-            {/* Plans - 3 cols */}
-            <div className="lg:col-span-3">
-                <PlansList plans={breakdown.plans} />
             </div>
         </div>
     );

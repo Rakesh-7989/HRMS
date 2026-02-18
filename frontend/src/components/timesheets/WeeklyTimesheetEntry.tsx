@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
-import { Loader2, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Trash2, Copy } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Plus, Trash2, Save, IndianRupee, Ban, Check, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { Button } from '@/components/ui/Button';
@@ -11,30 +11,51 @@ import { timesheetService } from '@/services/timesheet.service';
 import { attendanceService } from '@/services/attendance.service';
 import { projectsService } from '@/services/projects.service';
 import { cn } from '@/utils/cn';
+import { Task, Timesheet } from '@/types/project.types';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Interfaces
 interface WeeklyTimesheetEntryProps {
     onSuccess?: () => void;
     onCancel?: () => void;
+    initialDate?: Date;
+    preloadedTimesheet?: Timesheet;
+    isApprovalMode?: boolean;
+    onApprove?: (id: string, notes?: string) => void;
+    onReject?: (id: string, reason: string) => void;
 }
 
-const MAX_HOURS = 9; // Standard work hours
-const GRACE_PERIOD = 0.5; // 30 minutes grace period
-const OVERTIME_THRESHOLD = MAX_HOURS + GRACE_PERIOD; // 9.5 hours - only show overtime above this
-
-interface DaySplit {
-    project_id: string;
-    hours: number;
-    notes?: string;
+interface TimesheetRow {
+    id: string;
+    projectId: string;
+    taskId: string;
+    isBillable: boolean;
+    hours: Record<string, number>;
+    notes: Record<string, string>;
+    projectName?: string;
+    taskTitle?: string;
 }
 
-export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSuccess, onCancel }) => {
+export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
+    onSuccess,
+    onCancel,
+    initialDate,
+    preloadedTimesheet,
+    isApprovalMode,
+    onApprove,
+    onReject
+}) => {
+    const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(initialDate || (preloadedTimesheet ? new Date(preloadedTimesheet.week_start_date!) : new Date()));
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [overtimeReasons, setOvertimeReasons] = useState<Record<string, string>>({});
-    const [billableDays, setBillableDays] = useState<Record<string, boolean>>({});
-    const [daySplits, setDaySplits] = useState<Record<string, DaySplit[]>>({});
+    const [forceEdit, setForceEdit] = useState(false);
+
+    // Reset edit mode when navigating weeks
+    useEffect(() => { setForceEdit(false); }, [currentDate]);
+
+    // Matrix State
+    const [rows, setRows] = useState<TimesheetRow[]>([]);
 
     // Get current week range
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
@@ -42,22 +63,28 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSu
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
     const dates = weekDays.map(d => format(d, 'yyyy-MM-dd'));
 
-    // Fetch attendance hours for the current week
-    const { data: attendanceHours, isLoading: isLoadingAttendance, error: attendanceError } = useQuery({
-        queryKey: ['attendance', 'weekly-hours', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
+    // Fetch attendance hours for reference
+    const { data: attendanceHours, isLoading: isLoadingAttendance } = useQuery({
+        queryKey: ['attendance', 'weekly-hours', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd'), preloadedTimesheet?.employee?.id],
         queryFn: () => attendanceService.getWeeklyAttendanceHours({
             week_start: format(weekStart, 'yyyy-MM-dd'),
             week_end: format(weekEnd, 'yyyy-MM-dd')
+            // TODO: Add employee_id param to service if viewing another user's attendance
         }),
+        enabled: !isApprovalMode // Only fetch for self for now, or update service to support employeeId
     });
 
-    // Fetch existing timesheet entries for the week
-    const { data: existingEntries, isLoading: isLoadingEntries } = useQuery({
+    // Fetch existing timesheet entries for the week (if not preloaded)
+    const { data: fetchedEntries, isLoading: isLoadingEntries } = useQuery({
         queryKey: ['existing-timesheets', weekStart.toISOString()],
         queryFn: () => timesheetService.getMyTimesheets({
             week_start_date: format(weekStart, 'yyyy-MM-dd')
-        })
+        }),
+        enabled: !preloadedTimesheet
     });
+
+    const activeEntries = preloadedTimesheet ? preloadedTimesheet.entries : fetchedEntries;
+    const activeTimesheetStatus = preloadedTimesheet ? preloadedTimesheet.status : (activeEntries as any)?.[0]?.status;
 
     // Fetch projects
     const { data: projects } = useQuery({
@@ -65,663 +92,610 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({ onSu
         queryFn: () => projectsService.getProjects({ status: 'ACTIVE' }),
     });
 
-    // Initialize state from attendance and existing entries
+    // Initialize Rows
     useEffect(() => {
-        if (attendanceHours?.daily_data) {
-            const initialBillable: Record<string, boolean> = {};
-            const initialSplits: Record<string, DaySplit[]> = {};
-            const initialOvertime: Record<string, string> = {};
+        if (activeEntries && projects) {
+            // Group entries by Project + Task
+            const grouped: Record<string, TimesheetRow> = {};
 
-            dates.forEach(dateStr => {
-                // Find existing entries for this date
-                const dayEntries = existingEntries?.filter(e =>
-                    e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr))
-                ) || [];
+            activeEntries.forEach(entry => {
+                if (!entry.work_date) return;
+                const dateStr = format(new Date(entry.work_date), 'yyyy-MM-dd');
 
-                if (dayEntries.length > 0) {
-                    // Check if any entry has a project (meaning it was billable)
-                    // The backend returns project: { id, name }
-                    const isBillable = dayEntries.some(e => e.project?.id || e.project_id);
-                    initialBillable[dateStr] = isBillable;
+                // Handle both flat entries and nested entries structures
+                const pId = ((entry as any).project?.id || (entry as any).project_id || '').toString();
+                const tId = ((entry as any).task?.id || (entry as any).task_id || '').toString();
 
-                    if (isBillable) {
-                        initialSplits[dateStr] = dayEntries
-                            .filter(e => e.project?.id || e.project_id)
-                            .map(e => ({
-                                project_id: (e.project?.id || e.project_id || '').toString(),
-                                hours: Number(e.hours),
-                                notes: e.notes || ''
-                            }));
-                    } else {
-                        // If not billable but has entry, it's a standard entry
-                        // Prefer the saved hours from DB for accuracy
-                        initialSplits[dateStr] = [{
-                            project_id: '',
-                            hours: Number(dayEntries[0].hours),
-                            notes: dayEntries[0].notes || ''
-                        }];
-                    }
+                const key = `${pId}-${tId}`;
 
-                    // Collect notes as overtime reason if needed (combine all entry notes)
-                    const combinedNotes = dayEntries.map(e => e.notes).filter(Boolean).join('. ');
-                    if (combinedNotes) initialOvertime[dateStr] = combinedNotes;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        id: key,
+                        projectId: pId,
+                        taskId: tId,
+                        isBillable: (entry as any).is_billable !== false,
+                        hours: {},
+                        notes: {},
+                        projectName: (entry as any).project?.name || (entry as any).project_name,
+                        taskTitle: (entry as any).task?.title || (entry as any).task_title
+                    };
+                }
+
+                grouped[key].hours[dateStr] = (grouped[key].hours[dateStr] || 0) + Number(entry.hours);
+                if (entry.notes) {
+                    grouped[key].notes[dateStr] = grouped[key].notes[dateStr]
+                        ? grouped[key].notes[dateStr] + '\n' + entry.notes
+                        : entry.notes;
+                }
+            });
+
+            const initRows = Object.values(grouped);
+            if (initRows.length === 0) {
+                if (isApprovalMode) {
+                    setRows([]); // No rows to show
                 } else {
-                    // Default for new days
-                    initialBillable[dateStr] = false;
-                    initialSplits[dateStr] = [{
-                        project_id: '',
-                        hours: getDailyHours(dateStr),
-                        notes: ''
-                    }];
+                    setRows([{
+                        id: Math.random().toString(36).substr(2, 9),
+                        projectId: '',
+                        taskId: '',
+                        isBillable: true,
+                        hours: {},
+                        notes: {}
+                    }]);
                 }
-            });
-
-            setBillableDays(initialBillable);
-            setDaySplits(initialSplits);
-            setOvertimeReasons(initialOvertime);
+            } else {
+                setRows(initRows);
+            }
         }
-    }, [attendanceHours, existingEntries, weekStart]);
+    }, [activeEntries, projects, isApprovalMode]);
 
-    // Check if any existing entry is in a state that prevents editing
-    const isReadOnly = existingEntries?.some(e => e.status === 'APPROVED' || e.status === 'SUBMITTED');
-    const timesheetStatus = existingEntries?.[0]?.status || 'DRAFT';
+    const timesheetStatus = activeTimesheetStatus || 'DRAFT';
+    const hasExistingData = activeEntries && activeEntries.length > 0;
 
-    useEffect(() => {
-        if (attendanceError) {
-            toast.error("Failed to load attendance hours");
-        }
-    }, [attendanceError]);
+    // Read-only logic:
+    // 1. Approval Mode: ALWAYS read-only
+    // 2. Approved Status: ALWAYS read-only
+    // 3. Submitted/Draft: Read-only unless forceEdit is true
+    const isReadOnly = isApprovalMode || timesheetStatus === 'APPROVED' || (hasExistingData && !forceEdit);
 
-    // Get daily data from attendance
-    const getDailyData = (dateStr: string) => {
-        return attendanceHours?.daily_data?.[dateStr] || null;
+    // Helper to get daily total from rows
+    const getDailyTotal = (dateStr: string) => {
+        return rows.reduce((acc, row) => acc + (row.hours[dateStr] || 0), 0);
     };
 
-    // Get daily hours from attendance data
-    const getDailyHours = (dateStr: string): number => {
-        return getDailyData(dateStr)?.hours || 0;
+    // Helper to get daily attendance hours
+    const getAttendanceTotal = (dateStr: string) => {
+        return attendanceHours?.daily_data?.[dateStr]?.hours || 0;
     };
 
-    // Check if day is on leave
-    const isOnLeave = (dateStr: string): boolean => {
-        return getDailyData(dateStr)?.status === 'LEAVE';
+    const handleAddRow = () => {
+        setRows(prev => [...prev, {
+            id: Math.random().toString(36).substr(2, 9),
+            projectId: '',
+            taskId: '',
+            isBillable: true,
+            hours: {},
+            notes: {}
+        }]);
     };
 
-    // Get leave type name
-    const getLeaveType = (dateStr: string): string => {
-        return getDailyData(dateStr)?.leave_type || 'Leave';
+    const handleRemoveRow = (id: string) => {
+        setRows(prev => prev.filter(r => r.id !== id));
     };
 
-    // Check if a day has overtime (beyond max + grace period)
-    const hasOvertime = (dateStr: string): boolean => {
-        const hours = getDailyHours(dateStr);
-        return hours > OVERTIME_THRESHOLD;
-    };
-
-    // Count days with overtime that need reasons
-    const daysNeedingReason = dates.filter(d => hasOvertime(d) && !overtimeReasons[d]?.trim());
-
-    // Handle overtime reason change
-    const handleOvertimeReasonChange = (dateStr: string, reason: string) => {
-        setOvertimeReasons(prev => ({ ...prev, [dateStr]: reason }));
-    };
-
-    // Handle billable toggle
-    const handleBillableToggle = (dateStr: string, isBillable: boolean) => {
-        setBillableDays(prev => ({ ...prev, [dateStr]: isBillable }));
-    };
-
-    // Handle adding a split
-    const addSplit = (dateStr: string) => {
-        const dailyHours = getDailyHours(dateStr);
-        const currentSplits = daySplits[dateStr] || [];
-        const currentTotal = currentSplits.reduce((acc, s) => acc + s.hours, 0);
-        const remainingHours = Math.max(0, dailyHours - currentTotal);
-
-        setDaySplits(prev => ({
-            ...prev,
-            [dateStr]: [
-                ...(prev[dateStr] || []),
-                { project_id: '', hours: remainingHours, notes: '' }
-            ]
+    const handleRowChange = (id: string, field: keyof TimesheetRow, value: any) => {
+        setRows(prev => prev.map(r => {
+            if (r.id !== id) return r;
+            if (field === 'projectId' && value !== r.projectId) {
+                const proj = projects?.find((p: any) => p.id?.toString() === value?.toString());
+                const isProjectBillable = proj?.is_billable !== false;
+                return { ...r, projectId: value, taskId: '', isBillable: isProjectBillable };
+            }
+            return { ...r, [field]: value };
         }));
     };
 
-    // Handle removing a split
-    const removeSplit = (dateStr: string, index: number) => {
-        setDaySplits(prev => ({
-            ...prev,
-            [dateStr]: prev[dateStr].filter((_, i) => i !== index)
+    const handleHourChange = (id: string, dateStr: string, val: string) => {
+        const numVal = parseFloat(val);
+        setRows(prev => prev.map(r => {
+            if (r.id !== id) return r;
+            const newHours = { ...r.hours };
+            if (val === '' || isNaN(numVal)) {
+                delete newHours[dateStr];
+            } else {
+                newHours[dateStr] = numVal;
+            }
+            return { ...r, hours: newHours };
         }));
     };
 
-    // Handle split update
-    const updateSplit = (dateStr: string, index: number, updates: Partial<DaySplit>) => {
-        // Validation: Project Uniqueness
-        if (updates.project_id) {
-            const currentSplits = daySplits[dateStr] || [];
-            const isDuplicate = currentSplits.some((s, i) => i !== index && s.project_id === updates.project_id);
-            if (isDuplicate) {
-                toast.error('This project is already selected for this day.');
-                return;
-            }
-        }
-
-        // Validation: Split hours cannot exceed total daily hours
-        if (updates.hours !== undefined) {
-            const dailyTotal = getDailyHours(dateStr);
-            if (updates.hours > dailyTotal) {
-                toast.error(`Individual split cannot exceed daily total of ${dailyTotal} hrs`);
-                return;
-            }
-        }
-
-        setDaySplits(prev => {
-            const current = [...(prev[dateStr] || [])];
-            current[index] = { ...current[index], ...updates };
-            return { ...prev, [dateStr]: current };
-        });
-    };
-
-    // Copy one day's configuration to all other days with attendance
-    const copyDaySetupToAll = (sourceDateStr: string) => {
-        const sourceSplits = daySplits[sourceDateStr] || [];
-        if (sourceSplits.length === 0 || sourceSplits.every(s => !s.project_id)) {
-            toast.error("Please select at least one project first.");
-            return;
-        }
-
-        const sourceTotal = getDailyHours(sourceDateStr);
-
-        setDaySplits(prev => {
-            const next = { ...prev };
-            dates.forEach(targetDateStr => {
-                if (targetDateStr === sourceDateStr) return;
-
-                const targetHours = getDailyHours(targetDateStr);
-                if (targetHours > 0 && !isOnLeave(targetDateStr)) {
-                    // Proportionally scale hours if daily totals differ
-                    const scaledSplits = sourceSplits.map(s => ({
-                        ...s,
-                        hours: Number(((s.hours / sourceTotal) * targetHours).toFixed(1))
-                    }));
-
-                    next[targetDateStr] = scaledSplits;
-                    setBillableDays(b => ({ ...b, [targetDateStr]: true }));
-                }
-            });
-            return next;
-        });
-        toast.success("Applied to all working days!");
-    };
-
-    // Validate before submit
-    const validate = () => {
-        for (const dateStr of dates) {
-            const dailyHours = getDailyHours(dateStr);
-            const onLeave = isOnLeave(dateStr);
-
-            if (onLeave) continue;
-
-            if (hasOvertime(dateStr) && !overtimeReasons[dateStr]?.trim()) {
-                toast.error(`Please provide a reason for overtime on ${format(new Date(dateStr), 'MMM d')}`);
-                return false;
-            }
-
-            if (billableDays[dateStr]) {
-                const splits = daySplits[dateStr] || [];
-                if (splits.length === 0) {
-                    toast.error(`Please add at least one project for ${format(new Date(dateStr), 'MMM d')}`);
-                    return false;
-                }
-
-                const projectsSeen = new Set<string>();
-                let splitTotal = 0;
-                for (const split of splits) {
-                    if (!split.project_id) {
-                        toast.error(`Please select a project for all splits on ${format(new Date(dateStr), 'MMM d')}`);
-                        return false;
-                    }
-
-                    if (projectsSeen.has(split.project_id)) {
-                        toast.error(`Duplicate project selected for ${format(new Date(dateStr), 'MMM d')}`);
-                        return false;
-                    }
-                    projectsSeen.add(split.project_id);
-
-                    if (split.hours <= 0) {
-                        toast.error(`Hours must be greater than 0 for all splits on ${format(new Date(dateStr), 'MMM d')}`);
-                        return false;
-                    }
-                    splitTotal += split.hours;
-                }
-
-                // Small tolerance for floating point precision
-                if (Math.abs(splitTotal - dailyHours) > 0.01) {
-                    toast.error(`Total split hours (${splitTotal.toFixed(1)}) must match attendance hours (${dailyHours.toFixed(1)}) for ${format(new Date(dateStr), 'MMM d')}`);
-                    return false;
-                }
-            }
-        }
-        return true;
-    };
-
-    const handleSubmit = async () => {
-        if (!validate()) return;
+    const handleSubmit = async (shouldSubmit: boolean) => {
+        if (isApprovalMode) return;
         setIsSubmitting(true);
-
         try {
-            // Create entries from attendance hours and splits
+            // Validation
             const entries: any[] = [];
+            let hasErrors = false;
 
-            dates.forEach(dateStr => {
-                const dailyHours = getDailyHours(dateStr);
-                if (dailyHours <= 0) return;
+            for (const row of rows) {
+                const totalRowHours = Object.values(row.hours).reduce((a, b) => a + b, 0);
+                if (totalRowHours === 0) continue;
 
-                if (billableDays[dateStr]) {
-                    const splits = daySplits[dateStr] || [];
-                    splits.forEach(split => {
+                if (!row.projectId) {
+                    toast.error("Please select a project for all rows with hours");
+                    hasErrors = true;
+                    break;
+                }
+
+                for (const dateStr of dates) {
+                    const hrs = row.hours[dateStr];
+                    if (hrs && hrs > 0) {
                         entries.push({
                             work_date: dateStr,
-                            hours: split.hours,
-                            notes: (overtimeReasons[dateStr] ? `${overtimeReasons[dateStr]}. ${split.notes || ''}` : split.notes) || undefined,
-                            project_id: split.project_id
-                        });
-                    });
-                } else {
-                    // Non-billable day: only create entry if there are actual attendance hours
-                    if (dailyHours > 0) {
-                        entries.push({
-                            work_date: dateStr,
-                            hours: dailyHours,
-                            notes: overtimeReasons[dateStr] || undefined,
-                            project_id: undefined
+                            hours: hrs,
+                            project_id: row.projectId,
+                            task_id: row.taskId || undefined,
+                            notes: row.notes[dateStr],
+                            is_billable: row.isBillable
                         });
                     }
                 }
-            });
+            }
 
-            if (entries.length === 0) {
-                toast.error("No attendance hours to submit");
+            if (hasErrors) {
                 setIsSubmitting(false);
                 return;
             }
 
+            if (entries.length === 0) {
+                toast.error("Please enter some time before saving");
+                setIsSubmitting(false);
+                return;
+            }
+
+            const status = shouldSubmit ? 'SUBMITTED' : 'DRAFT';
+
             await timesheetService.createWeeklyTimesheet({
                 week_start_date: format(weekStart, 'yyyy-MM-dd'),
                 week_end_date: format(weekEnd, 'yyyy-MM-dd'),
-                entries
+                entries,
+                status
             });
 
+            if (shouldSubmit) {
+                toast.success("Timesheet submitted successfully");
+            } else {
+                toast.success("Timesheet draft saved successfully");
+            }
+
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
-            queryClient.invalidateQueries({ queryKey: ['attendance', 'weekly-hours'] });
-            toast.success("Timesheet submitted successfully");
+            queryClient.invalidateQueries({ queryKey: ['existing-timesheets'] });
+
             if (onSuccess) onSuccess();
-            setOvertimeReasons({});
+
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.response?.data?.message || "Failed to submit timesheet");
+            toast.error(shouldSubmit ? "Failed to submit timesheet" : "Failed to save timesheet");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoadingAttendance || isLoadingEntries) {
+    const TaskSelect = ({ projectId, value, onChange, disabled }: { projectId: string; value: string; onChange: (val: string) => void; disabled?: boolean }) => {
+        const { data: tasks, isLoading } = useQuery({
+            queryKey: ['tasks', projectId],
+            queryFn: () => projectsService.getTasks({ project_id: projectId }),
+            enabled: !!projectId
+        });
+
+        const selectedTask = tasks?.find((t: Task) => t.id?.toString() === value?.toString());
+
+        if (disabled && selectedTask) {
+            return (
+                <p className="text-xs font-medium text-gray-600 leading-snug break-words whitespace-normal py-0.5">
+                    {selectedTask.title}
+                </p>
+            );
+        }
+        if (disabled && !selectedTask) {
+            return (
+                <p className="text-xs text-gray-400 italic py-0.5">No activity</p>
+            );
+        }
+
+        return (
+            <select
+                className="w-full bg-transparent text-xs font-medium outline-none border-b border-gray-200 hover:border-gray-400 focus:border-indigo-500 transition-colors py-1 cursor-pointer"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                disabled={!projectId}
+            >
+                <option value="">{isLoading ? "Loading..." : "Select Activity"}</option>
+                {tasks?.map((t: Task) => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                ))}
+            </select>
+        );
+    };
+
+    if (isLoadingAttendance && !isApprovalMode || isLoadingEntries && !preloadedTimesheet) {
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4 h-[400px]">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-                <p className="text-sm font-medium text-gray-400 animate-pulse">Syncing timesheet data...</p>
             </div>
         );
     }
 
     return (
-        <Card className="p-0 border-none shadow-none bg-white dark:bg-gray-800/50">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
-                        <CalendarIcon size={20} className="stroke-[2.5px]" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white">Weekly Timesheet</h3>
-                        <p className="text-xs text-gray-500 font-medium">{format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 p-1 rounded-lg">
-                    <Button variant="ghost" size="sm" onClick={() => setCurrentDate(subDays(currentDate, 7))} className="h-8 w-8 p-0">
-                        <ChevronLeft size={16} />
-                    </Button>
-                    <span className="text-xs font-bold px-2 min-w-[100px] text-center">
-                        {isSameDay(currentDate, new Date()) ? 'Current Week' : format(weekStart, 'MMM d')}
-                    </span>
-                    <Button variant="ghost" size="sm" onClick={() => setCurrentDate(addDays(currentDate, 7))} className="h-8 w-8 p-0">
-                        <ChevronRight size={16} />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Attendance Days List */}
-            <div className="p-6 space-y-4">
-                {dates.map(dateStr => {
-                    const hours = getDailyHours(dateStr);
-                    const onLeave = isOnLeave(dateStr);
-                    const leaveType = getLeaveType(dateStr);
-                    const isOvertime = hasOvertime(dateStr);
-                    const needsReason = isOvertime && !overtimeReasons[dateStr]?.trim();
-                    const dayDate = new Date(dateStr);
-                    const isToday = isSameDay(dayDate, new Date());
-                    const dayIsLogged = existingEntries?.some(e => e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr)));
-
-                    return (
-                        <div
-                            key={dateStr}
-                            className={cn(
-                                "group relative bg-white dark:bg-gray-800/40 rounded-2xl border transition-all duration-300",
-                                isToday ? "border-indigo-200 dark:border-indigo-500/30 shadow-md shadow-indigo-500/5 ring-1 ring-indigo-50/50" : "border-gray-100 dark:border-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600 shadow-sm"
-                            )}
-                        >
-                            <div className="flex flex-col md:flex-row p-4 gap-6">
-                                {/* Left Side: Day Identity */}
-                                <div className="flex items-center gap-4 min-w-[140px]">
-                                    <div className={cn(
-                                        "w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black transition-colors",
-                                        isToday ? "bg-indigo-600 text-white" : "bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-gray-700"
-                                    )}>
-                                        <span className="text-[10px] uppercase tracking-tighter leading-none mb-0.5">{format(dayDate, 'EEE')}</span>
-                                        <span className="text-lg leading-none">{format(dayDate, 'd')}</span>
-                                    </div>
-                                    <div>
-                                        <p className={cn("text-xs font-bold uppercase tracking-widest leading-none mb-1", isToday ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400")}>
-                                            {format(dayDate, 'MMMM')}
-                                        </p>
-                                        {onLeave ? (
-                                            <div className="flex items-center gap-1 text-amber-500">
-                                                <span className="text-[10px] font-extrabold uppercase truncate max-w-[80px]">{leaveType}</span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col gap-1">
-                                                {hours > 0 ? (
-                                                    <div className={cn("flex items-center gap-1", isOvertime ? "text-orange-500" : "text-green-500")}>
-                                                        <Clock size={12} />
-                                                        <span className="text-xs font-black">{hours.toFixed(1)} hrs</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold text-gray-300 dark:text-gray-600 uppercase italic">No Entry</span>
-                                                )}
-                                                {existingEntries?.some(e => e.work_date && isSameDay(new Date(e.work_date), new Date(dateStr))) && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-md border border-green-100 dark:border-green-500/20 w-fit">
-                                                        <span className="text-[8px] font-black uppercase">Logged</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Middle Section: Billable Toggle or Logged Status */}
-                                <div className="flex items-center md:px-6 md:border-l md:border-r border-gray-100 dark:border-gray-700/50">
-                                    {!onLeave && (
-                                        dayIsLogged ? (
-                                            <div className="flex flex-row md:flex-col items-center gap-1">
-                                                <div className="px-2.5 py-1 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/20">
-                                                    <span className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest">Saved</span>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-row md:flex-col items-center gap-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:block">Billable</span>
-                                                <button
-                                                    disabled={hours === 0 || isReadOnly}
-                                                    onClick={() => handleBillableToggle(dateStr, !billableDays[dateStr])}
-                                                    className={cn(
-                                                        "w-10 h-5 rounded-full transition-all relative focus:outline-none ring-offset-2 focus:ring-2",
-                                                        billableDays[dateStr] ? "bg-indigo-600 ring-indigo-500" : "bg-gray-200 dark:bg-gray-700 ring-gray-200 dark:ring-gray-700",
-                                                        (hours === 0 || isReadOnly) && "opacity-30 cursor-not-allowed"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
-                                                        billableDays[dateStr] ? "left-5.5" : "left-0.5"
-                                                    )} />
-                                                </button>
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest md:hidden">Billable</span>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-
-                                {/* Right Section: Splits / Projects */}
-                                <div className="flex-1 min-w-0">
-                                    {!onLeave && !dayIsLogged && billableDays[dateStr] ? (
-                                        <div className="space-y-3">
-                                            <div className="flex flex-wrap gap-3">
-                                                {daySplits[dateStr]?.map((split, idx) => (
-                                                    <div key={idx} className="flex-1 min-w-[240px] bg-gray-50/50 dark:bg-gray-900/40 p-3 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3 group/split transition-all hover:bg-white dark:hover:bg-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900/30">
-                                                        <div className="flex-1 min-w-0">
-                                                            <select
-                                                                value={split.project_id}
-                                                                onChange={(e) => updateSplit(dateStr, idx, { project_id: e.target.value })}
-                                                                disabled={isReadOnly}
-                                                                className={cn(
-                                                                    "w-full text-[11px] font-bold bg-transparent border-none outline-none text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:cursor-default",
-                                                                    !split.project_id ? "text-orange-500" : ""
-                                                                )}
-                                                            >
-                                                                <option value="" disabled className="text-gray-400">Select Project...</option>
-                                                                {projects?.map((p: any) => (
-                                                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700">
-                                                            <input
-                                                                type="number"
-                                                                step="0.5"
-                                                                min="0"
-                                                                max={hours}
-                                                                value={split.hours || ''}
-                                                                onChange={(e) => updateSplit(dateStr, idx, { hours: parseFloat(e.target.value) || 0 })}
-                                                                disabled={isReadOnly}
-                                                                className="w-8 text-xs bg-transparent outline-none font-black text-indigo-600 dark:text-indigo-400 text-center"
-                                                                placeholder="0"
-                                                            />
-                                                            <span className="text-[9px] text-gray-400 font-black uppercase">hrs</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1">
-                                                            {daySplits[dateStr].length > 1 && !isReadOnly && (
-                                                                <button
-                                                                    onClick={() => removeSplit(dateStr, idx)}
-                                                                    className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                                                                    title="Remove Split"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {!isReadOnly && (
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => addSplit(dateStr)}
-                                                            disabled={isReadOnly}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50/50 dark:bg-indigo-500/5 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all border border-indigo-100/50 dark:border-indigo-500/20"
-                                                        >
-                                                            <Plus size={14} /> ADD PROJECT SPLIT
-                                                        </button>
-                                                        <button
-                                                            onClick={() => copyDaySetupToAll(dateStr)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-gray-500 hover:text-indigo-600 bg-gray-50 dark:bg-gray-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all border border-gray-100 dark:border-gray-700/50"
-                                                            title="Apply this project setup to all working days this week"
-                                                        >
-                                                            <Copy size={13} /> COPY TO ALL DAYS
-                                                        </button>
-                                                    </div>
-
-                                                    {daySplits[dateStr]?.length > 1 && (
-                                                        <div className={cn(
-                                                            "px-3 py-1 font-black text-[10px] rounded-lg border",
-                                                            Math.abs((daySplits[dateStr]?.reduce((acc, s) => acc + s.hours, 0) || 0) - hours) < 0.01
-                                                                ? "bg-green-50 dark:bg-green-900/10 text-green-600 border-green-100 dark:border-green-900/30"
-                                                                : "bg-orange-50 dark:bg-orange-900/10 text-orange-600 border-orange-100 dark:border-orange-900/30"
-                                                        )}>
-                                                            TOTAL: {daySplits[dateStr].reduce((acc, s) => acc + s.hours, 0).toFixed(1)} / {hours.toFixed(1)} HRS
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="h-full flex flex-col justify-center">
-                                            {isOvertime && needsReason ? (
-                                                <div className="flex-1 animate-pulse">
-                                                    <input
-                                                        type="text"
-                                                        placeholder={`Reason for extended hours (${hours.toFixed(1)} hrs)...`}
-                                                        value={overtimeReasons[dateStr] || ''}
-                                                        onChange={(e) => handleOvertimeReasonChange(dateStr, e.target.value)}
-                                                        className="w-full px-4 py-3 text-xs rounded-xl border-2 border-orange-300 dark:border-orange-500/50 bg-orange-50/50 dark:bg-orange-900/10 focus:ring-2 focus:ring-orange-500 outline-none placeholder:text-orange-400 font-bold"
-                                                    />
-                                                </div>
-                                            ) : onLeave ? (
-                                                <p className="text-xs text-amber-500/60 font-bold italic tracking-wide">Leave entries are automatically excluded from timesheets.</p>
-                                            ) : dayIsLogged ? (
-                                                <div className="bg-green-50/30 dark:bg-green-500/5 p-3 rounded-xl border border-green-100/50 dark:border-green-500/10">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">Logged Detail</p>
-                                                        <span className="text-[10px] font-bold text-green-600/60 tabular-nums">
-                                                            {existingEntries
-                                                                ?.filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
-                                                                .reduce((sum, e) => sum + Number(e.hours), 0).toFixed(1)} HRS
-                                                        </span>
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        {existingEntries
-                                                            ?.filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
-                                                            .map((entry, idx) => (
-                                                                <div key={idx} className="flex items-start gap-2">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1" />
-                                                                    <div className="flex-1">
-                                                                        <p className="text-[11px] font-bold text-green-800 dark:text-green-300">
-                                                                            {entry.project?.name || entry.project_name || "Standard Attendance Record"}
-                                                                            <span className="ml-2 text-green-600/50">({Number(entry.hours).toFixed(1)} hrs)</span>
-                                                                        </p>
-                                                                        {entry.notes && (
-                                                                            <p className="text-[9px] text-green-600/70 font-medium italic line-clamp-1">{entry.notes}</p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                    <p className="mt-2 text-[9px] text-green-500 font-bold uppercase tracking-tight cursor-default">✓ Timesheet saved</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    {existingEntries?.some(e => isSameDay(new Date(e.work_date), new Date(dateStr))) ? (
-                                                        <div className="bg-green-50/30 dark:bg-green-500/5 p-3 rounded-xl border border-green-100/50 dark:border-green-500/10">
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">Logged Detail</p>
-                                                                <span className="text-[10px] font-bold text-green-600/60 tabular-nums">
-                                                                    {existingEntries
-                                                                        .filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
-                                                                        .reduce((sum, e) => sum + Number(e.hours), 0).toFixed(1)} HRS
-                                                                </span>
-                                                            </div>
-                                                            <div className="space-y-1.5">
-                                                                {existingEntries
-                                                                    .filter(e => isSameDay(new Date(e.work_date), new Date(dateStr)))
-                                                                    .map((entry, idx) => (
-                                                                        <div key={idx} className="flex items-start gap-2">
-                                                                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1" />
-                                                                            <div className="flex-1">
-                                                                                <p className="text-[11px] font-bold text-green-800 dark:text-green-300">
-                                                                                    {entry.project_name || "Standard Attendance Record"}
-                                                                                    <span className="ml-2 text-green-600/50">({Number(entry.hours).toFixed(1)} hrs)</span>
-                                                                                </p>
-                                                                                {entry.notes && (
-                                                                                    <p className="text-[9px] text-green-600/70 font-medium italic line-clamp-1">{entry.notes}</p>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    ))
-                                                                }
-                                                            </div>
-                                                            <p className="mt-2 text-[9px] text-indigo-500 font-bold uppercase tracking-tight cursor-default">
-                                                                {isReadOnly ? "Timesheet is locked" : "Enable billable to edit projects"}
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-xs text-gray-400 font-bold tracking-wide italic">
-                                                            {hours > 0 ? "Standard work entry. Enable billable to split by projects." : "No activity recorded for this date."}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+        <div className="h-full flex flex-col gap-6">
+            <Card className="p-0 border-none shadow-none bg-white dark:bg-gray-800/50 flex flex-col flex-1">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 p-1 rounded-lg">
+                            {/* Only allow navigation if NOT approval mode (manager views specific week) */}
+                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(subDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0">
+                                <ChevronLeft size={16} />
+                            </Button>
+                            <div className="flex flex-col items-center px-2 min-w-[120px]">
+                                <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                    {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d')}
+                                </span>
+                                <span className="text-[10px] text-gray-500 font-medium">
+                                    {format(weekEnd, 'yyyy')}
+                                </span>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Footer / Totals */}
-            <div className="p-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1 flex items-center gap-8">
-                    {/* Total Attendance Hours */}
-                    <div className="flex flex-col">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Weekly Total</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
-                                {attendanceHours?.total_hours?.toFixed(1) ?? '0'}
-                            </span>
-                            <span className="text-xs font-black text-gray-400 uppercase">hrs</span>
+                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(addDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0">
+                                <ChevronRight size={16} />
+                            </Button>
                         </div>
                     </div>
 
-                    {/* Pending Actions Tracker */}
-                    <div className="hidden lg:flex flex-col gap-2">
-                        {daysNeedingReason.length > 0 && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/10 rounded-full border border-orange-100 dark:border-orange-500/20">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-tight"> {daysNeedingReason.length} OVERTIME REASONS NEEDED</span>
-                            </div>
+                    <div className="flex items-center gap-2">
+                        {/* Status Badge */}
+                        <div className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                            timesheetStatus === 'APPROVED' ? "bg-green-50 text-green-600 border-green-200" :
+                                timesheetStatus === 'SUBMITTED' ? "bg-blue-50 text-blue-600 border-blue-200" :
+                                    "bg-amber-50 text-amber-600 border-amber-200"
+                        )}>
+                            {timesheetStatus}
+                        </div>
+
+                        {/* Edit button for DRAFT and SUBMITTED (not APPROVED, not Approval Mode) */}
+                        {!isApprovalMode && hasExistingData && timesheetStatus !== 'APPROVED' && !forceEdit && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setForceEdit(true)}
+                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 border border-indigo-200"
+                            >
+                                {timesheetStatus === 'SUBMITTED' ? 'Recall / Edit' : 'Edit'}
+                            </Button>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    {onCancel && (
-                        <Button variant="ghost" onClick={onCancel} className="text-gray-500 font-black text-xs uppercase tracking-widest hover:bg-gray-50 flex-1 md:flex-none h-12">Cancel</Button>
-                    )}
-                    {isReadOnly ? (
-                        <div className={cn(
-                            "px-8 h-12 flex items-center justify-center rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border-2",
-                            timesheetStatus === 'APPROVED'
-                                ? "bg-green-50 text-green-600 border-green-200"
-                                : "bg-blue-50 text-blue-600 border-blue-200"
-                        )}>
-                            {timesheetStatus}
+                {/* Matrix Grid */}
+                <div className="flex-1 overflow-x-auto">
+                    <div className="min-w-[1000px] p-6">
+                        {/* Grid Header */}
+                        <div className="flex border-b border-gray-200 dark:border-gray-700 pb-2 mb-2">
+                            <div className="w-[20%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Project</div>
+                            <div className="w-[22%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</div>
+                            <div className="w-8 px-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest" title="Billable"><IndianRupee size={12} className="mx-auto" /></div>
+                            {dates.map(dateStr => {
+                                const date = new Date(dateStr);
+                                const isToday = isSameDay(date, new Date());
+                                const weekOffs = (isApprovalMode && preloadedTimesheet?.employee?.shift_week_offs)
+                                    ? (preloadedTimesheet.employee.shift_week_offs || [])
+                                    : (user?.shift_week_offs || []);
+                                const dayName = format(date, 'EEEE');
+                                const isWeekOff = weekOffs.includes(dayName);
+
+                                return (
+                                    <div key={dateStr} className="flex-1 px-1 text-center">
+                                        <div className={cn(
+                                            "flex flex-col items-center justify-center py-1 rounded-lg transition-colors",
+                                            isToday ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600" :
+                                                isWeekOff ? "bg-red-50 dark:bg-red-900/10 text-red-400" : "text-gray-500"
+                                        )}
+                                            title={isWeekOff ? "Week Off" : undefined}
+                                        >
+                                            <span className="text-[9px] font-black uppercase">{format(date, 'EEE')}</span>
+                                            <span className="text-sm font-bold">{format(date, 'd')}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div className="w-16 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</div>
+                            <div className="w-8"></div>
                         </div>
-                    ) : (
-                        <Button
-                            onClick={handleSubmit}
-                            isLoading={isSubmitting}
-                            disabled={daysNeedingReason.length > 0 || (attendanceHours?.total_hours ?? 0) === 0}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-12 h-12 rounded-xl shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all hover:-translate-y-0.5 active:translate-y-0 flex-1 md:flex-none uppercase tracking-widest text-xs"
-                        >
-                            Submit Timesheet
-                        </Button>
-                    )}
+
+                        {/* Grid Rows */}
+                        <div className="space-y-1">
+                            {rows.map((row) => (
+                                <div key={row.id} className="flex items-start py-2 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group">
+                                    {/* Project */}
+                                    <div className="w-[20%] px-2">
+                                        {isReadOnly ? (
+                                            <p className="text-sm font-semibold text-gray-800 py-1">
+                                                {projects?.find((p: any) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">No project</span>}
+                                            </p>
+                                        ) : (
+                                            <select
+                                                value={row.projectId}
+                                                onChange={(e) => handleRowChange(row.id, 'projectId', e.target.value)}
+                                                className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 hover:border-gray-400 focus:border-indigo-500 transition-colors py-1 cursor-pointer"
+                                            >
+                                                <option value="">Select Project</option>
+                                                {projects?.map((p: any) => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    {/* Activity */}
+                                    <div className="w-[22%] px-2">
+                                        {isReadOnly ? (
+                                            <p className="text-xs font-medium text-gray-600 leading-snug break-words whitespace-normal py-0.5">
+                                                {row.taskTitle || <span className="text-gray-400 italic">No activity</span>}
+                                            </p>
+                                        ) : (
+                                            <TaskSelect
+                                                projectId={row.projectId}
+                                                value={row.taskId}
+                                                onChange={(val) => handleRowChange(row.id, 'taskId', val)}
+                                                disabled={isReadOnly}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Billable Toggle */}
+                                    <div className="w-8 px-1 flex items-center justify-center">
+                                        {(() => {
+                                            const project = projects?.find((p: any) => p.id?.toString() === row.projectId?.toString());
+                                            const isProjectBillable = project?.is_billable !== false;
+                                            const canToggle = !isReadOnly && isProjectBillable;
+
+                                            if (!isProjectBillable) {
+                                                return (
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed" title="Project is non-billable">
+                                                        <Ban size={12} />
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <button
+                                                    onClick={() => canToggle && setRows(prev => prev.map(r => r.id === row.id ? { ...r, isBillable: !r.isBillable } : r))}
+                                                    disabled={!canToggle}
+                                                    title={row.isBillable ? 'Billable' : 'Non-billable'}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded-full flex items-center justify-center transition-all text-[10px] font-black",
+                                                        row.isBillable
+                                                            ? "bg-green-100 text-green-600 border border-green-300"
+                                                            : "bg-gray-100 text-gray-400 border border-gray-200",
+                                                        canToggle && "hover:scale-110 cursor-pointer"
+                                                    )}
+                                                >
+                                                    <IndianRupee size={10} />
+                                                </button>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Days Inputs */}
+                                    {dates.map(dateStr => {
+                                        const val = row.hours[dateStr];
+                                        const date = new Date(dateStr);
+                                        const dayName = format(date, 'EEEE');
+                                        const weekOffs = (isApprovalMode && preloadedTimesheet?.employee?.shift_week_offs)
+                                            ? (preloadedTimesheet.employee.shift_week_offs || [])
+                                            : (user?.shift_week_offs || []);
+                                        const isWeekOff = weekOffs.includes(dayName);
+
+                                        return (
+                                            <div key={dateStr} className={cn("flex-1 px-1 py-1 rounded-lg", isWeekOff && "bg-red-50/50 dark:bg-red-900/10")}>
+                                                <div className="relative">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.5"
+                                                        value={val !== undefined ? val : ''}
+                                                        onChange={(e) => handleHourChange(row.id, dateStr, e.target.value)}
+                                                        disabled={isReadOnly}
+                                                        className={cn(
+                                                            "w-full text-center py-2 rounded-lg text-sm font-bold outline-none border border-transparent transition-all",
+                                                            (val && val > 0) ? "bg-white shadow-sm border-gray-100 text-indigo-600" :
+                                                                (isWeekOff ? "bg-transparent text-red-300 placeholder:text-red-200" : "bg-gray-50/50 text-gray-400 hover:bg-white hover:shadow-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20")
+                                                        )}
+                                                        placeholder="-"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Row Total */}
+                                    <div className="w-16 text-center flex items-center justify-center font-bold text-gray-600 text-sm">
+                                        {Object.values(row.hours).reduce((a, b) => a + b, 0).toFixed(1)}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="w-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {!isReadOnly && rows.length > 1 && (
+                                            <button
+                                                onClick={() => handleRemoveRow(row.id)}
+                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add Row Button */}
+                        {!isReadOnly && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={handleAddRow}
+                                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                                >
+                                    <Plus size={16} />
+                                    ADD NEW LINE
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Totals Row */}
+                        <div className="flex border-t-2 border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                            <div className="w-[20%] px-2 text-right text-xs font-black text-gray-400 uppercase tracking-widest self-center">
+                            </div>
+                            <div className="w-[22%] px-2 text-right text-xs font-black text-gray-400 uppercase tracking-widest self-center">
+                                Total Hours
+                            </div>
+                            <div className="w-8"></div>
+                            {dates.map(dateStr => {
+                                const total = getDailyTotal(dateStr);
+                                const attTotal = !isApprovalMode ? getAttendanceTotal(dateStr) : 0; // Dont compare attendance in approval for now
+                                const isMatch = Math.abs(total - attTotal) < 0.1;
+                                const isOver = total > attTotal;
+
+                                return (
+                                    <div key={dateStr} className="flex-1 flex flex-col items-center px-1">
+                                        <span className={cn(
+                                            "text-sm font-black tabular-nums",
+                                            total === 0 ? "text-gray-300" :
+                                                (!isApprovalMode && attTotal > 0 && isOver) ? "text-orange-500" :
+                                                    (!isApprovalMode && attTotal > 0 && isMatch) ? "text-green-600" : "text-gray-700"
+                                        )}>
+                                            {total.toFixed(1)}
+                                        </span>
+                                        {!isApprovalMode && attTotal > 0 && (
+                                            <span className="text-[9px] text-gray-400 font-medium">
+                                                of {attTotal.toFixed(1)}
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            <div className="w-16 text-center text-sm font-black text-indigo-600 tabular-nums self-center">
+                                {rows.reduce((acc, r) => acc + Object.values(r.hours).reduce((a, b) => a + b, 0), 0).toFixed(1)}
+                            </div>
+                            <div className="w-8"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </Card >
+
+                {/* Footer / Actions */}
+                <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-6 py-4">
+                    <div className="flex justify-end gap-4">
+                        {onCancel && (
+                            <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+                        )}
+
+                        {/* Approval Actions */}
+                        {isApprovalMode && preloadedTimesheet && onApprove && onReject && (
+                            <>
+                                <Button
+                                    onClick={() => onReject(preloadedTimesheet.id, "")}
+                                    className="bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 min-w-[100px]"
+                                >
+                                    <X size={16} className="mr-2" />
+                                    REJECT
+                                </Button>
+                                <Button
+                                    onClick={() => onApprove(preloadedTimesheet.id)}
+                                    className="bg-green-600 hover:bg-green-700 text-white min-w-[120px]"
+                                >
+                                    <Check size={16} className="mr-2" />
+                                    APPROVE
+                                </Button>
+                            </>
+                        )}
+
+                        {/* Standard Actions */}
+                        {!isApprovalMode && !isReadOnly && (
+                            <>
+                                <Button
+                                    onClick={() => handleSubmit(false)}
+                                    isLoading={isSubmitting}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]"
+                                >
+                                    <Save size={16} className="mr-2" />
+                                    {timesheetStatus === 'SUBMITTED' ? 'SAVE AS DRAFT' : 'SAVE DRAFT'}
+                                </Button>
+
+                                {(() => {
+                                    // const isWeekComplete = new Date() >= weekEnd;
+                                    // Or compare with end of work week (e.g. Friday)?
+                                    // Usually "week not complete" implies you can't submit until the week is over.
+                                    // I'll stick to weekEnd (Sunday) or maybe check if today is > last work day.
+                                    // For now, let's use weekEnd as it is the safest "complete" definition.
+                                    // But maybe allow submission on the last day? using startOfDay/endOfDay.
+                                    // Let's use startOfDay comparison.
+                                    const todayCheck = new Date();
+                                    todayCheck.setHours(0, 0, 0, 0);
+                                    const weekEndCheck = new Date(weekEnd);
+                                    weekEndCheck.setHours(0, 0, 0, 0);
+                                    // Actually, endOfWeek returns the specific time in current timezone.
+                                    // Let's rely on simple comparison
+                                    // If today is BEFORE the week end date (Sunday), is it incomplete?
+                                    // Usually yes.
+
+                                    // User request: "if current week not complete unable to submit timesheet"
+                                    // Let's assume strict week completion.
+
+                                    // const isFutureWeek = weekStart > new Date();
+                                    // const canSubmit = !isFutureWeek && new Date() >= subDays(weekEnd, 2); // Allow submit on Friday? 
+                                    // Let's try: Disable if today < weekEnd. 
+                                    // Actually, standard practice: you can submit at the end of the week.
+                                    // Let's disable if today < weekEnd (Sunday).
+                                    // Maybe the user wants to submit on Friday.
+                                    // Let's stick to strict "week complete" -> today >= weekEnd.
+
+                                    // WAIT, if I use weekEnd (Sunday), they can't submit on Friday.
+                                    // Let's disable if today < subDays(weekEnd, 2) (Friday).
+                                    // Re-reading: "if current week not complete".
+                                    // Let's just assume they can't submit if it's a future week or current week is ongoing.
+                                    // Let's enable only if today >= weekEnd.
+
+                                    // Actually, looking at standard HRMS, mostly you submit on Friday.
+                                    // I will enable it if today is Friday or later.
+                                    const friday = subDays(weekEnd, 2);
+                                    friday.setHours(0, 0, 0, 0);
+                                    const now = new Date();
+                                    now.setHours(0, 0, 0, 0);
+
+                                    const isEligibleToSubmit = now >= friday;
+
+                                    return (
+                                        <div title={!isEligibleToSubmit ? "You can only submit the timesheet after the work week is complete (Friday onwards)." : undefined}>
+                                            <Button
+                                                onClick={() => handleSubmit(true)}
+                                                isLoading={isSubmitting}
+                                                disabled={!isEligibleToSubmit || rows.every(r => Object.keys(r.hours).length === 0)}
+                                                className={cn(
+                                                    "min-w-[120px]",
+                                                    !isEligibleToSubmit
+                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                        : "bg-green-600 hover:bg-green-700 text-white"
+                                                )}
+                                            >
+                                                {timesheetStatus === 'SUBMITTED' ? 'UPDATE SUBMISSION' : 'SUBMIT'}
+                                            </Button>
+                                        </div>
+                                    );
+                                })()}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </Card>
+        </div >
     );
 };

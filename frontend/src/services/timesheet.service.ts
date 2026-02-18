@@ -60,12 +60,13 @@ export const timesheetService = {
         week_start_date: string;
         week_end_date: string;
         entries: {
-            task_id?: string;
-            project_id?: string;
             work_date: string;
             hours: number;
             notes?: string;
+            project_id?: string;
+            task_id?: string;
         }[];
+        status?: TimesheetStatus;
     }): Promise<Timesheet> => {
         const response = await api.post<{ status: string; data: Timesheet }>(
             '/projects/timesheets',
@@ -144,6 +145,26 @@ export const timesheetService = {
     },
 
     /**
+     * Get my timesheet entries (Explicit naming)
+     * GET /api/projects/timesheets/my-entries
+     */
+    getMyTimesheetEntries: async (params?: {
+        project_id?: string;
+        week_start_date?: string;
+        start_date?: string;
+        end_date?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<{ entries: any[]; pagination: any }> => {
+        const response = await api.get<{ status: string; data: any[]; pagination: any }>(
+            '/projects/timesheets/my-entries',
+            { params }
+        );
+        // The controller returns data: [entries], matches existing getMyTimesheets structure but generic
+        return { entries: response.data.data || [], pagination: response.data.pagination };
+    },
+
+    /**
      * Bulk approve timesheets
      * POST /api/projects/timesheets/bulk-approve
      */
@@ -212,14 +233,8 @@ export const timesheetService = {
 
         // --- Stats Calculation ---
         const totalHours = entries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
-        // Assuming we don't have a 'billable' flag on entry yet, we'll treat all as billable or 0 for now to avoid confusion.
-        // User asked for "ASSIGNED" visibility. Let's assume for now everything is standard hours.
-        // If we want to simulate billable without a flag, we can't really. Let's set it to totalHours for now or 0.
-        // Let's check entry structure from backend service... it has project info.
-        // For now, let's assume 0 billable if no flag, OR match total to avoid "0.00" confusion if they logged time.
-        // Actually, valid "Billable" usually requires a flag. Let's assume 100% billable for simplicity or based on project type?
-        // Let's stick to strict data: if no flag, we don't know. But standard behavior might be:
-        const billableHours = totalHours; // Simplified: All hours logged are "billable" for this view until we have a flag.
+        // Calculate billable hours from actual is_billable flag
+        const billableHours = entries.reduce((acc, curr) => acc + (curr.is_billable !== false ? (Number(curr.hours) || 0) : 0), 0);
 
         const totalWholeHours = Math.floor(totalHours);
         const totalMinutes = Math.round((totalHours - totalWholeHours) * 60);
@@ -251,11 +266,12 @@ export const timesheetService = {
 
         const billableVsNonBillable = last7Days.map(date => {
             const daysEntries = entries.filter(e => e.work_date && e.work_date.startsWith(date));
-            const total = daysEntries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+            const billable = daysEntries.filter(e => e.is_billable !== false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+            const nonBillable = daysEntries.filter(e => e.is_billable === false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
             return {
                 date: new Date(date).getDate().toString(),
-                billable: total, // Simplified as above
-                nonBillable: 0
+                billable,
+                nonBillable
             };
         });
 

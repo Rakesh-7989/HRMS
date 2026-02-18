@@ -25,13 +25,15 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPrimary }) 
                     <h3 className="text-4xl font-bold tracking-tight">{value}</h3>
                 </div>
 
-                <div className={cn(
-                    "flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-bold",
-                    isPrimary ? "bg-white/20 text-white" : change >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
-                )}>
-                    {change >= 0 ? <ArrowUp size={10} strokeWidth={3} /> : <ArrowDown size={10} strokeWidth={3} />}
-                    <span>{Math.abs(change)}</span>
-                </div>
+                {change !== 0 && (
+                    <div className={cn(
+                        "flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-bold",
+                        isPrimary ? "bg-white/20 text-white" : change > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
+                    )}>
+                        {change > 0 ? <ArrowUp size={10} strokeWidth={3} /> : <ArrowDown size={10} strokeWidth={3} />}
+                        <span>{Math.abs(change)}</span>
+                    </div>
+                )}
             </div>
 
             <p className={cn(

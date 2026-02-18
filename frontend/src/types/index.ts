@@ -28,6 +28,7 @@ export interface User {
   shift?: string;
   shift_start_time?: string; // HH:mm:ss
   shift_end_time?: string; // HH:mm:ss
+  shift_week_offs?: string[]; // ["Sunday", "Saturday"]
   manager_first_name?: string;
   manager_last_name?: string;
   reports_to?: string;

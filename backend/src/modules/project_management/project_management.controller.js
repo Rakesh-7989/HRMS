@@ -656,13 +656,14 @@ exports.getMyTimesheetEntries = async (req, res, next) => {
 exports.createTimesheet = async (req, res, next) => {
   try {
     const { tenantId, id: userId, employeeId } = req.user;
-    const { project_id, week_start_date, week_end_date, entries } = req.body;
+    const { project_id, week_start_date, week_end_date, entries, status } = req.body;
 
     const timesheet = await service.createTimesheet(tenantId, userId, employeeId, {
       project_id,
       week_start_date,
       week_end_date,
       entries,
+      status,
     });
 
     return res.status(201).json({
@@ -1043,3 +1044,25 @@ exports.getMentionableUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * GET /api/project-management/dashboard/stats
+ * Get dashboard aggregated stats
+ * Requires: ADMIN, HR, EMPLOYEE
+ */
+exports.getDashboardStats = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, employeeId, role } = req.user;
+
+    const stats = await service.getDashboardStats(tenantId, userId, employeeId, role);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Dashboard stats retrieved successfully",
+      data: stats
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -77,10 +77,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]"
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999]"
                     />
                     {/* Dialog */}
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}

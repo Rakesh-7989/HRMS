@@ -559,4 +559,16 @@ router.get(
   ctrl.getMentionableUsers
 );
 
+/**
+ * GET /api/project-management/dashboard/stats
+ * Get dashboard aggregated stats
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE
+ */
+router.get(
+  "/dashboard/stats",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  ctrl.getDashboardStats
+);
+
 module.exports = router;

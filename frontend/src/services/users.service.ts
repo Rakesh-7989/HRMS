@@ -31,6 +31,7 @@ export interface User {
   shift_id?: string;
   shift_start_time?: string;
   shift_end_time?: string;
+  shift_week_offs?: string[];
   job_location?: string;
   address?: string;
   // Financial

@@ -594,7 +594,6 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
  * MY ATTENDANCE HISTORY
  */
 exports.getMyAttendance = async (db, employeeId, tenantId, filters) => {
-  console.log("DEBUG: getMyAttendance called with:", { employeeId, tenantId });
   const query = getQuery(db);
 
   const params = [employeeId, tenantId];

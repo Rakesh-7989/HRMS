@@ -25,6 +25,10 @@ export const ShiftsPage = () => {
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
     const [assignToAll, setAssignToAll] = useState(false);
 
+    // Delete Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [shiftToDelete, setShiftToDelete] = useState<string | null>(null);
+
     const queryClient = useQueryClient();
 
     const { data: shifts, isLoading } = useQuery<Shift[]>({
@@ -69,6 +73,8 @@ export const ShiftsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             toast.success('Shift deleted successfully');
+            setIsDeleteModalOpen(false);
+            setShiftToDelete(null);
         },
         onError: (error: any) => {
             const msg = error.response?.data?.message || 'Failed to delete shift';
@@ -91,7 +97,19 @@ export const ShiftsPage = () => {
         onError: () => toast.error('Failed to assign shift')
     });
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        name: string;
+        code: string;
+        start_time: string;
+        end_time: string;
+        break_start_time: string;
+        break_end_time: string;
+        grace_period_minutes: number | string;
+        work_hours: number | string;
+        half_day_threshold_hours: number | string;
+        overtime_enabled: boolean;
+        week_offs: string[];
+    }>({
         name: '',
         code: '',
         start_time: '',
@@ -102,15 +120,22 @@ export const ShiftsPage = () => {
         work_hours: 9.0,
         half_day_threshold_hours: 4.0,
         overtime_enabled: false,
-        week_offs: [] as string[]
+        week_offs: []
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const submissionData = {
+            ...formData,
+            grace_period_minutes: Number(formData.grace_period_minutes) || 0,
+            work_hours: Number(formData.work_hours) || 0,
+            half_day_threshold_hours: Number(formData.half_day_threshold_hours) || 0
+        };
+
         if (editingShift) {
-            updateMutation.mutate({ id: editingShift.id, data: formData });
+            updateMutation.mutate({ id: editingShift.id, data: submissionData });
         } else {
-            createMutation.mutate(formData);
+            createMutation.mutate(submissionData);
         }
     };
 
@@ -133,8 +158,13 @@ export const ShiftsPage = () => {
     };
 
     const handleDelete = (id: string) => {
-        if (confirm('Are you sure you want to delete this shift?')) {
-            deleteMutation.mutate(id);
+        setShiftToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (shiftToDelete) {
+            deleteMutation.mutate(shiftToDelete);
         }
     };
 
@@ -249,17 +279,50 @@ export const ShiftsPage = () => {
                         </div>
                         <div>
                             <Label>Grace Period (Minutes)</Label>
-                            <Input type="number" min={0} value={formData.grace_period_minutes} onChange={(e) => setFormData({ ...formData, grace_period_minutes: Math.max(0, parseInt(e.target.value) || 0) })} />
+                            <Input
+                                type="number"
+                                min={0}
+                                value={formData.grace_period_minutes}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData({
+                                        ...formData,
+                                        grace_period_minutes: val === '' ? '' : parseInt(val)
+                                    });
+                                }}
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label>Work Hours (Full Day)</Label>
-                                <Input type="number" step="0.5" value={formData.work_hours} onChange={(e) => setFormData({ ...formData, work_hours: parseFloat(e.target.value) || 0 })} />
+                                <Input
+                                    type="number"
+                                    step="0.5"
+                                    value={formData.work_hours}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFormData({
+                                            ...formData,
+                                            work_hours: val === '' ? '' : parseFloat(val)
+                                        });
+                                    }}
+                                />
                             </div>
                             <div>
                                 <Label>Half Day Threshold (Hours)</Label>
-                                <Input type="number" step="0.5" value={formData.half_day_threshold_hours} onChange={(e) => setFormData({ ...formData, half_day_threshold_hours: parseFloat(e.target.value) || 0 })} />
+                                <Input
+                                    type="number"
+                                    step="0.5"
+                                    value={formData.half_day_threshold_hours}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFormData({
+                                            ...formData,
+                                            half_day_threshold_hours: val === '' ? '' : parseFloat(val)
+                                        });
+                                    }}
+                                />
                             </div>
                         </div>
 
@@ -376,6 +439,31 @@ export const ShiftsPage = () => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Shift</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p>Are you sure you want to delete this shift? This action cannot be undone.</p>
+                        <p className="text-sm text-yellow-600 mt-2 bg-yellow-50 p-2 rounded border border-yellow-200">
+                            Note: You cannot delete a shift that is currently assigned to employees.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDelete}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

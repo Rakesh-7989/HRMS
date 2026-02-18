@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { Check, X, Calendar, Clock, Loader2, CheckSquare, Square, ChevronDown, ChevronRight, Briefcase } from 'lucide-react';
+import { Check, X, Calendar, Clock, Loader2, CheckSquare, Square, Briefcase } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { toast } from 'react-hot-toast';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
+import { WeeklyTimesheetEntry } from '@/components/timesheets/WeeklyTimesheetEntry';
 import { timesheetService } from '@/services/timesheet.service';
 import { cn } from '@/utils/cn';
 
@@ -17,6 +19,8 @@ interface TimesheetEntry {
     notes?: string;
     project_name?: string;
     task_title?: string;
+    project_id?: string;
+    task_id?: string;
 }
 
 interface WeekTimesheet {
@@ -33,6 +37,7 @@ interface WeekTimesheet {
         last_name: string;
         email?: string;
         role?: string;
+        shift_week_offs?: string[];
     };
     entries: TimesheetEntry[];
 }
@@ -41,19 +46,9 @@ export const TimesheetApprovals: React.FC = () => {
     const queryClient = useQueryClient();
     const { confirm, alert: showAlert, prompt: showPrompt } = useConfirm();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [selectedTimesheet, setSelectedTimesheet] = useState<WeekTimesheet | null>(null);
 
-    const toggleExpand = (id: string) => {
-        setExpandedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
+
 
     // Fetch Pending Approvals (now returns week-level timesheets)
     const { data: rawData, isLoading } = useQuery({
@@ -68,7 +63,8 @@ export const TimesheetApprovals: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
-            toast.success('Timesheet entry committed');
+            setSelectedTimesheet(null); // Close modal if open
+            toast.success('Timesheet approved');
         },
         onError: (error: any) => {
             showAlert({
@@ -110,6 +106,7 @@ export const TimesheetApprovals: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
+            setSelectedTimesheet(null); // Close modal if open
             toast.success('Timesheet entry rejected');
         },
         onError: (error: any) => {
@@ -123,9 +120,9 @@ export const TimesheetApprovals: React.FC = () => {
 
     const handleApprove = async (id: string) => {
         const result = await confirm({
-            title: 'Commit Labor Record',
-            message: 'Are you sure you want to approve this timesheet entry for formal audit?',
-            confirmText: 'Commit Now',
+            title: 'Approve Timesheet',
+            message: 'Are you sure you want to approve this timesheet?',
+            confirmText: 'Approve',
             cancelText: 'Cancel'
         });
         if (result) {
@@ -135,10 +132,10 @@ export const TimesheetApprovals: React.FC = () => {
 
     const handleReject = async (id: string) => {
         const reason = await showPrompt({
-            title: 'Reject Labor Record',
-            message: 'Please provide a justification for rejecting this timesheet entry.',
+            title: 'Reject Timesheet',
+            message: 'Please provide a justification for rejecting this timesheet.',
             placeholder: 'Reason for rejection...',
-            confirmText: 'Reject Entry',
+            confirmText: 'Reject',
             cancelText: 'Cancel'
         });
         if (reason) {
@@ -163,9 +160,9 @@ export const TimesheetApprovals: React.FC = () => {
     const handleBulkApprove = async () => {
         if (selectedIds.length === 0) return;
         const result = await confirm({
-            title: 'Bulk Commit Operations',
-            message: `Are you sure you want to approve ${selectedIds.length} labor records in the current audit queue?`,
-            confirmText: 'Execute Bulk Commit',
+            title: 'Approve Multiple Timesheets',
+            message: `Are you sure you want to approve ${selectedIds.length} timesheets?`,
+            confirmText: 'Approve All',
             cancelText: 'Cancel'
         });
         if (result) {
@@ -174,6 +171,10 @@ export const TimesheetApprovals: React.FC = () => {
     };
 
     const isMutating = approveMutation.isPending || rejectMutation.isPending || bulkApproveMutation.isPending;
+
+    const handleViewDetails = (ts: WeekTimesheet) => {
+        setSelectedTimesheet(ts);
+    };
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -260,7 +261,6 @@ export const TimesheetApprovals: React.FC = () => {
                 ) : (
                     <div className="divide-y divide-gray-50 dark:divide-gray-800">
                         {timesheets.map((ts) => {
-                            const isExpanded = expandedIds.has(ts.id);
                             const isSelected = selectedIds.includes(ts.id);
 
                             return (
@@ -268,9 +268,14 @@ export const TimesheetApprovals: React.FC = () => {
                                     {/* Week-level row */}
                                     <div
                                         className={cn(
-                                            "flex items-center gap-4 px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group",
+                                            "flex items-center gap-4 px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer",
                                             isSelected && "bg-primary/5 hover:bg-primary/10"
                                         )}
+                                        onClick={(e) => {
+                                            // Prevent click when clicking checkbox or buttons
+                                            if ((e.target as HTMLElement).closest('button')) return;
+                                            handleViewDetails(ts);
+                                        }}
                                     >
                                         {/* Checkbox */}
                                         <button
@@ -283,15 +288,8 @@ export const TimesheetApprovals: React.FC = () => {
                                             {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                                         </button>
 
-                                        {/* Expand toggle + main content */}
-                                        <button
-                                            onClick={() => toggleExpand(ts.id)}
-                                            className="flex items-center gap-4 flex-1 min-w-0"
-                                        >
-                                            <div className="text-gray-400 group-hover:text-primary transition-colors shrink-0">
-                                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                            </div>
-
+                                        {/* Main content */}
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
                                             {/* Employee avatar */}
                                             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black shadow-sm ring-1 ring-primary/20 shrink-0">
                                                 {(ts.employee?.first_name || 'U').charAt(0).toUpperCase()}
@@ -314,7 +312,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                        </button>
+                                        </div>
 
                                         {/* Hours + entries count */}
                                         <div className="text-right shrink-0">
@@ -351,59 +349,56 @@ export const TimesheetApprovals: React.FC = () => {
                                             </Button>
                                         </div>
                                     </div>
-
-                                    {/* Expanded entries detail */}
-                                    {isExpanded && ts.entries && ts.entries.length > 0 && (
-                                        <div className="bg-gray-50/50 dark:bg-gray-950/20 border-t border-gray-100 dark:border-gray-800 px-6 py-3">
-                                            <div className="ml-14 space-y-1">
-                                                {ts.entries.map((entry, idx) => (
-                                                    <div
-                                                        key={entry.id || idx}
-                                                        className="flex items-center justify-between py-2.5 px-4 rounded-lg hover:bg-white dark:hover:bg-gray-800/50 transition-colors"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                                                            <div>
-                                                                <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 tabular-nums">
-                                                                    {format(parseISO(entry.work_date), 'EEE, MMM d')}
-                                                                </span>
-                                                                {entry.project_name && (
-                                                                    <>
-                                                                        <span className="mx-2 text-gray-300">·</span>
-                                                                        <span className="text-[11px] font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">
-                                                                            {entry.project_name}
-                                                                        </span>
-                                                                    </>
-                                                                )}
-                                                                {entry.task_title && (
-                                                                    <>
-                                                                        <span className="mx-2 text-gray-300">·</span>
-                                                                        <span className="text-[10px] text-gray-500 font-medium">
-                                                                            {entry.task_title}
-                                                                        </span>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-4">
-                                                            {entry.notes && (
-                                                                <span className="text-[9px] text-gray-400 font-medium italic max-w-[200px] truncate">{entry.notes}</span>
-                                                            )}
-                                                            <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums w-16 text-right">
-                                                                {Number(entry.hours).toFixed(1)} hrs
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 )}
             </Card>
+
+            {/* Detailed Approval Modal */}
+            <Dialog
+                open={!!selectedTimesheet}
+                onOpenChange={(open) => !open && setSelectedTimesheet(null)}
+                title="Timesheet Approval"
+                // size="4xl" // Dialog component doesn't seem to have size prop based on previous read, checking...
+                // The Dialog component I read earlier uses className for size control: max-w-lg by default.
+                // I should probably override className to make it wider.
+                className="max-w-6xl w-full max-h-[90vh]"
+            >
+                {selectedTimesheet && (
+                    <div className="p-1">
+                        <div className="mb-4 flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {selectedTimesheet.employee?.first_name} {selectedTimesheet.employee?.last_name}
+                                </h3>
+                                <p className="text-xs text-gray-500 font-medium">
+                                    {format(parseISO(selectedTimesheet.week_start_date), 'MMM dd')} - {format(parseISO(selectedTimesheet.week_end_date), 'MMM dd, yyyy')}
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <WeeklyTimesheetEntry
+                            preloadedTimesheet={selectedTimesheet as unknown as any}
+                            isApprovalMode={true}
+                            onApprove={async (id) => {
+                                await handleApprove(id);
+                            }}
+                            onReject={async (id, reason) => {
+                                // handleReject already prompts, but WeeklyTimesheetEntry might pass reason if it has its own prompt
+                                if (reason) {
+                                    rejectMutation.mutate({ id, reason });
+                                } else {
+                                    handleReject(id);
+                                }
+                            }}
+                            onCancel={() => setSelectedTimesheet(null)}
+                        />
+                    </div>
+                )}
+            </Dialog>
         </div>
     );
 };
