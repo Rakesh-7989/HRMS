@@ -85,7 +85,7 @@ export const TasksPage: React.FC = () => {
         estimated_hours: '',
     });
 
-    const canManage = hasAnyPermission(['projects.manage', 'tasks.manage']);
+    const canManage = hasAnyPermission(['manage_all_projects', 'manage_tasks']);
 
     // Queries
     const { data: serverProject, isLoading: projectLoading } = useQuery({

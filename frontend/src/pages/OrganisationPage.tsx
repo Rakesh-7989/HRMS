@@ -40,7 +40,7 @@ export const OrganisationPage: React.FC = () => {
   // If user is platform admin, ensure tree tab is not active
   useEffect(() => {
     if (hasPermission('platform.manage_tenants') && (tab === 'tree' || tab === 'hierarchy')) handleTabChange('directory');
-    if (!hasAnyPermission(['employees.view']) && tab === 'directory') handleTabChange('hierarchy');
+    if (!hasAnyPermission(['view_all_employees']) && tab === 'directory') handleTabChange('hierarchy');
   }, [hasPermission, hasAnyPermission, tab]);
 
   // Sync state if URL changes externally
@@ -67,7 +67,7 @@ export const OrganisationPage: React.FC = () => {
     queryKey: ['allEmployees'],
     queryFn: () => usersService.getUsers({ limit: 1000 }),
     // Enable for anyone with view permissions
-    enabled: hasAnyPermission(['employees.view']) || hasPermission('platform.manage_tenants')
+    enabled: hasAnyPermission(['view_all_employees']) || hasPermission('platform.manage_tenants')
   });
 
   // Client-side filtering: apply selected department or fallback on department name
@@ -153,7 +153,7 @@ export const OrganisationPage: React.FC = () => {
 
 
   return (
-    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: hasAnyPermission(['reports.view', 'employees.view']) ? '/dashboard/organization' : '/dashboard/personal' }, { label: 'Organisation' }]}>
+    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: hasAnyPermission(['view_hr_reports', 'view_all_employees']) ? '/dashboard/organization' : '/dashboard/personal' }, { label: 'Organisation' }]}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
         {/* <div className="bg-white/5 p-3 rounded-md shadow-sm"></div> */}
@@ -162,9 +162,9 @@ export const OrganisationPage: React.FC = () => {
           {/* Subtabs */}
           <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
             <div className="flex items-center gap-6 min-w-max px-2">
-              {hasAnyPermission(['employees.view', 'platform.manage_tenants']) && (
+              {hasAnyPermission(['view_all_employees', 'platform.manage_tenants']) && (
                 <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
-                  {hasPermission('platform.manage_tenants') ? 'Tenant Directory' : hasPermission('employees.view') ? 'Employee Directory' : 'My Team'}
+                  {hasPermission('platform.manage_tenants') ? 'Tenant Directory' : hasPermission('view_all_employees') ? 'Employee Directory' : 'My Team'}
                 </button>
               )}
 
@@ -173,7 +173,7 @@ export const OrganisationPage: React.FC = () => {
                 <>
                   <button onClick={() => handleTabChange('hierarchy')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'hierarchy' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Hierarchy Structure</button>
                   <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Reporting Lines</button>
-                  {hasAnyPermission(['roles.manage', 'reports.view']) && (
+                  {hasAnyPermission(['manage_roles', 'view_hr_reports']) && (
                     <>
                       <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
                       <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
@@ -181,10 +181,10 @@ export const OrganisationPage: React.FC = () => {
                       <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                     </>
                   )}
-                  {hasPermission('shifts.manage') && (
+                  {hasPermission('manage_shifts') && (
                     <button onClick={() => setTab('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
                   )}
-                  {hasAnyPermission(['roles.view', 'roles.manage']) && (
+                  {hasAnyPermission(['view_roles', 'manage_roles']) && (
                     <button onClick={() => handleTabChange('roles')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'roles' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Roles & Permissions</button>
                   )}
                 </>

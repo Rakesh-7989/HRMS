@@ -848,10 +848,10 @@ export const CreateEmployeeForm = ({
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
-                        {hasPermission('admin.manage_tenant') ? 'Set Employee ID Prefix (Required)' : 'Configuration Required'}
+                        {hasPermission('manage_organization') ? 'Set Employee ID Prefix (Required)' : 'Configuration Required'}
                       </label>
 
-                      {hasPermission('admin.manage_tenant') ? (
+                      {hasPermission('manage_organization') ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="text"

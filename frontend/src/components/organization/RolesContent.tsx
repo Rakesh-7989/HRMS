@@ -11,7 +11,7 @@ import { RoleModal } from './RoleModal';
 
 export const RolesContent: React.FC = () => {
     const { hasAnyPermission } = usePermission();
-    const canManage = hasAnyPermission(['roles.manage']);
+    const canManage = hasAnyPermission(['manage_roles']);
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
 

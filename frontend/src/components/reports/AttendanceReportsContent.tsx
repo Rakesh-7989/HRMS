@@ -102,8 +102,8 @@ export const AttendanceReportsContent: React.FC = () => {
     };
 
     // Role-based access control
-    const canViewOrgAnalytics = hasAnyPermission(['view_all_attendance', 'attendance.view_all']);
-    const canViewTeamAnalytics = hasAnyPermission(['attendance.manage', 'attendance.approve']);
+    const canViewOrgAnalytics = hasAnyPermission(['view_all_attendance']);
+    const canViewTeamAnalytics = hasAnyPermission(['manage_attendance_policies', 'approve_attendance_regularization']);
 
     // Prepare chart data based on user role
     const chartData = useMemo(() => {

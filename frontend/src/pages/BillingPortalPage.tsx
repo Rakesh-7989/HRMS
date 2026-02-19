@@ -72,7 +72,7 @@ export const BillingPortalPage: React.FC = () => {
         <DashboardLayout
             title="Billing & Subscriptions"
             breadcrumbs={[
-                { label: 'Dashboard', href: hasPermission('roles.manage') ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: 'Dashboard', href: hasPermission('manage_roles') ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Settings', href: '/settings' },
                 { label: 'Billing' },
             ]}

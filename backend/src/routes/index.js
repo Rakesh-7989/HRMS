@@ -75,7 +75,7 @@ router.use('/users', userRouter.selfService);
 router.use('/users', checkAccess(), userRouter);
 
 // Attendance module
-router.use('/attendance', requireAnyPermission(['attendance.view_own', 'attendance.view_all']), requireFeature('attendance_tracker'), attendanceRouter);
+router.use('/attendance', requireAnyPermission(['view_own_attendance', 'view_all_attendance', 'mark_attendance']), requireFeature('attendance_tracker'), attendanceRouter);
 
 // Geo-Fencing module
 router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRouter);
@@ -87,7 +87,7 @@ router.use('/events', eventsRouter);
 router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
 
 // Leave module
-router.use('/leave', requireAnyPermission(['leave.view_own', 'leave.view_all']), requireFeature('leave_tracker'), leaveRouter);
+router.use('/leave', requireAnyPermission(['view_own_leave', 'view_all_leave', 'request_leave']), requireFeature('leave_tracker'), leaveRouter);
 
 // Inbox module
 router.use('/inbox', inboxRouter);
@@ -99,7 +99,7 @@ router.use('/documents', requireFeature('employee_management.document_storage'),
 router.use('/projects', requireFeature('project_management'), projectManagementRouter);
 
 // WFH (Work From Home) Request module
-router.use('/wfh', requireAnyPermission(['attendance.view_own', 'attendance.manage']), requireFeature('attendance_tracker'), wfhRouter);
+router.use('/wfh', requireAnyPermission(['view_own_attendance', 'manage_attendance_policies']), requireFeature('attendance_tracker'), wfhRouter);
 
 router.use('/chat', requireFeature('collaboration'), chatRouter);
 router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);

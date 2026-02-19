@@ -9,11 +9,11 @@ import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
 
 const LEAVE_TABS = [
-  { id: 'my-leave', label: 'My Leave', permission: 'leave.view_own' },
-  { id: 'team-requests', label: 'Team Requests', permission: 'leave.approve' },
-  { id: 'allocation', label: 'Allocation', permission: 'leave.manage_settings' },
-  { id: 'balances', label: 'Balances', permission: 'leave.manage_settings' },
-  { id: 'settings', label: 'Settings', permission: 'leave.manage_settings' },
+  { id: 'my-leave', label: 'My Leave', permission: 'view_own_leave' },
+  { id: 'team-requests', label: 'Team Requests', permission: 'approve_leave' },
+  { id: 'allocation', label: 'Allocation', permission: 'manage_leave_policies' },
+  { id: 'balances', label: 'Balances', permission: 'manage_leave_balances' },
+  { id: 'settings', label: 'Settings', permission: 'manage_leave_policies' },
 ] as const;
 
 type TabId = typeof LEAVE_TABS[number]['id'];

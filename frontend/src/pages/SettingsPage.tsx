@@ -67,7 +67,7 @@ export const SettingsPage: React.FC = () => {
     enabled: isTenantAdmin,
   });
 
-  const canManageOrg = hasPermission('roles.manage');
+  const canManageOrg = hasPermission('manage_roles');
 
   return (
     <DashboardLayout
@@ -76,9 +76,9 @@ export const SettingsPage: React.FC = () => {
         {
           label: 'Dashboard',
           href: user?.role === 'SUPER_ADMIN' ? '/dashboard/system' :
-            hasPermission('roles.manage') ? '/dashboard/organization' :
-              hasPermission('reports.view') ? '/dashboard/hr' :
-                hasPermission('leave.approve') ? '/dashboard/team' :
+            hasPermission('manage_roles') ? '/dashboard/organization' :
+              hasPermission('view_hr_reports') ? '/dashboard/hr' :
+                hasPermission('approve_leave') ? '/dashboard/team' :
                   '/dashboard/personal'
         },
         { label: 'Settings' },
@@ -427,7 +427,7 @@ const WorkingHoursSection: React.FC<{
   const { data: profile } = useQuery({
     queryKey: ['tenant-profile'],
     queryFn: () => adminService.getTenantProfile(),
-    enabled: hasPermission('roles.manage'),
+    enabled: hasPermission('manage_roles'),
   });
 
   const workingHours = profile?.settings?.workingHours || {
@@ -465,7 +465,7 @@ const WorkingHoursSection: React.FC<{
     }));
   };
 
-  const isOrgAdmin = hasPermission('roles.manage');
+  const isOrgAdmin = hasPermission('manage_roles');
 
   return (
     <>
@@ -584,7 +584,7 @@ const OrganizationProfileSection: React.FC<{
   const { data: profile, isLoading } = useQuery({
     queryKey: ['tenant-profile'],
     queryFn: () => adminService.getTenantProfile(),
-    enabled: hasPermission('roles.manage'),
+    enabled: hasPermission('manage_roles'),
   });
 
   const { user, setUser: setAuthUser } = useAuth();

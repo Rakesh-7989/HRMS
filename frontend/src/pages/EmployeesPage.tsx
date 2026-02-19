@@ -53,7 +53,7 @@ export const EmployeesPage: React.FC = () => {
 
   const { hasPermission, hasAnyPermission } = usePermission();
 
-  const canManage = hasAnyPermission(['employees.create', 'employees.edit', 'employees.delete']);
+  const canManage = hasAnyPermission(['create_employee', 'edit_employee', 'delete_employee']);
 
   // Build filter params
   const filterParams: EmployeeFilters = {
@@ -201,7 +201,7 @@ export const EmployeesPage: React.FC = () => {
     <DashboardLayout
       title="Employees"
       breadcrumbs={[
-        { label: 'Dashboard', href: authHasPermission('admin.view_dashboard') ? '/dashboard/organization' : '/dashboard/personal' },
+        { label: 'Dashboard', href: authHasPermission('view_admin_dashboard') ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Employees' },
       ]}
     >
@@ -469,7 +469,7 @@ export const EmployeesPage: React.FC = () => {
                               >
                                 {emp.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
                               </Button>
-                              {hasPermission('employees.delete') && (
+                              {hasPermission('delete_employee') && (
                                 <Button
                                   variant="ghost"
                                   size="sm"

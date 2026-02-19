@@ -10,13 +10,13 @@ import { UnifiedBreaksContent } from '@/components/attendance/UnifiedBreaksConte
 import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApprovalsContent';
 
 const ATTENDANCE_TABS = [
-  { id: 'reports', label: 'Reports & Analytics', permission: 'attendance.view_all' },
-  { id: 'daily', label: 'Daily Log', permission: 'attendance.view_own' },
-  { id: 'history', label: 'My History', permission: 'attendance.view_own' },
-  { id: 'breaks', label: 'Breaks', permission: 'attendance.view_own' },
-  { id: 'regularization', label: 'Regularization', permission: 'attendance.view_own' },
-  { id: 'approvals', label: 'Approvals & Requests', permission: 'attendance.approve' },
-  { id: 'geofence', label: 'Geo-Fencing', permission: 'attendance.manage_settings' },
+  { id: 'reports', label: 'Reports & Analytics', permission: 'view_all_attendance' },
+  { id: 'daily', label: 'Daily Log', permission: 'view_own_attendance' },
+  { id: 'history', label: 'My History', permission: 'view_own_attendance' },
+  { id: 'breaks', label: 'Breaks', permission: 'view_own_attendance' },
+  { id: 'regularization', label: 'Regularization', permission: 'view_own_attendance' },
+  { id: 'approvals', label: 'Approvals & Requests', permission: 'approve_attendance_regularization' },
+  { id: 'geofence', label: 'Geo-Fencing', permission: 'manage_attendance_policies' },
 ] as const;
 
 export const AttendancePage: React.FC = () => {

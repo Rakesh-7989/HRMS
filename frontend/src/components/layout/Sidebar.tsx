@@ -36,56 +36,54 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // Dashboards — shown based on role via permissions
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system', permissions: ['platform.manage_tenants'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization', permissions: ['admin.view_dashboard'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr', permissions: ['reports.view'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team', permissions: ['attendance.approve', 'leave.approve'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal', permissions: ['attendance.view_own', 'leave.view_own'] },
-
-
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization', permissions: ['view_admin_dashboard'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr', permissions: ['view_hr_reports'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team', permissions: ['approve_attendance_regularization', 'approve_leave'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal', permissions: ['view_own_attendance', 'view_own_leave'] },
 
   // Super Admin - strictly restricted to platform owners
   { label: 'Tenants', icon: Building2, path: '/tenants', permissions: ['platform.manage_tenants'] },
   { label: 'Plans', icon: CreditCard, path: '/plans', permissions: ['platform.manage_tenants'] },
-  { label: 'Coupons', icon: Tag, path: '/coupons', permissions: ['platform.manage_tenants'] },
+  { label: 'Coupons', icon: Tag, path: '/coupons', permissions: ['platform.manage_coupons'] },
 
   // Employees
-  { label: 'Employees', icon: Users, path: '/dashboard/employees', permissions: ['employees.view', 'employees.create'] },
+  { label: 'Employees', icon: Users, path: '/dashboard/employees', permissions: ['view_all_employees', 'create_employee'] },
 
   // Organisation
-  { label: 'Organisation', icon: Building2, path: '/organisation', permissions: ['organisation.view', 'organisation.manage_departments'] },
+  { label: 'Organisation', icon: Building2, path: '/organisation', permissions: ['view_organization_structure', 'manage_departments'] },
 
   // Attendance
-  { label: 'Attendance', icon: Clock, path: '/attendance', permissions: ['attendance.view_own', 'attendance.view_all'] },
+  { label: 'Attendance', icon: Clock, path: '/attendance', permissions: ['view_own_attendance', 'view_all_attendance'] },
 
   // Calendar
-  { label: 'Calendar', icon: CalendarRange, path: '/calendar', permissions: ['organisation.view'] },
+  { label: 'Calendar', icon: CalendarRange, path: '/calendar', permissions: ['view_calendar'] },
 
   // Leave
-  { label: 'Leave', icon: Calendar, path: '/leave', permissions: ['leave.view_own', 'leave.approve', 'leave.manage_settings'] },
+  { label: 'Leave', icon: Calendar, path: '/leave', permissions: ['view_own_leave', 'approve_leave', 'manage_leave_policies'] },
 
   // Reports
-  { label: 'Reports', icon: BarChart3, path: '/reports', permissions: ['reports.view', 'payroll.view_all'] },
+  { label: 'Reports', icon: BarChart3, path: '/reports', permissions: ['view_hr_reports', 'view_all_payroll'] },
 
   // Assets
-  { label: 'Assets', icon: Package, path: '/assets', permissions: ['assets.view', 'assets.request', 'assets.manage'] },
+  { label: 'Assets', icon: Package, path: '/assets', permissions: ['view_assets', 'request_asset', 'manage_all_assets'] },
 
   // Payroll
-  { label: 'Payroll', icon: Wallet, path: '/Payroll', permissions: ['payroll.view_own', 'payroll.view_all', 'payroll.manage'] },
+  { label: 'Payroll', icon: Wallet, path: '/Payroll', permissions: ['view_own_payslip', 'view_all_payroll', 'manage_payroll_components'] },
 
   // Projects
-  { label: 'Projects', icon: FolderKanban, path: '/projects', permissions: ['projects.view'] },
+  { label: 'Projects', icon: FolderKanban, path: '/projects', permissions: ['view_projects'] },
 
   // Chat
-  { label: 'Chat', icon: MessageSquare, path: '/chat', permissions: ['organisation.view'] },
+  { label: 'Chat', icon: MessageSquare, path: '/chat', permissions: ['access_chat'] },
 
   // Activity/Audit
-  { label: 'Activity', icon: Activity, path: '/activity', permissions: ['admin.view_audit_logs', 'admin.view_dashboard', 'platform.manage_tenants'] },
+  { label: 'Activity', icon: Activity, path: '/activity', permissions: ['view_audit_logs', 'view_admin_dashboard', 'platform.manage_tenants'] },
 
   // Roles & Permissions management
-  { label: 'Roles', icon: Shield, path: '/roles', permissions: ['roles.manage'] },
+  { label: 'Roles', icon: Shield, path: '/roles', permissions: ['manage_roles'] },
 
   // Settings
-  { label: 'Settings', icon: Settings, path: '/settings', permissions: ['roles.manage'] },
+  { label: 'Settings', icon: Settings, path: '/settings', permissions: ['manage_roles'] },
 ];
 
 interface SidebarProps {
@@ -135,6 +133,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     // STRICT SEPARATION: Super Admin sees ONLY Platform routes
     if (user.role === 'SUPER_ADMIN') {
       if (!superAdminAllowedPaths.includes(item.path)) return false;
+    }
+
+    // Hide Leaves and Attendance for ADMIN (as requested)
+    if (user.role === 'ADMIN' && ['/attendance', '/leave'].includes(item.path)) {
+      return false;
     }
 
     // Only show the first matching (highest privilege) dashboard

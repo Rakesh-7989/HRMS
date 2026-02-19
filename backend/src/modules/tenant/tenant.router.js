@@ -20,9 +20,9 @@ router.post("/register", validate(tenantRegisterSchema), controller.registerTena
 router.use(verifyJwt);
 
 router.get("/profile", controller.getTenantProfile);
-router.put("/profile", requirePermission("admin.manage_tenant"), validate(updateTenantSchema), controller.updateTenantProfile);
-router.put("/logo", requirePermission("admin.manage_tenant"), uploadImage.single('logo'), controller.uploadLogo);
-router.delete("/logo", requirePermission("admin.manage_tenant"), controller.deleteLogo);
+router.put("/profile", requirePermission("manage_organization"), validate(updateTenantSchema), controller.updateTenantProfile);
+router.put("/logo", requirePermission("manage_organization"), uploadImage.single('logo'), controller.uploadLogo);
+router.delete("/logo", requirePermission("manage_organization"), controller.deleteLogo);
 
 // Employee ID Settings
 router.get("/employee-id-settings", controller.getEmployeeIdSettings);

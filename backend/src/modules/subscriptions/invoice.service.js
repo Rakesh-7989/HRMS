@@ -47,7 +47,7 @@ class InvoiceService {
         if (!invoice) throw new Error('Invoice not found');
 
         // Fetch User for customer info
-        const userRes = await db.query('SELECT email, first_name, last_name, phone FROM users WHERE tenant_id = $1 AND role = \'ADMIN\' LIMIT 1', [invoice.tenant_id]);
+        const userRes = await db.query(`SELECT u.email, e.first_name, e.last_name, e.phone FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE u.tenant_id = $1 AND u.role = 'ADMIN' LIMIT 1`, [invoice.tenant_id]);
         const adminUser = userRes.rows[0];
 
         const request = {

@@ -143,7 +143,7 @@ exports.registerTenant = async (data, req = null) => {
     country: data.country || null,
     zip_code: data.zip_code ? String(data.zip_code) : null,
     email: data.email,
-    settings: data.settings || {}
+    settings: { ... (data.settings || {}), employee_id_prefix: (data.settings && data.settings.employee_id_prefix) || 'EMP' }
   };
 
   // Validate phone number if provided
@@ -585,6 +585,58 @@ exports.generateNextEmployeeId = async (tenantId, client = null) => {
   const employeeId = `${prefix}${String(newCounter).padStart(3, '0')}`;
 
   return employeeId;
+};
+
+/**
+ * Sync employee ID counter with a manually entered ID
+ * If manualId is "EMP005" and counter is at 3, update counter to 5 so next auto-gen is EMP006
+ */
+exports.syncEmployeeIdCounter = async (tenantId, manualId, client = null) => {
+  if (!manualId) return;
+
+  const executor = client || pool;
+
+  // 1. Get current settings
+  const result = await executor.query(
+    `SELECT settings FROM tenants WHERE id = $1 FOR UPDATE`,
+    [tenantId]
+  );
+
+  if (result.rowCount === 0) return;
+
+  const settings = result.rows[0].settings || {};
+  const prefix = settings.employee_id_prefix;
+
+  // If no prefix configured, we can't really "sync" anything intelligently
+  if (!prefix) return;
+
+  // 2. Check if manualId matches the prefix
+  // manualId: "EMP005", prefix: "EMP" -> match
+  if (!manualId.startsWith(prefix)) return;
+
+  // 3. Extract the numeric part
+  const numericPart = manualId.slice(prefix.length); // "005"
+
+  // Validate it's actually a number
+  if (!/^\d+$/.test(numericPart)) return;
+
+  const manualCount = parseInt(numericPart, 10);
+  const currentCount = settings.employee_id_counter || 0;
+
+  // 4. Update if manual > current
+  if (manualCount > currentCount) {
+    const newSettings = {
+      ...settings,
+      employee_id_counter: manualCount
+    };
+
+    await executor.query(
+      `UPDATE tenants SET settings = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(newSettings), tenantId]
+    );
+
+    logger.info(`Synced employee ID counter for tenant ${tenantId}. Updated from ${currentCount} to ${manualCount}`);
+  }
 };
 // ========================================================================
 // TENANT PROFILE & LOGO FUNCTIONS (Migrated from legacy admin)

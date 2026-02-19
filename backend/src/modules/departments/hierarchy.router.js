@@ -8,7 +8,7 @@ const hierarchyService = require('./hierarchy.service');
  * Get organization hierarchy tree
  * Accessible: Anyone with org_hierarchy.view permission
  */
-router.get('/', requirePermission('org_hierarchy.view'), async (req, res, next) => {
+router.get('/', requirePermission('view_organization_structure'), async (req, res, next) => {
     try {
         const tree = await hierarchyService.getHierarchyTree(req.user.tenantId);
         res.json({ status: 'success', data: tree });
@@ -17,11 +17,7 @@ router.get('/', requirePermission('org_hierarchy.view'), async (req, res, next) 
     }
 });
 
-/**
- * GET /api/hierarchy/positions/:id
- * Get a single hierarchy position
- */
-router.get('/positions/:id', requirePermission('org_hierarchy.view'), async (req, res, next) => {
+router.get('/positions/:id', requirePermission('view_organization_structure'), async (req, res, next) => {
     try {
         const position = await hierarchyService.getPosition(req.params.id);
         if (!position) {
@@ -33,11 +29,7 @@ router.get('/positions/:id', requirePermission('org_hierarchy.view'), async (req
     }
 });
 
-/**
- * POST /api/hierarchy/positions
- * Create a new hierarchy position
- */
-router.post('/positions', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.post('/positions', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         const position = await hierarchyService.createPosition(req.user.tenantId, req.body);
         res.status(201).json({ status: 'success', data: position });
@@ -46,11 +38,7 @@ router.post('/positions', requirePermission('org_hierarchy.manage'), async (req,
     }
 });
 
-/**
- * PUT /api/hierarchy/positions/:id
- * Update a hierarchy position
- */
-router.put('/positions/:id', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.put('/positions/:id', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         const position = await hierarchyService.updatePosition(req.params.id, req.body);
         if (!position) {
@@ -62,11 +50,7 @@ router.put('/positions/:id', requirePermission('org_hierarchy.manage'), async (r
     }
 });
 
-/**
- * DELETE /api/hierarchy/positions/:id
- * Delete a hierarchy position
- */
-router.delete('/positions/:id', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.delete('/positions/:id', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         await hierarchyService.deletePosition(req.params.id);
         res.json({ status: 'success', message: 'Position deleted successfully' });
@@ -75,11 +59,7 @@ router.delete('/positions/:id', requirePermission('org_hierarchy.manage'), async
     }
 });
 
-/**
- * POST /api/hierarchy/positions/:id/assign
- * Assign an employee to a hierarchy position
- */
-router.post('/positions/:id/assign', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.post('/positions/:id/assign', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         const { employeeId } = req.body;
         if (!employeeId) {
@@ -92,11 +72,7 @@ router.post('/positions/:id/assign', requirePermission('org_hierarchy.manage'), 
     }
 });
 
-/**
- * POST /api/hierarchy/positions/:id/unassign
- * Remove an employee from a hierarchy position
- */
-router.post('/positions/:id/unassign', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.post('/positions/:id/unassign', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         const { employeeId } = req.body;
         if (!employeeId) {
@@ -109,12 +85,7 @@ router.post('/positions/:id/unassign', requirePermission('org_hierarchy.manage')
     }
 });
 
-/**
- * POST /api/hierarchy/seed
- * Seed default hierarchy positions for the organization
- * Only works if no positions exist yet
- */
-router.post('/seed', requirePermission('org_hierarchy.manage'), async (req, res, next) => {
+router.post('/seed', requirePermission('manage_organization'), async (req, res, next) => {
     try {
         // Check if positions already exist
         const existing = await require('../../config/db').query(

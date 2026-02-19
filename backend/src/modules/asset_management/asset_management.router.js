@@ -37,7 +37,7 @@ const router = express.Router();
 router.post(
   "/create",
   verifyJwt,
-  requirePermission("assets.manage"),
+  requirePermission("manage_all_assets"),
   validate(createAssetSchema),
   ctrl.createAsset
 );
@@ -54,7 +54,7 @@ router.post(
 router.get(
   "/list",
   verifyJwt,
-  requireAnyPermission(["assets.view"]),
+  requireAnyPermission(["view_assets"]),
   validate(listAssetsSchema),
   ctrl.listAssets
 );
@@ -67,7 +67,7 @@ router.get(
 router.get(
   "/list/:id",
   verifyJwt,
-  requireAnyPermission(["assets.view"]),
+  requireAnyPermission(["view_assets"]),
   validate(getAssetByIdSchema),
   ctrl.getAssetById
 );
@@ -80,7 +80,7 @@ router.get(
 router.put(
   "/update/:id",
   verifyJwt,
-  requirePermission("assets.manage"),
+  requirePermission("manage_all_assets"),
   validate(updateAssetSchema),
   ctrl.updateAsset
 );
@@ -93,7 +93,7 @@ router.put(
 router.delete(
   "/delete/:id",
   verifyJwt,
-  requirePermission("assets.manage"),
+  requirePermission("manage_all_assets"),
   validate(deleteAssetSchema),
   ctrl.retireAsset
 );
@@ -107,7 +107,7 @@ router.delete(
 router.get(
   "/:id/barcode",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(getBarcodeSchema),
   ctrl.generateBarcode
 );
@@ -120,7 +120,7 @@ router.get(
 router.post(
   "/:id/assign",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(assignAssetSchema),
   ctrl.assignAsset
 );
@@ -133,7 +133,7 @@ router.post(
 router.post(
   "/:id/return",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(returnAssetSchema),
   ctrl.returnAsset
 );
@@ -146,7 +146,7 @@ router.post(
 router.get(
   "/:id/tracking",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(getTrackingSchema),
   ctrl.getAssetTracking
 );
@@ -159,7 +159,7 @@ router.get(
 router.get(
   "/:id/usage-history",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(getTrackingSchema),
   ctrl.getAssetUsageHistory
 );
@@ -199,7 +199,7 @@ router.get(
 router.post(
   "/requests/:id/handle",
   verifyJwt,
-  requireAnyPermission(["assets.manage"]),
+  requireAnyPermission(["manage_all_assets"]),
   validate(handleAssetRequestSchema),
   ctrl.handleAssetRequest
 );

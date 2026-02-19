@@ -112,30 +112,8 @@ CREATE TABLE role_permissions (
 CREATE INDEX idx_role_permissions_role ON role_permissions(role_id);
 CREATE INDEX idx_role_permissions_perm ON role_permissions(permission_id);
 
--- 2.3 USER ROLES (many-to-many with optional scope)
-CREATE TABLE user_roles (
-    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE,
-    scope_type    VARCHAR(30),     -- NULL, 'department', 'location'
-    scope_id      UUID,            -- department_id, location_id, etc.
-    assigned_by   UUID REFERENCES users(id) ON DELETE SET NULL,
-    assigned_at   TIMESTAMP DEFAULT now(),
-    UNIQUE(user_id, role_id, COALESCE(scope_type, ''), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'))
-);
-
-CREATE INDEX idx_user_roles_user ON user_roles(user_id);
-CREATE INDEX idx_user_roles_role ON user_roles(role_id);
-CREATE INDEX idx_user_roles_tenant ON user_roles(tenant_id);
-
-ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
-
 -- ===================================================================
--- 3. USERS
+-- 3. USERS (moved before user_roles to satisfy FK dependency)
 -- ===================================================================
 CREATE TABLE users (
     id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -164,6 +142,33 @@ CREATE UNIQUE INDEX users_unique_global_superadmin ON users(email)
 
 -- per-tenant user email uniqueness
 CREATE UNIQUE INDEX users_email_per_tenant ON users(tenant_id, email);
+
+-- 2.3 USER ROLES (many-to-many with optional scope)
+CREATE TABLE user_roles (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    scope_type    VARCHAR(30),     -- NULL, 'department', 'location'
+    scope_id      UUID,            -- department_id, location_id, etc.
+    assigned_by   UUID REFERENCES users(id) ON DELETE SET NULL,
+    assigned_at   TIMESTAMP DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_user_roles_unique ON user_roles(
+    user_id, role_id,
+    COALESCE(scope_type, ''),
+    COALESCE(scope_id, '00000000-0000-0000-0000-000000000000')
+);
+
+CREATE INDEX idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role_id);
+CREATE INDEX idx_user_roles_tenant ON user_roles(tenant_id);
+
+ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- 4. EMPLOYEES (one-to-one with users)

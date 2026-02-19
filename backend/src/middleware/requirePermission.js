@@ -20,6 +20,9 @@ function requirePermission(permissionName) {
             return next();
         }
 
+        console.error(`[AUTH_FAILURE] User ${req.user.id} (Role: ${req.user.role}) missing permission: ${permissionName}`);
+        console.error(`[AUTH_FAILURE] Available permissions: ${JSON.stringify(req.user.permissions)}`);
+
         return next(
             new ForbiddenError('You do not have permission to perform this action')
         );

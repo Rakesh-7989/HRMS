@@ -46,7 +46,7 @@ router.get(
  */
 router.get(
   "/organization",
-  requirePermission("admin.view_dashboard"),
+  requirePermission("view_admin_dashboard"),
   controller.getAdminDashboard
 );
 
@@ -56,7 +56,7 @@ router.get(
  */
 router.get(
   "/hr",
-  requirePermission("reports.view"),
+  requirePermission("view_hr_reports"),
   controller.getHRDashboard
 );
 
@@ -66,7 +66,7 @@ router.get(
  */
 router.get(
   "/team",
-  requirePermission("attendance.approve"),
+  requirePermission("approve_attendance_regularization"),
   controller.getManagerDashboard
 );
 
@@ -76,7 +76,7 @@ router.get(
  */
 router.get(
   "/personal",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   controller.getEmployeeDashboard
 );
 

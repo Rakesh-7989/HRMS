@@ -18,14 +18,26 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading,
   disabled,
   requiresActivePlan,
+  type = 'submit',
+  onKeyDown,
+  onClick,
   ...props
 }) => {
   const { hasActivePlan } = useAuth();
   const isSubscriptionDisabled = requiresActivePlan && !hasActivePlan;
   const effectivelyDisabled = disabled || isLoading || isSubscriptionDisabled;
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    // Trigger click on Enter key press for accessibility
+    if (e.key === 'Enter' && !effectivelyDisabled) {
+      e.preventDefault();
+      (e.currentTarget as HTMLButtonElement).click();
+    }
+    onKeyDown?.(e);
+  };
+
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900';
 
   const variantClasses = {
     primary:
@@ -46,6 +58,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <motion.button
+      type={type}
       className={cn(
         baseClasses,
         variantClasses[variant],
@@ -57,6 +70,8 @@ export const Button: React.FC<ButtonProps> = ({
       whileTap={effectivelyDisabled ? {} : { scale: 0.98 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       disabled={effectivelyDisabled}
+      onKeyDown={handleKeyDown}
+      onClick={onClick}
       title={isSubscriptionDisabled ? 'This action requires an active subscription plan.' : props.title}
       {...(props as any)}
     >

@@ -9,7 +9,7 @@ const roleService = require('./role.service');
 // ========================================
 
 // GET /api/rbac/permissions — list all permissions (grouped by category)
-router.get('/permissions', requirePermission('roles.view'), async (req, res, next) => {
+router.get('/permissions', requirePermission('view_roles'), async (req, res, next) => {
     try {
         const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
         const permissions = await permissionService.getAllPermissions(isSuperAdmin);
@@ -34,7 +34,7 @@ router.get('/permissions/my', async (req, res, next) => {
 // ========================================
 
 // GET /api/rbac/roles — list org roles with user/permission counts
-router.get('/roles', requirePermission('roles.view'), async (req, res, next) => {
+router.get('/roles', requirePermission('view_roles'), async (req, res, next) => {
     try {
         const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
         const roles = await roleService.getOrganizationRoles(req.user.tenantId, isSuperAdmin);
@@ -45,7 +45,7 @@ router.get('/roles', requirePermission('roles.view'), async (req, res, next) => 
 });
 
 // GET /api/rbac/roles/:id — get role detail with permissions
-router.get('/roles/:id', requirePermission('roles.view'), async (req, res, next) => {
+router.get('/roles/:id', requirePermission('view_roles'), async (req, res, next) => {
     try {
         const role = await roleService.getRoleWithPermissions(req.params.id);
         if (!role) return res.status(404).json({ status: 'error', message: 'Role not found' });
@@ -56,7 +56,7 @@ router.get('/roles/:id', requirePermission('roles.view'), async (req, res, next)
 });
 
 // POST /api/rbac/roles — create custom role
-router.post('/roles', requirePermission('roles.manage'), async (req, res, next) => {
+router.post('/roles', requirePermission('manage_roles'), async (req, res, next) => {
     try {
         const role = await roleService.createRole(req.user.tenantId, req.body, req.user.id);
         res.status(201).json({ status: 'success', data: role });
@@ -66,7 +66,7 @@ router.post('/roles', requirePermission('roles.manage'), async (req, res, next) 
 });
 
 // PUT /api/rbac/roles/:id — update role
-router.put('/roles/:id', requirePermission('roles.manage'), async (req, res, next) => {
+router.put('/roles/:id', requirePermission('manage_roles'), async (req, res, next) => {
     try {
         const role = await roleService.updateRole(req.params.id, req.body);
         res.json({ status: 'success', data: role });
@@ -76,7 +76,7 @@ router.put('/roles/:id', requirePermission('roles.manage'), async (req, res, nex
 });
 
 // DELETE /api/rbac/roles/:id — delete custom role
-router.delete('/roles/:id', requirePermission('roles.manage'), async (req, res, next) => {
+router.delete('/roles/:id', requirePermission('manage_roles'), async (req, res, next) => {
     try {
         await roleService.deleteRole(req.params.id);
         res.json({ status: 'success', message: 'Role deleted successfully' });
@@ -100,7 +100,7 @@ router.get('/users/:userId/roles', async (req, res, next) => {
 });
 
 // POST /api/rbac/users/:userId/roles — assign role to user
-router.post('/users/:userId/roles', requirePermission('roles.assign'), async (req, res, next) => {
+router.post('/users/:userId/roles', requirePermission('assign_roles'), async (req, res, next) => {
     try {
         const { roleId, scopeType, scopeId } = req.body;
         const assignment = await roleService.assignRoleToUser(
@@ -113,7 +113,7 @@ router.post('/users/:userId/roles', requirePermission('roles.assign'), async (re
 });
 
 // DELETE /api/rbac/users/:userId/roles/:roleId — remove role from user
-router.delete('/users/:userId/roles/:roleId', requirePermission('roles.assign'), async (req, res, next) => {
+router.delete('/users/:userId/roles/:roleId', requirePermission('assign_roles'), async (req, res, next) => {
     try {
         await roleService.removeRoleFromUser(req.params.userId, req.params.roleId);
         res.json({ status: 'success', message: 'Role removed successfully' });

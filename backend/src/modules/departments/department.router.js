@@ -13,27 +13,27 @@ router.use(verifyJwt);
 // ADMIN + HR
 router.post(
   "/",
-  requireAnyPermission(["organisation.manage_departments"]),
+  requireAnyPermission(["manage_departments"]),
   validate(validator.createDepartmentSchema),
   controller.createDepartment
 );
 
 router.get(
   "/",
-  requireAnyPermission(["organisation.view"]),
+  requireAnyPermission(["view_organization_structure"]),
   validate(validator.getDepartmentSchema),
   controller.getDepartments
 );
 
 router.get(
   "/:id",
-  requireAnyPermission(["organisation.view"]),
+  requireAnyPermission(["view_organization_structure"]),
   controller.getDepartmentById
 );
 
 router.patch(
   "/:id",
-  requireAnyPermission(["organisation.manage_departments"]),
+  requireAnyPermission(["manage_departments"]),
   validate(validator.updateDepartmentSchema),
   controller.updateDepartment
 );
@@ -41,7 +41,7 @@ router.patch(
 // ADMIN + HR (Updated to allow HR to delete)
 router.delete(
   "/:id",
-  requireAnyPermission(["organisation.manage_departments"]),
+  requireAnyPermission(["manage_departments"]),
   validate(validator.deleteDepartmentSchema),
   controller.deleteDepartment
 );

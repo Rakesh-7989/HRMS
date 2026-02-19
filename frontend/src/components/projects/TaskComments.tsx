@@ -186,7 +186,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
     // Check if user can edit/delete a comment
     const canModifyComment = (comment: TaskComment) => {
         if (!user) return false;
-        return comment.user_id === user.id || hasPermission('projects.manage');
+        return comment.user_id === user.id || hasPermission('manage_all_projects');
     };
 
     // Close dropdown when clicking outside

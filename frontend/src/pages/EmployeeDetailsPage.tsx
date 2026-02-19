@@ -53,7 +53,7 @@ export const EmployeeDetailsPage: React.FC = () => {
     });
 
     const { hasAnyPermission } = usePermission();
-    const canManage = hasAnyPermission(['employees.edit', 'employees.delete', 'employees.manage_status']);
+    const canManage = hasAnyPermission(['edit_employee', 'delete_employee', 'manage_employee_docs']);
 
     // Queries
     const { data: employee, isLoading, error } = useQuery({

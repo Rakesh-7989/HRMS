@@ -46,7 +46,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const { hasPermission, hasAnyPermission } = usePermission();
 
-  const canAccessSettings = user?.role !== 'SUPER_ADMIN' && hasAnyPermission(['roles.manage', 'platform.manage_tenants', 'reports.view']);
+  const canAccessSettings = user?.role !== 'SUPER_ADMIN' && hasAnyPermission(['manage_roles', 'platform.manage_tenants', 'view_hr_reports']);
 
   // Debounce search
   useEffect(() => {
@@ -93,7 +93,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     ];
 
     // Filter out settings for restricted roles via permissions
-    if (!hasAnyPermission(['roles.manage', 'platform.manage_tenants'])) {
+    if (!hasAnyPermission(['manage_roles', 'platform.manage_tenants'])) {
       results = results.filter(r =>
         !r.url.startsWith('/settings') &&
         !r.url.startsWith('/leave/settings')

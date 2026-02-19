@@ -18,19 +18,19 @@ export const hierarchyService = {
     // Get the full hierarchy tree
     getHierarchy: async () => {
         const response = await api.get('/hierarchy');
-        return response.data;
+        return response.data.data;
     },
 
     // Create a new position
     createPosition: async (data: Partial<HierarchyPosition>) => {
         const response = await api.post('/hierarchy/positions', data);
-        return response.data;
+        return response.data.data;
     },
 
     // Update an existing position
     updatePosition: async (id: string, data: Partial<HierarchyPosition>) => {
         const response = await api.put(`/hierarchy/positions/${id}`, data);
-        return response.data;
+        return response.data.data;
     },
 
     // Delete a position

@@ -33,9 +33,9 @@ export const ActivityPage: React.FC = () => {
 
   const getDashboardPath = () => {
     if (hasPermission('platform.manage_tenants')) return '/dashboard/system';
-    if (hasPermission('admin.view_dashboard')) return '/dashboard/organization';
-    if (hasPermission('reports.view')) return '/dashboard/hr';
-    if (hasPermission('attendance.approve')) return '/dashboard/team';
+    if (hasPermission('view_admin_dashboard')) return '/dashboard/organization';
+    if (hasPermission('view_hr_reports')) return '/dashboard/hr';
+    if (hasPermission('approve_attendance_regularization')) return '/dashboard/team';
     return '/dashboard/personal';
   };
 

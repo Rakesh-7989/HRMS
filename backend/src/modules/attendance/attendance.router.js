@@ -12,10 +12,10 @@ const validator = require("./attendance.validator");
 // All routes require authentication
 router.use(verifyJwt);
 
-// Clock in (All users with attendance.mark_own permission)
+// Clock in (All users with mark_attendance permission)
 router.post(
   "/clock-in",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   validate(validator.clockInSchema),
   controller.clockIn
 );
@@ -23,7 +23,7 @@ router.post(
 // Clock out
 router.post(
   "/clock-out",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   validate(validator.clockOutSchema),
   controller.clockOut
 );
@@ -31,28 +31,28 @@ router.post(
 // Start Break
 router.post(
   "/break/start",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   controller.startBreak
 );
 
 // End Break
 router.post(
   "/break/end",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   controller.endBreak
 );
 
 // Get Break History
 router.get(
   "/break/history",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   controller.getBreakHistory
 );
 
 // Get Currently On Break (Manager/HR/Admin)
 router.get(
   "/break/current",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   controller.getCurrentBreaks
 );
 
@@ -62,7 +62,7 @@ router.get("/today", controller.getTodayAttendance);
 // Get my attendance history
 router.get(
   "/my-attendance",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   validate(validator.myAttendanceQuerySchema),
   controller.getMyAttendance
 );
@@ -70,14 +70,14 @@ router.get(
 // Get my pending checkouts
 router.get(
   "/pending/my",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   controller.getPendingCheckouts
 );
 
 // Confirm checkout
 router.post(
   "/:id/confirm-checkout",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   validate(validator.confirmCheckoutSchema),
   controller.confirmCheckout
 );
@@ -87,7 +87,7 @@ router.post(
 // Get team attendance (direct reports of manager)
 router.get(
   "/team/attendance",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.teamAttendanceQuerySchema),
   controller.getTeamAttendance
 );
@@ -97,7 +97,7 @@ router.get(
 // Get all attendance records
 router.get(
   "/records",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.attendanceRecordsQuerySchema),
   controller.getAttendanceRecords
 );
@@ -105,7 +105,7 @@ router.get(
 // Approve attendance
 router.put(
   "/:id/approve",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.approveAttendanceSchema),
   controller.approveAttendance
 );
@@ -113,7 +113,7 @@ router.put(
 // Reject attendance
 router.put(
   "/:id/reject",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.rejectAttendanceSchema),
   controller.rejectAttendance
 );
@@ -121,7 +121,7 @@ router.put(
 // Get attendance summary for payroll period
 router.get(
   "/summary",
-  requireAnyPermission(["attendance.manage"]),
+  requireAnyPermission(["manage_attendance"]),
   validate(validator.summaryQuerySchema),
   controller.getAttendanceSummary
 );
@@ -129,7 +129,7 @@ router.get(
 // Get all pending checkouts (HR/Admin/Manager view)
 router.get(
   "/pending",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.pendingCheckoutsQuerySchema),
   controller.getPendingCheckouts
 );
@@ -137,7 +137,7 @@ router.get(
 // Auto-approve all pending checkouts older than 24 hours
 router.post(
   "/pending/auto-approve",
-  requireAnyPermission(["attendance.manage"]),
+  requireAnyPermission(["manage_attendance"]),
   validate(validator.autoApprovePendingSchema),
   controller.autoApprovePendingCheckouts
 );
@@ -161,7 +161,7 @@ router.get(
 // ===== INDIVIDUAL REPORT =====
 router.get(
   "/report/individual/:employeeId",
-  requireAnyPermission(["attendance.view_own", "attendance.view_all", "attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["view_own_attendance", "view_all_attendance", "manage_attendance", "approve_attendance"]),
   controller.getIndividualEmployeeReport
 );
 
@@ -169,7 +169,7 @@ router.get(
 // Get weekly attendance hours (for timesheet display)
 router.get(
   "/my-weekly-hours",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   controller.getWeeklyAttendanceHours
 );
 
@@ -178,7 +178,7 @@ router.get(
 // Apply for regularization
 router.post(
   "/regularize",
-  requirePermission("attendance.mark_own"),
+  requirePermission("mark_attendance"),
   validate(validator.regularizationRequestSchema),
   controller.createRegularization
 );
@@ -186,14 +186,14 @@ router.post(
 // Get my regularization requests
 router.get(
   "/regularize/my",
-  requirePermission("attendance.view_own"),
+  requirePermission("view_own_attendance"),
   controller.getMyRegularizations
 );
 
 // Get pending regularization requests for team (MANAGER / HR / ADMIN)
 router.get(
   "/regularize/pending",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.pendingRegularizationQuerySchema),
   controller.getPendingRegularizations
 );
@@ -201,7 +201,7 @@ router.get(
 // Review regularization (Approve/Reject) (MANAGER / HR / ADMIN)
 router.put(
   "/regularize/:id/review",
-  requireAnyPermission(["attendance.manage", "attendance.approve"]),
+  requireAnyPermission(["manage_attendance", "approve_attendance"]),
   validate(validator.regularizationReviewSchema),
   controller.reviewRegularization
 );

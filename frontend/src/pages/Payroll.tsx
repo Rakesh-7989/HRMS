@@ -8,14 +8,14 @@ import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresCo
 
 
 const PAYROLL_TABS = [
-  { id: 'summary', label: 'Summary', permissions: ['payroll.view_all'] },
-  { id: 'payslips', label: 'Payslips & Tax', permissions: ['payroll.view_own', 'payroll.view_all'] },
-  { id: 'salary_details', label: 'Salary Structure', permissions: ['payroll.manage', 'payroll.view_all'] },
+  { id: 'summary', label: 'Summary', permissions: ['view_all_payroll'] },
+  { id: 'payslips', label: 'Payslips & Tax', permissions: ['view_own_payslip', 'view_all_payroll'] },
+  { id: 'salary_details', label: 'Salary Structure', permissions: ['manage_payroll_components', 'view_all_payroll'] },
 ] as const;
 
 export const Payroll: React.FC = () => {
   const { hasAnyPermission } = usePermission();
-  const isHRorAdmin = hasAnyPermission(['payroll.view_all', 'payroll.manage']);
+  const isHRorAdmin = hasAnyPermission(['view_all_payroll', 'manage_payroll_components']);
   const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'summary' : 'payslips');
 
   return (

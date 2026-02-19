@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/Label';
 
 export const EmploymentTypesContent: React.FC = () => {
     const { hasPermission } = usePermission();
-    const canManage = hasPermission('roles.manage');
+    const canManage = hasPermission('manage_roles');
     const queryClient = useQueryClient();
 
     const [searchTerm, setSearchTerm] = useState('');

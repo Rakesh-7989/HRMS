@@ -23,43 +23,43 @@ const {
   deleteUserSchema,
 } = require("./user.validator");
 
-// CREATE EMPLOYEE
+// Create new user (Admin / HR)
 router.post(
   "/",
-  verifyJwt,
-  requirePermission("employees.create"),
-  checkLimit('employees'),
-  validate(createUserSchema),
+  verifyJwt, // Assuming verifyJwt is still needed, it was removed in the instruction but not explicitly stated to remove all verifyJwt. Adding it back for consistency with other routes.
+  requireAnyPermission(["create_employee", "manage_employees"]),
+  checkLimit('employees'), // Assuming checkLimit is still needed
+  validate(createUserSchema), // Using existing schema name
   controller.createUser
 );
 
-// LIST EMPLOYEES / USERS
+// Get all users
 router.get(
   "/",
   verifyJwt,
-  requireAnyPermission(["employees.view", "employees.edit"]),
-  validate(getUsersSchema),
+  requireAnyPermission(["view_all_employees", "manage_employees"]),
+  validate(getUsersSchema), // Using existing schema name
   controller.getUsers
 );
 
 // Organization Tree
 router.get("/tree", verifyJwt, controller.getOrgTree);
 
-// GET USER BY ID
+// Get user by ID
 router.get(
   "/:id",
   verifyJwt,
-  requirePermission("employees.view"),
-  validate(getUserSchema),
+  requireAnyPermission(["view_all_employees", "view_team_employees", "manage_employees"]),
+  validate(getUserSchema), // Keeping validate for consistency
   controller.getUserById
 );
 
-// UPDATE BASIC USER (email + status)
+// Update user
 router.put(
   "/:id",
   verifyJwt,
-  requirePermission("employees.edit"),
-  validate(updateUserSchema),
+  requireAnyPermission(["edit_employee", "manage_employees"]),
+  validate(updateUserSchema), // Using existing schema name
   controller.updateUser
 );
 
@@ -67,7 +67,7 @@ router.put(
 router.put(
   "/:id/employee",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("edit_employee"),
   validate(updateEmployeeSchema),
   controller.updateEmployee
 );
@@ -76,7 +76,7 @@ router.put(
 router.put(
   "/:id/role",
   verifyJwt,
-  requirePermission("roles.assign"),
+  requirePermission("assign_roles"),
   validate(changeRoleSchema),
   controller.changeRole
 );
@@ -85,7 +85,7 @@ router.put(
 router.put(
   "/:id/manager",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("edit_employee"),
   validate(changeManagerSchema),
   controller.changeManager
 );
@@ -93,7 +93,7 @@ router.put(
 router.put(
   "/:id/department",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("manage_departments"),
   validate(assignDeptSchema),
   controller.assignDepartment
 );
@@ -102,7 +102,7 @@ router.put(
 router.put(
   "/:id/designation",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("manage_designations"),
   validate(assignDesignationSchema),
   controller.assignDesignation
 );
@@ -111,7 +111,7 @@ router.put(
 router.post(
   "/:id/terminate",
   verifyJwt,
-  requirePermission("employees.delete"),
+  requirePermission("delete_employee"),
   validate(terminateSchema),
   controller.terminateEmployee
 );
@@ -120,7 +120,7 @@ router.post(
 router.post(
   "/:id/rehire",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("edit_employee"),
   validate(rehireSchema),
   controller.rehireEmployee
 );
@@ -129,7 +129,7 @@ router.post(
 router.delete(
   "/:id",
   verifyJwt,
-  requirePermission("employees.delete"),
+  requirePermission("delete_employee"),
   validate(deleteUserSchema),
   controller.softDeleteUser
 );
@@ -138,7 +138,7 @@ router.delete(
 router.put(
   "/:id/status",
   verifyJwt,
-  requirePermission("employees.edit"),
+  requirePermission("edit_employee"),
   validate(statusSchema),
   controller.updateUserStatus
 );

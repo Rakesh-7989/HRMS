@@ -304,6 +304,16 @@ class SubscriptionService {
     }
 
     async verifyPayment(tenantId, orderId) {
+        // Mock Bypass: Check if subscription with this ID is already active
+        if (orderId && orderId.startsWith('SUB_')) {
+            const subRes = await db.query('SELECT * FROM subscriptions WHERE cashfree_subscription_id = $1 AND tenant_id = $2', [orderId, tenantId]);
+            const sub = subRes.rows[0];
+
+            if (sub && sub.status === 'ACTIVE') {
+                return { success: true, message: 'Mock payment verified' };
+            }
+        }
+
         try {
             const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
             if (!invoice) throw new Error('Invoice not found for this order.');

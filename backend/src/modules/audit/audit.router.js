@@ -8,6 +8,6 @@ const controller = require('./audit.controller');
 router.use(verifyJwt);
 
 // Only Admins (and Super Admins via bypass) can view audit logs
-router.get('/', requireAnyPermission(['admin.view_audit_logs', 'admin.manage_tenant']), controller.getAuditLogs);
+router.get('/', requireAnyPermission(['view_audit_logs', 'platform.manage_tenants']), controller.getAuditLogs);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -37,7 +37,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 
 const ActionButton = ({
-  icon: Icon, title, subtitle, onClick, colorClass, gradientClass, delay = 0
+  icon: Icon, title, subtitle, onClick, colorClass, gradientClass, delay = 0, shortcutKey
 }: any) => (
   <motion.button
     initial={{ opacity: 0, x: -20 }}
@@ -46,7 +46,7 @@ const ActionButton = ({
     whileHover={{ scale: 1.02, x: 4 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`w-full p-6 rounded-2xl border flex items-center gap-5 group transition-all duration-300 ${colorClass}`}
+    className={`w-full p-6 rounded-2xl border flex items-center gap-5 group transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${colorClass}`}
   >
     <div className={`w-14 h-14 rounded-2xl text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform shrink-0 ml-1 ${gradientClass}`}>
       <Icon className="w-7 h-7" />
@@ -55,6 +55,11 @@ const ActionButton = ({
       <p className="font-bold text-slate-800 dark:text-white text-lg">{title}</p>
       <p className="text-sm font-medium opacity-60">{subtitle}</p>
     </div>
+    {shortcutKey && (
+      <kbd className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0 group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:group-hover:bg-indigo-900/40 dark:group-hover:text-indigo-400 transition-colors">
+        {shortcutKey}
+      </kbd>
+    )}
     <ChevronRight className="w-6 h-6 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all mr-2" />
   </motion.button>
 );
@@ -130,6 +135,26 @@ export const EmployeeDashboard: React.FC = () => {
     ? Math.round((Number(attendanceSummary.days_present) / 30) * 100)
     : 0;
 
+  // Keyboard shortcuts for Quick Actions
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger when typing in inputs/textareas
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      switch (e.key) {
+        case '1':
+          navigate('/leave');
+          break;
+        case '2':
+          navigate('/attendance');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   // Task Data Processing
   const taskChartData = (data?.taskMetrics || []).map((m: any) => ({
@@ -262,7 +287,13 @@ export const EmployeeDashboard: React.FC = () => {
               transition={{ delay: 0.3 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-black text-slate-900 dark:text-white px-2 tracking-tight">Quick Actions</h3>
+              <div className="flex items-center justify-between px-2">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Quick Actions</h3>
+                <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-[10px]">Tab</kbd>
+                  to navigate
+                </span>
+              </div>
               <div className="grid grid-cols-1 gap-5">
                 <ActionButton
                   icon={CalendarPlus} title="Apply Leave" subtitle="Request Time Off"
@@ -270,6 +301,7 @@ export const EmployeeDashboard: React.FC = () => {
                   colorClass="bg-white dark:bg-[#111827]/60 backdrop-blur-xl border-gray-100 dark:border-white/5 shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-500/50"
                   gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
                   delay={0.4}
+                  shortcutKey="1"
                 />
                 <ActionButton
                   icon={Calendar} title="Attendance" subtitle="View History"
@@ -277,6 +309,7 @@ export const EmployeeDashboard: React.FC = () => {
                   colorClass="bg-white dark:bg-[#111827]/60 backdrop-blur-xl border-gray-100 dark:border-white/5 shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-500/50"
                   gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
                   delay={0.5}
+                  shortcutKey="2"
                 />
               </div>
             </motion.div>

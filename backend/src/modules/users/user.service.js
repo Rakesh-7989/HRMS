@@ -20,7 +20,7 @@ exports.createUser = async (db, data, actor) => {
     const permissions = actor.permissions || [];
 
     // Check creation permission
-    if (!permissions.includes("employees.create") && !permissions.includes("platform.manage_tenants")) {
+    if (!permissions.includes("create_employee") && !permissions.includes("platform.manage_tenants")) {
       throw new Error("Not allowed to create users");
     }
 
@@ -56,6 +56,12 @@ exports.createUser = async (db, data, actor) => {
     // If null, manual mode is active or user overrode it
     if (data.employee_id && data.employee_id.trim()) {
       generatedEmployeeId = data.employee_id.trim();
+      // Try to sync the counter if this manual ID looks like it belongs to the sequence
+      try {
+        await tenantService.syncEmployeeIdCounter(actor.tenantId, generatedEmployeeId, client);
+      } catch (syncErr) {
+        logger.warn("Failed to sync employee ID counter:", syncErr.message);
+      }
     } else if (generatedEmployeeId === null) {
       if (!data.employee_id || !data.employee_id.trim()) {
         throw new Error("Employee ID is required when auto-prefix is disabled. Please enter an employee ID.");
@@ -242,8 +248,8 @@ exports.createUser = async (db, data, actor) => {
     await client.query("ROLLBACK");
     // Handle database unique constraint violations
     if (err.code === '23505') {
-      if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
-        throw new Error(`Employee ID "${data.employee_id}" is already assigned to another employee`);
+      if (err.constraint === 'employees_employee_id_key' || err.constraint === 'employees_tenant_id_employee_id_key' || err.message.includes('employee_id')) {
+        throw new Error(`Employee ID "${generatedEmployeeId || data.employee_id}" is already assigned to another employee`);
       }
       if (err.constraint === 'users_email_per_tenant' || err.message.includes('email')) {
         throw new Error("An employee with this email address already exists in your organization");
@@ -269,7 +275,7 @@ exports.softDeleteUser = async (db, id, actor) => {
 
   const permissions = actor.permissions || [];
   // Only those with delete_employee or platform.manage_tenants can delete
-  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
+  if (!permissions.includes("delete_employee") && !permissions.includes("platform.manage_tenants")) {
     throw new Error("Only authorized users can delete employees");
   }
 
@@ -292,7 +298,7 @@ exports.terminateEmployee = async (db, id, data, actor) => {
   const query = getQuery(db);
 
   const permissions = actor.permissions || [];
-  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
+  if (!permissions.includes("delete_employee") && !permissions.includes("platform.manage_tenants")) {
     throw new Error("Not allowed to terminate employees");
   }
 
@@ -334,7 +340,7 @@ exports.rehireEmployee = async (db, id, actor) => {
   const query = getQuery(db);
 
   const permissions = actor.permissions || [];
-  if (!permissions.includes("employees.delete") && !permissions.includes("platform.manage_tenants")) {
+  if (!permissions.includes("edit_employee") && !permissions.includes("platform.manage_tenants")) {
     throw new Error("Not allowed to rehire employees");
   }
 
@@ -382,8 +388,8 @@ exports.getUsers = async (db, opts, actor) => {
   }
 
   // Permission-based filtering:
-  const canViewAll = permissions.includes("employees.view") || permissions.includes('platform.manage_tenants');
-  const canViewTeam = permissions.includes('attendance.manage');
+  const canViewAll = permissions.includes("view_all_employees") || permissions.includes('platform.manage_tenants');
+  const canViewTeam = permissions.includes('view_team_employees');
 
   if (!canViewAll) {
     if (canViewTeam) {
@@ -635,7 +641,7 @@ exports.updateEmployee = async (db, id, updates, actor) => {
   } catch (err) {
     // Handle database unique constraint violations
     if (err.code === '23505') {
-      if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
+      if (err.constraint === 'employees_employee_id_key' || err.constraint === 'employees_tenant_id_employee_id_key' || err.message.includes('employee_id')) {
         throw new Error(`Employee ID "${updates.employee_id}" is already assigned to another employee`);
       }
       if (err.constraint === 'users_email_per_tenant' || err.message.includes('email')) {

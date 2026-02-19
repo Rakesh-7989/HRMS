@@ -3,7 +3,7 @@
 -- Consolidates RBAC schema, roles, and refined permissions into one file.
 -- ===================================================================
 
-BEGIN;
+-- (no transaction wrapper — individual statements are idempotent)
 
 -- ===================================================================
 -- 1. ALTER EXISTING ROLES TABLE
@@ -192,7 +192,7 @@ INSERT INTO permissions (name, category, description, resource, action) VALUES
 ('view_admin_dashboard',   'admin', 'View admin dashboard', 'dashboard', 'read'),
 ('manage_organization',    'admin', 'Manage organization settings', 'organization', 'manage'),
 ('view_audit_logs',        'admin', 'View audit logs', 'audit', 'read'),
-('billing.manage',         'admin', 'View billing/subscription', 'billing', 'manage'),
+('manage_billing',         'admin', 'View billing/subscription', 'billing', 'manage'),
 ('manage_integrations',    'admin', 'Configure third-party integrations', 'integration', 'manage'),
 
 -- Reports
@@ -328,4 +328,4 @@ WHERE u.role IS NOT NULL AND u.is_deleted = false
   AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id)
 ON CONFLICT DO NOTHING;
 
-COMMIT;
+-- done
