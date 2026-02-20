@@ -94,7 +94,7 @@ exports.login = async (req, res) => {
     user.ua = req.headers["user-agent"];
 
     // Fetch permissions
-    const permissions = await authService.getUserPermissions(user.id);
+    const permissions = await authService.getUserPermissions(user.id, user.tenant_id, user.role);
 
     // Generate JWT + Refresh Token
     const tokens = await authService.generateTokens(user, rememberMe, permissions);
@@ -587,7 +587,7 @@ exports.verify2FALogin = async (req, res) => {
     );
 
     // Fetch permissions
-    const permissions = await authService.getUserPermissions(user.id);
+    const permissions = await authService.getUserPermissions(user.id, user.tenant_id, user.role);
 
     // Generate JWT + Refresh Token
     const tokens = await authService.generateTokens(user, rememberMe, permissions);

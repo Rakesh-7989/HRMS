@@ -103,14 +103,36 @@ exports.listSessions = async (userId) => {
   );
   return res.rows;
 };
-exports.getUserPermissions = async (userId) => {
-  const res = await pool.query(
-    `SELECT DISTINCT p.name
-     FROM user_roles ur
-     JOIN role_permissions rp ON rp.role_id = ur.role_id
-     JOIN permissions p ON p.id = rp.permission_id
-     WHERE ur.user_id = $1`,
-    [userId]
-  );
-  return res.rows.map(r => r.name);
+exports.getUserPermissions = async (userId, tenantId = null, role = null) => {
+  // During login, there is no async context store, so pool.query's withContext
+  // sets empty RLS vars. On production (non-superuser DB user), this causes
+  // RLS policies to block access. We manually set context on a raw client.
+  const { Pool } = require("pg");
+  const origConnect = Object.getPrototypeOf(pool).connect.bind(pool);
+  const client = await origConnect();
+  try {
+    // Set RLS context so user_roles RLS policy passes
+    if (role) {
+      await client.query(`SELECT set_config('app.role', $1, true)`, [role]);
+    }
+    if (tenantId) {
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantId.toString()]);
+    }
+    if (userId) {
+      await client.query(`SELECT set_config('app.user_id', $1, true)`, [userId.toString()]);
+    }
+
+    const res = await client.query(
+      `SELECT DISTINCT p.name
+       FROM user_roles ur
+       JOIN role_permissions rp ON rp.role_id = ur.role_id
+       JOIN permissions p ON p.id = rp.permission_id
+       WHERE ur.user_id = $1`,
+      [userId]
+    );
+    return res.rows.map(r => r.name);
+  } finally {
+    await client.query("RESET ALL");
+    client.release();
+  }
 };

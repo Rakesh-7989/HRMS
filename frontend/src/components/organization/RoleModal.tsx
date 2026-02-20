@@ -159,7 +159,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
         >
             <form onSubmit={handleSubmit} className="flex flex-col h-full max-h-[95vh] min-h-0 bg-slate-50 dark:bg-[#0f172a]">
                 {/* Header */}
-                <div className="shrink-0 relative overflow-hidden p-8 border-b border-white/10 dark:border-white/5 shadow-2xl"
+                <div className="shrink-0 relative overflow-hidden p-8 border-b border-white/10 dark:border-white/5"
                     style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)' }}
                 >
                     {/* Background Pattern */}
@@ -202,7 +202,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1">Role Name</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] px-6 py-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-gray-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm disabled:opacity-50"
+                                        className="w-full bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] px-6 py-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-gray-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all disabled:opacity-50"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="e.g. Project Manager"
@@ -214,7 +214,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1">Description</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] px-6 py-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-gray-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm disabled:opacity-50"
+                                        className="w-full bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] px-6 py-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-gray-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all disabled:opacity-50"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Briefly describe this role's purpose"
@@ -227,7 +227,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                             <div className="space-y-8">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                             <Shield size={28} className="text-white" />
                                         </div>
                                         <div>
@@ -249,7 +249,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                                             />
                                                             <div className={cn(
                                                                 'w-4 h-4 rounded-lg border flex items-center justify-center transition-all',
-                                                                isAllSelected ? 'bg-indigo-500 border-indigo-500 shadow-lg shadow-indigo-500/30' : 'border-slate-300 dark:border-gray-600 bg-white dark:bg-white/5'
+                                                                isAllSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 dark:border-gray-600 bg-white dark:bg-white/5'
                                                             )}>
                                                                 {isAllSelected && <Check size={10} className="text-white fill-current stroke-[4]" />}
                                                             </div>
@@ -268,7 +268,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                             placeholder="Search permissions..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full pl-12 pr-6 py-4 text-sm bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
+                                            className="w-full pl-12 pr-6 py-4 text-sm bg-white dark:bg-[#111827]/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -294,7 +294,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                         {Object.entries(filteredGrouped).map(([category, perms]) => (
                                             <div
                                                 key={category}
-                                                className="bg-white dark:bg-[#111827]/60 rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden transition-all hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 shadow-xl shadow-slate-200/50"
+                                                className="bg-white dark:bg-[#111827]/60 rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden transition-all"
                                             >
                                                 <button
                                                     type="button"
@@ -318,7 +318,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                                                 return (
                                                                     <div className={cn(
                                                                         'w-5 h-5 rounded-lg border flex items-center justify-center transition-all',
-                                                                        isAllInCatSelected || isSomeInCatSelected ? 'bg-indigo-500 border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-white/5'
+                                                                        isAllInCatSelected || isSomeInCatSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-white/5'
                                                                     )}>
                                                                         {isAllInCatSelected && <Check size={12} className="text-white fill-current stroke-[4]" />}
                                                                         {isSomeInCatSelected && <Minus size={12} className="text-white stroke-[4]" />}
@@ -341,7 +341,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                                     </div>
                                                     <div className={cn(
                                                         'p-2 rounded-xl transition-all',
-                                                        expandedCategories.has(category) ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-50 text-slate-400'
+                                                        expandedCategories.has(category) ? 'bg-indigo-500 text-white' : 'bg-slate-50 text-slate-400'
                                                     )}>
                                                         <ChevronDown
                                                             size={20}
@@ -361,8 +361,8 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                                                                         className={cn(
                                                                             'relative flex items-center gap-4 p-5 rounded-2xl border transition-all cursor-pointer group',
                                                                             isSelected
-                                                                                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-none shadow-xl shadow-indigo-200/50'
-                                                                                : 'bg-white border-slate-100 shadow-sm hover:border-indigo-500/20 hover:shadow-md'
+                                                                                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-none'
+                                                                                : 'bg-white border-slate-100 hover:border-indigo-500/20'
                                                                         )}
                                                                     >
                                                                         <div className="relative flex items-center">
@@ -422,7 +422,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                         <button
                             type="submit"
                             disabled={mutation.isPending || !name.trim()}
-                            className="px-10 py-4 rounded-[1.5rem] bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-2xl hover:shadow-indigo-500/40 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3"
+                            className="px-10 py-4 rounded-[1.5rem] bg-gradient-to-r from-indigo-600 to-purple-600 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3"
                         >
                             {mutation.isPending && <Loader2 size={16} className="animate-spin" />}
                             {mutation.isPending ? 'Saving...' : editRole ? 'Update Role' : 'Create Role'}

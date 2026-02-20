@@ -66,6 +66,16 @@ module.exports = async function verifyJwt(req, res, next) {
       }
     }
 
+    // Set RLS context BEFORE any RBAC queries so that RLS policies
+    // on user_roles, role_permissions etc. work correctly on production
+    // (where the DB user is not a superuser and doesn't bypass RLS)
+    if (store) {
+      store.set("tenantId", user.tenant_id);
+      store.set("role", user.role);
+      store.set("userId", user.id);
+      store.set("employeeId", user.employee_id);
+    }
+
     // SECURITY FIX: Enforce session validation
     // All valid tokens MUST have a sessionId. Legacy tokens are rejected.
     if (!decoded.sessionId) {
@@ -108,18 +118,8 @@ module.exports = async function verifyJwt(req, res, next) {
       mustChangePassword: user.must_change_password
     };
 
-    console.log(`[AUTH DEBUG] User: ${user.email} (${user.id}), Role: ${user.role}, Permissions Count: ${permissions.length}`);
+    console.log(`[AUTH DEBUG] User: ${user.id}, Role: ${user.role}, Permissions Count: ${permissions.length}`);
     if (permissions.length < 5) console.log(`[AUTH DEBUG] Permissions: ${JSON.stringify(permissions)}`);
-
-    // Set PostgreSQL RLS session variables
-    // We update the async context store so that the db middleware (src/middleware/db.js)
-    // can automatically set these variables on the connection when queries are executed.
-    if (store) {
-      store.set("tenantId", user.tenant_id);
-      store.set("role", user.role);
-      store.set("userId", user.id);
-      store.set("employeeId", user.employee_id);
-    }
 
     next();
   } catch (err) {
