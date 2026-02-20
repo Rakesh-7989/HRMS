@@ -236,11 +236,20 @@ async function getUserRoles(userId) {
  */
 async function cloneSystemRolesForOrganization(tenantId, client = null) {
     const executor = client || pool;
+    // Select all system-level roles (tenant_id IS NULL) except SUPER_ADMIN
+    // Don't filter by role_type since it may be 'CUSTOM' on some installations
     const systemRoles = await executor.query(
-        `SELECT * FROM roles WHERE tenant_id IS NULL AND role_type = 'SYSTEM'`
+        `SELECT * FROM roles WHERE tenant_id IS NULL AND name != 'SUPER_ADMIN'`
     );
 
     for (const sysRole of systemRoles.rows) {
+        // Check if tenant already has this role (idempotent)
+        const existing = await executor.query(
+            `SELECT id FROM roles WHERE tenant_id = $1 AND name = $2`,
+            [tenantId, sysRole.name]
+        );
+        if (existing.rowCount > 0) continue;
+
         // Create tenant-specific copy
         const newRoleResult = await executor.query(
             `INSERT INTO roles (tenant_id, name, description, role_type, is_deletable, is_customizable)
@@ -252,7 +261,8 @@ async function cloneSystemRolesForOrganization(tenantId, client = null) {
         // Copy permissions
         await executor.query(
             `INSERT INTO role_permissions (role_id, permission_id)
-       SELECT $1, permission_id FROM role_permissions WHERE role_id = $2`,
+       SELECT $1, permission_id FROM role_permissions WHERE role_id = $2
+       ON CONFLICT DO NOTHING`,
             [newRoleResult.rows[0].id, sysRole.id]
         );
     }
