@@ -8,6 +8,8 @@ import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresCo
 
 import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
 import { TaxDeclaration } from '@/pages/payroll/TaxDeclaration';
+import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
+import { FnFSettlementsContent } from '@/pages/payroll/FnFSettlementsContent';
 
 const PAYROLL_TABS = [
   { id: 'dashboard', label: 'Overview', roles: ['ADMIN', 'HR'] },
@@ -15,6 +17,8 @@ const PAYROLL_TABS = [
   { id: 'payslips', label: 'Payslips', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'tax', label: 'Tax & Compliance', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
   { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR'] },
+  { id: 'arrears', label: 'Arrears', roles: ['ADMIN', 'HR'] },
+  { id: 'fnf', label: 'F&F Settlements', roles: ['ADMIN', 'HR'] },
 ] as const;
 
 export const Payroll: React.FC = () => {
@@ -65,6 +69,8 @@ export const Payroll: React.FC = () => {
         {activeTab === 'payslips' && <PayslipsContent />}
         {activeTab === 'tax' && <TaxDeclaration />}
         {activeTab === 'salary_details' && <SalaryStructuresContent />}
+        {activeTab === 'arrears' && <ArrearsPage />}
+        {activeTab === 'fnf' && <FnFSettlementsContent />}
       </div>
     </DashboardLayout>
   );

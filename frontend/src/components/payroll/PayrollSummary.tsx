@@ -61,7 +61,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-24 bg-gray-200 animate-pulse rounded" /> : totalEmployees}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded w-fit">
                         Active Personnel
                     </div>
                 </div>
@@ -74,7 +74,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-40 bg-gray-200 animate-pulse rounded" /> : formatINR(monthlyPayroll)}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-violet-500 bg-violet-50 dark:bg-violet-500/10 px-2 py-1 rounded w-fit">
                         Current Cycle
                     </div>
                 </div>
@@ -87,7 +87,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-16 bg-gray-200 animate-pulse rounded" /> : pendingPayslips}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-500/10 px-2 py-1 rounded w-fit">
                         Action Required
                     </div>
                 </div>

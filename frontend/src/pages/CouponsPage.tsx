@@ -56,7 +56,7 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                         <input
                             type="text"
                             name="code"
-                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 uppercase"
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 uppercase"
                             placeholder="SUMMER2026"
                             value={formik.values.code}
                             onChange={(e) => {
@@ -170,7 +170,7 @@ export const CouponsPage: React.FC = () => {
 
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-lg font-mono font-bold text-lg tracking-wider border border-indigo-100 dark:border-indigo-800 border-dashed">
+                                        <div className="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1 rounded-lg font-mono font-bold text-lg tracking-wider border border-purple-100 dark:border-purple-800 border-dashed">
                                             {coupon.code}
                                         </div>
                                         <div className={`px-2 py-1 rounded-md text-xs font-bold ${coupon.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>

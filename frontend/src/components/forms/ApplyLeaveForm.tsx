@@ -206,14 +206,14 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Balance Info */}
           {selectedTypeBalance && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-blue-700 dark:text-blue-400">Available Balance:</span>
-                <span className="font-semibold text-blue-900 dark:text-blue-300">
+                <span className="text-violet-700 dark:text-violet-400">Available Balance:</span>
+                <span className="font-semibold text-violet-900 dark:text-violet-300">
                   {selectedTypeBalance.available} days
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-500 mt-1">
+              <div className="flex items-center justify-between text-xs text-violet-600 dark:text-violet-500 mt-1">
                 <span>Entitled: {selectedTypeBalance.entitled}</span>
                 <span>Used: {selectedTypeBalance.used}</span>
                 <span>Pending: {selectedTypeBalance.pending}</span>
@@ -354,7 +354,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                       {selectedFile.name}
                     </span>
                     {uploadMutation.isPending && (
-                      <span className="text-xs text-blue-500">Uploading...</span>
+                      <span className="text-xs text-violet-500">Uploading...</span>
                     )}
                     {uploadedUrl && (
                       <span className="text-xs text-green-500">✓ Uploaded</span>
@@ -375,7 +375,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               )}
 
               {!uploadedUrl && !uploadMutation.isPending && (
-                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                <p className="mt-1 text-xs text-fuchsia-600 dark:text-fuchsia-400">
                   This leave type requires an attachment (e.g., medical certificate)
                 </p>
               )}

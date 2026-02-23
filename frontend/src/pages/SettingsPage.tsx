@@ -162,7 +162,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 {subscription.end_date && (
-                  <div className="p-3 rounded-lg bg-indigo-50/50 dark:bg-indigo-500/5 text-sm text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/10">
+                  <div className="p-3 rounded-lg bg-purple-50/50 dark:bg-purple-500/5 text-sm text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-500/10">
                     Your subscription will {subscription.status === 'CANCELLED' ? 'expire' : 'renew'} on <b>{new Date(subscription.end_date).toLocaleDateString()}</b>
                   </div>
                 )}
@@ -343,7 +343,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center ${user?.two_factor_enabled ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-white dark:bg-gray-800 text-primary'}`}>
+                <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center ${user?.two_factor_enabled ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-white dark:bg-gray-800 text-primary'}`}>
                   <Shield size={20} />
                 </div>
                 <div>
@@ -529,8 +529,8 @@ const WorkingHoursSection: React.FC<{
               </div>
             </div>
 
-            <div className="bg-amber-50 dark:bg-amber-500/10 p-3 rounded-lg border border-amber-100 dark:border-amber-500/20">
-              <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+            <div className="bg-fuchsia-50 dark:bg-fuchsia-500/10 p-3 rounded-lg border border-fuchsia-100 dark:border-fuchsia-500/20">
+              <p className="text-xs text-fuchsia-700 dark:text-fuchsia-400 leading-relaxed">
                 <b>Note:</b> These are global default hours. For custom requirements like Night Shifts or Rotation, please use advanced shift management.
               </p>
               <button

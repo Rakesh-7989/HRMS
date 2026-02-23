@@ -1,4 +1,6 @@
 const db = require("../../../config/db");
+const statutoryCalculator = require("../utils/statutoryCalculator");
+const { calculateAge } = require("../payrun/payrun.service"); // Reuse age helper
 
 // ===================================================================
 // TAX SECTIONS & CONFIGURATION
@@ -68,21 +70,60 @@ const getRegime = async (tenantId, employeeId, fy) => {
 };
 
 const setRegime = async (tenantId, employeeId, fy, regime) => {
-    // Check if frozen
-    const existing = await getRegime(tenantId, employeeId, fy);
-    if (existing.is_frozen) {
-        throw new Error("Tax regime selection is frozen for this financial year.");
+    if (!employeeId) {
+        throw new Error("Tax regime can only be set for users with an active employee profile.");
     }
 
-    const result = await db.query(
-        `INSERT INTO employee_tax_regimes (tenant_id, employee_id, financial_year, regime)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (employee_id, financial_year) 
-         DO UPDATE SET regime = $4, updated_at = NOW()
-         RETURNING *`,
-        [tenantId, employeeId, fy, regime]
-    );
-    return result.rows[0];
+    try {
+        // Check if frozen
+        const existing = await getRegime(tenantId, employeeId, fy);
+        if (existing.is_frozen) {
+            throw new Error("Tax regime selection is frozen for this financial year.");
+        }
+
+        const previousRegime = existing.regime;
+
+        const result = await db.query(
+            `INSERT INTO employee_tax_regimes (tenant_id, employee_id, financial_year, regime)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (employee_id, financial_year) 
+             DO UPDATE SET regime = $4, updated_at = NOW()
+             RETURNING *`,
+            [tenantId, employeeId, fy, regime]
+        );
+
+        // When switching from OLD to NEW, clear all OLD-regime-only declarations
+        if (previousRegime === 'OLD' && regime === 'NEW') {
+            const oldOnlySections = await db.query(
+                `SELECT id FROM tax_sections 
+                 WHERE tenant_id = $1 AND regime_allowed = 'OLD'`,
+                [tenantId]
+            );
+            const sectionIds = oldOnlySections.rows.map(s => s.id);
+            if (sectionIds.length > 0) {
+                await db.query(
+                    `UPDATE it_declarations 
+                     SET declared_amount = 0, status = 'CLEARED_ON_REGIME_SWITCH', updated_at = NOW()
+                     WHERE tenant_id = $1 AND employee_id = $2 AND financial_year = $3
+                       AND section_id = ANY($4::uuid[])`,
+                    [tenantId, employeeId, fy, sectionIds]
+                );
+            }
+        }
+
+        return result.rows[0];
+    } catch (error) {
+        console.error('[taxService.setRegime] DB Error details:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            constraint: error.constraint,
+            employeeId,
+            fy,
+            regime
+        });
+        throw error;
+    }
 };
 
 const freezeRegime = async (tenantId, employeeId, fy, userId) => {
@@ -113,27 +154,17 @@ const getDeclarations = async (tenantId, employeeId, fy) => {
 };
 
 const upsertDeclaration = async (tenantId, employeeId, userId, payload) => {
+    if (!employeeId) {
+        throw new Error("Tax declarations can only be submitted for users with an active employee profile.");
+    }
     const { financialYear, sectionId, declaredAmount, proofUrl } = payload;
 
-    // Check if regime is frozen/approved? (Usually declarations can modify until cutoff)
-    // For "fully dynamic", we verify if section matches regime? (Assume validation happens upstream or ignored)
+    // Check if tax declaration window is frozen for this FY
+    const regimeInfo = await getRegime(tenantId, employeeId, financialYear);
+    if (regimeInfo.is_frozen) {
+        throw new Error('Tax declaration window has been closed for this financial year. No further changes are allowed.');
+    }
 
-    const result = await db.query(
-        `INSERT INTO it_declarations (
-            tenant_id, employee_id, financial_year, section_id, 
-            declared_amount, proof_url, status, created_by
-         )
-         VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7)
-         ON CONFLICT DO UPDATE SET -- Note: ID is UUID, so insert always creates new row unless we enforce uniqueness on section?
-         -- Actually, multiple entries for same section allowed? Usually Yes (e.g. multiple LIC receipts).
-         -- But typically grouped. Let's assume Update if ID provided, else Insert.
-         -- WAIT, previous schema has ID PK. So this is pure Insert.
-         -- If editing, user sends ID.
-         -- This function handles ONE ITEM.
-    `,
-        // Wait, let's redesign to handle ID for update.
-        []
-    );
 
     // Correction: Upsert based on ID if present, else Insert.
     if (payload.id) {
@@ -153,6 +184,12 @@ const upsertDeclaration = async (tenantId, employeeId, userId, payload) => {
                 declared_amount, proof_url, status, created_by
              )
              VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7)
+             ON CONFLICT (employee_id, financial_year, section_id)
+             DO UPDATE SET 
+                declared_amount = EXCLUDED.declared_amount,
+                proof_url = COALESCE(EXCLUDED.proof_url, it_declarations.proof_url),
+                status = 'PENDING',
+                updated_at = NOW()
              RETURNING *`,
             [tenantId, employeeId, financialYear, sectionId, declaredAmount, proofUrl, userId]
         );
@@ -204,6 +241,62 @@ const getAdminReviewList = async (tenantId, fy, status = null) => {
     return result.rows;
 };
 
+/**
+ * Calculate projected TDS for an employee based on current declarations
+ * Used for real-time UI updates
+ */
+const calculateProjectedTDS = async (tenantId, employeeId, fy) => {
+    // 1. Get Employee Details
+    const empRes = await db.query(
+        `SELECT e.date_of_birth, e.gender, esa.annual_ctc as ctc
+         FROM employees e
+         LEFT JOIN employee_salary_assignments esa ON esa.employee_id = e.id AND esa.is_current = TRUE
+         WHERE e.tenant_id = $1 AND e.id = $2`,
+        [tenantId, employeeId]
+    );
+
+    if (empRes.rowCount === 0) return null;
+    const emp = empRes.rows[0];
+
+    // 2. Get Regime and Declarations
+    const regimeRes = await db.query(
+        `SELECT regime FROM employee_tax_regimes 
+         WHERE tenant_id = $1 AND employee_id = $2 AND financial_year = $3`,
+        [tenantId, employeeId, fy]
+    );
+    const regime = regimeRes.rows[0]?.regime || 'NEW';
+
+    const decls = await getDeclarations(tenantId, employeeId, fy);
+
+    // 3. Map to calculator format
+    const taxDecl = { regime };
+
+    // We need basic and hra for HRA exemption calculation
+    // Since this is real-time, we estimate them as 50% and 10% of gross if not precisely known
+    // but better to fetch components if possible. For simplicity, we'll use estimates or pass them.
+    const annualGross = parseFloat(emp.ctc) || 0;
+    taxDecl.annual_basic = annualGross * 0.5; // Benchmark
+    taxDecl.actual_hra = annualGross * 0.1;   // Benchmark
+
+    decls.forEach(d => {
+        const amount = parseFloat(d.approved_amount || d.declared_amount) || 0;
+        if (d.section_code === '80C') taxDecl.investments_80c = (taxDecl.investments_80c || 0) + amount;
+        else if (d.section_code === '80D') taxDecl.investments_80d = (taxDecl.investments_80d || 0) + amount;
+        else if (d.section_code === 'HRA') {
+            taxDecl.rent_paid = amount;
+            // metadata might contain is_metro
+            if (d.metadata?.is_metro) taxDecl.is_metro = true;
+        }
+        else if (d.section_code === 'LTA') taxDecl.lta = amount;
+        else if (d.section_code === 'OTHER') taxDecl.other_exemptions = (taxDecl.other_exemptions || 0) + amount;
+    });
+
+    const age = emp.date_of_birth ? calculateAge(emp.date_of_birth) : 30;
+    const tdsResult = statutoryCalculator.calculateTDS(annualGross, taxDecl, age);
+
+    return tdsResult;
+};
+
 module.exports = {
     getTaxSections,
     createTaxSection,
@@ -214,5 +307,6 @@ module.exports = {
     upsertDeclaration,
     deleteDeclaration,
     adminReviewDeclaration,
-    getAdminReviewList
+    getAdminReviewList,
+    calculateProjectedTDS
 };

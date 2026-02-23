@@ -240,8 +240,8 @@ export const ProjectReportsPage: React.FC = () => {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-blue-600" />
+                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                            <Calendar className="h-6 w-6 text-violet-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>
@@ -278,8 +278,8 @@ export const ProjectReportsPage: React.FC = () => {
                                         </div>
                                     </Card>
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-blue-600" />
+                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                            <Calendar className="h-6 w-6 text-violet-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>

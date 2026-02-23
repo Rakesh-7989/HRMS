@@ -220,7 +220,7 @@ export const AssetsPage: React.FC = () => {
       case 'AVAILABLE':
         return 'text-green-600 bg-green-100';
       case 'ASSIGNED':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-violet-600 bg-violet-100';
       case 'UNDER_REPAIR':
         return 'text-orange-600 bg-orange-100';
       case 'RETIRED':
@@ -498,7 +498,7 @@ export const AssetsPage: React.FC = () => {
                               {user?.role === 'ADMIN' && (
                                 <button
                                   onClick={() => navigate(`/assets/${asset.id}/edit`)}
-                                  className="text-blue-600 hover:text-blue-800"
+                                  className="text-violet-600 hover:text-violet-800"
                                   title="Edit Asset"
                                 >
                                   <Edit size={16} />
@@ -664,7 +664,7 @@ export const AssetsPage: React.FC = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500/10 to-primary/10">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <UserPlus size={22} className="text-blue-500" />
+                <UserPlus size={22} className="text-violet-500" />
                 Assign Asset to Employee
               </h2>
               <button
@@ -696,7 +696,7 @@ export const AssetsPage: React.FC = () => {
                   ))}
                 </select>
                 {availableAssets.length === 0 && (
-                  <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                  <p className="mt-2 text-sm text-fuchsia-600 dark:text-fuchsia-400">
                     No available assets to assign. All assets are currently assigned or unavailable.
                   </p>
                 )}

@@ -93,8 +93,8 @@ export const BillingPortalPage: React.FC = () => {
                                     <div className={cn(
                                         "px-3 py-1 rounded-full text-xs font-bold",
                                         subscription?.status === 'ACTIVE' ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400" :
-                                            subscription?.status === 'PAST_DUE' ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400" :
-                                                subscription?.status === 'TRIAL' ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400" :
+                                            subscription?.status === 'PAST_DUE' ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-400" :
+                                                subscription?.status === 'TRIAL' ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400" :
                                                     "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
                                     )}>
                                         {subscription?.status || 'INACTIVE'}
@@ -121,20 +121,20 @@ export const BillingPortalPage: React.FC = () => {
 
                             {/* Renewal / Reactivation CTA */}
                             {(!subscription?.status || ['INACTIVE', 'PAST_DUE', 'CANCELLED', 'SUSPENDED'].includes(subscription.status)) && (
-                                <Card className="md:col-span-3 p-6 border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-900/10 mb-6">
+                                <Card className="md:col-span-3 p-6 border-l-4 border-l-amber-500 bg-fuchsia-50 dark:bg-fuchsia-900/10 mb-6">
                                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                         <div>
                                             <h3 className="font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                                                <AlertTriangle size={18} className="text-amber-600" />
+                                                <AlertTriangle size={18} className="text-fuchsia-600" />
                                                 Subscription Inactive
                                             </h3>
-                                            <p className="text-sm text-gray-600 dark:text-amber-200/80">
+                                            <p className="text-sm text-gray-600 dark:text-fuchsia-200/80">
                                                 Your subscription is currently inactive. Restore full access to premium features now.
                                             </p>
                                         </div>
                                         <Button
                                             onClick={() => navigate('/pricing')}
-                                            className="bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20 w-full sm:w-auto"
+                                            className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white shadow-lg shadow-fuchsia-600/20 w-full sm:w-auto"
                                         >
                                             <Zap size={16} className="mr-2" />
                                             Reactivate Plan
@@ -200,12 +200,12 @@ export const BillingPortalPage: React.FC = () => {
                                                         <div className="flex items-center gap-2">
                                                             {invoice.status === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
                                                                 invoice.status === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
-                                                                    <Clock size={14} className="text-amber-500" />}
+                                                                    <Clock size={14} className="text-fuchsia-500" />}
                                                             <span className={cn(
                                                                 "text-[10px] font-black uppercase tracking-widest",
                                                                 invoice.status === 'PAID' ? "text-green-500" :
                                                                     invoice.status === 'FAILED' ? "text-red-500" :
-                                                                        "text-amber-500"
+                                                                        "text-fuchsia-500"
                                                             )}>
                                                                 {invoice.status}
                                                             </span>
@@ -216,7 +216,7 @@ export const BillingPortalPage: React.FC = () => {
                                                             {(invoice.status === 'PENDING' || invoice.status === 'FAILED') && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    className="h-8 bg-violet-600 hover:bg-violet-700 text-white"
                                                                     onClick={() => handleRetryPayment(invoice.id)}
                                                                 >
                                                                     Pay Now

@@ -47,10 +47,8 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
 
     return (
         <div className={cn(
-            "relative w-full h-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 group",
-            theme === 'dark' ? "bg-gray-900 border border-white/5" : "bg-white border border-gray-200",
-            isTalking ? "ring-2 ring-primary shadow-primary/20" : "",
-            isScreenShare ? "bg-black" : ""
+            "relative w-full h-full bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 transition-all duration-500 shadow-2xl group",
+            isTalking ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.3)]" : "border-white/5"
         )}>
             {/* Video Element */}
             <video
@@ -104,14 +102,12 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
                 </div>
             )}
 
-            {/* Overlay Info (Bottom Left) */}
-            <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <div className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 backdrop-blur-md rounded-lg border shadow-lg",
-                    theme === 'dark' ? "bg-black/60 border-white/10" : "bg-white/80 border-gray-200"
-                )}>
-                    <span className={cn("w-2 h-2 rounded-full", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-400")} />
-                    <span className={cn("text-xs font-bold tracking-wide", theme === 'dark' ? "text-white" : "text-gray-900")}>{name}</span>
+            {/* User Label */}
+            <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-2xl text-[12px] font-bold text-white/90 flex items-center gap-3 border border-white/10 shadow-lg group-hover:bottom-8 transition-all">
+                <div className={cn("w-2.5 h-2.5 rounded-full shadow-lg", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
+                <div className="flex flex-col">
+                    <span className="leading-tight text-white">{name}</span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{participant?.designation || 'Participant'}</span>
                 </div>
             </div>
         </div>
@@ -184,63 +180,58 @@ export const CallOverlay: React.FC = () => {
 
     const targetName = activeCall?.name || heldCall?.name || 'Meeting';
     const remoteUserIds = Object.keys(remoteStreams);
-    const filteredContacts = contacts.filter(c =>
-        (c.first_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.last_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    const someoneSharing = isScreenSharing;
+
+    const incomingBar = incomingCall && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-lg px-4 animate-in slide-in-from-top-10 duration-500">
+            <div className="bg-gray-900/80 backdrop-blur-3xl rounded-[2.5rem] border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-2 flex items-center justify-between">
+                <div className="flex items-center gap-4 pl-4 pr-2 py-2">
+                    <div className="relative">
+                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white/10 overflow-hidden">
+                            {incomingCall.callerName?.charAt(0) || '?'}
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-white font-black text-sm tracking-tight">{incomingCall.callerName || 'Incoming Call'}</span>
+                        <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest opacity-80">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            {incomingCall.type} call...
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2">
+                    <button onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-rose-500/20" title="Decline">
+                        <PhoneOff size={20} />
+                    </button>
+                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95">
+                        <Phone size={18} /> ACCEPT
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 
-    const isDark = theme === 'dark';
-
-    // -- Minimized View --
     if (isMinimized) {
         return (
-            <div className={cn(
-                "fixed bottom-6 right-6 z-[100] w-80 h-48 rounded-2xl shadow-2xl overflow-hidden border animate-in slide-in-from-bottom-5 fade-in duration-300 group",
-                isDark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
-            )}>
-                {/* Content */}
-                <div className="absolute inset-0">
-                    {remoteUserIds.length > 0 ? (
-                        <RemoteVideo
-                            stream={remoteStreams[remoteUserIds[0]]}
-                            userId={remoteUserIds[0]}
-                            isTalking={speakingUsers.has(remoteUserIds[0])}
-                            participant={callParticipants[remoteUserIds[0]]}
-                            theme={theme}
-                        />
-                    ) : (
-                        <div className={cn("w-full h-full flex items-center justify-center", isDark ? "bg-gray-800 text-white/50" : "bg-gray-100 text-gray-400")}>
-                            <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg uppercase">
-                                    {targetName.charAt(0)}
+            <>
+                {incomingBar}
+                <div className="fixed bottom-8 right-8 z-[110] w-80 h-48 bg-gray-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden border-2 border-primary/40 group animate-in slide-in-from-bottom-10 duration-500">
+                    <div className="absolute inset-0">
+                        {remoteUserIds.length > 0 ? (
+                            <RemoteVideo
+                                stream={remoteStreams[remoteUserIds[0]]}
+                                userId={remoteUserIds[0]}
+                                isTalking={speakingUsers.has(remoteUserIds[0])}
+                                participant={callParticipants[remoteUserIds[0]]}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-3xl font-black text-primary border-2 border-primary/40">
+                                    {targetName.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-xs font-medium uppercase tracking-widest opacity-70">On Hold</span>
                             </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Overlay Controls */}
-                <div className="absolute inset-0 bg-black/40 flex flex-col justify-between p-4 backdrop-blur-[1px] z-50">
-                    <div className="flex justify-between items-start">
-                        <span className="text-xs font-bold text-white shadow-sm truncate max-w-[150px] bg-black/40 px-2 py-1 rounded backdrop-blur-sm">
-                            {targetName}
-                        </span>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
-                            className="p-1.5 bg-black/40 hover:bg-black/60 rounded-lg text-white transition-colors cursor-pointer border border-white/20"
-                            title="Maximize"
-                        >
-                            <Maximize2 size={16} />
-                        </button>
-                    </div>
-                    <div className="flex justify-center gap-3">
-                        <button onClick={(e) => { e.stopPropagation(); toggleAudio(); }} className={cn("p-2 rounded-full transition-all active:scale-95 cursor-pointer", isMuted ? "bg-rose-500 text-white" : "bg-white/20 text-white hover:bg-white/30")}>
-                            {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); endCall(); }} className="p-2 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-all active:scale-95 shadow-lg cursor-pointer">
-                            <PhoneOff size={16} />
-                        </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -440,65 +431,40 @@ export const CallOverlay: React.FC = () => {
                         )}
                     </main>
 
-                    {/* Controls Bar */}
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 w-full max-w-fit px-4">
-                        <div className={cn(
-                            "flex items-center gap-4 p-3 pr-4 backdrop-blur-2xl border rounded-[2.5rem] shadow-2xl transition-colors duration-300",
-                            isDark
-                                ? "bg-[#0c0c0e]/80 border-white/10 hover:bg-[#0c0c0e]/90"
-                                : "bg-white/80 border-white/40 shadow-gray-200/50 hover:bg-white/90"
-                        )}>
-
-                            <div className={cn("flex items-center gap-2 px-2 border-r", isDark ? "border-white/10" : "border-gray-200")}>
-                                {/* Mic */}
-                                <button
-                                    onClick={toggleAudio}
-                                    className={cn(
-                                        "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
-                                        isMuted
-                                            ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                                            : isDark
-                                                ? "bg-white/5 text-white hover:bg-white/10"
-                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    )}
-                                    title="Toggle Mic"
-                                >
-                                    {isMuted ? <MicOff size={24} /> : <Mic size={24} className="group-hover:scale-110 transition-transform" />}
-                                </button>
-
-                                {/* Camera */}
-                                <button
-                                    onClick={toggleVideo}
-                                    className={cn(
-                                        "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
-                                        isVideoOff
-                                            ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                                            : isDark
-                                                ? "bg-white/5 text-white hover:bg-white/10"
-                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    )}
-                                    title="Toggle Camera"
-                                >
-                                    {isVideoOff ? <VideoOff size={24} /> : <Video size={24} className="group-hover:scale-110 transition-transform" />}
-                                </button>
-                            </div>
-
-                            <div className="flex items-center gap-2 px-2">
-                                {/* Screen Share */}
-                                <button
-                                    onClick={toggleScreenShare}
-                                    className={cn(
-                                        "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
-                                        isScreenSharing
-                                            ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                                            : isDark
-                                                ? "bg-white/5 text-indigo-300 hover:bg-white/10"
-                                                : "bg-gray-100 text-indigo-500 hover:bg-gray-200"
-                                    )}
-                                    title="Share Screen"
-                                >
-                                    <Monitor size={24} className="group-hover:scale-110 transition-transform" />
-                                </button>
+                    {/* Action Bar */}
+                    <div className="absolute bottom-16 flex items-center gap-3 p-4 bg-gray-900/40 backdrop-blur-[50px] rounded-[3.5rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 transition-all duration-500 hover:scale-[1.02] hover:bg-gray-900/60">
+                        <div className="flex items-center gap-2 px-4 border-r border-white/10">
+                            <button
+                                onClick={toggleAudio}
+                                className={cn(
+                                    "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
+                                    isMuted ? "bg-rose-500 text-white shadow-2xl shadow-rose-500/30" : "hover:bg-white/10 text-white"
+                                )}
+                                title={isMuted ? "Unmute" : "Mute"}
+                            >
+                                {isMuted ? <MicOff size={30} /> : <Mic size={30} />}
+                            </button>
+                            <button
+                                onClick={toggleVideo}
+                                className={cn(
+                                    "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
+                                    isVideoOff ? "bg-rose-500 text-white shadow-2xl shadow-rose-500/30" : "text-primary hover:bg-white/10"
+                                )}
+                                title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                            >
+                                {isVideoOff ? <VideoOff size={30} /> : <Video size={30} />}
+                            </button>
+                            <button
+                                onClick={toggleScreenShare}
+                                className={cn(
+                                    "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
+                                    isScreenSharing ? "bg-emerald-500 text-white shadow-2xl shadow-emerald-500/30" : "text-indigo-400 hover:bg-white/10"
+                                )}
+                                title="Share Screen"
+                            >
+                                <Monitor size={30} />
+                            </button>
+                        </div>
 
                                 {/* Add User */}
                                 <button
@@ -530,33 +496,35 @@ export const CallOverlay: React.FC = () => {
                     {/* Local Video Picture-in-Picture */}
                     {localStream && (
                         <div className={cn(
-                            "absolute z-20 transition-all duration-500 group",
-                            isScreenSharing ? "top-24 right-6 w-80 aspect-video" : "top-24 right-6 w-72 aspect-[3/4] md:aspect-video"
+                            "absolute transition-all duration-1000 shadow-2xl z-30 group overflow-hidden bg-gray-950",
+                            isScreenSharing ? "top-12 right-12 w-96 aspect-video border-4 border-emerald-500 rounded-3xl" : "top-12 right-12 w-80 aspect-video border-2 border-white/10 rounded-[2.5rem]"
                         )}>
-                            <div className={cn(
-                                "w-full h-full rounded-3xl overflow-hidden shadow-2xl border transition-colors",
-                                isDark ? "bg-[#18181b] border-white/10" : "bg-white border-white/40"
-                            )}>
-                                <video
-                                    ref={localVideoRef}
-                                    autoPlay
-                                    muted
-                                    playsInline
-                                    className={cn(
-                                        "w-full h-full object-cover transform -scale-x-100",
-                                        isVideoOff ? "hidden" : "block"
-                                    )}
-                                />
-                                {isVideoOff && (
-                                    <div className={cn(
-                                        "absolute inset-0 flex flex-col items-center justify-center",
-                                        isDark ? "bg-[#18181b]" : "bg-gray-100"
-                                    )}>
-                                        <div className={cn(
-                                            "w-16 h-16 rounded-full flex items-center justify-center mb-3",
-                                            isDark ? "bg-white/5" : "bg-white shadow-sm"
-                                        )}>
-                                            <VideoOff size={24} className={cn("", isDark ? "text-white/40" : "text-gray-400")} />
+                            {isScreenSharing && (
+                                <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-xl shadow-emerald-500/20">
+                                    <Monitor size={16} /> YOU ARE SHARING
+                                </div>
+                            )}
+                            <video
+                                ref={localVideoRef}
+                                autoPlay
+                                muted
+                                playsInline
+                                className={cn(
+                                    "w-full h-full mirror transition-all duration-1000",
+                                    isScreenSharing ? "object-contain" : "object-cover hover:scale-105",
+                                    isVideoOff && "opacity-0"
+                                )}
+                            />
+                            {isVideoOff && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-xl">
+                                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shadow-inner overflow-hidden border-2 border-white/20">
+                                        {currentUser?.profile_photo_url ? (
+                                            <img src={currentUser.profile_photo_url} alt="Local User" className="w-full h-full object-cover opacity-50 transition-all duration-700" />
+                                        ) : (
+                                            <span className="text-2xl font-black text-white/20 drop-shadow-lg">{localInitials}</span>
+                                        )}
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                            <VideoOff size={40} className="text-white/20" />
                                         </div>
                                         <span className={cn("text-[10px] font-bold uppercase tracking-widest", isDark ? "text-white/40" : "text-gray-400")}>Camera Off</span>
                                     </div>
@@ -568,107 +536,66 @@ export const CallOverlay: React.FC = () => {
                                     <span className={cn("text-[10px] font-bold uppercase tracking-wider", isDark ? "text-white" : "text-gray-900")}>You</span>
                                 </div>
                             </div>
+                            {speakingUsers.has(currentUser?.id || '') && (
+                                <div className="absolute top-5 right-5 w-4 h-4 bg-emerald-500 rounded-full animate-ping z-40" />
+                            )}
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* --- Add Participant Modal --- */}
-            {showAddModal && (
-                <div className={cn(
-                    "fixed inset-0 z-[160] backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300",
-                    isDark ? "bg-black/80" : "bg-white/60"
-                )}>
-                    <div className={cn(
-                        "w-full max-w-lg rounded-[2.5rem] border shadow-2xl overflow-hidden flex flex-col max-h-[80vh]",
-                        isDark ? "bg-[#121214] border-white/10" : "bg-white border-gray-200"
-                    )}>
-                        <div className={cn(
-                            "p-8 pb-4 border-b flex justify-between items-center",
-                            isDark ? "bg-white/5 border-white/5" : "bg-gray-50 border-gray-200"
-                        )}>
-                            <div>
-                                <h3 className={cn("text-2xl font-bold tracking-tight", isDark ? "text-white" : "text-gray-900")}>Invite Team</h3>
-                                <p className={cn("text-xs font-bold uppercase tracking-widest mt-1", isDark ? "text-gray-500" : "text-gray-500")}>Select people to join</p>
-                            </div>
-                            <button onClick={() => setShowAddModal(false)} className={cn(
-                                "p-3 rounded-full transition-colors",
-                                isDark ? "hover:bg-white/10 text-gray-400 hover:text-white" : "hover:bg-gray-200 text-gray-500 hover:text-gray-900"
-                            )}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <div className="p-6 flex-1 overflow-hidden flex flex-col">
-                            <div className="relative mb-6">
-                                <Search className={cn("absolute left-5 top-1/2 -translate-y-1/2", isDark ? "text-primary" : "text-gray-400")} size={20} />
-                                <input
-                                    type="text"
-                                    placeholder="SEARCH BY NAME..."
-                                    className={cn(
-                                        "w-full border rounded-2xl py-4 pl-14 pr-4 transition-all text-sm font-medium focus:outline-none focus:ring-2 placeholder:text-xs placeholder:font-bold placeholder:tracking-widest",
-                                        isDark
-                                            ? "bg-black/30 border-white/10 text-white focus:ring-primary/50 placeholder:text-gray-600"
-                                            : "bg-gray-50 border-gray-200 text-gray-900 focus:ring-primary/20 placeholder:text-gray-400"
-                                    )}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-                            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                                {filteredContacts.map(contact => (
-                                    <div key={contact.id} className={cn(
-                                        "flex items-center justify-between p-4 rounded-3xl transition-all group border border-transparent",
-                                        isDark ? "hover:bg-white/5 hover:border-white/5" : "hover:bg-gray-50 hover:border-gray-100"
-                                    )}>
-                                        <div className="flex items-center gap-4">
-                                            <div className={cn(
-                                                "w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg border shadow-inner",
-                                                isDark
-                                                    ? "bg-gradient-to-tr from-gray-800 to-gray-700 text-white border-white/5"
-                                                    : "bg-gradient-to-tr from-gray-100 to-white text-gray-800 border-gray-200"
-                                            )}>
-                                                {contact.profile_photo_url ? (
-                                                    <img src={resolveImageUrl(contact.profile_photo_url)} alt="" className="w-full h-full object-cover rounded-2xl" />
-                                                ) : contact.first_name?.[0].toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <p className={cn(
-                                                    "text-sm font-bold transition-colors",
-                                                    isDark ? "text-white group-hover:text-primary" : "text-gray-900 group-hover:text-primary"
-                                                )}>{contact.first_name} {contact.last_name}</p>
-                                                <p className={cn(
-                                                    "text-[10px] font-bold uppercase tracking-wider",
-                                                    isDark ? "text-gray-500" : "text-gray-400"
-                                                )}>{contact.designation || contact.email}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                if (!contact.id) {
-                                                    import('react-hot-toast').then(t => t.toast.error("Cannot invite: Invalid User ID"));
-                                                    return;
-                                                }
-                                                addParticipantToCall(contact.id, `${contact.first_name} ${contact.last_name}`);
-                                                setShowAddModal(false);
-                                            }}
-                                            className={cn(
-                                                "px-5 py-2.5 text-xs font-bold rounded-xl transition-all active:scale-95 uppercase tracking-wide",
-                                                isDark
-                                                    ? "bg-white/5 hover:bg-primary text-gray-300 hover:text-white"
-                                                    : "bg-gray-100 hover:bg-primary text-gray-600 hover:text-white"
-                                            )}
-                                        >
-                                            Invite
-                                        </button>
+                    {showAddModal && (
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-[40px] animate-in fade-in duration-500">
+                            <div className="bg-gray-900 w-full max-w-xl rounded-[3.5rem] border border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.6)]">
+                                <div className="p-12 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                    <div>
+                                        <h3 className="text-4xl font-black tracking-tight mb-2 italic bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">Invite Team</h3>
+                                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">Build your meeting workspace</p>
                                     </div>
-                                ))}
-                                {filteredContacts.length === 0 && (
-                                    <div className="text-center py-12 flex flex-col items-center gap-3 opacity-50">
-                                        <div className={cn("w-16 h-16 rounded-full flex items-center justify-center", isDark ? "bg-white/5" : "bg-gray-100")}>
-                                            <Search size={24} />
-                                        </div>
-                                        <p className="text-sm font-medium">No team members found</p>
+                                    <button onClick={() => setShowAddModal(false)} className="p-5 hover:bg-white/5 rounded-3xl transition-all active:scale-90 border border-white/10">
+                                        <X size={32} />
+                                    </button>
+                                </div>
+                                <div className="p-12">
+                                    <div className="relative mb-10">
+                                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-primary opacity-50" size={28} />
+                                        <input
+                                            type="text"
+                                            placeholder="SEARCH TEAM MEMBERS..."
+                                            className="w-full bg-[#151518] border border-white/5 rounded-[2rem] py-6 pl-16 pr-8 focus:ring-4 focus:ring-primary/20 outline-none transition-all font-black text-sm tracking-widest placeholder:text-gray-700"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="max-h-[450px] overflow-y-auto space-y-4 pr-4 custom-scrollbar">
+                                        {filteredContacts.map(contact => (
+                                            <div key={contact.id} className="flex items-center justify-between p-6 hover:bg-white/5 rounded-[2.5rem] transition-all group border border-transparent hover:border-white/5">
+                                                <div className="flex items-center gap-6">
+                                                    <div className="w-18 h-18 rounded-[1.5rem] bg-gradient-to-tr from-primary/20 to-indigo-500/20 flex items-center justify-center text-primary font-black text-3xl border border-primary/20 shadow-inner overflow-hidden">
+                                                        {contact.profile_photo_url ? (
+                                                            <img src={contact.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            contact.first_name?.[0].toUpperCase()
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-black text-xl tracking-tight leading-none mb-2">{contact.first_name} {contact.last_name}</div>
+                                                        <div className="text-[10px] text-gray-500 font-black tracking-widest uppercase">{contact.designation || contact.job_title || contact.email}</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        if (!contact.id) {
+                                                            import('react-hot-toast').then(t => t.toast.error("Cannot invite: Invalid User ID"));
+                                                            return;
+                                                        }
+                                                        addParticipantToCall(contact.id, `${contact.first_name} ${contact.last_name}`);
+                                                        setShowAddModal(false);
+                                                    }}
+                                                    className="p-5 bg-primary text-white hover:bg-primary/80 rounded-[1.8rem] transition-all shadow-2xl shadow-primary/30 active:scale-95 border-b-4 border-primary-dark"
+                                                >
+                                                    <UserPlus size={30} />
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>

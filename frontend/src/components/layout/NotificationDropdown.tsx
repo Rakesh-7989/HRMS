@@ -66,7 +66,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             case 'error':
                 return <AlertCircle className="text-red-500" size={18} />;
             default:
-                return <Info className="text-blue-500" size={18} />;
+                return <Info className="text-violet-500" size={18} />;
         }
     };
 
@@ -154,7 +154,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                                         className={cn(
                                             'px-4 py-3 border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors',
                                             !notification.read
-                                                ? 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                                ? 'bg-violet-50/50 dark:bg-violet-900/10 hover:bg-violet-50 dark:hover:bg-violet-900/20'
                                                 : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                                         )}
                                     >
@@ -168,7 +168,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                                                         {notification.title}
                                                     </p>
                                                     {!notification.read && (
-                                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
+                                                        <div className="w-2 h-2 bg-violet-500 rounded-full flex-shrink-0 mt-1.5" />
                                                     )}
                                                 </div>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">

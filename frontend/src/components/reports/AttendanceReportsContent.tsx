@@ -117,7 +117,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Total Employees',
                         value: analytics.overallSummary.total_employees || 0,
                         icon: Users,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     },
                     {
                         title: 'Present Days',
@@ -159,7 +159,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Team Members',
                         value: analytics.teamSummary.total_team_members || 0,
                         icon: Users,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     },
                     {
                         title: 'Present Days',
@@ -219,7 +219,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Attendance Rate',
                         value: `${analytics.personalSummary.attendance_rate || 0}%`,
                         icon: TrendingUp,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     }
                 ],
                 monthlyTrends: analytics.monthlyBreakdown?.map(month => ({

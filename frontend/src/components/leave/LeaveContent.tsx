@@ -214,7 +214,7 @@ export const LeaveContent: React.FC = () => {
                             {canApprove && `, ${filteredPendingApprovals.length} pending approvals`}
                         </span>
                         {searchTerm && (
-                            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                            <span className="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-1 rounded">
                                 Search: "{searchTerm}"
                             </span>
                         )}

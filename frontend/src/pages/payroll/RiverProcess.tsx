@@ -25,11 +25,58 @@ const STAGE_COLORS: any = {
 };
 
 const formatCurrency = (val: number) => {
+    if (val === 0) return '₹0';
     if (!val) return '₹0';
-    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
-    if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
-    if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
-    return `₹${val.toFixed(0)}`;
+    const sign = val < 0 ? '-' : '';
+    const absVal = Math.abs(val);
+
+    if (absVal >= 10000000) return `${sign}₹${(absVal / 10000000).toFixed(2)}Cr`;
+    if (absVal >= 100000) return `${sign}₹${(absVal / 100000).toFixed(2)}L`;
+    if (absVal >= 1000) return `${sign}₹${(absVal / 1000).toFixed(1)}K`;
+
+    return `${sign}₹${absVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const COLOR_CLASSES: any = {
+    indigo: {
+        active: 'border-indigo-500 bg-indigo-500/20 text-indigo-400 ring-indigo-500/10',
+        text: 'text-indigo-500 dark:text-indigo-400',
+        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
+        icon: 'text-indigo-500 dark:text-indigo-400'
+    },
+    blue: {
+        active: 'border-blue-500 bg-blue-500/20 text-blue-400 ring-blue-500/10',
+        text: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50 dark:bg-blue-500/10',
+        icon: 'text-blue-500 dark:text-blue-400'
+    },
+    purple: {
+        active: 'border-purple-500 bg-purple-500/20 text-purple-400 ring-purple-500/10',
+        text: 'text-purple-600 dark:text-purple-400',
+        bg: 'bg-purple-50 dark:bg-purple-500/10',
+        icon: 'text-purple-500 dark:text-purple-400'
+    },
+    emerald: {
+        active: 'border-emerald-500 bg-emerald-500/20 text-emerald-400 ring-emerald-500/10',
+        text: 'text-emerald-500 dark:text-emerald-400',
+        bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+        icon: 'text-emerald-500 dark:text-emerald-400'
+    },
+    amber: {
+        text: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50 dark:bg-amber-500/10',
+        icon: 'text-amber-500 dark:text-amber-400'
+    },
+    rose: {
+        text: 'text-rose-600 dark:text-rose-400',
+        bg: 'bg-rose-50 dark:bg-rose-500/10',
+        icon: 'text-rose-500 dark:text-rose-400'
+    },
+    indigo_light: {
+        text: 'text-indigo-600 dark:text-indigo-400',
+        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
+        icon: 'text-indigo-500 dark:text-indigo-400'
+    }
 };
 
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
@@ -66,14 +113,16 @@ export const RiverProcess = () => {
             } else if (isFirstLoad.current) {
                 isFirstLoad.current = false;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            toast.error(error.response?.data?.error || "Failed to load stage data");
         } finally {
             setLoading(false);
         }
     };
 
     const handleAction = async (action: string, payload: any = {}) => {
+        if (actionLoading) return; // Prevent double-submit on rapid clicks
         try {
             setActionLoading(true);
             if (action === 'INITIATE') {
@@ -120,7 +169,7 @@ export const RiverProcess = () => {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/Payroll')}
+                        onClick={() => navigate('/payroll')}
                         className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -139,6 +188,7 @@ export const RiverProcess = () => {
                             const isCompleted = STAGES.indexOf(stage) > idx;
                             const Icon = STAGE_ICONS[s];
                             const color = STAGE_COLORS[s];
+                            const styles = COLOR_CLASSES[color] || COLOR_CLASSES.indigo;
 
                             return (
                                 <div key={s} className="flex-1 flex flex-col items-center relative cursor-pointer" onClick={() => setStage(s)}>
@@ -147,12 +197,11 @@ export const RiverProcess = () => {
                                     )}
                                     <div
                                         className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${isActive
-                                            ? `border-${color}-500 bg-${color}-500/20 text-${color}-400 ring-4 ring-${color}-500/10 scale-110`
+                                            ? `${styles.active} scale-110 shadow-[0_0_20px_rgba(99,102,241,0.2)]`
                                             : isCompleted
                                                 ? 'border-emerald-500 bg-emerald-500 text-white'
                                                 : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                                             }`}
-                                        style={isActive ? { borderColor: `var(--${color})`, boxShadow: `0 0 20px rgba(99, 102, 241, 0.15)` } : {}}
                                     >
                                         {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                                     </div>
@@ -209,38 +258,54 @@ const ReviewStage = ({ data, onNext }: any) => {
                         icon: DollarSign, color: 'purple', section: 'revisions'
                     },
                     {
+                        label: 'Arrears Management', value: categories?.arrears?.count || 0,
+                        sub: `${formatCurrency(categories?.arrears?.totalAmount || 0)} pending`,
+                        icon: Receipt, color: 'rose', section: 'arrears'
+                    },
+                    {
                         label: 'TDS / Tax Config', value: categories?.finance?.totalTdsEmployees || 0,
                         sub: `Employees with tax declarations`,
                         icon: Shield, color: 'indigo', section: null
                     }
-                ].map((card, idx) => (
-                    <div
-                        key={idx}
-                        className={`bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm transition-all duration-200 ${card.section ? 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600/60 hover:-translate-y-0.5 hover:shadow-md' : ''}`}
-                        onClick={() => card.section && toggleSection(card.section)}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
-                                <p className={`text-2xl font-bold mt-1 ${card.value > 0 ? `text-${card.color}-600 dark:text-${card.color}-400` : 'text-gray-900 dark:text-white'}`}>
-                                    {card.value}
-                                </p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{card.sub}</p>
+                ].map((card, idx) => {
+                    const cardStyles: any = {
+                        blue: { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', icon: 'text-blue-500 dark:text-blue-400' },
+                        amber: { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', icon: 'text-amber-500 dark:text-amber-400' },
+                        purple: { text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10', icon: 'text-purple-500 dark:text-purple-400' },
+                        rose: { text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10', icon: 'text-rose-500 dark:text-rose-400' },
+                        indigo: { text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', icon: 'text-indigo-500 dark:text-indigo-400' },
+                    };
+                    const style = cardStyles[card.color] || cardStyles.indigo;
+
+                    return (
+                        <div
+                            key={idx}
+                            className={`bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm transition-all duration-200 ${card.section ? 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600/60 hover:-translate-y-0.5 hover:shadow-md' : ''}`}
+                            onClick={() => card.section && toggleSection(card.section)}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+                                    <p className={`text-2xl font-bold mt-1 ${card.value > 0 ? style.text : 'text-gray-900 dark:text-white'}`}>
+                                        {card.value}
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{card.sub}</p>
+                                </div>
+                                <div className={`p-2.5 rounded-xl ${style.bg}`}>
+                                    <card.icon className={`w-5 h-5 ${style.icon}`} />
+                                </div>
                             </div>
-                            <div className={`p-2.5 rounded-xl bg-${card.color}-50 dark:bg-${card.color}-500/10`}>
-                                <card.icon className={`w-5 h-5 text-${card.color}-500 dark:text-${card.color}-400`} />
-                            </div>
+                            {card.section && (
+                                <div className="mt-2 text-center">
+                                    {expandedSection === card.section ?
+                                        <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500 mx-auto" /> :
+                                        <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 mx-auto" />
+                                    }
+                                </div>
+                            )}
                         </div>
-                        {card.section && (
-                            <div className="mt-2 text-center">
-                                {expandedSection === card.section ?
-                                    <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500 mx-auto" /> :
-                                    <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 mx-auto" />
-                                }
-                            </div>
-                        )}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Expandable Sections */}
@@ -276,6 +341,18 @@ const ReviewStage = ({ data, onNext }: any) => {
                     rows={categories.finance.revisionDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.structure_name || '-',
                         formatCurrency(e.annual_ctc), new Date(e.effective_from).toLocaleDateString()
+                    ])}
+                />
+            )}
+
+            {expandedSection === 'arrears' && categories?.arrears?.details?.length > 0 && (
+                <DetailTable
+                    title="Pending Arrears to be Processed"
+                    icon={<Receipt className="w-4 h-4 text-rose-400" />}
+                    columns={['Employee', 'Emp Code', 'Department', 'Amount', 'Reason']}
+                    rows={categories.arrears.details.map((e: any) => [
+                        `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
+                        formatCurrency(e.amount), e.reason || '-'
                     ])}
                 />
             )}
@@ -478,7 +555,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 ].map((card, idx) => (
                     <div key={idx} className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm">
                         <div className="flex items-center gap-2 mb-2">
-                            <card.icon className={`w-4 h-4 text-${card.color}-500 dark:text-${card.color}-400`} />
+                            <card.icon className={`w-4 h-4 ${COLOR_CLASSES[card.color]?.icon || 'text-indigo-500'}`} />
                             <span className="text-xs text-gray-500 dark:text-gray-400">{card.label}</span>
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -727,8 +804,12 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
     };
 
     const handleRelease = async () => {
-        await onRelease();
-        setReleased(true);
+        try {
+            await onRelease();
+            setReleased(true);
+        } catch (error) {
+            console.error("Release failed", error);
+        }
     };
 
     return (
@@ -897,16 +978,42 @@ const DetailTable = ({ title, icon, columns, rows }: any) => (
 // CSV helpers
 const convertBankFileToCSV = (entries: any[]) => {
     const headers = ['S.No', 'Employee Name', 'Emp Code', 'Bank Name', 'Account Number', 'IFSC Code', 'Amount'];
-    const rows = entries.map(e => [e.sno, e.employeeName, e.empCode, e.bankName, e.accountNumber, e.ifscCode, e.amount]);
+    const rows = entries.map(e => [
+        e.sno,
+        `"${(e.employeeName || '').replace(/"/g, '""')}"`,
+        e.empCode,
+        `"${(e.bankName || '').replace(/"/g, '""')}"`,
+        `="${e.accountNumber}"`,   // Forces Excel to treat as text (preserves leading zeros)
+        e.ifscCode,
+        e.amount
+    ]);
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 };
 
 const convertRegisterToCSV = (entries: any[]) => {
     const headers = ['Employee', 'Emp Code', 'Department', 'Basic', 'HRA', 'Other', 'Gross', 'PF', 'ESI', 'PT', 'TDS', 'Net'];
+
+    const escape = (val: any) => {
+        const str = String(val || '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
     const rows = entries.map(e => [
-        `${e.first_name} ${e.last_name}`, e.emp_code, e.department || '-',
-        e.basic_pay, e.hra, e.other_allowances, e.gross_pay,
-        e.pf_employee, e.esi_employee, e.professional_tax, e.tds_amount, e.net_pay
+        escape(`${e.first_name} ${e.last_name}`),
+        escape(e.emp_code),
+        escape(e.department || '-'),
+        e.basic_pay,
+        e.hra,
+        e.other_allowances,
+        e.gross_pay,
+        e.pf_employee,
+        e.esi_employee,
+        e.professional_tax,
+        e.tds_amount,
+        e.net_pay
     ]);
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 };

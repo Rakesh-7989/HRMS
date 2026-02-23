@@ -247,7 +247,8 @@ const calculatePT = (gross, state, gender = 'MALE', month = null, customSlabs = 
     }
 
     // Special case: Maharashtra charges ₹300 in February
-    if (state === 'Maharashtra' && month === 2 && tax === 200) {
+    // month is 1-indexed (1=Jan, 2=Feb)
+    if (state === 'Maharashtra' && parseInt(month) === 2 && tax === 200) {
         tax = 300;
     }
 
@@ -314,32 +315,60 @@ const calculateLWF = (config, month) => {
 // ===================================================================
 
 /**
+ * Calculate HRA Exemption (Section 10(13A))
+ * 
+ * @param {number} actualHRA - Annual HRA received
+ * @param {number} annualBasic - Annual Basic + DA
+ * @param {number} annualRentPaid - Total rent paid in the year
+ * @param {boolean} isMetro - Whether living in a metro city (Delhi, Mumbai, Kolkata, Chennai)
+ * @returns {number} Exempt HRA amount
+ */
+const calculateHRAExemption = (actualHRA, annualBasic, annualRentPaid, isMetro = false) => {
+    if (annualRentPaid <= 0) return 0;
+
+    const rentMinusTenPercent = Math.max(0, annualRentPaid - (annualBasic * 0.10));
+    const fiftyOrFortyPercent = isMetro ? (annualBasic * 0.50) : (annualBasic * 0.40);
+
+    return Math.min(actualHRA, rentMinusTenPercent, fiftyOrFortyPercent);
+};
+
+/**
  * Calculate TDS based on Income Tax Slabs
  * Supports New Regime (FY 2025-26) and Old Regime
  * 
  * @param {number} annualGrossIncome - Projected Annual Gross Salary
- * @param {object} declarations - { regime: 'NEW'|'OLD', investments_80c: 0, ... }
+ * @param {object} declarations - { regime: 'NEW'|'OLD', investments_80c: 0, rent_paid: 0, is_metro: false, actual_hra: 0, ... }
  * @param {number} age - Employee age
  */
 const calculateTDS = (annualGrossIncome, declarations = {}, age = 30) => {
     const regime = declarations.regime || 'NEW'; // Default to New Regime
     let taxableIncome = annualGrossIncome;
     let taxAmount = 0;
+    let hraExemption = 0;
 
     // 1. Standard Deduction
     // FY 2025-26: New Regime Std Ded increased to 75,000
     const stdDeduction = regime === 'NEW' ? 75000 : 50000;
     taxableIncome = Math.max(0, taxableIncome - stdDeduction);
 
-    // 2. Exemptions / Deductions
+    // 2. Exemptions / Deductions (Old Regime Only)
     if (regime === 'OLD') {
+        const annualBasic = declarations.annual_basic || 0;
+        const actualHRA = declarations.actual_hra || 0;
+
+        hraExemption = calculateHRAExemption(
+            actualHRA,
+            annualBasic,
+            declarations.rent_paid || 0,
+            declarations.is_metro || false
+        );
+
         const exempt80C = Math.min(declarations.investments_80c || 0, 150000);
         const exempt80D = Math.min(declarations.investments_80d || 0, 25000);
-        const hra = declarations.hra || 0;
         const lta = declarations.lta || 0;
         const otherAndProfTax = declarations.other_exemptions || 0;
 
-        const totalDeductions = exempt80C + exempt80D + hra + lta + otherAndProfTax;
+        const totalDeductions = exempt80C + exempt80D + hraExemption + lta + otherAndProfTax;
         taxableIncome = Math.max(0, taxableIncome - totalDeductions);
     }
 
@@ -444,6 +473,7 @@ const calculateTDS = (annualGrossIncome, declarations = {}, age = 30) => {
     return {
         annualGross: annualGrossIncome,
         taxableIncome,
+        hraExemption,
         yearlyTax: Math.round(totalTaxInfo),
         monthlyTDS: Math.round(totalTaxInfo / 12),
         regime,

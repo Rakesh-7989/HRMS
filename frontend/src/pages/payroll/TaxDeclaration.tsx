@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { taxService, TaxSection, TaxRegime, ITDeclaration } from '@/services/tax.service';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +13,7 @@ import { FileText, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export const TaxDeclaration: React.FC = () => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('regime');
     const [fy] = useState('2024-2025'); // Default FY, could be dynamic
     const [regime, setRegime] = useState<TaxRegime | null>(null);
@@ -50,8 +53,9 @@ export const TaxDeclaration: React.FC = () => {
             await taxService.setRegime(fy, newRegime);
             setRegime({ ...regime!, regime: newRegime });
             toast.success(`Tax regime updated to ${newRegime}`);
-        } catch (error) {
-            toast.error('Failed to update regime');
+        } catch (error: any) {
+            const message = error.response?.data?.message || error.message || 'Failed to update regime';
+            toast.error(message);
         }
     };
 
@@ -73,8 +77,9 @@ export const TaxDeclaration: React.FC = () => {
             setEditAmount('');
             setEditLink('');
             fetchData(); // Refresh to show pending status
-        } catch (error) {
-            toast.error('Failed to save declaration');
+        } catch (error: any) {
+            const message = error.response?.data?.message || error.message || 'Failed to save declaration';
+            toast.error(message);
         }
     };
 
@@ -84,9 +89,10 @@ export const TaxDeclaration: React.FC = () => {
             await taxService.downloadForm16(fy);
             toast.dismiss();
             toast.success('Form 16 downloaded');
-        } catch (error) {
+        } catch (error: any) {
             toast.dismiss();
-            toast.error('Failed to download Form 16');
+            const message = error.response?.data?.message || error.message || 'Failed to download Form 16';
+            toast.error(message);
         }
     };
 
@@ -94,6 +100,26 @@ export const TaxDeclaration: React.FC = () => {
 
     // Group declarations by section
     const getDeclaration = (sectionId: string) => declarations.find(d => d.section_id === sectionId);
+
+    if (!user?.employee_id) {
+        return (
+            <div className="p-8">
+                <Card className="p-12 text-center border-dashed bg-gray-50/50">
+                    <AlertCircle className="w-16 h-16 mx-auto text-yellow-500 mb-4 opacity-50" />
+                    <h2 className="text-xl font-bold mb-2">Employee Profile Not Linked</h2>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                        Tax planning and investment declarations require an active employee profile.
+                        If you are an administrator, please ensure your user account is linked to an employee record in the Employee Directory.
+                    </p>
+                    <div className="flex justify-center gap-4">
+                        <Link to="/employees">
+                            <Button variant="outline">Go to Directory</Button>
+                        </Link>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -110,10 +136,25 @@ export const TaxDeclaration: React.FC = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-                    <TabsTrigger value="regime">Regime Selection</TabsTrigger>
-                    <TabsTrigger value="declarations">IT Declarations</TabsTrigger>
-                    <TabsTrigger value="form16">Form 16</TabsTrigger>
+                <TabsList className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700 h-auto">
+                    <TabsTrigger
+                        value="regime"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                    >
+                        Regime Selection
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="declarations"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                    >
+                        IT Declarations
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="form16"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                    >
+                        Form 16
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* --- REGIME SELECTION --- */}
@@ -149,9 +190,9 @@ export const TaxDeclaration: React.FC = () => {
                     </Card>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                        <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800">
-                            <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Why Choose Old Regime?</h4>
-                            <ul className="list-disc list-inside text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                        <Card className="p-4 bg-violet-50 dark:bg-violet-900/20 border-violet-100 dark:border-violet-800">
+                            <h4 className="font-semibold text-violet-800 dark:text-violet-300 mb-2">Why Choose Old Regime?</h4>
+                            <ul className="list-disc list-inside text-sm text-violet-700 dark:text-violet-400 space-y-1">
                                 <li>If you have high HRA (Rent)</li>
                                 <li>If you invest heavily in 80C (LIC, PF, PPF)</li>
                                 <li>If you have Education Loan or Medical Insurance</li>

@@ -68,9 +68,9 @@ export const ActivityPage: React.FC = () => {
   const getActionBadge = (action: string) => {
     switch (action) {
       case 'CREATE':
-        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">Created</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Created</span>;
       case 'UPDATE':
-        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">Updated</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400 border border-fuchsia-200 dark:border-fuchsia-800">Updated</span>;
       case 'DELETE':
         return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">Deleted</span>;
       case 'LOGIN':
@@ -156,7 +156,7 @@ export const ActivityPage: React.FC = () => {
       <div className="space-y-6">
         {/* Header Stats / Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg relative overflow-hidden">
+          <Card className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white border-none shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <Activity size={100} />
             </div>
@@ -165,12 +165,12 @@ export const ActivityPage: React.FC = () => {
                 <Activity size={24} className="text-white" />
               </div>
               <div>
-                <p className="text-indigo-100 text-sm font-medium">System Status</p>
+                <p className="text-purple-100 text-sm font-medium">System Status</p>
                 <p className="text-2xl font-bold flex items-center gap-2">
                   Active
                   <span className="flex h-3 w-3 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 border-2 border-indigo-600"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 border-2 border-purple-600"></span>
                   </span>
                 </p>
               </div>

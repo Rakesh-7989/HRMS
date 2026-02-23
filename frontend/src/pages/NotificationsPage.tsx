@@ -51,7 +51,7 @@ export const NotificationsPage: React.FC = () => {
             case 'error':
                 return <AlertCircle className="text-red-500" size={20} />;
             default:
-                return <Info className="text-blue-500" size={20} />;
+                return <Info className="text-violet-500" size={20} />;
         }
     };
 
@@ -108,7 +108,7 @@ export const NotificationsPage: React.FC = () => {
                                     key={notification.id}
                                     className={cn(
                                         "p-6 flex gap-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 relative group",
-                                        !notification.read && "bg-blue-50/30 dark:bg-blue-900/10"
+                                        !notification.read && "bg-violet-50/30 dark:bg-violet-900/10"
                                     )}
                                     onClick={() => !notification.read && markAsReadMutation.mutate(notification.id)}
                                 >

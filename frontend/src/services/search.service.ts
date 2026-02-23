@@ -53,7 +53,7 @@ const navigationItems: SearchResult[] = [
     { id: 'project-reports', type: 'page', title: 'Project Reports', subtitle: 'View project analytics', url: '/projects/reports', keywords: ['project', 'reports', 'analytics'] },
 
     // Payroll
-    { id: 'payroll', type: 'page', title: 'Payroll', subtitle: 'Salary and payslips', url: '/Payroll', keywords: ['payroll', 'salary', 'payslip', 'wages', 'compensation'] },
+    { id: 'payroll', type: 'page', title: 'Payroll', subtitle: 'Salary and payslips', url: '/payroll', keywords: ['payroll', 'salary', 'payslip', 'wages', 'compensation'] },
 
     // Reports & Settings
     { id: 'reports', type: 'page', title: 'Reports', subtitle: 'View HR reports', url: '/reports', keywords: ['reports', 'analytics', 'statistics', 'data'] },
@@ -68,7 +68,7 @@ const quickActions: SearchResult[] = [
     { id: 'add-asset', type: 'action', title: 'Add New Asset', subtitle: 'Register a new asset', url: '/assets/new', keywords: ['add', 'new', 'create', 'asset', 'equipment'] },
     { id: 'apply-leave', type: 'action', title: 'Apply for Leave', subtitle: 'Submit a leave request', url: '/leave', keywords: ['apply', 'leave', 'request', 'time off'] },
     { id: 'clock-in', type: 'action', title: 'Mark Attendance', subtitle: 'Clock in/out for today', url: '/attendance', keywords: ['clock', 'attendance', 'punch', 'checkin'] },
-    { id: 'view-payslip', type: 'action', title: 'View Payslip', subtitle: 'Check your salary details', url: '/Payroll', keywords: ['payslip', 'salary', 'wages'] },
+    { id: 'view-payslip', type: 'action', title: 'View Payslip', subtitle: 'Check your salary details', url: '/payroll', keywords: ['payslip', 'salary', 'wages'] },
 ];
 
 export const searchService = {

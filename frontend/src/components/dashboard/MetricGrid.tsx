@@ -6,7 +6,7 @@ import './dashboard.css';
 interface MetricItem {
     label: string;
     value: string | number;
-    color: 'blue' | 'emerald' | 'amber' | 'purple' | 'red' | 'pink';
+    color: 'blue' | 'purple' | 'amber' | 'red' | 'pink';
 }
 
 interface MetricGridProps {
@@ -21,17 +21,13 @@ const colorClasses = {
         card: 'dashboard-metric-card--blue',
         value: 'dashboard-metric-value--blue',
     },
-    emerald: {
-        card: 'dashboard-metric-card--emerald',
-        value: 'dashboard-metric-value--emerald',
+    purple: {
+        card: 'dashboard-metric-card--purple',
+        value: 'dashboard-metric-value--purple',
     },
     amber: {
         card: 'dashboard-metric-card--amber',
         value: 'dashboard-metric-value--amber',
-    },
-    purple: {
-        card: 'dashboard-metric-card--purple',
-        value: 'dashboard-metric-value--purple',
     },
     red: {
         card: 'bg-red-50/80 dark:bg-red-500/10 border-red-100 dark:border-red-500/20',

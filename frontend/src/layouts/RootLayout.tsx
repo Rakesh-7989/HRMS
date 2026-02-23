@@ -33,11 +33,11 @@ export const RootLayout = () => {
                                 success: {
                                     duration: 3000,
                                     style: {
-                                        background: '#10B981',
+                                        background: '#A78BFA',
                                     },
                                     iconTheme: {
                                         primary: '#fff',
-                                        secondary: '#10B981',
+                                        secondary: '#A78BFA',
                                     },
                                 },
                                 error: {

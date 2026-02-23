@@ -576,7 +576,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4">
                                                     <div className="flex flex-col gap-1">
                                                         {att.check_in_device && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 inline-block w-fit">
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 inline-block w-fit">
                                                                 IN: {att.check_in_device}
                                                             </span>
                                                         )}
@@ -723,7 +723,7 @@ export const DailyAttendanceContent: React.FC = () => {
                         <DialogTitle>End of Day Report</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        <div className="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 p-3 rounded-md text-sm border border-blue-100 dark:border-blue-800">
+                        <div className="bg-violet-50 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200 p-3 rounded-md text-sm border border-violet-100 dark:border-violet-800">
                             Since you are working from home today, detailed daily report is required to clock out.
                         </div>
                         <div>

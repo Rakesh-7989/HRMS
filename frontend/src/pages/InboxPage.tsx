@@ -261,7 +261,7 @@ const InboxPage: React.FC = () => {
                         <p className="text-xs text-muted truncate">{it.subtitle} · {it.category}</p>
 
                         <div className="mt-2 flex items-center gap-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-violet-100 text-violet-700' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
                           <span className="text-[11px] text-muted">{formatDistanceToNow(new Date(it.initiatedOn), { addSuffix: true })}</span>
                         </div>
                       </div>

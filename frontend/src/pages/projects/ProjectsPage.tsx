@@ -340,7 +340,7 @@ export const ProjectsPage: React.FC = () => {
                                             >
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                        <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
                                                             <FolderKanban size={20} />
                                                         </div>
                                                         <div>
@@ -379,7 +379,7 @@ export const ProjectsPage: React.FC = () => {
                                                             </button>
                                                             <button
                                                                 onClick={() => handleOpenEditModal(project)}
-                                                                className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                                                                className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
                                                                 title="Edit Project"
                                                             >
                                                                 <Edit size={16} />

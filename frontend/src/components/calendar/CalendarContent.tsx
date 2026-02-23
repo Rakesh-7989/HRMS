@@ -284,9 +284,9 @@ export const CalendarContent: React.FC = () => {
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className={cn(
                                                                 "p-1 md:p-3 rounded-lg md:rounded-2xl flex items-center justify-center md:justify-start gap-1 md:gap-2 border border-transparent shadow-sm",
-                                                                holiday.holiday_type === 'Central' && "bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                                                                holiday.holiday_type === 'Central' && "bg-violet-50/50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400",
                                                                 holiday.holiday_type === 'State' && "bg-purple-50/50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400",
-                                                                holiday.holiday_type === 'Company' && "bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                                                                holiday.holiday_type === 'Company' && "bg-fuchsia-50/50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
                                                                 holiday.holiday_type === 'Weekend' && "bg-gray-100/50 dark:bg-white/5 text-gray-400 dark:text-gray-600"
                                                             )}
                                                         >
@@ -377,7 +377,7 @@ export const CalendarContent: React.FC = () => {
                 <div className="space-y-4">
                     <div className="flex flex-col gap-1 px-2">
                         <div className="flex items-center gap-2">
-                            <Sparkles size={12} className="text-amber-500/70" />
+                            <Sparkles size={12} className="text-fuchsia-500/70" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">Priority Overrides</span>
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Custom Calendar</h3>

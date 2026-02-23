@@ -94,7 +94,7 @@ const PayRunPage: React.FC = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'COMPLETED': return 'text-green-600 bg-green-50 border-green-200';
-            case 'APPROVED': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'APPROVED': return 'text-violet-600 bg-violet-50 border-violet-200';
             case 'LOCKED': return 'text-purple-600 bg-purple-50 border-purple-200';
             case 'DRAFT': return 'text-gray-600 bg-gray-50 border-gray-200';
             default: return 'text-gray-600';

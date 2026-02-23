@@ -80,7 +80,7 @@ export const LoanTypesPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: 'Payroll', href: '/Payroll' }, { label: 'Loan Types' }]}>
+    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Loan Types' }]}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
           {canManage ? (

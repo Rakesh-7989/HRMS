@@ -200,12 +200,12 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20 flex items-center gap-3"
+                                className="mt-4 p-3 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-500/10 border border-fuchsia-200/50 dark:border-fuchsia-500/20 flex items-center gap-3"
                             >
-                                <div className="p-2 bg-amber-500 rounded-lg text-white shadow-lg shadow-amber-500/30">
+                                <div className="p-2 bg-fuchsia-500 rounded-lg text-white shadow-lg shadow-violet-500/30">
                                     <Building size={14} />
                                 </div>
-                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-tight">
+                                <span className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-tight">
                                     {todayHoliday.holiday_name}
                                 </span>
                             </motion.div>
@@ -273,13 +273,13 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                         'p-2 rounded-lg flex flex-col items-center justify-center transition-all border relative',
                                         day.isToday && 'ring-2 ring-primary ring-offset-1 bg-primary/10 border-primary/30',
                                         (day.isSunday || day.isHoliday) && !day.isToday && 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border-red-200/50 dark:border-red-500/20',
-                                        !day.isSunday && !day.isHoliday && !day.isToday && 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/20',
+                                        !day.isSunday && !day.isHoliday && !day.isToday && 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200/50 dark:border-purple-500/20',
                                         day.isFuture && 'opacity-60'
                                     )}
                                 >
                                     <p className={cn(
                                         'text-[8px] font-bold uppercase tracking-tighter mb-0.5',
-                                        (day.isSunday || day.isHoliday) ? 'text-red-400' : day.isToday ? 'text-primary' : 'text-emerald-500'
+                                        (day.isSunday || day.isHoliday) ? 'text-red-400' : day.isToday ? 'text-primary' : 'text-purple-500'
                                     )}>
                                         {day.dayLetter}
                                     </p>
@@ -298,7 +298,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                         {/* Legend */}
                         <div className="flex items-center justify-center gap-4 mt-3 text-[9px] text-gray-400">
                             <div className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                                 <span>Weekday</span>
                             </div>
                             <div className="flex items-center gap-1">

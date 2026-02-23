@@ -594,23 +594,35 @@ export const payrollService = {
     //   return [];
     // }
     try {
-      const response = await api.get<ApiResponse<Array<FnFSettlement>>>('/payroll/fnf');
+      const response = await api.get<ApiResponse<Array<FnFSettlement>>>('/payroll/settlement/fnf');
       return response.data.data || [];
     } catch (err) { return []; }
   },
 
   createFnFSettlement: async (payload: { employeeId: string; lastWorkingDay: string; resignationDate?: string }) => {
-    const response = await api.post<ApiResponse<FnFSettlement>>('/payroll/fnf', payload);
+    const response = await api.post<ApiResponse<FnFSettlement>>('/payroll/settlement/fnf', payload);
+    return response.data.data!;
+  },
+
+  getFnFSettlementById: async (id: string) => {
+    const response = await api.get<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}`);
+    return response.data.data!;
+  },
+
+  submitFnF: async (id: string) => {
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/submit`);
     return response.data.data!;
   },
 
   approveFnF: async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    const response = await api.put<ApiResponse<FnFSettlement>>(`/payroll/fnf/${id}/status`, { status });
+    // backend expects PATCH /payroll/settlement/fnf/:id/approve with body { status }
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/approve`, { status });
     return response.data.data!;
   },
 
   payFnF: async (id: string) => {
-    const response = await api.post<ApiResponse<FnFSettlement>>(`/payroll/fnf/${id}/pay`);
+    // backend expects PATCH /payroll/settlement/fnf/:id/pay
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/pay`);
     return response.data.data!;
   },
 
@@ -935,8 +947,27 @@ export interface FnFSettlement {
   resignation_date?: string;
   last_working_day: string;
   net_payable?: number;
-  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PAID';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PAID' | 'HOLD_ASSET_PENDING';
   created_at: string;
+
+  // Financials
+  pending_salary?: number;
+  leave_encashment?: number;
+  gratuity?: number;
+  bonus_pending?: number;
+  other_earnings?: number;
+  gross_payable?: number; // total_earnings
+
+  notice_period_recovery?: number;
+  loan_recovery?: number;
+  it_assets_recovery?: number;
+  other_recoveries?: number;
+  total_deductions?: number;
+  tds_on_fnf?: number;
+
+  hold_reason?: string;
+  remarks?: string;
+  paid_at?: string;
 }
 
 export default payrollService;

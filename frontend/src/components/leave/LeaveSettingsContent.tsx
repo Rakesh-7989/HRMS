@@ -445,7 +445,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                         </TableCell>
                                         <TableCell>
                                             {type.requires_attachment ? (
-                                                <Check size={16} className="text-amber-500" />
+                                                <Check size={16} className="text-fuchsia-500" />
                                             ) : (
                                                 <X size={16} className="text-gray-400" />
                                             )}

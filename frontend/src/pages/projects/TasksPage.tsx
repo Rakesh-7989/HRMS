@@ -666,7 +666,7 @@ export const TasksPage: React.FC = () => {
                                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                                 <button
                                                                     onClick={() => handleOpenEditModal(task)}
-                                                                    className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                                                                    className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
                                                                     title="Edit Task"
                                                                 >
                                                                     <Edit size={16} />

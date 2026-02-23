@@ -18,16 +18,16 @@ export const ValidationAlert: React.FC<ValidationAlertProps> = ({
 }) => {
     const icons = {
         error: <XCircle className="w-5 h-5 text-red-500" />,
-        warning: <AlertTriangle className="w-5 h-5 text-amber-500" />,
-        success: <CheckCircle className="w-5 h-5 text-emerald-500" />,
-        info: <Info className="w-5 h-5 text-indigo-500" />,
+        warning: <AlertTriangle className="w-5 h-5 text-fuchsia-500" />,
+        success: <CheckCircle className="w-5 h-5 text-purple-500" />,
+        info: <Info className="w-5 h-5 text-purple-500" />,
     };
 
     const styles = {
         error: "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400",
-        warning: "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
-        success: "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-        info: "bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400",
+        warning: "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400",
+        success: "bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400",
+        info: "bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400",
     };
 
     return (

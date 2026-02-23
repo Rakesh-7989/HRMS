@@ -167,7 +167,7 @@ export const DBADashboard = () => {
             <div className="w-64 flex flex-col border-r border-gray-800 bg-gray-950">
                 <div className="p-4 border-b border-gray-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Database className="w-5 h-5 text-blue-400" />
+                        <Database className="w-5 h-5 text-violet-400" />
                         <span className="font-bold text-lg tracking-tight">DBA Console</span>
                     </div>
                     <button onClick={fetchTables} className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white" title="Refresh Tables">
@@ -181,7 +181,7 @@ export const DBADashboard = () => {
                         <input
                             type="text"
                             placeholder="Filter tables..."
-                            className="w-full bg-gray-900 border border-gray-800 rounded pl-9 pr-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full bg-gray-900 border border-gray-800 rounded pl-9 pr-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 transition-colors"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -198,7 +198,7 @@ export const DBADashboard = () => {
                                     key={table}
                                     onClick={() => fetchTableData(table)}
                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${selectedTable === table
-                                        ? 'bg-blue-500/10 text-blue-400 border-r-2 border-blue-500'
+                                        ? 'bg-violet-500/10 text-violet-400 border-r-2 border-violet-500'
                                         : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
                                         }`}
                                 >
@@ -224,7 +224,7 @@ export const DBADashboard = () => {
                         <button
                             onClick={() => setActiveTab('sql')}
                             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'sql'
-                                ? 'bg-blue-600 text-white shadow-sm'
+                                ? 'bg-violet-600 text-white shadow-sm'
                                 : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                         >
@@ -234,7 +234,7 @@ export const DBADashboard = () => {
                         <button
                             onClick={() => setActiveTab('explorer')}
                             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'explorer'
-                                ? 'bg-emerald-600 text-white shadow-sm'
+                                ? 'bg-purple-600 text-white shadow-sm'
                                 : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                         >
@@ -248,7 +248,7 @@ export const DBADashboard = () => {
                             <button
                                 onClick={executeQuery}
                                 disabled={loading}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-lg shadow-blue-900/20 text-sm font-bold transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded shadow-lg shadow-violet-900/20 text-sm font-bold transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Play className="w-4 h-4 fill-current" />
                                 Run Query (Ctrl+Enter)
@@ -271,7 +271,7 @@ export const DBADashboard = () => {
                 <div className="flex-1 overflow-hidden relative">
                     {loading && (
                         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
                         </div>
                     )}
 
@@ -281,7 +281,7 @@ export const DBADashboard = () => {
                             {/* Editor */}
                             <div className="flex-1 p-4 relative">
                                 <textarea
-                                    className="w-full h-full bg-gray-950 text-green-400 font-mono text-sm border border-gray-800 rounded p-4 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 resize-none shadow-inner"
+                                    className="w-full h-full bg-gray-950 text-green-400 font-mono text-sm border border-gray-800 rounded p-4 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-blue-500/50 resize-none shadow-inner"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="-- Write your SQL query here
@@ -332,7 +332,7 @@ SELECT * FROM users LIMIT 10;"
                                 <>
                                     <div className="p-4 bg-gray-950 border-b border-gray-800 flex justify-between items-center">
                                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <TableIcon className="w-5 h-5 text-emerald-500" />
+                                            <TableIcon className="w-5 h-5 text-purple-500" />
                                             {selectedTable}
                                         </h2>
                                         <div className="flex gap-2">

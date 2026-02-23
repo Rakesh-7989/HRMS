@@ -96,7 +96,7 @@ export const AssetDetailsPage: React.FC = () => {
       case 'AVAILABLE':
         return 'text-green-600 bg-green-100';
       case 'ASSIGNED':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-violet-600 bg-violet-100';
       case 'REQUESTED':
         return 'text-yellow-600 bg-yellow-100';
       case 'UNDER_REPAIR':

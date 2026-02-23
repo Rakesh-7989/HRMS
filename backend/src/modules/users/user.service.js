@@ -670,7 +670,19 @@ exports.getMyProfile = async (db, user) => {
       e.profile_photo_url,
       s.status as subscription_status,
       p.name as subscription_plan_name,
-      t.settings as tenant_settings
+      (
+        COALESCE(t.settings, '{}'::jsonb) || 
+        jsonb_build_object(
+          'company_name', t.name,
+          'phone', t.phone,
+          'address', t.address,
+          'city', t.city,
+          'state', t.state,
+          'country', t.country,
+          'zip_code', t.zip_code,
+          'domain', t.domain
+        )
+      ) as tenant_settings
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id
     LEFT JOIN employees m ON m.id = e.reports_to
