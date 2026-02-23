@@ -25,31 +25,21 @@ interface CallInfo {
 export interface ChatNotification {
     messageId: string;
     conversationId: string;
-<<<<<<< HEAD
     conversationName?: string;
     conversationType: 'DIRECT' | 'GROUP';
-=======
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
     senderId: string;
     senderName: string;
     senderAvatar?: string;
     content: string;
-<<<<<<< HEAD
     type: 'TEXT' | 'FILE' | 'IMAGE' | 'CALL';
     createdAt: string;
-=======
-    type: string;
-    createdAt: string;
-    conversationType: 'DIRECT' | 'GROUP';
-    conversationName?: string;
 }
 
 export interface UserStatusInfo {
     status: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
     lastSeen: string;
     message?: string;
-    messageExpiry?: string;
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
+    messageExpiry?: string | null;
 }
 
 interface ChatContextType {
@@ -84,7 +74,6 @@ interface ChatContextType {
     addParticipantToCall: (userId: string, userName: string) => void;
     speakingUsers: Set<string>;
     callDuration: number;
-<<<<<<< HEAD
     chatNotifications: ChatNotification[];
     dismissChatNotification: (messageId: string) => void;
     setActiveConversation: (conversationId: string | null) => void;
@@ -94,20 +83,7 @@ interface ChatContextType {
     myStatus: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
     updateMyStatus: (status: 'available' | 'busy' | 'dnd' | 'away' | 'offline') => void;
     updateMyStatusMessage: (message: string, expiry: string | null) => void;
-    userStatuses: Record<string, {
-        status: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
-        message?: string;
-        expiry?: string | null;
-    }>;
-=======
-    // Notifications & Status
-    chatNotifications: ChatNotification[];
-    dismissChatNotification: (messageId: string) => void;
     userStatuses: Record<string, UserStatusInfo>;
-    myStatus: UserStatusInfo['status'];
-    updateMyStatus: (status: UserStatusInfo['status']) => void;
-    updateMyStatusMessage: (message: string, expiry?: string | null) => void;
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
 }
 
 
@@ -141,21 +117,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [totalUnreadCount, setTotalUnreadCount] = useState(0);
     const [typingStatus, setTypingStatus] = useState<Record<string, string[]>>({});
     const [chatNotifications, setChatNotifications] = useState<ChatNotification[]>([]);
-<<<<<<< HEAD
     const [heldCall, setHeldCall] = useState<any>(null);
     const [isResuming, setIsResuming] = useState(false);
     const [myStatus, setMyStatus] = useState<'available' | 'busy' | 'dnd' | 'away' | 'offline'>(
         (localStorage.getItem('userPresenceStatus') as any) || 'available'
     );
-    const [userStatuses, setUserStatuses] = useState<Record<string, any>>({});
+    const [userStatuses, setUserStatuses] = useState<Record<string, UserStatusInfo>>({});
     const heldCallRef = useRef<any>(null);
     useEffect(() => { heldCallRef.current = heldCall; }, [heldCall]);
     const chatDismissTimerRef = useRef<any>(null);
     const activeConversationRef = useRef<string | null>(null);
-=======
-    const [userStatuses, setUserStatuses] = useState<Record<string, UserStatusInfo>>({});
-    const [myStatus, setMyStatus] = useState<UserStatusInfo['status']>('available');
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
 
     const queryClient = useQueryClient();
     const callStartTime = useRef<number | null>(null);
@@ -531,7 +502,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         s.on('messages_read', ({ conversationId }) => queryClient.invalidateQueries({ queryKey: ['messages', conversationId] }));
 
-<<<<<<< HEAD
         s.on('chat_cleared', ({ conversationId }) => {
             queryClient.setQueryData(['messages', conversationId], []);
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -553,7 +523,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 ...prev,
                 [from]: { ...prev[from], status: 'active' }
             }));
-=======
+        });
+
         s.on('new_message', (message: any) => {
             if (message.senderId === user.id) return;
             // Add to notifications if not in the active room
@@ -583,7 +554,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         s.on('bulk_status_update', (statuses: Record<string, UserStatusInfo>) => {
             setUserStatuses(prev => ({ ...prev, ...statuses }));
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
         });
 
         setSocket(s);
@@ -1029,7 +999,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus, sendTypingStatus,
         isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
         callDuration,
-<<<<<<< HEAD
         chatNotifications, dismissChatNotification, setActiveConversation,
         heldCall, isResuming,
         myStatus,
@@ -1046,24 +1015,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                                 ...prev[user.id],
                                 message,
                                 expiry,
-                                status: myStatus
+                                status: myStatus,
+                                lastSeen: new Date().toISOString()
                             }
                         }));
                     }
+                    socketRef.current?.emit('update_status', { message, messageExpiry: expiry });
                 })
                 .catch(err => console.error("Failed to update status message", err));
-=======
-        chatNotifications,
-        dismissChatNotification: (messageId: string) => setChatNotifications(prev => prev.filter(n => n.messageId !== messageId)),
-        userStatuses,
-        myStatus,
-        updateMyStatus: (status: UserStatusInfo['status']) => {
-            setMyStatus(status);
-            socketRef.current?.emit('update_status', { status });
-        },
-        updateMyStatusMessage: (message: string, expiry?: string | null) => {
-            socketRef.current?.emit('update_status', { message, messageExpiry: expiry });
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
         }
     }), [
         socket, isConnected, sendMessage, joinRoom,
@@ -1072,13 +1031,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         initiateCall, acceptCall, joinActiveCall, endCall, isMuted, isVideoOff,
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus,
         sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
-<<<<<<< HEAD
         callDuration,
         chatNotifications, dismissChatNotification, setActiveConversation,
         heldCall, isResuming, myStatus, userStatuses, user
-=======
-        callDuration, chatNotifications, userStatuses, myStatus
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
     ]);
 
 

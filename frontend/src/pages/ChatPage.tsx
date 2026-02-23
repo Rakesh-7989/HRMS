@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useTranslation } from 'react-i18next';
 import api from '@/services/api';
 import { format } from 'date-fns';
-import { Send, Phone, Video, Search, Paperclip, Edit2, Trash2, X, Check, Users, Plus, Smile, Clock, Minus, PhoneIncoming, Pin, ArrowRight, MicOff, VideoOff, Download, FileText, FileArchive, FileSpreadsheet, File, ExternalLink, CornerUpLeft, Share, MoreHorizontal, Copy, Image, UserPlus, User, Eraser, UserMinus, BellOff, MessageSquare, ZoomIn, ZoomOut, Maximize2, RotateCw } from 'lucide-react';
+import { Send, Phone, Video, Search, Paperclip, Edit2, Trash2, X, Check, Users, Plus, Smile, Clock, Minus, PhoneIncoming, Pin, ArrowRight, MicOff, VideoOff, Download, FileText, FileArchive, FileSpreadsheet, File, ExternalLink, CornerUpLeft, Share, MoreHorizontal, Copy, Image, UserPlus, User, Eraser, UserMinus, MessageSquare, ZoomIn, ZoomOut, Maximize2, RotateCw } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
 import { EmojiPicker } from '@/components/chat/EmojiPicker';
@@ -1017,7 +1017,6 @@ export const ChatPage = () => {
 
                                     {/* Status Dot Overlay - Teams Style */}
                                     <div className={cn(
-<<<<<<< HEAD
                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center cursor-help",
                                         myStatus === 'available' ? 'bg-emerald-500' :
                                             myStatus === 'away' ? 'bg-amber-500' :
@@ -1028,19 +1027,6 @@ export const ChatPage = () => {
                                         {myStatus === 'away' && <Clock size={8} strokeWidth={3} className="text-white" />}
                                         {myStatus === 'dnd' && <Minus size={8} strokeWidth={4} className="text-white" />}
                                         {myStatus === 'offline' && <div className="h-1.5 w-1.5 rounded-full border border-white dark:border-gray-900" />}
-=======
-                                        "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center",
-                                        userStatus === 'ONLINE' ? 'bg-emerald-500' :
-                                            userStatus === 'AWAY' ? 'bg-amber-500' :
-                                                userStatus === 'DND' ? 'bg-red-500' :
-                                                    userStatus === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
-                                    )} title={userStatus === 'BUSY' ? 'In a Meeting' : userStatus}>
-                                        {userStatus === 'ONLINE' && <Check size={8} strokeWidth={4} className="text-white" />}
-                                        {userStatus === 'AWAY' && <Clock size={8} strokeWidth={3} className="text-white" />}
-                                        {userStatus === 'DND' && <Minus size={8} strokeWidth={4} className="text-white" />}
-                                        {userStatus === 'BUSY' && <PhoneIncoming size={6} strokeWidth={3} className="text-white" />}
-                                        {userStatus === 'OFFLINE' && <X size={8} strokeWidth={4} className="text-white" />}
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                     </div>
                                 </div>
                                 <div className="absolute top-8 left-0 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-1 hidden group-hover/status:block z-50">
@@ -1052,15 +1038,9 @@ export const ChatPage = () => {
                                         >
                                             <span className={cn(
                                                 "h-2 w-2 rounded-full",
-<<<<<<< HEAD
                                                 s === 'available' ? 'bg-emerald-500' :
                                                     s === 'away' ? 'bg-amber-500' :
                                                         s === 'dnd' || s === 'busy' ? 'bg-rose-500' : 'bg-gray-400'
-=======
-                                                s === 'ONLINE' ? 'bg-emerald-500' :
-                                                    s === 'AWAY' ? 'bg-amber-500' :
-                                                        s === 'DND' || s === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                             )} />
                                             {s === 'busy' ? 'In a Meeting' : s}
                                         </button>
@@ -1159,7 +1139,6 @@ export const ChatPage = () => {
                         {isSelectingContact ? (
                             <div className="animate-in slide-in-from-right duration-300">
                                 <div className="p-2">
-<<<<<<< HEAD
                                     <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('chat.suggestedContacts')}</p>
                                     {isLoadingContacts ? (
                                         <div className="flex flex-col items-center justify-center py-8 space-y-3">
@@ -1211,52 +1190,6 @@ export const ChatPage = () => {
                                             ))}
                                         </div>
                                     )}
-=======
-                                    <button
-                                        onClick={() => setIsSelectingContact(false)}
-                                        className="w-full p-2 text-left text-sm text-primary hover:underline mb-2"
-                                    >
-                                        ← Back to conversations
-                                    </button>
-                                    {searchQuery && searchResults.length > 0 ? (
-                                        // Show Search Results
-                                        searchResults.map(user => (
-                                            <button
-                                                key={user.id}
-                                                onClick={() => handleStartDirectChat(user.id)}
-                                                className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
-                                            >
-                                                <div className="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-medium">
-                                                    <Search size={16} />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {user.first_name} {user.last_name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                                </div>
-                                            </button>
-                                        ))
-                                    ) : isLoadingContacts ? (
-                                        <div className="p-4 text-center text-gray-500">Loading contacts...</div>
-                                    ) : contacts?.map(contact => (
-                                        <button
-                                            key={contact.id}
-                                            onClick={() => handleStartDirectChat(contact.id)}
-                                            className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
-                                        >
-                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                                {contact.first_name?.charAt(0) || contact.email.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                    {contact.first_name ? `${contact.first_name} ${contact.last_name || ''}` : contact.email}
-                                                </p>
-                                                <p className="text-xs text-gray-500 truncate">{contact.designation || contact.email}</p>
-                                            </div>
-                                        </button>
-                                    ))}
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                 </div>
                             </div>
                         ) : (
@@ -1350,7 +1283,6 @@ export const ChatPage = () => {
                                                         ) : details.initials}
                                                     </div>
                                                     <div className={cn(
-<<<<<<< HEAD
                                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center cursor-help",
                                                         details.status === 'available' || details.status === 'online' ? 'bg-emerald-500' :
                                                             details.status === 'away' ? 'bg-amber-500' :
@@ -1388,19 +1320,6 @@ export const ChatPage = () => {
                                                         {details.status === 'dnd' && <Minus size={8} strokeWidth={4} className="text-white" />}
                                                         {details.status === 'busy' && <PhoneIncoming size={6} strokeWidth={3} className="text-white" />}
                                                         {details.status === 'offline' && <div className="h-1.5 w-1.5 rounded-full border border-white dark:border-gray-900" />}
-=======
-                                                        "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center",
-                                                        details.status === 'ONLINE' ? 'bg-emerald-500' :
-                                                            details.status === 'AWAY' ? 'bg-amber-500' :
-                                                                details.status === 'DND' ? 'bg-red-500' :
-                                                                    details.status === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
-                                                    )}>
-                                                        {details.status === 'ONLINE' && <Check size={8} strokeWidth={4} className="text-white" />}
-                                                        {details.status === 'AWAY' && <Clock size={8} strokeWidth={3} className="text-white" />}
-                                                        {details.status === 'DND' && <Minus size={8} strokeWidth={4} className="text-white" />}
-                                                        {details.status === 'BUSY' && <PhoneIncoming size={6} strokeWidth={3} className="text-white" />}
-                                                        {(!details.status || details.status === 'OFFLINE') && <X size={8} strokeWidth={4} className="text-white" />}
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                                     </div>
                                                 </div>
 
@@ -1487,156 +1406,9 @@ export const ChatPage = () => {
                                                     </span>
                                                 </>
                                             );
-<<<<<<< HEAD
                                         })()}
-=======
-                                        }
-
-                                        const details = getConversationDetails(conv);
-                                        return (
-                                            <>
-                                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                                    {details.initials}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <h3 className="font-bold text-gray-900 dark:text-gray-100">{details.name}</h3>
-                                                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                                                        {typingStatus[selectedConversationId || '']?.length > 0 ? (
-                                                            <span className="text-primary font-medium italic animate-pulse">
-                                                                {typingStatus[selectedConversationId!].join(', ')} {typingStatus[selectedConversationId!].length > 1 ? 'are' : 'is'} typing...
-                                                            </span>
-                                                        ) : (
-                                                            <>
-                                                                <span className={cn(
-                                                                    "h-2 w-2 rounded-full",
-                                                                    details.status === 'ONLINE' ? 'bg-emerald-500' :
-                                                                        details.status === 'AWAY' ? 'bg-amber-500' :
-                                                                            details.status === 'DND' ? 'bg-red-500' :
-                                                                                details.status === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
-                                                                )}></span>
-                                                                {details.status === 'BUSY' ? 'In a Meeting' : (details.status || 'Offline')}
-                                                            </>
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                                <div className="flex items-center gap-4 text-gray-400">
-                                    {activeRoomCall === selectedConversationId && !activeCall && (
-                                        <button
-                                            onClick={() => joinActiveCall(selectedConversationId, 'video')}
-                                            className="group relative flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-xl transition-all border border-purple-500/20 active:scale-95"
-                                            title="Meeting in progress - Click to Join"
-                                        >
-                                            <div className="absolute -top-1 -right-1 flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
-                                            </div>
-                                            <Video size={18} className="animate-pulse" />
-                                            <span className="text-[11px] font-black uppercase tracking-wider">Join ongoing call</span>
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            if (activeCall) {
-                                                toggleAudio();
-                                                return;
-                                            }
-                                            const conv = conversations?.find(c => c.id === selectedConversationId);
-                                            if (conv) {
-                                                const details = getConversationDetails(conv);
-                                                if (details.participantId) {
-                                                    initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
-                                                } else if (conv.type === 'GROUP') {
-                                                    initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
-                                                }
-                                            }
-                                        }}
-                                        className={cn(
-                                            "hover:text-gray-600 dark:hover:text-gray-200 transition-colors",
-                                            activeCall && !isMuted ? "text-purple-500" : "text-gray-400"
-                                        )}
-                                        title={activeCall ? "Toggle Audio" : "Audio Call"}
-                                    >
-                                        {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (activeCall) {
-                                                toggleVideo();
-                                                return;
-                                            }
-                                            const conv = conversations?.find(c => c.id === selectedConversationId);
-                                            if (conv) {
-                                                const details = getConversationDetails(conv);
-                                                if (details.participantId) {
-                                                    initiateCall(details.participantId, details.name, 'video', selectedConversationId);
-                                                } else if (conv.type === 'GROUP') {
-                                                    initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
-                                                }
-                                            }
-                                        }}
-                                        className={cn(
-                                            "hover:text-gray-600 dark:hover:text-gray-200 transition-colors",
-                                            activeCall && !isVideoOff ? "text-primary" : "text-gray-400"
-                                        )}
-                                        title={activeCall ? "Toggle Video" : "Video Call"}
-                                    >
-                                        {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowPins(!showPins)}
-                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200", showPins && "text-primary")}
-                                        title="Pinned Messages"
-                                    >
-                                        <Pin size={20} className={showPins ? "fill-primary" : ""} />
-                                    </button>
-                                    <button
-                                        onClick={() => setShowMessageSearch(true)}
-                                        className="hover:text-gray-600 dark:hover:text-gray-200"
-                                        title="Search in conversation"
-                                    >
-                                        <Search size={20} />
-                                    </button>
-                                    <button
-                                        onClick={() => activeConversation?.type === 'GROUP' && setIsViewingGroupProfile(true)}
-                                        className="hover:text-gray-600 dark:hover:text-gray-200"
-                                        title="Group Info"
-                                    >
-                                        <MoreVertical size={20} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Message Search Overlay */}
-                            {showMessageSearch && (
-                                <MessageSearch
-                                    messages={messages || []}
-                                    onResultSelect={(messageId) => {
-                                        setHighlightedMessageId(messageId);
-                                        // Scroll to message
-                                        const element = document.getElementById(`message-${messageId}`);
-                                        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        // Remove highlight after animation
-                                        setTimeout(() => setHighlightedMessageId(null), 2000);
-                                    }}
-                                    onClose={() => setShowMessageSearch(false)}
-                                />
-                            )}
-
-                            {/* Pinned Messages Display */}
-                            {showPins && messages?.some(m => m.is_pinned) && (
-                                <div className="bg-primary/5 border-b border-primary/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
-                                    <div className="flex-shrink-0 flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider">
-                                        <Pin size={12} className="fill-primary" />
-                                        Pinned
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                     </div>
-
-                                    {/* Tabs moved to same row */}
-                                    <div className="flex items-center gap-1 h-full border-l border-gray-200 dark:border-gray-800 pl-4">
+                                    <div className="flex items-center gap-1 h-full border-l border-gray-200 dark:border-gray-800 ml-4 pl-4 hidden md:flex">
                                         {(['chat', 'files', 'photos'] as const).map(tab => (
                                             <button
                                                 key={tab}
@@ -1656,287 +1428,8 @@ export const ChatPage = () => {
                                         ))}
                                     </div>
                                 </div>
-
-<<<<<<< HEAD
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-4 text-gray-400">
                                     {activeRoomCall === selectedConversationId && !activeCall && (
-=======
-                            {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50 dark:bg-gray-900/50 relative">
-                                {messages?.map((msg, index) => {
-                                    const isMe = msg.sender_id === user?.id;
-                                    const prevMsg = index > 0 ? messages[index - 1] : null;
-                                    const isSameSender = prevMsg && prevMsg.sender_id === msg.sender_id;
-                                    const showAvatar = !isMe && !isSameSender;
-
-                                    if (msg.type === 'CALL') {
-                                        let callData = { callType: 'audio', duration: 0, status: 'ended' };
-                                        try { callData = JSON.parse(msg.content); } catch (e) { }
-                                        return (
-                                            <div key={msg.id} className="flex justify-center my-6">
-                                                <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-                                                    <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-red-500" : "bg-emerald-500")}>
-                                                        {callData.callType === 'video' ? <Video size={12} /> : <Phone size={12} />}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                            {callData.status === 'missed' ? 'Missed call' : `Call ended`}
-                                                        </span>
-                                                        <span className="opacity-70">
-                                                            {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} • `}
-                                                            {format(new Date(msg.created_at), 'HH:mm')}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-
-                                    const isEditing = editingMessageId === msg.id;
-                                    const isHighlighted = highlightedMessageId === msg.id;
-                                    return (
-                                        <div
-                                            key={msg.id}
-                                            id={`message-${msg.id}`}
-                                            className={cn(
-                                                "flex items-end gap-3 px-2 group transition-all duration-500",
-                                                isMe ? "flex-row-reverse" : "flex-row",
-                                                isSameSender ? "mt-1" : "mt-6",
-                                                isHighlighted && "bg-primary/10 rounded-xl scale-[1.02] ring-2 ring-primary/30"
-                                            )}
-                                        >
-                                            <div className="flex-shrink-0 w-8 h-8">
-                                                {showAvatar ? (
-                                                    <div className="h-8 w-8 rounded-full bg-primary-gradient p-[1px] shadow-sm">
-                                                        <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                                                            {msg.sender_profile_pic ? (
-                                                                <img src={`${API_BASE_URL.replace('/api', '')}${msg.sender_profile_pic}`} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <span className="text-[10px] font-bold text-primary">{msg.sender_first_name?.[0] || '?'}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ) : <div className="w-8" />}
-                                            </div>
-
-                                            <div className={cn(
-                                                "max-w-[75%] min-w-[60px] relative transition-all duration-200",
-                                                isMe ? "items-end" : "items-start",
-                                                msg.reactions && msg.reactions.length > 0 ? "mb-2" : "" // Add space for overlapping reactions
-                                            )}>
-                                                {!isMe && !isSameSender && (
-                                                    <span className="text-[10px] font-semibold text-gray-500 ml-1 mb-1 block">
-                                                        {msg.sender_first_name} {msg.sender_last_name}
-                                                    </span>
-                                                )}
-
-                                                {/* Threading UI: Show Parent Message */}
-                                                {msg.parent_message && !isEditing && (
-                                                    <div className={cn(
-                                                        "text-xs mb-1 px-3 py-1 rounded-t-lg border-l-4 opacity-80 cursor-pointer hover:opacity-100",
-                                                        isMe ? "bg-white/10 border-white text-white" : "bg-gray-200 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-300"
-                                                    )}>
-                                                        <span className="font-bold mr-1">{msg.parent_message.sender_first_name}:</span>
-                                                        {msg.parent_message.content.substring(0, 30)}...
-                                                    </div>
-                                                )}
-
-                                                <div className={cn(
-                                                    "rounded-2xl px-4 py-3 shadow-sm group-hover:shadow-lg transition-all duration-300 relative",
-                                                    isMe
-                                                        ? "bg-primary-gradient text-white rounded-br-md"
-                                                        : "bg-white dark:bg-gray-800/90 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-100/80 dark:border-gray-700/50 backdrop-blur-sm"
-                                                )}>
-                                                    {isEditing ? (
-                                                        <div className="flex flex-col gap-2 min-w-[200px]">
-                                                            <input
-                                                                type="text"
-                                                                value={editContent}
-                                                                onChange={(e) => setEditContent(e.target.value)}
-                                                                className="text-gray-900 text-sm rounded p-1 w-full"
-                                                                autoFocus
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') saveEdit(msg.id);
-                                                                    if (e.key === 'Escape') cancelEditing();
-                                                                }}
-                                                            />
-                                                            <div className="flex justify-end gap-2">
-                                                                <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></button>
-                                                                <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            {msg.type === 'FILE' ? (
-                                                                <a
-                                                                    href={msg.file_url?.startsWith('http') ? msg.file_url : `${API_BASE_URL.replace('/api', '')}${msg.file_url}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className={cn(
-                                                                        "flex items-center gap-4 p-3 rounded-xl transition-colors",
-                                                                        isMe ? "bg-white/10 hover:bg-white/20" : "bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700"
-                                                                    )}
-                                                                >
-
-                                                                    <div className={cn("p-2 rounded-lg", isMe ? "bg-white/20" : "bg-primary/10 text-primary")}>
-                                                                        <Paperclip size={20} />
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="text-sm font-semibold truncate">{msg.content}</p>
-                                                                        <p className="text-[10px] opacity-70">File Attachment</p>
-                                                                    </div>
-                                                                </a>
-                                                            ) : (
-                                                                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                                                    {msg.content}
-                                                                    {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
-                                                                </p>
-                                                            )}
-
-                                                            {msg.is_pinned && (
-                                                                <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-primary/20 shadow-md">
-                                                                    <Pin size={10} className="text-primary fill-primary" />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Reactions UI - Overlapping */}
-                                                            {msg.reactions && msg.reactions.length > 0 && (
-                                                                <div className={cn(
-                                                                    "absolute -bottom-3 flex items-center bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-sm border border-gray-100 dark:border-gray-700 z-10",
-                                                                    isMe ? "left-0 -translate-x-2" : "right-0 translate-x-2"
-                                                                )}>
-                                                                    {msg.reactions.map((reaction, i) => (
-                                                                        <span key={i} className="text-[10px] px-0.5" title="Reaction">
-                                                                            {reaction.emoji}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-
-                                                            <div className="flex justify-end mt-1 items-center gap-1">
-                                                                <p className={cn("text-[9px]", isMe ? "text-white/80" : "text-gray-400")}>
-                                                                    {format(new Date(msg.created_at), 'HH:mm')}
-                                                                </p>
-                                                                {isMe && (
-                                                                    <div className={cn("flex -space-x-1", msg.is_read ? "text-violet-200" : "text-white/60")}>
-                                                                        <Check size={12} strokeWidth={3} />
-                                                                        <Check size={12} strokeWidth={3} />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                {!isEditing && (
-                                                    <div className={cn(
-                                                        "flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 shadow-sm rounded-lg px-2 py-1 z-20 border border-gray-100 dark:border-gray-700",
-                                                        isMe ? "-left-32" : "-right-28"
-                                                    )}>
-                                                        {/* Quick Reaction Picker */}
-                                                        <div className="relative">
-                                                            <button
-                                                                className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
-                                                                onClick={() => setShowReactionPicker(showReactionPicker === msg.id ? null : msg.id)}
-                                                                title="React"
-                                                            >
-                                                                <Smile size={14} />
-                                                            </button>
-                                                            {showReactionPicker === msg.id && (
-                                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
-                                                                    <div className="flex gap-1">
-                                                                        {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉'].map(emoji => (
-                                                                            <button
-                                                                                key={emoji}
-                                                                                onClick={() => {
-                                                                                    handleToggleReaction(msg.id, emoji, msg.reactions);
-                                                                                    setShowReactionPicker(null);
-                                                                                }}
-                                                                                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
-                                                                            >
-                                                                                {emoji}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <button
-                                                            className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
-                                                            onClick={() => {
-                                                                setReplyToMessage(msg);
-                                                                fileInputRef.current?.focus();
-                                                            }}
-                                                            title="Reply"
-                                                        >
-                                                            <span className="text-sm leading-none">↩️</span>
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => handleTogglePin(msg.id)}
-                                                            className={cn("p-1 rounded", msg.is_pinned ? "text-primary bg-primary/10" : "text-gray-500 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700")}
-                                                            title={msg.is_pinned ? "Unpin" : "Pin"}
-                                                        >
-                                                            <Pin size={14} className={msg.is_pinned ? "fill-primary" : ""} />
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => setForwardingMessage(msg)}
-                                                            className="p-1 hover:text-primary text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
-                                                            title="Forward"
-                                                        >
-                                                            <ArrowRight size={14} />
-                                                        </button>
-
-                                                        {isMe && msg.type === 'TEXT' && (
-                                                            <>
-                                                                <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-600 mx-1"></div>
-                                                                <button onClick={() => startEditing(msg)} className="p-1 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded text-violet-500" title="Edit">
-                                                                    <Edit2 size={14} />
-                                                                </button>
-                                                                <button onClick={() => handleDeleteMessage(msg.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-red-500" title="Delete">
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* Typing Indicator */}
-                            {typingStatus[selectedConversationId || '']?.length > 0 && (
-                                <TypingIndicator
-                                    users={typingStatus[selectedConversationId!]}
-                                    className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
-                                />
-                            )}
-
-                            {/* Input */}
-                            <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-                                {replyToMessage && (
-                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded-lg mb-2 border-l-4 border-primary">
-                                        <div className="text-sm">
-                                            <span className="font-bold text-primary mr-2">Replying to {replyToMessage.sender_first_name || 'User'}:</span>
-                                            <span className="text-gray-500 truncate">{replyToMessage.content.substring(0, 50)}...</span>
-                                        </div>
-                                        <button onClick={() => setReplyToMessage(null)}><X size={14} /></button>
-                                    </div>
-                                )}
-                                <form onSubmit={handleSendMessage} className="relative flex items-end gap-4 max-w-4xl mx-auto">
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        onChange={handleFileSelect}
-                                    />
-
-                                    <div className="flex-1 flex items-center gap-2 bg-white/80 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/40 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/50 transition-all duration-300 backdrop-blur-xl shadow-sm hover:shadow-md">
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
                                         <button
                                             onClick={() => joinActiveCall(selectedConversationId, 'video')}
                                             className="group relative flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-md transition-all border border-emerald-500/20 active:scale-95 mr-2"
@@ -1950,62 +1443,6 @@ export const ChatPage = () => {
                                             <span className="text-[11px] font-bold">Join</span>
                                         </button>
                                     )}
-
-<<<<<<< HEAD
-                                    {/* Typing indicator in header */}
-                                    {typingStatus[selectedConversationId || '']?.length > 0 && (
-                                        <span className="text-[10px] text-primary font-medium italic animate-pulse mr-3 hidden sm:inline">
-                                            {typingStatus[selectedConversationId!].join(', ')} typing...
-                                        </span>
-                                    )}
-=======
-                                        <input
-                                            type="text"
-                                            value={messageInput}
-                                            onChange={handleInputChange}
-                                            placeholder="Type your message..."
-                                            className="flex-1 bg-transparent !border-0 !outline-none focus:ring-0 text-sm py-3 px-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
-                                        />
-
-                                        {/* Emoji Picker Button */}
-                                        <div className="relative">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                className="p-2.5 text-gray-400 hover:text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 rounded-xl transition-all duration-200"
-                                            >
-                                                <Smile size={20} />
-                                            </button>
-                                            {showEmojiPicker && (
-                                                <div className="absolute bottom-full mb-4 right-0 z-[100]">
-                                                    <EmojiPicker
-                                                        onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
-                                                        onClose={() => setShowEmojiPicker(false)}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
->>>>>>> 4d5ba5e1943ea1a748d30267b450f02f15caa488
-
-                                    <button
-                                        onClick={() => {
-                                            if (activeCall) { toggleVideo(); return; }
-                                            const conv = conversations?.find(c => c.id === selectedConversationId);
-                                            if (conv) {
-                                                const details = getConversationDetails(conv);
-                                                if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
-                                                else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
-                                            }
-                                        }}
-                                        className={cn(
-                                            "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                                            activeCall && !isVideoOff ? "text-primary" : "text-gray-500"
-                                        )}
-                                        title={activeCall ? "Toggle Video" : "Video Call"}
-                                    >
-                                        {activeCall && isVideoOff ? <VideoOff size={18} /> : <Video size={18} />}
-                                    </button>
                                     <button
                                         onClick={() => {
                                             if (activeCall) { toggleAudio(); return; }
@@ -2016,103 +1453,62 @@ export const ChatPage = () => {
                                                 else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
                                             }
                                         }}
-                                        className={cn(
-                                            "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                                            activeCall && !isMuted ? "text-emerald-500" : "text-gray-500"
-                                        )}
+                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-purple-500" : "text-gray-400")}
                                         title={activeCall ? "Toggle Audio" : "Audio Call"}
                                     >
-                                        {activeCall && isMuted ? <MicOff size={18} /> : <Phone size={18} />}
+                                        {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
                                     </button>
                                     <button
                                         onClick={() => {
-                                            if (activeConversation?.type === 'GROUP') {
-                                                setIsViewingGroupProfile(true);
-                                            } else {
-                                                setIsGroupModalOpen(true);
+                                            if (activeCall) { toggleVideo(); return; }
+                                            const conv = conversations?.find(c => c.id === selectedConversationId);
+                                            if (conv) {
+                                                const details = getConversationDetails(conv);
+                                                if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
+                                                else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
                                             }
                                         }}
-                                        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
-                                        title={activeConversation?.type === 'GROUP' ? "View members" : "Start a group chat"}
+                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-primary" : "text-gray-400")}
+                                        title={activeCall ? "Toggle Video" : "Video Call"}
                                     >
-                                        {activeConversation?.type === 'GROUP' ? <Users size={18} /> : <UserPlus size={18} />}
+                                        {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
                                     </button>
                                     <button
                                         onClick={() => setShowMessageSearch(!showMessageSearch)}
-                                        className={cn(
-                                            "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                                            showMessageSearch ? "text-primary bg-primary/10" : "text-gray-500"
-                                        )}
+                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-primary")}
                                         title="Search in conversation"
                                     >
-                                        <Search size={18} />
+                                        <Search size={20} />
                                     </button>
                                     <div className="relative">
                                         <button
                                             onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
-                                            className={cn(
-                                                "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                                                showHeaderMoreMenu ? "text-primary bg-primary/10" : "text-gray-500"
-                                            )}
+                                            className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-primary bg-primary/10" : "text-gray-500")}
                                             title="More options"
                                         >
-                                            <MoreHorizontal size={18} />
+                                            <MoreHorizontal size={20} />
                                         </button>
-
                                         {showHeaderMoreMenu && (
                                             <>
-                                                <div
-                                                    className="fixed inset-0 z-40"
-                                                    onClick={() => setShowHeaderMoreMenu(false)}
-                                                />
+                                                <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
                                                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                                                     <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
                                                     </div>
-
-                                                    <button
-                                                        onClick={() => {
-                                                            setIsViewingGroupProfile(true);
-                                                            setShowHeaderMoreMenu(false);
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                                    >
+                                                    <button onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                         <User size={16} className="text-gray-400" />
                                                         View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
                                                     </button>
-
-                                                    <button
-                                                        onClick={() => {
-                                                            setShowPins(!showPins);
-                                                            setShowHeaderMoreMenu(false);
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                                    >
+                                                    <button onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                         <Pin size={16} className={cn("text-gray-400", showPins && "text-primary fill-primary")} />
                                                         {showPins ? 'Hide' : 'Show'} Pinned Messages
                                                     </button>
-
-                                                    <button
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                                    >
-                                                        <BellOff size={16} className="text-gray-400" />
-                                                        Mute Notifications
-                                                    </button>
-
                                                     <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
-
-                                                    <button
-                                                        onClick={handleClearChat}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                                                    >
+                                                    <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
                                                         <Eraser size={16} />
                                                         Clear Chat History
                                                     </button>
-
-                                                    <button
-                                                        onClick={handleDeleteConversation}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    >
+                                                    <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                                         <Trash2 size={16} />
                                                         Delete Conversation
                                                     </button>
@@ -2123,737 +1519,750 @@ export const ChatPage = () => {
                                 </div>
                             </div>
 
+
                             {/* Content area: Messages + Search side panel */}
-                            <div className="flex-1 flex overflow-hidden">
+                            < div className="flex-1 flex overflow-hidden" >
                                 {/* Main messages column */}
-                                <div className="flex-1 flex flex-col min-w-0">
+                                < div className="flex-1 flex flex-col min-w-0" >
 
                                     {/* Pinned Messages Display */}
-                                    {showPins && messages?.some(m => m.is_pinned) && (
-                                        <div className="bg-primary/5 border-b border-primary/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
-                                            <div className="flex-shrink-0 flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider">
-                                                <Pin size={12} className="fill-primary" />
-                                                Pinned
+                                    {
+                                        showPins && messages?.some(m => m.is_pinned) && (
+                                            <div className="bg-primary/5 border-b border-primary/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
+                                                <div className="flex-shrink-0 flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider">
+                                                    <Pin size={12} className="fill-primary" />
+                                                    Pinned
+                                                </div>
+                                                <div className="flex items-center gap-3 pr-4">
+                                                    {messages.filter(m => m.is_pinned).map(msg => (
+                                                        <div
+                                                            key={msg.id}
+                                                            onClick={() => {
+                                                                const el = document.getElementById(`message-${msg.id}`);
+                                                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                setHighlightedMessageId(msg.id);
+                                                                setTimeout(() => setHighlightedMessageId(null), 2000);
+                                                            }}
+                                                            className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-primary/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-md transition-all group relative"
+                                                        >
+                                                            <p className="text-xs truncate font-medium text-gray-700 dark:text-gray-200">{msg.content}</p>
+                                                            <p className="text-[10px] text-gray-400 truncate">by {msg.sender_first_name}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-3 pr-4">
-                                                {messages.filter(m => m.is_pinned).map(msg => (
-                                                    <div
-                                                        key={msg.id}
-                                                        onClick={() => {
-                                                            const el = document.getElementById(`message-${msg.id}`);
-                                                            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                            setHighlightedMessageId(msg.id);
-                                                            setTimeout(() => setHighlightedMessageId(null), 2000);
-                                                        }}
-                                                        className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-primary/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-md transition-all group relative"
-                                                    >
-                                                        <p className="text-xs truncate font-medium text-gray-700 dark:text-gray-200">{msg.content}</p>
-                                                        <p className="text-[10px] text-gray-400 truncate">by {msg.sender_first_name}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                        )
+                                    }
 
                                     {/* Messages - only show on Chat tab */}
-                                    {chatViewTab === 'chat' && <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1 bg-white dark:bg-gray-900 relative">
-                                        {(!messages || messages.length === 0) ? (
-                                            <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-500 opacity-60 select-none">
-                                                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                                                    <MessageSquare size={40} className="text-gray-300 dark:text-gray-600" />
+                                    {
+                                        chatViewTab === 'chat' && <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1 bg-white dark:bg-gray-900 relative">
+                                            {(!messages || messages.length === 0) ? (
+                                                <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-500 opacity-60 select-none">
+                                                    <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                                                        <MessageSquare size={40} className="text-gray-300 dark:text-gray-600" />
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">No messages yet</h3>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[200px] mx-auto">
+                                                        Start the conversation by sending a message below.
+                                                    </p>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">No messages yet</h3>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[200px] mx-auto">
-                                                    Start the conversation by sending a message below.
-                                                </p>
-                                            </div>
-                                        ) : messages?.map((msg, index) => {
-                                            const isMe = msg.sender_id === user?.id;
-                                            const prevMsg = index > 0 ? messages[index - 1] : null;
-                                            const isSameSender = prevMsg && prevMsg.sender_id === msg.sender_id;
-                                            const showAvatar = !isMe && !isSameSender;
+                                            ) : messages?.map((msg, index) => {
+                                                const isMe = msg.sender_id === user?.id;
+                                                const prevMsg = index > 0 ? messages[index - 1] : null;
+                                                const isSameSender = prevMsg && prevMsg.sender_id === msg.sender_id;
+                                                const showAvatar = !isMe && !isSameSender;
 
-                                            if (msg.type === 'CALL') {
-                                                let callData = { callType: 'audio', duration: 0, status: 'ended' };
-                                                try { callData = JSON.parse(msg.content); } catch (e) { }
-                                                return (
-                                                    <div key={msg.id} className="flex justify-center my-6">
-                                                        <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-                                                            <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-rose-500" : "bg-emerald-500")}>
-                                                                {callData.callType === 'video' ? <Video size={12} /> : <Phone size={12} />}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                    {callData.status === 'missed' ? 'Missed call' : `Call ended`}
-                                                                </span>
-                                                                <span className="opacity-70">
-                                                                    {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} • `}
-                                                                    {format(new Date(msg.created_at), 'HH:mm')}
-                                                                </span>
+                                                if (msg.type === 'CALL') {
+                                                    let callData = { callType: 'audio', duration: 0, status: 'ended' };
+                                                    try { callData = JSON.parse(msg.content); } catch (e) { }
+                                                    return (
+                                                        <div key={msg.id} className="flex justify-center my-6">
+                                                            <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+                                                                <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-rose-500" : "bg-emerald-500")}>
+                                                                    {callData.callType === 'video' ? <Video size={12} /> : <Phone size={12} />}
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                        {callData.status === 'missed' ? 'Missed call' : `Call ended`}
+                                                                    </span>
+                                                                    <span className="opacity-70">
+                                                                        {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} • `}
+                                                                        {format(new Date(msg.created_at), 'HH:mm')}
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            }
+                                                    );
+                                                }
 
-                                            const isEditing = editingMessageId === msg.id;
-                                            const isHighlighted = highlightedMessageId === msg.id;
-                                            return (
-                                                <div
-                                                    key={msg.id}
-                                                    id={`message-${msg.id}`}
-                                                    className={cn(
-                                                        "flex items-end gap-3 px-2 group transition-all duration-500",
-                                                        isMe ? "flex-row-reverse" : "flex-row",
-                                                        isSameSender ? "mt-1" : "mt-6",
-                                                        isHighlighted && "bg-primary/10 rounded-xl scale-[1.02] ring-2 ring-primary/30"
-                                                    )}
-                                                >
-                                                    <div className="flex-shrink-0 w-8 h-8">
-                                                        {showAvatar ? (
-                                                            <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden">
-                                                                {msg.sender_profile_pic ? (
-                                                                    <img src={resolveImageUrl(msg.sender_profile_pic)} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <span className="text-[10px] font-bold text-primary">{msg.sender_first_name?.[0] || 'U'}</span>
-                                                                )}
-                                                            </div>
-                                                        ) : <div className="w-8" />}
-                                                    </div>
-
-                                                    <div className={cn(
-                                                        "max-w-[75%] min-w-[60px] relative transition-all duration-200",
-                                                        isMe ? "items-end" : "items-start",
-                                                        msg.reactions && msg.reactions.length > 0 ? "mb-2" : "" // Add space for overlapping reactions
-                                                    )}>
-                                                        {!isMe && !isSameSender && (
-                                                            <div className="flex items-center gap-2 ml-1 mb-1">
-                                                                <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">
-                                                                    {msg.sender_first_name} {msg.sender_last_name}
-                                                                </span>
-                                                                <span className="text-[11px] text-gray-400">
-                                                                    {format(new Date(msg.created_at), 'HH:mm')}
-                                                                </span>
-                                                            </div>
+                                                const isEditing = editingMessageId === msg.id;
+                                                const isHighlighted = highlightedMessageId === msg.id;
+                                                return (
+                                                    <div
+                                                        key={msg.id}
+                                                        id={`message-${msg.id}`}
+                                                        className={cn(
+                                                            "flex items-end gap-3 px-2 group transition-all duration-500",
+                                                            isMe ? "flex-row-reverse" : "flex-row",
+                                                            isSameSender ? "mt-1" : "mt-6",
+                                                            isHighlighted && "bg-primary/10 rounded-xl scale-[1.02] ring-2 ring-primary/30"
                                                         )}
-
-                                                        {/* Threading UI: Show Parent Message */}
-                                                        {msg.parent_message && !isEditing && (
-                                                            <div className={cn(
-                                                                "text-xs mb-1 px-3 py-1 rounded-t-lg border-l-4 opacity-80 cursor-pointer hover:opacity-100",
-                                                                isMe ? "bg-white/10 border-white text-white" : "bg-gray-200 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-300"
-                                                            )}>
-                                                                <span className="font-bold mr-1">{msg.parent_message.sender_first_name}:</span>
-                                                                {msg.parent_message.content.substring(0, 30)}...
-                                                            </div>
-                                                        )}
+                                                    >
+                                                        <div className="flex-shrink-0 w-8 h-8">
+                                                            {showAvatar ? (
+                                                                <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden">
+                                                                    {msg.sender_profile_pic ? (
+                                                                        <img src={resolveImageUrl(msg.sender_profile_pic)} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <span className="text-[10px] font-bold text-primary">{msg.sender_first_name?.[0] || 'U'}</span>
+                                                                    )}
+                                                                </div>
+                                                            ) : <div className="w-8" />}
+                                                        </div>
 
                                                         <div className={cn(
-                                                            "rounded-lg px-4 py-2.5 transition-all duration-200 relative",
-                                                            isMe
-                                                                ? "bg-primary-gradient text-white"
-                                                                : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                                            "max-w-[75%] min-w-[60px] relative transition-all duration-200",
+                                                            isMe ? "items-end" : "items-start",
+                                                            msg.reactions && msg.reactions.length > 0 ? "mb-2" : "" // Add space for overlapping reactions
                                                         )}>
-                                                            {isEditing ? (
-                                                                <div className="flex flex-col gap-2 min-w-[200px]">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={editContent}
-                                                                        onChange={(e) => setEditContent(e.target.value)}
-                                                                        className="text-gray-900 text-sm rounded p-1 w-full"
-                                                                        autoFocus
-                                                                        onKeyDown={(e) => {
-                                                                            if (e.key === 'Enter') saveEdit(msg.id);
-                                                                            if (e.key === 'Escape') cancelEditing();
-                                                                        }}
-                                                                    />
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></button>
-                                                                        <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></button>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    {msg.type === 'IMAGE' || (msg.type === 'FILE' && msg.file_url && /\.(jpg|jpeg|png|gif|webp)$/i.test(msg.file_url)) ? (
-                                                                        <div
-                                                                            className="relative group/img cursor-pointer max-w-[300px]"
-                                                                            onClick={() => {
-                                                                                const url = resolveImageUrl(msg.file_url) || '';
-                                                                                openLightbox(
-                                                                                    url,
-                                                                                    msg.content,
-                                                                                    `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(),
-                                                                                    format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <div className="relative rounded-xl overflow-hidden shadow-md border border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                                                                                <img
-                                                                                    src={resolveImageUrl(msg.file_url)}
-                                                                                    alt={msg.content}
-                                                                                    className="w-full h-auto max-h-[350px] object-cover transition-transform duration-500 group-hover/img:scale-105"
-                                                                                    onError={(e) => {
-                                                                                        (e.target as HTMLImageElement).src = 'https://placehold.co/400x300?text=Image+Unavailable';
-                                                                                    }}
-                                                                                />
-                                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                                                                                    <span className="text-white text-xs font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">Click to view</span>
-                                                                                </div>
-                                                                            </div>
-                                                                            <p className={cn("text-[9px] mt-1 font-medium truncate opacity-60", isMe ? "text-white text-right" : "text-gray-500")}>
-                                                                                {msg.content}
-                                                                            </p>
-                                                                        </div>
-                                                                    ) : msg.type === 'FILE' ? (
-                                                                        (() => {
-                                                                            const fileUrl = msg.file_url?.startsWith('http') ? msg.file_url : resolveImageUrl(msg.file_url);
-                                                                            const ext = msg.content?.split('.').pop()?.toLowerCase() || '';
-                                                                            const isPdf = ext === 'pdf';
-                                                                            const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
-                                                                            const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext);
-                                                                            const isSheet = ['xls', 'xlsx', 'csv', 'ods'].includes(ext);
-                                                                            const isPresentation = ['ppt', 'pptx', 'odp'].includes(ext);
-                                                                            const isVideo = ['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext);
-                                                                            const isAudio = ['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(ext);
-
-                                                                            const fileConfig = isPdf
-                                                                                ? { icon: FileText, color: 'text-red-500', bg: isMe ? 'bg-red-400/20' : 'bg-red-50 dark:bg-red-900/20', accent: 'bg-red-500', label: 'PDF Document' }
-                                                                                : isArchive
-                                                                                    ? { icon: FileArchive, color: 'text-amber-500', bg: isMe ? 'bg-amber-400/20' : 'bg-amber-50 dark:bg-amber-900/20', accent: 'bg-amber-500', label: 'Archive' }
-                                                                                    : isDoc
-                                                                                        ? { icon: FileText, color: 'text-blue-500', bg: isMe ? 'bg-blue-400/20' : 'bg-blue-50 dark:bg-blue-900/20', accent: 'bg-blue-500', label: 'Document' }
-                                                                                        : isSheet
-                                                                                            ? { icon: FileSpreadsheet, color: 'text-emerald-500', bg: isMe ? 'bg-emerald-400/20' : 'bg-emerald-50 dark:bg-emerald-900/20', accent: 'bg-emerald-500', label: 'Spreadsheet' }
-                                                                                            : isPresentation
-                                                                                                ? { icon: FileText, color: 'text-orange-500', bg: isMe ? 'bg-orange-400/20' : 'bg-orange-50 dark:bg-orange-900/20', accent: 'bg-orange-500', label: 'Presentation' }
-                                                                                                : isVideo
-                                                                                                    ? { icon: Video, color: 'text-purple-500', bg: isMe ? 'bg-purple-400/20' : 'bg-purple-50 dark:bg-purple-900/20', accent: 'bg-purple-500', label: 'Video' }
-                                                                                                    : isAudio
-                                                                                                        ? { icon: Phone, color: 'text-pink-500', bg: isMe ? 'bg-pink-400/20' : 'bg-pink-50 dark:bg-pink-900/20', accent: 'bg-pink-500', label: 'Audio' }
-                                                                                                        : { icon: File, color: 'text-gray-500', bg: isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-800', accent: 'bg-gray-500', label: 'File' };
-
-                                                                            const IconComponent = fileConfig.icon;
-
-                                                                            return (
-                                                                                <div
-                                                                                    className={cn(
-                                                                                        "flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group/file min-w-[220px] max-w-[300px]",
-                                                                                        isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-md border border-gray-100 dark:border-gray-700"
-                                                                                    )}
-                                                                                    onClick={(e) => {
-                                                                                        e.preventDefault();
-                                                                                        if (isPdf) {
-                                                                                            window.open(fileUrl, '_blank', 'noopener,noreferrer');
-                                                                                        } else {
-                                                                                            if (fileUrl) handleDownload(fileUrl, msg.content);
-                                                                                        }
-                                                                                    }}
-                                                                                >
-                                                                                    <div className={cn("relative p-3 rounded-xl flex-shrink-0 transition-transform group-hover/file:scale-110", fileConfig.bg)}>
-                                                                                        <IconComponent size={24} className={isMe ? 'text-white' : fileConfig.color} />
-                                                                                        <span className={cn("absolute -bottom-1 -right-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md uppercase leading-none shadow-sm", fileConfig.accent)}>
-                                                                                            {ext || 'FILE'}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="min-w-0 flex-1">
-                                                                                        <p className={cn("text-sm font-semibold truncate", isMe ? 'text-white' : 'text-gray-900 dark:text-gray-100')}>
-                                                                                            {msg.content}
-                                                                                        </p>
-                                                                                        <p className={cn("text-[10px] mt-0.5", isMe ? 'text-white/60' : 'text-gray-400')}>
-                                                                                            {fileConfig.label} • {isPdf ? 'Tap to open' : 'Tap to download'}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div className={cn(
-                                                                                        "p-2 rounded-lg opacity-0 group-hover/file:opacity-100 transition-all flex-shrink-0",
-                                                                                        isMe ? "hover:bg-white/10" : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                                                    )}>
-                                                                                        {isPdf ? <ExternalLink size={16} className={isMe ? 'text-white' : 'text-gray-500'} /> : <Download size={16} className={isMe ? 'text-white' : 'text-gray-500'} />}
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })()
-                                                                    ) : (
-                                                                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                                                            {msg.content}
-                                                                            {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
-                                                                        </p>
-                                                                    )}
-
-                                                                    {msg.is_pinned && (
-                                                                        <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-primary/20 shadow-md">
-                                                                            <Pin size={10} className="text-primary fill-primary" />
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* Reactions UI - Overlapping */}
-                                                                    {msg.reactions && msg.reactions.length > 0 && (
-                                                                        <div className={cn(
-                                                                            "absolute -bottom-3 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-md border border-gray-100 dark:border-gray-700 z-10 animate-in zoom-in-50 duration-200",
-                                                                            "left-0 -translate-x-2"
-                                                                        )}>
-                                                                            {(() => {
-                                                                                const grouped = msg.reactions.reduce<Record<string, number>>((acc, r) => {
-                                                                                    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
-                                                                                    return acc;
-                                                                                }, {});
-                                                                                return Object.entries(grouped).map(([emoji, count]) => (
-                                                                                    <button
-                                                                                        key={emoji}
-                                                                                        onClick={(e) => { e.stopPropagation(); handleToggleReaction(msg.id, emoji, msg.reactions); }}
-                                                                                        className={cn(
-                                                                                            "flex items-center gap-1 px-1 rounded-full transition-colors",
-                                                                                            msg.reactions?.some(r => String(r.user_id) === String(user?.id) && r.emoji === emoji)
-                                                                                                ? "bg-primary/10 text-primary"
-                                                                                                : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                                                        )}
-                                                                                    >
-                                                                                        <span className="text-[11px]">{emoji}</span>
-                                                                                        {Number(count) > 1 && <span className="text-[9px] font-bold">{count}</span>}
-                                                                                    </button>
-                                                                                ));
-                                                                            })()}
-                                                                        </div>
-                                                                    )}
-
-                                                                    <div className="flex justify-end mt-1 items-center gap-1">
-                                                                        <p className={cn("text-[9px]", isMe ? "text-white/80" : "text-gray-400")}>
-                                                                            {format(new Date(msg.created_at), 'HH:mm')}
-                                                                        </p>
-                                                                        {isMe && (
-                                                                            <div className={cn("flex -space-x-1", msg.is_read ? "text-blue-200" : "text-white/60")}>
-                                                                                <Check size={12} strokeWidth={3} />
-                                                                                <Check size={12} strokeWidth={3} />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </div>
-
-                                                        {!isEditing && (
-                                                            <div className={cn(
-                                                                "absolute opacity-0 group-hover:opacity-100 transition-all duration-200 z-20",
-                                                                isMe ? "right-2 -top-5" : "left-12 -top-5"
-                                                            )}>
-                                                                {/* Teams-style action bar */}
-                                                                <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-lg shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
-                                                                    {/* Quick emoji reactions */}
-                                                                    {['👍', '❤️', '😆', '😮'].map(emoji => (
-                                                                        <button
-                                                                            key={emoji}
-                                                                            onClick={() => handleToggleReaction(msg.id, emoji, msg.reactions)}
-                                                                            className={cn(
-                                                                                "w-8 h-8 flex items-center justify-center text-base hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150 hover:scale-110 first:rounded-l-lg",
-                                                                                msg.reactions?.some(r => r.user_id === user?.id && r.emoji === emoji) && "bg-primary/10"
-                                                                            )}
-                                                                        >
-                                                                            {emoji}
-                                                                        </button>
-                                                                    ))}
-
-                                                                    {/* More reactions button */}
-                                                                    <div className="relative">
-                                                                        <button
-                                                                            onClick={() => setShowReactionPicker(showReactionPicker === msg.id ? null : msg.id)}
-                                                                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
-                                                                            title="More reactions"
-                                                                        >
-                                                                            <Smile size={16} className={showReactionPicker === msg.id ? 'text-primary' : ''} />
-                                                                        </button>
-                                                                        {showReactionPicker === msg.id && (
-                                                                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
-                                                                                <div className="flex gap-1">
-                                                                                    {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '💯', '🙏'].map(emoji => (
-                                                                                        <button
-                                                                                            key={emoji}
-                                                                                            onClick={() => {
-                                                                                                handleToggleReaction(msg.id, emoji, msg.reactions);
-                                                                                                setShowReactionPicker(null);
-                                                                                            }}
-                                                                                            className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
-                                                                                        >
-                                                                                            {emoji}
-                                                                                        </button>
-                                                                                    ))}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-
-                                                                    {/* Separator */}
-                                                                    <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-600" />
-
-                                                                    {/* Reply button */}
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setReplyToMessage(msg);
-                                                                        }}
-                                                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
-                                                                        title="Reply"
-                                                                    >
-                                                                        <CornerUpLeft size={16} />
-                                                                    </button>
-
-                                                                    {/* More options button */}
-                                                                    <div className="relative">
-                                                                        <button
-                                                                            onClick={() => setShowMoreMenu(showMoreMenu === msg.id ? null : msg.id)}
-                                                                            className={cn(
-                                                                                "w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg transition-all duration-150",
-                                                                                showMoreMenu === msg.id && "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                                                                            )}
-                                                                            title="More options"
-                                                                        >
-                                                                            <MoreHorizontal size={16} />
-                                                                        </button>
-
-                                                                        {/* More options dropdown */}
-                                                                        {showMoreMenu === msg.id && (
-                                                                            <>
-                                                                                {/* Invisible overlay to close menu on click outside */}
-                                                                                <div className="fixed inset-0 z-30" onClick={() => setShowMoreMenu(null)} />
-                                                                                <div className={cn(
-                                                                                    "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
-                                                                                    isMe ? "right-0" : "left-0"
-                                                                                )}>
-                                                                                    <button
-                                                                                        onClick={() => { setForwardingMessage(msg); setShowMoreMenu(null); }}
-                                                                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                                                                    >
-                                                                                        <Share size={16} className="text-gray-400" />
-                                                                                        Forward
-                                                                                    </button>
-                                                                                    <button
-                                                                                        onClick={() => {
-                                                                                            navigator.clipboard.writeText(msg.content);
-                                                                                            setShowMoreMenu(null);
-                                                                                            import('react-hot-toast').then(({ toast }) => toast.success('Copied to clipboard'));
-                                                                                        }}
-                                                                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                                                                    >
-                                                                                        <Copy size={16} className="text-gray-400" />
-                                                                                        Copy message
-                                                                                    </button>
-                                                                                    <button
-                                                                                        onClick={() => { handleTogglePin(msg.id); setShowMoreMenu(null); }}
-                                                                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                                                                    >
-                                                                                        <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-primary")} />
-                                                                                        {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
-                                                                                    </button>
-
-                                                                                    {isMe && msg.type === 'TEXT' && (
-                                                                                        <>
-                                                                                            <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
-                                                                                            <button
-                                                                                                onClick={() => { startEditing(msg); setShowMoreMenu(null); }}
-                                                                                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                                                                            >
-                                                                                                <Edit2 size={16} className="text-gray-400" />
-                                                                                                Edit
-                                                                                            </button>
-                                                                                        </>
-                                                                                    )}
-
-                                                                                    <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
-                                                                                    <button
-                                                                                        onClick={() => { setDeletingMessage(msg); setShowMoreMenu(null); }}
-                                                                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                                                                    >
-                                                                                        <Trash2 size={16} />
-                                                                                        Delete
-                                                                                    </button>
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        <div ref={messagesEndRef} />
-                                    </div>}
-
-                                    {/* FILES TAB */}
-                                    {chatViewTab === 'files' && (
-                                        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
-                                            {(() => {
-                                                const fileMessages = messages?.filter(m => m.type === 'FILE' && m.file_url) || [];
-                                                if (fileMessages.length === 0) {
-                                                    return (
-                                                        <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
-                                                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                                                                <FileText size={28} className="text-gray-300 dark:text-gray-600" />
-                                                            </div>
-                                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No files shared yet</p>
-                                                            <p className="text-xs text-gray-400 mt-1">Files shared in this conversation will appear here</p>
-                                                        </div>
-                                                    );
-                                                }
-                                                return (
-                                                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                                                        {/* Table Header */}
-                                                        <div className="flex items-center gap-4 px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
-                                                            <span className="flex-1">Name</span>
-                                                            <span className="w-32 text-center">Shared by</span>
-                                                            <span className="w-28 text-center">Date</span>
-                                                            <span className="w-16 text-center">Action</span>
-                                                        </div>
-                                                        {fileMessages.map(msg => {
-                                                            const fileUrl = msg.file_url?.startsWith('http') ? msg.file_url : resolveImageUrl(msg.file_url);
-                                                            const ext = msg.content?.split('.').pop()?.toLowerCase() || '';
-                                                            const isPdf = ext === 'pdf';
-                                                            const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
-                                                            const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext);
-                                                            const isSheet = ['xls', 'xlsx', 'csv', 'ods'].includes(ext);
-
-                                                            const fileIcon = isPdf ? FileText : isArchive ? FileArchive : isDoc ? FileText : isSheet ? FileSpreadsheet : File;
-                                                            const iconColor = isPdf ? 'text-red-500' : isArchive ? 'text-amber-500' : isDoc ? 'text-blue-500' : isSheet ? 'text-emerald-500' : 'text-gray-500';
-                                                            const bgColor = isPdf ? 'bg-red-50 dark:bg-red-900/20' : isArchive ? 'bg-amber-50 dark:bg-amber-900/20' : isDoc ? 'bg-blue-50 dark:bg-blue-900/20' : isSheet ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-50 dark:bg-gray-800';
-                                                            const IconComp = fileIcon;
-
-                                                            return (
-                                                                <div
-                                                                    key={msg.id}
-                                                                    className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
-                                                                    onClick={() => isPdf ? (fileUrl && window.open(fileUrl, '_blank')) : (fileUrl && handleDownload(fileUrl, msg.content))}
-                                                                >
-                                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                                        <div className={cn('p-2.5 rounded-lg flex-shrink-0', bgColor)}>
-                                                                            <IconComp size={20} className={iconColor} />
-                                                                        </div>
-                                                                        <div className="min-w-0">
-                                                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{msg.content}</p>
-                                                                            <p className="text-xs text-gray-400 mt-0.5">{ext.toUpperCase()} file</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    <span className="w-32 text-center text-xs text-gray-500 truncate">
+                                                            {!isMe && !isSameSender && (
+                                                                <div className="flex items-center gap-2 ml-1 mb-1">
+                                                                    <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">
                                                                         {msg.sender_first_name} {msg.sender_last_name}
                                                                     </span>
-                                                                    <span className="w-28 text-center text-xs text-gray-400">
-                                                                        {format(new Date(msg.created_at), 'dd MMM yyyy')}
+                                                                    <span className="text-[11px] text-gray-400">
+                                                                        {format(new Date(msg.created_at), 'HH:mm')}
                                                                     </span>
-                                                                    <div className="w-16 flex justify-center">
+                                                                </div>
+                                                            )}
+
+                                                            {/* Threading UI: Show Parent Message */}
+                                                            {msg.parent_message && !isEditing && (
+                                                                <div className={cn(
+                                                                    "text-xs mb-1 px-3 py-1 rounded-t-lg border-l-4 opacity-80 cursor-pointer hover:opacity-100",
+                                                                    isMe ? "bg-white/10 border-white text-white" : "bg-gray-200 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-300"
+                                                                )}>
+                                                                    <span className="font-bold mr-1">{msg.parent_message.sender_first_name}:</span>
+                                                                    {msg.parent_message.content.substring(0, 30)}...
+                                                                </div>
+                                                            )}
+
+                                                            <div className={cn(
+                                                                "rounded-lg px-4 py-2.5 transition-all duration-200 relative",
+                                                                isMe
+                                                                    ? "bg-primary-gradient text-white"
+                                                                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                                            )}>
+                                                                {isEditing ? (
+                                                                    <div className="flex flex-col gap-2 min-w-[200px]">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={editContent}
+                                                                            onChange={(e) => setEditContent(e.target.value)}
+                                                                            className="text-gray-900 text-sm rounded p-1 w-full"
+                                                                            autoFocus
+                                                                            onKeyDown={(e) => {
+                                                                                if (e.key === 'Enter') saveEdit(msg.id);
+                                                                                if (e.key === 'Escape') cancelEditing();
+                                                                            }}
+                                                                        />
+                                                                        <div className="flex justify-end gap-2">
+                                                                            <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></button>
+                                                                            <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <>
+                                                                        {msg.type === 'IMAGE' || (msg.type === 'FILE' && msg.file_url && /\.(jpg|jpeg|png|gif|webp)$/i.test(msg.file_url)) ? (
+                                                                            <div
+                                                                                className="relative group/img cursor-pointer max-w-[300px]"
+                                                                                onClick={() => {
+                                                                                    const url = resolveImageUrl(msg.file_url) || '';
+                                                                                    openLightbox(
+                                                                                        url,
+                                                                                        msg.content,
+                                                                                        `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(),
+                                                                                        format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                <div className="relative rounded-xl overflow-hidden shadow-md border border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                                                                                    <img
+                                                                                        src={resolveImageUrl(msg.file_url)}
+                                                                                        alt={msg.content}
+                                                                                        className="w-full h-auto max-h-[350px] object-cover transition-transform duration-500 group-hover/img:scale-105"
+                                                                                        onError={(e) => {
+                                                                                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x300?text=Image+Unavailable';
+                                                                                        }}
+                                                                                    />
+                                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end justify-center pb-3">
+                                                                                        <span className="text-white text-xs font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">Click to view</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <p className={cn("text-[9px] mt-1 font-medium truncate opacity-60", isMe ? "text-white text-right" : "text-gray-500")}>
+                                                                                    {msg.content}
+                                                                                </p>
+                                                                            </div>
+                                                                        ) : msg.type === 'FILE' ? (
+                                                                            (() => {
+                                                                                const fileUrl = msg.file_url?.startsWith('http') ? msg.file_url : resolveImageUrl(msg.file_url);
+                                                                                const ext = msg.content?.split('.').pop()?.toLowerCase() || '';
+                                                                                const isPdf = ext === 'pdf';
+                                                                                const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+                                                                                const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext);
+                                                                                const isSheet = ['xls', 'xlsx', 'csv', 'ods'].includes(ext);
+                                                                                const isPresentation = ['ppt', 'pptx', 'odp'].includes(ext);
+                                                                                const isVideo = ['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext);
+                                                                                const isAudio = ['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(ext);
+
+                                                                                const fileConfig = isPdf
+                                                                                    ? { icon: FileText, color: 'text-red-500', bg: isMe ? 'bg-red-400/20' : 'bg-red-50 dark:bg-red-900/20', accent: 'bg-red-500', label: 'PDF Document' }
+                                                                                    : isArchive
+                                                                                        ? { icon: FileArchive, color: 'text-amber-500', bg: isMe ? 'bg-amber-400/20' : 'bg-amber-50 dark:bg-amber-900/20', accent: 'bg-amber-500', label: 'Archive' }
+                                                                                        : isDoc
+                                                                                            ? { icon: FileText, color: 'text-blue-500', bg: isMe ? 'bg-blue-400/20' : 'bg-blue-50 dark:bg-blue-900/20', accent: 'bg-blue-500', label: 'Document' }
+                                                                                            : isSheet
+                                                                                                ? { icon: FileSpreadsheet, color: 'text-emerald-500', bg: isMe ? 'bg-emerald-400/20' : 'bg-emerald-50 dark:bg-emerald-900/20', accent: 'bg-emerald-500', label: 'Spreadsheet' }
+                                                                                                : isPresentation
+                                                                                                    ? { icon: FileText, color: 'text-orange-500', bg: isMe ? 'bg-orange-400/20' : 'bg-orange-50 dark:bg-orange-900/20', accent: 'bg-orange-500', label: 'Presentation' }
+                                                                                                    : isVideo
+                                                                                                        ? { icon: Video, color: 'text-purple-500', bg: isMe ? 'bg-purple-400/20' : 'bg-purple-50 dark:bg-purple-900/20', accent: 'bg-purple-500', label: 'Video' }
+                                                                                                        : isAudio
+                                                                                                            ? { icon: Phone, color: 'text-pink-500', bg: isMe ? 'bg-pink-400/20' : 'bg-pink-50 dark:bg-pink-900/20', accent: 'bg-pink-500', label: 'Audio' }
+                                                                                                            : { icon: File, color: 'text-gray-500', bg: isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-800', accent: 'bg-gray-500', label: 'File' };
+
+                                                                                const IconComponent = fileConfig.icon;
+
+                                                                                return (
+                                                                                    <div
+                                                                                        className={cn(
+                                                                                            "flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group/file min-w-[220px] max-w-[300px]",
+                                                                                            isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-md border border-gray-100 dark:border-gray-700"
+                                                                                        )}
+                                                                                        onClick={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            if (isPdf) {
+                                                                                                window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                                                                                            } else {
+                                                                                                if (fileUrl) handleDownload(fileUrl, msg.content);
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        <div className={cn("relative p-3 rounded-xl flex-shrink-0 transition-transform group-hover/file:scale-110", fileConfig.bg)}>
+                                                                                            <IconComponent size={24} className={isMe ? 'text-white' : fileConfig.color} />
+                                                                                            <span className={cn("absolute -bottom-1 -right-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md uppercase leading-none shadow-sm", fileConfig.accent)}>
+                                                                                                {ext || 'FILE'}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <div className="min-w-0 flex-1">
+                                                                                            <p className={cn("text-sm font-semibold truncate", isMe ? 'text-white' : 'text-gray-900 dark:text-gray-100')}>
+                                                                                                {msg.content}
+                                                                                            </p>
+                                                                                            <p className={cn("text-[10px] mt-0.5", isMe ? 'text-white/60' : 'text-gray-400')}>
+                                                                                                {fileConfig.label} • {isPdf ? 'Tap to open' : 'Tap to download'}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                        <div className={cn(
+                                                                                            "p-2 rounded-lg opacity-0 group-hover/file:opacity-100 transition-all flex-shrink-0",
+                                                                                            isMe ? "hover:bg-white/10" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                                                        )}>
+                                                                                            {isPdf ? <ExternalLink size={16} className={isMe ? 'text-white' : 'text-gray-500'} /> : <Download size={16} className={isMe ? 'text-white' : 'text-gray-500'} />}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })()
+                                                                        ) : (
+                                                                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                                                                {msg.content}
+                                                                                {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
+                                                                            </p>
+                                                                        )}
+
+                                                                        {msg.is_pinned && (
+                                                                            <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-primary/20 shadow-md">
+                                                                                <Pin size={10} className="text-primary fill-primary" />
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Reactions UI - Overlapping */}
+                                                                        {msg.reactions && msg.reactions.length > 0 && (
+                                                                            <div className={cn(
+                                                                                "absolute -bottom-3 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-md border border-gray-100 dark:border-gray-700 z-10 animate-in zoom-in-50 duration-200",
+                                                                                "left-0 -translate-x-2"
+                                                                            )}>
+                                                                                {(() => {
+                                                                                    const grouped = msg.reactions.reduce<Record<string, number>>((acc, r) => {
+                                                                                        acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                                                                                        return acc;
+                                                                                    }, {});
+                                                                                    return Object.entries(grouped).map(([emoji, count]) => (
+                                                                                        <button
+                                                                                            key={emoji}
+                                                                                            onClick={(e) => { e.stopPropagation(); handleToggleReaction(msg.id, emoji, msg.reactions); }}
+                                                                                            className={cn(
+                                                                                                "flex items-center gap-1 px-1 rounded-full transition-colors",
+                                                                                                msg.reactions?.some(r => String(r.user_id) === String(user?.id) && r.emoji === emoji)
+                                                                                                    ? "bg-primary/10 text-primary"
+                                                                                                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                                                            )}
+                                                                                        >
+                                                                                            <span className="text-[11px]">{emoji}</span>
+                                                                                            {Number(count) > 1 && <span className="text-[9px] font-bold">{count}</span>}
+                                                                                        </button>
+                                                                                    ));
+                                                                                })()}
+                                                                            </div>
+                                                                        )}
+
+                                                                        <div className="flex justify-end mt-1 items-center gap-1">
+                                                                            <p className={cn("text-[9px]", isMe ? "text-white/80" : "text-gray-400")}>
+                                                                                {format(new Date(msg.created_at), 'HH:mm')}
+                                                                            </p>
+                                                                            {isMe && (
+                                                                                <div className={cn("flex -space-x-1", msg.is_read ? "text-blue-200" : "text-white/60")}>
+                                                                                    <Check size={12} strokeWidth={3} />
+                                                                                    <Check size={12} strokeWidth={3} />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                            </div>
+
+                                                            {!isEditing && (
+                                                                <div className={cn(
+                                                                    "absolute opacity-0 group-hover:opacity-100 transition-all duration-200 z-20",
+                                                                    isMe ? "right-2 -top-5" : "left-12 -top-5"
+                                                                )}>
+                                                                    {/* Teams-style action bar */}
+                                                                    <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-lg shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
+                                                                        {/* Quick emoji reactions */}
+                                                                        {['👍', '❤️', '😆', '😮'].map(emoji => (
+                                                                            <button
+                                                                                key={emoji}
+                                                                                onClick={() => handleToggleReaction(msg.id, emoji, msg.reactions)}
+                                                                                className={cn(
+                                                                                    "w-8 h-8 flex items-center justify-center text-base hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150 hover:scale-110 first:rounded-l-lg",
+                                                                                    msg.reactions?.some(r => r.user_id === user?.id && r.emoji === emoji) && "bg-primary/10"
+                                                                                )}
+                                                                            >
+                                                                                {emoji}
+                                                                            </button>
+                                                                        ))}
+
+                                                                        {/* More reactions button */}
+                                                                        <div className="relative">
+                                                                            <button
+                                                                                onClick={() => setShowReactionPicker(showReactionPicker === msg.id ? null : msg.id)}
+                                                                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
+                                                                                title="More reactions"
+                                                                            >
+                                                                                <Smile size={16} className={showReactionPicker === msg.id ? 'text-primary' : ''} />
+                                                                            </button>
+                                                                            {showReactionPicker === msg.id && (
+                                                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
+                                                                                    <div className="flex gap-1">
+                                                                                        {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '💯', '🙏'].map(emoji => (
+                                                                                            <button
+                                                                                                key={emoji}
+                                                                                                onClick={() => {
+                                                                                                    handleToggleReaction(msg.id, emoji, msg.reactions);
+                                                                                                    setShowReactionPicker(null);
+                                                                                                }}
+                                                                                                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
+                                                                                            >
+                                                                                                {emoji}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Separator */}
+                                                                        <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-600" />
+
+                                                                        {/* Reply button */}
                                                                         <button
-                                                                            onClick={(e) => { e.stopPropagation(); if (fileUrl) handleDownload(fileUrl, msg.content); }}
-                                                                            className="p-2 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
-                                                                            title="Download"
+                                                                            onClick={() => {
+                                                                                setReplyToMessage(msg);
+                                                                            }}
+                                                                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
+                                                                            title="Reply"
                                                                         >
-                                                                            <Download size={16} />
+                                                                            <CornerUpLeft size={16} />
                                                                         </button>
+
+                                                                        {/* More options button */}
+                                                                        <div className="relative">
+                                                                            <button
+                                                                                onClick={() => setShowMoreMenu(showMoreMenu === msg.id ? null : msg.id)}
+                                                                                className={cn(
+                                                                                    "w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg transition-all duration-150",
+                                                                                    showMoreMenu === msg.id && "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                                                                )}
+                                                                                title="More options"
+                                                                            >
+                                                                                <MoreHorizontal size={16} />
+                                                                            </button>
+
+                                                                            {/* More options dropdown */}
+                                                                            {showMoreMenu === msg.id && (
+                                                                                <>
+                                                                                    {/* Invisible overlay to close menu on click outside */}
+                                                                                    <div className="fixed inset-0 z-30" onClick={() => setShowMoreMenu(null)} />
+                                                                                    <div className={cn(
+                                                                                        "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
+                                                                                        isMe ? "right-0" : "left-0"
+                                                                                    )}>
+                                                                                        <button
+                                                                                            onClick={() => { setForwardingMessage(msg); setShowMoreMenu(null); }}
+                                                                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                                                        >
+                                                                                            <Share size={16} className="text-gray-400" />
+                                                                                            Forward
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => {
+                                                                                                navigator.clipboard.writeText(msg.content);
+                                                                                                setShowMoreMenu(null);
+                                                                                                import('react-hot-toast').then(({ toast }) => toast.success('Copied to clipboard'));
+                                                                                            }}
+                                                                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                                                        >
+                                                                                            <Copy size={16} className="text-gray-400" />
+                                                                                            Copy message
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => { handleTogglePin(msg.id); setShowMoreMenu(null); }}
+                                                                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                                                        >
+                                                                                            <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-primary")} />
+                                                                                            {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
+                                                                                        </button>
+
+                                                                                        {isMe && msg.type === 'TEXT' && (
+                                                                                            <>
+                                                                                                <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+                                                                                                <button
+                                                                                                    onClick={() => { startEditing(msg); setShowMoreMenu(null); }}
+                                                                                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                                                                >
+                                                                                                    <Edit2 size={16} className="text-gray-400" />
+                                                                                                    Edit
+                                                                                                </button>
+                                                                                            </>
+                                                                                        )}
+
+                                                                                        <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+                                                                                        <button
+                                                                                            onClick={() => { setDeletingMessage(msg); setShowMoreMenu(null); }}
+                                                                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                                                        >
+                                                                                            <Trash2 size={16} />
+                                                                                            Delete
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 );
-                                            })()}
+                                            })}
+                                            <div ref={messagesEndRef} />
                                         </div>
-                                    )}
+                                    }
 
-                                    {/* PHOTOS TAB */}
-                                    {chatViewTab === 'photos' && (
-                                        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 p-6">
-                                            {(() => {
-                                                const photoMessages = messages?.filter(m =>
-                                                    m.type === 'IMAGE' || (m.type === 'FILE' && m.file_url && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(m.file_url))
-                                                ) || [];
-                                                if (photoMessages.length === 0) {
-                                                    return (
-                                                        <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
-                                                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                                                                <Image size={28} className="text-gray-300 dark:text-gray-600" />
+                                    {/* FILES TAB */}
+                                    {
+                                        chatViewTab === 'files' && (
+                                            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+                                                {(() => {
+                                                    const fileMessages = messages?.filter(m => m.type === 'FILE' && m.file_url) || [];
+                                                    if (fileMessages.length === 0) {
+                                                        return (
+                                                            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
+                                                                <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                                                                    <FileText size={28} className="text-gray-300 dark:text-gray-600" />
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No files shared yet</p>
+                                                                <p className="text-xs text-gray-400 mt-1">Files shared in this conversation will appear here</p>
                                                             </div>
-                                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No photos shared yet</p>
-                                                            <p className="text-xs text-gray-400 mt-1">Photos shared in this conversation will appear here</p>
-                                                        </div>
-                                                    );
-                                                }
-                                                return (
-                                                    <div>
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{photoMessages.length} photo{photoMessages.length !== 1 ? 's' : ''}</h3>
-                                                        </div>
-                                                        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                                            {photoMessages.map(msg => {
-                                                                const imgUrl = resolveImageUrl(msg.file_url) || '';
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                                                            {/* Table Header */}
+                                                            <div className="flex items-center gap-4 px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
+                                                                <span className="flex-1">Name</span>
+                                                                <span className="w-32 text-center">Shared by</span>
+                                                                <span className="w-28 text-center">Date</span>
+                                                                <span className="w-16 text-center">Action</span>
+                                                            </div>
+                                                            {fileMessages.map(msg => {
+                                                                const fileUrl = msg.file_url?.startsWith('http') ? msg.file_url : resolveImageUrl(msg.file_url);
+                                                                const ext = msg.content?.split('.').pop()?.toLowerCase() || '';
+                                                                const isPdf = ext === 'pdf';
+                                                                const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+                                                                const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext);
+                                                                const isSheet = ['xls', 'xlsx', 'csv', 'ods'].includes(ext);
+
+                                                                const fileIcon = isPdf ? FileText : isArchive ? FileArchive : isDoc ? FileText : isSheet ? FileSpreadsheet : File;
+                                                                const iconColor = isPdf ? 'text-red-500' : isArchive ? 'text-amber-500' : isDoc ? 'text-blue-500' : isSheet ? 'text-emerald-500' : 'text-gray-500';
+                                                                const bgColor = isPdf ? 'bg-red-50 dark:bg-red-900/20' : isArchive ? 'bg-amber-50 dark:bg-amber-900/20' : isDoc ? 'bg-blue-50 dark:bg-blue-900/20' : isSheet ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-50 dark:bg-gray-800';
+                                                                const IconComp = fileIcon;
+
                                                                 return (
                                                                     <div
                                                                         key={msg.id}
-                                                                        className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-100 dark:bg-gray-800"
-                                                                        onClick={() => openLightbox(
-                                                                            imgUrl,
-                                                                            msg.content,
-                                                                            `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(),
-                                                                            format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
-                                                                        )}
+                                                                        className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
+                                                                        onClick={() => isPdf ? (fileUrl && window.open(fileUrl, '_blank')) : (fileUrl && handleDownload(fileUrl, msg.content))}
                                                                     >
-                                                                        <img
-                                                                            src={resolveImageUrl(msg.file_url)}
-                                                                            alt={msg.content}
-                                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Image'; }}
-                                                                        />
-                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-end">
-                                                                            <div className="p-2 opacity-0 group-hover:opacity-100 transition-opacity w-full">
-                                                                                <p className="text-[10px] text-white font-medium truncate">{msg.sender_first_name}</p>
-                                                                                <p className="text-[9px] text-white/70">{format(new Date(msg.created_at), 'dd MMM')}</p>
+                                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                            <div className={cn('p-2.5 rounded-lg flex-shrink-0', bgColor)}>
+                                                                                <IconComp size={20} className={iconColor} />
                                                                             </div>
+                                                                            <div className="min-w-0">
+                                                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{msg.content}</p>
+                                                                                <p className="text-xs text-gray-400 mt-0.5">{ext.toUpperCase()} file</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <span className="w-32 text-center text-xs text-gray-500 truncate">
+                                                                            {msg.sender_first_name} {msg.sender_last_name}
+                                                                        </span>
+                                                                        <span className="w-28 text-center text-xs text-gray-400">
+                                                                            {format(new Date(msg.created_at), 'dd MMM yyyy')}
+                                                                        </span>
+                                                                        <div className="w-16 flex justify-center">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); if (fileUrl) handleDownload(fileUrl, msg.content); }}
+                                                                                className="p-2 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
+                                                                                title="Download"
+                                                                            >
+                                                                                <Download size={16} />
+                                                                            </button>
                                                                         </div>
                                                                     </div>
                                                                 );
                                                             })}
                                                         </div>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    )}
+                                                    );
+                                                })()}
+                                            </div>
+                                        )
+                                    }
 
-                                    {chatViewTab === 'chat' && <>
-                                        {/* Typing Indicator */}
-                                        {typingStatus[selectedConversationId || '']?.length > 0 && (
-                                            <TypingIndicator
-                                                users={typingStatus[selectedConversationId!]}
-                                                className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
-                                            />
-                                        )}
-
-                                        {/* Teams-style Input Area */}
-                                        <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                                            {replyToMessage && (
-                                                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-5 py-2 border-b border-gray-100 dark:border-gray-700">
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <div className="w-1 h-8 bg-primary rounded-full" />
+                                    {/* PHOTOS TAB */}
+                                    {
+                                        chatViewTab === 'photos' && (
+                                            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 p-6">
+                                                {(() => {
+                                                    const photoMessages = messages?.filter(m =>
+                                                        m.type === 'IMAGE' || (m.type === 'FILE' && m.file_url && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(m.file_url))
+                                                    ) || [];
+                                                    if (photoMessages.length === 0) {
+                                                        return (
+                                                            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
+                                                                <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                                                                    <Image size={28} className="text-gray-300 dark:text-gray-600" />
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No photos shared yet</p>
+                                                                <p className="text-xs text-gray-400 mt-1">Photos shared in this conversation will appear here</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return (
                                                         <div>
-                                                            <span className="font-semibold text-primary text-xs">{replyToMessage.sender_first_name || 'User'}</span>
-                                                            <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{photoMessages.length} photo{photoMessages.length !== 1 ? 's' : ''}</h3>
+                                                            </div>
+                                                            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                                                {photoMessages.map(msg => {
+                                                                    const imgUrl = resolveImageUrl(msg.file_url) || '';
+                                                                    return (
+                                                                        <div
+                                                                            key={msg.id}
+                                                                            className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-100 dark:bg-gray-800"
+                                                                            onClick={() => openLightbox(
+                                                                                imgUrl,
+                                                                                msg.content,
+                                                                                `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(),
+                                                                                format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
+                                                                            )}
+                                                                        >
+                                                                            <img
+                                                                                src={resolveImageUrl(msg.file_url)}
+                                                                                alt={msg.content}
+                                                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                                                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Image'; }}
+                                                                            />
+                                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-end">
+                                                                                <div className="p-2 opacity-0 group-hover:opacity-100 transition-opacity w-full">
+                                                                                    <p className="text-[10px] text-white font-medium truncate">{msg.sender_first_name}</p>
+                                                                                    <p className="text-[9px] text-white/70">{format(new Date(msg.created_at), 'dd MMM')}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <button onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></button>
-                                                </div>
-                                            )}
-                                            <form onSubmit={handleSendMessage} className="px-5 py-3">
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    className="hidden"
-                                                    onChange={handleFileSelect}
-                                                />
+                                                    );
+                                                })()}
+                                            </div>
+                                        )
+                                    }
 
-                                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all bg-white dark:bg-gray-900">
+                                    {
+                                        chatViewTab === 'chat' && <>
+                                            {/* Typing Indicator */}
+                                            {typingStatus[selectedConversationId || '']?.length > 0 && (
+                                                <TypingIndicator
+                                                    users={typingStatus[selectedConversationId!]}
+                                                    className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+                                                />
+                                            )}
+
+                                            {/* Teams-style Input Area */}
+                                            <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                                                {replyToMessage && (
+                                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-5 py-2 border-b border-gray-100 dark:border-gray-700">
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <div className="w-1 h-8 bg-primary rounded-full" />
+                                                            <div>
+                                                                <span className="font-semibold text-primary text-xs">{replyToMessage.sender_first_name || 'User'}</span>
+                                                                <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></button>
+                                                    </div>
+                                                )}
+                                                <form onSubmit={handleSendMessage} className="px-5 py-3">
                                                     <input
-                                                        type="text"
-                                                        value={messageInput}
-                                                        onChange={handleInputChange}
-                                                        placeholder="Type a message"
-                                                        className="flex-1 bg-transparent border-0 outline-none focus:ring-0 text-sm py-3 px-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                                        type="file"
+                                                        ref={fileInputRef}
+                                                        className="hidden"
+                                                        onChange={handleFileSelect}
                                                     />
 
-                                                    <div className="flex items-center gap-0.5 pr-2">
-                                                        {/* Emoji */}
-                                                        <div className="relative">
+                                                    <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all bg-white dark:bg-gray-900">
+                                                        <input
+                                                            type="text"
+                                                            value={messageInput}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Type a message"
+                                                            className="flex-1 bg-transparent border-0 outline-none focus:ring-0 text-sm py-3 px-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                                        />
+
+                                                        <div className="flex items-center gap-0.5 pr-2">
+                                                            {/* Emoji */}
+                                                            <div className="relative">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                    title="Emoji"
+                                                                >
+                                                                    <Smile size={20} />
+                                                                </button>
+                                                                {showEmojiPicker && (
+                                                                    <>
+                                                                        <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
+                                                                        <EmojiPicker
+                                                                            onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
+                                                                            onClose={() => setShowEmojiPicker(false)}
+                                                                            className="left-auto -right-10 sm:right-0 origin-bottom-right z-[100]"
+                                                                        />
+                                                                    </>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Image/GIF */}
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                onClick={() => {
+                                                                    const input = document.createElement('input');
+                                                                    input.type = 'file';
+                                                                    input.accept = 'image/*';
+                                                                    input.onchange = (e) => {
+                                                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                                                        if (file && fileInputRef.current) {
+                                                                            const dt = new DataTransfer();
+                                                                            dt.items.add(file);
+                                                                            fileInputRef.current.files = dt.files;
+                                                                            fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+                                                                        }
+                                                                    };
+                                                                    input.click();
+                                                                }}
                                                                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                title="Emoji"
+                                                                title="Send image"
                                                             >
-                                                                <Smile size={20} />
+                                                                <Image size={20} />
                                                             </button>
-                                                            {showEmojiPicker && (
-                                                                <>
-                                                                    <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
-                                                                    <EmojiPicker
-                                                                        onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
-                                                                        onClose={() => setShowEmojiPicker(false)}
-                                                                        className="left-auto -right-10 sm:right-0 origin-bottom-right z-[100]"
-                                                                    />
-                                                                </>
-                                                            )}
+
+                                                            {/* Attachment */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => fileInputRef.current?.click()}
+                                                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                title="Attach file"
+                                                            >
+                                                                <Paperclip size={20} />
+                                                            </button>
+
+                                                            {/* More options */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowPins(!showPins)}
+                                                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                title="More options"
+                                                            >
+                                                                <Plus size={20} />
+                                                            </button>
+
+                                                            {/* Send */}
+                                                            <button
+                                                                type="submit"
+                                                                disabled={!messageInput.trim()}
+                                                                className="p-2 text-gray-400 hover:text-primary disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-primary/10"
+                                                                title="Send"
+                                                            >
+                                                                <Send size={20} />
+                                                            </button>
                                                         </div>
-
-                                                        {/* Image/GIF */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const input = document.createElement('input');
-                                                                input.type = 'file';
-                                                                input.accept = 'image/*';
-                                                                input.onchange = (e) => {
-                                                                    const file = (e.target as HTMLInputElement).files?.[0];
-                                                                    if (file && fileInputRef.current) {
-                                                                        const dt = new DataTransfer();
-                                                                        dt.items.add(file);
-                                                                        fileInputRef.current.files = dt.files;
-                                                                        fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
-                                                                    }
-                                                                };
-                                                                input.click();
-                                                            }}
-                                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                            title="Send image"
-                                                        >
-                                                            <Image size={20} />
-                                                        </button>
-
-                                                        {/* Attachment */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                            title="Attach file"
-                                                        >
-                                                            <Paperclip size={20} />
-                                                        </button>
-
-                                                        {/* More options */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowPins(!showPins)}
-                                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                            title="More options"
-                                                        >
-                                                            <Plus size={20} />
-                                                        </button>
-
-                                                        {/* Send */}
-                                                        <button
-                                                            type="submit"
-                                                            disabled={!messageInput.trim()}
-                                                            className="p-2 text-gray-400 hover:text-primary disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-primary/10"
-                                                            title="Send"
-                                                        >
-                                                            <Send size={20} />
-                                                        </button>
                                                     </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </>}
-                                </div>{/* End main messages column */}
+                                                </form>
+                                            </div>
+                                        </>
+                                    }
+                                </div > {/* End main messages column */}
 
                                 {/* Search Side Panel */}
-                                {showMessageSearch && (
-                                    <MessageSearch
-                                        messages={messages || []}
-                                        onResultSelect={(messageId) => {
-                                            setChatViewTab('chat');
-                                            setHighlightedMessageId(messageId);
-                                            // Small delay to let the chat tab render before scrolling
-                                            setTimeout(() => {
-                                                const element = document.getElementById(`message-${messageId}`);
-                                                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            }, 50);
-                                            setTimeout(() => setHighlightedMessageId(null), 2500);
-                                        }}
-                                        onClose={() => setShowMessageSearch(false)}
-                                    />
-                                )}
-                            </div>{/* End flex overflow-hidden */}
+                                {
+                                    showMessageSearch && (
+                                        <MessageSearch
+                                            messages={messages || []}
+                                            onResultSelect={(messageId) => {
+                                                setChatViewTab('chat');
+                                                setHighlightedMessageId(messageId);
+                                                // Small delay to let the chat tab render before scrolling
+                                                setTimeout(() => {
+                                                    const element = document.getElementById(`message-${messageId}`);
+                                                    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                }, 50);
+                                                setTimeout(() => setHighlightedMessageId(null), 2500);
+                                            }}
+                                            onClose={() => setShowMessageSearch(false)}
+                                        />
+                                    )
+                                }
+                            </div > {/* End flex overflow-hidden */}
                         </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
@@ -2875,8 +2284,8 @@ export const ChatPage = () => {
                             </button>
                         </div>
                     )}
-                </div>
-            </div>
+                </div >
+            </div >
             <ForwardModal
                 isOpen={!!forwardingMessage}
                 onClose={() => setForwardingMessage(null)}
@@ -2884,72 +2293,74 @@ export const ChatPage = () => {
                 message={forwardingMessage}
                 onForward={(targetId) => forwardingMessage && handleForward(forwardingMessage, targetId)}
             />
-            {isViewingGroupProfile && activeConversation && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                            <h3 className="font-black uppercase tracking-widest text-sm text-gray-900 dark:text-white">Group Info</h3>
-                            <button onClick={() => setIsViewingGroupProfile(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"><X size={18} /></button>
-                        </div>
-                        <div className="p-8 text-center bg-gradient-to-b from-primary/5 to-transparent">
-                            <div className="w-24 h-24 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
-                                {getConversationDetails(activeConversation).initials}
+            {
+                isViewingGroupProfile && activeConversation && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="font-black uppercase tracking-widest text-sm text-gray-900 dark:text-white">Group Info</h3>
+                                <button onClick={() => setIsViewingGroupProfile(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"><X size={18} /></button>
                             </div>
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation).name}</h2>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation.participants?.length || 0} Operatives Enrolled</p>
-                        </div>
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{activeConversation.type === 'GROUP' ? 'Team Members' : 'Participants'}</h4>
-                                {activeConversation.type === 'GROUP' && (
-                                    <button
-                                        onClick={() => setIsAddingParticipant(true)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
-                                    >
-                                        <UserPlus size={12} strokeWidth={3} /> Add
-                                    </button>
-                                )}
+                            <div className="p-8 text-center bg-gradient-to-b from-primary/5 to-transparent">
+                                <div className="w-24 h-24 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
+                                    {getConversationDetails(activeConversation).initials}
+                                </div>
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation).name}</h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation.participants?.length || 0} Operatives Enrolled</p>
                             </div>
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                {activeConversation.participants?.map((p: any) => (
-                                    <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 group/participant">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
-                                                {p.first_name?.[0]}{p.last_name?.[0]}
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{activeConversation.type === 'GROUP' ? 'Team Members' : 'Participants'}</h4>
+                                    {activeConversation.type === 'GROUP' && (
+                                        <button
+                                            onClick={() => setIsAddingParticipant(true)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                                        >
+                                            <UserPlus size={12} strokeWidth={3} /> Add
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                    {activeConversation.participants?.map((p: any) => (
+                                        <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 group/participant">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
+                                                    {p.first_name?.[0]}{p.last_name?.[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
+                                                    <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
-                                                <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
-                                            </div>
+                                            {p.id === user?.id ? (
+                                                <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
+                                            ) : (
+                                                activeConversation.type === 'GROUP' && (
+                                                    <button
+                                                        onClick={() => handleRemoveParticipant(p.id)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
+                                                        title="Remove participant"
+                                                    >
+                                                        <UserMinus size={14} />
+                                                    </button>
+                                                )
+                                            )}
                                         </div>
-                                        {p.id === user?.id ? (
-                                            <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
-                                        ) : (
-                                            activeConversation.type === 'GROUP' && (
-                                                <button
-                                                    onClick={() => handleRemoveParticipant(p.id)}
-                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
-                                                    title="Remove participant"
-                                                >
-                                                    <UserMinus size={14} />
-                                                </button>
-                                            )
-                                        )}
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 mt-2">
-                            <button
-                                onClick={() => setIsViewingGroupProfile(false)}
-                                className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                            >
-                                Dismiss
-                            </button>
+                            <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 mt-2">
+                                <button
+                                    onClick={() => setIsViewingGroupProfile(false)}
+                                    className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
             <DeleteMessageModal
                 isOpen={!!deletingMessage}
                 onClose={() => setDeletingMessage(null)}
@@ -2983,191 +2394,197 @@ export const ChatPage = () => {
                 }}
             />
             {/* Image Lightbox Viewer */}
-            {lightboxImage && (
-                <div
-                    className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
-                    onClick={closeLightbox}
-                >
-                    {/* Top Bar */}
+            {
+                lightboxImage && (
                     <div
-                        className="flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/80 to-transparent z-10"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
+                        onClick={closeLightbox}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold">
-                                {lightboxImage.sender?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
-                            </div>
-                            <div>
-                                <p className="text-white text-sm font-semibold">{lightboxImage.sender || 'Unknown'}</p>
-                                <p className="text-white/50 text-xs">{lightboxImage.time}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setLightboxZoom(z => Math.max(z - 0.25, 0.25))}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                title="Zoom Out (-)"
-                            >
-                                <ZoomOut size={20} />
-                            </button>
-                            <span className="text-white/50 text-xs font-mono w-12 text-center">{Math.round(lightboxZoom * 100)}%</span>
-                            <button
-                                onClick={() => setLightboxZoom(z => Math.min(z + 0.25, 5))}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                title="Zoom In (+)"
-                            >
-                                <ZoomIn size={20} />
-                            </button>
-                            <button
-                                onClick={() => setLightboxZoom(1)}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                title="Reset Zoom"
-                            >
-                                <Maximize2 size={18} />
-                            </button>
-                            <button
-                                onClick={() => setLightboxRotation(r => r + 90)}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                title="Rotate (R)"
-                            >
-                                <RotateCw size={18} />
-                            </button>
-                            <div className="w-px h-6 bg-white/20 mx-2" />
-                            <button
-                                onClick={() => handleDownload(lightboxImage.url, lightboxImage.name)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                title="Download"
-                            >
-                                <Download size={16} />
-                                Download
-                            </button>
-                            <button
-                                onClick={closeLightbox}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
-                                title="Close (Esc)"
-                            >
-                                <X size={22} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Image Container */}
-                    <div
-                        className="flex-1 flex items-center justify-center overflow-auto p-8"
-                        onClick={(e) => { if (e.target === e.currentTarget) closeLightbox(); }}
-                    >
-                        <img
-                            src={lightboxImage.url}
-                            alt={lightboxImage.name}
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-300 ease-out select-none"
-                            style={{
-                                transform: `scale(${lightboxZoom}) rotate(${lightboxRotation}deg)`,
-                                cursor: lightboxZoom > 1 ? 'grab' : 'default'
-                            }}
+                        {/* Top Bar */}
+                        <div
+                            className="flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/80 to-transparent z-10"
                             onClick={(e) => e.stopPropagation()}
-                            draggable={false}
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Unavailable';
-                            }}
-                        />
-                    </div>
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold">
+                                    {lightboxImage.sender?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                                </div>
+                                <div>
+                                    <p className="text-white text-sm font-semibold">{lightboxImage.sender || 'Unknown'}</p>
+                                    <p className="text-white/50 text-xs">{lightboxImage.time}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setLightboxZoom(z => Math.max(z - 0.25, 0.25))}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                                    title="Zoom Out (-)"
+                                >
+                                    <ZoomOut size={20} />
+                                </button>
+                                <span className="text-white/50 text-xs font-mono w-12 text-center">{Math.round(lightboxZoom * 100)}%</span>
+                                <button
+                                    onClick={() => setLightboxZoom(z => Math.min(z + 0.25, 5))}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                                    title="Zoom In (+)"
+                                >
+                                    <ZoomIn size={20} />
+                                </button>
+                                <button
+                                    onClick={() => setLightboxZoom(1)}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                                    title="Reset Zoom"
+                                >
+                                    <Maximize2 size={18} />
+                                </button>
+                                <button
+                                    onClick={() => setLightboxRotation(r => r + 90)}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                                    title="Rotate (R)"
+                                >
+                                    <RotateCw size={18} />
+                                </button>
+                                <div className="w-px h-6 bg-white/20 mx-2" />
+                                <button
+                                    onClick={() => handleDownload(lightboxImage.url, lightboxImage.name)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
+                                    title="Download"
+                                >
+                                    <Download size={16} />
+                                    Download
+                                </button>
+                                <button
+                                    onClick={closeLightbox}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
+                                    title="Close (Esc)"
+                                >
+                                    <X size={22} />
+                                </button>
+                            </div>
+                        </div>
 
-                    {/* Bottom bar - filename */}
-                    <div className="px-6 py-3 bg-gradient-to-t from-black/80 to-transparent text-center">
-                        <p className="text-white/60 text-xs font-medium truncate max-w-md mx-auto">{lightboxImage.name}</p>
+                        {/* Image Container */}
+                        <div
+                            className="flex-1 flex items-center justify-center overflow-auto p-8"
+                            onClick={(e) => { if (e.target === e.currentTarget) closeLightbox(); }}
+                        >
+                            <img
+                                src={lightboxImage.url}
+                                alt={lightboxImage.name}
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-300 ease-out select-none"
+                                style={{
+                                    transform: `scale(${lightboxZoom}) rotate(${lightboxRotation}deg)`,
+                                    cursor: lightboxZoom > 1 ? 'grab' : 'default'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                draggable={false}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                }}
+                            />
+                        </div>
+
+                        {/* Bottom bar - filename */}
+                        <div className="px-6 py-3 bg-gradient-to-t from-black/80 to-transparent text-center">
+                            <p className="text-white/60 text-xs font-medium truncate max-w-md mx-auto">{lightboxImage.name}</p>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
             {/* File Preview Viewer (PDFs etc.) */}
-            {filePreview && (
-                <div
-                    className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
-                    onClick={closeFilePreview}
-                >
-                    {/* Top Bar */}
+            {
+                filePreview && (
                     <div
-                        className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-800 z-10"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
+                        onClick={closeFilePreview}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="relative p-2.5 rounded-xl bg-red-500/10">
-                                <FileText size={22} className="text-red-400" />
-                                <span className="absolute -bottom-1 -right-1 text-[7px] font-black text-white px-1 py-0.5 rounded bg-red-500 uppercase leading-none">
-                                    {filePreview.ext || 'FILE'}
-                                </span>
+                        {/* Top Bar */}
+                        <div
+                            className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-800 z-10"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="relative p-2.5 rounded-xl bg-red-500/10">
+                                    <FileText size={22} className="text-red-400" />
+                                    <span className="absolute -bottom-1 -right-1 text-[7px] font-black text-white px-1 py-0.5 rounded bg-red-500 uppercase leading-none">
+                                        {filePreview.ext || 'FILE'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-white text-sm font-semibold truncate max-w-[400px]">{filePreview.name}</p>
+                                    <p className="text-white/40 text-xs">
+                                        {filePreview.sender && `Sent by ${filePreview.sender}`}
+                                        {filePreview.time && ` • ${filePreview.time}`}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-white text-sm font-semibold truncate max-w-[400px]">{filePreview.name}</p>
-                                <p className="text-white/40 text-xs">
-                                    {filePreview.sender && `Sent by ${filePreview.sender}`}
-                                    {filePreview.time && ` • ${filePreview.time}`}
-                                </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleDownload(filePreview.url, filePreview.name)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
+                                    title="Download"
+                                >
+                                    <Download size={16} />
+                                    Download
+                                </button>
+                                <button
+                                    onClick={() => window.open(filePreview.url, '_blank')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
+                                    title="Open in new tab"
+                                >
+                                    <ExternalLink size={16} />
+                                    New Tab
+                                </button>
+                                <button
+                                    onClick={closeFilePreview}
+                                    className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
+                                    title="Close (Esc)"
+                                >
+                                    <X size={22} />
+                                </button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleDownload(filePreview.url, filePreview.name)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                title="Download"
-                            >
-                                <Download size={16} />
-                                Download
-                            </button>
-                            <button
-                                onClick={() => window.open(filePreview.url, '_blank')}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                title="Open in new tab"
-                            >
-                                <ExternalLink size={16} />
-                                New Tab
-                            </button>
-                            <button
-                                onClick={closeFilePreview}
-                                className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
-                                title="Close (Esc)"
-                            >
-                                <X size={22} />
-                            </button>
-                        </div>
-                    </div>
 
-                    {/* PDF Viewer */}
-                    <div
-                        className="flex-1 w-full bg-gray-800"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <iframe
-                            src={filePreview.url}
-                            className="w-full h-full border-0"
-                            title={filePreview.name}
-                        />
+                        {/* PDF Viewer */}
+                        <div
+                            className="flex-1 w-full bg-gray-800"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <iframe
+                                src={filePreview.url}
+                                className="w-full h-full border-0"
+                                title={filePreview.name}
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
-            {hoveredUser && hoverPosition && (
-                <UserHoverCard
-                    user={hoveredUser}
-                    position={hoverPosition}
-                    onClose={() => setHoveredUser(null)}
-                    onMouseEnter={() => {
-                        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-                    }}
-                    onChat={() => {
-                        const conv = conversations?.find(c => c.type === 'DIRECT' && c.participants?.some(p => String(p.id) === hoveredUser.id));
-                        if (conv) setSelectedConversationId(conv.id);
-                        setHoveredUser(null);
-                    }}
-                    onVideo={() => {
-                        if (hoveredUser.id) initiateCall(hoveredUser.id, hoveredUser.name, 'video');
-                        setHoveredUser(null);
-                    }}
-                    onCall={() => {
-                        if (hoveredUser.id) initiateCall(hoveredUser.id, hoveredUser.name, 'audio');
-                        setHoveredUser(null);
-                    }}
-                />
-            )}
-        </DashboardLayout>
+                )
+            }
+            {
+                hoveredUser && hoverPosition && (
+                    <UserHoverCard
+                        user={hoveredUser}
+                        position={hoverPosition}
+                        onClose={() => setHoveredUser(null)}
+                        onMouseEnter={() => {
+                            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                        }}
+                        onChat={() => {
+                            const conv = conversations?.find(c => c.type === 'DIRECT' && c.participants?.some(p => String(p.id) === hoveredUser.id));
+                            if (conv) setSelectedConversationId(conv.id);
+                            setHoveredUser(null);
+                        }}
+                        onVideo={() => {
+                            if (hoveredUser.id) initiateCall(hoveredUser.id, hoveredUser.name, 'video');
+                            setHoveredUser(null);
+                        }}
+                        onCall={() => {
+                            if (hoveredUser.id) initiateCall(hoveredUser.id, hoveredUser.name, 'audio');
+                            setHoveredUser(null);
+                        }}
+                    />
+                )
+            }
+        </DashboardLayout >
     );
 };
 

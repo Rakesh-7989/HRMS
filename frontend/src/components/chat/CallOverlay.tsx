@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
     Phone, PhoneOff, Video, VideoOff, Mic, MicOff,
-    Minimize2, Maximize2, Monitor, UserPlus, Search, X
+    Minimize2, Monitor, UserPlus, Search, X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import api from '@/services/api';
@@ -127,10 +127,17 @@ export const CallOverlay: React.FC = () => {
 
     const { user: currentUser } = useAuth();
     const { theme } = useTheme();
+    const isDark = theme === 'dark';
+    const localInitials = currentUser?.first_name?.charAt(0) || '';
+
     const [isMinimized, setIsMinimized] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [contacts, setContacts] = useState<any[]>([]);
+
+    const filteredContacts = contacts.filter(c =>
+        `${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     // Audio Refs
     const ringtoneRef = useRef<HTMLAudioElement | null>(null);
@@ -180,7 +187,7 @@ export const CallOverlay: React.FC = () => {
 
     const targetName = activeCall?.name || heldCall?.name || 'Meeting';
     const remoteUserIds = Object.keys(remoteStreams);
-    const someoneSharing = isScreenSharing;
+
 
     const incomingBar = incomingCall && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-lg px-4 animate-in slide-in-from-top-10 duration-500">
@@ -224,6 +231,8 @@ export const CallOverlay: React.FC = () => {
                                 userId={remoteUserIds[0]}
                                 isTalking={speakingUsers.has(remoteUserIds[0])}
                                 participant={callParticipants[remoteUserIds[0]]}
+                                isScreenShare={isScreenSharing}
+                                theme={theme}
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-900">
@@ -234,7 +243,7 @@ export const CallOverlay: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
+            </>
         );
     }
 
@@ -432,7 +441,7 @@ export const CallOverlay: React.FC = () => {
                     </main>
 
                     {/* Action Bar */}
-                    <div className="absolute bottom-16 flex items-center gap-3 p-4 bg-gray-900/40 backdrop-blur-[50px] rounded-[3.5rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 transition-all duration-500 hover:scale-[1.02] hover:bg-gray-900/60">
+                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 p-4 bg-gray-900/40 backdrop-blur-[50px] rounded-[3.5rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 transition-all duration-500 hover:scale-[1.02] hover:bg-gray-900/60">
                         <div className="flex items-center gap-2 px-4 border-r border-white/10">
                             <button
                                 onClick={toggleAudio}
@@ -466,20 +475,20 @@ export const CallOverlay: React.FC = () => {
                             </button>
                         </div>
 
-                                {/* Add User */}
-                                <button
-                                    onClick={() => setShowAddModal(true)}
-                                    className={cn(
-                                        "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
-                                        isDark
-                                            ? "bg-white/5 text-teal-300 hover:bg-white/10"
-                                            : "bg-gray-100 text-teal-600 hover:bg-gray-200"
-                                    )}
-                                    title="Invite People"
-                                >
-                                    <UserPlus size={24} className="group-hover:scale-110 transition-transform" />
-                                </button>
-                            </div>
+                        <div className="flex items-center gap-2 px-4">
+                            {/* Add User */}
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className={cn(
+                                    "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
+                                    isDark
+                                        ? "bg-white/5 text-teal-300 hover:bg-white/10"
+                                        : "bg-gray-100 text-teal-600 hover:bg-gray-200"
+                                )}
+                                title="Invite People"
+                            >
+                                <UserPlus size={24} className="group-hover:scale-110 transition-transform" />
+                            </button>
 
                             {/* End Call (Distinct) */}
                             <button
@@ -526,15 +535,15 @@ export const CallOverlay: React.FC = () => {
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                             <VideoOff size={40} className="text-white/20" />
                                         </div>
-                                        <span className={cn("text-[10px] font-bold uppercase tracking-widest", isDark ? "text-white/40" : "text-gray-400")}>Camera Off</span>
                                     </div>
-                                )}
-                                <div className={cn(
-                                    "absolute bottom-3 left-3 px-3 py-1.5 backdrop-blur-md rounded-xl border opacity-0 group-hover:opacity-100 transition-opacity duration-300",
-                                    isDark ? "bg-black/60 border-white/5" : "bg-white/80 border-gray-200"
-                                )}>
-                                    <span className={cn("text-[10px] font-bold uppercase tracking-wider", isDark ? "text-white" : "text-gray-900")}>You</span>
+                                    <span className={cn("text-[10px] font-bold uppercase tracking-widest mt-2", isDark ? "text-white/40" : "text-gray-400")}>Camera Off</span>
                                 </div>
+                            )}
+                            <div className={cn(
+                                "absolute bottom-3 left-3 px-3 py-1.5 backdrop-blur-md rounded-xl border opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+                                isDark ? "bg-black/60 border-white/5" : "bg-white/80 border-gray-200"
+                            )}>
+                                <span className={cn("text-[10px] font-bold uppercase tracking-wider", isDark ? "text-white" : "text-gray-900")}>You</span>
                             </div>
                             {speakingUsers.has(currentUser?.id || '') && (
                                 <div className="absolute top-5 right-5 w-4 h-4 bg-emerald-500 rounded-full animate-ping z-40" />
@@ -597,10 +606,10 @@ export const CallOverlay: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
 
