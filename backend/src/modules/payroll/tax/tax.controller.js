@@ -39,6 +39,7 @@ const setRegime = async (req, res) => {
         const result = await taxService.setRegime(req.user.tenantId, req.user.employeeId, fy, regime);
         res.json({ status: 'success', data: result });
     } catch (err) {
+        console.error('[setRegime] Error:', err);
         res.status(400).json({ status: 'error', message: err.message });
     }
 };
@@ -117,7 +118,10 @@ const downloadForm16PartB = async (req, res) => {
         res.send(pdfBuffer);
     } catch (err) {
         console.error("Form 16 Error:", err);
-        res.status(500).json({ status: 'error', message: 'Failed to generate Form 16' });
+        res.status(500).json({
+            status: 'error',
+            message: err.message || 'Failed to generate Form 16 Part B'
+        });
     }
 };
 

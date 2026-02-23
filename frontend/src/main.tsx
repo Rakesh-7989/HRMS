@@ -22,7 +22,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <ReactQueryDevtools initialIsOpen={false} />
+        {import.meta.env.DEV && (
+          <div className="print:hidden">
+            <ReactQueryDevtools initialIsOpen={false} />
+          </div>
+        )}
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>

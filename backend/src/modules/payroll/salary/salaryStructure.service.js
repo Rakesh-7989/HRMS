@@ -1,4 +1,39 @@
 const db = require('../../../config/db');
+const arrearsService = require('../arrears/arrears.service');
+
+// =====================================================
+// SAFE FORMULA EVALUATOR (used by CTC Calculator)
+// =====================================================
+
+/**
+ * Safely evaluates a salary formula string within a restricted context.
+ * Only allows basic arithmetic on known variables.
+ * Returns 0 and logs a warning on any failure.
+ */
+const evaluateFormulaSafe = (formula, context = {}) => {
+    if (!formula || typeof formula !== 'string') return 0;
+    try {
+        // Build a sandboxed function with only numeric context variables
+        const keys = Object.keys(context);
+        const values = keys.map(k => Number(context[k]) || 0);
+
+        // Restrict to basic math operators and known variable names
+        const sanitized = formula.replace(/[^a-zA-Z0-9_+\-*/().\s]/g, '');
+
+        // eslint-disable-next-line no-new-func
+        const fn = new Function(...keys, `"use strict"; return (${sanitized});`);
+        const result = fn(...values);
+
+        if (!Number.isFinite(result)) {
+            console.warn(`[CTC] Formula "${formula}" produced non-finite result (${result}), defaulting to 0`);
+            return 0;
+        }
+        return result;
+    } catch (err) {
+        console.warn(`[CTC] Formula evaluation failed for "${formula}": ${err.message}`);
+        return 0;
+    }
+};
 
 // =====================================================
 // SALARY COMPONENTS
@@ -444,7 +479,52 @@ exports.calculateCTCBreakdown = async (tenantId, structureId, annualCTC) => {
         }
     }
 
-    // Third pass: Calculate REMAINING component (e.g., Special Allowance)
+    // Third pass: Calculate FORMULA components
+    // Build context from previously calculated amounts
+    const formulaContext = {
+        CTC: annualCTC,
+        BASIC: basicAmount,
+        GROSS: grossEarnings,
+    };
+    // Add all previously computed components to the context
+    for (const item of breakdown) {
+        formulaContext[item.component_code] = item.annual_amount;
+    }
+
+    for (const comp of structure.components) {
+        if (comp.calculation_type !== 'FORMULA') continue;
+
+        let amount = evaluateFormulaSafe(comp.formula, formulaContext);
+
+        // Apply min/max constraints
+        if (comp.min_value != null && amount < parseFloat(comp.min_value)) {
+            amount = parseFloat(comp.min_value);
+        }
+        if (comp.max_value != null && amount > parseFloat(comp.max_value)) {
+            amount = parseFloat(comp.max_value);
+        }
+
+        breakdown.push({
+            component_id: comp.component_id,
+            component_name: comp.component_name,
+            component_code: comp.component_code,
+            component_type: comp.component_type,
+            annual_amount: Math.round(amount * 100) / 100,
+            monthly_amount: Math.round((amount / 12) * 100) / 100
+        });
+
+        if (comp.component_type === 'EARNING' || comp.component_type === 'REIMBURSEMENT') {
+            grossEarnings += amount;
+            remainingAmount -= amount;
+        } else if (comp.component_type === 'DEDUCTION') {
+            totalDeductions += amount;
+        } else if (comp.component_type === 'EMPLOYER_CONTRIBUTION') {
+            employerContributions += amount;
+            remainingAmount -= amount;
+        }
+    }
+
+    // Fourth pass: Calculate REMAINING component (e.g., Special Allowance)
     for (const comp of structure.components) {
         if (comp.calculation_type !== 'REMAINING') continue;
 
@@ -470,6 +550,28 @@ exports.calculateCTCBreakdown = async (tenantId, structureId, annualCTC) => {
         const orderB = structure.components.find(c => c.component_id === b.component_id)?.display_order || 0;
         return orderA - orderB;
     });
+
+    // =========================================================
+    // CTC ROUNDING TRUE-UP
+    // Correct monthly rounding drift so that monthly × 12 = annual.
+    // Adjust the REMAINING or first EARNING component.
+    // =========================================================
+    const totalMonthlyTimes12 = breakdown
+        .filter(c => c.component_type === 'EARNING' || c.component_type === 'REIMBURSEMENT')
+        .reduce((sum, c) => sum + (c.monthly_amount * 12), 0);
+    const roundingDiff = Math.round((grossEarnings - totalMonthlyTimes12) * 100) / 100;
+
+    if (roundingDiff !== 0) {
+        // Prefer adjusting the REMAINING component, else the last EARNING
+        const adjustTarget = breakdown.find(c => c.component_code === 'SPECIAL_ALLOWANCE')
+            || breakdown.find(c => c.calculation_type === 'REMAINING' && c.component_type === 'EARNING')
+            || [...breakdown].reverse().find(c => c.component_type === 'EARNING');
+
+        if (adjustTarget) {
+            adjustTarget.annual_amount = Math.round((adjustTarget.annual_amount + roundingDiff) * 100) / 100;
+            adjustTarget.monthly_amount = Math.round((adjustTarget.annual_amount / 12) * 100) / 100;
+        }
+    }
 
     return {
         annual_ctc: annualCTC,
@@ -527,6 +629,21 @@ exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId, existi
         }
 
         if (isNewClient) await client.query('COMMIT');
+
+        // Trigger retroactive arrears calculation (Async)
+        // We do this after commit so it can see the new assignment
+        // and doesn't block the main flow if it fails
+        try {
+            const updatedAssignment = {
+                ...assignment,
+                summary: {
+                    monthly_net: breakdown.monthly_net
+                }
+            };
+            await arrearsService.calculateRetroactiveArrears(tenantId, employeeId, updatedAssignment, userId);
+        } catch (arrearError) {
+            console.error('[assignEmployeeSalary] Arrears calculation failed:', arrearError);
+        }
 
         return {
             ...assignment,

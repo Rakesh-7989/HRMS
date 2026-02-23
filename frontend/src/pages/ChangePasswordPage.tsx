@@ -86,7 +86,7 @@ export const ChangePasswordPage: React.FC = () => {
                 <Card>
                     <div className="mb-6">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+                            <div className="p-2 rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
                                 <ShieldAlert size={24} />
                             </div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Change Password</h1>

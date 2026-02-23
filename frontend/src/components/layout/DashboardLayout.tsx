@@ -140,15 +140,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const getIcon = (type: string) => {
     switch (type) {
       case 'employee':
-        return <User size={14} className="text-blue-500" />;
+        return <User size={14} className="text-violet-500" />;
       case 'asset':
         return <Package size={14} className="text-green-500" />;
       case 'project':
         return <Briefcase size={14} className="text-purple-500" />;
       case 'page':
-        return <LayoutDashboard size={14} className="text-indigo-500" />;
+        return <LayoutDashboard size={14} className="text-purple-500" />;
       case 'action':
-        return <Zap size={14} className="text-amber-500" />;
+        return <Zap size={14} className="text-fuchsia-500" />;
       default:
         return <Search size={14} className="text-gray-500" />;
     }
@@ -159,14 +159,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="h-screen flex overflow-hidden bg-[var(--background)]">
       {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <div className="print:hidden">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      </div>
 
       {/* Main wrapper */}
-      <div className="flex flex-col flex-1 ml-0 md:ml-[90px] min-w-0">
+      <div className="flex flex-col flex-1 ml-0 md:ml-[90px] min-w-0 print:ml-0">
 
         {/* Header */}
         <header
-          className="sticky top-0 z-30 min-h-16 border-b px-4 md:px-6 flex items-center py-2 transition-all"
+          className="sticky top-0 z-30 min-h-16 border-b px-4 md:px-6 flex items-center py-2 transition-all print:hidden"
           style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
         >
           <div className="flex items-center justify-between w-full gap-2">
@@ -414,7 +416,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Subscription Warning Banner */}
         {/* Subscription Warning Banner */}
         {!hasActivePlan && user?.role !== 'SUPER_ADMIN' && (
-          <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium animate-in slide-in-from-top duration-300">
+          <div className="bg-fuchsia-500 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium animate-in slide-in-from-top duration-300 print:hidden">
             <div className="flex items-center gap-2">
               <AlertTriangle size={16} />
               <span>
@@ -426,7 +428,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {user?.role === 'ADMIN' && (
               <button
                 onClick={() => navigate('/pricing')}
-                className="bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
+                className="bg-white text-fuchsia-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
               >
                 Upgrade Plan
               </button>
@@ -435,7 +437,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
 
         {/* Main Content */}
-        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
+        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain flex flex-col print:p-0 print:overflow-visible" style={{ backgroundColor: 'var(--background)' }}>
           {children}
         </main>
       </div>

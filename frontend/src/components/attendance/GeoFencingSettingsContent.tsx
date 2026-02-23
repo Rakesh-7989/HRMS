@@ -408,7 +408,7 @@ export const GeoFencingSettingsContent: React.FC = () => {
                                         <TableCell>
                                             <span className={cn(
                                                 "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
-                                                v.action_type === 'CLOCK_IN' ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                                                v.action_type === 'CLOCK_IN' ? "bg-violet-100 text-violet-700" : "bg-purple-100 text-purple-700"
                                             )}>
                                                 {v.action_type.replace('_', ' ')}
                                             </span>

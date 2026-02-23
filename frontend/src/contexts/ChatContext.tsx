@@ -20,6 +20,26 @@ interface CallInfo {
     conversationId?: string;
 }
 
+export interface ChatNotification {
+    messageId: string;
+    conversationId: string;
+    senderId: string;
+    senderName: string;
+    senderAvatar?: string;
+    content: string;
+    type: string;
+    createdAt: string;
+    conversationType: 'DIRECT' | 'GROUP';
+    conversationName?: string;
+}
+
+export interface UserStatusInfo {
+    status: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
+    lastSeen: string;
+    message?: string;
+    messageExpiry?: string;
+}
+
 interface ChatContextType {
     socket: Socket | null;
     isConnected: boolean;
@@ -52,6 +72,13 @@ interface ChatContextType {
     addParticipantToCall: (userId: string, userName: string) => void;
     speakingUsers: Set<string>;
     callDuration: number;
+    // Notifications & Status
+    chatNotifications: ChatNotification[];
+    dismissChatNotification: (messageId: string) => void;
+    userStatuses: Record<string, UserStatusInfo>;
+    myStatus: UserStatusInfo['status'];
+    updateMyStatus: (status: UserStatusInfo['status']) => void;
+    updateMyStatusMessage: (message: string, expiry?: string | null) => void;
 }
 
 
@@ -84,6 +111,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set());
     const [totalUnreadCount, setTotalUnreadCount] = useState(0);
     const [typingStatus, setTypingStatus] = useState<Record<string, string[]>>({});
+    const [chatNotifications, setChatNotifications] = useState<ChatNotification[]>([]);
+    const [userStatuses, setUserStatuses] = useState<Record<string, UserStatusInfo>>({});
+    const [myStatus, setMyStatus] = useState<UserStatusInfo['status']>('available');
 
     const queryClient = useQueryClient();
     const callStartTime = useRef<number | null>(null);
@@ -392,6 +422,37 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         s.on('user_stopped_typing', ({ conversationId }) => setTypingStatus(prev => ({ ...prev, [conversationId]: [] })));
         s.on('unread_update', fetchTotalUnread);
         s.on('messages_read', ({ conversationId }) => queryClient.invalidateQueries({ queryKey: ['messages', conversationId] }));
+
+        s.on('new_message', (message: any) => {
+            if (message.senderId === user.id) return;
+            // Add to notifications if not in the active room
+            setChatNotifications(prev => [
+                {
+                    messageId: message.id,
+                    conversationId: message.conversationId,
+                    senderId: message.senderId,
+                    senderName: message.senderName,
+                    senderAvatar: message.senderAvatar,
+                    content: message.content,
+                    type: message.type,
+                    createdAt: message.createdAt,
+                    conversationType: message.conversationType,
+                    conversationName: message.conversationName
+                },
+                ...prev
+            ]);
+        });
+
+        s.on('status_update', ({ userId, status, message, messageExpiry, lastSeen }: any) => {
+            setUserStatuses(prev => ({
+                ...prev,
+                [userId]: { status, message, messageExpiry, lastSeen }
+            }));
+        });
+
+        s.on('bulk_status_update', (statuses: Record<string, UserStatusInfo>) => {
+            setUserStatuses(prev => ({ ...prev, ...statuses }));
+        });
 
         setSocket(s);
         return () => { s.disconnect(); socketRef.current = null; };
@@ -734,7 +795,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleAudio: () => { if (localStreamRef.current) { const t = localStreamRef.current.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setIsMuted(!t.enabled); } } },
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus, sendTypingStatus,
         isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
-        callDuration
+        callDuration,
+        chatNotifications,
+        dismissChatNotification: (messageId: string) => setChatNotifications(prev => prev.filter(n => n.messageId !== messageId)),
+        userStatuses,
+        myStatus,
+        updateMyStatus: (status: UserStatusInfo['status']) => {
+            setMyStatus(status);
+            socketRef.current?.emit('update_status', { status });
+        },
+        updateMyStatusMessage: (message: string, expiry?: string | null) => {
+            socketRef.current?.emit('update_status', { message, messageExpiry: expiry });
+        }
     }), [
         socket, isConnected, sendMessage, joinRoom,
         isCalling, activeCall, incomingCall, localStream, remoteStreams,
@@ -742,7 +814,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         initiateCall, acceptCall, joinActiveCall, endCall, isMuted, isVideoOff,
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus,
         sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
-        callDuration
+        callDuration, chatNotifications, userStatuses, myStatus
     ]);
 
 

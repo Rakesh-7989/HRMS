@@ -161,7 +161,7 @@ export const AssetRequestsPage: React.FC = () => {
             case 'Medium':
                 return <span className="text-orange-600 dark:text-orange-400 font-semibold">{priority}</span>;
             default:
-                return <span className="text-blue-600 dark:text-blue-400 font-semibold">{priority}</span>;
+                return <span className="text-violet-600 dark:text-violet-400 font-semibold">{priority}</span>;
         }
     };
 
@@ -245,7 +245,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                                         <Button
                                                                             size="sm"
                                                                             variant="outline"
-                                                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                                                            className="text-violet-600 border-violet-200 hover:bg-violet-50"
                                                                             title="Edit Request"
                                                                             onClick={() => handleEdit(request)}
                                                                         >

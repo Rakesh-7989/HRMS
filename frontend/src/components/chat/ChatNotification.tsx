@@ -49,7 +49,7 @@ export const ChatNotification: React.FC = () => {
     const grouped = useMemo<GroupedNotification[]>(() => {
         const map = new Map<string, GroupedNotification>();
 
-        chatNotifications.forEach(n => {
+        chatNotifications.forEach((n: ChatNotificationType) => {
             const key = n.conversationId;
             if (map.has(key)) {
                 const group = map.get(key)!;
@@ -81,13 +81,13 @@ export const ChatNotification: React.FC = () => {
     const latest = chatNotifications[0];
 
     const handleNavigate = (group: GroupedNotification) => {
-        group.messages.forEach(m => dismissChatNotification(m.messageId));
+        group.messages.forEach((m: ChatNotificationType) => dismissChatNotification(m.messageId));
         navigate(`/chat?conversation=${group.conversationId}`);
     };
 
     const handleDismissAll = (e: React.MouseEvent) => {
         e.stopPropagation();
-        chatNotifications.forEach(n => dismissChatNotification(n.messageId));
+        chatNotifications.forEach((n: ChatNotificationType) => dismissChatNotification(n.messageId));
     };
 
     const displayName = (g: GroupedNotification) =>

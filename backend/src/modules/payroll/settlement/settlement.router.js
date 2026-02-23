@@ -21,6 +21,9 @@ const createReimbursementSchema = z.object({
 });
 
 const approveReimbursementSchema = z.object({
+    params: z.object({
+        id: z.string().uuid()
+    }),
     body: z.object({
         status: z.enum(["APPROVED", "REJECTED"]),
         includeInPayroll: z.boolean().optional()
@@ -36,6 +39,9 @@ const createFnFSchema = z.object({
 });
 
 const approveFnFSchema = z.object({
+    params: z.object({
+        id: z.string().uuid()
+    }),
     body: z.object({
         status: z.enum(["APPROVED", "REJECTED"])
     })
@@ -91,31 +97,34 @@ router.get(
 router.get(
     "/fnf/:id",
     requireRole(["HR", "ADMIN"]),
+    validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.getFnFSettlementById
 );
 
 router.put(
     "/fnf/:id",
     requireRole(["HR", "ADMIN"]),
+    validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.updateFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/submit",
     requireRole(["HR"]),
+    validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.submitFnFForApproval
 );
 
 router.patch(
     "/fnf/:id/approve",
-    requireRole(["ADMIN"]),
+    requireRole(["ADMIN", "HR"]),
     validate(approveFnFSchema),
     controller.approveFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/pay",
-    requireRole(["ADMIN"]),
+    requireRole(["ADMIN", "HR"]),
     controller.markFnFPaid
 );
 

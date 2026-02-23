@@ -8,7 +8,7 @@ interface ChartCardProps {
     subtitle?: string;
     badge?: {
         label: string;
-        color?: 'blue' | 'purple' | 'emerald' | 'amber';
+        color?: 'blue' | 'purple' | 'amber';
     };
     children: React.ReactNode;
     isLoading?: boolean;
@@ -20,7 +20,6 @@ interface ChartCardProps {
 const badgeColors = {
     blue: 'dashboard-chart-badge--blue',
     purple: 'dashboard-chart-badge--purple',
-    emerald: 'dashboard-chart-badge--emerald',
     amber: 'dashboard-chart-badge--amber',
 };
 

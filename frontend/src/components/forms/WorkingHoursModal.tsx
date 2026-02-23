@@ -153,7 +153,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                         )}
                     </div>
 
-                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-400">
+                    <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 text-xs text-violet-700 dark:text-violet-400">
                         <p>Total hours will be calculated based on start and end times, excluding breaks if any are added later.</p>
                     </div>
 

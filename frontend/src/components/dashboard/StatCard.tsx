@@ -57,18 +57,18 @@ const useAnimatedCounter = (end: number, duration: number = 1000, isLoading: boo
 const getColorConfig = (iconColor: string) => {
   if (iconColor.includes('blue')) {
     return {
-      iconBg: 'bg-blue-50 dark:bg-blue-500/15',
-      orbColor: 'bg-blue-400',
+      iconBg: 'bg-violet-50 dark:bg-violet-500/15',
+      orbColor: 'bg-violet-400',
       gradientFrom: 'from-blue-500',
       gradientTo: 'to-blue-600',
     };
   }
-  if (iconColor.includes('emerald') || iconColor.includes('green')) {
+  if (iconColor.includes('purple') || iconColor.includes('green')) {
     return {
-      iconBg: 'bg-emerald-50 dark:bg-emerald-500/15',
-      orbColor: 'bg-emerald-400',
-      gradientFrom: 'from-emerald-500',
-      gradientTo: 'to-emerald-600',
+      iconBg: 'bg-purple-50 dark:bg-purple-500/15',
+      orbColor: 'bg-purple-400',
+      gradientFrom: 'from-purple-500',
+      gradientTo: 'to-purple-600',
     };
   }
   if (iconColor.includes('purple') || iconColor.includes('violet')) {
@@ -81,10 +81,10 @@ const getColorConfig = (iconColor: string) => {
   }
   if (iconColor.includes('amber') || iconColor.includes('yellow') || iconColor.includes('orange')) {
     return {
-      iconBg: 'bg-amber-50 dark:bg-amber-500/15',
-      orbColor: 'bg-amber-400',
+      iconBg: 'bg-fuchsia-50 dark:bg-fuchsia-500/15',
+      orbColor: 'bg-fuchsia-400',
       gradientFrom: 'from-amber-500',
-      gradientTo: 'to-amber-600',
+      gradientTo: 'to-violet-600',
     };
   }
   if (iconColor.includes('red')) {
@@ -201,7 +201,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                       'flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full',
                       'ring-1 ring-inset',
                       isUp
-                        ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 ring-emerald-500/20'
+                        ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/15 ring-purple-500/20'
                         : 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/15 ring-red-500/20'
                     )}
                   >

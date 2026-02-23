@@ -119,7 +119,7 @@ export const ShiftRosterPage = () => {
                                 {/* Content */}
                                 <div className="p-4 pt-4 space-y-3">
                                     <div className="flex items-center gap-3 text-sm">
-                                        <div className={`p-2 rounded-lg ${isAssigned ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                        <div className={`p-2 rounded-lg ${isAssigned ? 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
                                             <Calendar className="h-4 w-4" />
                                         </div>
                                         <div>
@@ -132,7 +132,7 @@ export const ShiftRosterPage = () => {
 
                                     {isAssigned && shift.start_time && (
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="p-2 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                                            <div className="p-2 rounded-lg bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300">
                                                 <Clock className="h-4 w-4" />
                                             </div>
                                             <div>

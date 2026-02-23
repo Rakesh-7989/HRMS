@@ -86,7 +86,7 @@ const TaxDeclarationsPage: React.FC = () => {
                         <div className="space-y-4">
                             {declaration && (
                                 <div className={`p-3 rounded mb-4 ${declaration.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-                                    declaration.status === 'SUBMITTED' ? 'bg-blue-100 text-blue-800' :
+                                    declaration.status === 'SUBMITTED' ? 'bg-violet-100 text-violet-800' :
                                         declaration.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100'
                                     }`}>
                                     Status: <strong>{declaration.status}</strong>

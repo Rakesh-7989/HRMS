@@ -2,6 +2,7 @@ const db = require("../../../config/db");
 const attendanceService = require("../../attendance/attendance.service");
 const statutoryCalculator = require("../utils/statutoryCalculator");
 const salaryStructureService = require("../salary/salaryStructure.service");
+const arrearsService = require("../arrears/arrears.service");
 
 // ===================================================================
 // PAY SCHEDULES
@@ -55,9 +56,14 @@ const createPayrun = async (tenantId, userId, payload) => {
 
     if (existing.rowCount > 0) {
         const run = existing.rows[0];
-        // If it's still in DRAFT or CALCULATING, we can reuse it
-        if (['DRAFT', 'CALCULATING'].includes(run.status)) {
+        // If it's in DRAFT, we can reuse it
+        if (run.status === 'DRAFT') {
             return run;
+        }
+
+        // If currently CALCULATING, a calculation is in-flight — block to prevent double-submit
+        if (run.status === 'CALCULATING') {
+            throw new Error(`Payrun for ${periodMonth}/${periodYear} is currently being calculated. Please wait and try again.`);
         }
 
         // Allow resetting PENDING_APPROVAL, REJECTED, or APPROVED to DRAFT for regeneration
@@ -72,9 +78,9 @@ const createPayrun = async (tenantId, userId, payload) => {
         throw new Error(`Payrun for ${periodMonth}/${periodYear} already exists (Status: ${run.status})`);
     }
 
-    // Calculate period dates
-    const periodStart = new Date(periodYear, periodMonth - 1, 1);
-    const periodEnd = new Date(periodYear, periodMonth, 0); // Last day of month
+    // Calculate period dates (UTC Safe)
+    const periodStart = new Date(Date.UTC(periodYear, periodMonth - 1, 1)).toISOString().split('T')[0];
+    const periodEnd = new Date(Date.UTC(periodYear, periodMonth, 0)).toISOString().split('T')[0]; // Last day of month
 
     const result = await db.query(
         `INSERT INTO payroll_runs (
@@ -186,6 +192,16 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
 
     try {
         await client.query('BEGIN');
+
+        // Row-level lock to prevent concurrent calculations on the same run
+        const lockRes = await client.query(
+            `SELECT id, status FROM payroll_runs WHERE id = $1 FOR UPDATE`,
+            [payrunId]
+        );
+
+        if (lockRes.rowCount === 0) {
+            throw new Error('Payrun record could not be locked');
+        }
 
         // Update status to CALCULATING
         await client.query(
@@ -307,6 +323,9 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
             totalDeductions += result.totalDeductions;
             totalNet += result.netSalary;
             totalEmployees++;
+
+            // 5. Mark arrears as paid
+            await arrearsService.markArrearsAsPaid(tenantId, payrunId, emp.emp_id, client);
         }
 
         // Update payrun totals
@@ -384,11 +403,17 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const leaveDays = parseFloat(leaves.rows[0]?.leave_days || 0);
 
     // Get unpaid leaves (LOP) — compute actual overlap with this pay period
+    // Subtract holidays that fall within the LOP period (employee shouldn't lose pay for a holiday)
     const lopLeaves = await client.query(
         `SELECT SUM(
             GREATEST(0, 
                 LEAST(la.end_date, $4::date) - GREATEST(la.start_date, $3::date) + 1
             )
+            - COALESCE((
+                SELECT COUNT(*) FROM holidays h
+                WHERE h.tenant_id = $1
+                  AND h.date BETWEEN GREATEST(la.start_date, $3::date) AND LEAST(la.end_date, $4::date)
+            ), 0)
         ) as lop_days
          FROM leave_applications la
          JOIN leave_types lt ON lt.id = la.leave_type_id
@@ -444,6 +469,20 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const totalDaysInMonth = new Date(payrun.period_year, payrun.period_month, 0).getDate();
     const totalWorkingDays = totalDaysInMonth - holidays - weekends;
 
+    // Pro-rata for mid-month joiners
+    let proRataFactor = 1;
+    if (emp.join_date) {
+        const joinDate = new Date(emp.join_date);
+        const periodStartDate = new Date(periodStart);
+        const periodEndDate = new Date(periodEnd);
+        if (joinDate > periodStartDate && joinDate <= periodEndDate) {
+            // Employee joined mid-month — pay only from join date to month end
+            const joiningDay = joinDate.getDate();
+            const effectiveDays = totalDaysInMonth - joiningDay + 1;
+            proRataFactor = effectiveDays / totalDaysInMonth;
+        }
+    }
+
     const halfDays = parseInt(attData.half_days) || 0;
     const presentDays = parseInt(attData.present_days) + (halfDays * 0.5);
     const absentDays = parseInt(attData.absent_days);
@@ -452,8 +491,17 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const payableDays = totalWorkingDays - lopDays - attendanceBasedLop;
 
     // Calculate salary components from dynamic structure
-    const monthlyCtc = parseFloat(emp.ctc) / 12;
+    const monthlyCtc = (parseFloat(emp.ctc) / 12) * proRataFactor;
     const perDaySalary = monthlyCtc / totalDaysInMonth;
+
+    // Fetch pending arrears
+    const arrears = await arrearsService.getPendingArrears(tenantId, emp.emp_id);
+    const arrearsTotal = arrears.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+    // Link these arrears to the current payrun (if they aren't already linked)
+    if (arrearsTotal > 0) {
+        await arrearsService.linkArrearsToPayrun(tenantId, payrun.id, emp.emp_id, client);
+    }
 
     // Fetch component values for this assignment with their types
     const componentsRes = await client.query(
@@ -477,6 +525,17 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
             type: c.component_type
         });
     });
+
+    // Add Arrears as a virtual component for payslip breakdown
+    if (arrearsTotal > 0) {
+        compDetails.push({
+            component_id: null,
+            name: 'Salary Arrears',
+            code: 'ARREARS',
+            amount: arrearsTotal,
+            type: 'EARNING'
+        });
+    }
 
     // Map to standard variables for legacy compatibility
     // Note: Check for multiple code variants to handle different naming conventions
@@ -539,13 +598,41 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
     const fyStartYear = payrun.period_month >= 4 ? payrun.period_year : payrun.period_year - 1;
     const financialYear = `${fyStartYear}-${fyStartYear + 1}`;
 
-    // 2. Fetch Tax Declaration
-    const taxDeclRes = await client.query(
-        `SELECT * FROM employee_tax_declarations 
+    // 2. Fetch Tax Declaration (Unified from it_declarations and employee_tax_regimes)
+    // 2.1 Get Regime
+    const regimeRes = await client.query(
+        `SELECT regime FROM employee_tax_regimes 
          WHERE tenant_id = $1 AND employee_id = $2 AND financial_year = $3`,
         [tenantId, emp.emp_id, financialYear]
     );
-    const taxDecl = taxDeclRes.rows[0] || { regime: 'NEW' }; // Default to New Regime if no declaration
+    const regime = regimeRes.rows[0]?.regime || 'NEW';
+
+    // 2.2 Get Approved Declarations
+    const itDeclsRes = await client.query(
+        `SELECT d.*, s.section 
+         FROM it_declarations d
+         JOIN tax_sections s ON s.id = d.section_id
+         WHERE d.tenant_id = $1 AND d.employee_id = $2 AND d.financial_year = $3 AND d.status = 'APPROVED'`,
+        [tenantId, emp.emp_id, financialYear]
+    );
+
+    const taxDecl = {
+        regime,
+        annual_basic: basic * 12, // Project current basic annually for HRA calculation
+        actual_hra: hra * 12      // Project current HRA annually for HRA calculation
+    };
+
+    itDeclsRes.rows.forEach(row => {
+        const amount = parseFloat(row.approved_amount) || 0;
+        if (row.section === '80C') taxDecl.investments_80c = (taxDecl.investments_80c || 0) + amount;
+        else if (row.section === '80D') taxDecl.investments_80d = (taxDecl.investments_80d || 0) + amount;
+        else if (row.section === 'HRA') {
+            taxDecl.rent_paid = amount;
+            if (row.metadata?.is_metro) taxDecl.is_metro = true;
+        }
+        else if (row.section === 'LTA') taxDecl.lta = amount;
+        else if (row.section === 'OTHER') taxDecl.other_exemptions = (taxDecl.other_exemptions || 0) + amount;
+    });
 
     // 3. Calculate TDS
     // Use the Annual CTC from assignment as the base for projection
@@ -771,6 +858,9 @@ const revokePayrun = async (tenantId, payrunId, userId) => {
         [tenantId, payrunId]
     );
 
+    // Unlink arrears attached to this run
+    await arrearsService.unlinkArrearsFromPayrun(tenantId, payrunId);
+
     return result.rows[0];
 };
 
@@ -806,6 +896,9 @@ const deletePayrun = async (tenantId, payrunId) => {
             `DELETE FROM payroll_run_items WHERE payroll_run_id = $1`,
             [payrunId]
         );
+
+        // Unlink arrears
+        await arrearsService.unlinkArrearsFromPayrun(tenantId, payrunId, client);
 
         // Delete the payrun itself
         await client.query(

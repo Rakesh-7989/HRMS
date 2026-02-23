@@ -205,7 +205,7 @@ export const TimesheetApprovals: React.FC = () => {
                             <Button
                                 onClick={handleBulkApprove}
                                 isLoading={bulkApproveMutation.isPending}
-                                className="bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl px-6 h-10 shadow-xl"
+                                className="bg-slate-900 dark:bg-purple-600 hover:bg-slate-800 dark:hover:bg-purple-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl px-6 h-10 shadow-xl"
                             >
                                 {bulkApproveMutation.isPending ? 'Processing...' : 'Approve Selected'}
                             </Button>
@@ -239,7 +239,7 @@ export const TimesheetApprovals: React.FC = () => {
                                 Select All
                             </button>
                         )}
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-full ring-1 ring-amber-500/20 text-[9px] font-black text-amber-600 uppercase tracking-widest">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-fuchsia-50 dark:bg-fuchsia-500/10 rounded-full ring-1 ring-amber-500/20 text-[9px] font-black text-fuchsia-600 uppercase tracking-widest">
                             Pending: {timesheets.length}
                         </div>
                     </div>

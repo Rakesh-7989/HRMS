@@ -160,6 +160,27 @@ const generatePayslipPDFById = async (tenantId, payslipId) => {
 };
 
 const generatePDFFromData = async (data) => {
+    // =====================================================
+    // TEXT SANITIZER — protects against non-renderable Unicode in PDFKit
+    // =====================================================
+    const sanitizeForPDF = (text) => {
+        if (!text) return '';
+        return String(text)
+            .replace(/[\u2018\u2019]/g, "'")   // Smart single quotes → straight
+            .replace(/[\u201C\u201D]/g, '"')   // Smart double quotes → straight
+            .replace(/[\u2013\u2014]/g, '-')   // En/Em dash → hyphen
+            .replace(/\u2026/g, '...')         // Ellipsis → three dots
+            .replace(/[\u00A0]/g, ' ')         // Non-breaking space → regular space
+            .replace(/[^\x20-\x7E\u00A0-\u00FF\u0900-\u097F]/g, ''); // Keep ASCII + Latin-1 + Devanagari
+    };
+
+    // Sanitize key text fields upfront
+    data.first_name = sanitizeForPDF(data.first_name);
+    data.last_name = sanitizeForPDF(data.last_name);
+    data.company_name = sanitizeForPDF(data.company_name);
+    data.company_address = sanitizeForPDF(data.company_address);
+    data.designation_name = sanitizeForPDF(data.designation_name);
+
     // Create PDF document
     const doc = new PDFDocument({
         margin: 40,

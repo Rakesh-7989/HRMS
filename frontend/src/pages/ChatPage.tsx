@@ -682,8 +682,8 @@ export const ChatPage = () => {
                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center",
                                         userStatus === 'ONLINE' ? 'bg-emerald-500' :
                                             userStatus === 'AWAY' ? 'bg-amber-500' :
-                                                userStatus === 'DND' ? 'bg-rose-500' :
-                                                    userStatus === 'BUSY' ? 'bg-rose-500' : 'bg-gray-400'
+                                                userStatus === 'DND' ? 'bg-red-500' :
+                                                    userStatus === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
                                     )} title={userStatus === 'BUSY' ? 'In a Meeting' : userStatus}>
                                         {userStatus === 'ONLINE' && <Check size={8} strokeWidth={4} className="text-white" />}
                                         {userStatus === 'AWAY' && <Clock size={8} strokeWidth={3} className="text-white" />}
@@ -703,7 +703,7 @@ export const ChatPage = () => {
                                                 "h-2 w-2 rounded-full",
                                                 s === 'ONLINE' ? 'bg-emerald-500' :
                                                     s === 'AWAY' ? 'bg-amber-500' :
-                                                        s === 'DND' || s === 'BUSY' ? 'bg-rose-500' : 'bg-gray-400'
+                                                        s === 'DND' || s === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
                                             )} />
                                             {s === 'BUSY' ? 'In a Meeting' : s}
                                         </button>
@@ -773,7 +773,7 @@ export const ChatPage = () => {
                                                 onClick={() => handleStartDirectChat(user.id)}
                                                 className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                                             >
-                                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                                <div className="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-medium">
                                                     <Search size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -849,8 +849,8 @@ export const ChatPage = () => {
                                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center",
                                                         details.status === 'ONLINE' ? 'bg-emerald-500' :
                                                             details.status === 'AWAY' ? 'bg-amber-500' :
-                                                                details.status === 'DND' ? 'bg-rose-500' :
-                                                                    details.status === 'BUSY' ? 'bg-rose-500' : 'bg-gray-400'
+                                                                details.status === 'DND' ? 'bg-red-500' :
+                                                                    details.status === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
                                                     )}>
                                                         {details.status === 'ONLINE' && <Check size={8} strokeWidth={4} className="text-white" />}
                                                         {details.status === 'AWAY' && <Clock size={8} strokeWidth={3} className="text-white" />}
@@ -943,8 +943,8 @@ export const ChatPage = () => {
                                                                     "h-2 w-2 rounded-full",
                                                                     details.status === 'ONLINE' ? 'bg-emerald-500' :
                                                                         details.status === 'AWAY' ? 'bg-amber-500' :
-                                                                            details.status === 'DND' ? 'bg-rose-500' :
-                                                                                details.status === 'BUSY' ? 'bg-rose-500' : 'bg-gray-400'
+                                                                            details.status === 'DND' ? 'bg-red-500' :
+                                                                                details.status === 'BUSY' ? 'bg-red-500' : 'bg-gray-400'
                                                                 )}></span>
                                                                 {details.status === 'BUSY' ? 'In a Meeting' : (details.status || 'Offline')}
                                                             </>
@@ -959,12 +959,12 @@ export const ChatPage = () => {
                                     {activeRoomCall === selectedConversationId && !activeCall && (
                                         <button
                                             onClick={() => joinActiveCall(selectedConversationId, 'video')}
-                                            className="group relative flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all border border-emerald-500/20 active:scale-95"
+                                            className="group relative flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-xl transition-all border border-purple-500/20 active:scale-95"
                                             title="Meeting in progress - Click to Join"
                                         >
                                             <div className="absolute -top-1 -right-1 flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
                                             </div>
                                             <Video size={18} className="animate-pulse" />
                                             <span className="text-[11px] font-black uppercase tracking-wider">Join ongoing call</span>
@@ -988,7 +988,7 @@ export const ChatPage = () => {
                                         }}
                                         className={cn(
                                             "hover:text-gray-600 dark:hover:text-gray-200 transition-colors",
-                                            activeCall && !isMuted ? "text-emerald-500" : "text-gray-400"
+                                            activeCall && !isMuted ? "text-purple-500" : "text-gray-400"
                                         )}
                                         title={activeCall ? "Toggle Audio" : "Audio Call"}
                                     >
@@ -1099,7 +1099,7 @@ export const ChatPage = () => {
                                         return (
                                             <div key={msg.id} className="flex justify-center my-6">
                                                 <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-                                                    <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-rose-500" : "bg-emerald-500")}>
+                                                    <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-red-500" : "bg-emerald-500")}>
                                                         {callData.callType === 'video' ? <Video size={12} /> : <Phone size={12} />}
                                                     </div>
                                                     <div className="flex flex-col">
@@ -1242,7 +1242,7 @@ export const ChatPage = () => {
                                                                     {format(new Date(msg.created_at), 'HH:mm')}
                                                                 </p>
                                                                 {isMe && (
-                                                                    <div className={cn("flex -space-x-1", msg.is_read ? "text-blue-200" : "text-white/60")}>
+                                                                    <div className={cn("flex -space-x-1", msg.is_read ? "text-violet-200" : "text-white/60")}>
                                                                         <Check size={12} strokeWidth={3} />
                                                                         <Check size={12} strokeWidth={3} />
                                                                     </div>
@@ -1315,7 +1315,7 @@ export const ChatPage = () => {
                                                         {isMe && msg.type === 'TEXT' && (
                                                             <>
                                                                 <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-600 mx-1"></div>
-                                                                <button onClick={() => startEditing(msg)} className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded text-blue-500" title="Edit">
+                                                                <button onClick={() => startEditing(msg)} className="p-1 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded text-violet-500" title="Edit">
                                                                     <Edit2 size={14} />
                                                                 </button>
                                                                 <button onClick={() => handleDeleteMessage(msg.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-red-500" title="Delete">
@@ -1381,7 +1381,7 @@ export const ChatPage = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                className="p-2.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-xl transition-all duration-200"
+                                                className="p-2.5 text-gray-400 hover:text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 rounded-xl transition-all duration-200"
                                             >
                                                 <Smile size={20} />
                                             </button>

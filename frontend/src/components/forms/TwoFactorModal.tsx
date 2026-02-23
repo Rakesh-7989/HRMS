@@ -202,9 +202,9 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
 
                     {step === 'recovery' && (
                         <div className="space-y-4">
-                            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 flex gap-3">
-                                <AlertTriangle className="text-amber-600 shrink-0" size={20} />
-                                <p className="text-xs text-amber-800 dark:text-amber-300">
+                            <div className="p-4 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded-xl border border-fuchsia-100 dark:border-fuchsia-800 flex gap-3">
+                                <AlertTriangle className="text-fuchsia-600 shrink-0" size={20} />
+                                <p className="text-xs text-fuchsia-800 dark:text-fuchsia-300">
                                     Save these recovery codes in a safe place. They are the <b>only way</b> to access your account if you lose your device.
                                 </p>
                             </div>

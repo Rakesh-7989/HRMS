@@ -305,7 +305,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
         return (
             <select
-                className="w-full bg-transparent text-xs font-medium outline-none border-b border-gray-200 hover:border-gray-400 focus:border-indigo-500 transition-colors py-1 cursor-pointer"
+                className="w-full bg-transparent text-xs font-medium outline-none border-b border-gray-200 hover:border-gray-400 focus:border-purple-500 transition-colors py-1 cursor-pointer"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={!projectId}
@@ -321,7 +321,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
     if (isLoadingAttendance && !isApprovalMode || isLoadingEntries && !preloadedTimesheet) {
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4 h-[400px]">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
             </div>
         );
     }
@@ -356,8 +356,8 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         <div className={cn(
                             "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
                             timesheetStatus === 'APPROVED' ? "bg-green-50 text-green-600 border-green-200" :
-                                timesheetStatus === 'SUBMITTED' ? "bg-blue-50 text-blue-600 border-blue-200" :
-                                    "bg-amber-50 text-amber-600 border-amber-200"
+                                timesheetStatus === 'SUBMITTED' ? "bg-violet-50 text-violet-600 border-violet-200" :
+                                    "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200"
                         )}>
                             {timesheetStatus}
                         </div>
@@ -368,7 +368,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => setForceEdit(true)}
-                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 border border-indigo-200"
+                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-50 border border-purple-200"
                             >
                                 {timesheetStatus === 'SUBMITTED' ? 'Recall / Edit' : 'Edit'}
                             </Button>
@@ -397,7 +397,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     <div key={dateStr} className="flex-1 px-1 text-center">
                                         <div className={cn(
                                             "flex flex-col items-center justify-center py-1 rounded-lg transition-colors",
-                                            isToday ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600" :
+                                            isToday ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600" :
                                                 isWeekOff ? "bg-red-50 dark:bg-red-900/10 text-red-400" : "text-gray-500"
                                         )}
                                             title={isWeekOff ? "Week Off" : undefined}
@@ -426,7 +426,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                             <select
                                                 value={row.projectId}
                                                 onChange={(e) => handleRowChange(row.id, 'projectId', e.target.value)}
-                                                className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 hover:border-gray-400 focus:border-indigo-500 transition-colors py-1 cursor-pointer"
+                                                className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 hover:border-gray-400 focus:border-purple-500 transition-colors py-1 cursor-pointer"
                                             >
                                                 <option value="">Select Project</option>
                                                 {projects?.map((p: any) => (
@@ -508,8 +508,8 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                         disabled={isReadOnly}
                                                         className={cn(
                                                             "w-full text-center py-2 rounded-lg text-sm font-bold outline-none border border-transparent transition-all",
-                                                            (val && val > 0) ? "bg-white shadow-sm border-gray-100 text-indigo-600" :
-                                                                (isWeekOff ? "bg-transparent text-red-300 placeholder:text-red-200" : "bg-gray-50/50 text-gray-400 hover:bg-white hover:shadow-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20")
+                                                            (val && val > 0) ? "bg-white shadow-sm border-gray-100 text-purple-600" :
+                                                                (isWeekOff ? "bg-transparent text-red-300 placeholder:text-red-200" : "bg-gray-50/50 text-gray-400 hover:bg-white hover:shadow-sm focus:bg-white focus:ring-2 focus:ring-purple-500/20")
                                                         )}
                                                         placeholder="-"
                                                     />
@@ -543,7 +543,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                             <div className="mt-4">
                                 <button
                                     onClick={handleAddRow}
-                                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                                    className="flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors"
                                 >
                                     <Plus size={16} />
                                     ADD NEW LINE
@@ -583,7 +583,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     </div>
                                 );
                             })}
-                            <div className="w-16 text-center text-sm font-black text-indigo-600 tabular-nums self-center">
+                            <div className="w-16 text-center text-sm font-black text-purple-600 tabular-nums self-center">
                                 {rows.reduce((acc, r) => acc + Object.values(r.hours).reduce((a, b) => a + b, 0), 0).toFixed(1)}
                             </div>
                             <div className="w-8"></div>
@@ -624,7 +624,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                 <Button
                                     onClick={() => handleSubmit(false)}
                                     isLoading={isSubmitting}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px]"
                                 >
                                     <Save size={16} className="mr-2" />
                                     {timesheetStatus === 'SUBMITTED' ? 'SAVE AS DRAFT' : 'SAVE DRAFT'}

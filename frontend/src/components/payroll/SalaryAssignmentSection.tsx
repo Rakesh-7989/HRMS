@@ -108,9 +108,9 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                         </div>
                     </div>
                     {currentSalary && (
-                        <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl ring-1 ring-emerald-500/20">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 dark:bg-purple-500/10 rounded-xl ring-1 ring-purple-500/20">
+                            <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                            <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">
                                 Active: {currentSalary.structure_name}
                             </span>
                         </div>
@@ -180,7 +180,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                 {breakdown && (
                     <div className="p-8 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 animate-fadeIn">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-violet-50 dark:bg-violet-500/10 text-violet-600 rounded-lg flex items-center justify-center">
                                 <Calculator size={18} />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">Breakdown Verification</h4>
@@ -195,9 +195,9 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                 <p className="text-[9px] font-bold text-red-500/50 dark:text-red-400/50 uppercase tracking-widest mb-1.5">Monthly Deductions</p>
                                 <p className="text-lg font-black text-red-600 dark:text-red-400">{formatCurrency(breakdown.total_deductions)}</p>
                             </div>
-                            <div className="p-5 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-2xl ring-1 ring-emerald-500/10 shadow-sm border border-emerald-100/50 dark:border-emerald-900/20">
-                                <p className="text-[9px] font-bold text-emerald-500/50 dark:text-emerald-400/50 uppercase tracking-widest mb-1.5">Net Take-Home</p>
-                                <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(breakdown.monthly_net)}</p>
+                            <div className="p-5 bg-purple-50/50 dark:bg-purple-500/5 rounded-2xl ring-1 ring-purple-500/10 shadow-sm border border-purple-100/50 dark:border-purple-900/20">
+                                <p className="text-[9px] font-bold text-purple-500/50 dark:text-purple-400/50 uppercase tracking-widest mb-1.5">Net Take-Home</p>
+                                <p className="text-lg font-black text-purple-600 dark:text-purple-400">{formatCurrency(breakdown.monthly_net)}</p>
                             </div>
                             <div className="p-5 bg-primary/5 rounded-2xl ring-1 ring-primary/10 shadow-sm border border-primary/5">
                                 <p className="text-[9px] font-bold text-primary/50 dark:text-primary/50 uppercase tracking-widest mb-1.5">Annual Valuation</p>
@@ -241,29 +241,29 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
 
                 {currentSalary && !breakdown && (
                     <div className="p-8 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                        <div className="flex items-start gap-5 p-6 bg-blue-50/30 dark:bg-blue-500/5 rounded-3xl ring-1 ring-blue-500/10 border border-blue-100/30 dark:border-blue-900/20">
+                        <div className="flex items-start gap-5 p-6 bg-violet-50/30 dark:bg-violet-500/5 rounded-3xl ring-1 ring-blue-500/10 border border-violet-100/30 dark:border-violet-900/20">
                             <div className="w-10 h-10 bg-white dark:bg-gray-950 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                <TrendingUp className="text-blue-600" size={20} />
+                                <TrendingUp className="text-violet-600" size={20} />
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <p className="text-[10px] font-black text-blue-900/50 dark:text-blue-400/50 uppercase tracking-[0.2em]">Active Financial Status</p>
-                                    <div className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase tracking-tighter rounded">Current Contract</div>
+                                    <p className="text-[10px] font-black text-violet-900/50 dark:text-violet-400/50 uppercase tracking-[0.2em]">Active Financial Status</p>
+                                    <div className="px-2 py-0.5 bg-violet-600 text-white text-[8px] font-black uppercase tracking-tighter rounded">Current Contract</div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                                     <div>
-                                        <p className="text-[9px] font-bold text-blue-700/50 dark:text-blue-400/40 uppercase tracking-widest mb-1.5">Monthly Liquidity</p>
-                                        <p className="text-lg font-black text-blue-900 dark:text-blue-200">{formatCurrency(currentSalary.summary?.monthly_net || 0)}</p>
+                                        <p className="text-[9px] font-bold text-violet-700/50 dark:text-violet-400/40 uppercase tracking-widest mb-1.5">Monthly Liquidity</p>
+                                        <p className="text-lg font-black text-violet-900 dark:text-violet-200">{formatCurrency(currentSalary.summary?.monthly_net || 0)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-blue-700/50 dark:text-blue-400/40 uppercase tracking-widest mb-1.5">Gross Valuation (Annual)</p>
-                                        <p className="text-lg font-black text-blue-900 dark:text-blue-200">{formatCurrency(currentSalary.annual_ctc)}</p>
+                                        <p className="text-[9px] font-bold text-violet-700/50 dark:text-violet-400/40 uppercase tracking-widest mb-1.5">Gross Valuation (Annual)</p>
+                                        <p className="text-lg font-black text-violet-900 dark:text-violet-200">{formatCurrency(currentSalary.annual_ctc)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-blue-700/50 dark:text-blue-400/40 uppercase tracking-widest mb-1.5">Effective Timeline</p>
-                                        <p className="text-sm font-black text-blue-900 dark:text-blue-200 uppercase tracking-widest">{format(new Date(currentSalary.effective_from), 'MMM dd, yyyy')}</p>
+                                        <p className="text-[9px] font-bold text-violet-700/50 dark:text-violet-400/40 uppercase tracking-widest mb-1.5">Effective Timeline</p>
+                                        <p className="text-sm font-black text-violet-900 dark:text-violet-200 uppercase tracking-widest">{format(new Date(currentSalary.effective_from), 'MMM dd, yyyy')}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[8px] font-black text-blue-600/50 dark:text-blue-400/30 uppercase tracking-[0.2em] self-end">
+                                    <div className="flex items-center gap-2 text-[8px] font-black text-violet-600/50 dark:text-violet-400/30 uppercase tracking-[0.2em] self-end">
                                         <Info size={12} strokeWidth={3} /> Verified by System
                                     </div>
                                 </div>
@@ -317,7 +317,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                         </TableCell>
                                         <TableCell className="px-8 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                                                 <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">{h.structure_name}</span>
                                             </div>
                                         </TableCell>
@@ -326,7 +326,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                         </TableCell>
                                         <TableCell className="px-8 py-4 text-right">
                                             {h.is_current ? (
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 uppercase tracking-tight ring-1 ring-emerald-500/20">
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-purple-50 dark:bg-purple-500/10 text-purple-600 uppercase tracking-tight ring-1 ring-purple-500/20">
                                                     <Check size={10} className="mr-1 stroke-[3px]" /> Currently Active
                                                 </span>
                                             ) : (

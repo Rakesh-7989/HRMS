@@ -88,7 +88,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                         >
                             <div className="flex items-center gap-4">
                                 <button
-                                    className="text-gray-400 hover:text-indigo-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+                                    className="text-gray-400 hover:text-purple-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         toggleWeek(week.weekStart);
@@ -98,7 +98,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                                 </button>
 
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600">
+                                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600">
                                         <Calendar size={16} />
                                     </div>
                                     <div className="flex flex-col">
@@ -122,7 +122,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                                 <div className={cn(
                                     "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border min-w-[100px] text-center",
                                     week.status === 'APPROVED' ? "bg-green-50 text-green-600 border-green-200" :
-                                        week.status === 'SUBMITTED' ? "bg-blue-50 text-blue-600 border-blue-200" :
+                                        week.status === 'SUBMITTED' ? "bg-violet-50 text-violet-600 border-violet-200" :
                                             week.status === 'REJECTED' ? "bg-red-50 text-red-600 border-red-200" :
                                                 "bg-gray-50 text-gray-500 border-gray-200"
                                 )}>

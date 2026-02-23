@@ -18,6 +18,7 @@ const expensesRouter = require('./Expenses/expenses.router');
 const loansRouter = require('./loans/loans.router');
 const merchantsRouter = require('./Merchants/Merchants.router');
 const taxRouter = require('./tax/tax.router');
+const arrearsRouter = require('./arrears/arrears.router');
 
 // Import services for summary data
 const payrunService = require('./payrun/payrun.service');
@@ -39,6 +40,7 @@ router.use('/expenses', expensesRouter);
 router.use('/loans', loansRouter);
 router.use('/merchants', merchantsRouter);
 router.use('/tax', taxRouter);
+router.use('/arrears', arrearsRouter);
 
 // ===================================================================
 // PAYROLL SUMMARY (Dashboard Data)

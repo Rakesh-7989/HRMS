@@ -78,7 +78,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
                     <div className="flex items-center gap-4">
                         {/* Colored accent bar */}
                         <motion.div
-                            className="hidden sm:block h-12 w-1.5 rounded-full bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500"
+                            className="hidden sm:block h-12 w-1.5 rounded-full bg-gradient-to-b from-purple-500 via-purple-500 to-pink-500"
                             initial={{ scaleY: 0 }}
                             animate={{ scaleY: 1 }}
                             transition={{ delay: 0.2, duration: 0.4 }}
@@ -91,7 +91,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
                                 >
-                                    <Sparkles size={16} className="text-amber-500" />
+                                    <Sparkles size={16} className="text-fuchsia-500" />
                                 </motion.span>
                                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     {getGreeting()}
@@ -100,7 +100,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
 
                             <h1 className="text-xl md:text-2xl font-bold tracking-tight">
                                 Welcome back,{' '}
-                                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                                <span className="bg-gradient-to-r from-purple-600 via-purple-600 to-pink-600 dark:from-purple-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                                     {user?.first_name || 'User'}
                                 </span>
                             </h1>
@@ -131,7 +131,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
                             "shadow-sm backdrop-blur-sm"
                         )}>
                             <div className="flex items-center gap-2">
-                                <Calendar size={14} className="text-indigo-500 dark:text-indigo-400" />
+                                <Calendar size={14} className="text-purple-500 dark:text-purple-400" />
                                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                     {format(date, 'EEEE, MMM dd')}
                                 </p>
@@ -148,7 +148,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
 
                             {/* Live indicator */}
                             <motion.div
-                                className="h-2 w-2 rounded-full bg-emerald-500"
+                                className="h-2 w-2 rounded-full bg-purple-500"
                                 animate={{
                                     scale: [1, 1.2, 1],
                                     opacity: [1, 0.7, 1],

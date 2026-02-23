@@ -209,11 +209,11 @@ const PeopleEventsCard: React.FC<Props> = ({
         icon={Gift}
         accentColor={{
           headerBg: 'bg-gradient-to-r from-amber-50/80 to-transparent dark:from-amber-500/5',
-          text: 'text-amber-500 dark:text-amber-400',
-          iconBg: 'bg-amber-100 dark:bg-amber-500/20',
-          avatarBg: 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/10',
-          badgeBorder: 'border-amber-200 dark:border-amber-500/30',
-          emptyBg: 'bg-amber-50 dark:bg-amber-500/10',
+          text: 'text-fuchsia-500 dark:text-fuchsia-400',
+          iconBg: 'bg-fuchsia-100 dark:bg-fuchsia-500/20',
+          avatarBg: 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-violet-500/10',
+          badgeBorder: 'border-fuchsia-200 dark:border-fuchsia-500/30',
+          emptyBg: 'bg-fuchsia-50 dark:bg-fuchsia-500/10',
         }}
         items={processedAnniversaries}
         emptyText="No Anniversaries"
@@ -223,11 +223,11 @@ const PeopleEventsCard: React.FC<Props> = ({
         icon={UserPlus}
         accentColor={{
           headerBg: 'bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-500/5',
-          text: 'text-blue-500 dark:text-blue-400',
-          iconBg: 'bg-blue-100 dark:bg-blue-500/20',
+          text: 'text-violet-500 dark:text-violet-400',
+          iconBg: 'bg-violet-100 dark:bg-violet-500/20',
           avatarBg: 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/10',
-          badgeBorder: 'border-blue-200 dark:border-blue-500/30',
-          emptyBg: 'bg-blue-50 dark:bg-blue-500/10',
+          badgeBorder: 'border-violet-200 dark:border-violet-500/30',
+          emptyBg: 'bg-violet-50 dark:bg-violet-500/10',
         }}
         items={processedJoiners}
         emptyText="No New Joiners"

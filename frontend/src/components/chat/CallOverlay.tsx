@@ -72,7 +72,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare }: 
     return (
         <div className={cn(
             "relative w-full h-full bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 transition-all duration-500 shadow-2xl group",
-            isTalking ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.3)]" : "border-white/5"
+            isTalking ? "border-purple-500 ring-4 ring-purple-500/20 shadow-[0_0_40px_rgba(16,185,129,0.3)]" : "border-white/5"
         )}>
             <video
                 ref={ref}
@@ -115,7 +115,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare }: 
 
             {/* User Label */}
             <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-2xl text-[12px] font-bold text-white/90 flex items-center gap-3 border border-white/10 shadow-lg group-hover:bottom-8 transition-all">
-                <div className={cn("w-2.5 h-2.5 rounded-full shadow-lg", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
+                <div className={cn("w-2.5 h-2.5 rounded-full shadow-lg", isTalking ? "bg-purple-500 animate-pulse" : "bg-gray-500")} />
                 <div className="flex flex-col">
                     <span className="leading-tight text-white">{name}</span>
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{participant?.designation || 'Participant'}</span>
@@ -196,7 +196,7 @@ export const CallOverlay: React.FC = () => {
                 <div className="flex items-center gap-4 pl-4 pr-2 py-2">
                     <div className="relative">
                         <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white/10 overflow-hidden">
+                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white/10 overflow-hidden">
                             {incomingCall.callerName?.charAt(0) || '?'}
                         </div>
                     </div>
@@ -212,7 +212,7 @@ export const CallOverlay: React.FC = () => {
                     <button onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-rose-500/20" title="Decline">
                         <PhoneOff size={20} />
                     </button>
-                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95">
+                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-purple-500 text-white hover:bg-purple-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-lg shadow-purple-500/20 active:scale-95">
                         <Phone size={18} /> ACCEPT
                     </button>
                 </div>
@@ -224,7 +224,7 @@ export const CallOverlay: React.FC = () => {
         return (
             <>
                 {incomingBar}
-                <div className="fixed bottom-8 right-8 z-[110] w-80 h-48 bg-gray-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden border-2 border-primary/40 group animate-in slide-in-from-bottom-10 duration-500">
+                <div className="fixed bottom-8 right-8 z-[110] w-80 h-48 bg-gray-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden border-2 border-primary/40 group animate-in slide-in-from-bottom-10 duration-500 print:hidden">
                     <div className="absolute inset-0">
                         {remoteUserIds.length > 0 ? (
                             <RemoteVideo
@@ -374,7 +374,7 @@ export const CallOverlay: React.FC = () => {
                                 onClick={toggleScreenShare}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
-                                    isScreenSharing ? "bg-emerald-500 text-white shadow-2xl shadow-emerald-500/30" : "text-indigo-400 hover:bg-white/10"
+                                    isScreenSharing ? "bg-purple-500 text-white shadow-2xl shadow-purple-500/30" : "text-purple-400 hover:bg-white/10"
                                 )}
                                 title="Share Screen"
                             >
@@ -407,10 +407,10 @@ export const CallOverlay: React.FC = () => {
                     {localStream && (
                         <div className={cn(
                             "absolute transition-all duration-1000 shadow-2xl z-30 group overflow-hidden bg-gray-950",
-                            isScreenSharing ? "top-12 right-12 w-96 aspect-video border-4 border-emerald-500 rounded-3xl" : "top-12 right-12 w-80 aspect-video border-2 border-white/10 rounded-[2.5rem]"
+                            isScreenSharing ? "top-12 right-12 w-96 aspect-video border-4 border-purple-500 rounded-3xl" : "top-12 right-12 w-80 aspect-video border-2 border-white/10 rounded-[2.5rem]"
                         )}>
                             {isScreenSharing && (
-                                <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-xl shadow-emerald-500/20">
+                                <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-purple-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-xl shadow-purple-500/20">
                                     <Monitor size={16} /> YOU ARE SHARING
                                 </div>
                             )}
@@ -446,7 +446,7 @@ export const CallOverlay: React.FC = () => {
                                 You ({currentUser?.job_title || 'Host'})
                             </div>
                             {speakingUsers.has(currentUser?.id || '') && (
-                                <div className="absolute top-5 right-5 w-4 h-4 bg-emerald-500 rounded-full animate-ping z-40" />
+                                <div className="absolute top-5 right-5 w-4 h-4 bg-purple-500 rounded-full animate-ping z-40" />
                             )}
                         </div>
                     )}
@@ -478,7 +478,7 @@ export const CallOverlay: React.FC = () => {
                                         {filteredContacts.map(contact => (
                                             <div key={contact.id} className="flex items-center justify-between p-6 hover:bg-white/5 rounded-[2.5rem] transition-all group border border-transparent hover:border-white/5">
                                                 <div className="flex items-center gap-6">
-                                                    <div className="w-18 h-18 rounded-[1.5rem] bg-gradient-to-tr from-primary/20 to-indigo-500/20 flex items-center justify-center text-primary font-black text-3xl border border-primary/20 shadow-inner overflow-hidden">
+                                                    <div className="w-18 h-18 rounded-[1.5rem] bg-gradient-to-tr from-primary/20 to-purple-500/20 flex items-center justify-center text-primary font-black text-3xl border border-primary/20 shadow-inner overflow-hidden">
                                                         {contact.profile_photo_url ? (
                                                             <img src={contact.profile_photo_url} alt="" className="w-full h-full object-cover" />
                                                         ) : (

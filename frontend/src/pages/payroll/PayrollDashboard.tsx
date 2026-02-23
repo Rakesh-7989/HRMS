@@ -60,6 +60,10 @@ interface DashboardStats {
         pendingLeaves: number;
         missingStructures: number;
     };
+    arrearsSummary?: {
+        pendingCount: number;
+        pendingAmount: number;
+    };
     recentHistory: Array<{
         id: string;
         month: number;
@@ -79,10 +83,10 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
 const formatCurrency = (val: number) => {
-    if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)}Cr`;
-    if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
     if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
-    return `₹${val.toFixed(0)}`;
+    return `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // Reusable card class for consistent light/dark theming
@@ -183,11 +187,15 @@ export const PayrollDashboard = () => {
                         { label: 'Total Cost to Company', value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'from-indigo-500 to-blue-600', sub: `${stats?.costSummary.processedCount || 0} employees` },
                         { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: DollarSign, gradient: 'from-emerald-500 to-teal-600', sub: 'Bank transfer amount' },
                         { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: Receipt, gradient: 'from-amber-500 to-orange-600', sub: 'PF + ESI + PT + TDS' },
+                        { label: 'Pending Arrears', value: stats?.arrearsSummary?.pendingAmount || 0, icon: Clock, gradient: 'from-fuchsia-500 to-purple-600', sub: `${stats?.arrearsSummary?.pendingCount || 0} employees`, path: '/payroll/arrears' },
                         { label: 'Tax Deducted (TDS)', value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'from-rose-500 to-pink-600', sub: 'Income tax withheld' }
                     ].map((card, idx) => (
                         <div
                             key={idx}
-                            className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${card.gradient} p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group`}
+                            onClick={() => card.path && navigate(card.path)}
+                            className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${card.gradient} p-5 text-white shadow-lg 
+                                ${card.path ? 'cursor-pointer hover:shadow-2xl hover:-translate-y-2' : 'hover:shadow-xl hover:-translate-y-1'} 
+                                transition-all duration-300 group`}
                         >
                             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 group-hover:scale-125 transition-transform duration-500" />
                             <div className="relative z-10">
@@ -196,7 +204,10 @@ export const PayrollDashboard = () => {
                                     <span className="text-sm font-medium opacity-90">{card.label}</span>
                                 </div>
                                 <div className="text-2xl font-bold tracking-tight">{formatCurrency(card.value)}</div>
-                                <p className="text-xs mt-1 opacity-75">{card.sub}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                    <p className="text-xs opacity-75">{card.sub}</p>
+                                    {card.path && <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />}
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -390,6 +401,7 @@ export const PayrollDashboard = () => {
                                     )}
                                 </div>
                                 <Button
+                                    size="sm"
                                     onClick={handleStartProcess}
                                     className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-indigo-500/40"
                                 >

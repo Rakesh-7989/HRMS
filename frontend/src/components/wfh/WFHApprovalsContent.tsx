@@ -221,13 +221,13 @@ export const WFHApprovalsContent: React.FC = () => {
                                     </div>
                                 )}
 
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                                <p className="text-sm text-blue-900 dark:text-blue-300">
+                            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-4">
+                                <p className="text-sm text-violet-900 dark:text-violet-300">
                                     <strong>{selectedRequest.first_name} {selectedRequest.last_name}</strong> has
                                     requested to work from home on{' '}
                                     <strong>{format(new Date(selectedRequest.request_date), 'MMMM dd, yyyy')}</strong>
                                 </p>
-                                <p className="text-xs text-blue-700 dark:text-blue-400 mt-2">
+                                <p className="text-xs text-violet-700 dark:text-violet-400 mt-2">
                                     Reason: {selectedRequest.reason}
                                 </p>
                             </div>

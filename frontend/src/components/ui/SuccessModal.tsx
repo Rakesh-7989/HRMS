@@ -16,9 +16,9 @@ interface SuccessModalProps {
 const iconConfig = {
     success: {
         icon: CheckCircle,
-        bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
-        iconColor: 'text-emerald-500',
-        ringColor: 'ring-emerald-500/20',
+        bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+        iconColor: 'text-purple-500',
+        ringColor: 'ring-purple-500/20',
     },
     error: {
         icon: XCircle,
@@ -28,23 +28,23 @@ const iconConfig = {
     },
     warning: {
         icon: AlertCircle,
-        bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-        iconColor: 'text-amber-500',
+        bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
+        iconColor: 'text-fuchsia-500',
         ringColor: 'ring-amber-500/20',
     },
     info: {
         icon: Info,
-        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-        iconColor: 'text-blue-500',
+        bgColor: 'bg-violet-100 dark:bg-violet-900/30',
+        iconColor: 'text-violet-500',
         ringColor: 'ring-blue-500/20',
     },
 };
 
 const buttonConfig = {
-    success: 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-500/50',
+    success: 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-500/50',
     error: 'bg-red-500 hover:bg-red-600 focus:ring-red-500/50',
-    warning: 'bg-amber-500 hover:bg-amber-600 focus:ring-amber-500/50',
-    info: 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500/50',
+    warning: 'bg-fuchsia-500 hover:bg-fuchsia-600 focus:ring-amber-500/50',
+    info: 'bg-violet-500 hover:bg-violet-600 focus:ring-blue-500/50',
 };
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -89,8 +89,8 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                     >
                         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-8 pointer-events-auto relative overflow-hidden">
                             {/* Decorative background circles */}
-                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full" />
-                            <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-full" />
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full" />
+                            <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-full" />
 
                             {/* Close button */}
                             <button

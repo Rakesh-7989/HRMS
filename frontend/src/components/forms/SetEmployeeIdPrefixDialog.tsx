@@ -82,14 +82,14 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Info Banner */}
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg">
                         <div className="flex gap-2">
-                            <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <Info className="h-5 w-5 text-violet-500 mt-0.5 flex-shrink-0" />
                             <div>
-                                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                                <p className="text-sm text-violet-700 dark:text-violet-300 font-medium">
                                     One-time Configuration
                                 </p>
-                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">
                                     Employee IDs will auto-increment (AM001, AM002, AM003...)
                                 </p>
                             </div>
@@ -142,9 +142,9 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                     </div>
 
                     {/* Warning */}
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                    <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-900/20 border border-fuchsia-200 dark:border-fuchsia-800 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-fuchsia-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-fuchsia-700 dark:text-fuchsia-400">
                             <strong>Warning:</strong> Prefix cannot be changed after setting.
                         </p>
                     </div>

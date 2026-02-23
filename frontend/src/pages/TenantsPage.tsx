@@ -322,11 +322,11 @@ export const TenantsPage: React.FC = () => {
                       <td className="py-3 px-4 text-sm">
                         <div className="flex flex-col gap-1">
                           <span className={`px-2 py-1 rounded text-xs font-medium inline-block w-fit ${tenant.subscription_status === 'TRIAL'
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                            ? 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:text-fuchsia-400'
                             : tenant.subscription_status === 'PENDING_PAYMENT'
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                               : tenant.subscription_status === 'ACTIVE'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400'
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
                             {tenant.subscription_status === 'PENDING_PAYMENT' ? 'Pending Payment' : tenant.subscription_status || 'N/A'}
@@ -362,7 +362,7 @@ export const TenantsPage: React.FC = () => {
                           {tenant.plan_name === 'No Plan' ? (
                             <Button
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs"
+                              className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs"
                               onClick={() => {
                                 setConfirmConfig({
                                   isOpen: true,
@@ -382,7 +382,7 @@ export const TenantsPage: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-amber-500 text-amber-600 hover:bg-amber-50 h-8 text-xs"
+                                className="border-fuchsia-500 text-fuchsia-600 hover:bg-fuchsia-50 h-8 text-xs"
                                 onClick={() => {
                                   setConfirmConfig({
                                     isOpen: true,

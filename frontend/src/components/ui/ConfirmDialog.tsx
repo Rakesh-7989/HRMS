@@ -48,7 +48,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             case 'destructive':
                 return <AlertCircle className="text-red-500" size={24} />;
             case 'info':
-                return <Info className="text-blue-500" size={24} />;
+                return <Info className="text-violet-500" size={24} />;
             case 'prompt':
                 return <HelpCircle className="text-primary" size={24} />;
             default:
@@ -94,7 +94,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                                     <div className={cn(
                                         "p-3 rounded-xl shrink-0",
                                         type === 'destructive' ? "bg-red-50 dark:bg-red-900/20" :
-                                            type === 'info' ? "bg-blue-50 dark:bg-blue-900/20" :
+                                            type === 'info' ? "bg-violet-50 dark:bg-violet-900/20" :
                                                 "bg-primary/10 dark:bg-primary/20"
                                     )}>
                                         {getIcon()}

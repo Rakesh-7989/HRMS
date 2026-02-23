@@ -191,7 +191,7 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
             }}
             className="relative"
           >
-            <div className="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full scale-150" />
+            <div className="absolute inset-0 bg-fuchsia-500/20 blur-2xl rounded-full scale-150" />
             <IndianRupee size={64} className={cn("relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]", colorConfig.text)} />
           </motion.div>
           <div className="flex gap-2 mt-8">
@@ -388,7 +388,7 @@ const keyFeatures = [
     id: 'geofencing',
     title: 'Geo-Fencing Attendance',
     icon: MapPin,
-    color: 'emerald',
+    color: 'purple',
     points: [
       'Location-based check-in and check-out',
       'Prevents attendance fraud with real-time geo validation',
@@ -518,7 +518,7 @@ const keyFeatures = [
     id: 'shifts',
     title: 'Shift Planning',
     icon: Users,
-    color: 'emerald',
+    color: 'purple',
     points: [
       'Dynamic roster management',
       'Shift swap & coverage requests',
@@ -570,7 +570,7 @@ const testimonials = [
   {
     name: 'Ananya Sharma',
     role: 'Head of People, Fintech Co.',
-    avatarColor: 'bg-blue-500',
+    avatarColor: 'bg-violet-500',
     quote: 'WellZo HRMS helped us centralize attendance, leave, and payroll. Our HR team finally has time for people, not paperwork.',
   },
   {
@@ -594,7 +594,7 @@ const roles = [
     icon: Shield,
     description: 'Complete control over organization settings, payroll configuration, and high-level reports.',
     features: ['System Configuration', 'Role Management', 'Advanced Analytics'],
-    color: 'from-purple-500/20 to-indigo-500/10'
+    color: 'from-purple-500/20 to-purple-500/10'
   },
   {
     title: 'Manager',
@@ -608,7 +608,7 @@ const roles = [
     icon: UserCheck,
     description: 'Easy-to-use self-service portal for clocking in, requesting leave, and viewing payslips.',
     features: ['Self Service', 'Leave Requests', 'Document Access'],
-    color: 'from-emerald-500/20 to-teal-500/10'
+    color: 'from-purple-500/20 to-teal-500/10'
   }
 ];
 
@@ -1036,12 +1036,11 @@ export const LandingPage: React.FC = () => {
                 : (feature as any).isLarge;
 
               const colorConfig = {
-                emerald: { text: 'text-emerald-500', dot: 'bg-emerald-500/40', glow: 'bg-emerald-500', gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent' },
-                blue: { text: 'text-blue-500', dot: 'bg-blue-500/40', glow: 'bg-blue-500', gradient: 'from-blue-500/20 via-blue-500/5 to-transparent' },
                 purple: { text: 'text-purple-500', dot: 'bg-purple-500/40', glow: 'bg-purple-500', gradient: 'from-purple-500/20 via-purple-500/5 to-transparent' },
-                amber: { text: 'text-amber-500', dot: 'bg-amber-500/40', glow: 'bg-amber-500', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
+                blue: { text: 'text-violet-500', dot: 'bg-violet-500/40', glow: 'bg-violet-500', gradient: 'from-blue-500/20 via-blue-500/5 to-transparent' },
+                amber: { text: 'text-fuchsia-500', dot: 'bg-fuchsia-500/40', glow: 'bg-fuchsia-500', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
                 rose: { text: 'text-rose-500', dot: 'bg-rose-500/40', glow: 'bg-rose-500', gradient: 'from-rose-500/20 via-rose-500/5 to-transparent' },
-                indigo: { text: 'text-indigo-500', dot: 'bg-indigo-500/40', glow: 'bg-indigo-500', gradient: 'from-indigo-500/20 via-indigo-500/5 to-transparent' },
+                indigo: { text: 'text-purple-500', dot: 'bg-purple-500/40', glow: 'bg-purple-500', gradient: 'from-purple-500/20 via-purple-500/5 to-transparent' },
                 slate: { text: 'text-slate-500', dot: 'bg-slate-500/40', glow: 'bg-slate-500', gradient: 'from-slate-500/20 via-slate-500/5 to-transparent' },
               }[feature.color as string] || { text: 'text-primary', dot: 'bg-primary/40', glow: 'bg-primary', gradient: 'from-primary/20 via-primary/5 to-transparent' };
 
@@ -1246,7 +1245,7 @@ export const LandingPage: React.FC = () => {
                   )}
                 >
                   Annual
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/20">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-500 border border-purple-500/20">
                     -20%
                   </span>
                 </button>
@@ -1602,11 +1601,11 @@ export const LandingPage: React.FC = () => {
                 </li>
                 <li>
                   <div className="flex items-center gap-4 group">
-                    <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shadow-sm">
+                    <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500 shadow-sm">
                       <Phone size={20} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-emerald-500 tracking-widest uppercase mb-0.5 opacity-60">Call Sales</p>
+                      <p className="text-[10px] font-bold text-purple-500 tracking-widest uppercase mb-0.5 opacity-60">Call Sales</p>
                       <p className="text-base text-gray-900 dark:text-white/90 font-semibold">+91 7842238773</p>
                     </div>
                   </div>

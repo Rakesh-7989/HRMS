@@ -34,6 +34,9 @@ import { DesignationsPage } from '@/pages/DesignationsPage';
 import Payroll from '@/pages/Payroll';
 import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
 import { RiverProcess } from '@/pages/payroll/RiverProcess';
+import FnFSettlementsPage from '@/pages/payroll/FnFSettlementsPage';
+import FnFSettlementDetailsPage from '@/pages/payroll/FnFSettlementDetailsPage';
+import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
 import { AssetsPage } from '@/pages/AssetsPage';
 import { AddAssetPage } from '@/pages/AddAssetPage';
 import { AssetDetailsPage } from '@/pages/AssetDetailsPage';
@@ -535,7 +538,7 @@ const router = createBrowserRouter(
       />
       {/* Payroll Route */}
       <Route
-        path="/Payroll"
+        path="/payroll"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER', 'SUPER_ADMIN']}>
             <Payroll />
@@ -557,6 +560,32 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
             <RiverProcess />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/fnf"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+            <FnFSettlementsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/fnf/:id"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+            <FnFSettlementDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/arrears"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+            <DashboardLayout title="Arrears Management">
+              <ArrearsPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
