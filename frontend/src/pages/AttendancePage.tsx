@@ -8,36 +8,34 @@ import { MyAttendanceContent } from '@/components/attendance/MyAttendanceContent
 import { GeoFencingSettingsContent } from '@/components/attendance/GeoFencingSettingsContent';
 import { UnifiedBreaksContent } from '@/components/attendance/UnifiedBreaksContent';
 import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApprovalsContent';
-
-const ATTENDANCE_TABS = [
-    { id: 'reports', label: 'Reports & Analytics', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'daily', label: 'Daily Log', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'history', label: 'My History', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'breaks', label: 'Breaks', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'regularization', label: 'Regularization', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  //{ id: 'my-wfh', label: 'My WFH Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] }, // Merged
-  { id: 'approvals', label: 'Approvals & Requests', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  //{ id: 'team', label: 'Team & Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
-  //{ id: 'wfh-approvals', label: 'WFH Approvals', roles: ['MANAGER', 'HR', 'ADMIN'] }, // Merged
-
-  { id: 'geofence', label: 'Geo-Fencing', roles: ['HR', 'ADMIN'] },
-] as const;
+import { useTranslation } from 'react-i18next';
 
 export const AttendancePage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>('daily');
+
+  const ATTENDANCE_TABS = [
+    { id: 'reports', label: t('attendance.tabs.reports'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'daily', label: t('attendance.tabs.daily'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'history', label: t('attendance.tabs.history'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'breaks', label: t('attendance.tabs.breaks'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'regularization', label: t('attendance.tabs.regularization'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'approvals', label: t('attendance.tabs.approvals'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'geofence', label: t('attendance.tabs.geofence'), roles: ['HR', 'ADMIN'] },
+  ] as const;
 
   return (
     <DashboardLayout
-      title="Attendance"
+      title={t('attendance.title')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Attendance' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+        { label: t('common.breadcrumbs.attendance') },
       ]}
     >
       <div className="space-y-6">
         <div>
-          <p className="text-gray-500 dark:text-gray-400">Manage your daily attendance and view reports.</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('attendance.manageDescription')}</p>
         </div>
 
         {/* ===== CATEGORY CONTROLS ===== */}

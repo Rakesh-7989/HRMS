@@ -10,11 +10,14 @@ import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const NavbarClock: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const { alert: showAlert } = useConfirm();
+    const { alert: showAlert, confirm } = useConfirm();
+    const { t } = useTranslation();
+
     const [currentTimer, setCurrentTimer] = useState<number>(0);
     const [breakTimer, setBreakTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -209,6 +212,16 @@ export const NavbarClock: React.FC = () => {
     };
 
     const handleClockOut = async () => {
+        const isConfirmed = await confirm({
+            title: 'Confirm Clock Out',
+            message: 'Are you sure you want to clock out now? This will end your current working session.',
+            confirmText: 'Clock Out',
+            cancelText: 'Cancel',
+            type: 'destructive'
+        });
+
+        if (!isConfirmed) return;
+
         if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
@@ -265,7 +278,7 @@ export const NavbarClock: React.FC = () => {
         return (
             <div className="flex items-center mr-2">
                 <Button variant="outline" className="h-9 w-auto gap-2 border-red-200 bg-red-50 text-red-600">
-                    <span className="text-xs">Unavailable</span>
+                    <span className="text-xs">{t('attendance.unavailable')}</span>
                 </Button>
             </div>
         );
@@ -282,7 +295,7 @@ export const NavbarClock: React.FC = () => {
                     className="h-9 gap-2 border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-gray-500 cursor-not-allowed"
                 >
                     <Clock size={16} />
-                    <span className="hidden sm:inline">Clocked Out</span>
+                    <span className="hidden sm:inline">{t('attendance.clockedOut')}</span>
                 </Button>
             </div>
         );
@@ -298,7 +311,7 @@ export const NavbarClock: React.FC = () => {
                     className="h-9 gap-2 px-3 sm:px-4 border-green-200 hover:bg-green-50 text-green-700 hover:text-green-800 dark:border-green-900/30 dark:hover:bg-green-900/20 dark:text-green-400"
                 >
                     {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}
-                    <span className="hidden sm:inline">Clock In</span>
+                    <span className="hidden sm:inline">{t('attendance.clockIn')}</span>
                 </Button>
             )}
 
@@ -306,7 +319,7 @@ export const NavbarClock: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <div className="hidden lg:flex flex-col items-end mr-2 leading-none">
                         <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
-                            Session
+                            {t('attendance.session')}
                         </span>
                         <span className="text-sm font-mono font-bold text-gray-700 dark:text-gray-300">
                             {formatDuration(currentTimer)}
@@ -316,7 +329,7 @@ export const NavbarClock: React.FC = () => {
                     {(breakTimer > 0 || activeBreak) && (
                         <div className="hidden lg:flex flex-col items-end mr-2 leading-none">
                             <span className="text-[10px] text-orange-500 uppercase font-semibold tracking-wider">
-                                Break
+                                {t('attendance.break')}
                             </span>
                             <span className="text-sm font-mono font-bold text-orange-600 dark:text-orange-400">
                                 {formatDuration(breakTimer)}
@@ -333,7 +346,7 @@ export const NavbarClock: React.FC = () => {
                             size="sm"
                         >
                             <Coffee size={16} />
-                            <span className="hidden sm:inline">Break Out</span>
+                            <span className="hidden sm:inline">{t('attendance.breakOut')}</span>
                         </Button>
                     ) : (
                         <Button
@@ -344,7 +357,7 @@ export const NavbarClock: React.FC = () => {
                             size="sm"
                         >
                             <Coffee size={16} />
-                            <span className="hidden sm:inline">Break In</span>
+                            <span className="hidden sm:inline">{t('attendance.breakIn')}</span>
                         </Button>
                     )}
 
@@ -357,7 +370,7 @@ export const NavbarClock: React.FC = () => {
                             size="sm"
                         >
                             {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}
-                            <span className="hidden sm:inline">Clock Out</span>
+                            <span className="hidden sm:inline">{t('attendance.clockOut')}</span>
                         </Button>
                     )}
                 </div>

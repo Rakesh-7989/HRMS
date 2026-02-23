@@ -5,11 +5,13 @@ import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
 import api from '@/services/api';
 import toast from 'react-hot-toast';
+import { resolveImageUrl } from '@/utils/image';
 
 interface ParticipantInfo {
     name: string;
     designation: string;
     avatar?: string;
+    status?: 'active' | 'hold';
 }
 
 interface CallInfo {
@@ -18,6 +20,19 @@ interface CallInfo {
     type: 'audio' | 'video';
     callerName: string;
     conversationId?: string;
+}
+
+export interface ChatNotification {
+    messageId: string;
+    conversationId: string;
+    conversationName?: string;
+    conversationType: 'DIRECT' | 'GROUP';
+    senderId: string;
+    senderName: string;
+    senderAvatar?: string;
+    content: string;
+    type: 'TEXT' | 'FILE' | 'IMAGE' | 'CALL';
+    createdAt: string;
 }
 
 interface ChatContextType {
@@ -52,6 +67,20 @@ interface ChatContextType {
     addParticipantToCall: (userId: string, userName: string) => void;
     speakingUsers: Set<string>;
     callDuration: number;
+    chatNotifications: ChatNotification[];
+    dismissChatNotification: (messageId: string) => void;
+    setActiveConversation: (conversationId: string | null) => void;
+    heldCall: { to: string; name: string; type: 'audio' | 'video'; conversationId?: string; isGroup?: boolean } | null;
+    isResuming: boolean;
+    // Presence
+    myStatus: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
+    updateMyStatus: (status: 'available' | 'busy' | 'dnd' | 'away' | 'offline') => void;
+    updateMyStatusMessage: (message: string, expiry: string | null) => void;
+    userStatuses: Record<string, {
+        status: 'available' | 'busy' | 'dnd' | 'away' | 'offline';
+        message?: string;
+        expiry?: string | null;
+    }>;
 }
 
 
@@ -84,6 +113,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set());
     const [totalUnreadCount, setTotalUnreadCount] = useState(0);
     const [typingStatus, setTypingStatus] = useState<Record<string, string[]>>({});
+    const [chatNotifications, setChatNotifications] = useState<ChatNotification[]>([]);
+    const [heldCall, setHeldCall] = useState<any>(null);
+    const [isResuming, setIsResuming] = useState(false);
+    const [myStatus, setMyStatus] = useState<'available' | 'busy' | 'dnd' | 'away' | 'offline'>(
+        (localStorage.getItem('userPresenceStatus') as any) || 'available'
+    );
+    const [userStatuses, setUserStatuses] = useState<Record<string, any>>({});
+    const heldCallRef = useRef<any>(null);
+    useEffect(() => { heldCallRef.current = heldCall; }, [heldCall]);
+    const chatDismissTimerRef = useRef<any>(null);
+    const activeConversationRef = useRef<string | null>(null);
 
     const queryClient = useQueryClient();
     const callStartTime = useRef<number | null>(null);
@@ -100,6 +140,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
     useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
+
+    const updateMyStatus = useCallback((status: 'available' | 'busy' | 'dnd' | 'away' | 'offline') => {
+        setMyStatus(status);
+        localStorage.setItem('userPresenceStatus', status);
+        socketRef.current?.emit('update_manual_status', status);
+    }, []);
 
     const handleMediaError = useCallback((err: any) => {
         console.error("Media access error:", err);
@@ -132,6 +178,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const duration = Math.floor((Date.now() - callStartTime.current) / 1000);
             logCall(activeCallRef.current.conversationId, activeCallRef.current.type, duration, 'ended');
         }
+        updateMyStatus('available');
 
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(t => { t.stop(); t.enabled = false; });
@@ -164,7 +211,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsScreenSharing(false);
         setSpeakingUsers(new Set());
         callStartTime.current = null;
-    }, [logCall]);
+    }, [logCall, updateMyStatus]);
 
     const fetchParticipantInfo = useCallback(async (userId: string) => {
         if (!userId || userId === 'undefined') {
@@ -173,14 +220,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         try {
             const res = await api.get(`/users/${userId}`);
-            const data = res.data.data;
+            const data = res.data.user || res.data.data;
             if (!data) return;
             setCallParticipants(prev => ({
                 ...prev,
                 [userId]: {
-                    name: `${data.first_name || 'User'} ${data.last_name || userId.slice(0, 4)}`,
+                    name: `${data.first_name || 'User'} ${data.last_name || ''}`.trim() || `User ${userId.slice(0, 4)}`,
                     designation: data.job_title || data.role || 'Team Member',
-                    avatar: data.profile_photo_url || data.avatar
+                    avatar: resolveImageUrl(data.profile_photo_url || data.avatar)
                 }
             }));
         } catch (err) {
@@ -258,6 +305,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         s.on('connect', () => {
             setIsConnected(true);
+
+            // Restore user status from local storage
+            const savedStatus = localStorage.getItem('userPresenceStatus');
+            if (savedStatus && savedStatus !== 'available') {
+                s.emit('update_manual_status', savedStatus);
+            }
+
             // Re-join the active call room if we were in a call during disconnect
             if (activeCallRef.current?.conversationId) {
                 s.emit('join_room', activeCallRef.current.conversationId);
@@ -302,10 +356,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.log(`[CallSignal] isInvite: ${isInvite}, isNew Call: ${isNewCallSync}, AlreadyIn: ${isAlreadyInThisCall}`);
 
             if (isNewCallSync && data.from && data.from !== user?.id) {
-                // If we aren't in a call, or we are in a call but this is a DIFFERENT room/group
-                const isAcceptable = !activeCallRef.current || (!isAlreadyInThisCall);
+                // ALLOW offers if we are in the call but the PC is gone (someone re-joined)
+                const pc = peerConnections.current.get(data.from);
+                const isResumeOffer = !!(data.offer && isAlreadyInThisCall && (!pc || pc.connectionState !== 'connected'));
 
-                if (isAcceptable) {
+                // If we aren't in a call, or we are in a call but this is a DIFFERENT room/group, or it's a resume offer
+                const isAcceptable = !activeCallRef.current || (!isAlreadyInThisCall) || isResumeOffer;
+
+                if (isAcceptable && !isResumeOffer) {
                     console.info(`[Notification] SUCCESS: Showing popup for ${data.from}.`);
                     fetchParticipantInfo(data.from);
                     setIncomingCall(data);
@@ -320,7 +378,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         });
                     });
                     return;
-                } else {
+                } else if (!isAcceptable) {
                     console.warn(`[Notification] BLOCKED: Already in this call or busy. room_match: ${isAlreadyInThisCall}`);
                 }
             } else {
@@ -391,10 +449,87 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         s.on('user_stopped_typing', ({ conversationId }) => setTypingStatus(prev => ({ ...prev, [conversationId]: [] })));
         s.on('unread_update', fetchTotalUnread);
+        s.on('user_status_change', (data: { userId: string, status: string }) => {
+            const rawStatus = data.status.toLowerCase();
+            const mappedStatus = rawStatus === 'online' ? 'available' : rawStatus as any;
+            setUserStatuses(prev => ({
+                ...prev,
+                [data.userId]: { ...prev[data.userId], status: mappedStatus }
+            }));
+            if (data.userId === user?.id) {
+                setMyStatus(mappedStatus);
+                localStorage.setItem('userPresenceStatus', mappedStatus);
+            }
+        });
+
+        s.on('user_status_message_change', (data: { userId: string, message: string, expiry: string }) => {
+            setUserStatuses(prev => ({
+                ...prev,
+                [data.userId]: { ...prev[data.userId], message: data.message, expiry: data.expiry }
+            }));
+        });
+
+        // Global chat notification listener (similar to incoming-call)
+        s.on('chat_notification', (data: ChatNotification) => {
+            // Skip notification if user is currently viewing this conversation
+            if (activeConversationRef.current === data.conversationId) return;
+
+            // Add to notifications stack
+            setChatNotifications(prev => {
+                // Avoid duplicate notifications for same message
+                if (prev.find(n => n.messageId === data.messageId)) return prev;
+                return [data, ...prev];
+            });
+
+            // Reset the single dismiss timer — card stays 5s after the LAST message
+            if (chatDismissTimerRef.current) {
+                clearTimeout(chatDismissTimerRef.current);
+            }
+            chatDismissTimerRef.current = setTimeout(() => {
+                setChatNotifications([]);
+                chatDismissTimerRef.current = null;
+            }, 5000);
+
+            // Play a notification sound
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.volume = 0.3;
+                audio.play().catch(() => { });
+            } catch (e) { /* ignore */ }
+        });
         s.on('messages_read', ({ conversationId }) => queryClient.invalidateQueries({ queryKey: ['messages', conversationId] }));
 
+        s.on('chat_cleared', ({ conversationId }) => {
+            queryClient.setQueryData(['messages', conversationId], []);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        });
+
+        s.on('conversation_deleted', ({ conversationId: _unused }) => {
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        });
+
+        s.on('call-hold', ({ from }) => {
+            setCallParticipants(prev => ({
+                ...prev,
+                [from]: { ...prev[from], status: 'hold' }
+            }));
+        });
+
+        s.on('call-resume', ({ from }) => {
+            setCallParticipants(prev => ({
+                ...prev,
+                [from]: { ...prev[from], status: 'active' }
+            }));
+        });
+
         setSocket(s);
-        return () => { s.disconnect(); socketRef.current = null; };
+        return () => {
+            s.disconnect();
+            socketRef.current = null;
+            if (chatDismissTimerRef.current) {
+                clearTimeout(chatDismissTimerRef.current);
+            }
+        };
     }, [user, fetchTotalUnread, cleanupCall, queryClient, setupPeerConnection, fetchParticipantInfo]);
 
     useEffect(() => {
@@ -419,6 +554,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const initiateCall = useCallback(async (to: string, name: string, type: 'audio' | 'video', conversationId?: string, isGroup?: boolean) => {
         if (!socketRef.current) return;
+        if (activeCallRef.current) {
+            import('react-hot-toast').then(({ toast }) => toast.error('End your current call first'));
+            return;
+        }
         try {
             const isVideo = type === 'video';
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
@@ -437,7 +576,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     [user.id]: {
                         name: `${user.first_name || 'Me'} ${user.last_name || ''}`.trim(),
                         designation: user.job_title || user.role || 'Host',
-                        avatar: user.profile_photo_url || user.avatar
+                        avatar: resolveImageUrl(user.profile_photo_url || user.avatar)
                     }
                 }));
             }
@@ -452,19 +591,39 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 socketRef.current.emit('call-user', { to, offer, type, conversationId });
                 fetchParticipantInfo(to);
             }
+            updateMyStatus('busy');
         } catch (err) {
             handleMediaError(err);
             cleanupCall();
         }
-    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError]);
+    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError, updateMyStatus]);
 
     const acceptCall = useCallback(async () => {
         if (!incomingCall || !socketRef.current) return;
         const callData = { ...incomingCall };
+
+        // Handle concurrent calls: Put existing call on hold
+        if (activeCallRef.current) {
+            console.log("[Call] Putting current call on hold to accept incoming call.");
+            const current = activeCallRef.current;
+            setIsResuming(true);
+            setHeldCall(current);
+            socketRef.current?.emit('call-hold', {
+                to: current.isGroup ? current.conversationId : current.to,
+                isGroup: current.isGroup
+            });
+            // Stop tracks to release hardware for the new call
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(t => t.stop());
+            }
+            cleanupCall();
+        }
+
         setIncomingCall(null);
         try {
             const isVideo = callData.type === 'video';
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+            setIsResuming(false);
             setLocalStream(stream);
             localStreamRef.current = stream;
             setIsVideoOff(!isVideo);
@@ -476,7 +635,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     [user.id]: {
                         name: `${user.first_name || 'Me'} ${user.last_name || ''}`.trim(),
                         designation: user.job_title || user.role || 'Member',
-                        avatar: user.profile_photo_url || user.avatar
+                        avatar: resolveImageUrl(user.profile_photo_url || user.avatar)
                     }
                 }));
             }
@@ -509,17 +668,36 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 socketRef.current.emit('answer-call', { to: callData.from, answer });
             }
             fetchParticipantInfo(callData.from);
+            updateMyStatus('busy');
         } catch (err) {
             handleMediaError(err);
             cleanupCall();
         }
-    }, [user, incomingCall, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError]);
+    }, [user, incomingCall, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError, updateMyStatus]);
 
     const joinActiveCall = useCallback(async (conversationId: string, type: 'audio' | 'video') => {
         if (!socketRef.current) return;
+
+        // Handle concurrent calls: Leave current room before joining new one
+        if (activeCallRef.current && activeCallRef.current.conversationId !== conversationId) {
+            console.log("[Call] Putting current call on hold to join new session.");
+            const current = activeCallRef.current;
+            setIsResuming(true);
+            setHeldCall(current);
+            socketRef.current.emit('call-hold', {
+                to: current.isGroup ? current.conversationId : current.to,
+                isGroup: current.isGroup
+            });
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(t => t.stop());
+            }
+            cleanupCall();
+        }
+
         try {
             const isVideo = type === 'video';
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+            setIsResuming(false);
             setLocalStream(stream);
             localStreamRef.current = stream;
             setIsVideoOff(!isVideo);
@@ -531,7 +709,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     [user.id]: {
                         name: `${user.first_name || 'Me'} ${user.last_name || ''}`.trim(),
                         designation: user.job_title || user.role || 'Member',
-                        avatar: user.profile_photo_url || user.avatar
+                        avatar: resolveImageUrl(user.profile_photo_url || user.avatar)
                     }
                 }));
             }
@@ -541,11 +719,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             activeCallRef.current = callObj;
             socketRef.current.emit('join_room', conversationId);
             socketRef.current.emit('group-call-started', { conversationId, type });
+            updateMyStatus('busy');
         } catch (err) {
             handleMediaError(err);
             cleanupCall();
         }
-    }, [user, monitorAudioLevel, cleanupCall, handleMediaError]);
+    }, [user, monitorAudioLevel, cleanupCall, handleMediaError, updateMyStatus]);
 
     const toggleVideo = useCallback(async () => {
         if (!localStreamRef.current || !socketRef.current) return;
@@ -605,7 +784,50 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
         cleanupCall();
-    }, [incomingCall, cleanupCall]);
+
+        // Automatic Resume Logic
+        if (heldCallRef.current) {
+            const h = heldCallRef.current;
+            setHeldCall(null);
+            setIsResuming(true);
+            console.log("[Call] Automatically resuming previous call.");
+            import('react-hot-toast').then(({ toast }) => {
+                toast("Resuming previous call...", { icon: '🔄', duration: 3000 });
+            });
+            setTimeout(async () => {
+                try {
+                    if (h.isGroup) {
+                        await joinActiveCall(h.conversationId, h.type);
+                    } else {
+                        // For 1-on-1 resume, we treat it like a new call but skip the "End current" check since cleanupCall already ran
+                        const isVideo = h.type === 'video';
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+                        setLocalStream(stream);
+                        localStreamRef.current = stream;
+                        const callObj = { to: h.to, name: h.name, type: h.type, conversationId: h.conversationId, isGroup: false };
+                        setActiveCall(callObj);
+                        activeCallRef.current = callObj;
+                        setIsVideoOff(!isVideo);
+                        callStartTime.current = Date.now();
+
+                        const pc = setupPeerConnection(h.to, stream, socketRef.current!);
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        socketRef.current!.emit('call-user', { to: h.to, offer, type: h.type, conversationId: h.conversationId });
+                        fetchParticipantInfo(h.to);
+                    }
+                    socketRef.current?.emit('call-resume', {
+                        to: h.isGroup ? h.conversationId : h.to,
+                        isGroup: h.isGroup
+                    });
+                } catch (e) {
+                    console.error("[Resume] Failed to resume", e);
+                } finally {
+                    setIsResuming(false);
+                }
+            }, 1000);
+        }
+    }, [incomingCall, cleanupCall, joinActiveCall, fetchParticipantInfo, setupPeerConnection]);
 
     const markAsRead = useCallback(async (id: string) => {
         try {
@@ -725,6 +947,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => clearInterval(interval);
     }, [activeCall, isCalling]);
 
+    const dismissChatNotification = useCallback((messageId: string) => {
+        setChatNotifications(prev => prev.filter(n => n.messageId !== messageId));
+    }, []);
+
+    const setActiveConversation = useCallback((conversationId: string | null) => {
+        activeConversationRef.current = conversationId;
+    }, []);
+
     const contextValue = useMemo(() => ({
         socket, isConnected, sendMessage, joinRoom,
         isCalling, activeCall, incomingCall, localStream, remoteStreams,
@@ -734,7 +964,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleAudio: () => { if (localStreamRef.current) { const t = localStreamRef.current.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setIsMuted(!t.enabled); } } },
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus, sendTypingStatus,
         isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
-        callDuration
+        callDuration,
+        chatNotifications, dismissChatNotification, setActiveConversation,
+        heldCall, isResuming,
+        myStatus,
+        userStatuses,
+        updateMyStatus,
+        updateMyStatusMessage: (message: string, expiry: string | null) => {
+            api.post('/chat/status-message', { message, expiry })
+                .then(() => {
+                    // Optimistic update
+                    if (user) {
+                        setUserStatuses(prev => ({
+                            ...prev,
+                            [user.id]: {
+                                ...prev[user.id],
+                                message,
+                                expiry,
+                                status: myStatus
+                            }
+                        }));
+                    }
+                })
+                .catch(err => console.error("Failed to update status message", err));
+        }
     }), [
         socket, isConnected, sendMessage, joinRoom,
         isCalling, activeCall, incomingCall, localStream, remoteStreams,
@@ -742,7 +995,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         initiateCall, acceptCall, joinActiveCall, endCall, isMuted, isVideoOff,
         toggleVideo, markAsRead, logCall, totalUnreadCount, typingStatus,
         sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
-        callDuration
+        callDuration,
+        chatNotifications, dismissChatNotification, setActiveConversation,
+        heldCall, isResuming, myStatus, userStatuses, user
     ]);
 
 

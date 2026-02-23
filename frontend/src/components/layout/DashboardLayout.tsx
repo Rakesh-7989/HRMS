@@ -10,6 +10,10 @@ import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NavbarClock } from './NavbarClock';
+import { ProfileDropdown } from './ProfileDropdown';
+import { useChat } from '@/contexts/ChatContext';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface BreadcrumbItem {
   label: string;
@@ -29,8 +33,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   breadcrumbs,
   actions
 }) => {
-  const { user, logout, hasActivePlan } = useAuth();
+  const { user, hasActivePlan } = useAuth();
+  const { myStatus } = useChat();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  // Set initial direction based on language
+  useEffect(() => {
+    document.dir = i18n.language?.startsWith('ar') ? 'rtl' : 'ltr';
+  }, [i18n.language]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
@@ -43,10 +54,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const canAccessSettings =
-    user?.role === 'ADMIN' ||
-    user?.role === 'HR' ||
-    user?.role === 'SUPER_ADMIN';
+  // const canAccessSettings =
+  //   user?.role === 'ADMIN' ||
+  //   user?.role === 'HR' ||
+  //   user?.role === 'SUPER_ADMIN';
 
   // Debounce search
   useEffect(() => {
@@ -182,7 +193,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </button>
               <div className="flex flex-col justify-center min-w-0">
                 <h1 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white leading-snug truncate md:text-clip">
-                  {title || 'Dashboard'}
+                  {title === 'Dashboard' ? t('common.dashboard') : (title || t('common.dashboard'))}
                 </h1>
 
                 {breadcrumbs && breadcrumbs.length > 0 && (
@@ -251,7 +262,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder="Search..."
+                  placeholder={t('common.search')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -283,7 +294,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {isSearching && (
                       <div className="px-4 py-3 flex items-center gap-2 text-gray-500">
                         <Loader2 size={16} className="animate-spin" />
-                        <span className="text-sm">Searching...</span>
+                        <span className="text-sm">{t('common.searching')}</span>
                       </div>
                     )}
 
@@ -321,7 +332,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                           }}
                           className="w-full text-center px-4 py-2.5 text-sm text-primary hover:bg-primary/10 border-t border-gray-100 dark:border-gray-800"
                         >
-                          View all results for "{searchQuery}"
+                          {t('common.viewAllResults', { query: searchQuery })}
                         </button>
                       </>
                     )}
@@ -335,6 +346,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 )}
               </div>
 
+              <LanguageSwitcher />
               <ThemeToggle />
 
               {/* Notifications */}
@@ -349,62 +361,43 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen((p) => !p)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:opacity-90 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative group"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white overflow-hidden">
-                    {user?.profile_photo_url ? (
-                      <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      user?.first_name?.charAt(0) || 'U'
-                    )}
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden shadow-sm border-2 border-transparent group-hover:border-primary/20 transition-all">
+                      {user?.profile_photo_url ? (
+                        <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        user?.first_name?.charAt(0) || 'U'
+                      )}
+                    </div>
+                    {/* Status Dot on Trigger */}
+                    <div
+                      title={myStatus === 'dnd' ? 'Do not disturb' : (myStatus ? myStatus.charAt(0).toUpperCase() + myStatus.slice(1) : 'Available')}
+                      className={cn(
+                        "absolute -bottom-0.5 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-900 shadow-sm cursor-help flex items-center justify-center",
+                        myStatus === 'available' ? "bg-green-500" :
+                          myStatus === 'dnd' ? "bg-red-500" :
+                            myStatus === 'busy' ? "bg-red-500" :
+                              myStatus === 'away' ? "bg-amber-500" : "bg-gray-400 dark:bg-gray-600"
+                      )}
+                    >
+                      {myStatus === 'offline' && <div className="h-1 w-1 rounded-full bg-white dark:bg-gray-900" />}
+                      {myStatus === 'dnd' && <div className="w-2 h-0.5 bg-white rounded-full" />}
+                    </div>
                   </div>
-                  <div className="hidden sm:block text-left leading-tight">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="hidden sm:block text-left leading-tight ml-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
                       {user?.first_name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {user?.role}
                     </p>
                   </div>
                 </button>
 
                 {profileOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-48 rounded-md shadow-card bg-white dark:bg-gray-900 border"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <button
-                      onClick={() => {
-                        setProfileOpen(false);
-                        navigate('/profile');
-                      }}
-                      className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                    >
-                      Profile
-                    </button>
-
-                    {canAccessSettings && (
-                      <button
-                        onClick={() => {
-                          setProfileOpen(false);
-                          navigate('/settings');
-                        }}
-                        className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                      >
-                        Settings
-                      </button>
-                    )}
-
-                    <button
-                      onClick={async () => {
-                        setProfileOpen(false);
-                        await logout();
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                  <ProfileDropdown onClose={() => setProfileOpen(false)} />
                 )}
               </div>
             </div>
@@ -419,8 +412,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <AlertTriangle size={16} />
               <span>
                 {user?.role === 'ADMIN'
-                  ? "No active subscription found. Restore access to your features now."
-                  : "No active subscription found. Some features are restricted. Please contact your administrator."}
+                  ? t('common.restoreAccess')
+                  : t('common.restrictedFeature')}
               </span>
             </div>
             {user?.role === 'ADMIN' && (
@@ -428,7 +421,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onClick={() => navigate('/pricing')}
                 className="bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
               >
-                Upgrade Plan
+                {t('common.upgradePlan')}
               </button>
             )}
           </div>

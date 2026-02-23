@@ -7,20 +7,22 @@ import { TeamLeaveContent } from '@/components/leave/TeamLeaveContent';
 import { LeaveSettingsContent } from '@/components/leave/LeaveSettingsContent';
 import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
-
-const LEAVE_TABS = [
-  { id: 'my-leave', label: 'My Leave', roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-  { id: 'team-requests', label: 'Team Requests', roles: ['MANAGER', 'HR', 'ADMIN'] },
-  { id: 'allocation', label: 'Allocation', roles: ['HR', 'ADMIN'] },
-  { id: 'balances', label: 'Balances', roles: ['HR', 'ADMIN'] },
-  { id: 'settings', label: 'Settings', roles: ['HR', 'ADMIN'] },
-] as const;
-
-type TabId = typeof LEAVE_TABS[number]['id'];
+import { useTranslation } from 'react-i18next';
 
 export const LeavePage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+
+  const LEAVE_TABS = [
+    { id: 'my-leave', label: t('leave.tabs.myLeave'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
+    { id: 'team-requests', label: t('leave.tabs.teamRequests'), roles: ['MANAGER', 'HR', 'ADMIN'] },
+    { id: 'allocation', label: t('leave.tabs.allocation'), roles: ['HR', 'ADMIN'] },
+    { id: 'balances', label: t('leave.tabs.balances'), roles: ['HR', 'ADMIN'] },
+    { id: 'settings', label: t('leave.tabs.settings'), roles: ['HR', 'ADMIN'] },
+  ] as const;
+
+  type TabId = typeof LEAVE_TABS[number]['id'];
   const tabParam = searchParams.get('tab') as TabId | null;
 
   // Initialize from URL param if valid, otherwise default to 'my-leave'
@@ -49,10 +51,10 @@ export const LeavePage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Leave Management"
+      title={t('leave.title')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/personal' },
-        { label: 'Leave' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/personal' },
+        { label: t('common.breadcrumbs.leave') },
       ]}
     >
       {/* ===== TAB NAVIGATION ===== */}

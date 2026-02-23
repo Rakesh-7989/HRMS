@@ -370,6 +370,28 @@ export const usersService = {
     }
   },
 
+  uploadProfilePhoto: async (file: File): Promise<User> => {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const response = await api.post('/users/me/profile-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return extractData<User>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  removeProfilePhoto: async (): Promise<User> => {
+    try {
+      const response = await api.delete('/users/me/profile-photo');
+      return extractData<User>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
   // ==========================================================================
   // UTILITY METHODS
   // ==========================================================================

@@ -8,6 +8,7 @@ import { eventsService } from '@/services/events.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour } from '@/utils/timeFormat';
+import { useConfirm } from '@/contexts/ConfirmContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,6 +21,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, ComposedChart, Line
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_COLORS: Record<string, string> = {
   DONE: '#10b981',
@@ -114,16 +116,18 @@ export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
+  const { t } = useTranslation();
 
   const canClockIn = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
 
   // Greeting Logic
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }, []);
+    if (hour < 12) return t('common.morning');
+    if (hour < 17) return t('common.afternoon');
+    return t('common.evening');
+  }, [t]);
 
   // Queries
   const { data, isLoading } = useQuery({
@@ -185,6 +189,16 @@ export const EmployeeDashboard: React.FC = () => {
   };
 
   const handleClockOut = async () => {
+    const isConfirmed = await confirm({
+      title: 'Confirm Clock Out',
+      message: 'Are you sure you want to clock out now? This will end your current working session.',
+      confirmText: 'Clock Out',
+      cancelText: 'Cancel',
+      type: 'destructive'
+    });
+
+    if (!isConfirmed) return;
+
     if (geoSettings?.is_enabled) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
@@ -289,7 +303,7 @@ export const EmployeeDashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout title="My Dashboard">
+    <DashboardLayout title={t('dashboard.employeeDashboard')}>
       <motion.div className="space-y-8 pb-10" initial="initial" animate="animate">
 
         {/* --- Welcome Banner (Twilight Theme) --- */}
@@ -315,15 +329,13 @@ export const EmployeeDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-1"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span className="text-white/80 text-xs font-black uppercase tracking-widest">
-                  {greeting}
-                </span>
+                <Sparkles className="w-5 h-5 text-yellow-300" />
+                <span className="text-white/80 text-sm font-medium uppercase tracking-wider">{t('common.good')} {greeting}</span>
               </motion.div>
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">
-                Welcome back, {profile?.first_name || user?.first_name}! 👋
+              <h1 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight">
+                {t('common.welcomeBack')}, {user?.first_name}! 👋
               </h1>
-              <p className="text-white/70 text-base font-medium flex items-center gap-2">
+              <p className="text-white/70 text-lg md:text-xl font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-indigo-300" />
                 {profile?.designation || 'Team Member'} • {profile?.department || 'General'}
               </p>
@@ -472,20 +484,36 @@ export const EmployeeDashboard: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                title="Total Present" value={attendanceSummary.days_present || 0} icon={CheckCircle}
-                gradient="linear-gradient(135deg, #10b981, #059669)" delay={0.2}
+                title={t('dashboard.pendingLeaves')}
+                value={leaveMetrics.pending}
+                subtitle={t('dashboard.awaitingReview')}
+                icon={Calendar}
+                gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+                delay={0.1}
               />
               <StatCard
-                title="Leave Balance" value={data?.leaveBalance || 0} subtitle="Days Available" icon={Coffee}
-                gradient="linear-gradient(135deg, #6366f1, #4f46e5)" delay={0.3}
+                title={t('dashboard.onLeaveToday')}
+                value={leaveMetrics.upcoming_leaves || 0}
+                subtitle={t('dashboard.thisMonth')}
+                icon={TrendingUp}
+                gradient="linear-gradient(135deg, #3b82f6, #2563eb)"
+                delay={0.2}
               />
               <StatCard
-                title="Upcoming" value={leaveMetrics.upcoming_leaves || 0} subtitle="Approved Leaves" icon={Calendar}
-                gradient="linear-gradient(135deg, #f59e0b, #d97706)" delay={0.4}
+                title={t('dashboard.presentToday')}
+                value={`${attendanceRate}%`}
+                subtitle={t('dashboard.attendanceRate')}
+                icon={Activity}
+                gradient="linear-gradient(135deg, #10b981, #059669)"
+                delay={0.3}
               />
               <StatCard
-                title="On Time Rate" value={`${attendanceRate}%`} icon={TrendingUp}
-                gradient="linear-gradient(135deg, #ec4899, #db2777)" delay={0.5}
+                title={t('dashboard.approvedRequests')}
+                value={leaveMetrics.approved}
+                subtitle={t('dashboard.allTimeTotal')}
+                icon={CheckCircle}
+                gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+                delay={0.4}
               />
             </div>
 
@@ -584,12 +612,16 @@ export const EmployeeDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Task Distribution */}
-              <ChartCard title="Task Distribution" delay={0.65}>
-                <div className="h-[200px] w-full mt-2">
+              <ChartCard title={t('dashboard.leaveUtilization')} subtitle={t('dashboard.entitlementUsage')} delay={0.5}>
+                <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={taskChartData}
+                        data={[
+                          { name: t('dashboard.approvedRequests'), value: leaveMetrics.approved },
+                          { name: t('dashboard.pendingLeaves'), value: leaveMetrics.pending },
+                          { name: t('dashboard.rejected'), value: leaveMetrics.rejected },
+                        ]}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}

@@ -1,5 +1,7 @@
 const userService = require("./user.service");
 const logAudit = require('../../utils/auditLogger');
+const fs = require('fs');
+const path = require('path');
 
 exports.createUser = async (req, res) => {
   try {
@@ -251,6 +253,92 @@ exports.getOrgTree = async (req, res) => {
   try {
     const tree = await userService.getOrgTree(req.db, req.user);
     res.json({ status: "success", tree });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.uploadProfilePhoto = async (req, res) => {
+  try {
+    console.log("[uploadProfilePhoto] Start. User:", req.user.id, "Tenant:", req.user.tenantId);
+
+    if (!req.file) {
+      console.error("[uploadProfilePhoto] No file received");
+      throw new Error("Please upload a file");
+    }
+
+    // Log critical details about where multer put the file
+    console.log("[uploadProfilePhoto LOG] CWD:", process.cwd());
+    if (req.file) {
+      console.log("[uploadProfilePhoto LOG] req.file path (multer):", req.file.path);
+      console.log("[uploadProfilePhoto LOG] req.file dest:", req.file.destination);
+      console.log("[uploadProfilePhoto LOG] req.file filename:", req.file.filename);
+    }
+
+    if (!fs.existsSync(req.file.path)) {
+      throw new Error(`Multer reported success but file missing at: ${req.file.path}`);
+    }
+
+    // Force move to correct location manually to bypass Multer destination issues
+    const ext = path.extname(req.file.originalname);
+    // Use employee code if available, fallback to user ID for filename
+    const idToUse = req.user.empCode || req.user.id || 'unknown';
+    const safeId = idToUse.replace(/[^a-zA-Z0-9-]/g, '_');
+    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const filename = `${safeId}_${dateStr}${ext}`;
+
+    // Ensure creates uploads/profiles in backend root (CWD)
+    const targetDir = path.join(process.cwd(), 'uploads', 'profiles');
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const finalPath = path.join(targetDir, filename);
+
+    // Rename/Move
+    try {
+      fs.renameSync(req.file.path, finalPath);
+      console.log(`[uploadProfilePhoto LOG] File moved manually to: ${finalPath}`);
+    } catch (mvErr) {
+      // Fallback copy+unlink if across devices
+      if (mvErr.code === 'EXDEV') {
+        fs.copyFileSync(req.file.path, finalPath);
+        fs.unlinkSync(req.file.path);
+      } else {
+        throw mvErr;
+      }
+    }
+
+    // Relative path for DB/URL
+    const dbPath = `uploads/profiles/${filename}`;
+    console.log("[uploadProfilePhoto] File received (relative):", dbPath);
+
+    // Update DB
+    const result = await userService.updateProfilePhoto(req.db, req.user.id, dbPath, req.user);
+
+    if (!result) {
+      console.error("[uploadProfilePhoto] DB Update returned no result! Checking user match...");
+    } else {
+      console.log("[uploadProfilePhoto] DB Update success. New URL:", result.profile_photo_url);
+    }
+
+    // Audit
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: filePath }); } catch (e) { }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    console.error("[uploadProfilePhoto] Error:", err.message);
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.removeProfilePhoto = async (req, res) => {
+  try {
+    const result = await userService.removeProfilePhoto(req.db, req.user.id, req.user);
+
+    // Audit
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'REMOVE_PHOTO', null, {}); } catch (e) { }
+
+    res.json({ status: "success", message: "Profile photo removed", data: result });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });
   }

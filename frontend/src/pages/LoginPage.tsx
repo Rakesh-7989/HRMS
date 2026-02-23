@@ -15,13 +15,17 @@ import { Shield } from 'lucide-react';
 import { usersService } from '@/services/users.service';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
 
-const validationSchema = Yup.object({
-  email: Yup.string().email('Please enter a valid email address').required('Email is required'),
-  password: Yup.string().required('Password is required'),
+import { useTranslation } from 'react-i18next';
+
+// Moved inside component or create a factory
+const createValidationSchema = (t: any) => Yup.object({
+  email: Yup.string().email(t('auth.validEmail')).required(t('auth.emailRequired')),
+  password: Yup.string().required(t('auth.passwordRequired')),
   rememberMe: Yup.boolean(),
 });
 
 export const LoginPage: React.FC = () => {
+  const { t } = useTranslation();
   const { login, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -37,13 +41,15 @@ export const LoginPage: React.FC = () => {
     }
   }, [twoFactorToken, twoFactorRequired]);
 
+  const finalValidationSchema = React.useMemo(() => createValidationSchema(t), [t]);
+
   const formik = useFormik({
     initialValues: {
       email: localStorage.getItem('lastEmail') || '',
       password: '',
       rememberMe: localStorage.getItem('lastEmail') ? true : false,
     },
-    validationSchema,
+    validationSchema: finalValidationSchema,
     onSubmit: async (values) => {
       setIsLoading(true);
       setError(null);
@@ -65,9 +71,9 @@ export const LoginPage: React.FC = () => {
           'Login failed. Please check your connection.';
 
         if (errorMessage === 'Invalid credentials') {
-          errorMessage = 'Incorrect email or password. Please try again.';
+          errorMessage = t('auth.invalidCredentials');
         } else if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive')) {
-          errorMessage = 'Your account has been deactivated. Please contact support.';
+          errorMessage = t('auth.accountDeactivated');
         }
 
         setError(errorMessage);
@@ -103,7 +109,7 @@ export const LoginPage: React.FC = () => {
       const dashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
       window.location.href = dashboard; // Force redirect to ensure state is clean
     } catch (err: any) {
-      setError(err.response?.data?.message || '2FA verification failed');
+      setError(err.response?.data?.message || t('auth.verificationFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -131,24 +137,24 @@ export const LoginPage: React.FC = () => {
 
         <Card>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Welcome back</h1>
-            <p className="text-gray-600 dark:text-muted transition-colors duration-300">Sign in to your account to continue</p>
+            <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{t('auth.welcomeBack')}</h1>
+            <p className="text-gray-600 dark:text-muted transition-colors duration-300">{t('auth.signInSubtitle')}</p>
           </div>
 
-          <ValidationAlert message={error} type="error" />
+          <ValidationAlert message={error || undefined} type="error" />
 
           {twoFactorRequired ? (
             <div className="space-y-4">
               <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-3">
                 <Shield className="text-primary" size={20} />
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  Please enter the code from your authenticator app
+                  {t('auth.enterCode')}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="2fa-token" className="block text-sm font-medium">
-                  2FA Code
+                  {t('auth.twoFactorCode')}
                 </label>
                 <Input
                   id="2fa-token"
@@ -167,7 +173,7 @@ export const LoginPage: React.FC = () => {
                   className="flex-1"
                   onClick={() => setTwoFactorRequired(false)}
                 >
-                  Back
+                  {t('auth.back')}
                 </Button>
                 <Button
                   type="button"
@@ -177,7 +183,7 @@ export const LoginPage: React.FC = () => {
                   isLoading={isLoading}
                   disabled={twoFactorToken.length < 6}
                 >
-                  Verify
+                  {t('auth.verify')}
                 </Button>
               </div>
             </div>
@@ -185,7 +191,7 @@ export const LoginPage: React.FC = () => {
             <form onSubmit={formik.handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
-                  Email
+                  {t('auth.email')}
                 </label>
                 <Input
                   id="email"
@@ -199,7 +205,7 @@ export const LoginPage: React.FC = () => {
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium mb-2">
-                  Password
+                  {t('auth.password')}
                 </label>
                 <div className="relative">
                   <Input
@@ -229,24 +235,24 @@ export const LoginPage: React.FC = () => {
                     {...formik.getFieldProps('rememberMe')}
                     className="w-4 h-4 rounded border-gray-300 dark:border-dark-border bg-white dark:bg-white/5 text-primary focus:ring-gold transition-colors duration-300"
                   />
-                  <span className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">Remember me</span>
+                  <span className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">{t('auth.rememberMe')}</span>
                 </label>
                 <a href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </a>
               </div>
 
               <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
-                Sign in
+                {t('auth.signIn')}
               </Button>
             </form>
           )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">
-              Don&apos;t have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <a href="/pricing" className="text-primary hover:underline">
-                Register
+                {t('auth.register')}
               </a>
             </p>
           </div>
@@ -257,7 +263,7 @@ export const LoginPage: React.FC = () => {
               className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <ArrowLeft size={16} />
-              Back to home
+              {t('auth.backToHome')}
             </a>
           </div>
         </Card>

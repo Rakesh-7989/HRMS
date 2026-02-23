@@ -138,3 +138,23 @@ selfRouter.put(
   validate(updateProfileSchema),
   controller.updateMyProfile
 );
+
+const upload = require("../../middleware/upload");
+
+selfRouter.post(
+  "/me/profile-photo",
+  verifyJwt,
+  (req, res, next) => {
+    console.log("[Router Debug] HIT /me/profile-photo");
+    console.log("[Router Debug] Headers:", req.headers['content-type']);
+    next();
+  },
+  upload.single('photo'),
+  controller.uploadProfilePhoto
+);
+
+selfRouter.delete(
+  "/me/profile-photo",
+  verifyJwt,
+  controller.removeProfilePhoto
+);

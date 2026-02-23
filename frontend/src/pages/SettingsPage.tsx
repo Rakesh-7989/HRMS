@@ -65,7 +65,7 @@ export const SettingsPage: React.FC = () => {
     enabled: isTenantAdmin,
   });
 
-  const canManageOrg = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+  const canManageOrg = user?.role === 'ADMIN';
 
   return (
     <DashboardLayout

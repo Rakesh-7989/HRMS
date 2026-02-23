@@ -75,7 +75,8 @@ exports.updateMessage = async (req, res) => {
 exports.deleteMessage = async (req, res) => {
   try {
     const { conversationId, messageId } = req.params;
-    await chatService.deleteMessage(req.db, req.user.id, conversationId, messageId);
+    const { mode } = req.query; // Accept mode as query parameter? Or body? Query is easier for DELETE
+    await chatService.deleteMessage(req.db, req.user.id, conversationId, messageId, mode || 'everyone');
     res.json({ status: "success" });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });
@@ -183,6 +184,21 @@ exports.updateStatus = async (req, res) => {
   }
 };
 
+exports.setStatusMessage = async (req, res) => {
+  try {
+    const { message, expiry } = req.body;
+    const data = await chatService.updateStatusMessage(req.db, req.user.id, message, expiry);
+
+    // Broadcast status change globally to the tenant
+    const io = require("../../config/socket").getIo();
+    io.to(`tenant_${req.user.tenantId}`).emit('user_status_message_change', { userId: req.user.id, message, expiry });
+
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
 exports.searchGlobal = async (req, res) => {
   try {
     const { q } = req.query;
@@ -207,6 +223,47 @@ exports.togglePin = async (req, res) => {
   try {
     const { conversationId, messageId } = req.params;
     const data = await chatService.togglePinMessage(req.db, conversationId, messageId);
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.clearChatHistory = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    await chatService.clearChatHistory(req.db, conversationId, req.user.id);
+    res.json({ status: "success", message: "Chat history cleared successfully" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.deleteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    await chatService.deleteConversation(req.db, conversationId, req.user.id);
+    res.json({ status: "success", message: "Conversation deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.addParticipants = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { userIds } = req.body; // Expects array of user IDs
+    const data = await chatService.addParticipants(req.db, conversationId, userIds, req.user.id);
+    res.json({ status: "success", data });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.removeParticipant = async (req, res) => {
+  try {
+    const { conversationId, userId } = req.params;
+    const data = await chatService.removeParticipant(req.db, conversationId, userId, req.user.id);
     res.json({ status: "success", data });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { ConfirmProvider } from '@/contexts/ConfirmContext';
 import { CallOverlay } from '@/components/chat/CallOverlay';
+import { ChatNotification } from '@/components/chat/ChatNotification';
 
 export const RootLayout = () => {
     return (
@@ -53,6 +54,7 @@ export const RootLayout = () => {
                         />
                         <Outlet />
                         <CallOverlay />
+                        <ChatNotification />
                     </ChatProvider>
                 </ConfirmProvider>
             </AuthProvider>

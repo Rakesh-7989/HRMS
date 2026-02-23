@@ -68,16 +68,21 @@ const initSocket = (httpServer) => {
         socket.join(userRoom);
         logger.info(`User ${socket.user.id} joined own room: ${userRoom}`);
 
-        // Update status to ONLINE if this is the first connection
+        // Update status to ONLINE if this was the first connection for this user
         const userSockets = io.sockets.adapter.rooms.get(userRoom);
         if (userSockets && userSockets.size === 1) {
             (async () => {
+                const client = await pool.connect();
                 try {
-                    await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['ONLINE', socket.user.id]);
+                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                    await client.query(`SET app.user_id = '${socket.user.id}'`);
+                    await client.query('UPDATE users SET status = $1 WHERE id = $2', ['ONLINE', socket.user.id]);
                     io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'ONLINE' });
                     logger.info(`User ${socket.user.id} status updated to ONLINE`);
                 } catch (err) {
                     logger.error(`Failed to update status for user ${socket.user.id}`, err);
+                } finally {
+                    client.release();
                 }
             })();
         }
@@ -120,6 +125,13 @@ const initSocket = (httpServer) => {
                 // Fetch all participants for this conversation to send global notifications
                 const client = await pool.connect();
                 try {
+                    // Manual RLS context setup for read query just in case, though usually SELECTS might be looser or use different pattern
+                    // But to be safe lets reuse the pattern if needed, or rely on super admin bypass if we had it.
+                    // Actually, simple SELECT might work if RLS allows reading own conversations.
+                    // Let's just use the query directly.
+                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                    await client.query(`SET app.user_id = '${socket.user.id}'`);
+
                     const participantsRes = await client.query(
                         "SELECT user_id FROM conversation_participants WHERE conversation_id = $1",
                         [conversationId]
@@ -184,6 +196,16 @@ const initSocket = (httpServer) => {
             });
         });
 
+        socket.on("call-hold", ({ to, isGroup }) => {
+            const target = isGroup ? to : `user_${String(to)}`;
+            socket.to(target).emit("call-hold", { from: socket.user.id });
+        });
+
+        socket.on("call-resume", ({ to, isGroup }) => {
+            const target = isGroup ? to : `user_${String(to)}`;
+            socket.to(target).emit("call-resume", { from: socket.user.id });
+        });
+
         socket.on("end-call", async ({ to, isGroup }) => {
             if (isGroup) {
                 // For group calls, 'to' is the conversationId (room)
@@ -197,6 +219,9 @@ const initSocket = (httpServer) => {
                     // Broadcast to all conversation participants that the call is totally over
                     try {
                         const client = await pool.connect();
+                        // Manual RLS
+                        await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+
                         const parts = await client.query("SELECT user_id FROM conversation_participants WHERE conversation_id = $1", [to]);
                         client.release();
 
@@ -229,6 +254,27 @@ const initSocket = (httpServer) => {
             });
         });
 
+        socket.on("update_manual_status", async (newStatus) => {
+            const client = await pool.connect();
+            try {
+                // newStatus: available, busy, dnd, away, offline
+                await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                await client.query(`SET app.user_id = '${socket.user.id}'`);
+
+                await client.query('UPDATE users SET status = $1 WHERE id = $2', [newStatus.toUpperCase(), socket.user.id]);
+
+                io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', {
+                    userId: socket.user.id,
+                    status: newStatus.toUpperCase()
+                });
+                logger.info(`User ${socket.user.id} manually updated status to ${newStatus}`);
+            } catch (err) {
+                logger.error(`Failed to manually update status for user ${socket.user.id}`, err);
+            } finally {
+                client.release();
+            }
+        });
+
         socket.on("disconnect", async () => {
             logger.info(`User disconnected: ${socket.user.id}`);
 
@@ -236,12 +282,17 @@ const initSocket = (httpServer) => {
             const userRoom = `user_${String(socket.user.id)}`;
             const userSockets = io.sockets.adapter.rooms.get(userRoom);
             if (!userSockets || userSockets.size === 0) {
+                const client = await pool.connect();
                 try {
-                    await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
+                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                    await client.query(`SET app.user_id = '${socket.user.id}'`);
+                    await client.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
                     io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'OFFLINE' });
                     logger.info(`User ${socket.user.id} status updated to OFFLINE`);
                 } catch (err) {
                     logger.error(`Failed to update disconnect status for user ${socket.user.id}`, err);
+                } finally {
+                    client.release();
                 }
             }
         });

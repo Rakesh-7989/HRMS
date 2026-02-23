@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
 import logo from '../../../Assests/logo.png';
@@ -70,6 +71,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const { totalUnreadCount } = useChat();
+  const { t } = useTranslation();
   const { pathname } = useLocation();
 
   if (!user) return null;
@@ -146,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
               <span className="text-center leading-tight px-1 max-w-[72px]">
-                {label}
+                {t(`sidebar.${label.toLowerCase()}`)}
               </span>
             </Link>
           ))}

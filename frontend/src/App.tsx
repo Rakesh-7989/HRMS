@@ -520,7 +520,7 @@ const router = createBrowserRouter(
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER', 'EMPLOYEE']}>
             <SettingsPage />
           </ProtectedRoute>
         }

@@ -39,7 +39,7 @@ export const ShiftRosterPage = () => {
             // Maybe try to find by name?
             const shiftByName = shifts.find((s: any) => s.name === legacyShift);
             if (shiftByName) return shiftByName;
-            return { name: legacyShift, start_time: '?', end_time: '?' };
+            return { name: legacyShift, start_time: 'N/A', end_time: 'N/A' };
         }
         return null;
     };

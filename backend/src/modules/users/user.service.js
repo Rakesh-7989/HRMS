@@ -403,7 +403,7 @@ exports.getUsers = async (db, opts, actor) => {
   const sql = `
     SELECT u.id, u.email, u.role, u.is_active, u.tenant_id, u.created_at,
            e.id AS employee_uuid, e.employee_id AS employee_code, e.first_name, e.last_name, e.department_id, e.designation_id,
-           e.shift, e.shift_id, e.profile_photo_url
+           e.shift, e.shift_id, e.profile_photo_url, u.status, u.status_message, u.status_expiry
     FROM users u
     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = u.tenant_id
     ${where}
@@ -420,6 +420,7 @@ exports.getUserById = async (db, id, tenantId) => {
   const res = await query(
     `
      SELECT u.*, 
+            u.status_message, u.status_expiry,
             e.id AS employee_uuid,
             e.first_name, e.last_name, e.phone, e.department_id, e.designation_id, e.reports_to,
              e.employee_id, e.join_date, e.employment_type, e.shift_id,
@@ -514,6 +515,12 @@ exports.updateEmployee = async (db, id, updates, actor) => {
       params.push(updates[key]);
       i++;
     }
+  }
+
+  if (fields.length === 0) {
+    // Check if we just want to fetch the record (no updates provided)
+    const fetchRes = await query(`SELECT * FROM employees WHERE user_id=$1 AND tenant_id=$2`, [id, tenantId]);
+    return fetchRes.rows[0];
   }
 
   params.push(id);
@@ -891,6 +898,110 @@ exports.assignDesignation = async (db, id, designationId, actor) => {
 };
 
 /* ---------------------- ORG TREE ---------------------- */
+/* ---------------------- UPDATE PROFILE PHOTO ---------------------- */
+exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
+  const fs = require('fs');
+  const { Client } = require('pg');
+  // Use path.resolve or just relative path, checking dir structure:
+  // Current file: backend/src/modules/users/user.service.js
+  // config: backend/src/config/env -> ../../config/env
+  const env = require('../../config/env');
+
+  console.log("[updateProfilePhoto] Service called for User:", userId, "Tenant:", actor.tenantId, "Path:", photoPath);
+
+  // Use a raw client to bypass RLS restrictions that block self-update visibility
+  const client = new Client({
+    connectionString: env.DATABASE_URL,
+    ssl: (env.NODE_ENV === "production" || (env.DATABASE_URL && !env.DATABASE_URL.includes('localhost') && !env.DATABASE_URL.includes('127.0.0.1')))
+      ? { rejectUnauthorized: false }
+      : false
+  });
+
+  try {
+    await client.connect();
+
+    // 2. Update with new path
+    const updatedUrl = photoPath ? photoPath.replace(/\\/g, '/') : null;
+
+    // 1. Get current photo to delete it (Bypassing RLS)
+    const currentRes = await client.query(`SELECT profile_photo_url FROM employees WHERE user_id = $1`, [userId]);
+
+    // Only delete if the new URL is different from the old one
+    if (currentRes.rowCount > 0 && currentRes.rows[0].profile_photo_url && currentRes.rows[0].profile_photo_url !== updatedUrl) {
+      try {
+        if (fs.existsSync(currentRes.rows[0].profile_photo_url)) {
+          fs.unlinkSync(currentRes.rows[0].profile_photo_url);
+          console.log("[updateProfilePhoto] Deleted old photo:", currentRes.rows[0].profile_photo_url);
+        }
+      } catch (e) {
+        console.error("Failed to delete old profile photo:", e);
+      }
+    }
+    console.log("[updateProfilePhoto] Executing UPDATE employees SET profile_photo_url =", updatedUrl);
+
+    const updateRes = await client.query(
+      `UPDATE employees SET profile_photo_url=$1, updated_at=now() WHERE user_id=$2 RETURNING *`,
+      [updatedUrl, userId]
+    );
+
+    if (updateRes.rowCount === 0) {
+      console.warn("[updateProfilePhoto] UPDATE affected 0 rows via raw client. Attempting to create employee record.");
+
+      // Fetch user details for insert
+      const userDetails = await client.query(`SELECT first_name, last_name, email, role FROM users WHERE id = $1`, [userId]);
+
+      if (userDetails.rowCount === 0) {
+        throw new Error("User not found in users table. Cannot create employee record.");
+      }
+
+      const { first_name, last_name, email, role } = userDetails.rows[0];
+
+      // Insert with raw client
+      const insertRes = await client.query(`
+            INSERT INTO employees (
+                user_id, tenant_id, profile_photo_url, first_name, last_name, email, role, status, 
+                created_at, updated_at, created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'Active', now(), now(), $1)
+            RETURNING *
+          `, [userId, actor.tenantId, updatedUrl, first_name || '', last_name || '', email, role]);
+
+      console.log("[updateProfilePhoto] Created new employee record:", insertRes.rows[0].id);
+      return insertRes.rows[0];
+    }
+
+    console.log("[updateProfilePhoto] UPDATE success via raw client. Row returned:", updateRes.rows[0].id);
+    return updateRes.rows[0];
+
+  } catch (err) {
+    console.error("[updateProfilePhoto] Error with raw client:", err);
+    throw err;
+  } finally {
+    await client.end();
+  }
+};
+
+exports.removeProfilePhoto = async (db, userId, actor) => {
+  const query = getQuery(db);
+  const fs = require('fs');
+  // Get current photo to delete it
+  const current = await query(`SELECT profile_photo_url FROM employees WHERE user_id = $1`, [userId]);
+  if (current.rowCount > 0 && current.rows[0].profile_photo_url) {
+    try {
+      if (fs.existsSync(current.rows[0].profile_photo_url)) {
+        fs.unlinkSync(current.rows[0].profile_photo_url);
+      }
+    } catch (e) {
+      console.error("Failed to delete old profile photo:", e);
+    }
+  }
+
+  const res = await query(
+    `UPDATE employees SET profile_photo_url=NULL, updated_at=now() WHERE user_id=$1 AND tenant_id=$2 RETURNING *`,
+    [userId, actor.tenantId]
+  );
+  return res.rows[0];
+};
+
 exports.getOrgTree = async (db, actor) => {
   const query = getQuery(db);
 

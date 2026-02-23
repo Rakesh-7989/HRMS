@@ -14,6 +14,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 // Modern color palette
 const COLORS = {
@@ -190,6 +191,7 @@ const DepartmentRow = ({ name, count, percentage, index }: { name: string; count
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'organization'],
@@ -268,7 +270,7 @@ export const AdminDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="Organization Dashboard">
+      <DashboardLayout title={t('dashboard.adminDashboard')}>
         <div className="flex items-center justify-center h-96">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
@@ -280,7 +282,7 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout title="Organization Dashboard">
+    <DashboardLayout title={t('dashboard.adminDashboard')}>
       <motion.div
         className="space-y-8"
         initial="initial"
@@ -312,13 +314,13 @@ export const AdminDashboard: React.FC = () => {
                 className="flex items-center gap-2 mb-2"
               >
                 <Sparkles className="w-5 h-5 text-yellow-300" />
-                <span className="text-white/80 text-sm font-medium">Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}</span>
+                <span className="text-white/80 text-sm font-medium">{t('common.good')} {new Date().getHours() < 12 ? t('common.morning') : new Date().getHours() < 17 ? t('common.afternoon') : t('common.evening')}</span>
               </motion.div>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Welcome back, {user?.first_name}! 👋
+                {t('common.welcomeBack')}, {user?.first_name}! 👋
               </h1>
               <p className="text-white/70 text-lg">
-                Here's what's happening in your organization today
+                {t('dashboard.outOfOffice')}
               </p>
             </div>
 
@@ -343,35 +345,35 @@ export const AdminDashboard: React.FC = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard
-            title="Total Employees"
+            title={t('attendance.totalEmployees')}
             value={metrics.total_employees}
             icon={Users}
             gradient={COLORS.gradients.purple}
             delay={0.1}
           />
           <StatCard
-            title="Active Employees"
+            title={t('attendance.activeEmployees')}
             value={metrics.active_employees || (metrics.total_employees - (metrics.inactive_employees || 0))}
             icon={UserCheck}
             gradient={COLORS.gradients.green}
             delay={0.2}
           />
           <StatCard
-            title="Inactive Employees"
+            title={t('attendance.inactiveEmployees')}
             value={metrics.inactive_employees || 0}
             icon={UserX}
             gradient={COLORS.gradients.pink}
             delay={0.25}
           />
           <StatCard
-            title="Departments"
+            title={t('sidebar.organisation')}
             value={metrics.total_departments}
             icon={Building2}
             gradient={COLORS.gradients.blue}
             delay={0.3}
           />
           <StatCard
-            title="Designations"
+            title={t('common.designation')}
             value={metrics.total_designations}
             icon={Briefcase}
             gradient={COLORS.gradients.orange}
@@ -383,9 +385,9 @@ export const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Task Overview Chart - Replaces Attendance */}
           <ChartCard
-            title="Task Overview"
-            subtitle="Tasks by Status"
-            badge="Project Health"
+            title={t('dashboard.taskOverview')}
+            subtitle={t('dashboard.tasksByStatus')}
+            badge={t('dashboard.projectHealth')}
             delay={0.5}
           >
             <div className="h-72">
@@ -416,9 +418,9 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Role Distribution Pie Chart */}
           <ChartCard
-            title="Role Distribution"
-            subtitle="Employee roles breakdown"
-            badge={`${roleDist.length} Roles`}
+            title={t('dashboard.roleDistribution')}
+            subtitle={t('dashboard.employeeRolesBreakdown')}
+            badge={`${roleDist.length} ${t('common.role')}`}
             delay={0.6}
           >
             <div className="h-72 flex items-center">
@@ -468,9 +470,9 @@ export const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Leave Statistics Bar Chart */}
           <ChartCard
-            title="Leave Policies"
-            subtitle="Configured leave types"
-            badge={`${leaveStats.length} Total`}
+            title={t('dashboard.leavePolicies')}
+            subtitle={t('dashboard.configuredLeaveTypes')}
+            badge={`${leaveStats.length} ${t('common.total')}`}
             className="lg:col-span-2"
             delay={0.7}
           >
@@ -497,7 +499,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               {leaveStats.length === 0 && (
                 <div className="py-10 text-center text-gray-400 font-medium">
-                  No leave types configured
+                  {t('dashboard.noData')}
                 </div>
               )}
             </div>
@@ -505,8 +507,8 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Department Distribution */}
           <ChartCard
-            title="Top Departments"
-            subtitle="By headcount"
+            title={t('dashboard.topDepartments')}
+            subtitle={t('dashboard.byHeadcount')}
             delay={0.8}
           >
             <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
@@ -537,8 +539,8 @@ export const AdminDashboard: React.FC = () => {
                 🎂
               </div>
               <div>
-                <h3 className="font-bold text-lg">Birthdays</h3>
-                <p className="text-white/70 text-sm">This month</p>
+                <h3 className="font-bold text-lg">{t('dashboard.birthdays')}</h3>
+                <p className="text-white/70 text-sm">{t('dashboard.thisMonth')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -554,7 +556,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.birthdays || peopleEventsData.birthdays.length === 0) && (
-                <p className="text-white/60 text-center py-4">No birthdays this month</p>
+                <p className="text-white/60 text-center py-4">{t('dashboard.noBirthdays')}</p>
               )}
             </div>
           </div>
@@ -566,8 +568,8 @@ export const AdminDashboard: React.FC = () => {
                 🎉
               </div>
               <div>
-                <h3 className="font-bold text-lg">Anniversaries</h3>
-                <p className="text-white/70 text-sm">Work anniversaries</p>
+                <h3 className="font-bold text-lg">{t('dashboard.anniversaries')}</h3>
+                <p className="text-white/70 text-sm">{t('dashboard.anniversariesDescription')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -583,7 +585,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.anniversaries || peopleEventsData.anniversaries.length === 0) && (
-                <p className="text-white/60 text-center py-4">No anniversaries this month</p>
+                <p className="text-white/60 text-center py-4">{t('dashboard.noAnniversaries')}</p>
               )}
             </div>
           </div>
@@ -595,8 +597,8 @@ export const AdminDashboard: React.FC = () => {
                 👋
               </div>
               <div>
-                <h3 className="font-bold text-lg">New Joiners</h3>
-                <p className="text-white/70 text-sm">Recent hires</p>
+                <h3 className="font-bold text-lg">{t('dashboard.newJoiners')}</h3>
+                <p className="text-white/70 text-sm">{t('dashboard.recentHires')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -612,7 +614,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.joiners || peopleEventsData.joiners.length === 0) && (
-                <p className="text-white/60 text-center py-4">No new joiners this month</p>
+                <p className="text-white/60 text-center py-4">{t('dashboard.noNewJoiners')}</p>
               )}
             </div>
           </div>
@@ -626,10 +628,10 @@ export const AdminDashboard: React.FC = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
-            { label: 'Avg. Attendance Rate', value: attendanceRate, icon: Activity, color: '#6366f1' },
-            { label: 'On Leave Today', value: metrics.on_leave_today || 0, icon: Calendar, color: '#f59e0b' },
-            { label: 'Late Arrivals Today', value: metrics.late_today || 0, icon: Clock, color: '#ef4444' },
-            { label: 'Performance Score', value: performanceScore, icon: Award, color: '#10b981' },
+            { label: t('dashboard.attendanceRate'), value: attendanceRate, icon: Activity, color: '#6366f1' },
+            { label: t('dashboard.onLeaveToday'), value: metrics.on_leave_today || 0, icon: Calendar, color: '#f59e0b' },
+            { label: t('attendance.lateArrivals'), value: metrics.late_today || 0, icon: Clock, color: '#ef4444' },
+            { label: t('dashboard.performanceScore'), value: performanceScore, icon: Award, color: '#10b981' },
           ].map((stat) => (
             <div
               key={stat.label}

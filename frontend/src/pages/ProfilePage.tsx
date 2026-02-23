@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/utils/cn';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,13 +10,16 @@ import { Label } from '@/components/ui/Label';
 
 import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChat } from '@/contexts/ChatContext';
+import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { User } from '@/types';
 import {
   User as UserIcon, Mail, Phone, Building2, Briefcase,
   CreditCard, GraduationCap,
-  Edit, Save, X, UserCircle, FileText, Upload, Trash2, Download, Search
+  Edit, Save, X, UserCircle, FileText, Upload, Trash2, Download, Search,
+  CheckCircle2, Clock, Minus, Eye, Camera, CameraIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { departmentService } from '@/services/department.service';
@@ -26,6 +30,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
 import { FormError } from '@/components/ui/FormError';
+import { Dialog, DialogFooter } from '@/components/ui/Dialog';
 
 const profileValidationSchema = Yup.object({
   first_name: Yup.string()
@@ -60,6 +65,7 @@ const profileValidationSchema = Yup.object({
 });
 
 export const ProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { alert: showAlert } = useConfirm();
   const [isEditing, setIsEditing] = useState(false);
@@ -99,7 +105,108 @@ export const ProfilePage: React.FC = () => {
     enabled: !!profile?.email,
   });
 
+  const [photoMenuOpen, setPhotoMenuOpen] = React.useState(false);
+  const [viewPhotoOpen, setViewPhotoOpen] = React.useState(false);
+  const [takePhotoOpen, setTakePhotoOpen] = React.useState(false);
+  const photoMenuRef = React.useRef<HTMLDivElement>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
   const { user, setUser: setAuthUser } = useAuth();
+  const { myStatus } = useChat();
+
+  const removePhotoMutation = useMutation({
+    mutationFn: () => usersService.removeProfilePhoto(),
+    onSuccess: (_updatedProfile) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (user) {
+        const updatedUser = { ...user, profile_photo_url: undefined } as User;
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setAuthUser(updatedUser);
+      }
+      toast.success('Profile photo removed');
+      setPhotoMenuOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove photo');
+    }
+  });
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (photoMenuOpen && photoMenuRef.current && !photoMenuRef.current.contains(event.target as Node)) {
+        setPhotoMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [photoMenuOpen]);
+
+  const startCamera = async () => {
+    try {
+      setTakePhotoOpen(true);
+      setPhotoMenuOpen(false);
+      setTimeout(async () => {
+        if (videoRef.current) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      toast.error("Could not access camera");
+      setTakePhotoOpen(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setTakePhotoOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], "captured-photo.jpg", { type: "image/jpeg" });
+          photoMutation.mutate(file);
+          stopCamera();
+        }
+      }, 'image/jpeg');
+    }
+  };
+
+  const photoMutation = useMutation({
+    mutationFn: (file: File) => usersService.uploadProfilePhoto(file),
+    onSuccess: (updatedProfile) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Update global auth state
+      if (user) {
+        // The response from upload might be user object or { status, message, data: user }
+        const newPhotoUrl = updatedProfile.profile_photo_url || (updatedProfile as any).profile_photo_url;
+        const updatedUser = { ...user, profile_photo_url: newPhotoUrl } as User;
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setAuthUser(updatedUser);
+      }
+      toast.success('Profile photo updated successfully');
+    },
+    onError: (error: any) => {
+      showAlert({
+        title: 'Photo Upload Failed',
+        message: error.message || 'Failed to upload photo',
+        confirmText: 'OK'
+      });
+    }
+  });
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => usersService.updateMyProfile(data),
@@ -159,7 +266,7 @@ export const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="My Profile">
+      <DashboardLayout title={t('profile.title')}>
         <div className="h-64 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -175,7 +282,7 @@ export const ProfilePage: React.FC = () => {
   const getDesigName = (id?: string) => designations.find(d => d.id === id)?.name || '-';
 
   return (
-    <DashboardLayout title="My Profile">
+    <DashboardLayout title={t('profile.title')}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* HEADER CARD */}
@@ -189,41 +296,89 @@ export const ProfilePage: React.FC = () => {
                   <span>{profile.first_name?.[0]}{profile.last_name?.[0]}</span>
                 )}
               </div>
-              <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+              <div className={cn(
+                "absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center shadow-sm",
+                myStatus === 'available' ? 'bg-green-500' :
+                  myStatus === 'away' ? 'bg-amber-500' :
+                    myStatus === 'dnd' || myStatus === 'busy' ? 'bg-red-500' : 'bg-gray-400'
+              )}>
+                {myStatus === 'available' && <CheckCircle2 size={12} className="text-white" />}
+                {myStatus === 'away' && <Clock size={12} className="text-white" />}
+                {myStatus === 'dnd' && <Minus size={12} className="text-white" />}
+              </div>
 
-              {/* Upload Button Overlay */}
-              <label
-                htmlFor="profile-photo-upload"
+              {/* Photo Overlay / Toggle */}
+              <div
+                onClick={() => setPhotoMenuOpen(!photoMenuOpen)}
                 className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               >
                 <div className="flex flex-col items-center">
-                  <Upload size={20} />
+                  <Camera size={20} />
                   <span className="text-[10px] font-bold mt-1">UPDATE</span>
                 </div>
-                <input
-                  type="file"
-                  id="profile-photo-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
+              </div>
 
-                    // Limit to 2MB
-                    if (file.size > 2 * 1024 * 1024) {
-                      showToast.error('Image size too large (max 2MB)');
-                      return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const base64String = reader.result as string;
-                      updateMutation.mutate({ profile_photo_url: base64String });
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                />
-              </label>
+              {/* Photo Options Menu */}
+              {photoMenuOpen && (
+                <div
+                  ref={photoMenuRef}
+                  className="absolute top-0 left-full ml-4 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2.5 z-50 animate-in fade-in slide-in-from-left-2 duration-200"
+                >
+                  <button
+                    onClick={() => { setViewPhotoOpen(true); setPhotoMenuOpen(false); }}
+                    className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all active:scale-[0.98]"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500">
+                      <Eye size={18} />
+                    </div>
+                    {t('profile.viewPhoto')}
+                  </button>
+                  <button
+                    onClick={startCamera}
+                    className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all active:scale-[0.98]"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500">
+                      <CameraIcon size={18} />
+                    </div>
+                    {t('profile.takePhoto')}
+                  </button>
+                  <label
+                    htmlFor="profile-photo-upload"
+                    className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all cursor-pointer active:scale-[0.98]"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500">
+                      <Upload size={18} />
+                    </div>
+                    {t('profile.uploadPhoto')}
+                  </label>
+                  <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
+                  <button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to remove your profile photo?')) {
+                        removePhotoMutation.mutate();
+                      }
+                    }}
+                    className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-red-50 dark:hover:bg-red-900/10 text-sm font-semibold text-red-600 dark:text-red-400 transition-all active:scale-[0.98]"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+                      <Trash2 size={18} />
+                    </div>
+                    {t('profile.removePhoto')}
+                  </button>
+                  <input
+                    type="file"
+                    id="profile-photo-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      photoMutation.mutate(file);
+                      setPhotoMenuOpen(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex-1 text-center md:text-left space-y-2">
@@ -246,15 +401,15 @@ export const ProfilePage: React.FC = () => {
             <div className="flex gap-3">
               {!isEditing ? (
                 <Button onClick={() => setIsEditing(true)}>
-                  <Edit className="mr-2" size={16} /> Edit Profile
+                  <Edit className="mr-2" size={16} /> {t('profile.editProfile')}
                 </Button>
               ) : (
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setIsEditing(false)}>
-                    <X className="mr-2" size={16} /> Cancel
+                    <X className="mr-2" size={16} /> {t('common.cancel')}
                   </Button>
                   <Button onClick={() => formik.handleSubmit()} isLoading={updateMutation.isPending}>
-                    <Save className="mr-2" size={16} /> Save Changes
+                    <Save className="mr-2" size={16} /> {t('profile.saveChanges')}
                   </Button>
                 </div>
               )}
@@ -266,19 +421,19 @@ export const ProfilePage: React.FC = () => {
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="w-full justify-start h-12 bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
             <TabsTrigger value="personal" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-              <UserCircle className="mr-2" size={18} /> Personal
+              <UserCircle className="mr-2" size={18} /> {t('common.personal')}
             </TabsTrigger>
             <TabsTrigger value="professional" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-              <Briefcase className="mr-2" size={18} /> Professional
+              <Briefcase className="mr-2" size={18} /> {t('common.professional')}
             </TabsTrigger>
             <TabsTrigger value="financial" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-              <CreditCard className="mr-2" size={18} /> Financial
+              <CreditCard className="mr-2" size={18} /> {t('common.financial')}
             </TabsTrigger>
             <TabsTrigger value="education" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-              <GraduationCap className="mr-2" size={18} /> Education
+              <GraduationCap className="mr-2" size={18} /> {t('common.education')}
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-              <FileText className="mr-2" size={18} /> Documents
+              <FileText className="mr-2" size={18} /> {t('common.documents')}
             </TabsTrigger>
           </TabsList>
 
@@ -286,31 +441,31 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="personal">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <UserIcon className="text-primary" /> Personal Information
+                <UserIcon className="text-primary" /> {t('profile.personalInfo')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="First Name" id="first_name" formik={formik} isEditing={isEditing} required />
-                <FormField label="Last Name" id="last_name" formik={formik} isEditing={isEditing} required />
+                <FormField label={t('profile.firstName')} id="first_name" formik={formik} isEditing={isEditing} required />
+                <FormField label={t('profile.lastName')} id="last_name" formik={formik} isEditing={isEditing} required />
 
-                <FormField label="Date of Birth" id="date_of_birth" type="date" formik={formik} isEditing={isEditing} />
-                <FormField label="Gender" id="gender" formik={formik} isEditing={isEditing} type="select" options={['Male', 'Female', 'Other']} />
+                <FormField label={t('profile.dob')} id="date_of_birth" type="date" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.gender')} id="gender" formik={formik} isEditing={isEditing} type="select" options={['Male', 'Female', 'Other']} />
 
-                <FormField label="Marital Status" id="marital_status" formik={formik} isEditing={isEditing} type="select" options={['Single', 'Married', 'Divorced', 'Widowed']} />
-                <FormField label="Nationality" id="nationality" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.maritalStatus')} id="marital_status" formik={formik} isEditing={isEditing} type="select" options={['Single', 'Married', 'Divorced', 'Widowed']} />
+                <FormField label={t('profile.nationality')} id="nationality" formik={formik} isEditing={isEditing} />
 
-                <FormField label="Phone" id="phone" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.phone')} id="phone" formik={formik} isEditing={isEditing} />
                 <div className="md:col-span-2">
-                  <FormField label="Address" id="address" formik={formik} isEditing={isEditing} type="textarea" />
+                  <FormField label={t('profile.address')} id="address" formik={formik} isEditing={isEditing} type="textarea" />
                 </div>
               </div>
 
               <h4 className="text-lg font-medium mt-8 mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                <Phone className="text-primary" size={18} /> Emergency Contact
+                <Phone className="text-primary" size={18} /> {t('profile.emergencyContact')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField label="Contact Name" id="emergency_name" formik={formik} isEditing={isEditing} />
-                <FormField label="Relation" id="emergency_relation" formik={formik} isEditing={isEditing} />
-                <FormField label="Phone Number" id="emergency_phone" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.contactName')} id="emergency_name" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.relation')} id="emergency_relation" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.phoneNumber')} id="emergency_phone" formik={formik} isEditing={isEditing} />
               </div>
             </Card>
           </TabsContent>
@@ -319,20 +474,20 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="professional">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <Briefcase className="text-primary" /> Professional Details
+                <Briefcase className="text-primary" /> {t('profile.professionalDetails')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <DisplayField label="Employee ID" value={profile.employee_id} />
-                <DisplayField label="Email" value={profile.email} />
+                <DisplayField label={t('profile.employeeId')} value={profile.employee_id} />
+                <DisplayField label={t('profile.email')} value={profile.email} />
 
-                <DisplayField label="Department" value={getDeptName(profile.department_id)} />
-                <DisplayField label="Designation" value={getDesigName(profile.designation_id)} />
+                <DisplayField label={t('profile.department')} value={getDeptName(profile.department_id)} />
+                <DisplayField label={t('profile.designation')} value={getDesigName(profile.designation_id)} />
 
-                <DisplayField label="Date of Joining" value={profile.join_date ? format(new Date(profile.join_date), 'PPP') : '-'} />
-                <DisplayField label="Employment Type" value={profile.employment_type} />
+                <DisplayField label={t('profile.dateOfJoining')} value={profile.join_date ? format(new Date(profile.join_date), 'PPP') : '-'} />
+                <DisplayField label={t('profile.employmentType')} value={profile.employment_type} />
 
                 <DisplayField
-                  label="Shift"
+                  label={t('profile.shift')}
                   value={
                     profile.shift
                       ? `${profile.shift} ${profile.shift_start_time && profile.shift_end_time ? `(${profile.shift_start_time.slice(0, 5)} - ${profile.shift_end_time.slice(0, 5)})` : ''}`
@@ -340,7 +495,7 @@ export const ProfilePage: React.FC = () => {
                   }
                 />
                 <DisplayField
-                  label="Reports To"
+                  label={t('profile.reportsTo')}
                   value={
                     profile.manager_first_name
                       ? `${profile.manager_first_name} ${profile.manager_last_name || ''}`
@@ -351,7 +506,7 @@ export const ProfilePage: React.FC = () => {
 
               <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  Note: Professional details are managed by HR. Please contact HR for any discrepancies.
+                  {t('profile.professionalNote')}
                 </p>
               </div>
             </Card>
@@ -361,16 +516,16 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="financial">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <CreditCard className="text-primary" /> Financial Information
+                <CreditCard className="text-primary" /> {t('profile.financialInfo')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="Bank Name" id="bank_name" formik={formik} isEditing={isEditing} />
-                <FormField label="Account Holder Name" id="account_name" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.bankName')} id="bank_name" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.accountHolderName')} id="account_name" formik={formik} isEditing={isEditing} />
 
-                <FormField label="Account Number" id="account_number" formik={formik} isEditing={isEditing} />
-                <FormField label="IFSC Code" id="ifsc_code" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.accountNumber')} id="account_number" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.ifscCode')} id="ifsc_code" formik={formik} isEditing={isEditing} />
 
-                <FormField label="Tax ID (PAN/SSN)" id="tax_id" formik={formik} isEditing={isEditing} />
+                <FormField label={t('profile.taxId')} id="tax_id" formik={formik} isEditing={isEditing} />
               </div>
             </Card>
           </TabsContent>
@@ -379,23 +534,23 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="education">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <GraduationCap className="text-primary" /> Education
+                <GraduationCap className="text-primary" /> {t('common.education')}
               </h3>
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                   <GraduationCap size={32} className="text-gray-400" />
                 </div>
-                <h4 className="text-lg font-medium text-gray-900 dark:text-white">Educational Details</h4>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white">{t('profile.educationDetails')}</h4>
                 <p className="text-gray-500 dark:text-muted max-w-sm mt-2">
-                  This module is currently being updated to support creating and tracking educational qualifications.
+                  {t('profile.educationModuleUpdate')}
                 </p>
                 {isEditing && (
                   <div className="w-full max-w-md mt-6 text-left">
-                    <Label>Additional Notes (Optional)</Label>
+                    <Label>{t('profile.additionalNotes')}</Label>
                     <textarea
                       className="w-full mt-2 p-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
                       rows={4}
-                      placeholder="Enter any degree or certification details here..."
+                      placeholder={t('profile.enterEducationDetails')}
                     />
                   </div>
                 )}
@@ -404,8 +559,50 @@ export const ProfilePage: React.FC = () => {
           </TabsContent>
 
           {/* DOCUMENTS TAB */}
+          {/* Photo Options Modals */}
+          <Dialog open={viewPhotoOpen} onOpenChange={setViewPhotoOpen} title={t('profile.viewPhoto')}>
+            <div className="flex items-center justify-center p-4">
+              <div className="w-full max-w-md aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-2xl">
+                {profile.profile_photo_url ? (
+                  <img src={resolveImageUrl(profile.profile_photo_url)} alt="Profile Large" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-8xl font-bold text-primary/20">
+                    {profile.first_name?.[0]}{profile.last_name?.[0]}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Dialog>
+
+          <Dialog
+            open={takePhotoOpen}
+            onOpenChange={(open) => !open && stopCamera()}
+            title={t('profile.takePhoto')}
+            description={t('profile.alignFace')}
+            footer={
+              <DialogFooter className="px-6 py-4">
+                <Button variant="outline" onClick={stopCamera}>{t('common.cancel')}</Button>
+                <Button onClick={capturePhoto} className="gap-2">
+                  <Camera size={18} />
+                  {t('profile.captureSave')}
+                </Button>
+              </DialogFooter>
+            }
+          >
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-inner">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 pointer-events-none border-[3px] border-dashed border-white/30 rounded-[50%] scale-75" />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+          </Dialog>
+
           {/* DOCUMENTS TAB */}
-          <TabsContent value="documents">
+          <TabsContent value="documents" className="space-y-6">
             <DocumentsTab employeeId={employeeUuid} />
           </TabsContent>
 

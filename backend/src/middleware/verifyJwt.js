@@ -36,7 +36,8 @@ module.exports = async function verifyJwt(req, res, next) {
           u.must_change_password,
           u.is_active,
           u.portal_access_until,
-          e.id AS employee_id
+          e.id AS employee_id,
+          e.employee_id AS emp_code
       FROM users u
       LEFT JOIN employees e ON u.id = e.user_id
       WHERE u.id = $1
@@ -93,6 +94,7 @@ module.exports = async function verifyJwt(req, res, next) {
       tenantId: user.tenant_id,
       employeeId: user.employee_id || null,
       role: user.role,
+      empCode: user.emp_code || null,
       mustChangePassword: user.must_change_password
     };
 

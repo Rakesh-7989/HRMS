@@ -34,12 +34,18 @@ router.post("/conversations/:conversationId/log-call", controller.logCall);
 
 // Advanced Features
 router.post("/groups", controller.createGroupConversation);
+router.post("/conversations/:conversationId/participants", controller.addParticipants);
+router.delete("/conversations/:conversationId/participants/:userId", controller.removeParticipant);
 router.post("/status", controller.updateStatus);
+router.post("/status-message", controller.setStatusMessage);
 router.get("/search", controller.searchGlobal);
 router.get("/messages/:messageId/thread", controller.getThread);
 
 router.post("/conversations/:conversationId/messages/:messageId/reactions", controller.addReaction);
 router.delete("/conversations/:conversationId/messages/:messageId/reactions", controller.removeReaction);
 router.post("/conversations/:conversationId/messages/:messageId/toggle-pin", controller.togglePin);
+
+router.delete("/conversations/:conversationId/clear", controller.clearChatHistory);
+router.delete("/conversations/:conversationId", controller.deleteConversation);
 
 module.exports = router;
