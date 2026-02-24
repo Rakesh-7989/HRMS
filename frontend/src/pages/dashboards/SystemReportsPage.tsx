@@ -7,7 +7,7 @@ import {
     Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import {
-    Building2, Users, DollarSign, Zap, ChevronLeft,
+    Building2, Users, IndianRupee, Zap, ChevronLeft,
     TrendingUp, PieChart as PieChartIcon,
     Users2
 } from 'lucide-react';
@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                     <div key={index} className="flex items-center gap-2 mt-1">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                         <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {entry.name}: {entry.name.toLowerCase().includes('revenue') ? `$${entry.value.toLocaleString()}` : entry.value.toLocaleString()}
+                            {entry.name}: {entry.name.toLowerCase().includes('revenue') ? `₹${entry.value.toLocaleString()}` : entry.value.toLocaleString()}
                         </span>
                     </div>
                 ))}
@@ -101,7 +101,7 @@ export const SystemReportsPage: React.FC = () => {
     }
 
     const stats = [
-        { label: 'Total MRR', value: `$${reports?.stats.total_mrr?.toLocaleString() || '0'}`, icon: DollarSign, color: 'text-indigo-600', sub: 'Current monthly total' },
+        { label: 'Total MRR', value: `₹${reports?.stats.total_mrr?.toLocaleString() || '0'}`, icon: IndianRupee, color: 'text-indigo-600', sub: 'Current monthly total' },
         { label: 'Active Tenants', value: reports?.stats.total_tenants || 0, icon: Building2, color: 'text-emerald-600', sub: 'Organizations onboarded' },
         { label: 'Daily Active Users', value: reports?.stats.active_users || 0, icon: Users, color: 'text-amber-600', sub: 'Last 24h activity' },
         { label: 'Avg Employees', value: Math.round(reports?.stats.avg_employees || 0), icon: Users2, color: 'text-purple-600', sub: 'Calculated per tenant' },
@@ -150,7 +150,7 @@ export const SystemReportsPage: React.FC = () => {
 
                 {/* Medium Level Charts Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <ReportCard title="Revenue Growth" icon={DollarSign} delay={0.1}>
+                    <ReportCard title="Revenue Growth" icon={IndianRupee} delay={0.1}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData?.revenue}>
                                 <defs>

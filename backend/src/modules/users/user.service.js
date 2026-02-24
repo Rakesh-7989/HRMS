@@ -115,9 +115,9 @@ exports.createUser = async (db, data, actor) => {
          emergency_name, emergency_phone, emergency_relation,
          employee_id, department_id, designation_id, reports_to, join_date, employment_type, shift, shift_id,
          bank_name, account_name, account_number, ifsc_code, tax_id, address,
-         uan, pf_account, esi_number, created_by, aadhar_number, annual_salary, branch_name, job_location)
+         uan, pf_account, esi_number, created_by, aadhar_number, annual_salary, branch_name, job_location, timezone)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-         $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34)
+         $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34, $35)
       RETURNING id
       `,
       [
@@ -154,7 +154,8 @@ exports.createUser = async (db, data, actor) => {
         data.aadhar_number || null, // $31
         data.ctc || 0,            // $32 (annual_salary)
         data.branch_name || null, // $33
-        data.job_location || null // $34
+        data.job_location || null, // $34
+        data.timezone || null     // $35
       ]
     );
 
@@ -501,7 +502,8 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     // Address
     "address",
     "profile_photo_url",
-    "aadhar_number"
+    "aadhar_number",
+    "timezone"
   ];
 
   const fields = [];
@@ -665,6 +667,7 @@ exports.getMyProfile = async (db, user) => {
       e.esi_number,
       e.aadhar_number,
       e.reports_to,
+      e.timezone,
       m.first_name as manager_first_name,
       m.last_name as manager_last_name,
       e.profile_photo_url,

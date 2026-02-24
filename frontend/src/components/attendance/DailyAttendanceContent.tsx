@@ -62,8 +62,8 @@ export const DailyAttendanceContent: React.FC = () => {
     const { data: todayTeamAttendance = [], isLoading: isLoadingTeamAttendance } = useQuery({
         queryKey: ['attendance', 'today-team-log'],
         queryFn: () => attendanceService.getAttendanceRecords({
-            from_date: getCurrentDate(),
-            to_date: getCurrentDate()
+            from_date: getCurrentDate(user?.timezone),
+            to_date: getCurrentDate(user?.timezone)
         }),
         enabled: isHrOrManager
     });
@@ -89,21 +89,21 @@ export const DailyAttendanceContent: React.FC = () => {
                 try {
                     const now = new Date();
 
-                    // Get check-in date
-                    let checkInTime = todayAttendance.check_in_time;
-                    if (!checkInTime) return;
-
+                    // Get check-in absolute time
+                    const checkInUtc = (todayAttendance as any).check_in_time_utc;
                     let checkInDate: Date;
 
-                    if (checkInTime.includes('T')) {
-                        checkInDate = new Date(checkInTime);
+                    if (checkInUtc) {
+                        checkInDate = new Date(checkInUtc);
+                    } else if (todayAttendance.check_in_time?.includes('T')) {
+                        checkInDate = new Date(todayAttendance.check_in_time);
                     } else {
                         const recordDate = new Date(todayAttendance.date);
                         const year = recordDate.getFullYear();
                         const month = String(recordDate.getMonth() + 1).padStart(2, '0');
                         const day = String(recordDate.getDate()).padStart(2, '0');
                         const dateStr = `${year}-${month}-${day}`;
-                        checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                        checkInDate = new Date(`${dateStr}T${todayAttendance.check_in_time}`);
                     }
 
                     if (isNaN(checkInDate.getTime())) return;
@@ -334,7 +334,7 @@ export const DailyAttendanceContent: React.FC = () => {
                         <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Today's Attendance</h3>
                         <p className="text-sm text-gray-600 dark:text-muted">
                             {todayAttendance?.check_in_time
-                                ? `Checked in at ${formatTime12Hour(todayAttendance.check_in_time)}`
+                                ? `Checked in at ${formatTime12Hour(todayAttendance.check_in_time, user?.timezone)}`
                                 : 'Not checked in yet'}
                         </p>
 
@@ -343,7 +343,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                 {todayAttendance.shift_name && (
                                     <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                         <span className="font-medium">Shift:</span>
-                                        <span>{todayAttendance.shift_name} ({formatTime12Hour(todayAttendance.shift_start)} - {formatTime12Hour(todayAttendance.shift_end)})</span>
+                                        <span>{todayAttendance.shift_name} ({formatTime12Hour(todayAttendance.shift_start, user?.timezone)} - {formatTime12Hour(todayAttendance.shift_end, user?.timezone)})</span>
                                     </div>
                                 )}
                                 {todayAttendance.late_by && (
@@ -468,8 +468,8 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
                                                     {att.first_name} {att.last_name}
                                                 </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time, user?.timezone)}</td>
                                                 <td className="py-3 px-4">
                                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                         }`}>
@@ -511,7 +511,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                                                     {format(new Date(att.date), 'MMM dd, yyyy')}
                                                 </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
                                                 <td className="py-3 px-4">
                                                     <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-medium">
                                                         Warning: Pending
@@ -560,8 +560,8 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                                     {format(new Date(att.date), 'MMM dd, yyyy')}
                                                 </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time, user?.timezone)}</td>
                                                 <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                                                     {calculateWorkDuration(att.check_in_time, att.check_out_time)}
                                                 </td>
@@ -639,7 +639,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
                                                     {format(new Date(att.date), 'MMM dd, yyyy')}
                                                 </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time)}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
                                                 <td className="py-3 px-4">
                                                     <span
                                                         className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}

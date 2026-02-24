@@ -407,6 +407,7 @@ export const TasksPage: React.FC = () => {
 
     const filteredTasks = getFilteredTasks(false); // For List View, respect status filter
     const boardTasks = getFilteredTasks(true); // For Board View, ignore status filter (show all columns)
+    const isProjectLocked = ['COMPLETED', 'ARCHIVED'].includes(project?.status || '');
 
     return (
         <DashboardLayout
@@ -522,7 +523,7 @@ export const TasksPage: React.FC = () => {
                             </Button>
                         )}
                         {canManage && (
-                            <Button size="sm" onClick={() => setIsModalOpen(true)}>
+                            <Button size="sm" onClick={() => setIsModalOpen(true)} disabled={isProjectLocked} title={isProjectLocked ? `Cannot add tasks to a ${project?.status?.toLowerCase()} project` : undefined}>
                                 <Plus size={16} className="mr-1" />
                                 Add
                             </Button>
@@ -531,6 +532,13 @@ export const TasksPage: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-hidden min-h-0 min-w-0">
+                    {/* Status Lockout Banner */}
+                    {isProjectLocked && (
+                        <div className="mb-3 px-4 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
+                            <span>⚠️</span>
+                            This project is <strong>{project?.status?.toLowerCase()}</strong>. Adding or editing tasks is disabled.
+                        </div>
+                    )}
                     {activeTab === 'list' ? (
                         <Card className="h-full overflow-hidden border-0 shadow-none bg-transparent">
                             <div className="overflow-auto h-full scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">

@@ -255,7 +255,12 @@ export const timesheetService = {
         const last7Days = getPast7Days();
 
         const timeLogged = last7Days.map(date => {
-            const daysEntries = entries.filter(e => e.work_date && e.work_date.startsWith(date));
+            const daysEntries = entries.filter(e => {
+                if (!e.work_date) return false;
+                // Normalize both to YYYY-MM-DD for comparison
+                const entryDate = new Date(e.work_date).toISOString().split('T')[0];
+                return entryDate === date;
+            });
             const hours = daysEntries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
             const dateObj = new Date(date);
             return {
@@ -265,7 +270,11 @@ export const timesheetService = {
         });
 
         const billableVsNonBillable = last7Days.map(date => {
-            const daysEntries = entries.filter(e => e.work_date && e.work_date.startsWith(date));
+            const daysEntries = entries.filter(e => {
+                if (!e.work_date) return false;
+                const entryDate = new Date(e.work_date).toISOString().split('T')[0];
+                return entryDate === date;
+            });
             const billable = daysEntries.filter(e => e.is_billable !== false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
             const nonBillable = daysEntries.filter(e => e.is_billable === false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
             return {
@@ -283,10 +292,12 @@ export const timesheetService = {
             const pName = e.project?.name || 'Unassigned';
             projectMap[pName] = (projectMap[pName] || 0) + (Number(e.hours) || 0);
 
-            // Task breakdown - use task title
-            const tName = e.task?.title || 'Unknown Task';
-            // Or better, group by "Task Type" if we had it. We don't.
-            // Let's group by Task Title for now, or Project Plans?
+            // Task breakdown - use task title or fall back to project name if task is missing
+            let tName = e.task?.title;
+            if (!tName) {
+                tName = e.project?.name ? `${e.project.name} (General)` : 'Unassigned Work';
+            }
+
             taskMap[tName] = (taskMap[tName] || 0) + (Number(e.hours) || 0);
         });
 

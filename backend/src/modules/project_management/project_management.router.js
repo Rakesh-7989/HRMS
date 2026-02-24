@@ -347,12 +347,12 @@ router.post(
 /**
  * GET /api/project-management/timesheets/my-entries
  * Get my timesheet entries
- * Requires: ADMIN, HR, EMPLOYEE
+ * Requires: ADMIN, HR, EMPLOYEE, MANAGER
  */
 router.get(
   "/timesheets/my-entries",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "EMPLOYEE"]),
+  requireRole(["ADMIN", "HR", "EMPLOYEE", "MANAGER"]),
   validate(listTimesheetEntriesSchema),
   ctrl.getMyTimesheetEntries
 );
@@ -371,15 +371,30 @@ router.post(
 );
 
 /**
+ * GET /api/project-management/timesheets
+ * List all timesheets (for managers/admins)
+ * Requires: ADMIN, HR, MANAGER
+ * Note: This route must be before /:id routes
+ */
+router.get(
+  "/timesheets",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER"]),
+  validate(listTimesheetsSchema),
+  ctrl.listTimesheets
+);
+
+
+/**
  * GET /api/project-management/timesheets/my
  * Get my timesheets
- * Requires: ADMIN, HR, EMPLOYEE
+ * Requires: ADMIN, HR, EMPLOYEE, MANAGER
  * Note: This route must be before /:id routes
  */
 router.get(
   "/timesheets/my",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "EMPLOYEE"]),
+  requireRole(["ADMIN", "HR", "EMPLOYEE", "MANAGER"]),
   validate(listTimesheetsSchema),
   ctrl.getMyTimesheets
 );
@@ -470,12 +485,12 @@ router.get(
 /**
  * GET /api/project-management/reports/client/:client_id
  * Get client-wise hours report
- * Requires: ADMIN, HR
+ * Requires: ADMIN, HR, MANAGER
  */
 router.get(
   "/reports/client/:client_id",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requireRole(["ADMIN", "HR", "MANAGER"]),
   validate(getClientReportSchema),
   ctrl.getClientReport
 );

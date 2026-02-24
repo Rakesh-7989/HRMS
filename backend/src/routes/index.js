@@ -35,6 +35,7 @@ const subscriptionAdminRouter = require('../modules/subscriptions/subscriptions.
 
 
 const chatRouter = require('../modules/chat/chat.router');
+const commonRouter = require('../modules/common/common.router');
 const router = express.Router();
 
 // Always attach RLS/ALS context
@@ -44,6 +45,7 @@ router.use('/assets', verifyJwt, requireFeature('asset_management'), assetManage
 
 // Public routes
 router.use('/auth', authRoutes);
+router.use('/common', commonRouter);
 
 // Tenant module (use /tenants - plural, standard REST convention)
 router.use('/tenants', tenantRouter);

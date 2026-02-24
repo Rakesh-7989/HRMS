@@ -1,4 +1,4 @@
-const pool = require("../../config/db");
+const timeService = require("../../utils/timeService");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -10,6 +10,13 @@ exports.requestWFH = async (db, data, actor) => {
 
     if (!actor.employeeId) {
         throw new Error("You must have an active employee profile to request WFH.");
+    }
+
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId, actor.employeeId);
+    const today = timeService.todayDate(tz);
+
+    if (request_date < today) {
+        throw new Error("Cannot request WFH for a past date.");
     }
 
     // Check for existing request for the same date

@@ -69,32 +69,36 @@ const StatCard = ({
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
     whileHover={{ y: -5, scale: 1.02 }}
-    className="relative group"
+    className="relative group h-full"
   >
-    <div
-      className="relative overflow-hidden rounded-3xl p-5 h-full text-white"
-      style={{ background: gradient }}
-    >
-      {/* Decorative Pattern */}
-      <div className="absolute inset-0 opacity-10">
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+      {/* Subtle Decorative Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <circle cx="80" cy="20" r="40" fill="white" fillOpacity="0.3" />
-          <circle cx="10" cy="80" r="20" fill="white" fillOpacity="0.2" />
+          <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+          <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
         </svg>
+      </div>
+
+      {/* Icon Accent */}
+      <div
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        style={{ background: gradient }}
+      >
+        <Icon className="w-6 h-6 text-white" />
       </div>
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Icon className="w-5 h-5 text-white" />
-          </div>
-        </div>
-        <h3 className="text-3xl font-bold mb-0.5 tracking-tight">
+        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </h3>
-        <p className="text-white font-bold text-sm tracking-wide">{title}</p>
-        {subtitle && <p className="text-white/60 text-[10px] mt-0.5 uppercase tracking-wider">{subtitle}</p>}
+        <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
+        {subtitle && (
+          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   </motion.div>
@@ -305,15 +309,12 @@ export const HRDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-6"
-          style={{
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #6366f1 100%)',
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          {/* Subtle Patterns */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="absolute inset-0 text-slate-900 dark:text-white" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
@@ -325,15 +326,15 @@ export const HRDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-1"
               >
-                <Sparkles className="w-4 h-4 text-yellow-300" />
-                <span className="text-white/80 text-xs font-medium uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
                   Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}
                 </span>
               </motion.div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
                 Welcome back, {user?.first_name}! 👋
               </h1>
-              <p className="text-white/70 text-base font-medium">
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
                 Here's what's happening with your people today
               </p>
             </div>
@@ -343,15 +344,15 @@ export const HRDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
+                className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
               >
-                <div className="text-center px-3 border-r border-white/20">
-                  <p className="text-2xl font-bold text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
+                <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+                  <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{format(new Date(), 'dd')}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{format(new Date(), 'MMM')}</p>
                 </div>
-                <div className="text-center px-3">
-                  <p className="text-2xl font-bold text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Today</p>
+                <div className="text-center px-4">
+                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{format(new Date(), 'eee')}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Today</p>
                 </div>
               </motion.div>
             </div>
@@ -652,26 +653,30 @@ export const HRDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a] rounded-3xl p-6 text-white border border-white/5 shadow-2xl"
+          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          {/* Decorative Glows */}
-          <div className="absolute -top-20 -right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]" />
+          {/* Subtle Accent Pattern */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <circle cx="90" cy="10" r="30" fill="currentColor" className="text-indigo-500" />
+              <circle cx="10" cy="90" r="20" fill="currentColor" className="text-emerald-500" />
+            </svg>
+          </div>
 
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
-                  <Clock className="w-5 h-5 text-purple-300" />
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10 transition-transform hover:rotate-6">
+                  <Clock className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold tracking-tight">Today's Attendance</h3>
-                  <p className="text-white/50 text-xs font-medium uppercase tracking-widest">{format(new Date(), 'eeee, MMMM do')}</p>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Today's Attendance</h3>
+                  <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{format(new Date(), 'eeee, MMMM do')}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-md">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest">Live Updates</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Live Updates</span>
               </div>
             </div>
 
@@ -729,23 +734,18 @@ export const HRDashboard: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 + index * 0.1 }}
-                  className={`group relative p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-xl ${item.glow}`}
+                  className="group relative p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-indigo-500/10 transition-all duration-300 shadow-md hover:shadow-xl"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform`}>
-                      <item.icon className={`w-5 h-5 ${item.accent}`} />
+                  <div className="flex items-center justify-between mb-5">
+                    <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform shadow-lg`}>
+                      <item.icon className={`w-6 h-6 ${item.accent}`} />
                     </div>
                   </div>
                   <div>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <p className="text-3xl font-black tracking-tighter">{item.value}</p>
-                    </div>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${item.accent}`}>{item.label}</p>
-                    <p className="text-white/40 text-[10px] font-medium leading-tight group-hover:text-white/60 transition-colors">{item.desc}</p>
+                    <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-1">{item.value}</h3>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${item.accent}`}>{item.label}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold leading-tight group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-wider">{item.desc}</p>
                   </div>
-
-                  {/* Internal Glow Effect */}
-                  <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`} />
                 </motion.div>
               ))}
             </div>

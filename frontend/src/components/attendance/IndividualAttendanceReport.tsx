@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatTime12Hour } from '@/utils/timeFormat';
 import { format } from 'date-fns';
 import {
     FileText,
@@ -21,6 +23,7 @@ interface IndividualAttendanceReportProps {
 }
 
 export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProps> = ({ employeeId, fromDate, toDate }) => {
+    const { user } = useAuth();
     // Fetch Report
     const { data: reportData, isLoading } = useQuery({
         queryKey: ['attendance', 'individual-report', employeeId, fromDate, toDate],
@@ -140,12 +143,12 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                                         <td className="px-4 py-3">
                                             {record.check_in_time ? (
                                                 <span className={record.is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
-                                                    {record.check_in_time}
+                                                    {formatTime12Hour(record.check_in_time, user?.timezone)}
                                                     {record.is_late && <span className="text-xs ml-1 text-red-500">({record.late_by})</span>}
                                                 </span>
                                             ) : '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{record.check_out_time || '-'}</td>
+                                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatTime12Hour(record.check_out_time, user?.timezone) || '-'}</td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium
                                                 ${record.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :

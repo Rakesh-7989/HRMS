@@ -7,8 +7,8 @@ import { attendanceService } from '@/services/attendance.service';
 import { eventsService } from '@/services/events.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { detectDeviceType } from '@/utils/deviceDetection';
-import { formatTime12Hour } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { formatTime12Hour, getGreeting, formatInTimezone, getCurrentTime } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -47,23 +47,41 @@ const StatCard = ({
   delay?: number;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay }}
-    whileHover={{ y: -5 }}
-    className="relative group overflow-hidden rounded-[2rem] p-6 text-white shadow-xl"
-    style={{ background: gradient }}
+    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="relative group h-full"
   >
-    <div className="absolute inset-0 opacity-10 bg-white/10" />
-    <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-all" />
-
-    <div className="relative z-10">
-      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-white" />
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+      {/* Subtle Decorative Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+          <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
+        </svg>
       </div>
-      <h3 className="text-3xl font-black mb-1">{value}</h3>
-      <p className="font-bold text-white/90 text-sm tracking-wide">{title}</p>
-      {subtitle && <p className="text-white/60 text-[10px] uppercase tracking-wider font-medium mt-1">{subtitle}</p>}
+
+      {/* Icon Accent */}
+      <div
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        style={{ background: gradient }}
+      >
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </h3>
+        <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
+        {subtitle && (
+          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+            {subtitle}
+          </p>
+        )}
+      </div>
     </div>
   </motion.div>
 );
@@ -74,20 +92,20 @@ const ActionButton = ({
   <motion.button
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ delay }}
-    whileHover={{ scale: 1.02, x: 4 }}
+    transition={{ delay, ease: [0.22, 1, 0.36, 1] }}
+    whileHover={{ scale: 1.02, x: 8 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`w-full p-4 rounded-2xl border flex items-center gap-4 group transition-all duration-300 ${colorClass}`}
+    className={`w-full p-4 rounded-[1.5rem] border flex items-center gap-4 group transition-all duration-300 bg-white dark:bg-[#0f172a] shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 ${colorClass}`}
   >
-    <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-lg ${gradientClass}`}>
+    <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg border border-white/10 ${gradientClass}`}>
       <Icon className="w-6 h-6" />
     </div>
     <div className="flex-1 text-left">
-      <p className="font-bold text-slate-800 dark:text-white">{title}</p>
-      <p className="text-xs font-medium opacity-60">{subtitle}</p>
+      <p className="font-black text-slate-900 dark:text-white text-base leading-tight">{title}</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{subtitle}</p>
     </div>
-    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
   </motion.button>
 );
 
@@ -123,11 +141,8 @@ export const EmployeeDashboard: React.FC = () => {
 
   // Greeting Logic
   const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('common.morning');
-    if (hour < 17) return t('common.afternoon');
-    return t('common.evening');
-  }, [t]);
+    return getGreeting(user?.timezone);
+  }, [user?.timezone]);
 
   // Queries
   const { data, isLoading } = useQuery({
@@ -229,13 +244,23 @@ export const EmployeeDashboard: React.FC = () => {
 
   const getWorkingTime = () => {
     if (!todayStatus.check_in_time) return null;
-    const checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
+
+    let checkIn: Date;
+    const checkInUtc = (todayStatus as any).check_in_time_utc;
+    if (checkInUtc) {
+      checkIn = new Date(checkInUtc);
+    } else {
+      checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
+    }
 
     let checkOut: Date;
-    if (todayStatus.check_out_time) {
+    const checkOutUtc = (todayStatus as any).check_out_time_utc;
+    if (checkOutUtc) {
+      checkOut = new Date(checkOutUtc);
+    } else if (todayStatus.check_out_time) {
       checkOut = new Date(`2000-01-01T${todayStatus.check_out_time}`);
     } else {
-      const nowStr = format(new Date(), 'HH:mm:ss');
+      const nowStr = getCurrentTime(user?.timezone);
       checkOut = new Date(`2000-01-01T${nowStr}`);
     }
 
@@ -310,14 +335,12 @@ export const EmployeeDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2rem] p-6 lg:p-8 text-white border border-white/5 shadow-2xl shadow-indigo-500/15"
-          style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)',
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          {/* Subtle Patterns */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="absolute inset-0 text-slate-900 dark:text-white" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
@@ -329,14 +352,16 @@ export const EmployeeDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-1"
               >
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-                <span className="text-white/80 text-sm font-medium uppercase tracking-wider">{t('common.good')} {greeting}</span>
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
+                  {greeting}
+                </span>
               </motion.div>
-              <h1 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight">
-                {t('common.welcomeBack')}, {user?.first_name}! 👋
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
+                Welcome back, {profile?.first_name || user?.first_name}! 👋
               </h1>
-              <p className="text-white/70 text-lg md:text-xl font-medium flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-indigo-300" />
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-indigo-500" />
                 {profile?.designation || 'Team Member'} • {profile?.department || 'General'}
               </p>
             </div>
@@ -346,15 +371,15 @@ export const EmployeeDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
+                className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
               >
-                <div className="text-center px-3 border-r border-white/20 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
+                <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+                  <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short' })}</p>
                 </div>
-                <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Today</p>
+                <div className="text-center px-4">
+                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'short' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Today</p>
                 </div>
               </motion.div>
             </div>
@@ -406,26 +431,28 @@ export const EmployeeDashboard: React.FC = () => {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Check In</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-white">
-                    {formatTime12Hour(todayStatus.check_in_time) || '--:--'}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check In</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                    {formatTime12Hour(todayStatus.check_in_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Check Out</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-white">
-                    {formatTime12Hour(todayStatus.check_out_time) || '--:--'}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check Out</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                    {formatTime12Hour(todayStatus.check_out_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
-                <div className="col-span-2 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-between">
+                <div className="col-span-2 p-5 rounded-[1.5rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10 flex items-center justify-between group">
                   <div>
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Working Hours</p>
-                    <p className="text-xl font-black text-indigo-600 dark:text-indigo-300">
+                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500/70 uppercase tracking-widest mb-2">Working Hours</p>
+                    <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter leading-none">
                       {workingTime ? `${workingTime.hours}h ${workingTime.mins}m` : '--:--'}
                     </p>
                   </div>
-                  <Timer className="w-8 h-8 text-indigo-300" />
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                    <Timer className="w-6 h-6" />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -454,26 +481,26 @@ export const EmployeeDashboard: React.FC = () => {
               />
             </motion.div>
 
-            {/* Celebrations (Moved to Left Column) */}
+            {/* Celebrations */}
             <ChartCard title="Celebrations" delay={0.6}>
               <div className="space-y-3">
                 {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || [])].slice(0, 3).map((evt: any, i: number) => (
-                  <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${evt.type === 'BIRTHDAY' ? 'bg-pink-500' : 'bg-amber-500'}`}>
-                      {evt.type === 'BIRTHDAY' ? <Cake className="w-5 h-5" /> : <Award className="w-5 h-5" />}
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
+                      {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-white text-sm">{evt.name}</p>
-                      <p className="text-xs font-semibold text-slate-400">
-                        {evt.date} • {evt.type === 'BIRTHDAY' ? 'Birthday' : 'Anniversary'}
+                      <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : 'Anniversary'}
                       </p>
                     </div>
                   </div>
                 ))}
                 {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length) && (
-                  <div className="flex flex-col items-center justify-center h-[150px] text-center opacity-60">
-                    <Gift className="w-10 h-10 text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-400">No events this week</p>
+                  <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+                    <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                    <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No events this week</p>
                   </div>
                 )}
               </div>

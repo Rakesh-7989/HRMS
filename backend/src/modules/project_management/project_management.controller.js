@@ -732,6 +732,37 @@ exports.getPendingApprovals = async (req, res, next) => {
 };
 
 /**
+ * GET /api/project-management/timesheets
+ * List all timesheets (for managers/admins)
+ * Requires: ADMIN, HR, MANAGER
+ */
+exports.listTimesheets = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { employee_id, project_id, status, week_start_date, skip, limit } = req.query;
+
+    const result = await service.listTimesheets(tenantId, userId, {
+      employee_id,
+      project_id,
+      status,
+      week_start_date,
+      skip: skip ? parseInt(skip) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Timesheets retrieved successfully",
+      data: result.timesheets,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
  * POST /api/project-management/timesheets/:id/submit
  * Submit a timesheet
  * Requires: EMPLOYEE

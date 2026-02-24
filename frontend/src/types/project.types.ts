@@ -38,6 +38,8 @@ export interface CreateClientData {
     notes?: string;
 }
 
+export type BillingType = 'HOURLY' | 'FIXED' | 'NON_BILLABLE';
+
 // Project Interface
 export interface Project {
     id: string;
@@ -46,6 +48,7 @@ export interface Project {
     start_date: string;
     end_date: string;
     status: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
     is_billable?: boolean;
@@ -60,6 +63,7 @@ export interface CreateProjectData {
     start_date: string;
     end_date: string;
     status: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
 }
@@ -70,6 +74,7 @@ export interface UpdateProjectData {
     start_date?: string;
     end_date?: string;
     status?: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
 }
@@ -233,6 +238,13 @@ export interface ProjectReport {
     total_hours: number;
     total_timesheets: number;
     employees: any[]; // TODO: Define employee structure
+    financials?: {
+        total_billable_value: number;
+        invoiced_amount: number;
+        wip_writeoff: number;
+        budget: number;
+        billing_type: BillingType;
+    };
 }
 
 export interface ClientReport {

@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               two_factor_enabled: profile.two_factor_enabled ?? storedUser.two_factor_enabled,
               profile_photo_url: profile.profile_photo_url,
               tenant_settings: profile.tenant_settings,
+              timezone: profile.timezone || storedUser.timezone || profile.tenant_settings?.timezone,
               shift_week_offs: profile.shift_week_offs || storedUser.shift_week_offs,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
@@ -122,6 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           two_factor_enabled: profile.two_factor_enabled ?? response.user.two_factor_enabled,
           profile_photo_url: profile.profile_photo_url,
           tenant_settings: profile.tenant_settings,
+          timezone: profile.timezone || response.user.timezone || profile.tenant_settings?.timezone,
           shift_week_offs: profile.shift_week_offs || response.user.shift_week_offs,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));

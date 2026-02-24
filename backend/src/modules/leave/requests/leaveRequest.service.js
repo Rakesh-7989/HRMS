@@ -2,6 +2,7 @@ const pool = require("../../../config/db");
 const leaveBalanceService = require("../balances/leaveBalance.service");
 // const leavePolicyService = require("../policies/leavePolicy.service"); // Not strictly needed if validation logic matches
 const holidayService = require("../holidays/holiday.service");
+const timeService = require("../../../utils/timeService");
 const { BadRequestError, NotFoundError } = require("../../../utils/customErrors");
 
 const getQuery = (db) =>
@@ -38,7 +39,9 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
 
     // Check min days notice
     if (leaveType.min_days_notice > 0) {
-        const today = new Date();
+        const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+        const todayStr = timeService.todayDate(tz);
+        const today = new Date(todayStr); // Start of day in tenant timezone
         const startDateObj = new Date(start_date);
         const diffDays = Math.ceil((startDateObj - today) / (1000 * 60 * 60 * 24));
         if (diffDays < leaveType.min_days_notice) {
@@ -478,7 +481,9 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
     const leave = leaveRes.rows[0];
 
     // Cannot cancel past leaves
-    if (new Date(leave.start_date) < new Date()) {
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const todayStr = timeService.todayDate(tz);
+    if (new Date(leave.start_date) < new Date(todayStr)) {
         throw new Error("Cannot cancel leave that has already started or passed");
     }
 

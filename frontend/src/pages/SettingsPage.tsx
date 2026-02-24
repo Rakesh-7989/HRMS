@@ -30,6 +30,7 @@ import { SuccessModal } from '@/components/ui/SuccessModal';
 import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
 import defaultLogo from '../../Assests/logo.png';
+import { useTimezones, getTimezoneLabel } from '@/utils/timezone';
 
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -574,9 +575,11 @@ const OrganizationProfileSection: React.FC<{
     phone: '',
     city: '',
     state: '',
-    country: ''
+    country: '',
+    timezone: ''
   });
   const queryClient = useQueryClient();
+  const { timezones } = useTimezones();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['tenant-profile'],
@@ -684,7 +687,17 @@ const OrganizationProfileSection: React.FC<{
       showToast.error('Organization name is required');
       return;
     }
-    updateMutation.mutate(formData);
+    const payload = {
+      ...formData,
+      settings: {
+        ...(profile?.settings || {}),
+        timezone: formData.timezone
+      }
+    };
+    // @ts-ignore - removing timezone from top level if it's not expected there
+    delete (payload as any).timezone;
+
+    updateMutation.mutate(payload);
   };
 
   const startEditing = () => {
@@ -694,12 +707,14 @@ const OrganizationProfileSection: React.FC<{
       phone: profile?.phone || '',
       city: profile?.city || '',
       state: profile?.state || '',
-      country: profile?.country || ''
+      country: profile?.country || '',
+      timezone: profile?.settings?.timezone || ''
     });
     setIsEditing(true);
   };
 
-  const isTenantAdmin = userRole === 'ADMIN';
+  const canEditProfile = userRole === 'ADMIN' || userRole === 'HR' || userRole === 'MANAGER';
+
 
   if (isLoading) return <div className="p-3">Loading...</div>;
 
@@ -716,7 +731,7 @@ const OrganizationProfileSection: React.FC<{
                 className="w-full h-full object-contain"
               />
             </div>
-            {isTenantAdmin && (
+            {canEditProfile && (
               <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-3">
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -757,7 +772,7 @@ const OrganizationProfileSection: React.FC<{
         <div className="flex-1 w-full space-y-4">
           <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-2">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Profile Details</h4>
-            {isTenantAdmin && (
+            {canEditProfile && (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 Edit Profile
               </Button>
@@ -804,6 +819,13 @@ const OrganizationProfileSection: React.FC<{
               <p className="font-medium text-gray-900 dark:text-white text-[10px] uppercase text-muted mb-1">Country</p>
               <p className="text-sm text-gray-900 dark:text-white">
                 {profile?.country || 'Not set'}
+              </p>
+            </div>
+
+            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 md:col-span-2 border border-gray-100 dark:border-gray-800/50">
+              <p className="font-medium text-gray-900 dark:text-white text-[10px] uppercase text-muted mb-1">Default Organization Timezone</p>
+              <p className="text-sm font-semibold text-primary">
+                {getTimezoneLabel(profile?.settings?.timezone)}
               </p>
             </div>
           </div>
@@ -872,6 +894,22 @@ const OrganizationProfileSection: React.FC<{
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                   placeholder="Country"
                 />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="orgTz">Default Organization Timezone</Label>
+                <select
+                  id="orgTz"
+                  value={formData.timezone}
+                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Select Timezone</option>
+                  {timezones.map((tz: any) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">

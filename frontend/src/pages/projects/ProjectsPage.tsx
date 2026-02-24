@@ -71,6 +71,7 @@ export const ProjectsPage: React.FC = () => {
         start_date: '',
         end_date: '',
         status: 'PLANNING' as ProjectStatus,
+        billing_type: 'HOURLY' as 'HOURLY' | 'FIXED' | 'NON_BILLABLE',
         description: '',
         budget: '',
     });
@@ -143,6 +144,7 @@ export const ProjectsPage: React.FC = () => {
             start_date: '',
             end_date: '',
             status: 'PLANNING',
+            billing_type: 'HOURLY',
             description: '',
             budget: '',
         });
@@ -157,6 +159,7 @@ export const ProjectsPage: React.FC = () => {
             start_date: project.start_date.split('T')[0], // Format for date input
             end_date: project.end_date.split('T')[0],
             status: project.status,
+            billing_type: project.billing_type || 'HOURLY',
             description: project.description || '',
             budget: project.budget?.toString() || '',
         });
@@ -172,8 +175,19 @@ export const ProjectsPage: React.FC = () => {
         e.preventDefault();
 
         // Date validation
-        if (new Date(formData.end_date) < new Date(formData.start_date)) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(formData.start_date);
+        const endDate = new Date(formData.end_date);
+
+        if (endDate < startDate) {
             showToast.error('End date cannot be earlier than start date');
+            return;
+        }
+
+        // Prevent future start date for Active projects
+        if (formData.status === 'ACTIVE' && startDate > today) {
+            showToast.error('Cannot set status to ACTIVE if start date is in the future');
             return;
         }
 
@@ -479,6 +493,20 @@ export const ProjectsPage: React.FC = () => {
                                     <option value="ON_HOLD">On Hold</option>
                                     <option value="COMPLETED">Completed</option>
                                     <option value="ARCHIVED">Archived</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="billing_type">Billing Type</Label>
+                                <select
+                                    id="billing_type"
+                                    value={formData.billing_type}
+                                    onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as any })}
+                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                >
+                                    <option value="HOURLY">Hourly (Time & Materials)</option>
+                                    <option value="FIXED">Fixed Price (Capped by Budget)</option>
+                                    <option value="NON_BILLABLE">Non-Billable (Internal)</option>
                                 </select>
                             </div>
 

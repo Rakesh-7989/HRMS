@@ -8,7 +8,7 @@ const stringOrNull = z.string().optional().or(z.literal("").transform(() => null
 exports.createUserSchema = z.object({
   body: z.object({
     email: z.string().email(),
-    role: z.enum(["HR", "MANAGER", "EMPLOYEE","ADMIN"]),
+    role: z.enum(["HR", "MANAGER", "EMPLOYEE", "ADMIN"]),
     // Personal
     first_name: z.string().min(1),
     last_name: z.string().optional(),
@@ -48,7 +48,8 @@ exports.createUserSchema = z.object({
     // Address
     address: stringOrNull,
     branch_name: stringOrNull,
-    ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0))
+    ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0)),
+    timezone: z.string().optional()
   })
 });
 
@@ -108,7 +109,8 @@ const employeeUpdateBody = z.object({
   // Address
   address: stringOrNull,
   ctc: z.coerce.number().optional().or(z.literal("").transform(() => 0)),
-  role: z.enum(["ADMIN", "HR", "MANAGER", "EMPLOYEE", "SUPER_ADMIN"]).optional()
+  role: z.enum(["ADMIN", "HR", "MANAGER", "EMPLOYEE", "SUPER_ADMIN"]).optional(),
+  timezone: z.string().optional()
 });
 
 /* EMPLOYEE UPDATE (By Admin/HR) */

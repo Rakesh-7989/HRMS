@@ -100,10 +100,10 @@ export const BreakHistoryContent: React.FC = () => {
                                             {record.first_name} {record.last_name}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {formatTime12Hour(record.start_time)}
+                                            {formatTime12Hour(record.start_time, user?.timezone)}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {record.end_time ? formatTime12Hour(record.end_time) : '-'}
+                                            {record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             {record.duration_minutes

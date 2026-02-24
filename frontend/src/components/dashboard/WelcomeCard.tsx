@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Sparkles, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
+import { getGreeting } from '@/utils/timeFormat';
 import './dashboard.css';
 
 interface WelcomeCardProps {
@@ -12,14 +13,9 @@ interface WelcomeCardProps {
 export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
     const { user } = useAuth();
     const date = new Date();
-    const hour = date.getHours();
 
-    // Dynamic greeting based on time of day
-    const getGreeting = () => {
-        if (hour < 12) return 'Good Morning';
-        if (hour < 17) return 'Good Afternoon';
-        return 'Good Evening';
-    };
+    // Dynamic greeting based on time of day in user's configured timezone
+    const greeting = getGreeting(user?.timezone);
 
     // Get role-specific subtitle
     const getRoleMessage = () => {
@@ -94,7 +90,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ className }) => {
                                     <Sparkles size={16} className="text-fuchsia-500" />
                                 </motion.span>
                                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {getGreeting()}
+                                    {greeting}
                                 </span>
                             </div>
 

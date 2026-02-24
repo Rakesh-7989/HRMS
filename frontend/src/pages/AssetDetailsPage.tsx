@@ -11,13 +11,17 @@ import {
   Edit,
   Package,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Shield,
   FileText,
   Download,
   Printer,
   User,
-  XCircle,
+  MapPin,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -94,17 +98,34 @@ export const AssetDetailsPage: React.FC = () => {
   const getStatusColor = (status: AssetStatus) => {
     switch (status) {
       case 'AVAILABLE':
-        return 'text-green-600 bg-green-100';
+        return 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
       case 'ASSIGNED':
-        return 'text-violet-600 bg-violet-100';
+        return 'text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
       case 'REQUESTED':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
       case 'UNDER_REPAIR':
-        return 'text-orange-600 bg-orange-100';
+        return 'text-orange-600 bg-orange-50 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20';
+      case 'WRITTEN_OFF':
+        return 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20';
       case 'RETIRED':
-        return 'text-gray-600 bg-gray-100';
+      case 'DISPOSED':
+        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+      case 'DOA':
+      case 'LOST':
+        return 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+    }
+  };
+
+  const getConditionColor = (condition?: string) => {
+    switch (condition) {
+      case 'NEW': return 'text-green-700 bg-green-100';
+      case 'GOOD': return 'text-blue-700 bg-blue-100';
+      case 'FAIR': return 'text-yellow-700 bg-yellow-100';
+      case 'POOR': return 'text-orange-700 bg-orange-100';
+      case 'DAMAGED': return 'text-red-700 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -159,7 +180,7 @@ export const AssetDetailsPage: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/assets')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold px-5 py-2.5"
           >
             <ArrowLeft size={18} />
             Back to Assets
@@ -167,7 +188,7 @@ export const AssetDetailsPage: React.FC = () => {
           {canManage && (
             <Button
               onClick={() => navigate(`/assets/${asset.id}/edit`)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 rounded-2xl bg-primary text-white font-bold px-6 py-2.5"
             >
               <Edit size={18} />
               Edit Asset
@@ -215,11 +236,11 @@ export const AssetDetailsPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <DollarSign className="text-gray-400" size={20} />
+                    <IndianRupee className="text-gray-400" size={20} />
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Purchase Cost</p>
                       <p className="font-medium">
-                        {asset.purchase_price ? `$${asset.purchase_price.toLocaleString()}` : 'N/A'}
+                        {asset.purchase_price ? `₹${asset.purchase_price.toLocaleString()}` : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -231,11 +252,19 @@ export const AssetDetailsPage: React.FC = () => {
                     <Shield className="text-gray-400" size={20} />
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Warranty Expiry</p>
-                      <p className="font-medium">
-                        {asset.warranty_expiry
-                          ? format(new Date(asset.warranty_expiry), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {asset.warranty_expiry
+                            ? format(new Date(asset.warranty_expiry), 'MMM dd, yyyy')
+                            : 'N/A'}
+                        </p>
+                        {asset.warranty_expired && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full text-red-700 bg-red-100">
+                            <AlertTriangle size={12} />
+                            Expired
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -267,6 +296,28 @@ export const AssetDetailsPage: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Serial Number</p>
                         <p className="font-medium">{asset.serial_number}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {asset.location && (
+                    <div className="flex items-center gap-3">
+                      <MapPin className="text-gray-400" size={20} />
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                        <p className="font-medium">{asset.location}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {asset.condition && (
+                    <div className="flex items-center gap-3">
+                      <ShieldAlert className="text-gray-400" size={20} />
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Condition</p>
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getConditionColor(asset.condition)}`}>
+                          {asset.condition}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -345,6 +396,68 @@ export const AssetDetailsPage: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Financial & Depreciation */}
+            {(asset.purchase_price || asset.book_value) && (
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <TrendingDown size={20} className="text-gray-500" />
+                  Financial & Depreciation
+                </h3>
+                <div className="space-y-3">
+                  {asset.purchase_price != null && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Purchase Price</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        ₹{asset.purchase_price.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {asset.book_value != null && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Book Value</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        ₹{asset.book_value.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {asset.current_depreciated_value != null && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Depreciated Value</span>
+                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                        ₹{asset.current_depreciated_value.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {asset.useful_life_years && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Useful Life</span>
+                      <span className="font-medium">{asset.useful_life_years} years</span>
+                    </div>
+                  )}
+                  {asset.depreciation_method && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Method</span>
+                      <span className="font-medium">{asset.depreciation_method.replace('_', ' ')}</span>
+                    </div>
+                  )}
+                  <div className="pt-3 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Data Wipe</span>
+                      {asset.data_wipe_confirmed ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                          <CheckCircle size={12} /> Confirmed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                          <AlertTriangle size={12} /> Pending
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Barcode */}
             {canViewBarcode && (
               <Card>
@@ -362,7 +475,7 @@ export const AssetDetailsPage: React.FC = () => {
                       onClick={handlePrintBarcode}
                       variant="outline"
                       size="sm"
-                      className="flex-1 flex items-center gap-2"
+                      className="flex-1 flex items-center gap-2 rounded-xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
                     >
                       <Printer size={16} />
                       Print
@@ -371,7 +484,7 @@ export const AssetDetailsPage: React.FC = () => {
                       onClick={handleDownloadBarcode}
                       variant="outline"
                       size="sm"
-                      className="flex-1 flex items-center gap-2"
+                      className="flex-1 flex items-center gap-2 rounded-xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
                     >
                       <Download size={16} />
                       Download
@@ -381,37 +494,6 @@ export const AssetDetailsPage: React.FC = () => {
               </Card>
             )}
 
-            {/* Quick Actions */}
-            {(canManage || canReturn) && (
-              <Card>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Quick Actions
-                </h3>
-                <div className="space-y-2">
-                  {canManage && (
-                    <Button
-                      onClick={() => navigate(`/assets/${asset.id}/edit`)}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Edit size={16} className="mr-2" />
-                      Edit Asset
-                    </Button>
-                  )}
-                  {canReturn && asset.status === 'ASSIGNED' && (
-                    <Button
-                      onClick={() => navigate(`/assets/${asset.id}/return`)}
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                      variant="outline"
-                    >
-                      <XCircle size={16} className="mr-2" />
-                      Return / Unassign Asset
-                    </Button>
-                  )}
-                  {/* Add more actions as needed */}
-                </div>
-              </Card>
-            )}
           </div>
         </div>
 
@@ -425,12 +507,14 @@ export const AssetDetailsPage: React.FC = () => {
                   <Button
                     variant={historyView === 'tracking' ? 'primary' : 'outline'}
                     onClick={() => setHistoryView('tracking')}
+                    className="rounded-xl font-bold"
                   >
                     Tracking Events
                   </Button>
                   <Button
                     variant={historyView === 'usage' ? 'primary' : 'outline'}
                     onClick={() => setHistoryView('usage')}
+                    className="rounded-xl font-bold"
                   >
                     Usage History
                   </Button>
@@ -491,34 +575,46 @@ export const AssetDetailsPage: React.FC = () => {
                           <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Employee</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Department</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Date</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Return Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Logged At</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                            {usageHistory?.map((usage: any, index: number) => (
-                              <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                  {usage.first_name && usage.last_name
-                                    ? `${usage.first_name} ${usage.last_name}`
-                                    : usage.employee_id || '-'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {usage.assigned_date ? format(new Date(usage.assigned_date), 'MMM dd, yyyy') : '-'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {usage.return_date ? format(new Date(usage.return_date), 'MMM dd, yyyy') : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                  {usage.description || '-'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {usage.created_at ? format(new Date(usage.created_at), 'MMM dd, yyyy HH:mm') : '-'}
-                                </td>
-                              </tr>
-                            ))}
+                            {usageHistory?.map((usage: any, index: number) => {
+                              const start = new Date(usage.assigned_date);
+                              const end = usage.return_date ? new Date(usage.return_date) : new Date();
+                              const diffTime = Math.abs(end.getTime() - start.getTime());
+                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                              const duration = `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+
+                              return (
+                                <tr key={index}>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    {usage.first_name && usage.last_name
+                                      ? `${usage.first_name} ${usage.last_name}`
+                                      : usage.employee_id || '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {usage.department_name || '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {usage.assigned_date ? format(new Date(usage.assigned_date), 'MMM dd, yyyy') : '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {usage.return_date ? format(new Date(usage.return_date), 'MMM dd, yyyy') : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {duration}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {usage.description || '-'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table>
                       </div>

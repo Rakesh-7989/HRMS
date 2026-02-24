@@ -195,12 +195,12 @@ exports.createProject = async (tenantId, userId, data) => {
   const projectId = crypto.randomUUID();
   const result = await pool.query(
     `INSERT INTO projects (
-      id, tenant_id, client_id, name, description, status, start_date, end_date, budget, created_by, updated_by, created_at, updated_at
+      id, tenant_id, client_id, name, description, status, start_date, end_date, budget, billing_type, created_by, updated_by, created_at, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
     )
     RETURNING *`,
-    [projectId, tenantId, client_id, name, description || null, status || "PLANNING", start_date || null, end_date || null, budget || null, userId, userId]
+    [projectId, tenantId, client_id, name, description || null, status || "PLANNING", start_date || null, end_date || null, budget || null, data.billing_type || 'HOURLY', userId, userId]
   );
 
   const project = result.rows[0];
@@ -370,9 +370,9 @@ exports.updateProject = async (tenantId, userId, projectId, data) => {
   await pool.query(
     `UPDATE projects SET
       name = $1, description = $2, status = $3, start_date = $4, end_date = $5,
-      budget = $6, updated_by = $7, updated_at = NOW()
-    WHERE id = $8 AND tenant_id = $9`,
-    [name, description || null, status, start_date || null, end_date || null, budget || null, userId, projectId, tenantId]
+      budget = $6, billing_type = $7, updated_by = $8, updated_at = NOW()
+    WHERE id = $9 AND tenant_id = $10`,
+    [name, description || null, status, start_date || null, end_date || null, budget || null, data.billing_type || existingProject.billing_type, userId, projectId, tenantId]
   );
 
   return await this.getProjectById(tenantId, projectId);
@@ -814,7 +814,12 @@ exports.createTask = async (tenantId, userId, data) => {
   const { project_id, title, description, assigned_to, priority, column_key, due_date, estimated_hours } = data;
 
   // Verify project exists
-  await this.getProjectById(tenantId, project_id);
+  const project = await this.getProjectById(tenantId, project_id);
+
+  // Status Lockout: prevent changes to Completed/Archived projects
+  if (['COMPLETED', 'ARCHIVED'].includes(project.status)) {
+    throw new BadRequestError(`Cannot add tasks to a ${project.status.toLowerCase()} project`);
+  }
 
   // Verify column exists and is enabled
   const columnResult = await pool.query(
@@ -1628,6 +1633,143 @@ exports.getMyTimesheets = async (tenantId, employeeId, filters = {}) => {
 };
 
 /**
+ * LIST ALL TIMESHEETS (for managers/admins)
+ * Supports extensive filtering
+ */
+exports.listTimesheets = async (tenantId, userId, filters = {}) => {
+  const {
+    employee_id,
+    project_id,
+    status,
+    week_start_date,
+    skip = 0,
+    limit = 20
+  } = filters;
+
+  // Get the user's role and employee ID for permission check
+  const userResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (userResult.rows.length === 0) {
+    throw new BadRequestError("User not found");
+  }
+
+  const { role, employee_id: managerEmployeeId } = userResult.rows[0];
+
+  let query = `SELECT ts.*, 
+                      e.first_name, e.last_name, u.email, u.role as employee_role,
+                      p.name as project_name
+               FROM timesheets ts
+               LEFT JOIN employees e ON ts.employee_id = e.id
+               LEFT JOIN users u ON e.user_id = u.id
+               LEFT JOIN projects p ON ts.project_id = p.id
+               WHERE ts.tenant_id = $1`;
+  const params = [tenantId];
+  let paramCount = 1;
+
+  // Role-based Access Control
+  if (role === 'MANAGER' && managerEmployeeId) {
+    paramCount++;
+    query += ` AND (e.reports_to = $${paramCount} OR ts.employee_id = $${paramCount})`;
+    params.push(managerEmployeeId);
+    // Managers can only see drafts of their own timesheets, not their reports'
+    query += ` AND (ts.status != 'DRAFT' OR ts.employee_id = $${paramCount})`;
+  } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
+    // Other roles can only see their own
+    paramCount++;
+    query += ` AND ts.employee_id = $${paramCount}`;
+    params.push(managerEmployeeId);
+  }
+
+  // Optional Filters
+  if (employee_id) {
+    paramCount++;
+    query += ` AND ts.employee_id = $${paramCount}`;
+    params.push(employee_id);
+  }
+
+  if (project_id) {
+    paramCount++;
+    query += ` AND ts.project_id = $${paramCount}`;
+    params.push(project_id);
+  }
+
+  if (status) {
+    paramCount++;
+    query += ` AND ts.status = $${paramCount}`;
+    params.push(status);
+  }
+
+  if (week_start_date) {
+    paramCount++;
+    query += ` AND ts.week_start_date = $${paramCount}`;
+    params.push(week_start_date);
+  }
+
+  // Count for pagination
+  const countResult = await pool.query(
+    query.replace(/SELECT ts\\.\\*.*?FROM/s, 'SELECT COUNT(*) as count FROM'),
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count || 0);
+
+  // Sorting and Pagination
+  query += ` ORDER BY ts.week_start_date DESC, ts.submitted_at DESC NULLS LAST LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+  params.push(limit, skip);
+
+  const tsResult = await pool.query(query, params);
+
+  // Fetch entries for each timesheet (to match the structure expected by the frontend)
+  const timesheets = [];
+  for (const ts of tsResult.rows) {
+    const entriesResult = await pool.query(
+      `SELECT te.*, 
+              COALESCE(p_entry.name, p_task.name) as project_name,
+              tk.title as task_title
+       FROM timesheet_entries te
+       LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+       LEFT JOIN tasks tk ON te.task_id = tk.id
+       LEFT JOIN projects p_task ON tk.project_id = p_task.id
+       WHERE te.timesheet_id = $1 AND te.tenant_id = $2
+       ORDER BY te.work_date ASC`,
+      [ts.id, tenantId]
+    );
+
+    timesheets.push({
+      ...ts,
+      employee: {
+        id: ts.employee_id,
+        first_name: ts.first_name,
+        last_name: ts.last_name,
+        email: ts.email,
+        role: ts.employee_role
+      },
+      entries: entriesResult.rows.map(e => ({
+        ...e,
+        project_name: e.project_name,
+        task_title: e.task_title
+      }))
+    });
+  }
+
+  return {
+    timesheets,
+    pagination: {
+      total,
+      skip,
+      limit,
+      hasMore: skip + limit < total,
+    },
+  };
+};
+
+
+/**
  * LIST PENDING APPROVALS (for managers)
  * Returns week-level timesheets with nested entries for week-wise approval view
  */
@@ -1929,14 +2071,17 @@ exports.getProjectReport = async (tenantId, projectId, filters = {}) => {
   await this.getProjectById(tenantId, projectId);
 
   let query = `SELECT
-    p.id, p.name as project_name,
+    p.id, p.name as project_name, p.budget, p.billing_type,
     COUNT(DISTINCT ts.id) as total_timesheets,
     SUM(te.hours) as total_hours,
+    SUM(CASE WHEN te.is_billable THEN te.hours ELSE 0 END) as billable_hours,
+    SUM(CASE WHEN NOT te.is_billable THEN te.hours ELSE 0 END) as non_billable_hours,
+    SUM(CASE WHEN te.is_billable THEN te.hours * COALESCE(e.hourly_rate, 0) ELSE 0 END) as total_billable_value,
     ARRAY_AGG(DISTINCT e.first_name || ' ' || e.last_name) as employees,
     AVG(ts.total_hours) as avg_hours_per_timesheet
   FROM projects p
-  LEFT JOIN timesheets ts ON p.id = ts.project_id AND ts.tenant_id = $1 AND ts.status IN ('APPROVED', 'SUBMITTED')
-  LEFT JOIN timesheet_entries te ON ts.id = te.timesheet_id
+  LEFT JOIN timesheet_entries te ON p.id = te.project_id
+  LEFT JOIN timesheets ts ON te.timesheet_id = ts.id AND ts.tenant_id = $1 AND ts.status IN ('APPROVED', 'SUBMITTED')
   LEFT JOIN employees e ON ts.employee_id = e.id
   WHERE p.id = $2 AND p.tenant_id = $1`;
   const params = [tenantId, projectId];
@@ -1954,15 +2099,50 @@ exports.getProjectReport = async (tenantId, projectId, filters = {}) => {
     params.push(end_date);
   }
 
-  query += ` GROUP BY p.id, p.name`;
+  query += ` GROUP BY p.id, p.name, p.budget, p.billing_type`;
 
   const result = await pool.query(query, params);
+  const data = result.rows[0];
 
-  return result.rows[0] || {
-    project_id: projectId,
-    total_hours: 0,
-    total_timesheets: 0,
-    employees: [],
+  if (!data) {
+    return {
+      project_id: projectId,
+      total_hours: 0,
+      total_timesheets: 0,
+      employees: [],
+      financials: {
+        total_billable_value: 0,
+        invoiced_amount: 0,
+        wip_writeoff: 0,
+        budget: 0,
+        billing_type: 'HOURLY'
+      }
+    };
+  }
+
+  // Calculate WIP Cap Logic
+  const billableValue = parseFloat(data.total_billable_value || 0);
+  const budget = parseFloat(data.budget || 0);
+  let invoicedAmount = billableValue;
+  let wipWriteoff = 0;
+
+  if (data.billing_type === 'FIXED' && budget > 0) {
+    invoicedAmount = Math.min(billableValue, budget);
+    wipWriteoff = Math.max(0, billableValue - budget);
+  } else if (data.billing_type === 'NON_BILLABLE') {
+    invoicedAmount = 0;
+    wipWriteoff = billableValue; // Technically all work is "written off" or internal cost
+  }
+
+  return {
+    ...data,
+    financials: {
+      total_billable_value: billableValue,
+      invoiced_amount: invoicedAmount,
+      wip_writeoff: wipWriteoff,
+      budget: budget,
+      billing_type: data.billing_type
+    }
   };
 };
 

@@ -94,6 +94,51 @@ const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; on
   </motion.div>
 );
 
+// Stat Card Component
+const StatCard = ({
+  title, value, icon: Icon, gradient, delay = 0
+}: {
+  title: string;
+  value: number | string;
+  icon: any;
+  gradient: string;
+  delay?: number;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="relative group h-full"
+  >
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+      {/* Subtle Decorative Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+          <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
+        </svg>
+      </div>
+
+      {/* Icon Accent */}
+      <div
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        style={{ background: gradient }}
+      >
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </h3>
+        <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
+      </div>
+    </div>
+  </motion.div>
+);
+
 // System Status Card
 const SystemStatusCard = ({
   title, status, value, icon: Icon, gradient, delay = 0
@@ -109,28 +154,28 @@ const SystemStatusCard = ({
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-none"
+    className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300"
   >
     <div className="flex items-center justify-between mb-4">
       <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center"
+        className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border border-white/10"
         style={{ background: gradient }}
       >
         <Icon className="w-6 h-6 text-white" />
       </div>
-      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${status === 'healthy'
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${status === 'healthy'
+        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
         : status === 'warning'
-          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-          : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+          ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+          : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
         }`}>
-        <span className={`w-2 h-2 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
-          }`} />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        <span className={`w-1.5 h-1.5 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
+          } animate-pulse`} />
+        {status}
       </div>
     </div>
-    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{title}</p>
+    <p className="text-2xl font-black text-slate-900 dark:text-white mb-1">{value}</p>
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
   </motion.div>
 );
 
@@ -267,17 +312,13 @@ export const SuperAdminDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-6"
-          style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)',
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          <div className="absolute inset-0 opacity-20">
-            <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-              <circle cx="350" cy="50" r="150" fill="white" fillOpacity="0.2" />
-              <circle cx="50" cy="150" r="100" fill="white" fillOpacity="0.15" />
-              <circle cx="200" cy="100" r="80" fill="white" fillOpacity="0.1" />
-            </svg>
+          {/* Subtle Patterns */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="absolute inset-0 text-slate-900 dark:text-white" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
           </div>
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -288,14 +329,14 @@ export const SuperAdminDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-2"
               >
-                <Shield className="w-5 h-5 text-indigo-300" />
-                <span className="text-indigo-300 text-sm font-medium">Super Administrator</span>
+                <Shield className="w-5 h-5 text-amber-500" />
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">Super Administrator</span>
               </motion.div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
                 System Control Center
               </h1>
-              <p className="text-indigo-200 text-lg">
-                Monitor tenants, users, and system health across the platform
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
+                Monitor tenants, users, and platform health
               </p>
             </div>
 
@@ -303,13 +344,21 @@ export const SuperAdminDashboard: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-right"
+              className="flex flex-col sm:flex-row items-center gap-4"
             >
-              <div className="text-white text-3xl font-bold mb-1">
-                {format(currentTime, 'HH:mm:ss')}
-              </div>
-              <div className="text-indigo-200 text-sm font-medium uppercase tracking-wider">
-                {format(currentTime, 'EEEE, MMMM do')}
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm">
+                <div className="text-right px-4 border-r border-slate-200 dark:border-white/10">
+                  <p className="text-2xl font-black text-slate-900 dark:text-white leading-none whitespace-nowrap">
+                    {format(currentTime, 'HH:mm:ss')}
+                  </p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Local Time</p>
+                </div>
+                <div className="text-right px-4">
+                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase whitespace-nowrap">
+                    {format(currentTime, 'eee, MMM dd')}
+                  </p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">System Date</p>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -322,49 +371,35 @@ export const SuperAdminDashboard: React.FC = () => {
               title: 'Total Tenants',
               value: systemMetrics.total_tenants,
               icon: Building2,
-              gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              shadow: 'shadow-indigo-500/30'
+              gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
             },
             {
               title: 'Total Employees',
               value: systemMetrics.total_employees,
               icon: Users,
               gradient: 'linear-gradient(135deg, #10b981, #059669)',
-              shadow: 'shadow-emerald-500/30'
             },
             {
               title: 'Active Employees',
               value: systemMetrics.active_employees,
               icon: Activity,
               gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              shadow: 'shadow-amber-500/30'
             },
             {
               title: 'Inactive Employees',
               value: systemMetrics.inactive_employees,
               icon: UserX,
-              gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
-              shadow: 'shadow-pink-500/30'
+              gradient: 'linear-gradient(135deg, #ec4899, #db2777)',
             },
           ].map((stat, index) => (
-            <motion.div
+            <StatCard
               key={stat.title}
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.1 + index * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl ${stat.shadow}`}
-              style={{ background: stat.gradient }}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                  <stat.icon className="w-7 h-7 text-white" />
-                </div>
-                <p className="text-4xl font-bold">{stat.value}</p>
-                <p className="text-white/80 mt-1">{stat.title}</p>
-              </div>
-            </motion.div>
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              delay={0.1 + index * 0.1}
+            />
           ))}
         </div>
 
@@ -678,32 +713,44 @@ export const SuperAdminDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1 }}
-          className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6"
+          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-400" />
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-indigo-500 to-purple-600' },
-              { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-rose-500' },
-              { label: 'System Logs', icon: Activity, path: '/activity', color: 'from-emerald-500 to-teal-500' },
-              { label: 'System Settings', icon: Settings, path: '/settings', color: 'from-amber-500 to-orange-500' },
-            ].map((action) => (
-              <motion.button
-                key={action.label}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(action.path)}
-                className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center gap-3 transition-all"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg`}>
-                  <action.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-white">{action.label}</span>
-              </motion.button>
-            ))}
+          {/* Subtle Accent Pattern */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <circle cx="90" cy="90" r="30" fill="currentColor" className="text-indigo-500" />
+              <circle cx="10" cy="10" r="20" fill="currentColor" className="text-amber-500" />
+            </svg>
+          </div>
+
+          <div className="relative z-10">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 tracking-tight">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-white/10">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              Quick Control Panel
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-indigo-500 to-purple-600' },
+                { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-rose-500' },
+                { label: 'System Logs', icon: Activity, path: '/activity', color: 'from-emerald-500 to-teal-500' },
+                { label: 'System Settings', icon: Settings, path: '/settings', color: 'from-amber-500 to-orange-500' },
+              ].map((action) => (
+                <motion.button
+                  key={action.label}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate(action.path)}
+                  className="group relative p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex flex-col items-center gap-4 transition-all hover:bg-white dark:hover:bg-indigo-500/10 hover:shadow-xl hover:shadow-indigo-500/5 shadow-md"
+                >
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg border border-white/10 group-hover:rotate-6 transition-transform`}>
+                    <action.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest leading-none text-center">{action.label}</span>
+                </motion.button>
+              ))}
+            </div>
           </div>
         </motion.div>
       </motion.div>

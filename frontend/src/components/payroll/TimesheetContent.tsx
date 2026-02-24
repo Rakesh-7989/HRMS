@@ -22,7 +22,7 @@ export const TimesheetContent: React.FC = () => {
                             Time Portal
                         </h1>
                     </div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">High-fidelity labor auditing & logging</p>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">High-fidelity employee auditing & logging</p>
                 </div>
 
                 {canManage && (

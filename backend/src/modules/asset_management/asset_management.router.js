@@ -14,6 +14,8 @@ const {
   returnAssetSchema,
   getTrackingSchema,
   listAssetsSchema,
+  getAccessoriesSchema,
+  swapAssetSchema,
   createAssetRequestSchema,
   handleAssetRequestSchema,
   updateAssetRequestSchema,
@@ -57,6 +59,42 @@ router.get(
   requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
   validate(listAssetsSchema),
   ctrl.listAssets
+);
+
+/**
+ * GET /api/assets/dashboard
+ * Get asset dashboard stats
+ * Requires: ADMIN, HR
+ */
+router.get(
+  "/dashboard",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  ctrl.getAssetDashboard
+);
+
+/**
+ * GET /api/assets/export/csv
+ * Export all assets as CSV
+ * Requires: ADMIN, HR
+ */
+router.get(
+  "/export/csv",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  ctrl.exportAssetsCSV
+);
+
+/**
+ * GET /api/assets/warranty-alerts
+ * Get assets with warranty expiring soon
+ * Requires: ADMIN, HR
+ */
+router.get(
+  "/warranty-alerts",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  ctrl.getWarrantyAlerts
 );
 
 /**
@@ -113,6 +151,20 @@ router.get(
 );
 
 /**
+ * GET /api/assets/:id/qrcode
+ * Generate QR code for asset
+ * Returns: Base64 encoded PNG QR code image
+ * Requires: ADMIN, HR
+ */
+router.get(
+  "/:id/qrcode",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  validate(getBarcodeSchema),
+  ctrl.generateQRCode
+);
+
+/**
  * POST /api/assets/:id/assign
  * Assign asset to employee
  * Requires: ADMIN, HR
@@ -136,6 +188,32 @@ router.post(
   requireRole(["ADMIN", "HR"]),
   validate(returnAssetSchema),
   ctrl.returnAsset
+);
+
+/**
+ * GET /api/assets/:id/accessories
+ * Get active accessories assigned with this asset
+ * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only — enforced via getAssetById check)
+ */
+router.get(
+  "/:id/accessories",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  validate(getAccessoriesSchema),
+  ctrl.getAssetAccessories
+);
+
+/**
+ * POST /api/assets/:id/swap
+ * Swap asset — atomically return old and assign new to same employee
+ * Requires: ADMIN, HR
+ */
+router.post(
+  "/:id/swap",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  validate(swapAssetSchema),
+  ctrl.swapAsset
 );
 
 /**

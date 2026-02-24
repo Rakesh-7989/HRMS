@@ -58,6 +58,7 @@ export interface User {
   // Metadata
   created_at?: string;
   updated_at?: string;
+  timezone?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
   two_factor_enabled?: boolean;
@@ -104,6 +105,7 @@ export interface CreateUserData {
   esi_number?: string;
   aadhar_number?: string;
   ctc?: number;
+  timezone?: string;
 }
 
 export interface UpdateUserData {
@@ -142,6 +144,7 @@ export interface UpdateEmployeeData {
   aadhar_number?: string;
   ctc?: number;
   profile_photo_url?: string;
+  timezone?: string;
 }
 
 export interface TerminateEmployeeData {

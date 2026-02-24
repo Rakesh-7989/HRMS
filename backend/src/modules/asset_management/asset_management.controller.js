@@ -29,7 +29,11 @@ exports.createAsset = async (req, res, next) => {
       graphics_gpu,
       display,
       battery,
-      model_number
+      model_number,
+      useful_life_years,
+      depreciation_method,
+      location,
+      condition
     } = req.body;
 
     const asset = await assetService.createAsset(tenantId, userId, {
@@ -51,7 +55,11 @@ exports.createAsset = async (req, res, next) => {
       graphics_gpu,
       display,
       battery,
-      model_number
+      model_number,
+      useful_life_years,
+      depreciation_method,
+      location,
+      condition
     });
 
     return success(res, asset, "Asset created successfully", 201);
@@ -198,6 +206,27 @@ exports.generateBarcode = async (req, res, next) => {
 };
 
 /**
+ * GENERATE QR CODE
+ * GET /api/assets/:id/qrcode
+ * Returns: Base64 encoded QR code image
+ */
+exports.generateQRCode = async (req, res, next) => {
+  try {
+    const { tenantId, role, employeeId } = req.user;
+    const { id: assetId } = req.params;
+
+    // Verify access to asset
+    await assetService.getAssetById(tenantId, assetId, role, employeeId);
+
+    const qrData = await assetService.generateQRCode(tenantId, assetId);
+
+    return success(res, qrData, "QR code generated successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * ASSIGN ASSET
  * POST /api/assets/:id/assign
  * Requires: ADMIN, HR
@@ -206,14 +235,15 @@ exports.assignAsset = async (req, res, next) => {
   try {
     const { tenantId, id: userId } = req.user;
     const { id: assetId } = req.params;
-    const { employee_id, notes } = req.body;
+    const { employee_id, notes, accessories } = req.body;
 
     const asset = await assetService.assignAsset(
       tenantId,
       assetId,
       userId,
       employee_id,
-      notes
+      notes,
+      accessories
     );
 
     return success(res, asset, "Asset assigned successfully");
@@ -231,7 +261,7 @@ exports.returnAsset = async (req, res, next) => {
   try {
     const { tenantId, id: userId } = req.user;
     const { id: assetId } = req.params;
-    const { return_date, condition, notes } = req.body;
+    const { return_date, condition, notes, checklist } = req.body;
 
     const asset = await assetService.returnAsset(
       tenantId,
@@ -239,7 +269,8 @@ exports.returnAsset = async (req, res, next) => {
       userId,
       return_date,
       condition,
-      notes
+      notes,
+      checklist
     );
 
     return success(res, asset, "Asset returned successfully");
@@ -366,6 +397,105 @@ exports.deleteAssetRequest = async (req, res, next) => {
     const { id: requestId } = req.params;
     await assetService.deleteAssetRequest(tenantId, requestId, userId);
     return success(res, null, "Asset request deleted successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET ASSET ACCESSORIES
+ * GET /api/assets/:id/accessories
+ * Returns active accessories assigned with this asset
+ */
+exports.getAssetAccessories = async (req, res, next) => {
+  try {
+    const { tenantId, role, employeeId } = req.user;
+    const { id: assetId } = req.params;
+
+    // Verify access to asset (enforces EMPLOYEE can only see own assets)
+    await assetService.getAssetById(tenantId, assetId, role, employeeId);
+
+    const accessories = await assetService.getAssetAccessories(tenantId, assetId);
+
+    return success(res, accessories, "Asset accessories retrieved successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * SWAP ASSET
+ * POST /api/assets/:id/swap
+ * Atomically returns old asset and assigns new one to same employee
+ */
+exports.swapAsset = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { id: oldAssetId } = req.params;
+    const { new_asset_id, return_condition, return_notes, checklist, new_accessories } = req.body;
+
+    const result = await assetService.swapAsset(
+      tenantId,
+      userId,
+      {
+        old_asset_id: oldAssetId,
+        new_asset_id,
+        return_condition,
+        return_notes,
+        checklist,
+        new_accessories
+      }
+    );
+
+    return success(res, result, "Asset swapped successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET ASSET DASHBOARD
+ * GET /api/assets/dashboard
+ * Returns summary stats for asset management
+ */
+exports.getAssetDashboard = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const dashboard = await assetService.getAssetDashboard(tenantId);
+    return success(res, dashboard, "Asset dashboard retrieved successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * EXPORT ASSETS CSV
+ * GET /api/assets/export/csv
+ * Returns all assets as downloadable CSV
+ */
+exports.exportAssetsCSV = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const csv = await assetService.exportAssetsCSV(tenantId);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=assets_export.csv');
+    return res.status(200).send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET WARRANTY ALERTS
+ * GET /api/assets/warranty-alerts
+ * Returns assets with warranty expiring soon
+ */
+exports.getWarrantyAlerts = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const days = parseInt(req.query.days) || 30;
+    const alerts = await assetService.getWarrantyAlerts(tenantId, days);
+    return success(res, alerts, "Warranty alerts retrieved successfully");
   } catch (error) {
     next(error);
   }

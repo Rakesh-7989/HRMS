@@ -4,9 +4,11 @@ import { Card } from '@/components/ui/Card';
 import { attendanceService } from '@/services/attendance.service';
 import { format } from 'date-fns';
 import { Calendar, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatTime12Hour, calculateWorkDuration } from '@/utils/timeFormat';
 
 export const MyAttendanceContent: React.FC = () => {
+    const { user } = useAuth();
     const { data: attendanceHistory = [], isLoading } = useQuery({
         queryKey: ['attendance', 'history'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
@@ -62,10 +64,10 @@ export const MyAttendanceContent: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center font-mono text-gray-600 dark:text-gray-300">
-                                        {formatTime12Hour(record.check_in_time)}
+                                        {formatTime12Hour(record.check_in_time, user?.timezone)}
                                     </td>
                                     <td className="px-4 py-3 text-center font-mono text-gray-600 dark:text-gray-300">
-                                        {formatTime12Hour(record.check_out_time)}
+                                        {formatTime12Hour(record.check_out_time, user?.timezone)}
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         {record.check_in_time && record.check_out_time && (

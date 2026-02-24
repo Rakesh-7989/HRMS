@@ -93,8 +93,8 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
                    WeeklyTimesheetEntry has a Card with background.
                    DialogContent default has background.
                 */}
-                <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden flex flex-col">
-                    <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50">
+                <div className="flex-1 bg-white dark:bg-dark-card rounded-lg shadow-xl overflow-hidden flex flex-col">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                         <div>
                             <DialogTitle>Review Timesheet</DialogTitle>
                             <p className="text-sm text-gray-500 mt-1">

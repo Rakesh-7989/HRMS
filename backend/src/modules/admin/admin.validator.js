@@ -24,7 +24,8 @@ exports.updateTenantProfileSchema = z.object({
     country: z.string().optional(),
     settings: z.object({
       primary_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format").optional(),
-      logo_url: z.string().optional()
+      logo_url: z.string().optional(),
+      timezone: z.string().optional()
     }).optional()
   })
 });

@@ -1,20 +1,16 @@
 const pool = require("../../config/db");
 const logger = require("../../config/logger");
 const geoFencingService = require("../geo_fencing/geoFencing.service");
+const timeService = require("../../utils/timeService");
 
 const getQuery = (db) => {
   if (db && typeof db.query === "function") return db.query.bind(db);
   return pool.query.bind(pool);
 };
 
-const todayDate = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-const nowTime = () => new Date().toTimeString().slice(0, 8);
+const getEffectiveTz = timeService.getEffectiveTz;
+const todayDate = timeService.todayDate;
+const nowTime = timeService.nowTime;
 
 /**
  * CLOCK IN
@@ -22,8 +18,10 @@ const nowTime = () => new Date().toTimeString().slice(0, 8);
  */
 exports.clockIn = async (db, employeeId, actor, meta) => {
   const query = getQuery(db);
-  const today = todayDate();
-  const now = nowTime();
+
+  const tz = await getEffectiveTz(query, actor.tenantId, employeeId);
+  const today = todayDate(tz);
+  const now = nowTime(tz);
 
   if (!employeeId) {
     throw new Error("Your employee profile is not complete. Please update your profile with personal details before clocking in.");
@@ -66,7 +64,8 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   const hasWFHApproval = wfhRes.rowCount > 0;
 
   // == GEO-FENCING CHECK ==
-  // Skip if WFH is approved (either via leave type OR WFH request)
+  // Security: Strictly bypass ONLY if there is a verified, approved WFH record for this specific date
+  // to prevent location spoofing or unauthorized remote clock-ins.
   if (!isWFH && !hasWFHApproval) {
     const geoValidation = await geoFencingService.validateLocation(
       db,
@@ -129,7 +128,7 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
     // Calculate Late By and Validate Early Clock-in
     // Calculate Late By and Validate Early/Late Clock-in
     if (shift.start_time) {
-      const todayStr = todayDate(); // Use local date, not UTC
+      const todayStr = todayDate(tz); // Use local date, not UTC
       const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
       const actualIn = new Date(`${todayStr}T${now}`);
 
@@ -139,9 +138,9 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
       const earlyLimit = new Date(shiftStart.getTime() - EARLY_BUFFER_MINUTES * 60000);
 
       if (actualIn < earlyLimit) {
-        // Format time for display
-        const displayTime = shift.start_time.substring(0, 5);
-        throw new Error(`You are too early! Your shift starts at ${displayTime}. You can clock in from ${earlyLimit.toTimeString().substring(0, 5)} onwards (${EARLY_BUFFER_MINUTES} mins early).`);
+        // PER USER REQUEST: Allow early clock-in but flag it/don't block.
+        // We can set a flag or just log it. Currently, we just allow it to proceed.
+        logger.info(`Early clock-in allowed for employee ${employeeId}. Shift starts at ${shift.start_time}, actual in at ${now}.`);
       }
 
       // LATE CLOCK-IN VALIDATION (After Shift End)
@@ -227,8 +226,9 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
  */
 exports.clockOut = async (db, employeeId, actor, meta) => {
   const query = getQuery(db);
-  const today = todayDate();
-  const now = nowTime();
+  const tz = await getEffectiveTz(query, actor.tenantId, employeeId);
+  const today = todayDate(tz);
+  const now = nowTime(tz);
   const { calculateHoursDifference } = require('../../utils/dateHelper');
   const { eod_report } = meta; // Extract eod_report from meta
 
@@ -374,7 +374,8 @@ exports.startBreak = async (db, employeeId, tenantId) => {
   const query = getQuery(db);
 
   // Get active attendance
-  const today = todayDate();
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
+  const today = todayDate(tz);
   const attRes = await query(
     `SELECT id, status FROM attendance WHERE employee_id = $1 AND tenant_id = $2 AND date = $3`,
     [employeeId, tenantId, today]
@@ -410,7 +411,8 @@ exports.endBreak = async (db, employeeId, tenantId) => {
   const query = getQuery(db);
 
   // Get active attendance
-  const today = todayDate();
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
+  const today = todayDate(tz);
   const attRes = await query(
     `SELECT id FROM attendance WHERE employee_id = $1 AND tenant_id = $2 AND date = $3`,
     [employeeId, tenantId, today]
@@ -525,7 +527,8 @@ exports.getBreakHistory = async (db, actor, filters) => {
 exports.getCurrentBreaks = async (db, tenantId) => {
   const query = getQuery(db);
 
-  const today = todayDate();
+  const tz = await getEffectiveTz(query, tenantId);
+  const today = todayDate(tz);
 
   const result = await query(
     `
@@ -563,11 +566,14 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
   if (!employeeId) return null; // Admin/HR without employee profile
 
   const query = getQuery(db);
-  const today = todayDate();
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
+  const today = todayDate(tz);
 
   const result = await query(
     `
     SELECT att.*,
+           (att.date + att.check_in_time) AT TIME ZONE $4 AS check_in_time_utc,
+           (att.date + att.check_out_time) AT TIME ZONE $4 AS check_out_time_utc,
            s.name AS shift_name,
            s.start_time AS shift_start,
            s.end_time AS shift_end,
@@ -584,7 +590,7 @@ exports.getTodayAttendance = async (db, employeeId, tenantId) => {
       AND att.tenant_id = $2
       AND att.date = $3
     `,
-    [employeeId, tenantId, today]
+    [employeeId, tenantId, today, tz]
   );
 
   return result.rows[0] || null;
@@ -615,15 +621,18 @@ exports.getMyAttendance = async (db, employeeId, tenantId, filters) => {
   const limit = filters.limit || 30;
   const offset = filters.offset || 0;
 
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
   const result = await query(
     `
-    SELECT att.*
+    SELECT att.*,
+           (att.date + att.check_in_time) AT TIME ZONE $${p + 2} AT TIME ZONE 'UTC' as check_in_time_utc,
+           (att.date + att.check_out_time) AT TIME ZONE $${p + 2} AT TIME ZONE 'UTC' as check_out_time_utc
     FROM attendance att
     ${where}
     ORDER BY att.date DESC
     LIMIT $${p} OFFSET $${p + 1}
   `,
-    [...params, limit, offset]
+    [...params, limit, offset, tz]
   );
 
   return result.rows;
@@ -1326,13 +1335,18 @@ exports.getIndividualEmployeeReport = async (db, tenantId, employeeId, filters) 
   if (empRes.rowCount === 0) throw new Error("Employee not found.");
   const employee = empRes.rows[0];
 
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
   // 2. Fetch Attendance Records
   const attRes = await query(
-    `SELECT *, date::text as date_str FROM attendance 
+    `SELECT *, 
+            date::text as date_str,
+            (date + check_in_time) AT TIME ZONE $5 AT TIME ZONE 'UTC' as check_in_time_utc,
+            (date + check_out_time) AT TIME ZONE $5 AT TIME ZONE 'UTC' as check_out_time_utc
+     FROM attendance 
      WHERE employee_id = $1 AND tenant_id = $2 
      AND date BETWEEN $3 AND $4
      ORDER BY date ASC`,
-    [employeeId, tenantId, fromDate, toDate]
+    [employeeId, tenantId, fromDate, toDate, tz]
   );
   const attendanceMap = new Map();
   attRes.rows.forEach(r => {

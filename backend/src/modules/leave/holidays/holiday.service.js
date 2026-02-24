@@ -1,4 +1,5 @@
 const pool = require("../../../config/db");
+const timeService = require("../../../utils/timeService");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -39,7 +40,8 @@ exports.createPublicHoliday = async (db, data, actor) => {
 
 exports.getPublicHolidays = async (db, tenantId, year = null) => {
     const query = getQuery(db);
-    const targetYear = year || new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const res = await query(
         `SELECT * FROM public_holidays 
@@ -136,7 +138,8 @@ exports.createRestrictedHoliday = async (db, data, actor) => {
 
 exports.getRestrictedHolidays = async (db, tenantId, year = null) => {
     const query = getQuery(db);
-    const targetYear = year || new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const res = await query(
         `SELECT * FROM restricted_holidays 
@@ -204,7 +207,8 @@ exports.claimRestrictedHoliday = async (db, restrictedHolidayId, employeeId, act
 
 exports.getEmployeeRestrictedHolidayUsage = async (db, employeeId, tenantId, year = null) => {
     const query = getQuery(db);
-    const targetYear = year || new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const res = await query(
         `SELECT rhu.*, rh.name, rh.date, rh.description

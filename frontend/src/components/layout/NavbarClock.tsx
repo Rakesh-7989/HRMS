@@ -51,21 +51,21 @@ export const NavbarClock: React.FC = () => {
                 try {
                     const now = new Date();
 
-                    // Get check-in date
-                    let checkInTime = todayAttendance.check_in_time;
-                    if (!checkInTime) return;
-
+                    // Get check-in absolute time
+                    const checkInUtc = (todayAttendance as any).check_in_time_utc;
                     let checkInDate: Date;
 
-                    if (checkInTime.includes('T')) {
-                        checkInDate = new Date(checkInTime);
+                    if (checkInUtc) {
+                        checkInDate = new Date(checkInUtc);
+                    } else if (todayAttendance.check_in_time?.includes('T')) {
+                        checkInDate = new Date(todayAttendance.check_in_time);
                     } else {
                         const recordDate = new Date(todayAttendance.date);
                         const year = recordDate.getFullYear();
                         const month = String(recordDate.getMonth() + 1).padStart(2, '0');
                         const day = String(recordDate.getDate()).padStart(2, '0');
                         const dateStr = `${year}-${month}-${day}`;
-                        checkInDate = new Date(`${dateStr}T${checkInTime}`);
+                        checkInDate = new Date(`${dateStr}T${todayAttendance.check_in_time}`);
                     }
 
                     if (isNaN(checkInDate.getTime())) return;
@@ -308,10 +308,10 @@ export const NavbarClock: React.FC = () => {
                     onClick={handleClockIn}
                     isLoading={clockInMutation.isPending}
                     variant="outline"
-                    className="h-9 gap-2 px-3 sm:px-4 border-green-200 hover:bg-green-50 text-green-700 hover:text-green-800 dark:border-green-900/30 dark:hover:bg-green-900/20 dark:text-green-400"
+                    className="h-10 gap-2 px-6 border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded-2xl font-bold transition-all shadow-sm"
                 >
-                    {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}
-                    <span className="hidden sm:inline">{t('attendance.clockIn')}</span>
+                    {geoSettings?.is_enabled ? <MapPin size={18} className="text-emerald-500" /> : <Clock size={18} className="text-emerald-500" />}
+                    <span className="hidden sm:inline">Clock In</span>
                 </Button>
             )}
 
@@ -342,22 +342,22 @@ export const NavbarClock: React.FC = () => {
                             variant="outline"
                             onClick={handleEndBreak}
                             isLoading={endBreakMutation.isPending}
-                            className="h-9 gap-2 px-3 sm:px-4 border-orange-200 hover:bg-orange-50 text-orange-700 hover:text-orange-800 dark:border-orange-900/30 dark:hover:bg-orange-900/20 dark:text-orange-400"
+                            className="h-10 gap-2 px-6 border-orange-200 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-500/20 rounded-2xl font-bold transition-all shadow-sm"
                             size="sm"
                         >
-                            <Coffee size={16} />
-                            <span className="hidden sm:inline">{t('attendance.breakOut')}</span>
+                            <Coffee size={18} className="text-orange-500" />
+                            <span className="hidden sm:inline">Break Out</span>
                         </Button>
                     ) : (
                         <Button
                             variant="outline"
                             onClick={handleStartBreak}
                             isLoading={startBreakMutation.isPending}
-                            className="h-9 gap-2 px-3 sm:px-4"
+                            className="h-10 gap-2 px-6 border-indigo-200 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-2xl font-bold transition-all shadow-sm"
                             size="sm"
                         >
-                            <Coffee size={16} />
-                            <span className="hidden sm:inline">{t('attendance.breakIn')}</span>
+                            <Coffee size={18} className="text-indigo-500" />
+                            <span className="hidden sm:inline">Break In</span>
                         </Button>
                     )}
 
@@ -366,11 +366,11 @@ export const NavbarClock: React.FC = () => {
                             variant="destructive"
                             onClick={handleClockOut}
                             isLoading={clockOutMutation.isPending}
-                            className="h-9 gap-2 px-3 sm:px-4"
+                            className="h-10 gap-2 px-5 bg-rose-500 hover:bg-rose-600 border-none text-white rounded-2xl font-bold shadow-lg shadow-rose-500/20 transition-all"
                             size="sm"
                         >
-                            {geoSettings?.is_enabled ? <MapPin size={16} /> : <Clock size={16} />}
-                            <span className="hidden sm:inline">{t('attendance.clockOut')}</span>
+                            {geoSettings?.is_enabled ? <MapPin size={18} /> : <Clock size={18} />}
+                            <span className="hidden sm:inline">Clock Out</span>
                         </Button>
                     )}
                 </div>

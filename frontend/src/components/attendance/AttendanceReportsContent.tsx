@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
 import { adminService } from '@/services/admin.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, subDays } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { PieChart } from '@/components/charts/PieChart';
 import { Select } from '@/components/ui/Select';
@@ -50,7 +51,8 @@ export const AttendanceReportsContent: React.FC = () => {
 
     // Calculate date range based on selection
     const dateRange = useMemo(() => {
-        const now = new Date();
+        const todayStr = getCurrentDate(user?.timezone);
+        const now = parseISO(todayStr);
         let fromDate: Date;
 
         switch (selectedPeriod) {
@@ -66,7 +68,7 @@ export const AttendanceReportsContent: React.FC = () => {
             case 'custom':
                 return {
                     from_date: customFromDate || format(subDays(now, 30), 'yyyy-MM-dd'),
-                    to_date: customToDate || format(now, 'yyyy-MM-dd')
+                    to_date: customToDate || todayStr
                 };
             default:
                 fromDate = subDays(now, 30);
@@ -74,9 +76,9 @@ export const AttendanceReportsContent: React.FC = () => {
 
         return {
             from_date: format(fromDate, 'yyyy-MM-dd'),
-            to_date: format(now, 'yyyy-MM-dd')
+            to_date: todayStr
         };
-    }, [selectedPeriod, customFromDate, customToDate]);
+    }, [selectedPeriod, customFromDate, customToDate, user?.timezone]);
 
     // Fetch analytics data
     const { data: analytics } = useQuery<AttendanceAnalytics>({
@@ -524,12 +526,12 @@ export const AttendanceReportsContent: React.FC = () => {
                                                     <td className="py-3 px-4">
                                                         {report.check_in_time ? (
                                                             <div className={report.is_late ? 'text-red-500 font-medium' : ''}>
-                                                                {report.check_in_time}
+                                                                {formatTime12Hour(report.check_in_time, user?.timezone)}
                                                                 {report.is_late && <span className="text-[10px] ml-1 block">Late: {report.late_by}</span>}
                                                             </div>
                                                         ) : '-'}
                                                     </td>
-                                                    <td className="py-3 px-4">{report.check_out_time || '-'}</td>
+                                                    <td className="py-3 px-4">{formatTime12Hour(report.check_out_time, user?.timezone) || '-'}</td>
                                                     <td className="py-3 px-4">
                                                         <span className={`px-2 py-1 rounded text-xs font-medium ${report.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                                             report.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :

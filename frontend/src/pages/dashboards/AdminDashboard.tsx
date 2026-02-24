@@ -8,7 +8,7 @@ import {
   Users, Building2, Briefcase, TrendingUp, TrendingDown,
   Calendar, Clock, Activity, Sparkles, Award, UserCheck, UserX
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { getGreeting, formatInTimezone } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   PieChart, Pie, Cell, BarChart, Bar,
@@ -81,45 +81,41 @@ const StatCard = ({
       whileHover={{ y: -5, scale: 1.02 }}
       className="relative group"
     >
-      <div className="relative overflow-hidden rounded-3xl p-6 h-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none">
-        {/* Gradient Background Orb */}
-        <div
-          className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"
-          style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
-        />
+      <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+        {/* Subtle Decorative Pattern */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+            <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
+          </svg>
+        </div>
 
-        {/* Icon */}
+        {/* Icon Accent */}
         <div
-          className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
+          className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
           style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
         >
-          <Icon className="w-7 h-7 text-white" />
+          <Icon className="w-6 h-6 text-white" />
         </div>
 
         {/* Content */}
         <div className="relative z-10">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>
           <div className="flex items-end justify-between">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
               {typeof value === 'number' ? value.toLocaleString() : value}
             </h3>
             {change !== undefined && (
-              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${isPositive
+              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${isPositive
                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
                 }`}>
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                 {Math.abs(change)}%
               </div>
             )}
           </div>
+          <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
         </div>
-
-        {/* Decorative Line */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: `linear-gradient(90deg, ${gradient[0]}, ${gradient[1]})` }}
-        />
       </div>
     </motion.div>
   );
@@ -293,15 +289,12 @@ export const AdminDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl p-8"
-          style={{
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          {/* Subtle Patterns */}
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="absolute inset-0 text-slate-900 dark:text-white" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
@@ -313,14 +306,16 @@ export const AdminDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-2"
               >
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-                <span className="text-white/80 text-sm font-medium">{t('common.good')} {new Date().getHours() < 12 ? t('common.morning') : new Date().getHours() < 17 ? t('common.afternoon') : t('common.evening')}</span>
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest leading-none">
+                  {getGreeting(user?.timezone)}
+                </span>
               </motion.div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                {t('common.welcomeBack')}, {user?.first_name}! 👋
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
+                Welcome back, {user?.first_name}! 👋
               </h1>
-              <p className="text-white/70 text-lg">
-                {t('dashboard.outOfOffice')}
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
+                Here's what's happening in your organization today
               </p>
             </div>
 
@@ -328,15 +323,15 @@ export const AdminDashboard: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 bg-white/10 backdrop-blur-lg rounded-2xl p-4 min-w-fit"
+              className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
             >
-              <div className="text-center px-4 border-r border-white/20">
-                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'dd')}</p>
-                <p className="text-sm text-white/70">{format(new Date(), 'MMM yyyy')}</p>
+              <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+                <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
               </div>
               <div className="text-center px-4">
-                <p className="text-xl md:text-3xl font-bold text-white">{format(new Date(), 'EEEE')}</p>
-                <p className="text-sm text-white/70">{format(new Date(), 'hh:mm a')}</p>
+                <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
               </div>
             </motion.div>
           </div>
@@ -533,88 +528,94 @@ export const AdminDashboard: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {/* Birthdays */}
-          <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-3xl p-6 text-white shadow-xl shadow-pink-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                🎂
+          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-pink-500/5 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500 flex items-center justify-center shadow-lg shadow-pink-500/20 border border-white/10">
+                <span className="text-xl">🎂</span>
               </div>
               <div>
-                <h3 className="font-bold text-lg">{t('dashboard.birthdays')}</h3>
-                <p className="text-white/70 text-sm">{t('dashboard.thisMonth')}</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Birthdays</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">This month</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.birthdays || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center font-black text-pink-600 dark:text-pink-400 border border-pink-200/50 dark:border-pink-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.birthdays || peopleEventsData.birthdays.length === 0) && (
-                <p className="text-white/60 text-center py-4">{t('dashboard.noBirthdays')}</p>
+                <div className="text-center py-10">
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No birthdays this month</p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Anniversaries */}
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-6 text-white shadow-xl shadow-amber-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                🎉
+          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-white/10">
+                <span className="text-xl">🎉</span>
               </div>
               <div>
-                <h3 className="font-bold text-lg">{t('dashboard.anniversaries')}</h3>
-                <p className="text-white/70 text-sm">{t('dashboard.anniversariesDescription')}</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Anniversaries</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Work anniversaries</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.anniversaries || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center font-black text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.anniversaries || peopleEventsData.anniversaries.length === 0) && (
-                <p className="text-white/60 text-center py-4">{t('dashboard.noAnniversaries')}</p>
+                <div className="text-center py-10">
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No anniversaries this month</p>
+                </div>
               )}
             </div>
           </div>
 
           {/* New Joiners */}
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                👋
+          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-white/10">
+                <span className="text-xl">👋</span>
               </div>
               <div>
-                <h3 className="font-bold text-lg">{t('dashboard.newJoiners')}</h3>
-                <p className="text-white/70 text-sm">{t('dashboard.recentHires')}</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">New Joiners</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Recent hires</p>
               </div>
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.joiners || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{person.name}</p>
-                    <p className="text-white/70 text-xs">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.joiners || peopleEventsData.joiners.length === 0) && (
-                <p className="text-white/60 text-center py-4">{t('dashboard.noNewJoiners')}</p>
+                <div className="text-center py-10">
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No new joiners this month</p>
+                </div>
               )}
             </div>
           </div>
@@ -635,17 +636,17 @@ export const AdminDashboard: React.FC = () => {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 flex items-center gap-4"
+              className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 flex items-center gap-4 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5 group"
             >
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: `${stat.color}15` }}
+                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border border-white/10 group-hover:scale-110 transition-transform"
+                style={{ backgroundColor: `${stat.color}15`, color: stat.color }}
               >
-                <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
+                <stat.icon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{stat.value}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-1">{stat.label}</p>
               </div>
             </div>
           ))}

@@ -57,7 +57,7 @@ export const TimesheetDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-bg">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
             </div>
         );
@@ -68,12 +68,12 @@ export const TimesheetDashboard: React.FC = () => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="bg-gray-50/50 min-h-full font-sans relative"
+            className="bg-gray-50/50 dark:bg-dark-bg min-h-full font-sans relative"
         >
             {/* Header Section */}
             <motion.div variants={itemVariants} className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Timesheets</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Timesheets</h1>
                 </div>
 
                 <div className="flex items-center gap-6 w-full md:w-auto justify-end">
@@ -99,8 +99,8 @@ export const TimesheetDashboard: React.FC = () => {
 
                 {/* History Section */}
                 <motion.div variants={itemVariants}>
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Timesheet History</h3>
+                    <div className="bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Timesheet History</h3>
                         <TimesheetHistory
                             onWeekSelect={(date) => {
                                 setSelectedDate(date);
@@ -126,9 +126,9 @@ export const TimesheetDashboard: React.FC = () => {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative m-4"
+                            className="bg-white dark:bg-dark-card rounded-2xl w-full max-w-6xl shadow-2xl relative m-4"
                         >
-                            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">
+                            <div className="max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-dark-card">
                                 <WeeklyTimesheetEntry
                                     onSuccess={handleEntrySuccess}
                                     onCancel={() => setShowEntryForm(false)}

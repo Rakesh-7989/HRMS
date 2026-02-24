@@ -5,19 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { projectsService } from '@/services/projects.service';
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell,
-} from '@/components/ui/Table';
-import { Users, Briefcase, Calendar, Download } from 'lucide-react';
+import { Users, Briefcase, Calendar, Download, DollarSign, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
-type ReportType = 'project' | 'client' | 'utilization';
+type ReportType = 'project' | 'client';
 
 export const ProjectReports: React.FC = () => {
     const [activeTab, setActiveTab] = useState<ReportType>('project');
@@ -52,11 +44,7 @@ export const ProjectReports: React.FC = () => {
         enabled: activeTab === 'client' && !!selectedClient,
     });
 
-    const { data: utilizationReport, isLoading: loadingUtilizationReport } = useQuery({
-        queryKey: ['report', 'utilization', startDate, endDate],
-        queryFn: () => projectsService.getUtilizationReport({ start_date: startDate, end_date: endDate }),
-        enabled: activeTab === 'utilization',
-    });
+
 
     // Helper function to download CSV
     const downloadCSV = (data: string[][], filename: string) => {
@@ -128,23 +116,7 @@ export const ProjectReports: React.FC = () => {
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
                 toast.success('Client report exported successfully!');
 
-            } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
-                const rows: string[][] = [
-                    ['Employee Utilization Report'],
-                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
-                    ['Generated On', new Date().toLocaleString()],
-                    [],
-                    ['Employee Name', 'Email', 'Assigned Projects', 'Logged Hours', 'Utilization %'],
-                    ...utilizationReport.map((emp: any) => [
-                        `${emp.first_name || ''} ${emp.last_name || ''}`.trim(),
-                        emp.email || '',
-                        String(emp.projects_assigned || 0),
-                        String(Number(emp.total_hours_logged || 0).toFixed(2)),
-                        `${emp.utilization_percent || 0}%`,
-                    ]),
-                ];
-                downloadCSV(rows, `utilization_report_${dateRange}.csv`);
-                toast.success('Utilization report exported successfully!');
+
 
             } else {
                 toast.error('No data available to export. Please select filters and load report first.');
@@ -174,12 +146,7 @@ export const ProjectReports: React.FC = () => {
                         >
                             Client Report
                         </button>
-                        <button
-                            onClick={() => setActiveTab('utilization')}
-                            className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'utilization' ? "bg-white dark:bg-gray-900 shadow text-primary" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
-                        >
-                            Utilization Report
-                        </button>
+
                     </div>
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" /> Export
@@ -250,7 +217,75 @@ export const ProjectReports: React.FC = () => {
                                     </div>
                                 </Card>
                             </div>
-                            {/* If backend returns employee breakdown, render here. Currently assuming totals mainly. */}
+
+                            {/* Financials Section */}
+                            {projectReport.financials && (
+                                <div className="mt-8 space-y-4">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Financial Overview</h3>
+
+                                    {/* Budget Overflow Warning */}
+                                    {Number(projectReport.financials.wip_writeoff) > 0 && (
+                                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-4 flex items-start gap-4">
+                                            <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-full">
+                                                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-red-800 dark:text-red-300">Budget Overflow Detected</h4>
+                                                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                                    The total billable value ({Number(projectReport.financials.total_billable_value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })})
+                                                    has exceeded the project budget of {Number(projectReport.financials.budget).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.
+                                                </p>
+                                                <p className="text-sm font-semibold text-red-700 dark:text-red-300 mt-2">
+                                                    WIP Write-off: {Number(projectReport.financials.wip_writeoff).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <Card className="p-6 flex items-center gap-4">
+                                            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full">
+                                                <DollarSign className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Project Budget</p>
+                                                <h3 className="text-2xl font-bold">
+                                                    {Number(projectReport.financials.budget) > 0
+                                                        ? Number(projectReport.financials.budget).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+                                                        : 'No Limit'}
+                                                </h3>
+                                                <p className="text-xs text-gray-400 mt-1">{projectReport.financials.billing_type}</p>
+                                            </div>
+                                        </Card>
+
+                                        <Card className="p-6 flex items-center gap-4">
+                                            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-full">
+                                                <DollarSign className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Billable Value</p>
+                                                <h3 className="text-2xl font-bold">
+                                                    {Number(projectReport.financials.total_billable_value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                </h3>
+                                                <p className="text-xs text-gray-400 mt-1">Total work value</p>
+                                            </div>
+                                        </Card>
+
+                                        <Card className={cn("p-6 flex items-center gap-4", Number(projectReport.financials.wip_writeoff) > 0 ? "border-amber-500 border-2" : "")}>
+                                            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+                                                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Invoiced Amount</p>
+                                                <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                    {Number(projectReport.financials.invoiced_amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                </h3>
+                                                <p className="text-xs text-gray-400 mt-1">Actual billable</p>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                            )}
                         </>
                     ) : selectedProject ? <div className="text-center py-10 text-gray-500">No data found.</div> : <div className="text-center py-10 text-gray-500">Please select a project.</div>
                 )}
@@ -303,51 +338,7 @@ export const ProjectReports: React.FC = () => {
                     ) : selectedClient ? <div className="text-center py-10 text-gray-500">No data found.</div> : <div className="text-center py-10 text-gray-500">Please select a client.</div>
                 )}
 
-                {/* UTILIZATION REPORT */}
-                {activeTab === 'utilization' && (
-                    loadingUtilizationReport ? <div>Loading...</div> : utilizationReport ? (
-                        <Card className="overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Assigned Projects</TableHead>
-                                        <TableHead className="text-right">Logged Hours</TableHead>
-                                        <TableHead className="text-right">Utilization %</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {utilizationReport.map((emp: any) => (
-                                        <TableRow key={emp.id}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold">
-                                                        {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
-                                                    </div>
-                                                    {emp.first_name} {emp.last_name}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{emp.email}</TableCell>
-                                            <TableCell>{emp.projects_assigned}</TableCell>
-                                            <TableCell className="text-right">{Number(emp.total_hours_logged || 0).toFixed(2)}</TableCell>
-                                            <TableCell className="text-right">
-                                                <span className={cn(
-                                                    "px-2 py-1 rounded text-xs font-medium",
-                                                    Number(emp.utilization_percent) > 80 ? "bg-red-100 text-red-700" :
-                                                        Number(emp.utilization_percent) > 50 ? "bg-green-100 text-green-700" :
-                                                            "bg-yellow-100 text-yellow-700"
-                                                )}>
-                                                    {emp.utilization_percent}%
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Card>
-                    ) : <div className="text-center py-10 text-gray-500">No utilization data available.</div>
-                )}
+
             </div>
         </div>
     );

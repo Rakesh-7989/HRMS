@@ -20,6 +20,7 @@ import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
 import { showToast } from '@/utils/toast';
+import { useTimezones } from '@/utils/timezone';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -188,6 +189,7 @@ export const CreateEmployeeForm = ({
 }: CreateEmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { timezones } = useTimezones();
   const isEditMode = !!editEmployee;
 
   const [error, setError] = React.useState<string | null>(null);
@@ -351,6 +353,7 @@ export const CreateEmployeeForm = ({
       emergency_phone: editEmployee?.emergency_phone || '',
       emergency_relation: editEmployee?.emergency_relation || '',
       ctc: editEmployee?.ctc || '',
+      timezone: editEmployee?.timezone || '',
     },
     validationSchema: isEditMode ? editValidationSchema : createValidationSchema,
     validateOnChange: true,
@@ -1088,6 +1091,24 @@ export const CreateEmployeeForm = ({
               {formik.touched.job_location && formik.errors.job_location && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.job_location}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                Preferred Timezone
+              </label>
+              <Select
+                name="timezone"
+                value={formik.values.timezone}
+                onChange={formik.handleChange}
+                placeholder="Select Timezone"
+              >
+                {timezones.map((tz: any) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </Select>
             </div>
           </div>
         </div>

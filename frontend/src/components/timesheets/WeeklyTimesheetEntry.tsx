@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay, isAfter, startOfDay } from 'date-fns';
 import { Loader2, ChevronLeft, ChevronRight, Plus, Trash2, Save, IndianRupee, Ban, Check, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -57,6 +57,20 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
     // Matrix State
     const [rows, setRows] = useState<TimesheetRow[]>([]);
 
+    // Reset rows when navigating to a different week
+    useEffect(() => {
+        if (!preloadedTimesheet) {
+            setRows([{
+                id: Math.random().toString(36).substr(2, 9),
+                projectId: '',
+                taskId: '',
+                isBillable: true,
+                hours: {},
+                notes: {}
+            }]);
+        }
+    }, [currentDate]);
+
     // Get current week range
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -98,9 +112,15 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             // Group entries by Project + Task
             const grouped: Record<string, TimesheetRow> = {};
 
+            // Filter entries to only include dates within the current week
+            const currentWeekDates = new Set(dates);
+
             activeEntries.forEach(entry => {
                 if (!entry.work_date) return;
                 const dateStr = format(new Date(entry.work_date), 'yyyy-MM-dd');
+
+                // Skip entries that don't belong to the current week view
+                if (!currentWeekDates.has(dateStr)) return;
 
                 // Handle both flat entries and nested entries structures
                 const pId = ((entry as any).project?.id || (entry as any).project_id || '').toString();
@@ -147,7 +167,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 setRows(initRows);
             }
         }
-    }, [activeEntries, projects, isApprovalMode]);
+    }, [activeEntries, projects, isApprovalMode, dates.join(',')]);
 
     const timesheetStatus = activeTimesheetStatus || 'DRAFT';
     const hasExistingData = activeEntries && activeEntries.length > 0;
@@ -230,6 +250,13 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 for (const dateStr of dates) {
                     const hrs = row.hours[dateStr];
                     if (hrs && hrs > 0) {
+                        // Block future date entries
+                        const entryDate = new Date(dateStr);
+                        if (isAfter(startOfDay(entryDate), startOfDay(new Date()))) {
+                            toast.error(`Cannot log time for future date: ${format(entryDate, 'MMM d')}`);
+                            hasErrors = true;
+                            break;
+                        }
                         entries.push({
                             work_date: dateStr,
                             hours: hrs,
@@ -240,6 +267,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         });
                     }
                 }
+                if (hasErrors) break;
             }
 
             if (hasErrors) {
@@ -251,6 +279,19 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 toast.error("Please enter some time before saving");
                 setIsSubmitting(false);
                 return;
+            }
+
+            // Validate max 24h per day
+            const dailyTotals: Record<string, number> = {};
+            for (const entry of entries) {
+                dailyTotals[entry.work_date] = (dailyTotals[entry.work_date] || 0) + entry.hours;
+            }
+            for (const [dateStr, total] of Object.entries(dailyTotals)) {
+                if (total > 24) {
+                    toast.error(`Total hours for ${format(new Date(dateStr), 'MMM d')} exceed 24h (${total}h logged)`);
+                    setIsSubmitting(false);
+                    return;
+                }
             }
 
             const status = shouldSubmit ? 'SUBMITTED' : 'DRAFT';
@@ -305,7 +346,8 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
         return (
             <select
-                className="w-full bg-transparent text-xs font-medium outline-none border-b border-gray-200 hover:border-gray-400 focus:border-purple-500 transition-colors py-1 cursor-pointer"
+
+                className="w-full bg-transparent text-xs font-medium outline-none border-b border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors py-1 cursor-pointer dark:text-gray-200 dark:bg-dark-card"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={!projectId}
@@ -328,13 +370,13 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
     return (
         <div className="h-full flex flex-col gap-6">
-            <Card className="p-0 border-none shadow-none bg-white dark:bg-gray-800/50 flex flex-col flex-1">
+            <Card className="p-0 border-none shadow-none bg-white dark:bg-dark-card flex flex-col flex-1">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 p-1 rounded-lg">
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-1 rounded-lg">
                             {/* Only allow navigation if NOT approval mode (manager views specific week) */}
-                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(subDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(subDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0 dark:text-gray-400 dark:hover:text-white">
                                 <ChevronLeft size={16} />
                             </Button>
                             <div className="flex flex-col items-center px-2 min-w-[120px]">
@@ -345,7 +387,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     {format(weekEnd, 'yyyy')}
                                 </span>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(addDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" onClick={() => !isApprovalMode && setCurrentDate(addDays(currentDate, 7))} disabled={isApprovalMode} className="h-8 w-8 p-0 dark:text-gray-400 dark:hover:text-white">
                                 <ChevronRight size={16} />
                             </Button>
                         </div>
@@ -368,7 +410,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => setForceEdit(true)}
-                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-50 border border-purple-200"
+                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800"
                             >
                                 {timesheetStatus === 'SUBMITTED' ? 'Recall / Edit' : 'Edit'}
                             </Button>
@@ -380,13 +422,14 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 <div className="flex-1 overflow-x-auto">
                     <div className="min-w-[1000px] p-6">
                         {/* Grid Header */}
-                        <div className="flex border-b border-gray-200 dark:border-gray-700 pb-2 mb-2">
+                        <div className="flex border-b border-gray-200 dark:border-dark-border pb-2 mb-2">
                             <div className="w-[20%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Project</div>
                             <div className="w-[22%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</div>
                             <div className="w-8 px-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest" title="Billable"><IndianRupee size={12} className="mx-auto" /></div>
                             {dates.map(dateStr => {
                                 const date = new Date(dateStr);
                                 const isToday = isSameDay(date, new Date());
+                                const isFutureDate = isAfter(startOfDay(date), startOfDay(new Date()));
                                 const weekOffs = (isApprovalMode && preloadedTimesheet?.employee?.shift_week_offs)
                                     ? (preloadedTimesheet.employee.shift_week_offs || [])
                                     : (user?.shift_week_offs || []);
@@ -397,10 +440,11 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     <div key={dateStr} className="flex-1 px-1 text-center">
                                         <div className={cn(
                                             "flex flex-col items-center justify-center py-1 rounded-lg transition-colors",
-                                            isToday ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600" :
-                                                isWeekOff ? "bg-red-50 dark:bg-red-900/10 text-red-400" : "text-gray-500"
+                                            isFutureDate ? "bg-gray-100 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600 opacity-50" :
+                                                isToday ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400" :
+                                                    isWeekOff ? "bg-red-50 dark:bg-red-900/10 text-red-400" : "text-gray-500 dark:text-gray-400"
                                         )}
-                                            title={isWeekOff ? "Week Off" : undefined}
+                                            title={isFutureDate ? "Future date — cannot log time" : isWeekOff ? "Week Off" : undefined}
                                         >
                                             <span className="text-[9px] font-black uppercase">{format(date, 'EEE')}</span>
                                             <span className="text-sm font-bold">{format(date, 'd')}</span>
@@ -415,18 +459,18 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         {/* Grid Rows */}
                         <div className="space-y-1">
                             {rows.map((row) => (
-                                <div key={row.id} className="flex items-start py-2 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group">
+                                <div key={row.id} className="flex items-start py-2 border-b border-gray-50 dark:border-dark-border hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group">
                                     {/* Project */}
                                     <div className="w-[20%] px-2">
                                         {isReadOnly ? (
-                                            <p className="text-sm font-semibold text-gray-800 py-1">
+                                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 py-1">
                                                 {projects?.find((p: any) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">No project</span>}
                                             </p>
                                         ) : (
                                             <select
                                                 value={row.projectId}
                                                 onChange={(e) => handleRowChange(row.id, 'projectId', e.target.value)}
-                                                className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 hover:border-gray-400 focus:border-purple-500 transition-colors py-1 cursor-pointer"
+                                                className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-indigo-500 transition-colors py-1 cursor-pointer dark:text-gray-200 dark:bg-dark-card"
                                             >
                                                 <option value="">Select Project</option>
                                                 {projects?.map((p: any) => (
@@ -439,7 +483,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     {/* Activity */}
                                     <div className="w-[22%] px-2">
                                         {isReadOnly ? (
-                                            <p className="text-xs font-medium text-gray-600 leading-snug break-words whitespace-normal py-0.5">
+                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 leading-snug break-words whitespace-normal py-0.5">
                                                 {row.taskTitle || <span className="text-gray-400 italic">No activity</span>}
                                             </p>
                                         ) : (
@@ -461,7 +505,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
                                             if (!isProjectBillable) {
                                                 return (
-                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed" title="Project is non-billable">
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 cursor-not-allowed" title="Project is non-billable">
                                                         <Ban size={12} />
                                                     </div>
                                                 );
@@ -475,8 +519,8 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                     className={cn(
                                                         "w-6 h-6 rounded-full flex items-center justify-center transition-all text-[10px] font-black",
                                                         row.isBillable
-                                                            ? "bg-green-100 text-green-600 border border-green-300"
-                                                            : "bg-gray-100 text-gray-400 border border-gray-200",
+                                                            ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-800"
+                                                            : "bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700",
                                                         canToggle && "hover:scale-110 cursor-pointer"
                                                     )}
                                                 >
@@ -490,28 +534,37 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     {dates.map(dateStr => {
                                         const val = row.hours[dateStr];
                                         const date = new Date(dateStr);
+                                        const isFutureDate = isAfter(startOfDay(date), startOfDay(new Date()));
                                         const dayName = format(date, 'EEEE');
                                         const weekOffs = (isApprovalMode && preloadedTimesheet?.employee?.shift_week_offs)
                                             ? (preloadedTimesheet.employee.shift_week_offs || [])
                                             : (user?.shift_week_offs || []);
                                         const isWeekOff = weekOffs.includes(dayName);
+                                        const isCellDisabled = isReadOnly || isFutureDate;
 
                                         return (
-                                            <div key={dateStr} className={cn("flex-1 px-1 py-1 rounded-lg", isWeekOff && "bg-red-50/50 dark:bg-red-900/10")}>
+                                            <div key={dateStr} className={cn(
+                                                "flex-1 px-1 py-1 rounded-lg",
+                                                isFutureDate && "bg-gray-100/50 dark:bg-gray-800/30 opacity-40",
+                                                isWeekOff && !isFutureDate && "bg-red-50/50 dark:bg-red-900/5"
+                                            )}>
                                                 <div className="relative">
                                                     <input
                                                         type="number"
                                                         min="0"
+                                                        max="24"
                                                         step="0.5"
                                                         value={val !== undefined ? val : ''}
                                                         onChange={(e) => handleHourChange(row.id, dateStr, e.target.value)}
-                                                        disabled={isReadOnly}
+                                                        disabled={isCellDisabled}
                                                         className={cn(
                                                             "w-full text-center py-2 rounded-lg text-sm font-bold outline-none border border-transparent transition-all",
-                                                            (val && val > 0) ? "bg-white shadow-sm border-gray-100 text-purple-600" :
-                                                                (isWeekOff ? "bg-transparent text-red-300 placeholder:text-red-200" : "bg-gray-50/50 text-gray-400 hover:bg-white hover:shadow-sm focus:bg-white focus:ring-2 focus:ring-purple-500/20")
+                                                            isFutureDate ? "bg-gray-100 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600 cursor-not-allowed" :
+                                                                (val && val > 0) ? "bg-white dark:bg-gray-800 shadow-sm border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400" :
+                                                                    (isWeekOff ? "bg-transparent text-red-300 dark:text-red-900/50 placeholder:text-red-200 dark:placeholder:text-red-900/30" : "bg-gray-50/50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-indigo-500/20")
                                                         )}
-                                                        placeholder="-"
+                                                        placeholder={isFutureDate ? "" : " "}
+                                                        title={isFutureDate ? "Cannot log time for future dates" : undefined}
                                                     />
                                                 </div>
                                             </div>
@@ -519,7 +572,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     })}
 
                                     {/* Row Total */}
-                                    <div className="w-16 text-center flex items-center justify-center font-bold text-gray-600 text-sm">
+                                    <div className="w-16 text-center flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 text-sm">
                                         {Object.values(row.hours).reduce((a, b) => a + b, 0).toFixed(1)}
                                     </div>
 
@@ -543,7 +596,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                             <div className="mt-4">
                                 <button
                                     onClick={handleAddRow}
-                                    className="flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                                 >
                                     <Plus size={16} />
                                     ADD NEW LINE
@@ -571,7 +624,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                             "text-sm font-black tabular-nums",
                                             total === 0 ? "text-gray-300" :
                                                 (!isApprovalMode && attTotal > 0 && isOver) ? "text-orange-500" :
-                                                    (!isApprovalMode && attTotal > 0 && isMatch) ? "text-green-600" : "text-gray-700"
+                                                    (!isApprovalMode && attTotal > 0 && isMatch) ? "text-green-600 dark:text-green-400" : "text-gray-700 dark:text-gray-300"
                                         )}>
                                             {total.toFixed(1)}
                                         </span>
@@ -583,7 +636,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     </div>
                                 );
                             })}
-                            <div className="w-16 text-center text-sm font-black text-purple-600 tabular-nums self-center">
+                            <div className="w-16 text-center text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums self-center">
                                 {rows.reduce((acc, r) => acc + Object.values(r.hours).reduce((a, b) => a + b, 0), 0).toFixed(1)}
                             </div>
                             <div className="w-8"></div>
@@ -592,18 +645,18 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 </div>
 
                 {/* Footer / Actions */}
-                <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-6 py-4">
+                <div className="border-t border-gray-200 dark:border-dark-border bg-gray-50/50 dark:bg-gray-800/30 px-6 py-4">
                     <div className="flex justify-end gap-4">
                         {onCancel && (
                             <Button variant="ghost" onClick={onCancel}>Cancel</Button>
                         )}
 
-                        {/* Approval Actions */}
-                        {isApprovalMode && preloadedTimesheet && onApprove && onReject && (
+                        {/* Approval Actions - ONLY show if status is SUBMITTED */}
+                        {isApprovalMode && preloadedTimesheet && timesheetStatus === 'SUBMITTED' && onApprove && onReject && (
                             <>
                                 <Button
                                     onClick={() => onReject(preloadedTimesheet.id, "")}
-                                    className="bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 min-w-[100px]"
+                                    className="bg-white dark:bg-gray-700 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 min-w-[100px]"
                                 >
                                     <X size={16} className="mr-2" />
                                     REJECT
@@ -682,7 +735,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                 className={cn(
                                                     "min-w-[120px]",
                                                     !isEligibleToSubmit
-                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                        ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                                         : "bg-green-600 hover:bg-green-700 text-white"
                                                 )}
                                             >

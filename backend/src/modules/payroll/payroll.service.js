@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const timeService = require("../../utils/timeService");
 
 const getQuery = (db) => (db && typeof db.query === 'function' ? db.query : pool.query.bind(pool));
 
@@ -80,9 +81,11 @@ exports.listExpenses = async (db, tenantId) => {
 
 exports.createExpense = async (db, tenantId, payload) => {
   const query = getQuery(db);
+  const tz = await timeService.getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
   const res = await query(
     `INSERT INTO payroll_expenses (tenant_id, category, amount, expense_date, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id, category, amount, expense_date, created_at`,
-    [tenantId, payload.category, payload.amount, payload.expense_date || new Date(), payload.created_by || null]
+    [tenantId, payload.category, payload.amount, payload.expense_date || today, payload.created_by || null]
   );
   return res.rows[0];
 };
@@ -110,6 +113,8 @@ exports.listTransactions = async (db, tenantId) => {
 
 exports.createTransaction = async (db, tenantId, payload) => {
   const query = getQuery(db);
-  const res = await query(`INSERT INTO payroll_transactions (tenant_id, employee_id, type, amount, tx_date, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, employee_id, type, amount, tx_date, created_at`, [tenantId, payload.employee_id || null, payload.type, payload.amount, payload.tx_date || new Date(), payload.created_by || null]);
+  const tz = await timeService.getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
+  const res = await query(`INSERT INTO payroll_transactions (tenant_id, employee_id, type, amount, tx_date, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, employee_id, type, amount, tx_date, created_at`, [tenantId, payload.employee_id || null, payload.type, payload.amount, payload.tx_date || today, payload.created_by || null]);
   return res.rows[0];
 };

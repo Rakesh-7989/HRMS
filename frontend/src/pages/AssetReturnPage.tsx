@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+
+interface ChecklistItem {
+    item_name: string;
+    is_returned: boolean;
+    notes: string;
+}
 
 export const AssetReturnPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -19,32 +25,101 @@ export const AssetReturnPage: React.FC = () => {
         notes: '',
     });
 
+    const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+    const [newItemName, setNewItemName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Fetch asset details
     const { data: asset, isLoading } = useQuery({
         queryKey: ['asset', id],
         queryFn: () => assetsService.getAsset(id!),
         enabled: !!id,
     });
 
+    // Fetch accessories from DB — what was actually given during assignment
+    const { data: dbAccessories, isLoading: accessoriesLoading } = useQuery({
+        queryKey: ['asset-accessories', id],
+        queryFn: () => assetsService.getAssetAccessories(id!),
+        enabled: !!id,
+    });
+
+    // Populate checklist from DB accessories once they load
+    useEffect(() => {
+        if (dbAccessories && dbAccessories.length > 0) {
+            setChecklist(
+                dbAccessories.map(acc => ({
+                    item_name: acc.item_name,
+                    is_returned: false,
+                    notes: '',
+                }))
+            );
+        }
+    }, [dbAccessories]);
+
     const returnMutation = useMutation({
-        mutationFn: (data: typeof form) => assetsService.unassignAsset(id!, data),
+        mutationFn: (data: any) => assetsService.unassignAsset(id!, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assets'] });
             queryClient.invalidateQueries({ queryKey: ['asset', id] });
+            queryClient.invalidateQueries({ queryKey: ['asset-accessories', id] });
             toast.success('Asset returned successfully');
             navigate(`/assets/${id}`);
         },
         onError: (error: Error) => {
             toast.error(error.message || 'Failed to return asset');
+            setIsSubmitting(false);
         },
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!id) return;
-        returnMutation.mutate(form);
+    const handleChecklistChange = (index: number, field: keyof ChecklistItem, value: boolean | string) => {
+        const updated = [...checklist];
+        (updated[index] as any)[field] = value;
+        setChecklist(updated);
     };
 
-    if (isLoading) {
+    const handleAddItem = () => {
+        const trimmed = newItemName.trim();
+        if (!trimmed) return;
+        if (checklist.some(item => item.item_name.toLowerCase() === trimmed.toLowerCase())) {
+            toast.error('This item is already in the checklist');
+            return;
+        }
+        setChecklist(prev => [...prev, { item_name: trimmed, is_returned: false, notes: '' }]);
+        setNewItemName('');
+    };
+
+    const handleRemoveItem = (index: number) => {
+        setChecklist(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id || isSubmitting) return;
+
+        // Enforce notes when condition is DAMAGED or LOST
+        if ((form.condition === 'DAMAGED' || form.condition === 'LOST') && !form.notes.trim()) {
+            toast.error(`Please provide notes when marking asset as ${form.condition.toLowerCase()}.`);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        const checklistData = checklist.map(item => ({
+            item_name: item.item_name,
+            is_returned: item.is_returned,
+            notes: item.notes || undefined,
+        }));
+
+        returnMutation.mutate({
+            ...form,
+            checklist: checklistData,
+        });
+    };
+
+    const hasPartialReturn = checklist.length > 0 && checklist.some(item => !item.is_returned);
+    const needsNotes = (form.condition === 'DAMAGED' || form.condition === 'LOST') && !form.notes.trim();
+
+    if (isLoading || accessoriesLoading) {
         return (
             <DashboardLayout title="Loading...">
                 <div className="flex justify-center p-8">Loading...</div>
@@ -82,12 +157,19 @@ export const AssetReturnPage: React.FC = () => {
                     <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <h3 className="font-medium text-gray-900 dark:text-white mb-2">{asset.name}</h3>
                         <p className="text-sm text-gray-500 mb-1">Asset Code: {asset.asset_code}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 mb-1">Category: {asset.category}</p>
+                        <p className="text-sm text-gray-500 mb-1">
                             Currently Assigned To: {asset.assigned_employee?.first_name} {asset.assigned_employee?.last_name}
                         </p>
+                        {asset.assigned_by_employee && (
+                            <p className="text-sm text-gray-500">
+                                Assigned By: {asset.assigned_by_employee.first_name} {asset.assigned_by_employee.last_name}
+                            </p>
+                        )}
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Return Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Return Date
@@ -101,6 +183,7 @@ export const AssetReturnPage: React.FC = () => {
                             />
                         </div>
 
+                        {/* Asset Condition */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Asset Condition
@@ -114,28 +197,112 @@ export const AssetReturnPage: React.FC = () => {
                                 <option value="WORN">Worn / Minor Damage</option>
                                 <option value="DAMAGED">Damaged / Needs Repair</option>
                                 <option value="LOST">Lost</option>
+                                <option value="DOA">Dead on Arrival (DOA)</option>
                             </select>
                         </div>
 
+                        {/* Return Checklist — DB Driven */}
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                Return Checklist — Accessories
+                            </h4>
+                            <div className="space-y-3">
+                                {checklist.length === 0 && (
+                                    <p className="text-sm text-gray-400 italic">
+                                        No accessories were recorded during assignment. Add items below if applicable.
+                                    </p>
+                                )}
+                                {checklist.map((item, index) => (
+                                    <div key={index} className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={item.is_returned}
+                                            onChange={(e) => handleChecklistChange(index, 'is_returned', e.target.checked)}
+                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <div className="flex-1">
+                                            <span className={`text-sm ${item.is_returned ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                {item.item_name}
+                                            </span>
+                                            {!item.is_returned && (
+                                                <input
+                                                    type="text"
+                                                    placeholder="Reason not returned..."
+                                                    value={item.notes}
+                                                    onChange={(e) => handleChecklistChange(index, 'notes', e.target.value)}
+                                                    className="mt-1 w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
+                                                />
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveItem(index)}
+                                            className="mt-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Remove item"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add custom item */}
+                            <div className="mt-3 flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem(); } }}
+                                    placeholder="Add custom item..."
+                                    className="flex-1 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddItem}
+                                    disabled={!newItemName.trim()}
+                                    className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-primary hover:text-primary-dark disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Plus size={14} />
+                                    Add
+                                </button>
+                            </div>
+
+                            {hasPartialReturn && (
+                                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs">
+                                    <AlertTriangle size={14} />
+                                    Some accessories are not returned. Asset will be marked as "Under Repair" until resolved.
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Notes */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Notes
+                                Notes {(form.condition === 'DAMAGED' || form.condition === 'LOST') && (
+                                    <span className="text-red-500">* (Required for {form.condition.toLowerCase()} assets)</span>
+                                )}
                             </label>
                             <textarea
                                 rows={3}
                                 value={form.notes}
                                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${needsNotes
+                                    ? 'border-red-400 dark:border-red-500'
+                                    : 'border-gray-300 dark:border-gray-600'
+                                    }`}
                                 placeholder="Any comments about the return..."
                             />
                         </div>
 
-
-
+                        {/* Submit */}
                         <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={returnMutation.isPending} className="flex items-center gap-2">
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting || returnMutation.isPending}
+                                className="flex items-center gap-2"
+                            >
                                 <Save size={16} />
-                                {returnMutation.isPending ? 'Processing...' : 'Confirm Return'}
+                                {isSubmitting || returnMutation.isPending ? 'Processing...' : 'Confirm Return'}
                             </Button>
                         </div>
                     </form>

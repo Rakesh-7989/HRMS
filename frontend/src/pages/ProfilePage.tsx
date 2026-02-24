@@ -31,6 +31,8 @@ import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
 import { FormError } from '@/components/ui/FormError';
 import { Dialog, DialogFooter } from '@/components/ui/Dialog';
+import { useTimezones } from '@/utils/timezone';
+
 
 const profileValidationSchema = Yup.object({
   first_name: Yup.string()
@@ -68,6 +70,7 @@ export const ProfilePage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { alert: showAlert } = useConfirm();
+  const { timezones } = useTimezones();
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch Profile
@@ -256,6 +259,7 @@ export const ProfilePage: React.FC = () => {
       account_number: profile?.account_number || '',
       ifsc_code: profile?.ifsc_code || '',
       tax_id: profile?.tax_id || '',
+      timezone: profile?.timezone || '',
     },
     validationSchema: profileValidationSchema,
     onSubmit: (values) => {
@@ -457,6 +461,14 @@ export const ProfilePage: React.FC = () => {
                 <div className="md:col-span-2">
                   <FormField label={t('profile.address')} id="address" formik={formik} isEditing={isEditing} type="textarea" />
                 </div>
+                <FormField
+                  label="Preferred Timezone"
+                  id="timezone"
+                  formik={formik}
+                  isEditing={isEditing}
+                  type="select"
+                  options={timezones.map(tz => ({ label: tz.label, value: tz.value }))}
+                />
               </div>
 
               <h4 className="text-lg font-medium mt-8 mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-200">
@@ -645,9 +657,11 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         >
           <option value="">Select {label}</option>
-          {options?.map((opt: string) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
+          {options?.map((opt: any) => {
+            const label = typeof opt === 'string' ? opt : opt.label;
+            const value = typeof opt === 'string' ? opt : opt.value;
+            return <option key={value} value={value}>{label}</option>;
+          })}
         </select>
       ) : type === 'textarea' ? (
         <textarea

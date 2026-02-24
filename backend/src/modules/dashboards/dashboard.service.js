@@ -3,8 +3,12 @@ const pool = require("../../config/db");
 const os = require("os");
 const process = require("process");
 
+const timeService = require("../../utils/timeService");
+
 const getQuery = (db) =>
   db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+
+const getEffectiveTz = timeService.getEffectiveTz;
 
 /* ==================== SUPER_ADMIN DASHBOARD ==================== */
 
@@ -296,14 +300,15 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
   const query = getQuery(db);
   console.log("DEBUG: Starting getAdminDashboard for tenant:", tenantId, "Date Range:", startDate, endDate);
 
-  // Default to 30 days if not provided
-  const end = endDate || new Date();
-  const start = startDate || new Date(new Date().setDate(end.getDate() - 30));
+  // Resolve effective timezone (defaults to organization timezone)
+  const tz = await getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
 
-  // Format dates for SQL
-  const formatDate = (d) => d.toISOString().split('T')[0];
-  const startDateStr = formatDate(new Date(start));
-  const endDateStr = formatDate(new Date(end));
+  // Default to 30 days if not provided
+  const endStr = endDate || today;
+  const startStr = startDate || timeService.todayDate(tz, -30);
+
+  console.log("DEBUG: Resolved Timezone:", tz, "Today:", today, "Range:", startStr, endStr);
 
   // Get organization metrics
   const orgMetrics = await query(
@@ -339,13 +344,13 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
           FROM leave_applications 
           WHERE tenant_id = $1 
           AND status = 'APPROVED' 
-          AND CURRENT_DATE BETWEEN start_date AND end_date
+          AND $2::date BETWEEN start_date AND end_date
         ) AS on_leave_today,
         (
           SELECT COUNT(*)::INTEGER 
           FROM attendance 
           WHERE tenant_id = $1 
-          AND date = CURRENT_DATE 
+          AND date = $2::date
           AND is_late = true
         ) AS late_today,
 
@@ -365,7 +370,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
     (SELECT COUNT(*)::INTEGER FROM departments WHERE tenant_id = $1 AND created_at < NOW() - INTERVAL '30 days') AS prev_total_departments,
       (SELECT COUNT(*)::INTEGER FROM designations WHERE tenant_id = $1 AND created_at < NOW() - INTERVAL '30 days') AS prev_total_designations
         `,
-    [tenantId]
+    [tenantId, today]
   );
 
   const calculateGrowth = (current, previous) => {
@@ -424,7 +429,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
       GROUP BY date
       ORDER BY date DESC
     `,
-    [tenantId, startDateStr, endDateStr]
+    [tenantId, startStr, endStr]
   );
 
   // Get task metrics
@@ -457,7 +462,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
       GROUP BY lt.name
       ORDER BY lt.name ASC
     `,
-    [tenantId, startDateStr, endDateStr]
+    [tenantId, startStr, endStr]
   );
 
   // Get employee status breakdown
@@ -470,7 +475,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
       FROM users
       WHERE tenant_id = $1
     `,
-    [tenantId, startDateStr, endDateStr]
+    [tenantId, startStr, endStr]
   );
 
   // Get top departments by headcount
@@ -510,6 +515,10 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
  */
 exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   const query = getQuery(db);
+
+  // Resolve effective timezone
+  const tz = await getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
 
   // Handle date strings safely
   const startDateStr = startDate || null;
@@ -596,22 +605,8 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   // Get attendance overview
   const attendanceOverview = await query(
     `
-    WITH stats AS(
-      SELECT
-        COUNT(*):: INTEGER AS total_checkins,
-      COUNT(DISTINCT employee_id):: INTEGER AS unique_employees,
-      COUNT(CASE WHEN is_late THEN 1 END):: INTEGER AS late_count
-      FROM attendance
-      WHERE tenant_id = $1 AND date = CURRENT_DATE
-    ),
-    totals AS(
-      SELECT COUNT(*):: INTEGER AS total_employees
-      FROM employees e
-      JOIN users u ON e.user_id = u.id
-      WHERE e.tenant_id = $1 AND u.is_active = true AND u.is_deleted = false
-    )
     SELECT
-      CURRENT_DATE AS date,
+      $2::date AS date,
     s.total_checkins,
     s.unique_employees,
     s.late_count,
@@ -623,7 +618,7 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
     GREATEST(0, t.total_employees - s.unique_employees) AS not_clocked_in
     FROM stats s, totals t
     `,
-    [tenantId]
+    [tenantId, today]
   );
 
   // Get employees on leave today
@@ -643,10 +638,10 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
     LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
     WHERE la.tenant_id = $1
     AND la.status = 'APPROVED'
-    AND CURRENT_DATE BETWEEN la.start_date AND la.end_date
+    AND $2::date BETWEEN la.start_date AND la.end_date
     ORDER BY e.first_name, e.last_name
     `,
-    [tenantId]
+    [tenantId, today]
   );
 
   // Get leave balance by employee
@@ -710,6 +705,9 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
 exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
   const query = getQuery(db);
 
+  const tz = await getEffectiveTz(query, tenantId, managerEmployeeId);
+  const today = timeService.todayDate(tz);
+
   // Get team metrics
   const teamMetrics = await query(
     `
@@ -739,7 +737,7 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     des.name AS designation,
     (SELECT COUNT(*) FROM leave_applications 
        WHERE employee_id = e.id AND status = 'APPROVED' 
-       AND CURRENT_DATE BETWEEN start_date AND end_date
+       AND $3::date BETWEEN start_date AND end_date
        AND tenant_id = $2) AS on_leave_today
     FROM employees e
     JOIN users u ON u.id = e.user_id
@@ -749,7 +747,7 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     AND e.tenant_id = $2
     ORDER BY e.first_name, e.last_name
     `,
-    [managerEmployeeId, tenantId]
+    [managerEmployeeId, tenantId, today]
   );
 
   // Get team attendance today
@@ -776,12 +774,12 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     AND e.id NOT IN(
       SELECT employee_id FROM leave_applications 
       WHERE status = 'APPROVED' 
-      AND CURRENT_DATE BETWEEN start_date AND end_date
+      AND $3::date BETWEEN start_date AND end_date
       AND tenant_id = $2
     )
     ORDER BY e.first_name
     `,
-    [managerEmployeeId, tenantId]
+    [managerEmployeeId, tenantId, today]
   );
 
   // Get team leave requests
@@ -846,9 +844,9 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
     JOIN employees e ON a.employee_id = e.id
     WHERE e.reports_to = $1
     AND e.tenant_id = $2
-    AND a.date >= CURRENT_DATE - INTERVAL '30 days'
+    AND a.date >= $3::date - INTERVAL '30 days'
     `,
-    [managerEmployeeId, tenantId]
+    [managerEmployeeId, tenantId, today]
   );
 
   return {
@@ -869,6 +867,9 @@ exports.getManagerDashboard = async (db, managerEmployeeId, tenantId) => {
  */
 exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
   const query = getQuery(db);
+
+  const tz = await getEffectiveTz(query, tenantId, employeeId);
+  const today = timeService.todayDate(tz);
 
   // Get employee profile
   const employeeProfile = await query(
@@ -904,12 +905,12 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     COUNT(CASE WHEN status = 'PENDING' THEN 1 END) AS pending,
       COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) AS approved,
         COUNT(CASE WHEN status = 'REJECTED' THEN 1 END) AS rejected,
-          COUNT(CASE WHEN status = 'APPROVED' AND start_date > CURRENT_DATE THEN 1 END) AS upcoming_leaves
+          COUNT(CASE WHEN status = 'APPROVED' AND start_date > $3::date THEN 1 END) AS upcoming_leaves
     FROM leave_applications
     WHERE employee_id = $1
     AND tenant_id = $2
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
 
   // Get personal leave history
@@ -947,19 +948,23 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     FROM attendance
     WHERE employee_id = $1
     AND tenant_id = $2
-    AND date >= CURRENT_DATE - INTERVAL '30 days'
+    AND date >= $3::date - INTERVAL '30 days'
     AND check_out_time IS NOT NULL
     AND check_in_time IS NOT NULL
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
+
+  // Get today's attendance status
 
   // Get today's attendance status
   const todayStatus = await query(
     `
   SELECT
-  check_in_time,
+    check_in_time,
     check_out_time,
+    (date + check_in_time) AT TIME ZONE $4 AS check_in_time_utc,
+    (date + check_out_time) AT TIME ZONE $4 AS check_out_time_utc,
     is_late,
     CASE
         WHEN check_in_time IS NULL THEN 'NOT_CHECKED_IN'
@@ -969,10 +974,10 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     FROM attendance
     WHERE employee_id = $1
     AND tenant_id = $2
-    AND date = CURRENT_DATE
+    AND date = $3
     LIMIT 1
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today, tz]
   );
 
   // Get monthly attendance breakdown
@@ -989,11 +994,11 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     FROM attendance
     WHERE employee_id = $1
     AND tenant_id = $2
-    AND date >= CURRENT_DATE - INTERVAL '30 days'
+    AND date >= $3::date - INTERVAL '30 days'
     GROUP BY date, type
     ORDER BY date DESC
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
 
   // Get upcoming events/leaves
@@ -1010,11 +1015,11 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
     WHERE la.employee_id = $1
     AND la.tenant_id = $2
-    AND la.start_date >= CURRENT_DATE
+    AND la.start_date >= $3::date
     ORDER BY la.start_date ASC
     LIMIT 10
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
 
   // Get weekly activity for Hours Graph
@@ -1026,11 +1031,11 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     check_out_time
     FROM attendance
     WHERE employee_id = $1 AND tenant_id = $2
-    AND date >= CURRENT_DATE - INTERVAL '7 days'
+    AND date >= $3::date - INTERVAL '7 days'
     AND check_in_time IS NOT NULL
     ORDER BY date ASC
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
 
   // Get total leave balance
@@ -1040,9 +1045,9 @@ exports.getEmployeeDashboard = async (db, employeeId, tenantId) => {
     FROM leave_balances
     WHERE employee_id = $1
     AND tenant_id = $2
-    AND year = EXTRACT(YEAR FROM CURRENT_DATE)
+    AND year = EXTRACT(YEAR FROM $3::date)
     `,
-    [employeeId, tenantId]
+    [employeeId, tenantId, today]
   );
   const totalLeaveBalance = parseFloat(leaveBalanceRes.rows[0]?.total_balance || 0);
 

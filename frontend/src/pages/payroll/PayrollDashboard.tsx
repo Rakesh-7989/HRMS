@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { motion } from 'framer-motion';
 import api from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import {
@@ -90,7 +90,7 @@ const formatCurrency = (val: number) => {
 };
 
 // Reusable card class for consistent light/dark theming
-const cardClass = "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm";
+const cardClass = "bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 rounded-[1.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300";
 
 export const PayrollDashboard = () => {
     const navigate = useNavigate();
@@ -184,55 +184,77 @@ export const PayrollDashboard = () => {
                 {/* Cost Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Cost to Company', value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'from-indigo-500 to-blue-600', sub: `${stats?.costSummary.processedCount || 0} employees` },
-                        { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: DollarSign, gradient: 'from-emerald-500 to-teal-600', sub: 'Bank transfer amount' },
-                        { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: Receipt, gradient: 'from-amber-500 to-orange-600', sub: 'PF + ESI + PT + TDS' },
-                        { label: 'Pending Arrears', value: stats?.arrearsSummary?.pendingAmount || 0, icon: Clock, gradient: 'from-fuchsia-500 to-purple-600', sub: `${stats?.arrearsSummary?.pendingCount || 0} employees`, path: '/payroll/arrears' },
-                        { label: 'Tax Deducted (TDS)', value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'from-rose-500 to-pink-600', sub: 'Income tax withheld' }
+                        { label: 'Total Cost to Company', value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-indigo-600', sub: `${stats?.costSummary.processedCount || 0} employees` },
+                        { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: DollarSign, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: 'Bank transfer amount' },
+                        { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: Receipt, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: 'PF + ESI + PT + TDS' },
+                        { label: 'Tax Deducted (TDS)', value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', accent: 'text-pink-600', sub: 'Income tax withheld' }
                     ].map((card, idx) => (
-                        <div
+                        <motion.div
                             key={idx}
-                            onClick={() => card.path && navigate(card.path)}
-                            className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${card.gradient} p-5 text-white shadow-lg 
-                                ${card.path ? 'cursor-pointer hover:shadow-2xl hover:-translate-y-2' : 'hover:shadow-xl hover:-translate-y-1'} 
-                                transition-all duration-300 group`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            whileHover={{ y: -5, scale: 1.02 }}
+                            className="relative group h-full"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 group-hover:scale-125 transition-transform duration-500" />
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <card.icon className="w-5 h-5 opacity-90" />
-                                    <span className="text-sm font-medium opacity-90">{card.label}</span>
+                            <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+                                {/* Subtle Decorative Pattern */}
+                                <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+                                    <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                        <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+                                        <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
+                                    </svg>
                                 </div>
-                                <div className="text-2xl font-bold tracking-tight">{formatCurrency(card.value)}</div>
-                                <div className="flex items-center justify-between mt-1">
-                                    <p className="text-xs opacity-75">{card.sub}</p>
-                                    {card.path && <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />}
+
+                                {/* Icon Accent */}
+                                <div
+                                    className="relative z-10 w-11 h-11 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+                                    style={{ background: card.gradient }}
+                                >
+                                    <card.icon className="w-5 h-5 text-white" />
+                                </div>
+
+                                {/* Content */}
+                                <div className="relative z-10">
+                                    <h3 className="text-3xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
+                                        {formatCurrency(card.value)}
+                                    </h3>
+                                    <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-2">{card.label}</p>
+                                    <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+                                        {card.sub}
+                                    </p>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
 
                 {/* Headcount Row */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {[
-                        { label: 'Total Employees', value: stats?.headcount.total || 0, icon: Users, color: 'text-indigo-600 dark:text-indigo-400', bgIcon: 'bg-indigo-50 dark:bg-indigo-900/30', borderColor: 'border-indigo-100 dark:border-indigo-800' },
-                        { label: 'Included', value: stats?.headcount.included || 0, icon: UserCheck, color: 'text-emerald-600 dark:text-emerald-400', bgIcon: 'bg-emerald-50 dark:bg-emerald-900/30', borderColor: 'border-emerald-100 dark:border-emerald-800' },
-                        { label: 'Excluded', value: stats?.headcount.excluded || 0, icon: UserMinus, color: 'text-slate-500 dark:text-slate-400', bgIcon: 'bg-slate-50 dark:bg-slate-800', borderColor: 'border-slate-100 dark:border-slate-700' },
-                        { label: 'Incomplete', value: stats?.headcount.incomplete || 0, icon: AlertCircle, color: 'text-amber-600 dark:text-amber-400', bgIcon: 'bg-amber-50 dark:bg-amber-900/30', borderColor: 'border-amber-100 dark:border-amber-800', alert: true },
-                        { label: 'On Hold', value: stats?.headcount.onHold || 0, icon: Clock, color: 'text-rose-600 dark:text-rose-400', bgIcon: 'bg-rose-50 dark:bg-rose-900/30', borderColor: 'border-rose-100 dark:border-rose-800' }
+                        { label: 'Total Employees', value: stats?.headcount.total || 0, icon: Users, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-100 dark:border-indigo-500/20' },
+                        { label: 'Included', value: stats?.headcount.included || 0, icon: UserCheck, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-100 dark:border-emerald-500/20' },
+                        { label: 'Excluded', value: stats?.headcount.excluded || 0, icon: UserMinus, accent: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-white/5', border: 'border-slate-100 dark:border-white/5' },
+                        { label: 'Incomplete', value: stats?.headcount.incomplete || 0, icon: AlertCircle, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-100 dark:border-amber-500/20', alert: true },
+                        { label: 'On Hold', value: stats?.headcount.onHold || 0, icon: Clock, accent: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10', border: 'border-rose-100 dark:border-rose-500/20' }
                     ].map((item, idx) => (
-                        <div key={idx} className={`bg-white dark:bg-gray-800 border ${item.borderColor} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}>
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{item.label}</span>
-                                <div className={`p-1.5 rounded-lg ${item.bgIcon}`}>
-                                    <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 + idx * 0.05 }}
+                            className={`bg-white dark:bg-[#0f172a] border ${item.border} rounded-2xl p-4 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300`}
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">{item.label}</span>
+                                <div className={`p-1.5 rounded-xl ${item.bg} border ${item.border}`}>
+                                    <item.icon className={`w-3.5 h-3.5 ${item.accent}`} />
                                 </div>
                             </div>
-                            <div className={`text-2xl font-bold ${item.alert && (item.value as number) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                            <div className={`text-3xl font-black tracking-tighter ${item.alert && (item.value as number) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
                                 {item.value}
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
 
@@ -262,7 +284,7 @@ export const PayrollDashboard = () => {
                                             <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #f1f5f9)" className="[.dark_&]:stroke-gray-700" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-slate-100 dark:text-white/5" />
                                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => formatCurrency(v)} tickLine={false} axisLine={false} />
                                     <Tooltip

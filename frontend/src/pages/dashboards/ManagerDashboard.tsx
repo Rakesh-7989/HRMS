@@ -8,6 +8,7 @@ import {
   Filter, ExternalLink, Folder
 } from 'lucide-react';
 import { format, isAfter, parseISO, eachDayOfInterval, subDays, getDay, differenceInDays } from 'date-fns';
+import { getGreeting, formatInTimezone } from '@/utils/timeFormat';
 import {
   PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip,
@@ -116,35 +117,41 @@ const StatCard = ({
     className="relative group"
   >
     <div
-      className="relative overflow-hidden rounded-[1.5rem] p-5 h-full text-white shadow-2xl"
-      style={{ background: gradient }}
+      className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5"
     >
-      {/* Decorative Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      {/* Decorative Pattern - Subtle */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <circle cx="80" cy="20" r="40" fill="white" fillOpacity="0.3" />
-          <circle cx="10" cy="80" r="20" fill="white" fillOpacity="0.2" />
+          <circle cx="80" cy="20" r="40" fill="currentColor" className="text-slate-900 dark:text-white" />
+          <circle cx="10" cy="80" r="20" fill="currentColor" className="text-slate-900 dark:text-white" />
         </svg>
       </div>
 
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/10">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border border-white/10"
+            style={{ background: gradient }}
+          >
             <Icon className="w-6 h-6 text-white" />
           </div>
           {trend !== undefined && (
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black backdrop-blur-md ${trend >= 0 ? 'bg-white/20 text-white' : 'bg-rose-500/20 text-rose-100'}`}>
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${trend >= 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'}`}>
               {trend >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
               {Math.abs(trend)}%
             </div>
           )}
         </div>
-        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none">
+        <h3 className="text-4xl font-black mb-1 tracking-tighter leading-none text-slate-900 dark:text-white">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </h3>
-        <p className="text-white font-black text-[10px] uppercase tracking-[0.2em] opacity-80">{title}</p>
-        {subtitle && <p className="text-white/60 text-[10px] mt-2 font-medium bg-black/10 px-2 py-0.5 rounded-full w-fit tracking-wide">{subtitle}</p>}
+        <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
+        {subtitle && (
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-2 font-medium bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit tracking-wide border border-slate-100 dark:border-white/5">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   </motion.div>
@@ -641,11 +648,8 @@ export const ManagerDashboard: React.FC = () => {
   const COLORS = ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4'];
 
   const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  }, []);
+    return getGreeting(user?.timezone);
+  }, [user?.timezone]);
 
   const totalPending = (pendingRequests as any)?.data?.length || 0;
 
@@ -705,15 +709,12 @@ export const ManagerDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2rem] p-6 lg:p-8 text-white border border-white/5 shadow-2xl shadow-indigo-500/15"
-          style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)',
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-6 lg:p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
         >
           {/* Decorative Elements */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="absolute inset-0 text-slate-900 dark:text-white" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
 
@@ -725,17 +726,17 @@ export const ManagerDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-1"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span className="text-white/80 text-xs font-black uppercase tracking-widest">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
                   {greeting}
                 </span>
               </motion.div>
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
                 Welcome back, {user?.first_name}! 👋
               </h1>
-              <p className="text-white/70 text-base font-medium">
+              <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
                 {totalPending > 0 ? (
-                  <>You have <span className="text-white font-bold">{totalPending} pending requests</span> to review today.</>
+                  <>You have <span className="text-indigo-600 dark:text-indigo-400 font-bold">{totalPending} pending requests</span> to review today.</>
                 ) : (
                   <>You're all caught up! No pending actions for today.</>
                 )}
@@ -747,15 +748,15 @@ export const ManagerDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/20 shadow-2xl"
+                className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-[1.5rem] p-3 border border-slate-100 dark:border-white/5 shadow-sm"
               >
-                <div className="text-center px-3 border-r border-white/20 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">{format(new Date(), 'MMM')}</p>
+                <div className="text-center px-3 border-r border-slate-200 dark:border-white/10 min-w-[50px]">
+                  <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short' })}</p>
                 </div>
                 <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-white leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">W{format(new Date(), 'w')}</p>
+                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'short' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">W{format(new Date(), 'w')}</p>
                 </div>
               </motion.div>
             </div>

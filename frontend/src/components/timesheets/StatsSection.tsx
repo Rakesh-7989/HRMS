@@ -13,8 +13,8 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPrimary }) => {
     return (
         <div className={cn(
-            "p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-32 relative overflow-hidden transition-all hover:shadow-md",
-            isPrimary ? "bg-gradient-to-br from-purple-600 to-purple-400 text-white border-none shadow-purple-200" : "bg-white text-gray-800"
+            "p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-32 relative overflow-hidden transition-all hover:shadow-md dark:border-dark-border",
+            isPrimary ? "bg-gradient-to-br from-purple-600 to-purple-400 text-white border-none shadow-purple-200" : "bg-white text-gray-800 dark:bg-dark-card dark:text-white"
         )}>
             {isPrimary && (
                 <div className="absolute -right-4 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -38,7 +38,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPrimary }) 
 
             <p className={cn(
                 "font-medium text-sm relative z-10",
-                isPrimary ? "text-purple-100" : "text-gray-400"
+                isPrimary ? "text-purple-100" : "text-gray-400 dark:text-gray-400"
             )}>{title}</p>
         </div>
     );
@@ -57,12 +57,12 @@ export const StatsSection: React.FC<{ stats: TimesheetDashboardStats }> = ({ sta
             />
             <StatCard
                 title="Billable hours"
-                value={<>{stats.billable_hours.hours}<span className="text-xl font-medium opacity-60 text-gray-400">h</span>{stats.billable_hours.minutes.toString().padStart(2, '0')}</>}
+                value={<>{stats.billable_hours.hours}<span className="text-xl font-medium opacity-60 text-gray-400 dark:text-gray-400">h</span>{stats.billable_hours.minutes.toString().padStart(2, '0')}</>}
                 change={stats.billable_hours.trend}
             />
             <StatCard
                 title="Productivity score"
-                value={<>{stats.productivity_score.value}<span className="text-xl font-medium opacity-60 text-gray-400">%</span></>}
+                value={<>{stats.productivity_score.value}<span className="text-xl font-medium opacity-60 text-gray-400 dark:text-gray-400">%</span></>}
                 change={stats.productivity_score.trend}
             />
         </div>

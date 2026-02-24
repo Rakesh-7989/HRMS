@@ -5,8 +5,10 @@ import { Card } from '@/components/ui/Card';
 import { Loader2, RefreshCw, Coffee, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatTime12Hour } from '@/utils/timeFormat';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const CurrentBreaksContent: React.FC = () => {
+    const { user } = useAuth();
     const { data: breaks, isLoading, refetch } = useQuery({
         queryKey: ['current-breaks'],
         queryFn: attendanceService.getCurrentBreaks,
@@ -88,7 +90,7 @@ export const CurrentBreaksContent: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <Clock size={14} className="text-gray-400" />
-                                                    {formatTime12Hour(item.start_time)}
+                                                    {formatTime12Hour(item.start_time, user?.timezone)}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
