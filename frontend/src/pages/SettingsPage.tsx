@@ -1023,7 +1023,7 @@ const EmployeeIdSection: React.FC<{
                     placeholder="Enter Prefix"
                     value={prefixInput || idSettings?.prefix || ''}
                     onChange={(e) => setPrefixInput(e.target.value)}
-                    disabled={idSettings?.prefix && idSettings?.counter > 0}
+                    disabled={!!(idSettings?.prefix && (idSettings?.counter ?? 0) > 0)}
                     className="max-w-[150px]"
                   />
                   {(!idSettings?.prefix || idSettings?.counter === 0) && (
