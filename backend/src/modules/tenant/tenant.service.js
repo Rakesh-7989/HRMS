@@ -407,8 +407,10 @@ exports.setEmployeeIdPrefix = async (tenantId, prefix) => {
   }
 
   const settings = current.rows[0].settings || {};
-  if (settings.employee_id_prefix) {
-    throw new Error("Employee ID prefix is already configured and cannot be changed");
+  const currentCounter = settings.employee_id_counter || 0;
+
+  if (settings.employee_id_prefix && currentCounter > 0) {
+    throw new Error("Employee ID prefix is already in use and cannot be changed");
   }
 
   // Check if prefix is already used by another tenant

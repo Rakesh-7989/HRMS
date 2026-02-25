@@ -344,3 +344,42 @@ exports.removeProfilePhoto = async (req, res) => {
   }
 };
 
+exports.bulkImportEmployees = async (req, res) => {
+  try {
+    if (!req.file) {
+      throw new Error("Please upload an Excel file (.xlsx or .xls)");
+    }
+
+    const columnMapping = JSON.parse(req.body.mapping || '{}');
+
+    const result = await userService.bulkImportEmployees(
+      req.db,
+      req.file.buffer,
+      columnMapping,
+      req.user
+    );
+
+    // Audit Log
+    try {
+      await logAudit(req, 'users', null, 'BULK_IMPORT', null, {
+        total: result.total,
+        success: result.success,
+        failed: result.failed
+      });
+    } catch (e) {
+      console.error('Audit failed', e);
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: `Bulk import completed: ${result.success} succeeded, ${result.failed} failed.`,
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "error",
+      message: err.message
+    });
+  }
+};
+

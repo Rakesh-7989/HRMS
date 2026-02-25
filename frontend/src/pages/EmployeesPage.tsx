@@ -24,10 +24,12 @@ import {
   Building2,
   Briefcase,
   Trash2,
+  FileText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
 
 const ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
 const PAGE_SIZE = 10;
@@ -45,6 +47,7 @@ export const EmployeesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'' | 'active' | 'inactive'>('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
 
@@ -212,15 +215,26 @@ export const EmployeesPage: React.FC = () => {
 
           {canManage && (
             <div className="flex flex-col items-end">
-              <Button
-                onClick={() => navigate('/dashboard/employees/new')}
-                disabled={isLimitReached}
-                title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
-                className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
-              >
-                <Plus size={18} className="mr-2" />
-                Add Employee
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsBulkImportOpen(true)}
+                  disabled={isLimitReached}
+                  title="Import employees from Excel"
+                >
+                  <FileText size={18} className="mr-2" />
+                  Bulk Import
+                </Button>
+                <Button
+                  onClick={() => navigate('/dashboard/employees/new')}
+                  disabled={isLimitReached}
+                  title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
+                  className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
+                >
+                  <Plus size={18} className="mr-2" />
+                  Add Employee
+                </Button>
+              </div>
               {isLimitReached && (
                 <p className="text-xs text-red-500 mt-1 font-medium">
                   Plan limit reached ({currentCount}/{maxEmployees})
@@ -496,6 +510,12 @@ export const EmployeesPage: React.FC = () => {
           )}
         </Card>
       </div>
+
+      <BulkImportDialog
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['employees'] })}
+      />
     </DashboardLayout>
   );
 };

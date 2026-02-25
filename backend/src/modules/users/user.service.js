@@ -2,6 +2,7 @@ const pool = require("../../config/db");
 const { query: dbQuery, queryRLS } = require("../../middleware/db");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const XLSX = require("xlsx");
 const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
@@ -55,22 +56,20 @@ exports.createUser = async (db, data, actor) => {
     if (duplicate.rowCount) {
       throw new Error("Email Not Available");
     }
-    // Auto-generate employee ID using tenant's configured prefix
+    // Determine employee ID
     let generatedEmployeeId;
-    try {
-      generatedEmployeeId = await tenantService.generateNextEmployeeId(actor.tenantId, client);
-    } catch (err) {
-      throw new Error(err.message || "Failed to generate employee ID. Please configure the employee ID prefix first.");
-    }
-
-    // If null, manual mode is active or user overrode it
     if (data.employee_id && data.employee_id.trim()) {
       generatedEmployeeId = data.employee_id.trim();
-    } else if (generatedEmployeeId === null) {
-      if (!data.employee_id || !data.employee_id.trim()) {
-        throw new Error("Employee ID is required when auto-prefix is disabled. Please enter an employee ID.");
+    } else {
+      // Auto-generate employee ID using tenant's configured prefix
+      try {
+        generatedEmployeeId = await tenantService.generateNextEmployeeId(actor.tenantId, client);
+        if (generatedEmployeeId === null) {
+          throw new Error("Employee ID is required when auto-prefix is disabled. Please enter an employee ID.");
+        }
+      } catch (err) {
+        throw new Error(err.message || "Failed to generate employee ID. Please configure the employee ID prefix first.");
       }
-      generatedEmployeeId = data.employee_id.trim();
     }
 
     // Validate department belongs to same tenant
@@ -1101,4 +1100,98 @@ exports.getOrgTree = async (db, actor) => {
     initials: 'ORG',
     children: roots
   };
+};
+
+/* ------------------------- BULK IMPORT EMPLOYEES ------------------------- */
+exports.bulkImportEmployees = async (db, fileBuffer, columnMapping, actor) => {
+  const deptService = require('../departments/department.service');
+  const desigService = require('../designation/designation.service');
+
+  // 1. Parse Excel
+  const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+  if (!rawData || rawData.length === 0) {
+    throw new Error("The uploaded file is empty");
+  }
+
+  const results = {
+    total: rawData.length,
+    success: 0,
+    failed: 0,
+    errors: []
+  };
+
+  // Fetch departments and designations for name-to-ID lookup
+  const departments = await deptService.getDepartments(db, actor);
+  const designations = await desigService.getDesignations(db, actor.tenantId, { limit: 1000 });
+
+  const deptMap = {};
+  departments.forEach(d => { deptMap[d.name.toLowerCase()] = d.id; });
+
+  const desigMap = {};
+  designations.forEach(d => { desigMap[d.name.toLowerCase()] = d.id; });
+
+  const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+  // 2. Iterate and Create
+  for (let idx = 0; idx < rawData.length; idx++) {
+    const row = rawData[idx];
+    const employeeData = {};
+
+    // Map columns to fields
+    Object.entries(columnMapping).forEach(([xlsxCol, hrmsField]) => {
+      // Clean up the value
+      let value = row[xlsxCol];
+      if (typeof value === 'string') value = value.trim();
+
+      if (value !== undefined && hrmsField) {
+        employeeData[hrmsField] = value;
+      }
+    });
+
+    // Mandatory default values if missing
+    if (!employeeData.role) employeeData.role = 'EMPLOYEE';
+    if (!employeeData.employment_type) employeeData.employment_type = 'FULL_TIME';
+
+    // Name-to-ID lookup for Department
+    if (employeeData.department_id && !isUuid(employeeData.department_id)) {
+      const originalValue = employeeData.department_id;
+      const name = originalValue.trim().toLowerCase();
+      if (deptMap[name]) {
+        employeeData.department_id = deptMap[name];
+      } else {
+        throw new Error(`Department "${originalValue}" not found. Please create it first.`);
+      }
+    }
+
+    // Name-to-ID lookup for Designation
+    if (employeeData.designation_id && !isUuid(employeeData.designation_id)) {
+      const originalValue = employeeData.designation_id;
+      const name = originalValue.trim().toLowerCase();
+      if (desigMap[name]) {
+        employeeData.designation_id = desigMap[name];
+      } else {
+        throw new Error(`Designation "${originalValue}" not found. Please create it first.`);
+      }
+    }
+
+    try {
+      // Reuse the robust createUser logic
+      await exports.createUser(db, employeeData, actor);
+      results.success++;
+    } catch (err) {
+      results.failed++;
+      results.errors.push({
+        row: idx + 2, // Excel rows start at 1, header is 1
+        email: employeeData.email || 'N/A',
+        name: employeeData.first_name || 'Unknown',
+        error: err.message
+      });
+    }
+  }
+
+  return results;
 };

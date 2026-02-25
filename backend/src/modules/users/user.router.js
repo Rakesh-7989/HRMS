@@ -19,6 +19,8 @@ const {
   statusSchema
 } = require("./user.validator");
 
+const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
+
 // CREATE EMPLOYEE (Admin + HR)
 router.post(
   "/",
@@ -27,6 +29,16 @@ router.post(
   checkLimit('employees'),
   validate(createUserSchema),
   controller.createUser
+);
+
+// BULK IMPORT EMPLOYEES
+router.post(
+  "/bulk-import",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  checkLimit('employees'),
+  uploadTemp.single("file"),
+  controller.bulkImportEmployees
 );
 
 // LIST EMPLOYEES / USERS

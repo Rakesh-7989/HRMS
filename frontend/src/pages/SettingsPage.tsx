@@ -12,6 +12,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin.service';
+import { tenantService } from '@/services/tenant.service';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import {
@@ -98,6 +99,8 @@ export const SettingsPage: React.FC = () => {
             </p>
             <div className="space-y-3">
               <OrganizationProfileSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
+
+              <EmployeeIdSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
 
               <WorkingHoursSection userRole={user?.role} setSuccessConfig={setSuccessConfig} />
 
@@ -920,5 +923,132 @@ const OrganizationProfileSection: React.FC<{
         </DialogContent>
       </Dialog>
     </>
+  );
+};
+
+const EmployeeIdSection: React.FC<{
+  userRole?: string,
+  setSuccessConfig: React.Dispatch<React.SetStateAction<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>>
+}> = ({ userRole, setSuccessConfig }) => {
+  const [prefixInput, setPrefixInput] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: idSettings } = useQuery({
+    queryKey: ['employee-id-settings'],
+    queryFn: () => tenantService.getEmployeeIdSettings(),
+    enabled: userRole === 'ADMIN'
+  });
+
+  const toggleModeMutation = useMutation({
+    mutationFn: (usePrefix: boolean) => tenantService.toggleEmployeeIdMode(usePrefix),
+    onSuccess: (data) => {
+      showToast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
+    },
+    onError: (err: Error) => {
+      showToast.error(err.message);
+    }
+  });
+
+  const handleSetPrefix = async () => {
+    try {
+      if (!prefixInput || prefixInput.length < 2) {
+        showToast.error('Prefix must be at least 2 characters');
+        return;
+      }
+      await tenantService.setEmployeeIdPrefix(prefixInput.toUpperCase());
+      setPrefixInput('');
+      setSuccessConfig({
+        isOpen: true,
+        title: 'ID Prefix Configured',
+        message: 'Employee ID prefix has been set successfully.',
+        type: 'success'
+      });
+      queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
+    } catch (err: any) {
+      showToast.error(err.message);
+    }
+  };
+
+  const isTenantAdmin = userRole === 'ADMIN';
+  if (!isTenantAdmin) return null;
+
+  return (
+    <div className="flex flex-col gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
+          <Key size={20} />
+        </div>
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white">Employee ID Settings</p>
+          <p className="text-xs text-gray-600 dark:text-muted">Configure how employee IDs are generated</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Prefix Mode</p>
+            <p className="text-xs text-gray-500">Auto-increment IDs with a custom prefix</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={idSettings?.usePrefix}
+              onChange={(e) => toggleModeMutation.mutate(e.target.checked)}
+              className="sr-only peer"
+              disabled={toggleModeMutation.isPending}
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        {idSettings?.usePrefix && (
+          <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label className="text-xs">ID Prefix (e.g. EMP, ORG)</Label>
+                <p className="text-[10px] text-gray-500 mb-2">
+                  {idSettings?.prefix && idSettings?.counter > 0
+                    ? "Prefix is locked because IDs have been generated"
+                    : "Tip: You can change this until the first ID is used"}
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter Prefix"
+                    value={prefixInput || idSettings?.prefix || ''}
+                    onChange={(e) => setPrefixInput(e.target.value)}
+                    disabled={idSettings?.prefix && idSettings?.counter > 0}
+                    className="max-w-[150px]"
+                  />
+                  {(!idSettings?.prefix || idSettings?.counter === 0) && (
+                    <Button size="sm" onClick={handleSetPrefix}>
+                      {idSettings?.prefix ? 'Update Prefix' : 'Set Prefix'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {idSettings?.prefix && (
+                <div className="flex gap-4 text-xs">
+                  <div>
+                    <span className="text-gray-500">Current Prefix:</span>
+                    <span className="ml-2 font-bold text-primary">{idSettings.prefix}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Next ID:</span>
+                    <span className="ml-2 font-bold text-green-600">{idSettings.nextId}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
