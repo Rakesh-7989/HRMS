@@ -115,6 +115,9 @@ export const WFHApprovalsContent: React.FC = () => {
                                         Reason
                                     </th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                                         Requested
                                     </th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
@@ -151,6 +154,14 @@ export const WFHApprovalsContent: React.FC = () => {
                                         </td>
                                         <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
                                             {request.reason}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${request.status === 'PENDING_HR'
+                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                }`}>
+                                                {request.status === 'PENDING_HR' ? 'PENDING (HR)' : request.status}
+                                            </span>
                                         </td>
                                         <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">
                                             {format(new Date(request.created_at), 'MMM dd, hh:mm a')}
@@ -193,10 +204,10 @@ export const WFHApprovalsContent: React.FC = () => {
             >
                 {selectedRequest && (
                     <div className="flex flex-col">
-                        <DialogContent className="py-6 px-6">
+                        <DialogContent className="py-2 px-0">
                             {capacityStats && capacityStats.totalTeamSize > 0 &&
                                 ((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) >= 0.5 && (
-                                    <div className="mb-4 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r shadow-sm">
+                                    <div className="mb-4 bg-orange-50/50 dark:bg-orange-900/10 border-l-4 border-orange-500 p-3 rounded shadow-sm">
                                         <div className="flex">
                                             <div className="flex-shrink-0">
                                                 <svg className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
@@ -204,53 +215,52 @@ export const WFHApprovalsContent: React.FC = () => {
                                                 </svg>
                                             </div>
                                             <div className="ml-3">
-                                                <h3 className="text-sm font-medium text-orange-800">
+                                                <h3 className="text-xs font-semibold text-orange-800">
                                                     High Absence Warning
                                                 </h3>
-                                                <div className="mt-1 text-sm text-orange-700">
-                                                    <p>
-                                                        {capacityStats.approvedWFHCount} WFH + {capacityStats.approvedLeaveCount} Leave
-                                                        out of {capacityStats.totalTeamSize} team members.
-                                                        {(
-                                                            ((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) * 100
-                                                        ).toFixed(0)}% of the team is away/remote.
-                                                    </p>
-                                                </div>
+                                                <p className="mt-1 text-[11px] text-orange-700 leading-tight">
+                                                    {capacityStats.approvedWFHCount} WFH + {capacityStats.approvedLeaveCount} Leave requests approved for this day.
+                                                    <strong> {((((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) * 100)).toFixed(0)}%</strong> of the team will be away.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-4">
-                                <p className="text-sm text-violet-900 dark:text-violet-300">
-                                    <strong>{selectedRequest.first_name} {selectedRequest.last_name}</strong> has
-                                    requested to work from home on{' '}
-                                    <strong>{format(new Date(selectedRequest.request_date), 'MMMM dd, yyyy')}</strong>
-                                </p>
-                                <p className="text-xs text-violet-700 dark:text-violet-400 mt-2">
-                                    Reason: {selectedRequest.reason}
+                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 rounded-lg p-3">
+                                <p className="text-xs text-primary-700 dark:text-primary-300">
+                                    <strong>{selectedRequest.first_name} {selectedRequest.last_name}</strong> requested WFH for{' '}
+                                    <strong>{format(new Date(selectedRequest.request_date), 'MMM dd, yyyy')}</strong>
                                 </p>
                             </div>
 
-                            <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="mt-4">
+                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                                     Comment (Optional)
                                 </label>
                                 <textarea
                                     value={approvalComment}
                                     onChange={(e) => setApprovalComment(e.target.value)}
-                                    rows={3}
-                                    className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm shadow-sm"
+                                    rows={2}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
                                     placeholder="Add a comment (optional)..."
                                 />
                             </div>
                         </DialogContent>
 
-                        <DialogFooter className="px-6 pb-6 pt-0 border-t-0">
-                            <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
+                        <DialogFooter className="px-0 pb-2 pt-4 border-t-0 flex justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowApproveDialog(false)}
+                                className="px-6 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
                                 Cancel
                             </Button>
-                            <Button onClick={confirmApprove} isLoading={approveMutation.isPending}>
+                            <Button
+                                onClick={confirmApprove}
+                                isLoading={approveMutation.isPending}
+                                className="px-6 bg-primary hover:bg-primary-600 shadow-md"
+                            >
                                 Confirm Approval
                             </Button>
                         </DialogFooter>
@@ -266,35 +276,39 @@ export const WFHApprovalsContent: React.FC = () => {
             >
                 {selectedRequest && (
                     <div className="flex flex-col">
-                        <DialogContent className="py-6 px-6">
-                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                                <p className="text-sm text-red-900 dark:text-red-300">
+                        <DialogContent className="py-2 px-0">
+                            <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg p-3">
+                                <p className="text-xs text-red-800 dark:text-red-400">
                                     You are about to reject <strong>{selectedRequest.first_name}'s</strong> WFH request for{' '}
-                                    <strong>{format(new Date(selectedRequest.request_date), 'MMMM dd, yyyy')}</strong>
+                                    <strong>{format(new Date(selectedRequest.request_date), 'MMM dd, yyyy')}</strong>
                                 </p>
                             </div>
 
-                            <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="mt-4">
+                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                                     Rejection Reason *
                                 </label>
                                 <textarea
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}
-                                    className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm shadow-sm"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
                                     placeholder="Please provide a reason for rejection (minimum 5 characters)..."
                                 />
                                 {rejectionReason.length > 0 && rejectionReason.length < 5 && (
-                                    <p className="mt-1 text-sm text-red-600">
+                                    <p className="mt-1 text-[11px] text-red-600 font-medium">
                                         Reason must be at least 5 characters
                                     </p>
                                 )}
                             </div>
                         </DialogContent>
 
-                        <DialogFooter className="px-6 pb-6 pt-0 border-t-0">
-                            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+                        <DialogFooter className="px-0 pb-2 pt-4 border-t-0 flex justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowRejectDialog(false)}
+                                className="px-6 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
                                 Cancel
                             </Button>
                             <Button
@@ -302,6 +316,7 @@ export const WFHApprovalsContent: React.FC = () => {
                                 onClick={confirmReject}
                                 isLoading={rejectMutation.isPending}
                                 disabled={rejectionReason.trim().length < 5}
+                                className="px-6 bg-red-500 hover:bg-red-600 shadow-md"
                             >
                                 Confirm Rejection
                             </Button>

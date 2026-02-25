@@ -96,18 +96,29 @@ exports.getMyWFHRequests = async (db, actor, params = {}) => {
 exports.getPendingWFHRequests = async (db, actor) => {
     const query = getQuery(db);
 
-    // Get requests from employees who report to this user
+    let whereClause = `wr.tenant_id = $1`;
+    const params = [actor.tenantId];
+
+    if (actor.role === 'MANAGER') {
+        // Managers see PENDING requests from their reports
+        whereClause += ` AND wr.status = 'PENDING' AND e.reports_to = $2`;
+        params.push(actor.employeeId);
+    } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        // HR/Admin see PENDING_HR requests across the tenant
+        whereClause += ` AND wr.status = 'PENDING_HR'`;
+    } else {
+        return [];
+    }
+
     const result = await query(
         `SELECT wr.*, 
                 e.first_name, e.last_name, u.email, e.employee_id as employee_code
          FROM wfh_requests wr
          JOIN employees e ON e.id = wr.employee_id
          JOIN users u ON u.id = e.user_id
-         WHERE wr.tenant_id = $1 
-           AND wr.status = 'PENDING'
-           AND e.reports_to = $2
+         WHERE ${whereClause}
          ORDER BY wr.request_date ASC, wr.created_at ASC`,
-        [actor.tenantId, actor.employeeId]
+        params
     );
 
     return result.rows;
@@ -132,35 +143,61 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
 
     const request = requestRes.rows[0];
 
-    if (request.status !== 'PENDING') {
-        throw new Error(`Cannot approve a ${request.status.toLowerCase()} request`);
-    }
-
-    // Check authorization
+    // Authorization check
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can approve WFH requests");
     }
 
-    // If MANAGER, verify they manage this employee
-    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
-        throw new Error("You can only approve WFH requests for your direct reports");
+    if (request.employee_id === actor.employeeId) {
+        throw new Error("You cannot approve your own WFH requests.");
     }
 
-    // Approve the request
-    const result = await query(
-        `UPDATE wfh_requests 
-         SET status = 'APPROVED', 
-             approved_by = $1, 
-             approved_at = NOW(),
-             approval_comment = $2,
-             updated_at = NOW()
-         WHERE id = $3 AND tenant_id = $4
-         RETURNING *`,
-        [actor.id, comment, requestId, actor.tenantId]
-    );
+    // ---------------------------------------------------------
+    // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
+    // ---------------------------------------------------------
+    if (request.status === 'PENDING') {
+        if (request.reports_to !== actor.employeeId && actor.role !== 'ADMIN' && actor.role !== 'HR') {
+            throw new Error("You can only approve WFH requests for your direct reports");
+        }
 
-    return result.rows[0];
+        const result = await query(
+            `UPDATE wfh_requests 
+             SET status = 'PENDING_HR', 
+                 manager_approved_by = $1, 
+                 manager_approved_at = NOW(),
+                 approval_comment = $2,
+                 updated_at = NOW()
+             WHERE id = $3 AND tenant_id = $4
+             RETURNING *`,
+            [actor.id, comment, requestId, actor.tenantId]
+        );
+        return result.rows[0];
+    }
+
+    // ---------------------------------------------------------
+    // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
+    // ---------------------------------------------------------
+    if (request.status === 'PENDING_HR') {
+        if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
+            throw new Error("Only HR or Admin can finalize this WFH request after manager approval.");
+        }
+
+        const result = await query(
+            `UPDATE wfh_requests 
+             SET status = 'APPROVED', 
+                 approved_by = $1, 
+                 approved_at = NOW(),
+                 approval_comment = $2,
+                 updated_at = NOW()
+             WHERE id = $3 AND tenant_id = $4
+             RETURNING *`,
+            [actor.id, comment, requestId, actor.tenantId]
+        );
+        return result.rows[0];
+    }
+
+    throw new Error(`Cannot approve a WFH request with status: ${request.status}`);
 };
 
 /* ========================== REJECT WFH REQUEST ========================== */
@@ -186,19 +223,28 @@ exports.rejectWFH = async (db, requestId, actor, reason) => {
 
     const request = requestRes.rows[0];
 
-    if (request.status !== 'PENDING') {
-        throw new Error(`Cannot reject a ${request.status.toLowerCase()} request`);
-    }
-
-    // Check authorization
+    // Authorization check
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can reject WFH requests");
     }
 
-    // If MANAGER, verify they manage this employee
-    if (actor.role === 'MANAGER' && request.reports_to !== actor.employeeId) {
-        throw new Error("You can only reject WFH requests for your direct reports");
+    if (request.employee_id === actor.employeeId) {
+        throw new Error("You cannot reject your own WFH requests.");
+    }
+
+    // Logic: Managers can reject 'PENDING'. HR/Admin can reject 'PENDING' or 'PENDING_HR'.
+    if (actor.role === 'MANAGER') {
+        if (request.reports_to !== actor.employeeId) {
+            throw new Error("You can only reject WFH requests for your direct reports");
+        }
+        if (request.status !== 'PENDING') {
+            throw new Error(`You can only reject requests in PENDING status. This request is ${request.status}.`);
+        }
+    } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        if (request.status !== 'PENDING' && request.status !== 'PENDING_HR') {
+            throw new Error(`Request is already ${request.status}.`);
+        }
     }
 
     // Reject the request

@@ -271,7 +271,12 @@ exports.getPendingApprovals = async (db, actor, filters) => {
     let p = 2;
 
     // Default to PENDING if status not provided, otherwise allow filtering by specific status
-    let statusFilter = filters.status || 'PENDING';
+    // HR/Admin see PENDING_HR (action items) by default
+    let statusFilter = filters.status;
+    if (!statusFilter) {
+        statusFilter = (actor.role === 'HR' || actor.role === 'ADMIN') ? 'PENDING_HR' : 'PENDING';
+    }
+
     let statusClause = `la.status = $${p}`;
 
     if (statusFilter.includes(',')) {
@@ -285,9 +290,8 @@ exports.getPendingApprovals = async (db, actor, filters) => {
     let where = `WHERE la.tenant_id = $1 AND ${statusClause}`;
 
     // Visibility Logic: 
-    // - MANAGERS only see their direct reports.
-    // - HR and ADMIN can see all pending requests in the organization (visibility only).
-    // Note: The actual Approve/Reject action is still strictly protected in the approveLeave/rejectLeave functions.
+    // - MANAGERS see requests from their direct reports (PENDING or PENDING_HR).
+    // - HR and ADMIN see PENDING_HR by default, but can see everything.
     if (actor.role === 'MANAGER') {
         if (!actor.employeeId) {
             return [];
@@ -319,7 +323,11 @@ exports.getPendingApprovals = async (db, actor, filters) => {
             u.email,
             m.first_name AS manager_first_name,
             m.last_name AS manager_last_name,
-            CASE WHEN e.reports_to = $${p} THEN true ELSE false END AS can_approve
+            CASE 
+                WHEN e.reports_to = $${p} AND la.status = 'PENDING' THEN true 
+                WHEN '${actor.role}' IN ('HR', 'ADMIN') AND la.status = 'PENDING_HR' THEN true
+                ELSE false 
+            END AS can_approve
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id
          JOIN users u     ON u.id = e.user_id
@@ -341,68 +349,95 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 exports.approveLeave = async (db, actor, leaveId, comment) => {
     const query = getQuery(db);
 
-    // SECURITY FIX: Validate role authorization
+    // SECURITY: Validate role authorization
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can approve leave requests");
     }
 
-    // Get leave details first
+    // Get leave details and current status
     const leaveRes = await query(
         `SELECT la.*, lt.is_paid, lt.code as leave_type_code, e.reports_to
          FROM leave_applications la
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
          LEFT JOIN employees e ON e.id = la.employee_id
-         WHERE la.id = $1 AND la.tenant_id = $2 AND la.status = 'PENDING'`,
+         WHERE la.id = $1 AND la.tenant_id = $2`,
         [leaveId, actor.tenantId]
     );
 
     if (leaveRes.rowCount === 0) {
-        throw new Error("Leave not found or already processed");
+        throw new Error("Leave application not found");
     }
 
     const leave = leaveRes.rows[0];
 
-    // STRICT HIERARCHY: Verify reporter-manager relationship for all roles
-    // Block self-approval
+    // BLOCK SELF-APPROVAL
     if (leave.employee_id === actor.employeeId) {
-        throw new Error("You cannot approve your own leave requests. Your reporting manager must do this.");
-    }
-    // Verify direct report relationship
-    if (leave.reports_to !== actor.employeeId) {
-        throw new Error("You can only approve leave for employees who report directly to you.");
+        throw new Error("You cannot approve your own leave requests.");
     }
 
-    // Update leave status
-    const res = await query(
-        `UPDATE leave_applications
-         SET status       = 'APPROVED',
-             approved_by  = $1,
-             approved_at  = now(),
-             manager_note = $2,
-             updated_at   = now()
-         WHERE id = $3
-         RETURNING *`,
-        [actor.id, comment || null, leaveId]
-    );
-
-    // Deduct balance for paid leave types (Except WFH)
-    if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
-        const daysCount = leave.days_count ||
-            (leave.is_half_day ? 0.5 :
-                Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);
-
-        try {
-            await leaveBalanceService.deductBalance(
-                db, leave.employee_id, leave.leave_type_id, daysCount,
-                actor.tenantId, `Approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, actor.id
-            );
-        } catch (err) {
-            console.warn("Could not deduct balance:", err.message);
+    // ---------------------------------------------------------
+    // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
+    // ---------------------------------------------------------
+    if (leave.status === 'PENDING') {
+        if (leave.reports_to !== actor.employeeId && actor.role !== 'ADMIN' && actor.role !== 'HR') {
+            throw new Error("You can only approve leave for employees who report directly to you.");
         }
+
+        const res = await query(
+            `UPDATE leave_applications
+             SET status              = 'PENDING_HR',
+                 manager_approved_by = $1,
+                 manager_approved_at = now(),
+                 manager_note        = $2,
+                 updated_at          = now()
+             WHERE id = $3
+             RETURNING *`,
+            [actor.id, comment || null, leaveId]
+        );
+        return res.rows[0];
     }
 
-    return res.rows[0];
+    // ---------------------------------------------------------
+    // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
+    // ---------------------------------------------------------
+    if (leave.status === 'PENDING_HR') {
+        if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
+            throw new Error("Only HR or Admin can finalize this leave request after manager approval.");
+        }
+
+        const res = await query(
+            `UPDATE leave_applications
+             SET status       = 'APPROVED',
+                 approved_by  = $1,
+                 approved_at  = now(),
+                 hr_note      = $2,
+                 updated_at   = now()
+             WHERE id = $3
+             RETURNING *`,
+            [actor.id, comment || null, leaveId]
+        );
+
+        // Deduct balance for paid leave types (Except WFH)
+        if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
+            const daysCount = leave.days_count ||
+                (leave.is_half_day ? 0.5 :
+                    Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);
+
+            try {
+                await leaveBalanceService.deductBalance(
+                    db, leave.employee_id, leave.leave_type_id, daysCount,
+                    actor.tenantId, `Approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, actor.id
+                );
+            } catch (err) {
+                console.warn("Could not deduct balance:", err.message);
+            }
+        }
+
+        return res.rows[0];
+    }
+
+    throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
 };
 
 /**
@@ -413,28 +448,43 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 exports.rejectLeave = async (db, actor, leaveId, reason) => {
     const query = getQuery(db);
 
-    // SECURITY FIX: Validate role authorization
+    // SECURITY: Validate role authorization
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can reject leave requests");
     }
 
-    // For managers, verify the employee reports to them
+    // Get request details
     const leaveCheck = await query(
-        `SELECT la.employee_id, e.reports_to 
+        `SELECT la.employee_id, la.status, e.reports_to 
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id
          WHERE la.id = $1 AND la.tenant_id = $2`,
         [leaveId, actor.tenantId]
     );
 
-    if (leaveCheck.rowCount > 0) {
-        const leave = leaveCheck.rows[0];
-        if (leave.employee_id === actor.employeeId) {
-            throw new Error("You cannot reject your own leave requests.");
-        }
+    if (leaveCheck.rowCount === 0) {
+        throw new Error("Leave application not found");
+    }
+
+    const leave = leaveCheck.rows[0];
+
+    // Block self-rejection
+    if (leave.employee_id === actor.employeeId) {
+        throw new Error("You cannot reject your own leave requests.");
+    }
+
+    // Authorization check
+    if (actor.role === 'MANAGER') {
         if (leave.reports_to !== actor.employeeId) {
             throw new Error("You can only reject leave for employees who report directly to you.");
+        }
+        if (leave.status !== 'PENDING') {
+            throw new Error(`You can only reject requests in PENDING status. This request is already ${leave.status}.`);
+        }
+    } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        if (leave.status !== 'PENDING' && leave.status !== 'PENDING_HR') {
+            throw new Error(`Request is already ${leave.status}.`);
         }
     }
 
@@ -447,14 +497,9 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
              updated_at       = now()
          WHERE id = $3
            AND tenant_id = $4
-           AND status = 'PENDING'
          RETURNING *`,
         [actor.id, reason || null, leaveId, actor.tenantId]
     );
-
-    if (res.rowCount === 0) {
-        throw new Error("Leave not found or already processed");
-    }
 
     return res.rows[0];
 };
@@ -566,7 +611,7 @@ exports.getLeaveSummary = async (db, actor, filters) => {
             COUNT(*) AS total_applications,
             COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END) AS approved,
             COUNT(CASE WHEN la.status = 'REJECTED' THEN 1 END) AS rejected,
-            COUNT(CASE WHEN la.status = 'PENDING' THEN 1 END) AS pending,
+            COUNT(CASE WHEN la.status IN ('PENDING', 'PENDING_HR') THEN 1 END) AS pending,
             COUNT(CASE WHEN la.status = 'CANCELLED' THEN 1 END) AS cancelled
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id

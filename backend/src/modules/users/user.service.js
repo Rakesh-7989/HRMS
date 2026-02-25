@@ -366,15 +366,36 @@ exports.getUsers = async (db, opts, actor) => {
     i++;
   }
 
-  // Manager filtering: Only show their direct reports (or hierarchical, but direct for now)
-  if (actor.role === 'MANAGER') {
+  // Restricted Visibility for MANAGER and EMPLOYEE
+  // Managers see: Direct reports, Project-mates, Self
+  // Employees see: Teammates (same manager), Manager, Project-mates, Self
+  if (['MANAGER', 'EMPLOYEE'].includes(actor.role)) {
     if (!actor.employeeId) {
-      console.warn(`[getUsers] MANAGER ${actor.id} has no employeeId linked. Returning empty list.`);
-      return []; // Return empty if manager has no employee record to link reports_to
+      // If user has no employee record, they can only see themselves
+      filter.push(`u.id = $${i}`);
+      params.push(actor.id);
+      i++;
+    } else {
+      filter.push(`(
+        e.id = $${i} -- Self
+        OR e.reports_to = $${i} -- Direct reports (for managers)
+        OR EXISTS (
+          SELECT 1 FROM employees emp_self 
+          WHERE emp_self.id = $${i} 
+          AND (
+            e.id = emp_self.reports_to -- My Manager
+            OR (e.reports_to = emp_self.reports_to AND e.reports_to IS NOT NULL) -- Teammates
+          )
+        )
+        OR EXISTS (
+          SELECT 1 FROM project_members pm1 
+          JOIN project_members pm2 ON pm1.project_id = pm2.project_id 
+          WHERE pm1.employee_id = $${i} AND pm2.employee_id = e.id
+        ) -- Project mates
+      )`);
+      params.push(actor.employeeId);
+      i++;
     }
-    filter.push(`e.reports_to = $${i}`);
-    params.push(actor.employeeId);
-    i++;
   }
 
   if (opts.role) {

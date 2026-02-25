@@ -11,7 +11,7 @@ export interface WFHRequest {
     employee_id: string;
     request_date: string;
     reason: string;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    status: 'PENDING' | 'PENDING_HR' | 'APPROVED' | 'REJECTED';
     approved_by?: string;
     approved_at?: string;
     approval_comment?: string;

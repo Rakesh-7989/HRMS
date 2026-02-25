@@ -18,6 +18,7 @@ export const MyWFHRequestsContent: React.FC = () => {
         switch (status) {
             case 'APPROVED': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
             case 'REJECTED': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            case 'PENDING_HR': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
             case 'PENDING': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
             default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
         }
@@ -27,6 +28,7 @@ export const MyWFHRequestsContent: React.FC = () => {
         switch (status) {
             case 'APPROVED': return <CheckCircle2 size={14} className="mr-1" />;
             case 'REJECTED': return <XCircle size={14} className="mr-1" />;
+            case 'PENDING_HR':
             case 'PENDING': return <Clock size={14} className="mr-1" />;
             default: return null;
         }
@@ -86,7 +88,7 @@ export const MyWFHRequestsContent: React.FC = () => {
                                         <td className="py-3 px-4">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
                                                 {getStatusIcon(request.status)}
-                                                {request.status}
+                                                {request.status === 'PENDING_HR' ? 'PENDING (HR)' : request.status}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">
@@ -98,8 +100,8 @@ export const MyWFHRequestsContent: React.FC = () => {
                                             )}
                                             {request.status === 'REJECTED' && request.rejection_reason && (
                                                 <div className="flex items-start gap-1 text-red-500">
-                                                    <AlertCircle size={12} className="mt-0.5" />
-                                                    <span>{request.rejection_reason}</span>
+                                                    <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                                                    <span className="leading-tight">Reason: {request.rejection_reason}</span>
                                                 </div>
                                             )}
                                         </td>
