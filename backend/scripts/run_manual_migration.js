@@ -13,7 +13,7 @@ async function runMigration() {
         await client.connect();
 
         console.log('Reading migration file: 20260211_add_two_factor_auth.sql');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260218_asset_accessories.sql');
+        const migrationPath = path.join(__dirname, '../src/database/migrations/20260225_add_user_status_fields.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

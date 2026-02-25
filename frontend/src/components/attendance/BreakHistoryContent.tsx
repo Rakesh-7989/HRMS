@@ -5,14 +5,14 @@ import { Card } from '@/components/ui/Card';
 import { Loader2, Calendar as CalIcon, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { formatTime12Hour } from '@/utils/timeFormat';
+import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { usersService } from '@/services/users.service';
 
 export const BreakHistoryContent: React.FC = () => {
     const { user } = useAuth();
-    const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState<string>(getCurrentDate(user?.timezone));
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
     // Fetch employees for filter (Only for HR/Admin/Manager)
@@ -62,7 +62,7 @@ export const BreakHistoryContent: React.FC = () => {
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setDate(new Date().toISOString().split('T')[0])} className="flex-1 sm:flex-none">
+                            <Button variant="outline" size="sm" onClick={() => setDate(getCurrentDate(user?.timezone))} className="flex-1 sm:flex-none">
                                 Today
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 flex-1 sm:flex-none">

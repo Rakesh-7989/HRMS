@@ -229,7 +229,7 @@ export const DailyAttendanceContent: React.FC = () => {
     });
 
     const isWFHApprovedToday = () => {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const todayStr = getCurrentDate(user?.timezone);
         return myWFHRequests.some(req => req.request_date === todayStr && req.status === 'APPROVED');
     };
 
