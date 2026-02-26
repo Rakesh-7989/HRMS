@@ -1,0 +1,76 @@
+<h1 style="margin:0 0 8px;font-size:24px;color:#1a1a2e;font-weight:700;">Attendance Report</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#666;line-height:1.6;">Here's the attendance summary for
+    <strong>{{reportDate}}</strong>.</p>
+
+<!-- Stats Grid -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr>
+        <td width="50%" style="padding:0 6px 12px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">
+                <tr>
+                    <td style="padding:20px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:800;color:#16a34a;">{{present}}</p>
+                        <p
+                            style="margin:4px 0 0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;">
+                            Present</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td width="50%" style="padding:0 0 12px 6px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
+                <tr>
+                    <td style="padding:20px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:800;color:#dc2626;">{{absent}}</p>
+                        <p
+                            style="margin:4px 0 0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;">
+                            Absent</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%" style="padding:0 6px 0 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;">
+                <tr>
+                    <td style="padding:20px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:800;color:#2563eb;">{{onLeave}}</p>
+                        <p
+                            style="margin:4px 0 0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;">
+                            On Leave</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td width="50%" style="padding:0 0 0 6px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="background:#fff7ed;border-radius:10px;border:1px solid #fed7aa;">
+                <tr>
+                    <td style="padding:20px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:800;color:#ea580c;">{{lateArrivals}}</p>
+                        <p
+                            style="margin:4px 0 0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;">
+                            Late Arrivals</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- Summary Bar -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+    style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);border-radius:10px;border:1px solid #e8ddf0;">
+    <tr>
+        <td style="padding:16px 20px;">
+            <p style="margin:0;font-size:13px;color:#42275a;">
+                <strong>Total Employees:</strong> {{totalEmployees}} &nbsp;|&nbsp; <strong>Attendance Rate:</strong>
+                {{presentPct}}%
+            </p>
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,43 @@
+<h1 style="margin:0 0 8px;font-size:24px;color:#1a1a2e;font-weight:700;">Leave Request</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#666;line-height:1.6;">A team member has submitted a leave request that
+    requires your attention.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+    style="border-radius:12px;border:1px solid #e8ddf0;overflow:hidden;margin-bottom:24px;">
+    <tr>
+        <td
+            style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);padding:20px 24px;border-bottom:1px solid #e8ddf0;">
+            <p style="margin:0;font-size:18px;font-weight:700;color:#42275a;">{{employeeName}}</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;width:35%;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Leave
+                            Type</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">{{leaveType}}</p>
+                    </td>
+                    <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">
+                            Duration</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">{{startDate}} — {{endDate}}
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+        <td
+            style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+            <a href="{{dashboardUrl}}"
+                style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Review
+                Request →</a>
+        </td>
+    </tr>
+</table>
