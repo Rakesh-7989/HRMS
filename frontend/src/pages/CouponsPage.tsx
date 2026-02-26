@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { couponService, Coupon } from '@/services/coupons.service';
-import { Plus, Copy, Tag, Calendar, Percent, DollarSign, RefreshCw } from 'lucide-react';
+import { Plus, Copy, Tag, Calendar, Percent, IndianRupee, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useFormik } from 'formik';
@@ -180,7 +180,7 @@ export const CouponsPage: React.FC = () => {
 
                                     <div className="space-y-3 mb-6">
                                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                            {coupon.discount_type === 'PERCENT' ? <Percent className="w-4 h-4" /> : <DollarSign className="w-4 h-4" />}
+                                            {coupon.discount_type === 'PERCENT' ? <Percent className="w-4 h-4" /> : <IndianRupee className="w-4 h-4" />}
                                             <span className="font-medium text-gray-900 dark:text-white">
                                                 {coupon.discount_value}{coupon.discount_type === 'PERCENT' ? '%' : ' INR'} OFF
                                             </span>

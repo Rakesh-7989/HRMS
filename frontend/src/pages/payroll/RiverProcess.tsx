@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
     Check, Send, Lock, ThumbsUp,
-    Users, Calendar, DollarSign, AlertTriangle,
+    Users, Calendar, IndianRupee, AlertTriangle,
     ChevronDown, ChevronUp, Search, Download,
     FileText, Building2, Shield, BarChart3,
     Wallet, ArrowLeft, Zap, CheckCircle2,
@@ -139,7 +139,7 @@ export const RiverProcess = () => {
                 fetchStageData();
             } else if (action === 'RELEASE') {
                 await api.post(`/payroll/river/release/${runId}`);
-                toast.success("🎉 Payroll Released to Employees!");
+                toast.success("Payroll Released to Employees!");
                 setStage('RELEASE');
                 fetchStageData();
             }
@@ -255,12 +255,12 @@ const ReviewStage = ({ data, onNext }: any) => {
                     {
                         label: 'Salary Revisions', value: categories?.finance?.salaryRevisions || 0,
                         sub: `Revisions effective this month`,
-                        icon: DollarSign, color: 'purple', section: 'revisions'
+                        icon: IndianRupee, color: 'purple', section: 'revisions'
                     },
                     {
                         label: 'Arrears Management', value: categories?.arrears?.count || 0,
                         sub: `${formatCurrency(categories?.arrears?.totalAmount || 0)} pending`,
-                        icon: Receipt, color: 'rose', section: 'arrears'
+                        icon: IndianRupee, color: 'rose', section: 'arrears'
                     },
                     {
                         label: 'TDS / Tax Config', value: categories?.finance?.totalTdsEmployees || 0,
@@ -336,7 +336,7 @@ const ReviewStage = ({ data, onNext }: any) => {
             {expandedSection === 'revisions' && categories?.finance?.revisionDetails?.length > 0 && (
                 <DetailTable
                     title="Salary Revisions"
-                    icon={<DollarSign className="w-4 h-4 text-purple-400" />}
+                    icon={<IndianRupee className="w-4 h-4 text-purple-400" />}
                     columns={['Employee', 'Emp Code', 'Structure', 'Annual CTC', 'Effective From']}
                     rows={categories.finance.revisionDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.structure_name || '-',
@@ -549,9 +549,9 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 {[
                     { label: 'Employees', value: data?.summary?.count || 0, icon: Users, color: 'blue', isCurrency: false },
                     { label: 'Total Gross', value: data?.summary?.total_gross || 0, icon: Wallet, color: 'indigo', isCurrency: true },
-                    { label: 'Deductions', value: data?.summary?.total_deductions || 0, icon: Receipt, color: 'amber', isCurrency: true },
+                    { label: 'Deductions', value: data?.summary?.total_deductions || 0, icon: IndianRupee, color: 'amber', isCurrency: true },
                     { label: 'Tax (TDS)', value: data?.summary?.total_tax || 0, icon: Shield, color: 'rose', isCurrency: true },
-                    { label: 'Net Payout', value: data?.summary?.total_net || 0, icon: DollarSign, color: 'emerald', isCurrency: true }
+                    { label: 'Net Payout', value: data?.summary?.total_net || 0, icon: IndianRupee, color: 'emerald', isCurrency: true }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm">
                         <div className="flex items-center gap-2 mb-2">

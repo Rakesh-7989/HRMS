@@ -43,23 +43,23 @@ router.use(dbSessionContext);
 
 router.use('/assets', verifyJwt, requireFeature('asset_management'), assetManagementRouter);
 
-// Public routes
+// Public routes (no auth required)
 router.use('/auth', authRoutes);
 router.use('/common', commonRouter);
 
-// Tenant module (use /tenants - plural, standard REST convention)
-router.use('/tenants', tenantRouter);
-
-// Audit Logs
-router.use('/audit-logs', auditRouter);
-
-// Subscriptions module
+// Subscriptions module (billing routes handle their own auth)
 //router.use('/subscriptions', subscriptionRouter);
 router.use('/subscriptions', billingRouter);
 router.use('/subscriptions', subscriptionAdminRouter);
 
 // Everything below requires authentication
 router.use(verifyJwt);
+
+// Tenant module (requires auth — tenant settings are sensitive)
+router.use('/tenants', tenantRouter);
+
+// Audit Logs (requires auth)
+router.use('/audit-logs', auditRouter);
 
 // Dashboards module (all authenticated users)
 router.use('/dashboards', checkAccess(), dashboardRouter);
@@ -69,7 +69,7 @@ router.use('/admin', requireRole(['ADMIN', 'HR']), checkAccess(), adminRouter);
 
 // Super admin module
 router.use('/super-admin', requireRole(['SUPER_ADMIN']), superAdminRouter);
-router.use('/dba', dbaRouter);
+router.use('/dba', requireRole(['SUPER_ADMIN']), dbaRouter);
 
 
 

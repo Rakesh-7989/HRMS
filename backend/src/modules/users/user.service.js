@@ -7,13 +7,105 @@ const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
 const tenantService = require("../tenant/tenant.service");
+const { encrypt, decrypt, encryptFields, decryptFields, decryptAndMaskFields, canRevealField, SENSITIVE_FIELDS, FIELD_CONFIG } = require("../../utils/encryption");
 
 const getQuery = (db) =>
   db && typeof db.query === "function" ? db.query : dbQuery;
 
-/* ----------------------------- CREATE USER ----------------------------- */
-exports.createUser = async (db, data, actor) => {
-  const client = await pool.connect();
+/* ---------- DUPLICATE CHECK FOR ENCRYPTED FIELDS ---------- */
+// Since encrypted values use random IVs, DB UNIQUE constraints don't work.
+// This decrypts existing values and compares at the application level.
+const UNIQUE_FIELDS = [
+  { field: 'phone', label: 'Phone Number' },
+  { field: 'aadhar_number', label: 'Aadhaar Number' },
+  { field: 'tax_id', label: 'Tax ID (PAN)' },
+  { field: 'account_number', label: 'Account Number' },
+  { field: 'uan', label: 'UAN' },
+  { field: 'pf_account', label: 'PF Account Number' },
+  { field: 'esi_number', label: 'ESI Number' },
+];
+
+async function checkEncryptedDuplicates(client, tenantId, data, excludeUserId = null) {
+  for (const { field, label } of UNIQUE_FIELDS) {
+    const value = data[field];
+    if (!value || !String(value).trim()) continue;
+
+    const plainValue = String(value).trim();
+
+    let sql = `SELECT user_id, ${field} FROM employees WHERE tenant_id = $1 AND ${field} IS NOT NULL`;
+    const params = [tenantId];
+
+    if (excludeUserId) {
+      sql += ` AND user_id != $2`;
+      params.push(excludeUserId);
+    }
+
+    const { rows } = await client.query(sql, params);
+
+    for (const row of rows) {
+      try {
+        const existingValue = decrypt(row[field]);
+        if (existingValue === plainValue) {
+          throw new Error(`${label} "${plainValue}" is already assigned to another employee`);
+        }
+      } catch (err) {
+        if (err.message.includes('already assigned')) throw err;
+        // If decryption fails (old plaintext data), compare directly
+        if (row[field] === plainValue) {
+          throw new Error(`${label} "${plainValue}" is already assigned to another employee`);
+        }
+      }
+    }
+  }
+}
+
+/* ---------- REAL-TIME UNIQUENESS CHECK ---------- */
+exports.checkFieldUniqueness = async (db, field, value, tenantId, excludeUserId = null) => {
+  const query = getQuery(db);
+
+  // Email check: simple query, no encryption
+  if (field === 'email') {
+    let sql = `SELECT id FROM users WHERE LOWER(email) = $1 AND is_deleted = false`;
+    const params = [value.toLowerCase()];
+    if (excludeUserId) {
+      sql += ` AND id != $2`;
+      params.push(excludeUserId);
+    }
+    const { rowCount } = await query(sql, params);
+    return { exists: rowCount > 0 };
+  }
+
+  // For encrypted employee fields
+  const allowed = UNIQUE_FIELDS.map(f => f.field);
+  if (!allowed.includes(field)) {
+    return { exists: false };
+  }
+
+  const label = UNIQUE_FIELDS.find(f => f.field === field)?.label || field;
+  const plainValue = String(value).trim();
+  if (!plainValue) return { exists: false };
+
+  let sql = `SELECT user_id, ${field} FROM employees WHERE tenant_id = $1 AND ${field} IS NOT NULL`;
+  const params = [tenantId];
+  if (excludeUserId) {
+    sql += ` AND user_id != $2`;
+    params.push(excludeUserId);
+  }
+
+  const { rows } = await query(sql, params);
+  for (const row of rows) {
+    try {
+      const existing = decrypt(row[field]);
+      if (existing === plainValue) return { exists: true, label };
+    } catch {
+      if (row[field] === plainValue) return { exists: true, label };
+    }
+  }
+  return { exists: false, label };
+};
+
+exports.createUser = async (db, data, actor, isSharedClient = false) => {
+  const client = isSharedClient ? db : await pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -54,7 +146,7 @@ exports.createUser = async (db, data, actor) => {
       [data.email]
     );
     if (duplicate.rowCount) {
-      throw new Error("Email Not Available");
+      throw new Error("This email already exists in our system. Please use a different email address.");
     }
     // Determine employee ID
     let generatedEmployeeId;
@@ -107,6 +199,20 @@ exports.createUser = async (db, data, actor) => {
       [actor.tenantId, data.email, hash, data.role, actor.id]
     );
 
+    // Check for duplicate sensitive fields (phone, aadhar, PAN, account, etc.)
+    await checkEncryptedDuplicates(client, actor.tenantId, data);
+
+    // Encrypt sensitive fields before DB insert
+    const encPhone = data.phone ? encrypt(data.phone) : null;
+    const encEmergencyPhone = data.emergency_phone ? encrypt(data.emergency_phone) : null;
+    const encAccountNumber = data.account_number ? encrypt(data.account_number) : null;
+    const encIfscCode = data.ifsc_code ? encrypt(data.ifsc_code) : null;
+    const encTaxId = data.tax_id ? encrypt(data.tax_id) : null;
+    const encUan = data.uan ? encrypt(data.uan) : null;
+    const encPfAccount = data.pf_account ? encrypt(data.pf_account) : null;
+    const encEsiNumber = data.esi_number ? encrypt(data.esi_number) : null;
+    const encAadharNumber = data.aadhar_number ? encrypt(data.aadhar_number) : null;
+
     const empRes = await client.query(
       `
       INSERT INTO employees
@@ -124,13 +230,13 @@ exports.createUser = async (db, data, actor) => {
         userRes.rows[0].id,       // $2
         data.first_name,          // $3
         data.last_name || null,   // $4
-        data.phone || null,       // $5
+        encPhone,                 // $5 (encrypted)
         data.date_of_birth || null, // $6
         data.gender || null,      // $7
         data.marital_status || null, // $8
         data.nationality || null, // $9
         data.emergency_name || null, // $10
-        data.emergency_phone || null, // $11
+        encEmergencyPhone,        // $11 (encrypted)
         data.emergency_relation || null, // $12
         generatedEmployeeId,      // $13
         data.department_id || null, // $14
@@ -142,15 +248,15 @@ exports.createUser = async (db, data, actor) => {
         data.shift_id || null,    // $20
         data.bank_name || null,   // $21
         data.account_name || null, // $22
-        data.account_number || null, // $23
-        data.ifsc_code || null,   // $24
-        data.tax_id || null,      // $25
+        encAccountNumber,         // $23 (encrypted)
+        encIfscCode,              // $24 (encrypted)
+        encTaxId,                 // $25 (encrypted)
         data.address || null,     // $26
-        data.uan || null,         // $27
-        data.pf_account || null,  // $28
-        data.esi_number || null,  // $29
+        encUan,                   // $27 (encrypted)
+        encPfAccount,             // $28 (encrypted)
+        encEsiNumber,             // $29 (encrypted)
         actor.id,                 // $30
-        data.aadhar_number || null, // $31
+        encAadharNumber,          // $31 (encrypted)
         data.ctc || 0,            // $32 (annual_salary)
         data.branch_name || null, // $33
         data.job_location || null, // $34
@@ -174,8 +280,8 @@ exports.createUser = async (db, data, actor) => {
             empRes.rows[0].id,
             data.ctc,
             data.bank_name || null,
-            data.account_number || null,
-            data.ifsc_code || null,
+            encAccountNumber,       // encrypted
+            encIfscCode,            // encrypted
             actor.id
           ]
         );
@@ -248,7 +354,7 @@ exports.createUser = async (db, data, actor) => {
 
     throw err;
   } finally {
-    client.release();
+    if (!isSharedClient) client.release();
   }
 };
 
@@ -437,7 +543,7 @@ exports.getUsers = async (db, opts, actor) => {
 };
 
 /* ------------------------- GET ONE USER ------------------------- */
-exports.getUserById = async (db, id, tenantId) => {
+exports.getUserById = async (db, id, tenantId, requester) => {
   const query = getQuery(db);
   const res = await query(
     `
@@ -474,152 +580,203 @@ exports.getUserById = async (db, id, tenantId) => {
     };
   }
 
+  // Decrypt and mask sensitive fields before returning
+  if (user) {
+    decryptAndMaskFields(user);
+
+    // Apply strict filtering based on the requester's role
+    if (requester) {
+      const isSelf = requester.id === id;
+      const isHRAdmin = ['ADMIN', 'HR'].includes(requester.role);
+      const isManager = requester.role === 'MANAGER';
+      const isDirectReport = user.reports_to === requester.id;
+
+      if (!isSelf && !isHRAdmin && !(isManager && isDirectReport)) {
+        // Hide sensitive fields completely from unauthorized eyes
+        delete user.ctc;
+        delete user.annual_salary;
+        delete user.account_number;
+        delete user.ifsc_code;
+        delete user.bank_name;
+        delete user.account_name;
+        delete user.tax_id;
+        delete user.aadhar_number;
+        delete user.uan;
+        delete user.pf_account;
+        delete user.esi_number;
+        delete user.emergency_phone;
+        delete user.emergency_name;
+        delete user.emergency_relation;
+      }
+    }
+  }
+
   return user || null;
 };
 
 /* ---------------------- EMPLOYEE PROFILE UPDATE ---------------------- */
 exports.updateEmployee = async (db, id, updates, actor) => {
-  const query = getQuery(db);
-  const tenantId = actor.tenantId;
+  const isTransactionClient = typeof db.release === 'function';
+  const client = isTransactionClient ? db : await pool.connect();
 
-  const allowed = [
-    // Personal
-    "first_name",
-    "last_name",
-    "phone",
-    "date_of_birth",
-    "gender",
-    "marital_status",
-    "nationality",
+  try {
+    if (!isTransactionClient) await client.query("BEGIN");
 
-    // Emergency
-    "emergency_name",
-    "emergency_phone",
-    "emergency_relation",
+    const query = (sql, params) => client.query(sql, params);
+    const tenantId = actor.tenantId;
 
-    // Professional
-    "employee_id",
-    "department_id",
-    "designation_id",
-    "reports_to",
-    "join_date",
-    "employment_type",
-    "shift",
-    "shift_id",
+    const allowed = [
+      // Personal
+      "first_name",
+      "last_name",
+      "phone",
+      "date_of_birth",
+      "gender",
+      "marital_status",
+      "nationality",
 
-    // Finance
-    "bank_name",
-    "account_name",
-    "account_number",
-    "ifsc_code",
-    "tax_id",
-    "uan",
-    "pf_account",
-    "esi_number",
+      // Emergency
+      "emergency_name",
+      "emergency_phone",
+      "emergency_relation",
 
-    "annual_salary",
-    "ctc", // support both aliases
+      // Professional
+      "employee_id",
+      "department_id",
+      "designation_id",
+      "reports_to",
+      "join_date",
+      "employment_type",
+      "shift",
+      "shift_id",
 
-    // Address
-    "address",
-    "profile_photo_url",
-    "aadhar_number",
-    "timezone"
-  ];
+      // Finance
+      "bank_name",
+      "account_name",
+      "account_number",
+      "ifsc_code",
+      "tax_id",
+      "uan",
+      "pf_account",
+      "esi_number",
 
-  const fields = [];
-  const params = [];
-  let i = 1;
+      "annual_salary",
+      "ctc", // support both aliases
 
-  for (const key of allowed) {
-    if (updates[key] !== undefined) {
-      const fieldName = key === 'ctc' ? 'annual_salary' : key;
-      fields.push(`${fieldName}=$${i}`);
-      params.push(updates[key]);
-      i++;
+      // Address
+      "address",
+      "profile_photo_url",
+      "aadhar_number",
+      "timezone"
+    ];
+
+    const fields = [];
+    const params = [];
+    let i = 1;
+
+    // Check for duplicate sensitive fields (exclude current user from check)
+    await checkEncryptedDuplicates(client, tenantId, updates, id);
+
+    // Encrypt sensitive fields before building update query
+    const sensitiveSet = new Set(SENSITIVE_FIELDS);
+
+    for (const key of allowed) {
+      if (updates[key] !== undefined) {
+        const fieldName = key === 'ctc' ? 'annual_salary' : key;
+        let value = updates[key];
+        // Encrypt if this is a sensitive field and has a value
+        if (sensitiveSet.has(key) && value !== null && value !== '') {
+          value = encrypt(value);
+        }
+        fields.push(`${fieldName}=$${i}`);
+        params.push(value);
+        i++;
+      }
     }
-  }
 
-  if (fields.length === 0) {
-    // Check if we just want to fetch the record (no updates provided)
-    const fetchRes = await query(`SELECT * FROM employees WHERE user_id=$1 AND tenant_id=$2`, [id, tenantId]);
-    return fetchRes.rows[0];
-  }
+    if (fields.length === 0) {
+      // Check if we just want to fetch the record (no updates provided)
+      const fetchRes = await query(`SELECT * FROM employees WHERE user_id=$1 AND tenant_id=$2`, [id, tenantId]);
+      return fetchRes.rows[0];
+    }
 
-  params.push(id);
-  params.push(tenantId);
+    params.push(id);
+    params.push(tenantId);
 
-  const sql = `
+    const sql = `
     UPDATE employees 
     SET ${fields.join(", ")}, updated_at=now()
     WHERE user_id=$${i} AND tenant_id=$${i + 1}
     RETURNING *
   `;
 
-  const result = await query(sql, params);
+    const result = await query(sql, params);
 
-  // Update salary details if CTC or bank info changed
-  try {
-    if (updates.ctc !== undefined || updates.bank_name || updates.account_number || updates.ifsc_code) {
-      const empId = result.rows[0].id;
-      const esdCheck = await query(
-        `SELECT id FROM employee_salary_details WHERE employee_id = $1 AND is_current = true`,
-        [empId]
-      );
-
-      if (esdCheck.rowCount > 0) {
-        // Update existing
-        const esdFields = [];
-        const esdParams = [];
-        let esdIdx = 1;
-
-        if (updates.ctc !== undefined) { esdFields.push(`ctc=$${esdIdx++}`); esdParams.push(updates.ctc); }
-        if (updates.bank_name !== undefined) { esdFields.push(`bank_name=$${esdIdx++}`); esdParams.push(updates.bank_name); }
-        if (updates.account_number !== undefined) { esdFields.push(`bank_account_number=$${esdIdx++}`); esdParams.push(updates.account_number); }
-        if (updates.ifsc_code !== undefined) { esdFields.push(`bank_ifsc=$${esdIdx++}`); esdParams.push(updates.ifsc_code); }
-
-        if (esdFields.length > 0) {
-          esdParams.push(empId);
-          await query(
-            `UPDATE employee_salary_details SET ${esdFields.join(", ")}, updated_at=now() WHERE employee_id=$${esdIdx} AND is_current=true`,
-            esdParams
-          );
-        }
-      } else {
-        // Create new
-        await query(
-          `INSERT INTO employee_salary_details (tenant_id, employee_id, ctc, bank_name, bank_account_number, bank_ifsc, is_current)
-           VALUES ($1, $2, $3, $4, $5, $6, true)`,
-          [tenantId, empId, updates.ctc || 0, updates.bank_name || null, updates.account_number || null, updates.ifsc_code || null]
+    // Update salary details if CTC or bank info changed
+    try {
+      if (updates.ctc !== undefined || updates.bank_name || updates.account_number || updates.ifsc_code) {
+        const empId = result.rows[0].id;
+        const esdCheck = await query(
+          `SELECT id FROM employee_salary_details WHERE employee_id = $1 AND is_current = true`,
+          [empId]
         );
-      }
 
-      // New Keka-style handling
-      if (updates.ctc !== undefined) {
-        try {
-          const salaryStructureService = require("../payroll/salary/salaryStructure.service");
-          const defaultStructure = await query(
-            `SELECT id FROM salary_structures WHERE tenant_id = $1 AND is_default = TRUE AND is_active = TRUE`,
-            [tenantId]
-          );
+        if (esdCheck.rowCount > 0) {
+          // Update existing
+          const esdFields = [];
+          const esdParams = [];
+          let esdIdx = 1;
 
-          if (defaultStructure.rowCount > 0) {
-            await salaryStructureService.assignEmployeeSalary(
-              tenantId,
-              empId,
-              {
-                structure_id: defaultStructure.rows[0].id,
-                annual_ctc: parseFloat(updates.ctc),
-                effective_from: updates.join_date || new Date().toISOString().split('T')[0],
-                revision_reason: 'Salary update from profile'
-              },
-              actor.id
+          if (updates.ctc !== undefined) { esdFields.push(`ctc=$${esdIdx++}`); esdParams.push(updates.ctc); }
+          if (updates.bank_name !== undefined) { esdFields.push(`bank_name=$${esdIdx++}`); esdParams.push(updates.bank_name); }
+          if (updates.account_number !== undefined) { esdFields.push(`bank_account_number=$${esdIdx++}`); esdParams.push(updates.account_number ? encrypt(updates.account_number) : null); }
+          if (updates.ifsc_code !== undefined) { esdFields.push(`bank_ifsc=$${esdIdx++}`); esdParams.push(updates.ifsc_code ? encrypt(updates.ifsc_code) : null); }
+
+          if (esdFields.length > 0) {
+            esdParams.push(empId);
+            await query(
+              `UPDATE employee_salary_details SET ${esdFields.join(", ")}, updated_at=now() WHERE employee_id=$${esdIdx} AND is_current=true`,
+              esdParams
             );
           }
-        } catch (assignError) {
-          logger.error("Failed to update salary assignment in updateEmployee:", assignError.message);
+        } else {
+          // Create new
+          await query(
+            `INSERT INTO employee_salary_details (tenant_id, employee_id, ctc, bank_name, bank_account_number, bank_ifsc, is_current)
+           VALUES ($1, $2, $3, $4, $5, $6, true)`,
+            [tenantId, empId, updates.ctc || 0, updates.bank_name || null, updates.account_number ? encrypt(updates.account_number) : null, updates.ifsc_code ? encrypt(updates.ifsc_code) : null]
+          );
+        }
+
+        // New Keka-style handling
+        if (updates.ctc !== undefined) {
+          try {
+            const salaryStructureService = require("../payroll/salary/salaryStructure.service");
+            const defaultStructure = await query(
+              `SELECT id FROM salary_structures WHERE tenant_id = $1 AND is_default = TRUE AND is_active = TRUE`,
+              [tenantId]
+            );
+
+            if (defaultStructure.rowCount > 0) {
+              await salaryStructureService.assignEmployeeSalary(
+                tenantId,
+                empId,
+                {
+                  structure_id: defaultStructure.rows[0].id,
+                  annual_ctc: parseFloat(updates.ctc),
+                  effective_from: updates.join_date || new Date().toISOString().split('T')[0],
+                  revision_reason: 'Salary update from profile'
+                },
+                actor.id
+              );
+            }
+          } catch (assignError) {
+            logger.error("Failed to update salary assignment in updateEmployee:", assignError.message);
+          }
         }
       }
+    } catch (salaryError) {
+      logger.error("Error updating salary details:", salaryError.message);
     }
 
     // Role Change Logic
@@ -630,9 +787,11 @@ exports.updateEmployee = async (db, id, updates, actor) => {
       );
     }
 
+    if (!isTransactionClient) await client.query("COMMIT");
     return result.rows[0];
 
   } catch (err) {
+    if (!isTransactionClient) await client.query("ROLLBACK");
     // Handle database unique constraint violations
     if (err.code === '23505') {
       if (err.constraint === 'employees_employee_id_key' || err.message.includes('employee_id')) {
@@ -647,6 +806,8 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     // Actually we want to rethrow critical errors, but salary detail errors were already caught in inner try/catch blocks
 
     throw err;
+  } finally {
+    if (!isTransactionClient) client.release();
   }
 };
 
@@ -725,6 +886,9 @@ exports.getMyProfile = async (db, user) => {
   if (res.rows.length === 0) {
     throw new Error('User not found');
   }
+
+  // Decrypt and mask sensitive fields before returning
+  decryptAndMaskFields(res.rows[0]);
 
   return res.rows[0];
 };
@@ -1158,62 +1322,123 @@ exports.bulkImportEmployees = async (db, fileBuffer, columnMapping, actor) => {
 
   const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
-  // 2. Iterate and Create
-  for (let idx = 0; idx < rawData.length; idx++) {
-    const row = rawData[idx];
-    const employeeData = {};
+  // Use a shared database client to prevent slamming the database connection pool (Issue 4)
+  const sharedClient = await pool.connect();
 
-    // Map columns to fields
-    Object.entries(columnMapping).forEach(([xlsxCol, hrmsField]) => {
-      // Clean up the value
-      let value = row[xlsxCol];
-      if (typeof value === 'string') value = value.trim();
+  try {
+    // 2. Iterate and Create
+    for (let idx = 0; idx < rawData.length; idx++) {
+      const row = rawData[idx];
+      const employeeData = {};
 
-      if (value !== undefined && hrmsField) {
-        employeeData[hrmsField] = value;
-      }
-    });
+      // Map columns to fields
+      Object.entries(columnMapping).forEach(([xlsxCol, hrmsField]) => {
+        let value = row[xlsxCol];
+        if (typeof value === 'string') value = value.trim();
 
-    // Mandatory default values if missing
-    if (!employeeData.role) employeeData.role = 'EMPLOYEE';
-    if (!employeeData.employment_type) employeeData.employment_type = 'FULL_TIME';
-
-    // Name-to-ID lookup for Department
-    if (employeeData.department_id && !isUuid(employeeData.department_id)) {
-      const originalValue = employeeData.department_id;
-      const name = originalValue.trim().toLowerCase();
-      if (deptMap[name]) {
-        employeeData.department_id = deptMap[name];
-      } else {
-        throw new Error(`Department "${originalValue}" not found. Please create it first.`);
-      }
-    }
-
-    // Name-to-ID lookup for Designation
-    if (employeeData.designation_id && !isUuid(employeeData.designation_id)) {
-      const originalValue = employeeData.designation_id;
-      const name = originalValue.trim().toLowerCase();
-      if (desigMap[name]) {
-        employeeData.designation_id = desigMap[name];
-      } else {
-        throw new Error(`Designation "${originalValue}" not found. Please create it first.`);
-      }
-    }
-
-    try {
-      // Reuse the robust createUser logic
-      await exports.createUser(db, employeeData, actor);
-      results.success++;
-    } catch (err) {
-      results.failed++;
-      results.errors.push({
-        row: idx + 2, // Excel rows start at 1, header is 1
-        email: employeeData.email || 'N/A',
-        name: employeeData.first_name || 'Unknown',
-        error: err.message
+        if (value !== undefined && hrmsField) {
+          employeeData[hrmsField] = value;
+        }
       });
+
+      // Mandatory default values if missing
+      if (!employeeData.role) employeeData.role = 'EMPLOYEE';
+      if (!employeeData.employment_type) employeeData.employment_type = 'FULL_TIME';
+
+      try {
+        // Name-to-ID lookup for Department (Issue 5: Catch lookup errors)
+        if (employeeData.department_id && !isUuid(employeeData.department_id)) {
+          const originalValue = employeeData.department_id;
+          const name = originalValue.trim().toLowerCase();
+          if (deptMap[name]) {
+            employeeData.department_id = deptMap[name];
+          } else {
+            throw new Error(`Department "${originalValue}" not found. Please create it first.`);
+          }
+        }
+
+        // Name-to-ID lookup for Designation (Issue 5: Catch lookup errors)
+        if (employeeData.designation_id && !isUuid(employeeData.designation_id)) {
+          const originalValue = employeeData.designation_id;
+          const name = originalValue.trim().toLowerCase();
+          if (desigMap[name]) {
+            employeeData.designation_id = desigMap[name];
+          } else {
+            throw new Error(`Designation "${originalValue}" not found. Please create it first.`);
+          }
+        }
+
+        // Reuse the robust createUser logic using sharedClient
+        await exports.createUser(sharedClient, employeeData, actor, true);
+        results.success++;
+      } catch (err) {
+        results.failed++;
+        results.errors.push({
+          row: idx + 2, // Excel rows start at 1, header is 1
+          email: employeeData.email || 'N/A',
+          name: employeeData.first_name || 'Unknown',
+          error: err.message
+        });
+      }
     }
+  } finally {
+    sharedClient.release();
   }
 
   return results;
+};
+
+/* ------------------- REVEAL SENSITIVE FIELD (Audit-Logged) ------------------- */
+exports.revealSensitiveField = async (db, targetUserId, fieldName, actor) => {
+  const query = getQuery(db);
+
+  // Validate field name
+  if (!FIELD_CONFIG[fieldName]) {
+    throw new Error(`Invalid field: ${fieldName}. Allowed fields: ${Object.keys(FIELD_CONFIG).join(', ')}`);
+  }
+
+  // Check if actor is viewing their own data
+  const isSelf = actor.id === targetUserId;
+
+  // Check if target is a direct report (for manager tier-3 access)
+  let isDirectReport = false;
+  if (actor.role === 'MANAGER' && actor.employeeId) {
+    const reportCheck = await query(
+      `SELECT 1 FROM employees WHERE user_id = $1 AND reports_to = $2 AND tenant_id = $3`,
+      [targetUserId, actor.employeeId, actor.tenantId]
+    );
+    isDirectReport = reportCheck.rowCount > 0;
+  }
+
+  // Enforce tier-based access
+  if (!canRevealField(actor.role, fieldName, isSelf, isDirectReport)) {
+    throw new Error('You do not have permission to view this sensitive information');
+  }
+
+  // Determine which table and column to query
+  let sql, params;
+  if (['account_number', 'ifsc_code'].includes(fieldName)) {
+    // These might come from employee_salary_details (preferred) or employees table
+    const colMap = { account_number: 'bank_account_number', ifsc_code: 'bank_ifsc' };
+    sql = `
+      SELECT COALESCE(esd.${colMap[fieldName]}, e.${fieldName}) as value
+      FROM employees e
+      LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
+      WHERE e.user_id = $1 AND e.tenant_id = $2
+    `;
+    params = [targetUserId, actor.tenantId];
+  } else {
+    sql = `SELECT ${fieldName} as value FROM employees WHERE user_id = $1 AND tenant_id = $2`;
+    params = [targetUserId, actor.tenantId];
+  }
+
+  const res = await query(sql, params);
+  if (res.rowCount === 0) {
+    throw new Error('Employee not found');
+  }
+
+  const encryptedValue = res.rows[0].value;
+  const decryptedValue = decrypt(encryptedValue);
+
+  return { field: fieldName, value: decryptedValue };
 };

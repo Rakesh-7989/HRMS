@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/Button';
 import {
     Users, UserCheck, UserMinus, AlertCircle,
     PlayCircle, Clock,
-    DollarSign, Shield, ArrowRight, BarChart3,
+    IndianRupee, Shield, ArrowRight, BarChart3,
     FileText, AlertTriangle, CheckCircle2, Building2,
-    Calendar, Wallet, Receipt, Activity
+    Calendar, Wallet, Activity
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
@@ -185,8 +185,8 @@ export const PayrollDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
                         { label: 'Total Cost to Company', value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-indigo-600', sub: `${stats?.costSummary.processedCount || 0} employees` },
-                        { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: DollarSign, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: 'Bank transfer amount' },
-                        { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: Receipt, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: 'PF + ESI + PT + TDS' },
+                        { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: 'Bank transfer amount' },
+                        { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: 'PF + ESI + PT + TDS' },
                         { label: 'Tax Deducted (TDS)', value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', accent: 'text-pink-600', sub: 'Income tax withheld' }
                     ].map((card, idx) => (
                         <motion.div

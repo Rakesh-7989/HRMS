@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/Label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { payrollService, CTCBreakdown } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Calculator, Check, AlertCircle, History, Save, DollarSign, Calendar, FileText, TrendingUp, Info } from 'lucide-react';
+import { Loader2, Calculator, Check, AlertCircle, History, Save, IndianRupee, Calendar, FileText, TrendingUp, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -100,7 +100,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                 <div className="p-8 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                            <DollarSign size={24} className="stroke-[2.5px]" />
+                            <IndianRupee size={24} className="stroke-[2.5px]" />
                         </div>
                         <div>
                             <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white uppercase">Salary Assignment</h3>
@@ -145,7 +145,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                         className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
                                     />
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors">
-                                        <DollarSign size={16} />
+                                        <IndianRupee size={16} />
                                     </div>
                                 </div>
                             </div>

@@ -6,7 +6,8 @@ import { dashboardService } from '@/services/dashboard.service';
 import { eventsService } from '@/services/events.service';
 import {
   Users, Building2, Briefcase, TrendingUp, TrendingDown,
-  Calendar, Clock, Activity, Sparkles, Award, UserCheck, UserX
+  Calendar, Clock, Activity, Sparkles, Award, UserCheck, UserX,
+  Cake, Gift, UserPlus
 } from 'lucide-react';
 import { getGreeting, formatInTimezone } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -312,7 +313,7 @@ export const AdminDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
-                Welcome back, {user?.first_name}! 👋
+                Welcome back, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
                 Here's what's happening in your organization today
@@ -531,7 +532,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-pink-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-pink-500 flex items-center justify-center shadow-lg shadow-pink-500/20 border border-white/10">
-                <span className="text-xl">🎂</span>
+                <Cake className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Birthdays</h3>
@@ -562,7 +563,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-white/10">
-                <span className="text-xl">🎉</span>
+                <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Anniversaries</h3>
@@ -593,7 +594,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-white/10">
-                <span className="text-xl">👋</span>
+                <UserPlus className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">New Joiners</h3>

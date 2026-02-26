@@ -3,6 +3,22 @@ const logAudit = require('../../utils/auditLogger');
 const fs = require('fs');
 const path = require('path');
 
+/* REAL-TIME UNIQUENESS CHECK */
+exports.checkFieldUniqueness = async (req, res) => {
+  try {
+    const { field, value, excludeUserId } = req.query;
+    if (!field || !value) {
+      return res.status(400).json({ status: "error", message: "field and value are required" });
+    }
+    const result = await userService.checkFieldUniqueness(
+      req.db, field, value, req.user.tenantId, excludeUserId || null
+    );
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
 exports.createUser = async (req, res) => {
   try {
     const result = await userService.createUser(req.db, req.body, req.user);
@@ -48,7 +64,7 @@ exports.getUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
-    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId);
+    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId, req.user);
     if (!user) return res.status(404).json({ status: "error", message: "User not found" });
 
     res.json({ status: "success", user });
@@ -383,3 +399,57 @@ exports.bulkImportEmployees = async (req, res) => {
   }
 };
 
+// REVEAL SENSITIVE FIELD (for viewing another user's data — audit-logged)
+exports.revealSensitiveField = async (req, res) => {
+  try {
+    const { field } = req.query;
+    if (!field) {
+      return res.status(400).json({ status: "error", message: "Query param 'field' is required" });
+    }
+
+    const result = await userService.revealSensitiveField(req.db, req.params.id, field, req.user);
+
+    // Audit log the sensitive data access
+    try {
+      await logAudit(req, 'employees', req.params.id, 'SENSITIVE_DATA_VIEW', null, {
+        field,
+        viewer_role: req.user.role,
+        viewer_id: req.user.id
+      });
+    } catch (e) {
+      console.error('Audit failed for sensitive reveal', e);
+    }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    const statusCode = err.message.includes('permission') ? 403 : 400;
+    res.status(statusCode).json({ status: "error", message: err.message });
+  }
+};
+
+// REVEAL OWN SENSITIVE FIELD (self-service — audit-logged)
+exports.revealOwnSensitiveField = async (req, res) => {
+  try {
+    const { field } = req.query;
+    if (!field) {
+      return res.status(400).json({ status: "error", message: "Query param 'field' is required" });
+    }
+
+    const result = await userService.revealSensitiveField(req.db, req.user.id, field, req.user);
+
+    // Audit log
+    try {
+      await logAudit(req, 'employees', req.user.id, 'SENSITIVE_DATA_VIEW', null, {
+        field,
+        viewer_role: req.user.role,
+        self_view: true
+      });
+    } catch (e) {
+      console.error('Audit failed for sensitive reveal', e);
+    }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};

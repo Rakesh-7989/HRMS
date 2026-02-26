@@ -11,6 +11,7 @@ import {
   Users, AlertCircle, UserCheck, Timer, Sparkles, ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatInTimezone, getGreeting } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   BarChart, Bar, PieChart, Pie, Cell, Sector,
@@ -328,11 +329,11 @@ export const HRDashboard: React.FC = () => {
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
-                  Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}
+                  {getGreeting(user?.timezone)}
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}! 👋
+                Welcome back, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
                 Here's what's happening with your people today
@@ -347,12 +348,12 @@ export const HRDashboard: React.FC = () => {
                 className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
               >
                 <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
-                  <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{format(new Date(), 'dd')}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{format(new Date(), 'MMM')}</p>
+                  <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{format(new Date(), 'eee')}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Today</p>
+                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
             </div>

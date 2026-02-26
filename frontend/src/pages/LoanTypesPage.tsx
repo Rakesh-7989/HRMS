@@ -131,7 +131,7 @@ export const LoanTypesPage: React.FC = () => {
                   <TableCell>{lt.name}</TableCell>
                   <TableCell>{lt.interest_rate ?? lt.interestRate ?? '—'}</TableCell>
                   <TableCell>{(lt.interest_type || lt.interestType || '—').toString()}</TableCell>
-                  <TableCell>{lt.max_amount ?? lt.maxAmount ?? '—'}</TableCell>
+                  <TableCell>{(lt.max_amount ?? lt.maxAmount) ? `₹${Number(lt.max_amount ?? lt.maxAmount).toLocaleString('en-IN')}` : '—'}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(lt)}>
                       <Edit size={16} />

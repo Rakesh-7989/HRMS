@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -32,6 +32,7 @@ import { showToast } from '@/utils/toast';
 import { FormError } from '@/components/ui/FormError';
 import { Dialog, DialogFooter } from '@/components/ui/Dialog';
 import { useTimezones } from '@/utils/timezone';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 
 const profileValidationSchema = Yup.object({
@@ -72,6 +73,37 @@ export const ProfilePage: React.FC = () => {
   const { alert: showAlert } = useConfirm();
   const { timezones } = useTimezones();
   const [isEditing, setIsEditing] = useState(false);
+
+  // Sensitive field reveal state
+  const [revealedFields, setRevealedFields] = useState<Record<string, string>>({});
+  const [revealingField, setRevealingField] = useState<string | null>(null);
+
+  const handleRevealField = useCallback(async (fieldName: string) => {
+    if (revealedFields[fieldName]) {
+      setRevealedFields(prev => {
+        const next = { ...prev };
+        delete next[fieldName];
+        return next;
+      });
+      return;
+    }
+    try {
+      setRevealingField(fieldName);
+      const result = await usersService.revealOwnSensitiveField(fieldName);
+      setRevealedFields(prev => ({ ...prev, [fieldName]: result.value }));
+      setTimeout(() => {
+        setRevealedFields(prev => {
+          const next = { ...prev };
+          delete next[fieldName];
+          return next;
+        });
+      }, 10000);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reveal field');
+    } finally {
+      setRevealingField(null);
+    }
+  }, [revealedFields]);
 
   // Fetch Profile
   const { data: profile, isLoading } = useQuery({
@@ -461,14 +493,23 @@ export const ProfilePage: React.FC = () => {
                 <div className="md:col-span-2">
                   <FormField label={t('profile.address')} id="address" formik={formik} isEditing={isEditing} type="textarea" />
                 </div>
-                <FormField
-                  label="Preferred Timezone"
-                  id="timezone"
-                  formik={formik}
-                  isEditing={isEditing}
-                  type="select"
-                  options={timezones.map(tz => ({ label: tz.label, value: tz.value }))}
-                />
+                {isEditing ? (
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Preferred Timezone</label>
+                    <SearchableSelect
+                      name="timezone"
+                      value={formik.values.timezone}
+                      onChange={(val) => formik.setFieldValue('timezone', val)}
+                      placeholder="Search Timezone..."
+                      options={timezones.map(tz => ({ label: tz.label, value: tz.value }))}
+                    />
+                  </div>
+                ) : (
+                  <DisplayField
+                    label="Preferred Timezone"
+                    value={timezones.find(tz => tz.value === formik.values.timezone)?.label || formik.values.timezone || undefined}
+                  />
+                )}
               </div>
 
               <h4 className="text-lg font-medium mt-8 mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-200">
@@ -534,10 +575,10 @@ export const ProfilePage: React.FC = () => {
                 <FormField label={t('profile.bankName')} id="bank_name" formik={formik} isEditing={isEditing} />
                 <FormField label={t('profile.accountHolderName')} id="account_name" formik={formik} isEditing={isEditing} />
 
-                <FormField label={t('profile.accountNumber')} id="account_number" formik={formik} isEditing={isEditing} />
-                <FormField label={t('profile.ifscCode')} id="ifsc_code" formik={formik} isEditing={isEditing} />
+                <SensitiveFormField label={t('profile.accountNumber')} id="account_number" formik={formik} isEditing={isEditing} fieldName="account_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} />
+                <SensitiveFormField label={t('profile.ifscCode')} id="ifsc_code" formik={formik} isEditing={isEditing} fieldName="ifsc_code" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} />
 
-                <FormField label={t('profile.taxId')} id="tax_id" formik={formik} isEditing={isEditing} />
+                <SensitiveFormField label={t('profile.taxId')} id="tax_id" formik={formik} isEditing={isEditing} fieldName="tax_id" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} />
               </div>
             </Card>
           </TabsContent>
@@ -699,6 +740,51 @@ const DisplayField = ({ label, value }: { label: string, value: string | undefin
     </p>
   </div>
 );
+
+// Sensitive form field with eye-icon reveal in display mode, regular input in edit mode
+const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedFields, revealingField, onReveal }: any) => {
+  if (isEditing) {
+    return <FormField label={label} id={id} formik={formik} isEditing={isEditing} />;
+  }
+
+  const maskedValue = formik.values[id];
+  const isRevealed = !!revealedFields[fieldName];
+  const isLoading = revealingField === fieldName;
+  const displayValue = isRevealed ? revealedFields[fieldName] : maskedValue;
+  const hasValue = !!maskedValue && maskedValue !== 'Not set';
+
+  return (
+    <div className="space-y-1">
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+      <div className="flex items-center gap-2">
+        <p className={`text-base font-medium font-mono ${isRevealed ? 'text-primary' : 'text-gray-900 dark:text-white'
+          }`}>
+          {displayValue || <span className="text-gray-400 italic">Not set</span>}
+        </p>
+        {hasValue && (
+          <button
+            onClick={() => onReveal(fieldName)}
+            disabled={isLoading}
+            className={`p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${isRevealed ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            title={isRevealed ? 'Hide' : 'Show full value (audit-logged)'}
+          >
+            {isLoading ? (
+              <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-gray-300 border-t-primary rounded-full" />
+            ) : isRevealed ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+            )}
+          </button>
+        )}
+      </div>
+      {isRevealed && (
+        <p className="text-[10px] text-amber-500">Auto-hides in 10s</p>
+      )}
+    </div>
+  );
+};
 
 const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
   const { user } = useAuth();

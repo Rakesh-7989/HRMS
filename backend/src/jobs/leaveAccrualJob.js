@@ -2,8 +2,12 @@ const cron = require('node-cron');
 const pool = require("../config/db");
 const logger = require("../config/logger");
 const leavePolicyService = require("../modules/leave/policies/leavePolicy.service");
+<<<<<<< Updated upstream
 const timeService = require("../utils/timeService"); // Issue 30
 
+=======
+const asyncContext = require("../utils/asyncContext");
+>>>>>>> Stashed changes
 
 /**
  * Leave Accrual Job
@@ -18,10 +22,10 @@ const leaveAccrualJob = cron.schedule(
         logger.info("Starting monthly leave accrual job...");
 
         try {
-            // Get all active tenants
-            const tenants = await pool.query(
-                `SELECT id, name FROM tenants WHERE is_active = true`
-            );
+            // Get all active tenants (with SUPER_ADMIN context to bypass RLS)
+            const tenants = await asyncContext.run(new Map([['role', 'SUPER_ADMIN']]), async () => {
+                return await pool.query(`SELECT id, name FROM tenants WHERE is_active = true`);
+            });
 
             let totalAccruals = 0;
 
@@ -40,7 +44,13 @@ const leaveAccrualJob = cron.schedule(
                         continue;
                     }
 
-                    const result = await leavePolicyService.runMonthlyAccrual(null, tenant.id);
+                    // Run with tenant-specific RLS context
+                    const result = await asyncContext.run(
+                        new Map([['tenantId', tenant.id], ['role', 'ADMIN']]),
+                        async () => {
+                            return await leavePolicyService.runMonthlyAccrual(null, tenant.id);
+                        }
+                    );
                     totalAccruals += result.accruals_processed;
                     logger.info(`Tenant ${tenant.name}: ${result.accruals_processed} accruals processed`);
                 } catch (err) {

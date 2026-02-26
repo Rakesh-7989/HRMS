@@ -21,6 +21,14 @@ const {
 
 const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
 
+// REAL-TIME UNIQUENESS CHECK (for inline form validation)
+router.get(
+  "/check-unique",
+  verifyJwt,
+  requireRole(["ADMIN", "HR"]),
+  controller.checkFieldUniqueness
+);
+
 // CREATE EMPLOYEE (Admin + HR)
 router.post(
   "/",
@@ -53,6 +61,14 @@ router.get(
 // Organization Tree
 router.get("/tree", verifyJwt, controller.getOrgTree);
 
+// REVEAL SENSITIVE FIELD (audit-logged)
+router.get(
+  "/:id/reveal",
+  verifyJwt,
+  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  controller.revealSensitiveField
+);
+
 // GET USER BY ID
 router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]), controller.getUserById);
 
@@ -60,6 +76,7 @@ router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]
 router.put(
   "/:id",
   verifyJwt,
+  requireRole(["ADMIN", "HR"]),
   validate(updateUserSchema),
   controller.updateUser
 );
@@ -68,6 +85,7 @@ router.put(
 router.put(
   "/:id/employee",
   verifyJwt,
+  requireRole(["ADMIN", "HR"]),
   validate(updateEmployeeSchema),
   controller.updateEmployee
 );
@@ -93,6 +111,7 @@ router.put(
 router.put(
   "/:id/department",
   verifyJwt,
+  requireRole(["ADMIN", "HR"]),
   validate(assignDeptSchema),
   controller.assignDepartment
 );
@@ -101,6 +120,7 @@ router.put(
 router.put(
   "/:id/designation",
   verifyJwt,
+  requireRole(["ADMIN", "HR"]),
   validate(assignDesignationSchema),
   controller.assignDesignation
 );
@@ -133,6 +153,7 @@ router.delete(
 router.put(
   "/:id/status",
   verifyJwt,
+  requireRole(["ADMIN", "HR"]),
   validate(statusSchema),
   controller.updateUserStatus
 );
@@ -144,6 +165,7 @@ module.exports.selfService = express.Router();
 // Self-service routes (no role restrictions)
 const selfRouter = module.exports.selfService;
 selfRouter.get("/me/profile", verifyJwt, controller.getMyProfile);
+selfRouter.get("/me/reveal", verifyJwt, controller.revealOwnSensitiveField);
 selfRouter.put(
   "/me/profile",
   verifyJwt,

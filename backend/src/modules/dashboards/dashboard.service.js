@@ -605,17 +605,31 @@ exports.getHRDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   // Get attendance overview
   const attendanceOverview = await query(
     `
+    WITH stats AS (
+      SELECT
+        COUNT(*)::INTEGER AS total_checkins,
+        COUNT(DISTINCT employee_id)::INTEGER AS unique_employees,
+        COUNT(CASE WHEN is_late THEN 1 END)::INTEGER AS late_count
+      FROM attendance
+      WHERE tenant_id = $1 AND date = $2::date
+    ),
+    totals AS (
+      SELECT COUNT(*)::INTEGER AS total_employees
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.tenant_id = $1 AND u.is_deleted = false AND u.is_active = true
+    )
     SELECT
       $2::date AS date,
-    s.total_checkins,
-    s.unique_employees,
-    s.late_count,
-    CASE
+      s.total_checkins,
+      s.unique_employees,
+      s.late_count,
+      CASE
         WHEN s.total_checkins = 0 THEN 0
         ELSE ROUND(100.0 * s.late_count / s.total_checkins, 2)
       END AS late_percentage,
-    t.total_employees,
-    GREATEST(0, t.total_employees - s.unique_employees) AS not_clocked_in
+      t.total_employees,
+      GREATEST(0, t.total_employees - s.unique_employees) AS not_clocked_in
     FROM stats s, totals t
     `,
     [tenantId, today]

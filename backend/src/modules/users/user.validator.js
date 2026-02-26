@@ -7,7 +7,7 @@ const stringOrNull = z.string().optional().or(z.literal("").transform(() => null
 /* CREATE USER */
 exports.createUserSchema = z.object({
   body: z.object({
-    email: z.string().email(),
+    email: z.string().email("Please provide a valid email address"),
     role: z.enum(["HR", "MANAGER", "EMPLOYEE", "ADMIN"]),
     // Personal
     first_name: z.string().min(1),

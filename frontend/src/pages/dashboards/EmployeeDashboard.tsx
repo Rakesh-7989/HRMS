@@ -245,23 +245,32 @@ export const EmployeeDashboard: React.FC = () => {
   const getWorkingTime = () => {
     if (!todayStatus.check_in_time) return null;
 
-    let checkIn: Date;
     const checkInUtc = (todayStatus as any).check_in_time_utc;
-    if (checkInUtc) {
-      checkIn = new Date(checkInUtc);
-    } else {
-      checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
-    }
-
-    let checkOut: Date;
     const checkOutUtc = (todayStatus as any).check_out_time_utc;
-    if (checkOutUtc) {
-      checkOut = new Date(checkOutUtc);
-    } else if (todayStatus.check_out_time) {
-      checkOut = new Date(`2000-01-01T${todayStatus.check_out_time}`);
+    const useUtc = !!checkInUtc;
+
+    let checkIn: Date;
+    let checkOut: Date;
+
+    if (useUtc) {
+      // UTC timestamps — use real Date objects throughout
+      checkIn = new Date(checkInUtc);
+      if (checkOutUtc) {
+        checkOut = new Date(checkOutUtc);
+      } else if (todayStatus.check_out_time) {
+        checkOut = new Date(checkOutUtc || todayStatus.check_out_time);
+      } else {
+        checkOut = new Date(); // current real time
+      }
     } else {
-      const nowStr = getCurrentTime(user?.timezone);
-      checkOut = new Date(`2000-01-01T${nowStr}`);
+      // Time-only strings (HH:mm) — use a fixed date for comparison
+      checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
+      if (todayStatus.check_out_time) {
+        checkOut = new Date(`2000-01-01T${todayStatus.check_out_time}`);
+      } else {
+        const nowStr = getCurrentTime(user?.timezone);
+        checkOut = new Date(`2000-01-01T${nowStr}`);
+      }
     }
 
     let diffMins = differenceInMinutes(checkOut, checkIn);
@@ -358,7 +367,7 @@ export const EmployeeDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {profile?.first_name || user?.first_name}! 👋
+                Welcome back, {profile?.first_name || user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-indigo-500" />
@@ -375,11 +384,11 @@ export const EmployeeDashboard: React.FC = () => {
               >
                 <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
                   <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'short' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Today</p>
+                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
             </div>

@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const pool = require('../config/db');
 const logger = require('../config/logger');
 const moment = require('moment');
+const asyncContext = require('../utils/asyncContext');
 
 /**
  * Auto-checkout job (PENDING CHECKOUT WORKFLOW)
@@ -22,38 +23,52 @@ const attendanceAutoCheckout = cron.schedule(
 
             const today = moment().format('YYYY-MM-DD');
 
-            // Find attendance records with check-in but no check-out
-            // Mark them as PENDING_CHECKOUT for review instead of auto-closing
-            const result = await pool.query(
-                `UPDATE attendance
-                 SET status = 'PENDING_CHECKOUT',
-                     check_out_time = '23:59:00',
-                     notes = COALESCE(notes, '') || ' Auto-checkout pending confirmation',
-                     updated_at = NOW()
-                 WHERE date = $1
-                   AND check_in_time IS NOT NULL
-                   AND check_out_time IS NULL
-                 RETURNING id, employee_id, check_in_time`,
-                [today]
-            );
+            // Get all active tenants to process per-tenant (ensures RLS isolation)
+            const tenantsResult = await asyncContext.run(new Map([['role', 'SUPER_ADMIN']]), async () => {
+                return await pool.query('SELECT id, name FROM tenants WHERE is_active = true');
+            });
 
-            if (result.rowCount > 0) {
-                logger.info(`Marked ${result.rowCount} employees for checkout confirmation on ${today}`);
+            let totalMarked = 0;
 
-                // Log each pending checkout
-                result.rows.forEach(row => {
-                    logger.debug(`Pending checkout: Employee ${row.employee_id}, Check-in: ${row.check_in_time}`);
-                });
-            } else {
-                logger.info(`No employees to mark pending for ${today}`);
+            for (const tenant of tenantsResult.rows) {
+                try {
+                    // Run with tenant-specific RLS context
+                    const result = await asyncContext.run(
+                        new Map([['tenantId', tenant.id], ['role', 'ADMIN']]),
+                        async () => {
+                            return await pool.query(
+                                `UPDATE attendance
+                                 SET status = 'PENDING_CHECKOUT',
+                                     check_out_time = '23:59:00',
+                                     notes = COALESCE(notes, '') || ' Auto-checkout pending confirmation',
+                                     updated_at = NOW()
+                                 WHERE date = $1
+                                   AND tenant_id = $2
+                                   AND check_in_time IS NOT NULL
+                                   AND check_out_time IS NULL
+                                 RETURNING id, employee_id, check_in_time`,
+                                [today, tenant.id]
+                            );
+                        }
+                    );
+
+                    if (result.rowCount > 0) {
+                        totalMarked += result.rowCount;
+                        logger.info(`Tenant ${tenant.name}: Marked ${result.rowCount} employees for checkout confirmation`);
+                    }
+                } catch (tenantError) {
+                    logger.error(`Error processing auto-checkout for tenant ${tenant.name}:`, tenantError);
+                }
             }
+
+            logger.info(`Auto-checkout job completed. Total marked: ${totalMarked} on ${today}`);
 
         } catch (error) {
             logger.error('Error in attendance auto-checkout job:', error);
         }
     },
     {
-        scheduled: false, 
+        scheduled: false,
         timezone: process.env.TZ || 'Asia/Kolkata'
     }
 );

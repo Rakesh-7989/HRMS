@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -30,6 +30,9 @@ import {
     FileText,
     Clock,
     Users,
+    Eye,
+    EyeOff,
+    Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -52,6 +55,39 @@ export const EmployeeDetailsPage: React.FC = () => {
     });
 
     const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
+
+    // Sensitive field reveal state
+    const [revealedFields, setRevealedFields] = useState<Record<string, string>>({});
+    const [revealingField, setRevealingField] = useState<string | null>(null);
+
+    const handleRevealField = useCallback(async (fieldName: string) => {
+        if (revealedFields[fieldName]) {
+            // Toggle off
+            setRevealedFields(prev => {
+                const next = { ...prev };
+                delete next[fieldName];
+                return next;
+            });
+            return;
+        }
+        try {
+            setRevealingField(fieldName);
+            const result = await usersService.revealSensitiveField(id!, fieldName);
+            setRevealedFields(prev => ({ ...prev, [fieldName]: result.value }));
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                setRevealedFields(prev => {
+                    const next = { ...prev };
+                    delete next[fieldName];
+                    return next;
+                });
+            }, 10000);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to reveal field');
+        } finally {
+            setRevealingField(null);
+        }
+    }, [id, revealedFields]);
 
     // Queries
     const { data: employee, isLoading, error } = useQuery({
@@ -339,7 +375,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                                 <InfoRow icon={Mail} label="Email" value={employee.email} />
-                                <InfoRow icon={Phone} label="Phone" value={employee.phone || 'Not provided'} />
+                                <SensitiveInfoRow
+                                    icon={Phone}
+                                    label="Phone"
+                                    maskedValue={employee.phone || 'Not provided'}
+                                    fieldName="phone"
+                                    revealedFields={revealedFields}
+                                    revealingField={revealingField}
+                                    onReveal={handleRevealField}
+                                    hasValue={!!employee.phone}
+                                />
                                 <InfoRow icon={MapPin} label="Address" value={employee.address || 'Not provided'} />
                             </div>
                         </Card>
@@ -362,7 +407,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                             </h3>
                             <div className="grid md:grid-cols-3 gap-4">
                                 <InfoRow icon={UserIcon} label="Name" value={employee.emergency_name || 'Not provided'} />
-                                <InfoRow icon={Phone} label="Phone" value={employee.emergency_phone || 'Not provided'} />
+                                <SensitiveInfoRow
+                                    icon={Phone}
+                                    label="Phone"
+                                    maskedValue={employee.emergency_phone || 'Not provided'}
+                                    fieldName="emergency_phone"
+                                    revealedFields={revealedFields}
+                                    revealingField={revealingField}
+                                    onReveal={handleRevealField}
+                                    hasValue={!!employee.emergency_phone}
+                                />
                                 <InfoRow icon={Users} label="Relationship" value={employee.emergency_relation || 'Not provided'} />
                             </div>
                         </Card>
@@ -431,8 +485,8 @@ export const EmployeeDetailsPage: React.FC = () => {
                                     <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
                                     <InfoRow icon={Building2} label="Branch Name" value={employee.branch_name || 'Not provided'} />
                                     <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
-                                    <InfoRow icon={Wallet} label="Account Number" value={employee.account_number ? `****${employee.account_number.slice(-4)}` : 'Not provided'} />
-                                    <InfoRow icon={Wallet} label="IFSC Code" value={employee.ifsc_code || 'Not provided'} />
+                                    <SensitiveInfoRow icon={Wallet} label="Account Number" maskedValue={employee.account_number || 'Not provided'} fieldName="account_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.account_number} />
+                                    <SensitiveInfoRow icon={Wallet} label="IFSC Code" maskedValue={employee.ifsc_code || 'Not provided'} fieldName="ifsc_code" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.ifsc_code} />
                                 </div>
                             </Card>
                             <Card>
@@ -440,16 +494,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                                     Payroll & Tax Information
                                 </h3>
                                 <div className="space-y-4">
-                                    <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
-                                    <InfoRow icon={FileText} label="Aadhaar Number" value={employee.aadhar_number || 'Not provided'} />
+                                    <SensitiveInfoRow icon={FileText} label="Tax ID (PAN)" maskedValue={employee.tax_id || 'Not provided'} fieldName="tax_id" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.tax_id} />
+                                    <SensitiveInfoRow icon={FileText} label="Aadhaar Number" maskedValue={employee.aadhar_number || 'Not provided'} fieldName="aadhar_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.aadhar_number} />
                                     <InfoRow icon={Wallet} label="Annual Salary (CTC)" value={
                                         employee.annual_salary
                                             ? `₹${Number(employee.annual_salary).toLocaleString('en-IN')}`
                                             : (employee.ctc ? `₹${Number(employee.ctc).toLocaleString('en-IN')}` : 'Not provided')
                                     } />
-                                    <InfoRow icon={FileText} label="UAN" value={employee.uan || 'Not provided'} />
-                                    <InfoRow icon={Wallet} label="PF A/C Number" value={employee.pf_account || 'Not provided'} />
-                                    <InfoRow icon={FileText} label="ESI Number" value={employee.esi_number || 'Not provided'} />
+                                    <SensitiveInfoRow icon={FileText} label="UAN" maskedValue={employee.uan || 'Not provided'} fieldName="uan" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.uan} />
+                                    <SensitiveInfoRow icon={Wallet} label="PF A/C Number" maskedValue={employee.pf_account || 'Not provided'} fieldName="pf_account" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.pf_account} />
+                                    <SensitiveInfoRow icon={FileText} label="ESI Number" maskedValue={employee.esi_number || 'Not provided'} fieldName="esi_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.esi_number} />
                                 </div>
                             </Card>
                         </div>
@@ -554,5 +608,60 @@ const InfoRow: React.FC<{
         </div>
     </div>
 );
+
+// Sensitive info row with eye-icon reveal toggle
+const SensitiveInfoRow: React.FC<{
+    icon: React.ElementType;
+    label: string;
+    maskedValue: string;
+    fieldName: string;
+    revealedFields: Record<string, string>;
+    revealingField: string | null;
+    onReveal: (field: string) => void;
+    hasValue: boolean;
+}> = ({ icon: Icon, label, maskedValue, fieldName, revealedFields, revealingField, onReveal, hasValue }) => {
+    const isRevealed = !!revealedFields[fieldName];
+    const isLoading = revealingField === fieldName;
+    const displayValue = isRevealed ? revealedFields[fieldName] : maskedValue;
+
+    return (
+        <div className="flex items-start gap-3">
+            <Icon size={18} className="text-gray-400 mt-0.5" />
+            <div className="flex-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+                <div className="flex items-center gap-2">
+                    <p className={cn(
+                        "text-gray-900 dark:text-white font-mono",
+                        isRevealed && "text-primary font-semibold"
+                    )}>
+                        {displayValue}
+                    </p>
+                    {hasValue && (
+                        <button
+                            onClick={() => onReveal(fieldName)}
+                            disabled={isLoading}
+                            className={cn(
+                                "p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700",
+                                isRevealed ? "text-primary" : "text-gray-400 hover:text-gray-600"
+                            )}
+                            title={isRevealed ? 'Hide' : 'Reveal (audit-logged)'}
+                        >
+                            {isLoading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : isRevealed ? (
+                                <EyeOff size={14} />
+                            ) : (
+                                <Eye size={14} />
+                            )}
+                        </button>
+                    )}
+                </div>
+                {isRevealed && (
+                    <p className="text-[10px] text-amber-500 mt-0.5">Auto-hides in 10s</p>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default EmployeeDetailsPage;

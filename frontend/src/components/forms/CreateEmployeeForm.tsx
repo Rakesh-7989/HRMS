@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { usersService, CreateUserData, UpdateEmployeeData, User } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -104,6 +105,7 @@ const createValidationSchema = Yup.object({
     .matches(/^[0-9+]*$/, 'Emergency phone number can only contain numbers')
     .min(10, 'Emergency phone number must be at least 10 digits')
     .max(20, 'Emergency phone number cannot exceed 20 digits')
+    .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
     .required('Emergency phone is required'),
   emergency_relation: Yup.string().required('Emergency relation is required'),
   ctc: Yup.number()
@@ -174,6 +176,16 @@ const editValidationSchema = Yup.object({
   tax_id: Yup.string()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
     .required('Tax ID is required'),
+  emergency_name: Yup.string()
+    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
+    .required('Emergency contact is required'),
+  emergency_phone: Yup.string()
+    .matches(/^[0-9+]*$/, 'Emergency phone number can only contain numbers')
+    .min(10, 'Emergency phone number must be at least 10 digits')
+    .max(20, 'Emergency phone number cannot exceed 20 digits')
+    .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
+    .required('Emergency phone is required'),
+  emergency_relation: Yup.string().required('Emergency relation is required'),
 
   ctc: Yup.number()
     .transform((value) => (isNaN(value) ? undefined : value))
@@ -208,6 +220,29 @@ export const CreateEmployeeForm = ({
     { id: 4, title: 'Emergency', icon: Phone, description: 'Emergency contact' },
   ];
 
+  // Real-time uniqueness check on blur
+  const [uniqueErrors, setUniqueErrors] = useState<Record<string, string | null>>({});
+  const checkUnique = async (fieldName: string, value: string) => {
+    if (!value || !value.trim()) {
+      setUniqueErrors(prev => ({ ...prev, [fieldName]: null }));
+      return;
+    }
+    try {
+      const result = await usersService.checkFieldUniqueness(
+        fieldName, value.trim(), isEditMode ? editEmployee?.id : undefined
+      );
+      if (result.exists) {
+        const label = result.label || fieldName.replace(/_/g, ' ');
+        const msg = `${label} "${value.trim()}" is already assigned to another employee`;
+        setUniqueErrors(prev => ({ ...prev, [fieldName]: msg }));
+        formik.setFieldError(fieldName, msg);
+      } else {
+        setUniqueErrors(prev => ({ ...prev, [fieldName]: null }));
+      }
+    } catch {
+      // Silently fail — submission will still catch duplicates
+    }
+  };
 
 
 
@@ -260,16 +295,16 @@ export const CreateEmployeeForm = ({
       setError(err.message);
 
       // Map specific server errors to Formik fields and mark as touched to show under the input
-      if (err.message.toLowerCase().includes('employee id')) {
-        formik.setFieldError('employee_id', err.message);
-        formik.setFieldTouched('employee_id', true, false);
-      }
-      if (err.message.toLowerCase().includes('email')) {
-        formik.setFieldError('email', err.message);
-        formik.setFieldTouched('email', true, false);
-      }
+      // if (err.message.toLowerCase().includes('employee id')) {
+      //   formik.setFieldError('employee_id', err.message);
+      //   formik.setFieldTouched('employee_id', true, false);
+      // }
+      // if (err.message.toLowerCase().includes('email')) {
+      //   formik.setFieldError('email', err.message);
+      //   formik.setFieldTouched('email', true, false);
+      // }
 
-      showToast.error(err.message);
+      // showToast.error(err.message);
     },
   });
 
@@ -286,11 +321,11 @@ export const CreateEmployeeForm = ({
     },
     onError: (err: Error) => {
       setError(err.message);
-      if (err.message.toLowerCase().includes('employee id')) {
-        formik.setFieldError('employee_id', err.message);
-        formik.setFieldTouched('employee_id', true, false);
-      }
-      showToast.error(err.message);
+      // if (err.message.toLowerCase().includes('employee id')) {
+      //   formik.setFieldError('employee_id', err.message);
+      //   formik.setFieldTouched('employee_id', true, false);
+      // }
+      // showToast.error(err.message);
     },
   });
 
@@ -488,6 +523,13 @@ export const CreateEmployeeForm = ({
   };
 
   const handleNext = async () => {
+    // If there is any unique error currently displaying, block
+    const hasUniqueError = Object.values(uniqueErrors).some(err => err !== null);
+    if (hasUniqueError) {
+      showToast.error("Please resolve the duplicate field errors before proceeding.");
+      return;
+    }
+
     let fieldsToValidate: string[] = [];
     switch (currentStep) {
       case 1:
@@ -645,12 +687,15 @@ export const CreateEmployeeForm = ({
               name="email"
               value={formik.values.email}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              onBlur={(e) => {
+                formik.handleBlur(e);
+                checkUnique('email', e.target.value);
+              }}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
-              error={formik.touched.email && Boolean(formik.errors.email)}
+              error={(formik.touched.email && Boolean(formik.errors.email)) || Boolean(uniqueErrors.email)}
               placeholder="employee@company.com"
             />
-            <FormError message={formik.touched.email ? formik.errors.email : undefined} />
+            <FormError message={uniqueErrors.email || (formik.touched.email ? formik.errors.email : undefined)} />
           </div>
         )}
 
@@ -702,13 +747,16 @@ export const CreateEmployeeForm = ({
               name="phone"
               value={formik.values.phone}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              onBlur={(e) => {
+                formik.handleBlur(e);
+                checkUnique('phone', e.target.value);
+              }}
               onInput={handleInput}
-              error={formik.touched.phone && Boolean(formik.errors.phone)}
+              error={(formik.touched.phone && Boolean(formik.errors.phone)) || Boolean(uniqueErrors.phone)}
               placeholder="+91 9876543210"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
             />
-            <FormError message={formik.touched.phone ? formik.errors.phone : undefined} />
+            <FormError message={uniqueErrors.phone || (formik.touched.phone ? formik.errors.phone : undefined)} />
           </div>
 
           <div>
@@ -1097,18 +1145,13 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Preferred Timezone
               </label>
-              <Select
+              <SearchableSelect
                 name="timezone"
                 value={formik.values.timezone}
-                onChange={formik.handleChange}
-                placeholder="Select Timezone"
-              >
-                {timezones.map((tz: any) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </Select>
+                onChange={(value) => formik.setFieldValue('timezone', value)}
+                placeholder="Search Timezone..."
+                options={timezones.map((tz: any) => ({ label: tz.label, value: tz.value }))}
+              />
             </div>
           </div>
         </div>
@@ -1142,14 +1185,16 @@ export const CreateEmployeeForm = ({
                 name="aadhar_number"
                 value={formik.values.aadhar_number}
                 onChange={formik.handleChange}
+                onBlur={(e) => {
+                  formik.handleBlur(e);
+                  checkUnique('aadhar_number', e.target.value);
+                }}
                 onInput={handleInput}
                 maxLength={12}
                 placeholder="123456789012"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.aadhar_number && formik.errors.aadhar_number) || uniqueErrors.aadhar_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
               />
-              {formik.touched.aadhar_number && formik.errors.aadhar_number && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.aadhar_number}</p>
-              )}
+              <FormError message={uniqueErrors.aadhar_number || (formik.touched.aadhar_number ? (formik.errors.aadhar_number as string) : undefined)} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
@@ -1160,14 +1205,16 @@ export const CreateEmployeeForm = ({
                 name="tax_id"
                 value={formik.values.tax_id}
                 onChange={formik.handleChange}
+                onBlur={(e) => {
+                  formik.handleBlur(e);
+                  checkUnique('tax_id', e.target.value);
+                }}
                 onInput={handleInput}
                 maxLength={10}
                 placeholder="ABCDE1234F"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm uppercase"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 uppercase shadow-sm ${((formik.touched.tax_id && formik.errors.tax_id) || uniqueErrors.tax_id) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
               />
-              {formik.touched.tax_id && formik.errors.tax_id && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.tax_id}</p>
-              )}
+              <FormError message={uniqueErrors.tax_id || (formik.touched.tax_id ? (formik.errors.tax_id as string) : undefined)} />
             </div>
           </div>
 
@@ -1241,13 +1288,15 @@ export const CreateEmployeeForm = ({
                 name="account_number"
                 value={formik.values.account_number}
                 onChange={formik.handleChange}
+                onBlur={(e) => {
+                  formik.handleBlur(e);
+                  checkUnique('account_number', e.target.value);
+                }}
                 onInput={handleInput}
                 placeholder="1234567890123456"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.account_number && formik.errors.account_number) || uniqueErrors.account_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
               />
-              {formik.touched.account_number && formik.errors.account_number && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.account_number}</p>
-              )}
+              <FormError message={uniqueErrors.account_number || (formik.touched.account_number ? (formik.errors.account_number as string) : undefined)} />
             </div>
           </div>
 
@@ -1262,13 +1311,15 @@ export const CreateEmployeeForm = ({
                 name="uan"
                 value={formik.values.uan}
                 onChange={formik.handleChange}
+                onBlur={(e) => {
+                  formik.handleBlur(e);
+                  checkUnique('uan', e.target.value);
+                }}
                 onInput={handleInput}
                 placeholder="12-digit UAN"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.uan && formik.errors.uan) || uniqueErrors.uan) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
               />
-              {formik.touched.uan && formik.errors.uan && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.uan}</p>
-              )}
+              <FormError message={uniqueErrors.uan || (formik.touched.uan ? (formik.errors.uan as string) : undefined)} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
@@ -1279,9 +1330,14 @@ export const CreateEmployeeForm = ({
                 name="pf_account"
                 value={formik.values.pf_account}
                 onChange={formik.handleChange}
+                onBlur={(e) => {
+                  formik.handleBlur(e);
+                  checkUnique('pf_account', e.target.value);
+                }}
                 placeholder="MH/BOM/12345/000/1234567"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 uppercase shadow-sm ${((formik.touched.pf_account && formik.errors.pf_account) || uniqueErrors.pf_account) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
               />
+              <FormError message={uniqueErrors.pf_account || (formik.touched.pf_account ? (formik.errors.pf_account as string) : undefined)} />
             </div>
           </div>
 

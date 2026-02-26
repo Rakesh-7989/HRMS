@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { projectsService } from '@/services/projects.service';
-import { Users, Briefcase, Calendar, Download, DollarSign, AlertTriangle } from 'lucide-react';
+import { Users, Briefcase, Calendar, Download, IndianRupee, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
@@ -232,11 +232,11 @@ export const ProjectReports: React.FC = () => {
                                             <div>
                                                 <h4 className="text-sm font-bold text-red-800 dark:text-red-300">Budget Overflow Detected</h4>
                                                 <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                                                    The total billable value ({Number(projectReport.financials.total_billable_value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })})
-                                                    has exceeded the project budget of {Number(projectReport.financials.budget).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.
+                                                    The total billable value ({Number(projectReport.financials.total_billable_value).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })})
+                                                    has exceeded the project budget of {Number(projectReport.financials.budget).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}.
                                                 </p>
                                                 <p className="text-sm font-semibold text-red-700 dark:text-red-300 mt-2">
-                                                    WIP Write-off: {Number(projectReport.financials.wip_writeoff).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                    WIP Write-off: {Number(projectReport.financials.wip_writeoff).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                                 </p>
                                             </div>
                                         </div>
@@ -245,13 +245,13 @@ export const ProjectReports: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <Card className="p-6 flex items-center gap-4">
                                             <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full">
-                                                <DollarSign className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                                                <IndianRupee className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Project Budget</p>
                                                 <h3 className="text-2xl font-bold">
                                                     {Number(projectReport.financials.budget) > 0
-                                                        ? Number(projectReport.financials.budget).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+                                                        ? Number(projectReport.financials.budget).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })
                                                         : 'No Limit'}
                                                 </h3>
                                                 <p className="text-xs text-gray-400 mt-1">{projectReport.financials.billing_type}</p>
@@ -260,12 +260,12 @@ export const ProjectReports: React.FC = () => {
 
                                         <Card className="p-6 flex items-center gap-4">
                                             <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-full">
-                                                <DollarSign className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                                <IndianRupee className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Billable Value</p>
                                                 <h3 className="text-2xl font-bold">
-                                                    {Number(projectReport.financials.total_billable_value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                    {Number(projectReport.financials.total_billable_value).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                                 </h3>
                                                 <p className="text-xs text-gray-400 mt-1">Total work value</p>
                                             </div>
@@ -273,12 +273,12 @@ export const ProjectReports: React.FC = () => {
 
                                         <Card className={cn("p-6 flex items-center gap-4", Number(projectReport.financials.wip_writeoff) > 0 ? "border-amber-500 border-2" : "")}>
                                             <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
-                                                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                <IndianRupee className="h-6 w-6 text-green-600 dark:text-green-400" />
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Invoiced Amount</p>
                                                 <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                                    {Number(projectReport.financials.invoiced_amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                    {Number(projectReport.financials.invoiced_amount).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                                 </h3>
                                                 <p className="text-xs text-gray-400 mt-1">Actual billable</p>
                                             </div>

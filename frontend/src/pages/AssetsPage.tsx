@@ -466,6 +466,7 @@ export const AssetsPage: React.FC = () => {
             <AnimatePresence>
               {canRequestAsset && (
                 <motion.button
+                  key="request"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   whileHover={{ y: -2 }}
@@ -480,6 +481,7 @@ export const AssetsPage: React.FC = () => {
 
               {canManage && (
                 <motion.button
+                  key="assign"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   whileHover={{ y: -2 }}
@@ -493,6 +495,7 @@ export const AssetsPage: React.FC = () => {
               )}
 
               <motion.button
+                key="requests"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ y: -2 }}
@@ -506,6 +509,7 @@ export const AssetsPage: React.FC = () => {
 
               {user?.role === 'ADMIN' && (
                 <motion.button
+                  key="add"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   whileHover={{ y: -2, shadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4)' }}

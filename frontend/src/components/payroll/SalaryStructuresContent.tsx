@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, DollarSign, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, IndianRupee, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
 
 export const SalaryStructuresContent: React.FC = () => {
     const queryClient = useQueryClient();
@@ -755,9 +755,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                         value={calcCTC}
                                         onChange={e => setCalcCTC(e.target.value)}
                                     />
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors">
-                                        <DollarSign size={16} />
-                                    </div>
+                                    <IndianRupee size={16} />
                                 </div>
                             </div>
 

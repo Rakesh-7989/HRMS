@@ -15,7 +15,7 @@ pool.on("error", (err) => {
   logger.error("Unexpected PG pool error", { err });
 });
 
-// --------- RLS SESSION WRAPPER ---------
+// --------- RLS SESSION WRAPPER (uses parameterized set_config to prevent SQL injection) ---------
 async function withContext(client) {
   const store = asyncContext.getStore();
   if (!store) return;
@@ -27,29 +27,20 @@ async function withContext(client) {
 
   // SUPER ADMIN bypasses tenant isolation
   if (role === "SUPER_ADMIN") {
-    await client.query(`SET app.role = 'SUPER_ADMIN'`);
-    // Use RESET to correctly unset the variable so current_setting returns NULL
-    await client.query(`RESET app.tenant_id`);
+    await client.query("SELECT set_config('app.role', 'SUPER_ADMIN', false)");
+    await client.query("RESET app.tenant_id");
   } else {
-    // Escape string values for SET command (quotes must be escaped)
-    if (role) {
-      await client.query(`SET app.role = '${role.replace(/'/g, "''")}'`);
-    } else {
-      // Ensure app.role exists even if empty, to prevent "unrecognized configuration parameter" if policy is strict
-      await client.query(`SET app.role = ''`);
-    }
-
+    await client.query("SELECT set_config('app.role', $1, false)", [role || ""]);
     if (tenantId) {
-      await client.query(`SET app.tenant_id = '${tenantId.toString()}'`);
+      await client.query("SELECT set_config('app.tenant_id', $1, false)", [tenantId.toString()]);
     }
   }
 
-  // Escape string values for SET command
   if (userId) {
-    await client.query(`SET app.user_id = '${userId.toString()}'`);
+    await client.query("SELECT set_config('app.user_id', $1, false)", [userId.toString()]);
   }
   if (employeeId) {
-    await client.query(`SET app.employee_id = '${employeeId.toString()}'`);
+    await client.query("SELECT set_config('app.employee_id', $1, false)", [employeeId.toString()]);
   }
 }
 

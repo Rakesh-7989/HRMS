@@ -65,7 +65,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                                     </p>
                                 </div>
                                 <div className="text-right text-sm">
-                                    <p className="font-bold text-gray-900 dark:text-white">${plan.price}/mo</p>
+                                    <p className="font-bold text-gray-900 dark:text-white">₹{plan.price}/mo</p>
                                 </div>
                             </div>
                         ))

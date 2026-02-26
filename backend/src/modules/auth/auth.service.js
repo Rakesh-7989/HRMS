@@ -42,7 +42,7 @@ exports.generateTokens = async (user, rememberMe = false) => {
       sessionId: sessionId // NEW: Include session ID for revocation check
     },
     env.JWT_ACCESS_SECRET,
-    { expiresIn: rememberMe ? "30d" : ACCESS_EXP }
+    { expiresIn: ACCESS_EXP }
   );
 
   return { accessToken, refreshToken, sessionId };

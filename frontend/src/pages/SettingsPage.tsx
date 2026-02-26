@@ -32,6 +32,7 @@ import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
 import defaultLogo from '../../Assests/logo.png';
 import { useTimezones, getTimezoneLabel } from '@/utils/timezone';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -900,19 +901,13 @@ const OrganizationProfileSection: React.FC<{
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="orgTz">Default Organization Timezone</Label>
-                <select
+                <SearchableSelect
                   id="orgTz"
                   value={formData.timezone}
-                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select Timezone</option>
-                  {timezones.map((tz: any) => (
-                    <option key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData({ ...formData, timezone: val })}
+                  placeholder="Search Timezone..."
+                  options={timezones.map((tz: any) => ({ label: tz.label, value: tz.value }))}
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">

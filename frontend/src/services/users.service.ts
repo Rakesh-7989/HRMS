@@ -450,6 +450,45 @@ export const usersService = {
       return null;
     }
   },
+
+  // ==========================================================================
+  // REAL-TIME UNIQUENESS CHECK
+  // ==========================================================================
+
+  checkFieldUniqueness: async (field: string, value: string, excludeUserId?: string): Promise<{ exists: boolean; label?: string }> => {
+    try {
+      const params: any = { field, value };
+      if (excludeUserId) params.excludeUserId = excludeUserId;
+      const response = await api.get('/users/check-unique', { params });
+      return response.data?.data || { exists: false };
+    } catch {
+      return { exists: false };
+    }
+  },
+
+  // ==========================================================================
+  // SENSITIVE DATA REVEAL (Audit-Logged)
+  // ==========================================================================
+
+  /** Reveal a sensitive field for another employee (HR/Admin) */
+  revealSensitiveField: async (userId: string, field: string): Promise<{ field: string; value: string }> => {
+    try {
+      const response = await api.get(`/users/${userId}/reveal`, { params: { field } });
+      return extractData<{ field: string; value: string }>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  /** Reveal own sensitive field (self-service) */
+  revealOwnSensitiveField: async (field: string): Promise<{ field: string; value: string }> => {
+    try {
+      const response = await api.get('/users/me/reveal', { params: { field } });
+      return extractData<{ field: string; value: string }>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
 };
 
 export default usersService;

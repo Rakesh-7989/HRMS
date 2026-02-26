@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Play, Loader2 } from 'lucide-react';
+import api from '@/services/api';
+import { toast } from 'react-hot-toast';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,9 +27,36 @@ const PAYROLL_TABS = [
 
 export const Payroll: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
-  // Default to Dashboard for Admin/HR, Payslips for others
   const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'dashboard' : 'payslips');
+  const [payRunLoading, setPayRunLoading] = useState(false);
+
+  const handlePayRun = async () => {
+    if (payRunLoading) return;
+    try {
+      setPayRunLoading(true);
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+
+      // Check if a run already exists for the current month
+      const dashRes = await api.get(`/payroll/river/dashboard?month=${month}&year=${year}`);
+      if (dashRes.data?.runStatus?.id) {
+        navigate(`/payroll/process/${dashRes.data.runStatus.id}`);
+        return;
+      }
+
+      // No existing run — create a new one
+      const res = await api.post('/payroll/river/run', { month, year });
+      toast.success('New Payroll Run Started!');
+      navigate(`/payroll/process/${res.data.id}`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to start payroll run');
+    } finally {
+      setPayRunLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout
@@ -36,13 +67,11 @@ export const Payroll: React.FC = () => {
       ]}
     >
 
-
       {/* ===== CATEGORY CONTROLS ===== */}
       {PAYROLL_TABS.filter(t => (t.roles as readonly string[]).includes(user?.role || '')).length > 1 && (
         <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700">
           {PAYROLL_TABS.map((tab) => {
             if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
-
             const isActive = tab.id === activeTab;
             return (
               <button
@@ -57,6 +86,22 @@ export const Payroll: React.FC = () => {
               </button>
             );
           })}
+
+          {/* Pay Run Button */}
+          {isHRorAdmin && (
+            <button
+              onClick={handlePayRun}
+              disabled={payRunLoading}
+              className="ml-2 px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+            >
+              {payRunLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Play className="w-3.5 h-3.5" />
+              )}
+              Pay Run
+            </button>
+          )}
         </div>
       )}
 

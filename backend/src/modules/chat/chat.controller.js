@@ -5,6 +5,7 @@ exports.getConversations = async (req, res) => {
     const data = await chatService.getConversations(req.db, req.user.id, req.user.tenantId);
     res.json({ status: "success", data });
   } catch (err) {
+    console.error("[ChatController] getConversations error:", err.message, err.detail || '');
     res.status(400).json({ status: "error", message: err.message });
   }
 };

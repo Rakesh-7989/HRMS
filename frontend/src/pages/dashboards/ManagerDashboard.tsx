@@ -732,7 +732,7 @@ export const ManagerDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}! 👋
+                Welcome back, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
                 {totalPending > 0 ? (
@@ -752,11 +752,11 @@ export const ManagerDashboard: React.FC = () => {
               >
                 <div className="text-center px-3 border-r border-slate-200 dark:border-white/10 min-w-[50px]">
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'short' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">W{format(new Date(), 'w')}</p>
+                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
             </div>

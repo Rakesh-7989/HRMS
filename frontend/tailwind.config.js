@@ -56,6 +56,9 @@ export default {
                     dark: '#4B5563',
                 },
             },
+            fontFamily: {
+                sans: ['Plus Jakarta Sans', 'sans-serif'],
+            },
             boxShadow: {
                 'card': '0 1px 3px rgba(0, 0, 0, 0.1)',
                 'card-hover': '0 4px 6px rgba(0, 0, 0, 0.1)',

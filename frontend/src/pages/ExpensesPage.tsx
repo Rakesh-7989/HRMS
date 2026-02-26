@@ -141,7 +141,7 @@ const ExpensesPage: React.FC = () => {
               expenses.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell>{e.category}</TableCell>
-                  <TableCell>{e.amount}</TableCell>
+                  <TableCell>₹{Number(e.amount).toLocaleString('en-IN')}</TableCell>
                   <TableCell>{e.expense_date}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
