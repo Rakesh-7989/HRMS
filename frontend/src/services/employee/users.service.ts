@@ -71,6 +71,8 @@ export interface User {
     logo_url?: string;
     [key: string]: any;
   };
+  permissions?: string[];
+  default_path?: string;
 }
 
 export interface CreateUserData {
