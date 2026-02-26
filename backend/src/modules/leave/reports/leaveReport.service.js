@@ -3,12 +3,20 @@ const pool = require("../../../config/db");
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
 
-exports.getLeaveTrendReport = async (db, tenantId, filters = {}) => {
+// Issue 22: Added actor-based filtering for role-based visibility
+exports.getLeaveTrendReport = async (db, tenantId, filters = {}, actor = null) => {
     const query = getQuery(db);
 
     const params = [tenantId];
     let where = `WHERE la.tenant_id = $1 AND la.status = 'APPROVED'`;
     let i = 2;
+
+    // Issue 22: Manager filter — only show direct reports' data
+    if (actor && actor.role === 'MANAGER' && actor.employeeId) {
+        where += ` AND la.employee_id IN (SELECT id FROM employees WHERE reports_to = $${i})`;
+        params.push(actor.employeeId);
+        i++;
+    }
 
     if (filters.from_date) {
         where += ` AND la.start_date >= $${i}`;
@@ -42,12 +50,20 @@ exports.getLeaveTrendReport = async (db, tenantId, filters = {}) => {
     return res.rows;
 };
 
-exports.getAbsenteeismReport = async (db, tenantId, filters = {}) => {
+// Issue 22: Added actor-based filtering
+exports.getAbsenteeismReport = async (db, tenantId, filters = {}, actor = null) => {
     const query = getQuery(db);
 
     const params = [tenantId];
     let where = `WHERE la.tenant_id = $1 AND la.status = 'APPROVED'`;
     let i = 2;
+
+    // Issue 22: Manager filter
+    if (actor && actor.role === 'MANAGER' && actor.employeeId) {
+        where += ` AND e.reports_to = $${i}`;
+        params.push(actor.employeeId);
+        i++;
+    }
 
     if (filters.from_date) {
         where += ` AND la.start_date >= $${i}`;
@@ -92,12 +108,20 @@ exports.getAbsenteeismReport = async (db, tenantId, filters = {}) => {
     return res.rows;
 };
 
-exports.getDepartmentWiseReport = async (db, tenantId, filters = {}) => {
+// Issue 22: Added actor-based filtering
+exports.getDepartmentWiseReport = async (db, tenantId, filters = {}, actor = null) => {
     const query = getQuery(db);
 
     const params = [tenantId];
     let where = `WHERE la.tenant_id = $1 AND la.status = 'APPROVED'`;
     let i = 2;
+
+    // Issue 22: Manager filter
+    if (actor && actor.role === 'MANAGER' && actor.employeeId) {
+        where += ` AND e.reports_to = $${i}`;
+        params.push(actor.employeeId);
+        i++;
+    }
 
     if (filters.from_date) {
         where += ` AND la.start_date >= $${i}`;

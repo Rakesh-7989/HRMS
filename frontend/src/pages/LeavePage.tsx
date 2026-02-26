@@ -7,6 +7,7 @@ import { TeamLeaveContent } from '@/components/leave/TeamLeaveContent';
 import { LeaveSettingsContent } from '@/components/leave/LeaveSettingsContent';
 import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
+import { DelegationContent } from '@/components/leave/DelegationContent';
 import { useTranslation } from 'react-i18next';
 
 export const LeavePage: React.FC = () => {
@@ -19,6 +20,7 @@ export const LeavePage: React.FC = () => {
     { id: 'team-requests', label: t('leave.tabs.teamRequests'), roles: ['MANAGER', 'HR', 'ADMIN'] },
     { id: 'allocation', label: t('leave.tabs.allocation'), roles: ['HR', 'ADMIN'] },
     { id: 'balances', label: t('leave.tabs.balances'), roles: ['HR', 'ADMIN'] },
+    { id: 'delegations', label: 'Delegations', roles: ['MANAGER', 'HR', 'ADMIN'] },
     { id: 'settings', label: t('leave.tabs.settings'), roles: ['HR', 'ADMIN'] },
   ] as const;
 
@@ -84,6 +86,7 @@ export const LeavePage: React.FC = () => {
         {activeTab === 'team-requests' && <TeamLeaveContent />}
         {activeTab === 'allocation' && <LeaveAllocationContent />}
         {activeTab === 'balances' && <LeaveBalancesContent />}
+        {activeTab === 'delegations' && <DelegationContent />}
         {activeTab === 'settings' && <LeaveSettingsContent />}
       </div>
     </DashboardLayout>

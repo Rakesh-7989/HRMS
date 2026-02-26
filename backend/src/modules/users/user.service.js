@@ -379,6 +379,7 @@ exports.getUsers = async (db, opts, actor) => {
       filter.push(`(
         e.id = $${i} -- Self
         OR e.reports_to = $${i} -- Direct reports (for managers)
+        OR u.role IN ('HR', 'MANAGER') -- Managers can see HR and other managers
         OR EXISTS (
           SELECT 1 FROM employees emp_self 
           WHERE emp_self.id = $${i} 

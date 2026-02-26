@@ -1,4 +1,6 @@
 const timeService = require("../../utils/timeService");
+const delegationService = require("../leave/delegations/delegation.service");
+const pool = require("../../config/db");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -100,9 +102,17 @@ exports.getPendingWFHRequests = async (db, actor) => {
     const params = [actor.tenantId];
 
     if (actor.role === 'MANAGER') {
-        // Managers see PENDING requests from their reports
-        whereClause += ` AND wr.status = 'PENDING' AND e.reports_to = $2`;
+        // Managers see PENDING requests from their reports + delegated reports
+        whereClause += ` AND wr.status = 'PENDING' AND (e.reports_to = $2 OR e.reports_to IN (
+            SELECT de.id FROM approval_delegations ad
+            JOIN users du ON du.id = ad.delegator_id
+            JOIN employees de ON de.user_id = du.id
+            WHERE ad.tenant_id = $1 AND ad.delegate_id = $3
+              AND ad.is_active = true
+              AND ad.start_date <= CURRENT_DATE AND ad.end_date >= CURRENT_DATE
+        ))`;
         params.push(actor.employeeId);
+        params.push(actor.id);
     } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
         // HR/Admin see PENDING_HR requests across the tenant
         whereClause += ` AND wr.status = 'PENDING_HR'`;
@@ -157,8 +167,14 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
     // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
     // ---------------------------------------------------------
     if (request.status === 'PENDING') {
-        if (request.reports_to !== actor.employeeId && actor.role !== 'ADMIN' && actor.role !== 'HR') {
-            throw new Error("You can only approve WFH requests for your direct reports");
+        const isDirectManager = request.reports_to === actor.employeeId;
+        const isDelegateApprover = await delegationService.canApprove(query, actor.id,
+            (await query(`SELECT user_id FROM employees WHERE id = $1`, [request.reports_to])).rows[0]?.user_id,
+            actor.tenantId
+        );
+
+        if (!isDirectManager && !isDelegateApprover && actor.role !== 'ADMIN' && actor.role !== 'HR') {
+            throw new Error("You can only approve WFH requests for your direct reports or as a delegate");
         }
 
         const result = await query(
@@ -235,8 +251,14 @@ exports.rejectWFH = async (db, requestId, actor, reason) => {
 
     // Logic: Managers can reject 'PENDING'. HR/Admin can reject 'PENDING' or 'PENDING_HR'.
     if (actor.role === 'MANAGER') {
-        if (request.reports_to !== actor.employeeId) {
-            throw new Error("You can only reject WFH requests for your direct reports");
+        const isDirectManager = request.reports_to === actor.employeeId;
+        const isDelegateApprover = await delegationService.canApprove(query, actor.id,
+            (await query(`SELECT user_id FROM employees WHERE id = $1`, [request.reports_to])).rows[0]?.user_id,
+            actor.tenantId
+        );
+
+        if (!isDirectManager && !isDelegateApprover) {
+            throw new Error("You can only reject WFH requests for your direct reports or as a delegate");
         }
         if (request.status !== 'PENDING') {
             throw new Error(`You can only reject requests in PENDING status. This request is ${request.status}.`);

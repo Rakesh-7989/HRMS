@@ -1,8 +1,13 @@
 const pool = require("../../../config/db");
 const timeService = require("../../../utils/timeService");
+const logger = require("../../../config/logger"); // Issue 26
 
-const getQuery = (db) =>
-    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+const getQuery = (db) => {
+    if (db && typeof db.query === "function") {
+        return (text, params) => db.query(text, params);
+    }
+    return pool.query.bind(pool);
+};
 
 /* ========================== GET EMPLOYEE BALANCES ========================== */
 exports.getEmployeeBalances = async (db, employeeId, tenantId, year = null) => {
@@ -82,8 +87,9 @@ exports.deductBalance = async (db, employeeId, leaveTypeId, days, tenantId, reas
     let balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear, true);
 
     if (!balance) {
+        // Issue 9: Initialize and then RE-FETCH with local lock to prevent race conditions
         await exports.initializeBalances(db, employeeId, tenantId);
-        balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear);
+        balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear, true);
     }
 
     if (!balance) {
@@ -155,16 +161,17 @@ exports.restoreBalance = async (db, employeeId, leaveTypeId, days, tenantId, rea
 };
 
 /* ========================== MANUAL ADJUSTMENT ========================== */
+// Issue 9: Use lock=true to prevent race conditions on concurrent adjustments
 exports.adjustBalance = async (db, employeeId, leaveTypeId, adjustment, reason, actor) => {
     const query = getQuery(db);
     const tz = await timeService.getEffectiveTz(query, actor.tenantId, employeeId);
     const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
-    let balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear);
+    let balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear, true);
 
     if (!balance) {
         await exports.initializeBalances(db, employeeId, actor.tenantId);
-        balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear);
+        balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear, true);
     }
 
     if (!balance) {
@@ -299,7 +306,11 @@ exports.getAdjustmentHistory = async (db, employeeId, tenantId, filters = {}) =>
 };
 
 /* ========================== BULK ALLOCATE ========================== */
+// Issue 19: Add role authorization check
 exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor, year = null) => {
+    if (!['ADMIN', 'HR'].includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin or HR can perform bulk allocations");
+    }
     const query = getQuery(db);
     const tz = await timeService.getEffectiveTz(query, actor.tenantId);
     const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
@@ -497,7 +508,11 @@ exports.resetBalances = async (db, options, actor) => {
 };
 
 /* ========================== BULK RESET BALANCES ========================== */
+// Issue 19: Add role authorization check
 exports.bulkResetBalances = async (db, leave_type_id, employee_ids, reset_to_zero, reason, actor, year) => {
+    if (!['ADMIN', 'HR'].includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin or HR can perform bulk resets");
+    }
     const query = getQuery(db);
     const tz = await timeService.getEffectiveTz(query, actor.tenantId);
     const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
@@ -525,10 +540,37 @@ exports.bulkResetBalances = async (db, leave_type_id, employee_ids, reset_to_zer
             processed += result.processed;
             failed += result.failed;
         } catch (err) {
-            console.error(`Failed to reset for employee ${empId}:`, err);
+            logger.error(`Failed to reset for employee ${empId}:`, err);
             failed++;
         }
     }
 
     return { success: true, processed, failed, year: targetYear };
+};
+
+/* ========================== PENDING BALANCE HELPERS ========================== */
+// Issue 14: Track pending balance when leaves are applied/approved/rejected/cancelled
+// Note: These use new Date().getFullYear() instead of timeService because they're
+// called inside transactions with PoolClients where bound query methods fail.
+
+exports.incrementPending = async (db, employeeId, leaveTypeId, days, tenantId) => {
+    const query = getQuery(db);
+    const currentYear = new Date().getFullYear();
+
+    await query(
+        `UPDATE leave_balances SET pending = pending + $1, updated_at = now()
+         WHERE tenant_id = $2 AND employee_id = $3 AND leave_type_id = $4 AND year = $5`,
+        [days, tenantId, employeeId, leaveTypeId, currentYear]
+    );
+};
+
+exports.decrementPending = async (db, employeeId, leaveTypeId, days, tenantId) => {
+    const query = getQuery(db);
+    const currentYear = new Date().getFullYear();
+
+    await query(
+        `UPDATE leave_balances SET pending = GREATEST(0, pending - $1), updated_at = now()
+         WHERE tenant_id = $2 AND employee_id = $3 AND leave_type_id = $4 AND year = $5`,
+        [days, tenantId, employeeId, leaveTypeId, currentYear]
+    );
 };

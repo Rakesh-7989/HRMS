@@ -321,34 +321,33 @@ export const leaveService = {
     }
   },
 
-  // Backend route: GET /leave/my-leaves (not /leave/my)
+  // Issue 29: Throw errors so React Query error states work
   getMyLeaves: async (params?: DateRangeParams & PaginationParams & { status?: string }): Promise<LeaveApplication[]> => {
     try {
       const response = await api.get('/leave/my-leaves', { params });
       return extractData(response) || [];
     } catch (error) {
-      console.error('Error fetching leaves:', error);
-      return [];
+      return handleApiError(error);
     }
   },
 
-  cancelMyLeave: async (id: string): Promise<LeaveApplication> => {
+  // Issue 27: Accept reason parameter and pass it in the body
+  cancelMyLeave: async (id: string, reason?: string): Promise<LeaveApplication> => {
     try {
-      const response = await api.post(`/leave/${id}/cancel`, {});
+      const response = await api.post(`/leave/${id}/cancel`, { reason: reason || 'Cancelled by employee' });
       return extractData(response);
     } catch (error) {
       return handleApiError(error);
     }
   },
 
-  // Backend route: GET /leave/approvals (not /leave/approvals/pending)
+  // Issue 29: Throw errors
   getPendingApprovals: async (params?: DateRangeParams & PaginationParams): Promise<LeaveApplication[]> => {
     try {
       const response = await api.get('/leave/approvals', { params });
       return extractData(response) || [];
     } catch (error) {
-      console.error('Error fetching pending approvals:', error);
-      return [];
+      return handleApiError(error);
     }
   },
 
@@ -504,7 +503,7 @@ export const leaveService = {
         params: year ? { year } : undefined
       });
       const rawData = extractData(response) || [];
-      // Transform backend format to frontend format
+      // Issue 23: Fix entitled calculation — use raw backend fields
       return rawData.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -515,11 +514,11 @@ export const leaveService = {
           code: item.leave_type_code || '',
         },
         year: item.year,
-        entitled: parseFloat(item.current_balance || 0) + parseFloat(item.used || 0) + parseFloat(item.pending || 0),
+        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
         used: parseFloat(item.used || 0),
         pending: parseFloat(item.pending || 0),
         available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carried_forward || 0),
+        carried_forward: parseFloat(item.carry_forward || 0),
       }));
     } catch (error) {
       console.error('Error fetching balances:', error);
@@ -533,7 +532,7 @@ export const leaveService = {
         params: year ? { year } : undefined
       });
       const rawData = extractData(response) || [];
-      // Transform backend format to frontend format
+      // Issue 23: Fix entitled calculation
       return rawData.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -544,11 +543,11 @@ export const leaveService = {
           code: item.leave_type_code || '',
         },
         year: item.year,
-        entitled: parseFloat(item.current_balance || 0) + parseFloat(item.used || 0) + parseFloat(item.pending || 0),
+        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
         used: parseFloat(item.used || 0),
         pending: parseFloat(item.pending || 0),
         available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carried_forward || 0),
+        carried_forward: parseFloat(item.carry_forward || 0),
       }));
     } catch (error) {
       console.error('Error fetching employee balances:', error);
@@ -808,6 +807,61 @@ export const leaveService = {
   }): Promise<{ success: boolean; processed: number; failed: number; year?: number }> => {
     try {
       const response = await api.post('/leave/balances/bulk-reset', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+};
+
+/* ========================== DELEGATION API ========================== */
+
+export interface Delegation {
+  id: string;
+  delegator_id: string;
+  delegate_id: string;
+  start_date: string;
+  end_date: string;
+  reason?: string;
+  is_active: boolean;
+  created_at?: string;
+  delegator_name?: string;
+  delegate_name?: string;
+  delegator_email?: string;
+  delegate_email?: string;
+}
+
+export const delegationService = {
+  create: async (data: { delegate_id: string; start_date: string; end_date: string; reason?: string }): Promise<Delegation> => {
+    try {
+      const response = await api.post('/leave/delegations', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  getMyDelegations: async (): Promise<Delegation[]> => {
+    try {
+      const response = await api.get('/leave/delegations/my');
+      return extractData(response) || [];
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  getDelegationsToMe: async (): Promise<Delegation[]> => {
+    try {
+      const response = await api.get('/leave/delegations/to-me');
+      return extractData(response) || [];
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  revoke: async (id: string): Promise<{ success: boolean }> => {
+    try {
+      const response = await api.delete(`/leave/delegations/${id}`);
       return extractData(response);
     } catch (error) {
       return handleApiError(error);

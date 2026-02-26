@@ -1,8 +1,12 @@
 const pool = require("../../../config/db");
 const timeService = require("../../../utils/timeService");
 
-const getQuery = (db) =>
-    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+const getQuery = (db) => {
+    if (db && typeof db.query === "function") {
+        return (text, params) => db.query(text, params);
+    }
+    return pool.query.bind(pool);
+};
 
 /* ========================== PUBLIC HOLIDAYS ========================== */
 

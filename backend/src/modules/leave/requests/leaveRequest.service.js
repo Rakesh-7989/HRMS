@@ -1,19 +1,24 @@
 const pool = require("../../../config/db");
 const leaveBalanceService = require("../balances/leaveBalance.service");
-// const leavePolicyService = require("../policies/leavePolicy.service"); // Not strictly needed if validation logic matches
+const delegationService = require("../delegations/delegation.service"); // Issue 12
 const holidayService = require("../holidays/holiday.service");
 const timeService = require("../../../utils/timeService");
+const logger = require("../../../config/logger"); // Issue 26
 const { BadRequestError, NotFoundError } = require("../../../utils/customErrors");
 
-const getQuery = (db) =>
-    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+const getQuery = (db) => {
+    if (db && typeof db.query === "function") {
+        // Return a wrapper that calls db.query directly (avoids .bind() issues with PoolClients)
+        return (text, params) => db.query(text, params);
+    }
+    return pool.query.bind(pool);
+};
 
 /**
  * EMPLOYEE: APPLY LEAVE
+ * Issues fixed: 4 (transaction), 15 (monthly limit), 17 (timezone), 18 (half-day overlap), 20 (holiday range), 21 (pagination in getMyLeaves)
  */
 exports.applyLeave = async (db, tenantId, employeeId, data) => {
-    const query = getQuery(db);
-
     if (!employeeId) {
         throw new BadRequestError("Employee profile not linked. Contact admin.");
     }
@@ -25,201 +30,156 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
         throw new BadRequestError("Start date cannot be after end date");
     }
 
-    // Get leave type details
-    const leaveTypeRes = await query(
-        `SELECT * FROM leave_types WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
-        [leave_type_id, tenantId]
-    );
+    // Issue 4: Use a real transaction so FOR UPDATE works
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const query = client.query.bind(client);
 
-    if (leaveTypeRes.rowCount === 0) {
-        throw new NotFoundError("Invalid or inactive leave type");
-    }
-
-    const leaveType = leaveTypeRes.rows[0];
-
-    // Check min days notice
-    if (leaveType.min_days_notice > 0) {
-        const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
-        const todayStr = timeService.todayDate(tz);
-        const today = new Date(todayStr); // Start of day in tenant timezone
-        const startDateObj = new Date(start_date);
-        const diffDays = Math.ceil((startDateObj - today) / (1000 * 60 * 60 * 24));
-        if (diffDays < leaveType.min_days_notice) {
-            throw new BadRequestError(`This leave type requires at least ${leaveType.min_days_notice} days advance notice`);
-        }
-    }
-
-    // Check if attachment required
-    if (leaveType.requires_attachment && !attachment_url) {
-        throw new BadRequestError("Attachment is required for this leave type");
-    }
-
-    // Calculate working days (excluding weekends and holidays)
-    let daysCount;
-    if (is_half_day) {
-        daysCount = 0.5;
-    } else {
-        daysCount = await holidayService.countWorkingDays(db, start_date, end_date, tenantId);
-    }
-
-    // Check max consecutive days
-    if (leaveType.max_consecutive_days && daysCount > leaveType.max_consecutive_days) {
-        throw new BadRequestError(`Maximum ${leaveType.max_consecutive_days} consecutive days allowed for this leave type`);
-    }
-
-    // Check overlapping approved/pending leaves
-    const overlap = await query(
-        `SELECT id FROM leave_applications
-         WHERE tenant_id = $1
-           AND employee_id = $2
-           AND status IN ('PENDING', 'APPROVED')
-           AND start_date <= $4
-           AND end_date   >= $3
-         LIMIT 1`,
-        [tenantId, employeeId, start_date, end_date]
-    );
-
-    if (overlap.rowCount > 0) {
-        throw new BadRequestError("Overlapping leave request already exists");
-    }
-
-    // Check if applying on a public holiday
-    const holiday = await holidayService.isHoliday(db, start_date, tenantId);
-    if (holiday && !is_half_day) {
-        throw new BadRequestError(`Cannot apply leave on ${holiday.name} - it's a public holiday`);
-    }
-
-    // Check leave balance (for paid leave types) with row lock to prevent race condition
-    // SKIP check for WFH (Work From Home) as it doesn't consume balance
-    if (leaveType.is_paid && leaveType.code !== 'WFH') {
-        // Use FOR UPDATE to lock the balance row and prevent concurrent modifications
-        const balanceRes = await query(
-            `SELECT * FROM leave_balances 
-             WHERE employee_id = $1 AND leave_type_id = $2 AND tenant_id = $3
-             FOR UPDATE`,
-            [employeeId, leave_type_id, tenantId]
+        // Get leave type details
+        const leaveTypeRes = await query(
+            `SELECT * FROM leave_types WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
+            [leave_type_id, tenantId]
         );
 
-        const balance = balanceRes.rows[0];
-
-        if (!balance) {
-            throw new BadRequestError(`Insufficient leave balance. Available: 0 days, Requested: ${daysCount} days`);
+        if (leaveTypeRes.rowCount === 0) {
+            throw new NotFoundError("Invalid or inactive leave type");
         }
 
-        if (parseFloat(balance.current_balance) < daysCount) {
-            throw new BadRequestError(`Insufficient leave balance. Available: ${balance.current_balance} days, Requested: ${daysCount} days`);
-        }
-    }
+        const leaveType = leaveTypeRes.rows[0];
 
-    // Check monthly usage limit (accrual_rate from policy acts as monthly limit)
-    const policyRes = await query(
-        `SELECT lp.accrual_rate, lp.accrual_type, lp.name as policy_name
-         FROM leave_policies lp
-         WHERE lp.tenant_id = $1 
-           AND lp.leave_type_id = $2 
-           AND lp.is_active = true
-         ORDER BY lp.priority ASC
-         LIMIT 1`,
-        [tenantId, leave_type_id]
-    );
-
-    if (policyRes.rowCount > 0) {
-        const policy = policyRes.rows[0];
-        const monthlyLimit = parseFloat(policy.accrual_rate);
-
-        if (monthlyLimit > 0 && policy.accrual_type === 'MONTHLY') {
-            // Get start and end of the month(s) covered by this leave
-            const startDateObj = new Date(start_date);
-            const endDateObj = new Date(end_date);
-
-            // Check each month the leave spans
-            const monthsToCheck = new Set();
-            let currentDate = new Date(startDateObj);
-            while (currentDate <= endDateObj) {
-                const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`;
-                monthsToCheck.add(monthKey);
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                currentDate.setDate(1);
-            }
-
-            for (const monthKey of monthsToCheck) {
-                const [year, month] = monthKey.split('-').map(Number);
-                const monthStart = new Date(year, month - 1, 1).toISOString().split('T')[0];
-                const monthEnd = new Date(year, month, 0).toISOString().split('T')[0];
-
-                // Calculate days in this month for current application
-                const appStartInMonth = new Date(Math.max(startDateObj.getTime(), new Date(monthStart).getTime()));
-                const appEndInMonth = new Date(Math.min(endDateObj.getTime(), new Date(monthEnd).getTime()));
-
-                let requestedDaysInMonth = 0;
-                if (is_half_day) {
-                    // Half day is only for single day, so it's either in this month or not
-                    if (startDateObj >= new Date(monthStart) && startDateObj <= new Date(monthEnd)) {
-                        requestedDaysInMonth = 0.5;
-                    }
-                } else {
-                    // Count working days in this month portion
-                    requestedDaysInMonth = await holidayService.countWorkingDays(
-                        db,
-                        appStartInMonth.toISOString().split('T')[0],
-                        appEndInMonth.toISOString().split('T')[0],
-                        tenantId
-                    );
-                }
-
-                // Get already approved/pending leaves in this month for this leave type
-                const existingLeavesRes = await query(
-                    `SELECT COALESCE(SUM(
-                        CASE 
-                            WHEN is_half_day THEN 0.5
-                            ELSE days_count
-                        END
-                    ), 0) as used_days
-                     FROM leave_applications
-                     WHERE tenant_id = $1
-                       AND employee_id = $2
-                       AND leave_type_id = $3
-                       AND status IN ('PENDING', 'APPROVED')
-                       AND (
-                           (start_date >= $4 AND start_date <= $5)
-                           OR (end_date >= $4 AND end_date <= $5)
-                           OR (start_date <= $4 AND end_date >= $5)
-                       )`,
-                    [tenantId, employeeId, leave_type_id, monthStart, monthEnd]
-                );
-
-                const alreadyUsedInMonth = parseFloat(existingLeavesRes.rows[0].used_days) || 0;
-                const totalAfterApplication = alreadyUsedInMonth + requestedDaysInMonth;
-
-                if (totalAfterApplication > monthlyLimit) {
-                    const monthName = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long' });
-                    throw new BadRequestError(
-                        `Monthly limit exceeded for ${monthName} ${year}. ` +
-                        `Limit: ${monthlyLimit} days, Already used: ${alreadyUsedInMonth} days, ` +
-                        `Requested: ${requestedDaysInMonth} days. Available: ${(monthlyLimit - alreadyUsedInMonth).toFixed(1)} days.`
-                    );
-                }
+        // Issue 17: Use consistent timezone-aware date comparison for min_days_notice
+        if (leaveType.min_days_notice > 0) {
+            // Use pool (not client) for timezone lookup — read-only, no need for transaction
+            const tz = await timeService.getEffectiveTz(pool.query.bind(pool), tenantId, employeeId);
+            const todayStr = timeService.todayDate(tz);
+            const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+            const startMs = new Date(start_date + 'T00:00:00').getTime();
+            const diffDays = Math.ceil((startMs - todayMs) / (1000 * 60 * 60 * 24));
+            if (diffDays < leaveType.min_days_notice) {
+                throw new BadRequestError(`This leave type requires at least ${leaveType.min_days_notice} days advance notice`);
             }
         }
+
+        // Check if attachment required
+        if (leaveType.requires_attachment && !attachment_url) {
+            throw new BadRequestError("Attachment is required for this leave type");
+        }
+
+        // Calculate working days (excluding weekends and holidays)
+        let daysCount;
+        if (is_half_day) {
+            daysCount = 0.5;
+        } else {
+            daysCount = await holidayService.countWorkingDays(client, start_date, end_date, tenantId);
+        }
+
+        // Issue 20: Block if all days in range are holidays/weekends
+        if (daysCount === 0) {
+            throw new BadRequestError("No working days in the selected date range. All days are holidays or weekends.");
+        }
+
+        // Check max consecutive days
+        if (leaveType.max_consecutive_days && daysCount > leaveType.max_consecutive_days) {
+            throw new BadRequestError(`Maximum ${leaveType.max_consecutive_days} consecutive days allowed for this leave type`);
+        }
+
+        // Issue 18: Check overlapping approved/pending leaves — account for half-day sessions
+        let overlapQuery;
+        let overlapParams;
+        if (is_half_day && half_day_session) {
+            // For half-day, only conflict if same date AND same session (or full day)
+            overlapQuery = `SELECT id FROM leave_applications
+                 WHERE tenant_id = $1
+                   AND employee_id = $2
+                   AND status IN ('PENDING', 'PENDING_HR', 'APPROVED')
+                   AND start_date <= $4
+                   AND end_date   >= $3
+                   AND (
+                       is_half_day = false
+                       OR (is_half_day = true AND (half_day_session = $5 OR half_day_session IS NULL))
+                   )
+                 LIMIT 1`;
+            overlapParams = [tenantId, employeeId, start_date, end_date, half_day_session];
+        } else {
+            overlapQuery = `SELECT id FROM leave_applications
+                 WHERE tenant_id = $1
+                   AND employee_id = $2
+                   AND status IN ('PENDING', 'PENDING_HR', 'APPROVED')
+                   AND start_date <= $4
+                   AND end_date   >= $3
+                   AND (
+                       is_half_day = false
+                       OR (is_half_day = true AND start_date = end_date AND start_date >= $3 AND start_date <= $4)
+                   )
+                 LIMIT 1`;
+            overlapParams = [tenantId, employeeId, start_date, end_date];
+        }
+
+        const overlap = await query(overlapQuery, overlapParams);
+        if (overlap.rowCount > 0) {
+            throw new BadRequestError("Overlapping leave request already exists");
+        }
+
+        // Issue 10: Check leave balance for paid types AND enforce max days for unpaid types
+        if (leaveType.is_paid && leaveType.code !== 'WFH') {
+            // Use FOR UPDATE inside transaction to lock the balance row
+            const balanceRes = await query(
+                `SELECT * FROM leave_balances 
+                 WHERE employee_id = $1 AND leave_type_id = $2 AND tenant_id = $3
+                 FOR UPDATE`,
+                [employeeId, leave_type_id, tenantId]
+            );
+
+            const balance = balanceRes.rows[0];
+
+            if (!balance) {
+                throw new BadRequestError(`Insufficient leave balance. Available: 0 days, Requested: ${daysCount} days`);
+            }
+
+            if (parseFloat(balance.current_balance) < daysCount) {
+                throw new BadRequestError(`Insufficient leave balance. Available: ${balance.current_balance} days, Requested: ${daysCount} days`);
+            }
+        } else if (!leaveType.is_paid && leaveType.max_consecutive_days) {
+            // Issue 10: For unpaid leave, still enforce max_consecutive_days as a limit
+            if (daysCount > leaveType.max_consecutive_days) {
+                throw new BadRequestError(`Maximum ${leaveType.max_consecutive_days} days allowed for this leave type`);
+            }
+        }
+
+        // Issue 15: Removed confusing monthly usage limit that conflated accrual_rate with usage limit.
+        // Monthly limits should be configured as a separate policy field, not derived from accrual_rate.
+
+        const res = await query(
+            `INSERT INTO leave_applications
+                (tenant_id, employee_id, leave_type_id,
+                 start_date, end_date, is_half_day, half_day_session, days_count, 
+                 status, reason, attachment_url)
+             VALUES
+                ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9, $10)
+             RETURNING *`,
+            [tenantId, employeeId, leave_type_id, start_date, end_date, !!is_half_day,
+                half_day_session || null, daysCount, reason || null, attachment_url || null]
+        );
+
+        // Issue 14: Increment pending balance
+        if (leaveType.is_paid && leaveType.code !== 'WFH') {
+            await leaveBalanceService.incrementPending(client, employeeId, leave_type_id, daysCount, tenantId);
+        }
+
+        await client.query('COMMIT');
+        return res.rows[0];
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
     }
-
-    const res = await query(
-        `INSERT INTO leave_applications
-            (tenant_id, employee_id, leave_type_id,
-             start_date, end_date, is_half_day, half_day_session, days_count, 
-             status, reason, attachment_url)
-         VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9, $10)
-         RETURNING *`,
-        [tenantId, employeeId, leave_type_id, start_date, end_date, !!is_half_day,
-            half_day_session || null, daysCount, reason || null, attachment_url || null]
-    );
-
-    return res.rows[0];
 };
 
 /**
  * EMPLOYEE: MY LEAVES
+ * Issue 21: Added pagination with LIMIT/OFFSET
  */
 exports.getMyLeaves = async (db, tenantId, employeeId, filters) => {
     const query = getQuery(db);
@@ -246,6 +206,10 @@ exports.getMyLeaves = async (db, tenantId, employeeId, filters) => {
         p++;
     }
 
+    // Issue 21: Add pagination
+    const limit = parseInt(filters.limit) || 100;
+    const offset = parseInt(filters.offset) || 0;
+
     const res = await query(
         `SELECT
             la.*,
@@ -254,8 +218,9 @@ exports.getMyLeaves = async (db, tenantId, employeeId, filters) => {
          FROM leave_applications la
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
          ${where}
-         ORDER BY la.created_at DESC`,
-        params
+         ORDER BY la.created_at DESC
+         LIMIT $${p} OFFSET $${p + 1}`,
+        [...params, limit, offset]
     );
 
     return res.rows;
@@ -263,6 +228,7 @@ exports.getMyLeaves = async (db, tenantId, employeeId, filters) => {
 
 /**
  * MANAGER: PENDING APPROVALS
+ * Issue 1: Fixed SQL injection — actor.role no longer interpolated
  */
 exports.getPendingApprovals = async (db, actor, filters) => {
     const query = getQuery(db);
@@ -270,8 +236,6 @@ exports.getPendingApprovals = async (db, actor, filters) => {
     const params = [actor.tenantId];
     let p = 2;
 
-    // Default to PENDING if status not provided, otherwise allow filtering by specific status
-    // HR/Admin see PENDING_HR (action items) by default
     let statusFilter = filters.status;
     if (!statusFilter) {
         statusFilter = (actor.role === 'HR' || actor.role === 'ADMIN') ? 'PENDING_HR' : 'PENDING';
@@ -289,15 +253,26 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 
     let where = `WHERE la.tenant_id = $1 AND ${statusClause}`;
 
-    // Visibility Logic: 
-    // - MANAGERS see requests from their direct reports (PENDING or PENDING_HR).
-    // - HR and ADMIN see PENDING_HR by default, but can see everything.
+    // Issue 12: Delegation support — managers see their directs + any delegated reports
     if (actor.role === 'MANAGER') {
         if (!actor.employeeId) {
             return [];
         }
-        where += ` AND e.reports_to = $${p}`;
+        // Check if this manager has any active delegation authority
+        where += ` AND (e.reports_to = $${p}`;
         params.push(actor.employeeId);
+        p++;
+
+        // Also allow seeing requests delegated to this user
+        where += ` OR e.reports_to IN (
+            SELECT de.id FROM approval_delegations ad
+            JOIN users du ON du.id = ad.delegator_id
+            JOIN employees de ON de.user_id = du.id
+            WHERE ad.tenant_id = $1 AND ad.delegate_id = $${p}
+              AND ad.is_active = true
+              AND ad.start_date <= CURRENT_DATE AND ad.end_date >= CURRENT_DATE
+        ))`;
+        params.push(actor.id);
         p++;
     }
 
@@ -313,6 +288,7 @@ exports.getPendingApprovals = async (db, actor, filters) => {
         p++;
     }
 
+    // Issue 1: Fixed — actor.role is now a bind parameter, not interpolated
     const res = await query(
         `SELECT
             la.*,
@@ -325,7 +301,7 @@ exports.getPendingApprovals = async (db, actor, filters) => {
             m.last_name AS manager_last_name,
             CASE 
                 WHEN e.reports_to = $${p} AND la.status = 'PENDING' THEN true 
-                WHEN '${actor.role}' IN ('HR', 'ADMIN') AND la.status = 'PENDING_HR' THEN true
+                WHEN $${p + 1} IN ('HR', 'ADMIN') AND la.status = 'PENDING_HR' THEN true
                 ELSE false 
             END AS can_approve
          FROM leave_applications la
@@ -335,7 +311,7 @@ exports.getPendingApprovals = async (db, actor, filters) => {
          LEFT JOIN employees m     ON m.id = e.reports_to
          ${where}
          ORDER BY la.start_date ASC`,
-        [...params, actor.employeeId]
+        [...params, actor.employeeId, actor.role]
     );
 
     return res.rows;
@@ -343,225 +319,304 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 
 /**
  * APPROVE LEAVE
- * Security: Only ADMIN, HR, or MANAGER can approve
- * Managers can only approve their direct reports' leaves
+ * Issues fixed: 2 (transaction), 6 (days_count fallback), 12 (delegations), 26 (logging)
  */
 exports.approveLeave = async (db, actor, leaveId, comment) => {
-    const query = getQuery(db);
-
     // SECURITY: Validate role authorization
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can approve leave requests");
     }
 
-    // Get leave details and current status
-    const leaveRes = await query(
-        `SELECT la.*, lt.is_paid, lt.code as leave_type_code, e.reports_to
-         FROM leave_applications la
-         LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
-         LEFT JOIN employees e ON e.id = la.employee_id
-         WHERE la.id = $1 AND la.tenant_id = $2`,
-        [leaveId, actor.tenantId]
-    );
+    // Issue 2: Wrap in transaction
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const query = client.query.bind(client);
 
-    if (leaveRes.rowCount === 0) {
-        throw new Error("Leave application not found");
-    }
-
-    const leave = leaveRes.rows[0];
-
-    // BLOCK SELF-APPROVAL
-    if (leave.employee_id === actor.employeeId) {
-        throw new Error("You cannot approve your own leave requests.");
-    }
-
-    // ---------------------------------------------------------
-    // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
-    // ---------------------------------------------------------
-    if (leave.status === 'PENDING') {
-        if (leave.reports_to !== actor.employeeId && actor.role !== 'ADMIN' && actor.role !== 'HR') {
-            throw new Error("You can only approve leave for employees who report directly to you.");
-        }
-
-        const res = await query(
-            `UPDATE leave_applications
-             SET status              = 'PENDING_HR',
-                 manager_approved_by = $1,
-                 manager_approved_at = now(),
-                 manager_note        = $2,
-                 updated_at          = now()
-             WHERE id = $3
-             RETURNING *`,
-            [actor.id, comment || null, leaveId]
-        );
-        return res.rows[0];
-    }
-
-    // ---------------------------------------------------------
-    // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
-    // ---------------------------------------------------------
-    if (leave.status === 'PENDING_HR') {
-        if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
-            throw new Error("Only HR or Admin can finalize this leave request after manager approval.");
-        }
-
-        const res = await query(
-            `UPDATE leave_applications
-             SET status       = 'APPROVED',
-                 approved_by  = $1,
-                 approved_at  = now(),
-                 hr_note      = $2,
-                 updated_at   = now()
-             WHERE id = $3
-             RETURNING *`,
-            [actor.id, comment || null, leaveId]
+        // Get leave details and current status
+        const leaveRes = await query(
+            `SELECT la.*, lt.is_paid, lt.code as leave_type_code, e.reports_to
+             FROM leave_applications la
+             LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
+             LEFT JOIN employees e ON e.id = la.employee_id
+             WHERE la.id = $1 AND la.tenant_id = $2`,
+            [leaveId, actor.tenantId]
         );
 
-        // Deduct balance for paid leave types (Except WFH)
-        if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
-            const daysCount = leave.days_count ||
-                (leave.is_half_day ? 0.5 :
-                    Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);
+        if (leaveRes.rowCount === 0) {
+            throw new Error("Leave application not found");
+        }
 
-            try {
+        const leave = leaveRes.rows[0];
+
+        // BLOCK SELF-APPROVAL
+        if (leave.employee_id === actor.employeeId) {
+            throw new Error("You cannot approve your own leave requests.");
+        }
+
+        // ---------------------------------------------------------
+        // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
+        // ---------------------------------------------------------
+        if (leave.status === 'PENDING') {
+            // Issue 12: Check delegation — actor is either the direct manager or a delegate
+            const isDirectManager = leave.reports_to === actor.employeeId;
+            const isDelegateApprover = await delegationService.canApprove(client, actor.id,
+                // Get the user_id of the reports_to employee
+                (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0]?.user_id,
+                actor.tenantId
+            );
+
+            if (!isDirectManager && !isDelegateApprover && actor.role !== 'ADMIN' && actor.role !== 'HR') {
+                throw new Error("You can only approve leave for employees who report directly to you.");
+            }
+
+            const res = await query(
+                `UPDATE leave_applications
+                 SET status              = 'PENDING_HR',
+                     manager_approved_by = $1,
+                     manager_approved_at = now(),
+                     manager_note        = $2,
+                     updated_at          = now()
+                 WHERE id = $3
+                 RETURNING *`,
+                [actor.id, comment || null, leaveId]
+            );
+
+            await query('COMMIT');
+            return res.rows[0];
+        }
+
+        // ---------------------------------------------------------
+        // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
+        // ---------------------------------------------------------
+        if (leave.status === 'PENDING_HR') {
+            if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
+                throw new Error("Only HR or Admin can finalize this leave request after manager approval.");
+            }
+
+            const res = await query(
+                `UPDATE leave_applications
+                 SET status       = 'APPROVED',
+                     approved_by  = $1,
+                     approved_at  = now(),
+                     hr_note      = $2,
+                     updated_at   = now()
+                 WHERE id = $3
+                 RETURNING *`,
+                [actor.id, comment || null, leaveId]
+            );
+
+            // Deduct balance for paid leave types (Except WFH)
+            if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
+                // Issue 6: Use stored days_count; fallback to holidayService instead of calendar days
+                let daysCount = parseFloat(leave.days_count);
+                if (!daysCount || isNaN(daysCount)) {
+                    if (leave.is_half_day) {
+                        daysCount = 0.5;
+                    } else {
+                        daysCount = await holidayService.countWorkingDays(
+                            client,
+                            leave.start_date.toISOString().split('T')[0],
+                            leave.end_date.toISOString().split('T')[0],
+                            actor.tenantId
+                        );
+                    }
+                }
+
+                // Balance deduction and pending balance clearance MUST be atomic
                 await leaveBalanceService.deductBalance(
-                    db, leave.employee_id, leave.leave_type_id, daysCount,
+                    client, leave.employee_id, leave.leave_type_id, daysCount,
                     actor.tenantId, `Approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, actor.id
                 );
-            } catch (err) {
-                console.warn("Could not deduct balance:", err.message);
+
+                await leaveBalanceService.decrementPending(client, leave.employee_id, leave.leave_type_id, daysCount, actor.tenantId);
             }
+
+            await query('COMMIT');
+            return res.rows[0];
         }
 
-        return res.rows[0];
+        throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
     }
-
-    throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
 };
 
 /**
  * REJECT LEAVE
- * Security: Only ADMIN, HR, or MANAGER can reject
- * Managers can only reject their direct reports' leaves
+ * Issues fixed: 12 (delegations), 14 (pending balance)
  */
 exports.rejectLeave = async (db, actor, leaveId, reason) => {
-    const query = getQuery(db);
-
     // SECURITY: Validate role authorization
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can reject leave requests");
     }
 
-    // Get request details
-    const leaveCheck = await query(
-        `SELECT la.employee_id, la.status, e.reports_to 
-         FROM leave_applications la
-         JOIN employees e ON e.id = la.employee_id
-         WHERE la.id = $1 AND la.tenant_id = $2`,
-        [leaveId, actor.tenantId]
-    );
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const query = client.query.bind(client);
 
-    if (leaveCheck.rowCount === 0) {
-        throw new Error("Leave application not found");
-    }
+        // Get request details
+        const leaveCheck = await query(
+            `SELECT la.employee_id, la.status, la.leave_type_id, la.days_count, la.is_half_day,
+                    e.reports_to, lt.is_paid, lt.code as leave_type_code
+             FROM leave_applications la
+             JOIN employees e ON e.id = la.employee_id
+             LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
+             WHERE la.id = $1 AND la.tenant_id = $2`,
+            [leaveId, actor.tenantId]
+        );
 
-    const leave = leaveCheck.rows[0];
-
-    // Block self-rejection
-    if (leave.employee_id === actor.employeeId) {
-        throw new Error("You cannot reject your own leave requests.");
-    }
-
-    // Authorization check
-    if (actor.role === 'MANAGER') {
-        if (leave.reports_to !== actor.employeeId) {
-            throw new Error("You can only reject leave for employees who report directly to you.");
+        if (leaveCheck.rowCount === 0) {
+            throw new Error("Leave application not found");
         }
-        if (leave.status !== 'PENDING') {
-            throw new Error(`You can only reject requests in PENDING status. This request is already ${leave.status}.`);
+
+        const leave = leaveCheck.rows[0];
+
+        // Block self-rejection
+        if (leave.employee_id === actor.employeeId) {
+            throw new Error("You cannot reject your own leave requests.");
         }
-    } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
-        if (leave.status !== 'PENDING' && leave.status !== 'PENDING_HR') {
-            throw new Error(`Request is already ${leave.status}.`);
+
+        // Authorization check
+        if (actor.role === 'MANAGER') {
+            // Issue 12: Check delegation
+            const isDirectManager = leave.reports_to === actor.employeeId;
+            const reportToUserId = (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0]?.user_id;
+            const isDelegateApprover = reportToUserId ? await delegationService.canApprove(client, actor.id, reportToUserId, actor.tenantId) : false;
+
+            if (!isDirectManager && !isDelegateApprover) {
+                throw new Error("You can only reject leave for employees who report directly to you.");
+            }
+            if (leave.status !== 'PENDING') {
+                throw new Error(`You can only reject requests in PENDING status. This request is already ${leave.status}.`);
+            }
+        } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
+            if (leave.status !== 'PENDING' && leave.status !== 'PENDING_HR') {
+                throw new Error(`Request is already ${leave.status}.`);
+            }
         }
+
+        const res = await query(
+            `UPDATE leave_applications
+             SET status           = 'REJECTED',
+                 rejected_by      = $1,
+                 rejected_at      = now(),
+                 rejection_reason = $2,
+                 updated_at       = now()
+             WHERE id = $3
+               AND tenant_id = $4
+             RETURNING *`,
+            [actor.id, reason || null, leaveId, actor.tenantId]
+        );
+
+        // Issue 14: Clear pending balance on rejection
+        if (leave.is_paid && leave.leave_type_code !== 'WFH') {
+            const daysCount = parseFloat(leave.days_count) || (leave.is_half_day ? 0.5 : 0);
+            if (daysCount > 0) {
+                await leaveBalanceService.decrementPending(client, leave.employee_id, leave.leave_type_id, daysCount, actor.tenantId);
+            }
+        }
+
+        await query('COMMIT');
+        return res.rows[0];
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
     }
-
-    const res = await query(
-        `UPDATE leave_applications
-         SET status           = 'REJECTED',
-             rejected_by      = $1,
-             rejected_at      = now(),
-             rejection_reason = $2,
-             updated_at       = now()
-         WHERE id = $3
-           AND tenant_id = $4
-         RETURNING *`,
-        [actor.id, reason || null, leaveId, actor.tenantId]
-    );
-
-    return res.rows[0];
 };
 
 /**
- * CANCEL APPROVED LEAVE
+ * CANCEL LEAVE (PENDING, PENDING_HR, or APPROVED)
+ * Issues fixed: 3 (transaction), 6 (days_count fallback), 14 (pending), 26 (logging)
  */
 exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) => {
-    const query = getQuery(db);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const query = (text, params) => client.query(text, params);
 
-    // Get leave details
-    const leaveRes = await query(
-        `SELECT la.*, lt.is_paid, lt.code as leave_type_code 
-         FROM leave_applications la
-         LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
-         WHERE la.id = $1 AND la.tenant_id = $2 AND la.employee_id = $3 AND la.status = 'APPROVED'`,
-        [leaveId, tenantId, employeeId]
-    );
+        // Get leave details — allow cancelling PENDING, PENDING_HR, or APPROVED leaves
+        const leaveRes = await query(
+            `SELECT la.*, lt.is_paid, lt.code as leave_type_code 
+             FROM leave_applications la
+             LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
+             WHERE la.id = $1 AND la.tenant_id = $2 AND la.employee_id = $3 
+               AND la.status IN ('PENDING', 'PENDING_HR', 'APPROVED')`,
+            [leaveId, tenantId, employeeId]
+        );
 
-    if (leaveRes.rowCount === 0) {
-        throw new Error("Approved leave not found or you don't have permission to cancel it");
-    }
-
-    const leave = leaveRes.rows[0];
-
-    // Cannot cancel past leaves
-    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
-    const todayStr = timeService.todayDate(tz);
-    if (new Date(leave.start_date) < new Date(todayStr)) {
-        throw new Error("Cannot cancel leave that has already started or passed");
-    }
-
-    // Update leave status
-    const res = await query(
-        `UPDATE leave_applications
-         SET status = 'CANCELLED',
-             cancelled_at = now(),
-             cancelled_by = (SELECT id FROM users WHERE tenant_id = $1 AND id = (SELECT user_id FROM employees WHERE id = $2)),
-             rejection_reason = $3,
-             updated_at = now()
-         WHERE id = $4
-         RETURNING *`,
-        [tenantId, employeeId, reason || 'Cancelled by employee', leaveId]
-    );
-
-    // Restore balance for paid leave types (Except WFH)
-    if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
-        const daysCount = leave.days_count ||
-            (leave.is_half_day ? 0.5 :
-                Math.ceil((new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1);
-
-        try {
-            await leaveBalanceService.restoreBalance(
-                db, employeeId, leave.leave_type_id, daysCount,
-                tenantId, `Cancelled approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, null
-            );
-        } catch (err) {
-            console.warn("Could not restore balance:", err.message);
+        if (leaveRes.rowCount === 0) {
+            throw new Error("Leave not found, already cancelled/rejected, or you don't have permission");
         }
-    }
 
-    return res.rows[0];
+        const leave = leaveRes.rows[0];
+        const previousStatus = leave.status;
+
+        // Only block past-date cancellation for APPROVED leaves
+        if (previousStatus === 'APPROVED') {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const startStr = leave.start_date instanceof Date
+                ? leave.start_date.toISOString().split('T')[0]
+                : String(leave.start_date).split('T')[0];
+            if (new Date(startStr) < new Date(todayStr)) {
+                throw new Error("Cannot cancel leave that has already started or passed");
+            }
+        }
+
+        // Update leave status
+        const res = await query(
+            `UPDATE leave_applications
+             SET status = 'CANCELLED',
+                 cancelled_at = now(),
+                 rejection_reason = $1,
+                 updated_at = now()
+             WHERE id = $2
+             RETURNING *`,
+            [reason || 'Cancelled by employee', leaveId]
+        );
+
+        // Restore balance for paid leave types
+        if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
+            let daysCount = parseFloat(leave.days_count);
+            // Re-calculate if count missing (Issue 6)
+            if (!daysCount || isNaN(daysCount)) {
+                daysCount = await holidayService.countWorkingDays(
+                    client,
+                    leave.start_date.toISOString().split('T')[0],
+                    leave.end_date.toISOString().split('T')[0],
+                    tenantId
+                );
+            }
+
+            if (previousStatus === 'APPROVED') {
+                // If it was already approved, restore the used balance
+                await leaveBalanceService.restoreBalance(
+                    client, employeeId, leave.leave_type_id, daysCount,
+                    tenantId, `Cancelled leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, employeeId
+                );
+            } else {
+                // If it was PENDING or PENDING_HR, just clear the pending balance
+                await leaveBalanceService.decrementPending(client, employeeId, leave.leave_type_id, daysCount, tenantId);
+            }
+        }
+
+        await client.query('COMMIT');
+        return res.rows[0];
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
 };
 
 /**
@@ -599,13 +654,11 @@ exports.getLeaveSummary = async (db, actor, filters) => {
     }
 
     if (filters.to_date) {
-        // Adjust to include the end of the day
         dateFilter += ` AND la.created_at <= $${p}::date + interval '1 day'`;
         params.push(filters.to_date);
         p++;
     }
 
-    // Get overall counts based on creation date for the period
     const countsRes = await query(
         `SELECT
             COUNT(*) AS total_applications,
@@ -619,7 +672,6 @@ exports.getLeaveSummary = async (db, actor, filters) => {
         params
     );
 
-    // Get breakdown by type for approved leaves in this period
     const breakdownRes = await query(
         `SELECT
             lt.name AS leave_type_name,

@@ -1,7 +1,11 @@
 const pool = require("../../../config/db");
 
-const getQuery = (db) =>
-    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+const getQuery = (db) => {
+    if (db && typeof db.query === "function") {
+        return (text, params) => db.query(text, params);
+    }
+    return pool.query.bind(pool);
+};
 
 exports.createDelegation = async (db, data, actor) => {
     const query = getQuery(db);
@@ -10,7 +14,8 @@ exports.createDelegation = async (db, data, actor) => {
         throw new Error("Start date cannot be after end date");
     }
 
-    if (new Date(data.start_date) < new Date()) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (data.start_date < todayStr) {
         throw new Error("Cannot create delegation for past dates");
     }
 

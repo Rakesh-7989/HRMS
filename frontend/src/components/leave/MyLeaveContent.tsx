@@ -210,11 +210,18 @@ export const MyLeaveContent: React.FC = () => {
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                     : leave.status === 'REJECTED'
                                                         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                        : leave.status === 'CANCELLED'
+                                                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                                                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                                     }`}
                                             >
                                                 {leave.status}
                                             </span>
+                                            {(leave.status === 'REJECTED' || leave.status === 'CANCELLED') && (leave as any).rejection_reason && (
+                                                <p className="text-xs text-red-500 dark:text-red-400 mt-1 whitespace-normal max-w-[200px]">
+                                                    Reason: {(leave as any).rejection_reason}
+                                                </p>
+                                            )}
                                         </td>
                                         <td className="py-3 px-4 text-right">
                                             {leave.status === 'PENDING' && (
