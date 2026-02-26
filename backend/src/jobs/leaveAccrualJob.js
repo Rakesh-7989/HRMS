@@ -2,12 +2,9 @@ const cron = require('node-cron');
 const pool = require("../config/db");
 const logger = require("../config/logger");
 const leavePolicyService = require("../modules/leave/policies/leavePolicy.service");
-<<<<<<< Updated upstream
-const timeService = require("../utils/timeService"); // Issue 30
-
-=======
+const timeService = require("../utils/timeService");
 const asyncContext = require("../utils/asyncContext");
->>>>>>> Stashed changes
+
 
 /**
  * Leave Accrual Job
