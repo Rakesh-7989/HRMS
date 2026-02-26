@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { ArrowLeft } from 'lucide-react';
 
 export const ForgotPasswordPage: React.FC = () => {

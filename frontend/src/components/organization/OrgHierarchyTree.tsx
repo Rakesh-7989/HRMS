@@ -14,7 +14,7 @@ import {
     Trash2,
     Share2
 } from 'lucide-react';
-import { hierarchyService, HierarchyPosition } from '@/services/hierarchy.service';
+import { hierarchyService, HierarchyPosition } from '@/services/organization/hierarchy.service';
 import { cn } from '@/utils/cn';
 import { CreatePositionForm } from '@/components/forms/CreatePositionForm';
 import { usePermission } from '@/contexts/PermissionContext';

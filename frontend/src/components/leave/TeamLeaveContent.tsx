@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { leaveService, LeaveType } from '@/services/leave.service';
+import { leaveService, LeaveType } from '@/services/employee/leave.service';
 import { usePermission } from '@/contexts/PermissionContext';
 import { CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, subDays } from 'date-fns';

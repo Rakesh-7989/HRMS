@@ -15,7 +15,7 @@ export const AddEmployeePage: React.FC = () => {
   // Subscription Query for Limit Check
   const { data: subscription, isLoading } = useQuery({ // Using react-query's useQuery
     queryKey: ['my-subscription'],
-    queryFn: () => import('@/services/subscription.service').then(m => m.subscriptionService.getMySubscription()),
+    queryFn: () => import('@/services/finance/subscription.service').then(m => m.subscriptionService.getMySubscription()),
     retry: false
   });
 

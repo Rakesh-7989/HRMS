@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
-import api from '@/services/api';
+import api from '@/services/common/api';
 import toast from 'react-hot-toast';
 
 interface ParticipantInfo {

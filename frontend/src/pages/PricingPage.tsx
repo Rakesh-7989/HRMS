@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { Check, Star, Zap, ShieldCheck, ChevronDown, Minus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { SuccessModal } from '@/components/ui/SuccessModal';
-import { plansService } from '@/services/plans.service';
+import { plansService } from '@/services/finance/plans.service';
 
-import { subscriptionService } from '@/services/subscription.service';
+import { subscriptionService } from '@/services/finance/subscription.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermission } from '@/contexts/PermissionContext';
 import { toast } from 'react-hot-toast';

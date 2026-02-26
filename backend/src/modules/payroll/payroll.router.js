@@ -110,7 +110,7 @@ router.get('/summary', verifyJwt, requireAnyPermission(["view_all_payroll", "man
 // ===================================================================
 
 // Salary Components (redirect to salary.service or return placeholder)
-router.get('/salary-components', verifyJwt, async (req, res) => {
+router.get('/salary-components', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const templates = await salaryService.getTemplates(req.user.tenantId);
     res.json({ status: 'success', data: templates });
@@ -120,7 +120,7 @@ router.get('/salary-components', verifyJwt, async (req, res) => {
 });
 
 // Cost Centers (redirect to statutory)
-router.get('/cost-centers', verifyJwt, async (req, res) => {
+router.get('/cost-centers', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const data = await statutoryService.getCostCentres(req.user.tenantId);
     res.json({ status: 'success', data });
@@ -140,7 +140,7 @@ router.post('/cost-centers', verifyJwt, requirePermission('manage_payroll_compon
 });
 
 // Pay Schedules
-router.get('/schedules', verifyJwt, async (req, res) => {
+router.get('/schedules', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const data = await payrunService.getSchedules(req.user.tenantId);
     res.json({ status: 'success', data });
@@ -150,7 +150,7 @@ router.get('/schedules', verifyJwt, async (req, res) => {
 });
 
 // Deductions
-router.get('/deductions', verifyJwt, async (req, res) => {
+router.get('/deductions', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const data = await statutoryService.getDeductionTypes(req.user.tenantId);
     res.json({ status: 'success', data });
@@ -159,7 +159,7 @@ router.get('/deductions', verifyJwt, async (req, res) => {
   }
 });
 
-router.get('/deduction-types', verifyJwt, async (req, res) => {
+router.get('/deduction-types', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const data = await statutoryService.getDeductionTypes(req.user.tenantId);
     res.json({ status: 'success', data });
@@ -169,7 +169,7 @@ router.get('/deduction-types', verifyJwt, async (req, res) => {
 });
 
 // Salary Revisions
-router.get('/salary-revisions', verifyJwt, async (req, res) => {
+router.get('/salary-revisions', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   try {
     const data = await salaryService.getRevisions(req.user.tenantId);
     res.json({ status: 'success', data });
@@ -179,7 +179,7 @@ router.get('/salary-revisions', verifyJwt, async (req, res) => {
 });
 
 // Income Tax
-router.get('/income-tax', verifyJwt, async (req, res) => {
+router.get('/income-tax', verifyJwt, requirePermission('view_all_payroll'), async (req, res) => {
   // Return statutory config for now
   try {
     const data = await statutoryService.getStatutoryConfig(req.user.tenantId);

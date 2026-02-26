@@ -3,7 +3,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Minus, Maximize2, Monitor, UserPlus, Search, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import api from '@/services/api';
+import api from '@/services/common/api';
 import { formatDuration } from '@/utils/format';
 
 

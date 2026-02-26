@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '@/services/api'; // Adjust path if needed
-import { authService } from '@/services/auth.service';
+import api from '@/services/common/api'; // Adjust path if needed
+import { authService } from '@/services/auth/auth.service';
 import {
     Database,
     Terminal,

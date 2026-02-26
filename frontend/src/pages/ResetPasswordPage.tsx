@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export const ResetPasswordPage: React.FC = () => {

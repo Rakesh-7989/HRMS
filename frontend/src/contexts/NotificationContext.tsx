@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { inboxService } from '@/services/inbox.service';
+import { inboxService } from '@/services/common/inbox.service';
 
 export interface Notification {
     id: string;

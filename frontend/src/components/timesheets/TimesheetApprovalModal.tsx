@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 import { WeeklyTimesheetEntry } from './WeeklyTimesheetEntry';
 import { Timesheet } from '@/types/project.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { timesheetService } from '@/services/timesheet.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
 import { toast } from 'react-hot-toast';
 
 

@@ -15,7 +15,7 @@ import {
   Twitter, Linkedin, Github, Youtube, Mail, Phone
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { plansService } from '@/services/plans.service';
+import { plansService } from '@/services/finance/plans.service';
 import { cn } from '@/utils/cn';
 import rolesVisual from '@/assets/hrms_roles.png';
 

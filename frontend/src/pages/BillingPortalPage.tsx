@@ -10,7 +10,7 @@ import { SuccessModal } from '@/components/ui/SuccessModal';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 import { usePermission } from '@/contexts/PermissionContext';
-import { subscriptionService } from '@/services/subscription.service';
+import { subscriptionService } from '@/services/finance/subscription.service';
 
 import { load } from '@cashfreepayments/cashfree-js';
 

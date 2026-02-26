@@ -11,6 +11,7 @@ interface LoginResponse {
   preAuthToken?: string;
   permissions?: string[];
   message?: string;
+  default_path?: string;
 }
 
 interface RefreshResponse {
@@ -74,6 +75,7 @@ export const authService = {
       employee_id: decoded.employeeId,
       permissions: response.data.permissions || [],
       is_active: true,
+      default_path: response.data.default_path,
     };
 
     // Store tokens based on rememberMe preference

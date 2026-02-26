@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import api from '@/services/api';
+import api from '@/services/common/api';
 import { format } from 'date-fns';
 import { Send, Phone, Video, MoreVertical, Search, Paperclip, Edit2, Trash2, X, Check, Users, Plus, Smile, Clock, Minus, PhoneIncoming, Pin, ArrowRight, MicOff, VideoOff } from 'lucide-react';
 import { cn } from '@/utils/cn';

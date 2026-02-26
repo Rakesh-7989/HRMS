@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Dialog, DialogFooter } from '../ui/Dialog';
 import { Button } from '../ui/Button';
-import { superAdminService } from '@/services/superAdmin.service';
+import { superAdminService } from '@/services/management/superAdmin.service';
 
 interface BillingHistoryModalProps {
     isOpen: boolean;

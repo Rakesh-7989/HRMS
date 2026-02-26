@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { showToast } from '@/utils/toast';
 import { Shield, Copy, Check, AlertTriangle, Key, X } from 'lucide-react';
 

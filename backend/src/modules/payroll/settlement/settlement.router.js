@@ -48,26 +48,26 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/reimbursements",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     validate(createReimbursementSchema),
     controller.createReimbursement
 );
 
 router.get(
     "/reimbursements/my",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.getMyReimbursements
 );
 
 router.get(
     "/reimbursements",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.getReimbursements
 );
 
 router.patch(
     "/reimbursements/:id/approve",
-    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+    requireAnyPermission(["run_payroll", "view_own_payroll"]),
     validate(approveReimbursementSchema),
     controller.approveReimbursement
 );
@@ -77,45 +77,45 @@ router.patch(
 // =====================
 router.post(
     "/fnf",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     validate(createFnFSchema),
     controller.createFnFSettlement
 );
 
 router.get(
     "/fnf",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.getFnFSettlements
 );
 
 router.get(
     "/fnf/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.getFnFSettlementById
 );
 
 router.put(
     "/fnf/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.updateFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/submit",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.submitFnFForApproval
 );
 
 router.patch(
     "/fnf/:id/approve",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     validate(approveFnFSchema),
     controller.approveFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/pay",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.markFnFPaid
 );
 

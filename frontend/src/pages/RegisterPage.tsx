@@ -7,7 +7,7 @@ import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '@/components/ui/Button';
-import { tenantRegistrationService } from '@/services/tenantRegistration.service';
+import { tenantRegistrationService } from '@/services/organization/tenantRegistration.service';
 
 type Step = 'details' | 'otp' | 'success';
 

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { notificationsService, Notification } from '@/services/notifications.service';
+import { notificationsService, Notification } from '@/services/common/notifications.service';
 import { Bell, CheckCheck, Trash2, Info, AlertCircle, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';

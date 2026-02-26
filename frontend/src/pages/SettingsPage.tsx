@@ -12,7 +12,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermission } from '@/contexts/PermissionContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import {
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/Dialog';
 import { SessionsModal } from '@/components/forms/SessionsModal';
 import { ChangePasswordModal } from '@/components/forms/ChangePasswordModal';
-import { subscriptionService } from '@/services/subscription.service';
+import { subscriptionService } from '@/services/finance/subscription.service';
 import { TwoFactorModal } from '@/components/forms/TwoFactorModal';
 
 import { SuccessModal } from '@/components/ui/SuccessModal';
@@ -75,10 +75,10 @@ export const SettingsPage: React.FC = () => {
       breadcrumbs={[
         {
           label: 'Dashboard',
-          href: user?.role === 'SUPER_ADMIN' ? '/dashboard/system' :
+          href: hasPermission('platform.manage_tenants') ? '/dashboard/system' :
             hasPermission('manage_roles') ? '/dashboard/organization' :
               hasPermission('view_hr_reports') ? '/dashboard/hr' :
-                hasPermission('approve_leave') ? '/dashboard/team' :
+                hasPermission('approve_attendance_regularization') || hasPermission('approve_leave') ? '/dashboard/team' :
                   '/dashboard/personal'
         },
         { label: 'Settings' },

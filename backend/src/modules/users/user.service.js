@@ -10,6 +10,15 @@ const tenantService = require("../tenant/tenant.service");
 const getQuery = (db) =>
   db && typeof db.query === "function" ? db.query : dbQuery;
 
+exports.calculateDefaultPath = (permissions) => {
+  if (permissions.includes('platform.manage_tenants')) return '/dashboard/system';
+  if (permissions.includes('view_admin_dashboard')) return '/dashboard/organization';
+  if (permissions.includes('view_hr_reports')) return '/dashboard/hr';
+  if (permissions.includes('approve_attendance_regularization') || permissions.includes('approve_leave')) return '/dashboard/team';
+  if (permissions.includes('view_own_attendance') || permissions.includes('view_own_leave')) return '/dashboard/personal';
+  return '/dashboard/personal'; // Absolute fallback
+};
+
 /* ----------------------------- CREATE USER ----------------------------- */
 exports.createUser = async (db, data, actor) => {
   const client = await pool.connect();
@@ -394,7 +403,7 @@ exports.getUsers = async (db, opts, actor) => {
   if (!canViewAll) {
     if (canViewTeam) {
       if (!actor.employeeId) {
-        console.warn(`[getUsers] User ${actor.id} lacks employeeId but has attendance.manage. Returning empty.`);
+        console.warn(`[getUsers] User ${actor.id} lacks employeeId but has view_team_employees. Returning empty.`);
         return [];
       }
       filter.push(`e.reports_to = $${i}`);
@@ -663,6 +672,7 @@ exports.getMyProfile = async (db, user) => {
     `
     SELECT
       u.id, u.email, u.role, u.is_active, u.two_factor_enabled, u.created_at, u.updated_at,
+      r.default_path,
       COALESCE(e.first_name, '') as first_name,
       COALESCE(e.last_name, '') as last_name,
       e.phone,
@@ -702,6 +712,7 @@ exports.getMyProfile = async (db, user) => {
       p.name as subscription_plan_name,
       t.settings as tenant_settings
     FROM users u
+    LEFT JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
     LEFT JOIN employees e ON e.user_id = u.id
     LEFT JOIN employees m ON m.id = e.reports_to
     LEFT JOIN shifts sh ON sh.id = e.shift_id
@@ -729,16 +740,58 @@ exports.getMyProfile = async (db, user) => {
 
   const profile = res.rows[0];
 
-  // Load user permissions from RBAC system
-  const permRes = await query(
-    `SELECT DISTINCT p.name
-     FROM user_roles ur
-     JOIN role_permissions rp ON rp.role_id = ur.role_id
-     JOIN permissions p ON p.id = rp.permission_id
-     WHERE ur.user_id = $1`,
-    [user.id]
-  );
-  profile.permissions = permRes.rows.map(r => r.name);
+  // Load user permissions from RBAC system (including primary role)
+  let permRes;
+  if (profile.role === 'SUPER_ADMIN') {
+    // Use role-permission assignments, but always include platform permissions as safety net
+    permRes = await query(
+      `SELECT DISTINCT p.name
+       FROM (
+         SELECT ur.role_id FROM user_roles ur WHERE ur.user_id = $1
+         UNION
+         SELECT r.id FROM users u 
+         JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
+         WHERE u.id = $1
+       ) user_all_roles
+       JOIN role_permissions rp ON rp.role_id = user_all_roles.role_id
+       JOIN permissions p ON p.id = rp.permission_id`,
+      [user.id]
+    );
+    // Always include platform-level permissions for SUPER_ADMIN
+    const platformRes = await query(
+      `SELECT name FROM permissions WHERE name LIKE 'platform.%'`
+    );
+    const platformPerms = platformRes.rows.map(r => r.name);
+    const rolePerms = permRes.rows.map(r => r.name);
+    profile.permissions = [...new Set([...rolePerms, ...platformPerms])];
+  } else {
+    permRes = await query(
+      `SELECT DISTINCT p.name
+       FROM (
+         -- Permissions from explicitly assigned roles
+         SELECT ur.role_id FROM user_roles ur WHERE ur.user_id = $1
+         UNION
+         -- Permissions from primary role in users table
+         SELECT r.id FROM users u 
+         JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
+         WHERE u.id = $1
+       ) user_all_roles
+       JOIN role_permissions rp ON rp.role_id = user_all_roles.role_id
+       JOIN permissions p ON p.id = rp.permission_id`,
+      [user.id]
+    );
+  }
+  if (profile.role !== 'SUPER_ADMIN') {
+    profile.permissions = permRes.rows.map(r => r.name);
+  }
+
+  // Set default path based on permissions
+  profile.default_path = exports.calculateDefaultPath(profile.permissions);
+
+  // Debug: Log SUPER_ADMIN permissions
+  if (profile.role === 'SUPER_ADMIN') {
+    console.log(`[PROFILE DEBUG] SUPER_ADMIN permissions (${profile.permissions.length}):`, profile.permissions.sort().join(', '));
+  }
 
   return profile;
 };

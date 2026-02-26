@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 import { cn } from '@/utils/cn';
 
 interface WorkingHoursModalProps {

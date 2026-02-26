@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
+import { leaveService, LeaveType, LeaveBalance } from '@/services/employee/leave.service';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, Search, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';

@@ -7,7 +7,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { searchService, SearchResult } from '@/services/search.service';
+import { searchService, SearchResult } from '@/services/common/search.service';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NavbarClock } from './NavbarClock';
 import { usePermission } from '@/contexts/PermissionContext';

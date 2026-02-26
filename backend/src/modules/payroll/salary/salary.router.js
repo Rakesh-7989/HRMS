@@ -60,33 +60,33 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/templates",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createTemplateSchema),
     controller.createTemplate
 );
 
 router.get(
     "/templates",
-    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+    requireAnyPermission(["manage_payroll_policies", "view_own_payroll"]),
     controller.getTemplates
 );
 
 router.get(
     "/templates/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getTemplateById
 );
 
 router.put(
     "/templates/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createTemplateSchema),
     controller.updateTemplate
 );
 
 router.delete(
     "/templates/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_policies"),
     controller.deleteTemplate
 );
 
@@ -95,26 +95,26 @@ router.delete(
 // =====================
 router.post(
     "/assign",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(assignSalarySchema),
     controller.assignSalary
 );
 
 router.get(
     "/all",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getAllEmployeeSalaries
 );
 
 router.get(
     "/employee/:employeeId",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll", "view_payroll"]),
     controller.getEmployeeSalary
 );
 
 router.get(
     "/employee/:employeeId/history",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getEmployeeSalaryHistory
 );
 
@@ -123,20 +123,20 @@ router.get(
 // =====================
 router.post(
     "/revisions",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createRevisionSchema),
     controller.createRevision
 );
 
 router.get(
     "/revisions",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getRevisions
 );
 
 router.patch(
     "/revisions/:id/approve",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_policies"),
     validate(approveRevisionSchema),
     controller.approveRevision
 );

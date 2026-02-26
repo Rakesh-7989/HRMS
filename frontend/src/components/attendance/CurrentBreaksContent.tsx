@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { attendanceService } from '@/services/attendance.service';
+import { attendanceService } from '@/services/employee/attendance.service';
 import { Card } from '@/components/ui/Card';
 import { Loader2, RefreshCw, Coffee, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

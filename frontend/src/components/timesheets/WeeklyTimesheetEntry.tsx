@@ -7,9 +7,9 @@ import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-import { timesheetService } from '@/services/timesheet.service';
-import { attendanceService } from '@/services/attendance.service';
-import { projectsService } from '@/services/projects.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
+import { attendanceService } from '@/services/employee/attendance.service';
+import { projectsService } from '@/services/management/projects.service';
 import { cn } from '@/utils/cn';
 import { Task, Timesheet } from '@/types/project.types';
 import { useAuth } from '@/contexts/AuthContext';

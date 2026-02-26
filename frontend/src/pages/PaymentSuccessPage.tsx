@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { subscriptionService } from '@/services/subscription.service';
+import { subscriptionService } from '@/services/finance/subscription.service';
 
 export const PaymentSuccessPage: React.FC = () => {
     const navigate = useNavigate();

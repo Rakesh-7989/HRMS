@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '@/services/auth.service';
-import { usersService } from '@/services/users.service';
+import { authService } from '@/services/auth/auth.service';
+import { usersService } from '@/services/employee/users.service';
 import type { User, LoginCredentials } from '@/types';
 
 interface AuthContextType {
@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<any>;
   logout: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
   hasActivePlan: boolean;
   hasPermission: (permission: string) => boolean;
@@ -58,6 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               tenant_settings: profile.tenant_settings,
               permissions: (profile as any).permissions || (storedUser as any).permissions || [],
               shift_week_offs: profile.shift_week_offs || storedUser.shift_week_offs,
+              default_path: profile.default_path || storedUser.default_path,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
             setUser(merged);
@@ -127,6 +129,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           tenant_settings: profile.tenant_settings,
           permissions: (profile as any).permissions || (response.user as any).permissions || [],
           shift_week_offs: profile.shift_week_offs || response.user.shift_week_offs,
+          default_path: profile.default_path || response.user.default_path,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
         setUser(merged);
@@ -136,6 +139,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     return response;
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const profile = await usersService.getMyProfile();
+      if (profile && user) {
+        const merged: User = {
+          ...user,
+          ...profile,
+          permissions: (profile as any).permissions || [],
+          default_path: profile.default_path || user.default_path,
+        } as User;
+        localStorage.setItem('user', JSON.stringify(merged));
+        setUser(merged);
+      }
+    } catch (err) {
+      console.warn('Failed to refresh profile:', err);
+    }
   };
 
   const logout = async () => {
@@ -152,13 +173,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         setUser,
+        refreshProfile,
         isAuthenticated: !!user,
         hasActivePlan: user?.role === 'SUPER_ADMIN' ||
           user?.subscription_status === 'ACTIVE' ||
           user?.subscription_status === 'TRIAL' ||
           (user?.subscription_status === 'CANCELLED' && user?.cancel_at_period_end === true),
         hasPermission: (permission: string) => {
-          if (user?.role === 'SUPER_ADMIN') return true;
           return user?.permissions?.includes(permission) || false;
         },
       }}

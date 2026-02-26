@@ -25,7 +25,7 @@ exports.getMyDashboard = async (req, res) => {
     }
 
     // Organization dashboard — tenant-level org overview
-    if (permissions.includes('admin.view_dashboard') && req.user.tenantId) {
+    if (permissions.includes('view_organization_dashboard') && req.user.tenantId) {
       try {
         sections.organization = await dashboardService.getAdminDashboard(
           req.db,
@@ -39,7 +39,7 @@ exports.getMyDashboard = async (req, res) => {
     }
 
     // HR Analytics — leave, attendance, workforce analytics
-    if (permissions.includes('reports.view') && req.user.tenantId) {
+    if (permissions.includes('view_reports') && req.user.tenantId) {
       try {
         sections.hr = await dashboardService.getHRDashboard(
           req.db,
@@ -53,7 +53,7 @@ exports.getMyDashboard = async (req, res) => {
     }
 
     // Team dashboard — direct reports and team performance
-    if (permissions.includes('attendance.approve') && req.user.employeeId && req.user.tenantId) {
+    if (permissions.includes('view_team_attendance') && req.user.employeeId && req.user.tenantId) {
       try {
         sections.team = await dashboardService.getManagerDashboard(
           req.db,
@@ -67,7 +67,7 @@ exports.getMyDashboard = async (req, res) => {
     }
 
     // Personal dashboard — employee's own data
-    if (permissions.includes('attendance.view_own') && req.user.employeeId && req.user.tenantId) {
+    if (permissions.includes('view_own_attendance') && req.user.employeeId && req.user.tenantId) {
       try {
         sections.personal = await dashboardService.getEmployeeDashboard(
           req.db,

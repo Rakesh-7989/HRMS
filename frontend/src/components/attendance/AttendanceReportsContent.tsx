@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
+import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/employee/attendance.service';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays } from 'date-fns';
@@ -27,7 +27,7 @@ import {
     CheckCircle,
     XCircle
 } from 'lucide-react';
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 import { IndividualAttendanceReport } from './IndividualAttendanceReport';
 
 export const AttendanceReportsContent: React.FC = () => {

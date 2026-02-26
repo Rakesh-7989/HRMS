@@ -12,34 +12,34 @@ router.use(verifyJwt);
 
 router.post(
   "/",
-  requireAnyPermission(["organisation.manage_designations"]),
+  requireAnyPermission(["manage_designations"]),
   validate(validator.createDesignationSchema),
   controller.createDesignation
 );
 
 router.get(
   "/",
-  requireAnyPermission(["organisation.view"]),
+  requireAnyPermission(["view_organization_structure"]),
   validate(validator.getDesignationSchema),
   controller.getDesignations
 );
 
 router.get(
   "/:id",
-  requireAnyPermission(["organisation.manage_designations"]),
+  requireAnyPermission(["manage_designations"]),
   controller.getDesignationById
 );
 
 router.patch(
   "/:id",
-  requireAnyPermission(["organisation.manage_designations"]),
+  requireAnyPermission(["manage_designations"]),
   validate(validator.updateDesignationSchema),
   controller.updateDesignation
 );
 
 router.delete(
   "/:id",
-  requireAnyPermission(["organisation.manage_designations"]),
+  requireAnyPermission(["manage_designations"]),
   validate(validator.deleteDesignationSchema),
   controller.deleteDesignation
 );

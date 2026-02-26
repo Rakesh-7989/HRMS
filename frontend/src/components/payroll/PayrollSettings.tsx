@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { adminService, TenantProfile } from '@/services/admin.service';
+import { adminService, TenantProfile } from '@/services/organization/admin.service';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { API_BASE_URL } from '@/utils/constants';
 

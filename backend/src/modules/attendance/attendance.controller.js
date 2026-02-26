@@ -141,7 +141,7 @@ exports.getBreakHistory = async (req, res) => {
     // Let's implement basics: EMPLOYEE sees self. ADMIN/HR sees all. MANAGER sees self (or could be team if we added that logic).
     // For safety: if EMPLOYEE, force employee_id.
 
-    const canViewOthers = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('attendance.manage') || req.user.permissions.includes('admin.manage_tenant');
+    const canViewOthers = req.user.permissions.includes('view_all_attendance') || req.user.permissions.includes('manage_attendance_policies') || req.user.permissions.includes('platform.manage_tenants');
 
     if (!canViewOthers) {
       filters.employee_id = req.user.employeeId;
@@ -416,8 +416,8 @@ exports.getAttendanceAnalytics = async (req, res) => {
 
     let analytics;
 
-    const canViewAll = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('admin.manage_tenant');
-    const canViewTeam = req.user.permissions.includes('attendance.manage');
+    const canViewAll = req.user.permissions.includes('view_all_attendance') || req.user.permissions.includes('platform.manage_tenants');
+    const canViewTeam = req.user.permissions.includes('view_team_attendance') || req.user.permissions.includes('manage_attendance_policies');
 
     if (canViewAll) {
       // Organization-wide analytics
@@ -474,8 +474,8 @@ exports.getAttendanceReports = async (req, res) => {
 
     let reports;
 
-    const canViewAll = req.user.permissions.includes('attendance.view_all') || req.user.permissions.includes('admin.manage_tenant');
-    const canViewTeam = req.user.permissions.includes('attendance.manage');
+    const canViewAll = req.user.permissions.includes('view_all_attendance') || req.user.permissions.includes('platform.manage_tenants');
+    const canViewTeam = req.user.permissions.includes('view_team_attendance') || req.user.permissions.includes('manage_attendance_policies');
 
     if (canViewAll) {
       // Organization-wide reports
@@ -628,8 +628,8 @@ exports.getIndividualEmployeeReport = async (req, res) => {
 
     // Permission Check: 
     // Users without view_all_attendance can only see own report
-    const canViewAll = req.user.permissions.includes('view_all_attendance') || req.user.permissions.includes('attendance.view_all');
-    const canViewTeam = req.user.permissions.includes('attendance.manage') || req.user.permissions.includes('attendance.approve');
+    const canViewAll = req.user.permissions.includes('view_all_attendance');
+    const canViewTeam = req.user.permissions.includes('view_team_attendance') || req.user.permissions.includes('manage_attendance_policies') || req.user.permissions.includes('approve_attendance_regularization');
     if (!canViewAll && !canViewTeam && req.user.employeeId !== employeeId) {
       return res.status(403).json({ status: "error", message: "Access denied" });
     }

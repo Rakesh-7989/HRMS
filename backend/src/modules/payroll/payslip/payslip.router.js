@@ -45,7 +45,7 @@ router.use(verifyJwt);
 // Generate payslips for a month (creates and calculates a payrun)
 router.post(
     "/generate",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     async (req, res) => {
         try {
             const tenantId = req.user.tenantId;
@@ -85,35 +85,35 @@ router.post(
 // Employee views their payslips
 router.get(
     "/my",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.getMyPayslips
 );
 
 // Admin/HR views all payslips
 router.get(
     "/",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.getAllPayslips
 );
 
 // Get specific payslip data
 router.get(
     "/:payrollRunId/employee/:employeeId",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.getPayslipData
 );
 
 // Download payslip PDF
 router.get(
     "/:id/download",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.downloadPayslip
 );
 
 // Email payslip as PDF
 router.post(
     "/:id/email",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.emailPayslip
 );
 
@@ -124,14 +124,14 @@ router.post(
 // Employee views their tax declaration
 router.get(
     "/tax-declaration",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.getMyTaxDeclaration
 );
 
 // Employee saves tax declaration
 router.put(
     "/tax-declaration",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     validate(taxDeclarationSchema),
     controller.saveTaxDeclaration
 );
@@ -139,14 +139,14 @@ router.put(
 // Submit for verification
 router.patch(
     "/tax-declaration/:id/submit",
-    requireAnyPermission(["payroll.view_own"]),
+    requireAnyPermission(["view_own_payroll"]),
     controller.submitTaxDeclaration
 );
 
 // HR verifies declaration
 router.patch(
     "/tax-declaration/:id/verify",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.verifyTaxDeclaration
 );
 

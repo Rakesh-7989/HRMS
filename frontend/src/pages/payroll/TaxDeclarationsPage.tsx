@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import payrollService from '@/services/finance/payroll.service';
 import type { TaxDeclaration } from '@/types/payroll';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';

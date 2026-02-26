@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { usersService, EmployeeFilters } from '@/services/users.service';
-import { departmentService } from '@/services/department.service';
-import { designationService } from '@/services/designation.service';
+import { usersService, EmployeeFilters } from '@/services/employee/users.service';
+import { departmentService } from '@/services/organization/department.service';
+import { designationService } from '@/services/organization/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermission } from '@/contexts/PermissionContext';
 import { resolveImageUrl } from '@/utils/image';
-import { rbacService } from '@/services/rbac.service';
+import { rbacService } from '@/services/auth/rbac.service';
 import { cn } from '@/utils/cn';
 import {
   Plus,
@@ -31,7 +31,7 @@ import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 
 
 const PAGE_SIZE = 10;
@@ -187,7 +187,7 @@ export const EmployeesPage: React.FC = () => {
   // Subscription Query for Limit Check
   const { data: subscription } = useQuery({
     queryKey: ['my-subscription'],
-    queryFn: () => import('@/services/subscription.service').then(m => m.subscriptionService.getMySubscription()),
+    queryFn: () => import('@/services/finance/subscription.service').then(m => m.subscriptionService.getMySubscription()),
     retry: false
   });
 

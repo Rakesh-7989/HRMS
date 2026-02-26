@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
-import { dashboardService } from '@/services/dashboard.service';
+import { dashboardService } from '@/services/common/dashboard.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, Activity, Users, Shield, ChevronRight,
   Server, Database, Zap, Globe, Settings, Plus,
-  Sparkles, Tag, UserX
+  Sparkles, Tag, UserX, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -115,6 +115,34 @@ const SystemStatusCard = ({
 
 export const SuperAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const topRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(true);
+
+  // Track visibility of top/bottom sentinels using IntersectionObserver
+  useEffect(() => {
+    const topEl = topRef.current;
+    const bottomEl = bottomRef.current;
+    if (!topEl || !bottomEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === topEl) setShowScrollTop(!entry.isIntersecting);
+          if (entry.target === bottomEl) setShowScrollBottom(!entry.isIntersecting);
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(topEl);
+    observer.observe(bottomEl);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'system'],
@@ -238,6 +266,8 @@ export const SuperAdminDashboard: React.FC = () => {
   return (
     <DashboardLayout title="System Dashboard">
       <motion.div className="space-y-6 pb-6" initial="initial" animate="animate">
+        {/* Scroll sentinel – top */}
+        <div ref={topRef} />
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -689,7 +719,40 @@ export const SuperAdminDashboard: React.FC = () => {
             ))}
           </div>
         </motion.div>
+
+        {/* Scroll sentinel – bottom */}
+        <div ref={bottomRef} />
       </motion.div>
+
+      {/* Floating Scroll Buttons */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={scrollToTop}
+            className="w-11 h-11 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            title="Scroll to Top"
+          >
+            <ArrowUp size={18} />
+          </motion.button>
+        )}
+        {showScrollBottom && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={scrollToBottom}
+            className="w-11 h-11 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            title="Scroll to Bottom"
+          >
+            <ArrowDown size={18} />
+          </motion.button>
+        )}
+      </div>
     </DashboardLayout >
   );
 };

@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Key, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 
 interface ChangePasswordModalProps {
     isOpen: boolean;

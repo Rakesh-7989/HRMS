@@ -16,7 +16,7 @@ const getPayslipData = async (req, res) => {
     const { employeeId } = req.params;
 
     // IDOR Protection: Employees can only view their own payslips unless they have payroll permissions
-    const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+    const canViewAll = req.user.permissions.includes('view_payroll') || req.user.permissions.includes('platform.manage_tenants');
     if (req.user.employeeId !== employeeId && !canViewAll) {
         return res.status(403).json({ status: "error", message: "Access denied" });
     }
@@ -44,7 +44,7 @@ const downloadPayslip = async (req, res) => {
         }
 
         // 2. IDOR Protection: Employees can only download their own payslips
-        const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+        const canViewAll = req.user.permissions.includes('view_payroll') || req.user.permissions.includes('platform.manage_tenants');
         if (req.user.employeeId !== data.employee_id && !canViewAll) {
             return res.status(403).json({ status: "error", message: "Access denied" });
         }

@@ -6,16 +6,17 @@ const pool = require('../../config/db');
  */
 async function getOrganizationRoles(tenantId, isSuperAdmin = false) {
     const query = isSuperAdmin
-        ? `SELECT r.*,
+        ? `SELECT r.*, t.name as organization_name,
            (SELECT COUNT(*) FROM user_roles ur WHERE ur.role_id = r.id) AS user_count,
            (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id = r.id) AS permission_count
          FROM roles r
-         WHERE r.tenant_id IS NULL
+         LEFT JOIN tenants t ON t.id = r.tenant_id
          ORDER BY r.role_type, r.name`
-        : `SELECT r.*,
+        : `SELECT r.*, t.name as organization_name,
            (SELECT COUNT(*) FROM user_roles ur WHERE ur.role_id = r.id) AS user_count,
            (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id = r.id) AS permission_count
          FROM roles r
+         LEFT JOIN tenants t ON t.id = r.tenant_id
          WHERE r.tenant_id = $1 AND r.role_type != 'PLATFORM'
          ORDER BY r.role_type, r.name`;
 
@@ -100,8 +101,8 @@ async function updateRole(roleId, { name, description, permissionIds }) {
             [roleId]
         );
         if (check.rows.length === 0) throw new Error('Role not found');
-        if (!check.rows[0].is_customizable && check.rows[0].role_type === 'PLATFORM') {
-            throw new Error('Platform role cannot be modified');
+        if (!check.rows[0].is_customizable) {
+            throw new Error('This role cannot be modified');
         }
 
         await client.query(
@@ -129,6 +130,7 @@ async function updateRole(roleId, { name, description, permissionIds }) {
         }
 
         await client.query('COMMIT');
+        console.log(`[RBAC] Role ${roleId} updated. New permissions count: ${permissionIds ? permissionIds.length : 'N/A'}`);
         return getRoleWithPermissions(roleId);
     } catch (err) {
         await client.query('ROLLBACK');

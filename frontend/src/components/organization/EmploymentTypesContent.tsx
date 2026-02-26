@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 import { Plus, Trash2, Briefcase, Search, Loader2 } from 'lucide-react';
 import { showToast } from '@/utils/toast';
 import { usePermission } from '@/contexts/PermissionContext';

@@ -24,7 +24,7 @@ router.use(verifyJwt);
 // Create category → HR, ADMIN only
 router.post(
   "/createcategories",
-  requireAnyPermission(["payroll.manage"]),
+  requireAnyPermission(["run_payroll"]),
   validate(createCategorySchema),
   controller.createCategory
 );
@@ -32,7 +32,7 @@ router.post(
 // Get categories → EMPLOYEE, MANAGER, HR, ADMIN
 router.get(
   "/getcategories",
-  requireAnyPermission(["payroll.view_own"]),
+  requireAnyPermission(["view_own_payroll"]),
   controller.getCategories
 );
 
@@ -43,7 +43,7 @@ router.get(
 // Create expense → EMPLOYEE, MANAGER
 router.post(
   "/createexpense",
-  requireAnyPermission(["payroll.view_own"]),
+  requireAnyPermission(["view_own_payroll"]),
   validate(createExpenseSchema),
   controller.createExpense
 );
@@ -54,14 +54,14 @@ router.post(
 // HR, ADMIN → all
 router.get(
   "/getexpenses",
-  requireAnyPermission(["payroll.view_own"]),
+  requireAnyPermission(["view_own_payroll"]),
   controller.getExpenses
 );
 
 // Update expense → HR, ADMIN
 router.put(
   "/:updateId",
-  requireAnyPermission(["payroll.manage"]),
+  requireAnyPermission(["run_payroll"]),
   validate(createExpenseSchema),
   controller.updateExpense
 );
@@ -69,14 +69,14 @@ router.put(
 // Delete expense (soft delete) → HR, ADMIN
 router.delete(
   "/:updateId",
-  requireAnyPermission(["payroll.manage"]),
+  requireAnyPermission(["run_payroll"]),
   controller.deleteExpense
 );
 
 // Approve / Reject expense → MANAGER, HR, ADMIN
 router.patch(
   "/:expenseId/approve",
-  requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+  requireAnyPermission(["run_payroll", "view_own_payroll"]),
   requireExpenseApprover,
   validate(approveExpenseSchema),
   controller.approveExpense
@@ -85,7 +85,7 @@ router.patch(
 // Toggle payroll inclusion → HR, ADMIN
 router.patch(
   "/:expenseId/payroll",
-  requireAnyPermission(["payroll.manage"]),
+  requireAnyPermission(["run_payroll"]),
   validate(payrollToggleSchema),
   controller.togglePayroll
 );

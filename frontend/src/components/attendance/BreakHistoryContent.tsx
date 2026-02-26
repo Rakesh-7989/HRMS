@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { attendanceService } from '@/services/attendance.service';
+import { attendanceService } from '@/services/employee/attendance.service';
 import { Card } from '@/components/ui/Card';
 import { Loader2, Calendar as CalIcon, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { formatTime12Hour } from '@/utils/timeFormat';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 
 export const BreakHistoryContent: React.FC = () => {
     const { user } = useAuth();

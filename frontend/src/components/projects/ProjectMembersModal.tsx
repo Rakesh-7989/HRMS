@@ -15,8 +15,8 @@ import {
     TableCell,
 } from '@/components/ui/Table';
 
-import { projectsService } from '@/services/projects.service';
-import { usersService } from '@/services/users.service';
+import { projectsService } from '@/services/management/projects.service';
+import { usersService } from '@/services/employee/users.service';
 import type { Project, ProjectMemberRole } from '@/types/project.types';
 
 interface ProjectMembersModalProps {

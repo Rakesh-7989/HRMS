@@ -6,24 +6,24 @@ const { requirePermission, requireAnyPermission } = require("../../middleware/re
 router.use(verifyJwt);
 
 // GET TASKS (All if Admin/HR, own if Employee)
-router.get("/", controller.getTasks);
+router.get("/", requireAnyPermission(["view_notifications", "manage_tasks"]), controller.getTasks);
 
 // CREATE TASK (Admin/HR only usually, but maybe managers too)
-router.post("/", requireAnyPermission(["notifications.view", "notifications.view"]), controller.createTask);
+router.post("/", requirePermission("manage_tasks"), controller.createTask);
 
 // UPDATE STATUS
-router.put("/:id/status", controller.updateTaskStatus);
+router.put("/:id/status", requirePermission("manage_tasks"), controller.updateTaskStatus);
 
 // GET ACTIVITIES (Replies)
-router.get("/:id/activities", controller.getActivities);
+router.get("/:id/activities", requireAnyPermission(["view_notifications", "manage_tasks"]), controller.getActivities);
 
 // ADD ACTIVITY (Reply)
-router.post("/:id/activities", controller.addActivity);
+router.post("/:id/activities", requireAnyPermission(["view_notifications", "manage_tasks"]), controller.addActivity);
 
 // NOTIFICATIONS (Standard paths used by notificationsService)
-router.get("/unread-count", controller.getUnreadCount);
-router.patch("/mark-all-read", controller.markAllAsRead);
-router.patch("/:id/read", controller.markAsRead);
-router.delete("/:id", controller.deleteNotification);
+router.get("/unread-count", requirePermission("view_notifications"), controller.getUnreadCount);
+router.patch("/mark-all-read", requirePermission("view_notifications"), controller.markAllAsRead);
+router.patch("/:id/read", requirePermission("view_notifications"), controller.markAsRead);
+router.delete("/:id", requirePermission("view_notifications"), controller.deleteNotification);
 
 module.exports = router;

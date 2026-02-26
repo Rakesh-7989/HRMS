@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService, RegularizationRequest } from '@/services/attendance.service';
+import { attendanceService, RegularizationRequest } from '@/services/employee/attendance.service';
 import { format } from 'date-fns';
 import {
     Dialog,

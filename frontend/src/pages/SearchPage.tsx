@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
-import { searchService, SearchResult, SearchResults } from '@/services/search.service';
+import { searchService, SearchResult, SearchResults } from '@/services/common/search.service';
 import {
     Search,
     User,

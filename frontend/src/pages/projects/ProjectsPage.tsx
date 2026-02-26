@@ -28,7 +28,7 @@ import { ProjectReports } from '@/components/projects/ProjectReports';
 import { ProjectMembersModal } from '@/components/projects/ProjectMembersModal';
 import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';

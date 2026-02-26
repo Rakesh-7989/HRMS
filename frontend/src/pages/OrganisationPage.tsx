@@ -5,14 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 
-import { departmentService } from '@/services/department.service';
-import { usersService } from '@/services/users.service';
+import { departmentService } from '@/services/organization/department.service';
+import { usersService } from '@/services/employee/users.service';
 
-import type { Tenant } from '@/services/superAdmin.service';
+import type { Tenant } from '@/services/management/superAdmin.service';
 import { Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
-import { superAdminService } from '@/services/superAdmin.service';
+import { superAdminService } from '@/services/management/superAdmin.service';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
@@ -21,7 +21,7 @@ import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/Un
 import { RolesContent } from '@/components/organization/RolesContent';
 import { EmploymentTypesContent } from '@/components/organization/EmploymentTypesContent';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 
 
 export const OrganisationPage: React.FC = () => {

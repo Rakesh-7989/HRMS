@@ -19,15 +19,13 @@ const inboxRouter = require('../modules/inbox/inbox.router');
 const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
 const assetManagementRouter = require('../modules/asset_management/asset_management.router');
-const eventsRouter = require('../modules/events/events.router');
 const auditRouter = require('../modules/audit/audit.router');
 const projectManagementRouter = require('../modules/project_management/project_management.router');
 const geoFencingRouter = require('../modules/geo_fencing/geoFencing.router');
 const calendarRouter = require('../modules/calendar/calendar.router');
 const wfhRouter = require('../modules/wfh/wfh.router');
 const shiftRouter = require('../modules/shifts/shift.router');
-const billingRouter = require('../modules/subscriptions/billing.routes');
-const subscriptionAdminRouter = require('../modules/subscriptions/subscriptions.routes');
+const subscriptionRouter = require('../modules/subscriptions/subscription.router');
 const chatRouter = require('../modules/chat/chat.router');
 const rbacRouter = require('../modules/rbac/rbac.router');
 const hierarchyRouter = require('../modules/departments/hierarchy.router');
@@ -46,11 +44,9 @@ router.use('/auth', authRoutes);
 router.use('/tenants', tenantRouter);
 
 // Audit Logs
-router.use('/audit-logs', auditRouter);
+router.use('/audit-logs', verifyJwt, requirePermission('view_audit_logs'), auditRouter);
 
-// Subscriptions module
-router.use('/subscriptions', billingRouter);
-router.use('/subscriptions', subscriptionAdminRouter);
+router.use('/subscriptions', subscriptionRouter);
 
 // Everything below requires authentication
 router.use(verifyJwt);
@@ -72,6 +68,7 @@ router.use('/designations', checkAccess(), designationRouter);
 
 // User module
 router.use('/users', userRouter.selfService);
+// All other user management requires access check
 router.use('/users', checkAccess(), userRouter);
 
 // Attendance module
@@ -80,8 +77,8 @@ router.use('/attendance', requireAnyPermission(['view_own_attendance', 'view_all
 // Geo-Fencing module
 router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRouter);
 
-// Events module
-router.use('/events', eventsRouter);
+// Calendar & Events (Unified mount)
+router.use(['/calendar', '/events'], verifyJwt, requirePermission('view_calendar'), requireFeature('leave_tracker'), calendarRouter);
 
 // Payroll module
 router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
@@ -91,7 +88,7 @@ router.use('/leave', requireAnyPermission(['view_own_leave', 'view_all_leave', '
 
 // Inbox module
 router.use('/inbox', inboxRouter);
-router.use('/notifications', notificationRouter);
+router.use('/notifications', verifyJwt, requirePermission('view_notifications'), notificationRouter);
 
 // Documents module
 router.use('/documents', requireFeature('employee_management.document_storage'), documentsRouter);
@@ -101,8 +98,7 @@ router.use('/projects', requireFeature('project_management'), projectManagementR
 // WFH (Work From Home) Request module
 router.use('/wfh', requireAnyPermission(['view_own_attendance', 'manage_attendance_policies']), requireFeature('attendance_tracker'), wfhRouter);
 
-router.use('/chat', requireFeature('collaboration'), chatRouter);
-router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);
+router.use('/chat', requirePermission('access_chat'), requireFeature('collaboration'), chatRouter);
 router.use('/shifts', requireFeature('attendance_tracker'), shiftRouter);
 
 module.exports = router;

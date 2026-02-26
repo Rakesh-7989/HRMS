@@ -10,7 +10,7 @@ exports.getTasks = async (db, opts, actor) => {
     let filter = "WHERE tenant_id = $1";
 
     // If not admin/HR, only show own tasks
-    if (!["ADMIN", "HR"].includes(actor.role)) {
+    if (!actor.permissions.includes('view_all_employees') && !actor.permissions.includes('manage_organization')) {
         filter += " AND employee_id = (SELECT id FROM employees WHERE user_id = $2)";
         params.push(actor.id);
     } else if (opts.employee_id) {

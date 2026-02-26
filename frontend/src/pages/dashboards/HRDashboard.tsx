@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
-import { dashboardService } from '@/services/dashboard.service';
+import { dashboardService } from '@/services/common/dashboard.service';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
   Calendar, Clock, UserX, CheckCircle,

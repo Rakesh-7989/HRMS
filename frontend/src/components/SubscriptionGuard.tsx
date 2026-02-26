@@ -13,10 +13,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     fallback,
     mode = 'message'
 }) => {
-    const { hasActivePlan, user } = useAuth();
+    const { hasActivePlan } = useAuth();
 
-    // Super admins are always allowed
-    if (user?.role === 'SUPER_ADMIN' || hasActivePlan) {
+    if (hasActivePlan) {
         return <>{children}</>;
     }
 

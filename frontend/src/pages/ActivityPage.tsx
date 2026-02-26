@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/Card';
 import { Activity, RefreshCw, Search, History, Clock } from 'lucide-react';
-import { auditService, AuditLog } from '@/services/audit.service';
+import { auditService, AuditLog } from '@/services/common/audit.service';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 

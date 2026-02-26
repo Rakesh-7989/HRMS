@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 import { KanbanColumn } from '@/components/projects/KanbanColumn';
 import { TaskCard } from '@/components/projects/TaskCard';
 
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 import type { Task, TaskStatus } from '@/types/project.types';
 
 // Default configuration

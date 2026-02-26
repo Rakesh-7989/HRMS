@@ -21,7 +21,7 @@ router.use(verifyJwt);
 // Create loan type
 router.post(
   "/loantype",
-  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
+  requireAnyPermission(["manage_payroll_policies", "manage_loans"]),
   validate(createLoanTypeSchema),
   loanController.createLoanType
 );
@@ -29,21 +29,21 @@ router.post(
 // Get loan types
 router.get(
   "/loantype",
-  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
+  requireAnyPermission(["manage_payroll_policies", "manage_loans"]),
   loanController.getLoanTypes
 );
 
 // Get loan type by ID
 router.get(
   "/loantype/:loantypeid",
-  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
+  requireAnyPermission(["manage_payroll_policies", "manage_loans"]),
   loanController.getLoanTypeById
 );
 
 // Update loan type
 router.put(
   "/loantype/:loantypeid",
-  requireAnyPermission(["manage_payroll_components", "manage_loans"]),
+  requireAnyPermission(["manage_payroll_policies", "manage_loans"]),
   validate(updateLoanTypeSchema),
   loanController.updateLoanType
 );
@@ -69,7 +69,7 @@ router.post(
 // Employee: view own loans
 router.get(
   "/getloans",
-  requirePermission("view_own_payslip"),
+  requirePermission("view_own_payroll"),
   loanController.getLoans
 );
 
@@ -83,14 +83,14 @@ router.get(
 // HR / ADMIN: view all loans
 router.get(
   "/all",
-  requireAnyPermission(["manage_loans", "manage_payroll_components"]),
+  requireAnyPermission(["manage_loans", "manage_payroll_policies"]),
   loanController.getLoanTypes
 );
 
 // Get loan by ID (role-aware inside controller)
 router.get(
   "/:loanId",
-  requireAnyPermission(["view_own_payslip", "view_team_payroll", "manage_loans"]),
+  requireAnyPermission(["view_own_payroll", "view_team_payroll", "manage_loans"]),
   loanController.getLoanById
 );
 

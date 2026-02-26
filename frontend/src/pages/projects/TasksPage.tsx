@@ -39,7 +39,7 @@ import { BoardSettingsModal } from '@/components/projects/BoardSettingsModal';
 import { TaskDetailsModal } from '@/components/projects/TaskDetailsModal';
 import { KanbanSetupCard } from '@/components/projects/KanbanSetupCard';
 
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermission } from '@/contexts/PermissionContext';

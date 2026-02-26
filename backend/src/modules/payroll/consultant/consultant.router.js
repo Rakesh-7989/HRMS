@@ -52,32 +52,32 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createConsultantSchema),
     controller.createConsultant
 );
 
 router.get(
     "/",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getConsultants
 );
 
 router.get(
     "/summary",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getConsultantPayrollSummary
 );
 
 router.get(
     "/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getConsultantById
 );
 
 router.put(
     "/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createConsultantSchema),
     controller.updateConsultant
 );
@@ -87,26 +87,26 @@ router.put(
 // =====================
 router.post(
     "/invoices",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     validate(createInvoiceSchema),
     controller.createInvoice
 );
 
 router.get(
     "/invoices/all",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_policies"]),
     controller.getInvoices
 );
 
 router.patch(
     "/invoices/:id/approve",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_policies"),
     controller.approveInvoice
 );
 
 router.patch(
     "/invoices/:id/pay",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_policies"),
     validate(markPaidSchema),
     controller.markInvoicePaid
 );

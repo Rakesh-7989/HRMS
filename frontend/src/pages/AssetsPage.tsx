@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { assetsService } from '@/services/assets.service';
-import { usersService } from '@/services/users.service';
+import { assetsService } from '@/services/management/assets.service';
+import { usersService } from '@/services/employee/users.service';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Plus,
@@ -68,7 +68,7 @@ export const AssetsPage: React.FC = () => {
 
   // Fetch employees for the assign modal
   // Backend returns employee_uuid (actual employee table ID) which we need for asset assignment
-  const { data: employees = [] } = useQuery<Array<import('@/services/users.service').User & { employee_uuid?: string }>>({
+  const { data: employees = [] } = useQuery<Array<import('@/services/employee/users.service').User & { employee_uuid?: string }>>({
     queryKey: ['users', 'employees'],
     queryFn: () => usersService.getUsers({ is_active: true }),
     enabled: showAssignModal && hasPermission('manage_all_assets'),

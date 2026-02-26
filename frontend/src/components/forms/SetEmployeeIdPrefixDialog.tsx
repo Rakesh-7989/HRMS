@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, Info, X } from 'lucide-react';
-import { tenantService } from '@/services/tenant.service';
+import { tenantService } from '@/services/organization/tenant.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { createPortal } from 'react-dom';

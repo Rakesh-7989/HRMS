@@ -29,7 +29,7 @@ router.get('/positions/:id', requirePermission('view_organization_structure'), a
     }
 });
 
-router.post('/positions', requirePermission('manage_organization'), async (req, res, next) => {
+router.post('/positions', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         const position = await hierarchyService.createPosition(req.user.tenantId, req.body);
         res.status(201).json({ status: 'success', data: position });
@@ -38,7 +38,7 @@ router.post('/positions', requirePermission('manage_organization'), async (req, 
     }
 });
 
-router.put('/positions/:id', requirePermission('manage_organization'), async (req, res, next) => {
+router.put('/positions/:id', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         const position = await hierarchyService.updatePosition(req.params.id, req.body);
         if (!position) {
@@ -50,7 +50,7 @@ router.put('/positions/:id', requirePermission('manage_organization'), async (re
     }
 });
 
-router.delete('/positions/:id', requirePermission('manage_organization'), async (req, res, next) => {
+router.delete('/positions/:id', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         await hierarchyService.deletePosition(req.params.id);
         res.json({ status: 'success', message: 'Position deleted successfully' });
@@ -59,7 +59,7 @@ router.delete('/positions/:id', requirePermission('manage_organization'), async 
     }
 });
 
-router.post('/positions/:id/assign', requirePermission('manage_organization'), async (req, res, next) => {
+router.post('/positions/:id/assign', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         const { employeeId } = req.body;
         if (!employeeId) {
@@ -72,7 +72,7 @@ router.post('/positions/:id/assign', requirePermission('manage_organization'), a
     }
 });
 
-router.post('/positions/:id/unassign', requirePermission('manage_organization'), async (req, res, next) => {
+router.post('/positions/:id/unassign', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         const { employeeId } = req.body;
         if (!employeeId) {
@@ -85,7 +85,7 @@ router.post('/positions/:id/unassign', requirePermission('manage_organization'),
     }
 });
 
-router.post('/seed', requirePermission('manage_organization'), async (req, res, next) => {
+router.post('/seed', requirePermission('manage_org_hierarchy'), async (req, res, next) => {
     try {
         // Check if positions already exist
         const existing = await require('../../config/db').query(

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { taxService, TaxSection, TaxRegime, ITDeclaration } from '@/services/tax.service';
+import { taxService, TaxSection, TaxRegime, ITDeclaration } from '@/services/finance/tax.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';

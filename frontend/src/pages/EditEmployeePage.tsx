@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 export const EditEmployeePage: React.FC = () => {

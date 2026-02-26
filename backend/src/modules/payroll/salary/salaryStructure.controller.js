@@ -175,7 +175,7 @@ exports.getEmployeeSalary = async (req, res) => {
         const { employeeId } = req.params;
 
         // IDOR check
-        const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+        const canViewAll = req.user.permissions.includes('view_payroll') || req.user.permissions.includes('platform.manage_tenants');
         if (req.user.employeeId !== employeeId && !canViewAll) {
             return res.status(403).json({ status: 'error', message: 'Access denied' });
         }
@@ -224,7 +224,7 @@ exports.getEmployeeSalaryHistory = async (req, res) => {
         const { employeeId } = req.params;
 
         // IDOR check
-        const canViewAll = req.user.permissions.includes('manage_payroll') || req.user.permissions.includes('platform.manage_tenants');
+        const canViewAll = req.user.permissions.includes('view_payroll') || req.user.permissions.includes('platform.manage_tenants');
         if (req.user.employeeId !== employeeId && !canViewAll) {
             return res.status(403).json({ status: 'error', message: 'Access denied' });
         }

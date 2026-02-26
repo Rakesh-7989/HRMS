@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@/components/ui/Dialog';
-import { rbacService, Role } from '@/services/rbac.service';
+import { rbacService, Role } from '@/services/auth/rbac.service';
+import { useAuth } from '@/contexts/AuthContext';
 import { showToast } from '@/utils/toast';
 import { Search, Shield, ChevronDown, Check, Loader2, X, Building2, Minus } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -15,6 +16,7 @@ interface RoleModalProps {
 
 export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, isViewOnly = false }) => {
     const queryClient = useQueryClient();
+    const { refreshProfile } = useAuth();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
@@ -64,6 +66,15 @@ export const RoleModal: React.FC<RoleModalProps> = ({ open, onClose, editRole, i
                 : rbacService.createRole(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
+            if (editRole) {
+                queryClient.invalidateQueries({ queryKey: ['role', editRole.id] });
+            }
+            // Also invalidate permissions for the current user in case they edited their own role
+            queryClient.invalidateQueries({ queryKey: ['permissions'] });
+
+            // Refresh permissions in AuthContext immediately
+            refreshProfile();
+
             showToast.success(`Role ${editRole ? 'updated' : 'created'} successfully`);
             onClose();
         },

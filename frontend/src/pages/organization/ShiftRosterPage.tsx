@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { usersService } from '@/services/users.service';
-import { getShifts } from '@/services/shift.service';
-import { departmentService } from '@/services/department.service';
+import { usersService } from '@/services/employee/users.service';
+import { getShifts } from '@/services/employee/shift.service';
+import { departmentService } from '@/services/organization/department.service';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Clock, Search, Calendar } from 'lucide-react';

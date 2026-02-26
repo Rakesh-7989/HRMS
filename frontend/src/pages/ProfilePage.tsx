@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -18,9 +18,9 @@ import {
   Edit, Save, X, UserCircle, FileText, Upload, Trash2, Download, Search
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { departmentService } from '@/services/department.service';
-import { designationService } from '@/services/designation.service';
-import { documentsService } from '@/services/documents.service';
+import { departmentService } from '@/services/organization/department.service';
+import { designationService } from '@/services/organization/designation.service';
+import { documentsService } from '@/services/employee/documents.service';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';

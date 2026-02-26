@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import api from '@/services/api';
+import api from '@/services/common/api';
 import { Button } from '@/components/ui/Button';
 import {
     Users, UserCheck, UserMinus, AlertCircle,

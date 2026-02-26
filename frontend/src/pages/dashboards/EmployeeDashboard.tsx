@@ -2,8 +2,8 @@ import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { dashboardService } from '@/services/dashboard.service';
-import { eventsService } from '@/services/events.service';
+import { dashboardService } from '@/services/common/dashboard.service';
+import { eventsService } from '@/services/common/events.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {

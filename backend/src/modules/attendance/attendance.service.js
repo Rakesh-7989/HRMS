@@ -925,7 +925,7 @@ exports.getPendingCheckouts = async (db, actor, filters) => {
     p++;
   }
 
-  if (filters.employee_id && ["ADMIN", "HR"].includes(actor.role)) {
+  if (filters.employee_id && (actor.permissions.includes('view_all_attendance') || actor.permissions.includes('view_team_attendance'))) {
     where += ` AND att.employee_id = $${p} `;
     params.push(filters.employee_id);
     p++;
@@ -991,7 +991,7 @@ exports.confirmCheckout = async (db, attendanceId, tenantId, employeeId, finalSt
   const record = existing.rows[0];
 
   // Only employee or HR/ADMIN can confirm
-  if (record.employee_id !== employeeId && !["ADMIN", "HR"].includes(employeeId)) {
+  if (record.employee_id !== actor.employeeId && !actor.permissions.includes('view_all_attendance') && !actor.permissions.includes('view_team_attendance')) {
     throw new Error("Unauthorized: Can only confirm your own checkout");
   }
 

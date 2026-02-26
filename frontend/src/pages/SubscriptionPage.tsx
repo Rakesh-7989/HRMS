@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { subscriptionService, Plan } from '@/services/subscription.service';
+import { subscriptionService, Plan } from '@/services/finance/subscription.service';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';

@@ -10,9 +10,9 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { Shield } from 'lucide-react';
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Please enter a valid email address').required('Email is required'),

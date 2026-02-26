@@ -7,8 +7,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { leaveService, LeaveBalance, BalanceAdjustmentData } from '@/services/leave.service';
-import { usersService } from '@/services/users.service';
+import { leaveService, LeaveBalance, BalanceAdjustmentData } from '@/services/employee/leave.service';
+import { usersService } from '@/services/employee/users.service';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

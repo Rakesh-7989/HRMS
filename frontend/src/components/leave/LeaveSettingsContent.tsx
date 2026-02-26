@@ -7,7 +7,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData } from '@/services/leave.service';
+import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData } from '@/services/employee/leave.service';
 import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, RefreshCw, AlertCircle, FileText, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';

@@ -122,12 +122,42 @@ exports.getUserPermissions = async (userId, tenantId = null, role = null) => {
       await client.query(`SELECT set_config('app.user_id', $1, true)`, [userId.toString()]);
     }
 
+    // SUPER_ADMIN now uses role-permission assignments like other roles
+    // Platform permissions are always included as a safety net
+    if (role === 'SUPER_ADMIN') {
+      const res = await client.query(
+        `SELECT DISTINCT p.name
+         FROM (
+           SELECT role_id FROM user_roles WHERE user_id = $1
+           UNION
+           SELECT r.id FROM users u
+           JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
+           WHERE u.id = $1
+         ) user_all_roles
+         JOIN role_permissions rp ON rp.role_id = user_all_roles.role_id
+         JOIN permissions p ON p.id = rp.permission_id`,
+        [userId]
+      );
+      const perms = res.rows.map(r => r.name);
+      // Always ensure platform-level permissions for SUPER_ADMIN
+      const platformRes = await client.query(
+        `SELECT name FROM permissions WHERE name LIKE 'platform.%'`
+      );
+      const platformPerms = platformRes.rows.map(r => r.name);
+      return [...new Set([...perms, ...platformPerms])];
+    }
+
     const res = await client.query(
       `SELECT DISTINCT p.name
-       FROM user_roles ur
-       JOIN role_permissions rp ON rp.role_id = ur.role_id
-       JOIN permissions p ON p.id = rp.permission_id
-       WHERE ur.user_id = $1`,
+       FROM (
+         SELECT role_id FROM user_roles WHERE user_id = $1
+         UNION
+         SELECT r.id FROM users u
+         JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
+         WHERE u.id = $1
+       ) user_all_roles
+       JOIN role_permissions rp ON rp.role_id = user_all_roles.role_id
+       JOIN permissions p ON p.id = rp.permission_id`,
       [userId]
     );
     return res.rows.map(r => r.name);

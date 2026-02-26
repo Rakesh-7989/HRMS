@@ -6,6 +6,7 @@ const { requirePermission, requireAnyPermission } = require("../../middleware/re
 const validate = require("../../middleware/validate");
 
 const controller = require("./calendar.controller");
+const eventsController = require("../events/events.controller");
 const validator = require("./calendar.validator");
 
 // All routes require authentication
@@ -27,20 +28,20 @@ router.get(
 // Company Holidays Management (Admin/HR only)
 router.get(
     "/company/holidays",
-    requirePermission("calendar.manage"),
+    requirePermission("manage_calendar"),
     controller.getCompanyHolidays
 );
 
 router.post(
     "/company/holidays",
-    requirePermission("calendar.manage"),
+    requirePermission("manage_calendar"),
     validate(validator.companyHolidaySchema),
     controller.createCompanyHoliday
 );
 
 router.delete(
     "/company/holidays/:id",
-    requirePermission("calendar.manage"),
+    requirePermission("manage_calendar"),
     controller.deleteCompanyHoliday
 );
 
@@ -60,14 +61,21 @@ router.get(
 
 router.post(
     "/announcements",
-    requireAnyPermission(["calendar.manage", "announcements.manage"]),
+    requireAnyPermission(["manage_calendar", "manage_announcements"]),
     controller.createAnnouncement
 );
 
 router.delete(
     "/announcements/:id",
-    requireAnyPermission(["calendar.manage", "announcements.manage"]),
+    requireAnyPermission(["manage_calendar", "manage_announcements"]),
     controller.deleteAnnouncement
+);
+
+// People Events (Merged from events module)
+router.get(
+    "/people",
+    requirePermission("view_calendar"),
+    eventsController.getPeopleEvents
 );
 
 module.exports = router;

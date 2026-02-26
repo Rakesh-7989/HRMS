@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notificationsService, Notification } from '@/services/notifications.service';
+import { notificationsService, Notification } from '@/services/common/notifications.service';
 import { Bell, CheckCheck, X, Info, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';

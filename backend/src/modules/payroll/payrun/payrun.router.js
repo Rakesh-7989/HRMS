@@ -41,14 +41,14 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/schedules",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     validate(createScheduleSchema),
     controller.createSchedule
 );
 
 router.get(
     "/schedules",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.getSchedules
 );
 
@@ -57,41 +57,41 @@ router.get(
 // =====================
 router.post(
     "/",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     validate(createPayrunSchema),
     controller.createPayrun
 );
 
 router.get(
     "/",
-    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+    requireAnyPermission(["run_payroll", "view_own_payroll"]),
     controller.getPayruns
 );
 
 router.get(
     "/:id",
-    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+    requireAnyPermission(["run_payroll", "view_own_payroll"]),
     controller.getPayrunById
 );
 
 // Calculate payrun
 router.post(
     "/:id/calculate",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.calculatePayrun
 );
 
 // Approve payrun
 router.patch(
     "/:id/approve",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.approvePayrun
 );
 
 // Reject payrun
 router.patch(
     "/:id/reject",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     validate(rejectPayrunSchema),
     controller.rejectPayrun
 );
@@ -99,35 +99,35 @@ router.patch(
 // Revoke payrun
 router.patch(
     "/:id/revoke",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.revokePayrun
 );
 
 // Delete payrun (DRAFT, CALCULATED, PENDING_APPROVAL)
 router.delete(
     "/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.deletePayrun
 );
 
 // Void payrun (APPROVED/PAID — keeps data for audit)
 router.patch(
     "/:id/void",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.voidPayrun
 );
 
 // Delete a single payslip item from a payrun
 router.delete(
     "/:id/items/:itemId",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["run_payroll"]),
     controller.deletePayslipItem
 );
 
 // Lock payrun
 router.patch(
     "/:id/lock",
-    requirePermission("payroll.manage"),
+    requirePermission("run_payroll"),
     controller.lockPayrun
 );
 

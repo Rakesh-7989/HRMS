@@ -53,7 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Organisation', icon: Building2, path: '/organisation', permissions: ['view_organization_structure', 'manage_departments'] },
 
   // Attendance
-  { label: 'Attendance', icon: Clock, path: '/attendance', permissions: ['view_own_attendance', 'view_all_attendance'] },
+  { label: 'Attendance', icon: Clock, path: '/attendance', permissions: ['view_own_attendance', 'view_all_attendance', 'mark_attendance'] },
 
   // Calendar
   { label: 'Calendar', icon: CalendarRange, path: '/calendar', permissions: ['view_calendar'] },
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   if (!user) return null;
 
-  // Filter to show only ONE dashboard based on highest privilege
+  // Slots to prevent duplicate primary navigation items (e.g., multiple dashboards)
   const dashboardPaths = [
     '/dashboard/system',
     '/dashboard/organization',
@@ -108,42 +108,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     '/dashboard/personal',
   ];
 
-  let dashboardShown = false;
-
-  // Strict Whitelist for Super Admin (Platform Owner)
-  const superAdminAllowedPaths = [
-    '/dashboard/system',
-    '/tenants',
-    '/plans',
-    '/coupons',
-    '/activity',
-    '/roles'
-  ];
+  let dashboardFound = false;
 
   const visibleItems = NAV_ITEMS.filter(item => {
-    // Permission check
+    // 1. Core Permission Check
     if (!hasAnyPermission(item.permissions)) return false;
 
-    // Strict Guard for Platform level routes
-    const platformPaths = ['/dashboard/system', '/tenants', '/plans', '/coupons'];
-    if (platformPaths.includes(item.path) && !user.permissions?.includes('platform.manage_tenants')) {
-      return false;
-    }
-
-    // STRICT SEPARATION: Super Admin sees ONLY Platform routes
-    if (user.role === 'SUPER_ADMIN') {
-      if (!superAdminAllowedPaths.includes(item.path)) return false;
-    }
-
-    // Hide Leaves and Attendance for ADMIN (as requested)
-    if (user.role === 'ADMIN' && ['/attendance', '/leave'].includes(item.path)) {
-      return false;
-    }
-
-    // Only show the first matching (highest privilege) dashboard
+    // 2. Dashboard Slot Management (Exclusive)
     if (dashboardPaths.includes(item.path)) {
-      if (dashboardShown) return false;
-      dashboardShown = true;
+      if (dashboardFound) return false;
+      dashboardFound = true;
     }
 
     return true;

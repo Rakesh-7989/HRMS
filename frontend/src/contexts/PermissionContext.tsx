@@ -15,15 +15,14 @@ export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children
 
     const value = useMemo(() => {
         const permissions = user?.permissions || [];
-        const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
         return {
             permissions,
-            hasPermission: (name: string) => isSuperAdmin || permissions.includes(name),
-            hasAnyPermission: (names: string[]) => isSuperAdmin || names.some(n => permissions.includes(n)),
-            hasAllPermissions: (names: string[]) => isSuperAdmin || names.every(n => permissions.includes(n)),
+            hasPermission: (name: string) => permissions.includes(name),
+            hasAnyPermission: (names: string[]) => names.some(n => permissions.includes(n)),
+            hasAllPermissions: (names: string[]) => names.every(n => permissions.includes(n)),
         };
-    }, [user?.permissions, user?.role]);
+    }, [user?.permissions]);
 
     return (
         <PermissionContext.Provider value={value}>

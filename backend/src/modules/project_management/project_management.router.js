@@ -429,7 +429,7 @@ router.get(
 router.get(
   "/dashboard/stats",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requireAnyPermission(["view_projects", "view_all_projects_summary"]),
   ctrl.getDashboardStats
 );
 

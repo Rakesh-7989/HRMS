@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { StatsSection } from './StatsSection';
 import { MiddleSection } from './MiddleSection';
 import { BottomSection } from './BottomSection';
-import { timesheetService } from '@/services/timesheet.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
 import { TimesheetDashboardStats, TimesheetDashboardCharts, TimesheetDashboardBreakdown } from '@/types/project.types';
 import { WeeklyTimesheetEntry } from './WeeklyTimesheetEntry';
 import { TimesheetHistory } from './TimesheetHistory';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { wfhService } from '@/services/wfh.service';
+import { wfhService } from '@/services/employee/wfh.service';
 import { format } from 'date-fns';
 import { Calendar, Clock, Home, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
 import { WFHRequestDialog } from '@/components/wfh/WFHRequestDialog';

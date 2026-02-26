@@ -3,7 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { wfhService, CreateWFHRequestData } from '@/services/wfh.service';
+import { wfhService, CreateWFHRequestData } from '@/services/employee/wfh.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
 

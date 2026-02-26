@@ -3,7 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { designationService, CreateDesignationData, Designation } from '@/services/designation.service';
+import { designationService, CreateDesignationData, Designation } from '@/services/organization/designation.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { showToast } from '@/utils/toast';
 import { Input } from '@/components/ui/Input';

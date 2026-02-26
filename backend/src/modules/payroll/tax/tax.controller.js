@@ -101,7 +101,7 @@ const downloadForm16PartB = async (req, res) => {
     try {
         const { fy } = req.query;
         // If admin, allowing specifying employeeId via query, else use self
-        const employeeId = (['ADMIN', 'HR'].includes(req.user.role) && req.query.employeeId)
+        const employeeId = (req.user.permissions.includes('view_payroll') && req.query.employeeId)
             ? req.query.employeeId
             : req.user.employeeId;
 

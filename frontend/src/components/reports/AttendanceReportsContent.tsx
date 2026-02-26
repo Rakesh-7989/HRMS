@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
+import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/employee/attendance.service';
 import { usePermission } from '@/contexts/PermissionContext';
 import { format, subDays } from 'date-fns';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
@@ -27,7 +27,7 @@ import {
     CheckCircle,
     XCircle
 } from 'lucide-react';
-import { adminService } from '@/services/admin.service';
+import { adminService } from '@/services/organization/admin.service';
 
 export const AttendanceReportsContent: React.FC = () => {
     const { hasAnyPermission } = usePermission();

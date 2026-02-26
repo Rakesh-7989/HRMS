@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
+import { assetsService, fetchAssetConfiguration } from '@/services/management/assets.service';
 import { usePermission } from '@/contexts/PermissionContext';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';

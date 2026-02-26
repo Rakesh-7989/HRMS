@@ -97,13 +97,21 @@ module.exports = async function verifyJwt(req, res, next) {
       return next(new UnauthorizedError("Session has been revoked - please login again"));
     }
 
-    // Load user permissions from RBAC tables
+    // Load user permissions from RBAC tables (including primary role)
     const permRes = await pool.query(
       `SELECT DISTINCT p.name
-       FROM user_roles ur
-       JOIN role_permissions rp ON rp.role_id = ur.role_id
-       JOIN permissions p ON p.id = rp.permission_id
-       WHERE ur.user_id = $1`,
+       FROM (
+         -- Permissions from explicitly assigned roles
+         SELECT ur.role_id FROM user_roles ur WHERE ur.user_id = $1
+         UNION
+         -- Permissions from primary role in users table (Fallback ONLY if no explicit roles)
+        SELECT r.id FROM users u 
+        JOIN roles r ON (r.name = u.role AND (r.tenant_id = u.tenant_id OR (r.tenant_id IS NULL AND NOT EXISTS (SELECT 1 FROM roles r2 WHERE r2.name = u.role AND r2.tenant_id = u.tenant_id))))
+        WHERE u.id = $1
+          AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1)
+      ) user_all_roles
+       JOIN role_permissions rp ON rp.role_id = user_all_roles.role_id
+       JOIN permissions p ON p.id = rp.permission_id`,
       [user.id]
     );
     const permissions = permRes.rows.map(r => r.name);

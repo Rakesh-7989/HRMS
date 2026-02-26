@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ChevronDown, ChevronRight, Calendar, FileText, AlertCircle } from 'lucide-react';
-import { timesheetService } from '@/services/timesheet.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
 import { cn } from '@/utils/cn';
 
 interface TimesheetHistoryProps {

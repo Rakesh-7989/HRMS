@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 // import { Select } from '@/components/ui/Select'; // Unused, using native select for now or replace with UI component
 
-import { hierarchyService, HierarchyPosition } from '@/services/hierarchy.service';
-import { departmentService } from '@/services/department.service';
+import { hierarchyService, HierarchyPosition } from '@/services/organization/hierarchy.service';
+import { departmentService } from '@/services/organization/department.service';
 import { showToast } from '@/utils/toast';
 
 interface CreatePositionFormProps {

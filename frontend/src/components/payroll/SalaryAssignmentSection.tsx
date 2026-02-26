@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { payrollService, CTCBreakdown } from '@/services/payroll.service';
+import { payrollService, CTCBreakdown } from '@/services/finance/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Calculator, Check, AlertCircle, History, Save, DollarSign, Calendar, FileText, TrendingUp, Info } from 'lucide-react';
 import { format } from 'date-fns';

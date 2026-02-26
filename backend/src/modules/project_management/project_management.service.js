@@ -2167,7 +2167,7 @@ exports.updateComment = async (tenantId, userId, commentId, data, options = {}) 
   const existingComment = await this.getCommentById(tenantId, commentId);
 
   // Only creator or ADMIN can update
-  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+  if (existingComment.user_id !== userId && !options.permissions?.includes('manage_all_projects')) {
     throw new ForbiddenError("You can only edit your own comments");
   }
 
@@ -2191,7 +2191,7 @@ exports.deleteComment = async (tenantId, userId, commentId, options = {}) => {
   const existingComment = await this.getCommentById(tenantId, commentId);
 
   // Only creator or ADMIN can delete
-  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+  if (existingComment.user_id !== userId && !options.permissions?.includes('manage_all_projects')) {
     throw new ForbiddenError("You can only delete your own comments");
   }
 

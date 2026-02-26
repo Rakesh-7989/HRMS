@@ -104,15 +104,17 @@ async function setupDatabase() {
   const {
     DB_HOST = "localhost",
     DB_PORT = 5432,
-    DB_USER = "hrms_user",
-    DB_NAME = "hrms_saas_db",
+    DB_USER = "new_hrms_admin",
+    DB_NAME = "hrms_new_db",
     DB_PASSWORD,
+    POSTGRES_PASSWORD = "root",
   } = process.env;
-
-  // if (DB_PASSWORD) process.env.PGPASSWORD = DB_PASSWORD; // Moved down to avoid conflict with postgres user auth
 
   const isWindows = process.platform === "win32";
   const SUPERUSER = "postgres";
+
+  // Set superuser password for DB + user creation steps
+  process.env.PGPASSWORD = POSTGRES_PASSWORD;
 
   // -----------------------
   // Step A: Run setup.sql
@@ -139,7 +141,7 @@ async function setupDatabase() {
     console.log("✓ DB user password updated");
   }
 
-  // Now that we are switching to the app user for migrations, set the password in env
+  // Now switch to the app user for migrations
   if (DB_PASSWORD) process.env.PGPASSWORD = DB_PASSWORD;
 
   // -----------------------
@@ -161,9 +163,12 @@ async function setupDatabase() {
   console.log("Running migrations...");
 
   const migrationFiles = [
+    // --- Prefixed migrations ---
     "src/database/migrations/001_add_extended_employee_fields.sql",
     "src/database/migrations/001_create_asset_management_tables.sql",
     "src/database/migrations/001_create_expense_categories.sql",
+
+    // --- Dated migrations (chronological) ---
     "src/database/migrations/20251218_add_payroll_tables.sql",
     "src/database/migrations/20260106_leave_tracker.sql",
     "src/database/migrations/20260109_fix_payroll_schema.sql",
@@ -174,11 +179,7 @@ async function setupDatabase() {
     "src/database/migrations/20260124_add_device_tracking.sql",
     "src/database/migrations/20260124_corporate_calendar.sql",
     "src/database/migrations/20260124_geo_fencing.sql",
-    "src/database/migrations/20260128_task_comments.sql",
-    "src/database/migrations/20260202_create_chat_tables.sql",
-    "src/database/migrations/20260203_chat_enhancements.sql"
-
-    "src/database/migrations/20260127_add_annual_salary.sql",
+    "src/database/migrations/20260126_add_notifications.sql",
     "src/database/migrations/20260127_add_work_mode.sql",
     "src/database/migrations/20260127_enhanced_payroll_structures.sql",
     "src/database/migrations/20260128_add_employee_uan_esi.sql",
@@ -189,7 +190,32 @@ async function setupDatabase() {
     "src/database/migrations/20260129_add_wfh_leave_type.sql",
     "src/database/migrations/20260129_create_wfh_requests.sql",
     "src/database/migrations/20260130_add_dynamic_pricing.sql",
-    "src/database/migrations/20260130_add_shift_tracking_to_attendance.sql"
+    "src/database/migrations/20260130_add_shift_tracking_to_attendance.sql",
+    "src/database/migrations/20260202_add_eod_report_to_attendance.sql",
+    "src/database/migrations/20260202_add_is_billable.sql",
+    "src/database/migrations/20260202_create_chat_tables.sql",
+    "src/database/migrations/20260203_add_project_id_to_timesheet_entries.sql",
+    "src/database/migrations/20260203_chat_advanced_schema.sql",
+    "src/database/migrations/20260203_chat_enhancements.sql",
+    "src/database/migrations/20260203_email_verifications.sql",
+    "src/database/migrations/20260203_make_email_globally_unique.sql",
+    "src/database/migrations/20260205_chat_pin_edit.sql",
+    "src/database/migrations/20260206_robust_subscriptions.sql",
+    "src/database/migrations/20260209_add_profile_photo_to_employees.sql",
+    "src/database/migrations/20260210_add_coupon_code_to_subscriptions.sql",
+    "src/database/migrations/20260210_billing_system_final.sql",
+    "src/database/migrations/20260211_add_seed_functions.sql",
+    "src/database/migrations/20260211_add_two_factor_auth.sql",
+    "src/database/migrations/20260211_payroll_fixes.sql",
+    "src/database/migrations/20260212_add_tax_config_tables.sql",
+    "src/database/migrations/20260212_payroll_power_upgrade.sql",
+    "src/database/migrations/20260213_enhance_attendance_multi_tenant.sql",
+    "src/database/migrations/20260215_rbac_comprehensive.sql",
+    "src/database/migrations/20260218_system_refinements_consolidated.sql",
+    "src/database/migrations/20260218_system_refinements_consolidated_2.sql",
+
+    // --- Framework migration ---
+    "src/database/migrations/river_framework.sql",
   ];
 
   for (const migrationFile of migrationFiles) {

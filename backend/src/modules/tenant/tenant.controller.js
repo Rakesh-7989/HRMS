@@ -130,7 +130,7 @@ exports.setEmployeeIdPrefix = async (req, res) => {
     }
 
     // ADMIN and HR can set the prefix
-    if (!["ADMIN", "SUPER_ADMIN"].includes(req.user.role)) {
+    if (!req.user.permissions.includes('manage_organization') && !req.user.permissions.includes('platform.manage_tenants')) {
       return res.status(403).json({
         status: "error",
         message: "Only Admin  can configure employee ID prefix"

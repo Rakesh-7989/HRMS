@@ -29,6 +29,7 @@ export interface User {
   cancel_at_period_end?: boolean;
   two_factor_enabled?: boolean;
   tenant_settings?: TenantSettings;
+  default_path?: string;
 
   // Professional
   shift?: string;

@@ -25,8 +25,8 @@ router.put("/logo", requirePermission("manage_organization"), uploadImage.single
 router.delete("/logo", requirePermission("manage_organization"), controller.deleteLogo);
 
 // Employee ID Settings
-router.get("/employee-id-settings", controller.getEmployeeIdSettings);
-router.post("/employee-id-prefix", controller.setEmployeeIdPrefix);
+router.get("/employee-id-settings", requirePermission("manage_organization"), controller.getEmployeeIdSettings);
+router.post("/employee-id-prefix", requirePermission("manage_organization"), controller.setEmployeeIdPrefix);
 
 router.get("/platform/tenants", requirePlatformAdmin("platform.manage_tenants"), controller.getAllTenants);
 router.get("/platform/tenants/:id", requirePlatformAdmin("platform.manage_tenants"), controller.getPlatformTenantById);
@@ -35,6 +35,6 @@ router.patch("/platform/tenants/:id/deactivate", requirePlatformAdmin("platform.
 router.get("/platform/tenants/:id/users", requirePlatformAdmin("platform.manage_tenants"), controller.getUsersByTenant);
 router.get("/platform/tenants/:id/employee-count", requirePlatformAdmin("platform.manage_tenants"), controller.getPlatformTenantEmployeeCount);
 
-router.put("/employee-id-mode", verifyJwt, controller.toggleEmployeeIdMode);
+router.put("/employee-id-mode", verifyJwt, requirePermission("manage_organization"), controller.toggleEmployeeIdMode);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService, { FnFSettlement } from '@/services/payroll.service';
-import { usersService } from '@/services/users.service';
+import payrollService, { FnFSettlement } from '@/services/finance/payroll.service';
+import { usersService } from '@/services/employee/users.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';

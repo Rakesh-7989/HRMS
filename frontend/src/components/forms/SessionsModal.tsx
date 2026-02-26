@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { toast } from 'react-hot-toast';
 
 interface SessionsModalProps {

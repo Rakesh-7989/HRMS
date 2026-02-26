@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
-import { payrollService } from '@/services/payroll.service';
+import { payrollService } from '@/services/finance/payroll.service';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
 import { Download, Filter, FileText, Mail, Trash2 } from 'lucide-react';

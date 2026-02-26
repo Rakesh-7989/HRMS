@@ -9,18 +9,24 @@ const required = (key, fallback) => {
     if (value === undefined) {
         throw new Error(`Missing required env var: ${key}`);
     }
+    // If we are in production, we should NOT rely on fallbacks for critical infrastructure
+    if (process.env.NODE_ENV === 'production' && value === fallback && fallback !== undefined) {
+        console.warn(`[SECURITY WARNING] Using fallback value for ${key} in production!`);
+    }
     return value;
 };
+
+const isProd = process.env.NODE_ENV === 'production';
 
 module.exports = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: parseInt(process.env.PORT || '5000', 10),
 
     DATABASE_URL: process.env.DATABASE_URL || (() => {
-        if (process.env.NODE_ENV === 'production') {
-            console.warn('[HRMS] DATABASE_URL not set — using localhost default. Set this in .env for production.');
+        if (isProd) {
+            throw new Error('DATABASE_URL must be set in production! App terminating for security.');
         }
-        return 'postgresql://hrms_user:root@localhost:5432/hrms_saas_db';
+        return 'postgresql://new_hrms_admin:admin@localhost:5432/hrms_new_db';
     })(),
     JWT_ACCESS_SECRET: required('JWT_ACCESS_SECRET'),
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
@@ -30,8 +36,8 @@ module.exports = {
     LOG_LEVEL: (process.env.LOG_LEVEL || 'debug').toLowerCase(),
 
     FRONTEND_URL: process.env.FRONTEND_URL || (() => {
-        if (process.env.NODE_ENV === 'production') {
-            console.warn('[HRMS] FRONTEND_URL not set — using localhost default. Set this in .env for production.');
+        if (isProd) {
+            throw new Error('FRONTEND_URL must be set in production! App terminating for security.');
         }
         return 'http://localhost:5173';
     })(),
@@ -44,5 +50,5 @@ module.exports = {
     SMTP_PASS: process.env.SMTP_PASS,
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply.hrms@WellZo.com',
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HR WellZo',
-    DBA_PASSWORD: process.env.DBA_PASSWORD || 'dba_secret'
+    DBA_PASSWORD: required('DBA_PASSWORD', isProd ? undefined : 'dba_secret')
 };

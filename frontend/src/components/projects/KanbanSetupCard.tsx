@@ -12,7 +12,7 @@ import {
     DialogFooter,
 } from '@/components/ui/Dialog';
 
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 import type { KanbanColumnInput } from '@/types/project.types';
 
 interface KanbanSetupCardProps {

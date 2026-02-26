@@ -3,6 +3,7 @@ const controller = require("./chat.controller");
 const verifyJwt = require("../../middleware/verifyJwt");
 const multer = require("multer");
 const path = require("path");
+const { requirePermission } = require("../../middleware/requirePermission");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -16,6 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.use(verifyJwt);
+router.use(requirePermission("access_chat"));
 
 router.get("/conversations", controller.getConversations);
 router.get("/conversations/:conversationId", controller.getConversation);

@@ -17,13 +17,13 @@ router.use(verifyJwt);
 
 router.get(
     "/settings",
-    requireAnyPermission(["view_all_employees", "manage_attendance_policies"]),
+    requireAnyPermission(["view_geofencing", "manage_geofencing", "manage_attendance_policies"]),
     controller.getSettings
 );
 
 router.put(
     "/settings",
-    requirePermission("manage_attendance_policies"),
+    requirePermission("manage_geofencing"),
     validate(validator.updateSettingsSchema),
     controller.updateSettings
 );
@@ -34,33 +34,33 @@ router.put(
 
 router.get(
     "/locations",
-    requireAnyPermission(["manage_attendance_policies", "manage_organization"]),
+    requireAnyPermission(["manage_geofencing", "manage_attendance_policies"]),
     controller.getLocations
 );
 
 router.get(
     "/locations/:id",
-    requireAnyPermission(["manage_attendance_policies", "manage_organization"]),
+    requireAnyPermission(["view_geofencing", "manage_geofencing", "manage_attendance_policies"]),
     controller.getLocation
 );
 
 router.post(
     "/locations",
-    requirePermission("manage_attendance_policies"),
+    requirePermission("manage_geofencing"),
     validate(validator.createLocationSchema),
     controller.createLocation
 );
 
 router.put(
     "/locations/:id",
-    requirePermission("manage_attendance_policies"),
+    requirePermission("manage_geofencing"),
     validate(validator.updateLocationSchema),
     controller.updateLocation
 );
 
 router.delete(
     "/locations/:id",
-    requirePermission("manage_attendance_policies"),
+    requirePermission("manage_geofencing"),
     controller.deleteLocation
 );
 
@@ -80,7 +80,7 @@ router.post(
 
 router.get(
     "/violations",
-    requireAnyPermission(["view_all_employees", "manage_attendance_policies"]),
+    requireAnyPermission(["view_geofencing", "manage_geofencing", "manage_attendance_policies"]),
     controller.getViolations
 );
 

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Dialog } from '@/components/ui/Dialog';
-import { geoFencingService, GeoFenceLocation, CreateGeoFenceLocationData, GeoFencingSettings } from '@/services/geoFencing.service';
+import { geoFencingService, GeoFenceLocation, CreateGeoFenceLocationData, GeoFencingSettings } from '@/services/employee/geoFencing.service';
 import { MapPin, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, RefreshCw, Check, X, ShieldCheck, Settings, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';

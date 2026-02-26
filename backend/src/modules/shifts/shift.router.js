@@ -4,11 +4,11 @@ const shiftController = require('./shift.controller');
 const { requirePermission, requireAnyPermission } = require("../../middleware/requirePermission");
 
 // GET methods - Allow Managers to view shifts
-router.get('/', requireAnyPermission(['employees.view', 'organisation.manage_shifts']), shiftController.getShifts);
-router.get('/:id', requireAnyPermission(['employees.view', 'organisation.manage_shifts']), shiftController.getShiftById);
+router.get('/', requireAnyPermission(['view_all_employees', 'manage_shifts']), shiftController.getShifts);
+router.get('/:id', requireAnyPermission(['view_all_employees', 'manage_shifts']), shiftController.getShiftById);
 
 // Only HR and ADMIN can manage (create/update/delete/assign) shifts
-router.use(requireAnyPermission(["organisation.manage_shifts"]));
+router.use(requireAnyPermission(["manage_shifts"]));
 
 router.post('/', shiftController.createShift);
 router.put('/:id', shiftController.updateShift);

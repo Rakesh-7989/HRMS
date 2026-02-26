@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { Label } from '@/components/ui/Label';
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 import {
     Table,
     TableHeader,

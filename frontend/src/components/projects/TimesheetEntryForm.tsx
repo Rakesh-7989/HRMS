@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Card } from '@/components/ui/Card';
 
-import { projectsService } from '@/services/projects.service';
-import { timesheetService } from '@/services/timesheet.service';
+import { projectsService } from '@/services/management/projects.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermission } from '@/contexts/PermissionContext';
 import { cn } from '@/utils/cn';

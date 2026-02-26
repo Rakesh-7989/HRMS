@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/Dialog';
 import { StatusBadge } from '@/components/projects/StatusBadge';
 
-import { projectsService } from '@/services/projects.service';
+import { projectsService } from '@/services/management/projects.service';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Client, ClientStatus } from '@/types/project.types';
 

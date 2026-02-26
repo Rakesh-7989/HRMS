@@ -26,10 +26,10 @@ const {
 // Create new user (Admin / HR)
 router.post(
   "/",
-  verifyJwt, // Assuming verifyJwt is still needed, it was removed in the instruction but not explicitly stated to remove all verifyJwt. Adding it back for consistency with other routes.
-  requireAnyPermission(["create_employee", "manage_employees"]),
-  checkLimit('employees'), // Assuming checkLimit is still needed
-  validate(createUserSchema), // Using existing schema name
+  verifyJwt,
+  requireAnyPermission(["create_employee", "manage_all_employees"]),
+  checkLimit('employees'),
+  validate(createUserSchema),
   controller.createUser
 );
 
@@ -37,8 +37,8 @@ router.post(
 router.get(
   "/",
   verifyJwt,
-  requireAnyPermission(["view_all_employees", "manage_employees"]),
-  validate(getUsersSchema), // Using existing schema name
+  requireAnyPermission(["view_all_employees", "manage_all_employees"]),
+  validate(getUsersSchema),
   controller.getUsers
 );
 
@@ -49,8 +49,8 @@ router.get("/tree", verifyJwt, controller.getOrgTree);
 router.get(
   "/:id",
   verifyJwt,
-  requireAnyPermission(["view_all_employees", "view_team_employees", "manage_employees"]),
-  validate(getUserSchema), // Keeping validate for consistency
+  requireAnyPermission(["view_all_employees", "view_team_employees", "manage_all_employees"]),
+  validate(getUserSchema),
   controller.getUserById
 );
 
@@ -58,8 +58,8 @@ router.get(
 router.put(
   "/:id",
   verifyJwt,
-  requireAnyPermission(["edit_employee", "manage_employees"]),
-  validate(updateUserSchema), // Using existing schema name
+  requireAnyPermission(["edit_employee", "manage_all_employees"]),
+  validate(updateUserSchema),
   controller.updateUser
 );
 

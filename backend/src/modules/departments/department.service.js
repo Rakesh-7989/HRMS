@@ -11,7 +11,7 @@ const getQuery = (db) => {
 exports.createDepartment = async (db, data, actor) => {
   const query = getQuery(db);
 
-  if (!["ADMIN", "HR"].includes(actor.role)) {
+  if (!actor.permissions || !actor.permissions.includes('manage_departments')) {
     throw new ForbiddenError("Not allowed to create departments");
   }
 
@@ -64,7 +64,7 @@ exports.getDepartmentById = async (db, deptId, actor) => {
 exports.updateDepartment = async (db, deptId, updates, actor) => {
   const query = getQuery(db);
 
-  if (!["ADMIN", "HR"].includes(actor.role)) {
+  if (!actor.permissions || !actor.permissions.includes('manage_departments')) {
     throw new ForbiddenError("Not allowed to update departments");
   }
 
@@ -101,7 +101,7 @@ exports.updateDepartment = async (db, deptId, updates, actor) => {
 exports.deleteDepartment = async (db, deptId, actor) => {
   const query = getQuery(db);
 
-  if (!["ADMIN", "HR"].includes(actor.role)) {
+  if (!actor.permissions || !actor.permissions.includes('manage_departments')) {
     throw new ForbiddenError("Not allowed to delete departments");
   }
 

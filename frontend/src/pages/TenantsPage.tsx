@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { superAdminService, Tenant } from '@/services/superAdmin.service';
+import { superAdminService, Tenant } from '@/services/management/superAdmin.service';
 import { format } from 'date-fns';
 import { Eye, BadgeCheck, Ban, Calendar, XCircle, ArrowUp, ShieldAlert, Receipt, MoreVertical } from 'lucide-react';
 import { cn } from '@/utils/cn';

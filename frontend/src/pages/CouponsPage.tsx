@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
-import { couponService, Coupon } from '@/services/coupons.service';
+import { couponService, Coupon } from '@/services/finance/coupons.service';
 import { Plus, Copy, Tag, Calendar, Percent, DollarSign, RefreshCw, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';

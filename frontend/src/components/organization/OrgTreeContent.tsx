@@ -11,7 +11,7 @@ import {
     Briefcase,
     Grab
 } from 'lucide-react';
-import { usersService } from '@/services/users.service';
+import { usersService } from '@/services/employee/users.service';
 import { cn } from '@/utils/cn';
 
 // Role-based styling

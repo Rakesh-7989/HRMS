@@ -80,41 +80,36 @@ const createCostCentreSchema = z.object({
 
 router.use(verifyJwt);
 
-// =====================
-// STATUTORY CONFIG
-// =====================
+
 router.get(
     "/config",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     controller.getStatutoryConfig
 );
 
 router.put(
     "/config",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     validate(upsertStatutorySchema),
     controller.upsertStatutoryConfig
 );
 
-// =====================
-// PT SLABS
-// =====================
 router.get(
     "/pt-slabs",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     controller.getPTSlabs
 );
 
 router.post(
     "/pt-slabs",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     validate(createPTSlabSchema),
     controller.createPTSlab
 );
 
 router.delete(
     "/pt-slabs/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     controller.deletePTSlab
 );
 
@@ -123,20 +118,20 @@ router.delete(
 // =====================
 router.get(
     "/deduction-types",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     controller.getDeductionTypes
 );
 
 router.post(
     "/deduction-types",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     validate(createDeductionTypeSchema),
     controller.createDeductionType
 );
 
 router.put(
     "/deduction-types/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     controller.updateDeductionType
 );
 
@@ -145,20 +140,20 @@ router.put(
 // =====================
 router.get(
     "/deductions/employee/:employeeId",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     controller.getEmployeeDeductions
 );
 
 router.post(
     "/deductions",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     validate(addEmployeeDeductionSchema),
     controller.addEmployeeDeduction
 );
 
 router.delete(
     "/deductions/:id",
-    requireAnyPermission(["payroll.manage"]),
+    requireAnyPermission(["manage_payroll_components"]),
     controller.removeEmployeeDeduction
 );
 
@@ -167,26 +162,26 @@ router.delete(
 // =====================
 router.get(
     "/cost-centres",
-    requireAnyPermission(["payroll.manage", "payroll.view_own"]),
+    requireAnyPermission(["manage_payroll_components", "view_own_payslip"]),
     controller.getCostCentres
 );
 
 router.post(
     "/cost-centres",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     validate(createCostCentreSchema),
     controller.createCostCentre
 );
 
 router.put(
     "/cost-centres/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     controller.updateCostCentre
 );
 
 router.delete(
     "/cost-centres/:id",
-    requirePermission("payroll.manage"),
+    requirePermission("manage_payroll_components"),
     controller.deleteCostCentre
 );
 

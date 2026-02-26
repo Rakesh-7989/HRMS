@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { dashboardService } from '@/services/dashboard.service';
-import { eventsService } from '@/services/events.service';
+import { dashboardService } from '@/services/common/dashboard.service';
+import { eventsService } from '@/services/common/events.service';
 import {
   Users, Building2, Briefcase, Calendar, Clock, Activity,
   Sparkles, Award, UserCheck, UserX

@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { WeeklyTimesheetEntry } from '@/components/timesheets/WeeklyTimesheetEntry';
-import { timesheetService } from '@/services/timesheet.service';
+import { timesheetService } from '@/services/employee/timesheet.service';
 import { cn } from '@/utils/cn';
 
 interface TimesheetEntry {

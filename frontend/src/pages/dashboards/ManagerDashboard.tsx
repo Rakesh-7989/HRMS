@@ -21,11 +21,11 @@ import { showToast } from '@/utils/toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
-import { dashboardService } from '@/services/dashboard.service';
+import { dashboardService } from '@/services/common/dashboard.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { attendanceService } from '@/services/attendance.service';
-import { leaveService } from '@/services/leave.service';
-import { projectsService } from '@/services/projects.service';
+import { attendanceService } from '@/services/employee/attendance.service';
+import { leaveService } from '@/services/employee/leave.service';
+import { projectsService } from '@/services/management/projects.service';
 
 // --- Types ---
 interface Task {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
-import { attendanceService } from '@/services/attendance.service';
+import { attendanceService } from '@/services/employee/attendance.service';
 import { format } from 'date-fns';
 import { Calendar, Clock } from 'lucide-react';
 import { formatTime12Hour, calculateWorkDuration } from '@/utils/timeFormat';

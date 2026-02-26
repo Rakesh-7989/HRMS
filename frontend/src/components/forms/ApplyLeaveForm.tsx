@@ -4,7 +4,7 @@ import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
-import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
+import { leaveService, ApplyLeaveData, LeaveType } from '@/services/employee/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Upload, X, FileText } from 'lucide-react';
 

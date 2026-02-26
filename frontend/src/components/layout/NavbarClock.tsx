@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
-import { useAuth } from '@/contexts/AuthContext';
-import { attendanceService } from '@/services/attendance.service';
-import { geoFencingService } from '@/services/geoFencing.service';
+import { usePermission } from '@/contexts/PermissionContext';
+import { attendanceService } from '@/services/employee/attendance.service';
+import { geoFencingService } from '@/services/employee/geoFencing.service';
 import { Clock, MapPin, Coffee } from 'lucide-react';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
@@ -12,7 +12,8 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 
 export const NavbarClock: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = usePermission();
+    const canMarkAttendance = hasPermission('mark_attendance');
     const queryClient = useQueryClient();
     const { alert: showAlert } = useConfirm();
     const [currentTimer, setCurrentTimer] = useState<number>(0);
@@ -31,12 +32,14 @@ export const NavbarClock: React.FC = () => {
         },
         staleTime: 1000 * 60, // 1 minute stale time
         retry: 1,
+        enabled: canMarkAttendance, // Don't fetch if user lacks permission
     });
 
     const { data: geoSettings } = useQuery({
         queryKey: ['geo-fencing-settings'],
         queryFn: () => geoFencingService.getSettings(),
         retry: false,
+        enabled: canMarkAttendance, // Don't fetch if user lacks permission
     });
 
     // Timer effect
@@ -240,6 +243,11 @@ export const NavbarClock: React.FC = () => {
     const status = todayAttendance?.status || 'NOT_CHECKED_IN';
     const canClockOut = !!todayAttendance?.check_in_time && !todayAttendance?.check_out_time;
 
+    // Permission check (after all hooks to comply with React Rules of Hooks)
+    if (!canMarkAttendance) {
+        return null;
+    }
+
     // Loading state
     if (isLoadingAttendance) {
         return (
@@ -253,11 +261,6 @@ export const NavbarClock: React.FC = () => {
 
 
     const activeBreak = todayAttendance?.active_break;
-
-    // Only ADMIN and SUPER_ADMIN skip the clock widget — HR, MANAGER, EMPLOYEE all see it
-    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
-        return null;
-    }
 
 
     // Failed to load attendance

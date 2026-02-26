@@ -7,7 +7,7 @@ import { Key, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/auth/auth.service';
 
 const validationSchema = Yup.object({
     currentPassword: Yup.string().required('Current password is required'),

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { attendanceService } from '@/services/attendance.service';
-import { geoFencingService } from '@/services/geoFencing.service';
+import { attendanceService } from '@/services/employee/attendance.service';
+import { geoFencingService } from '@/services/employee/geoFencing.service';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import {
     LogIn, LogOut, Coffee, Play, CheckCircle2,

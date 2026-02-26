@@ -1,4 +1,5 @@
 const authService = require("./auth.service");
+const userService = require("../users/user.service");
 const logger = require("../../config/logger");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -109,6 +110,7 @@ exports.login = async (req, res) => {
       role: user.role,
       tenantId: user.tenant_id,
       permissions,
+      default_path: userService.calculateDefaultPath(permissions),
       mustChangePassword: user.must_change_password,
       ...tokens
     });
