@@ -43,19 +43,19 @@ CREATE TABLE IF NOT EXISTS assets (
 );
 
 -- Indexes for performance
-CREATE UNIQUE INDEX assets_unique_code_per_tenant 
+CREATE UNIQUE INDEX IF NOT EXISTS assets_unique_code_per_tenant 
     ON assets(tenant_id, asset_code);
 
-CREATE INDEX assets_tenant_idx 
+CREATE INDEX IF NOT EXISTS assets_tenant_idx 
     ON assets(tenant_id);
 
-CREATE INDEX assets_status_idx 
+CREATE INDEX IF NOT EXISTS assets_status_idx 
     ON assets(tenant_id, status);
 
-CREATE INDEX assets_category_idx 
+CREATE INDEX IF NOT EXISTS assets_category_idx 
     ON assets(tenant_id, category);
 
-CREATE INDEX assets_assigned_to_idx 
+CREATE INDEX IF NOT EXISTS assets_assigned_to_idx 
     ON assets(assigned_to);
 
 -- ===================================================================
@@ -81,13 +81,13 @@ CREATE TABLE IF NOT EXISTS asset_tracking (
 );
 
 -- Indexes
-CREATE INDEX asset_tracking_asset_idx 
+CREATE INDEX IF NOT EXISTS asset_tracking_asset_idx 
     ON asset_tracking(asset_id);
 
-CREATE INDEX asset_tracking_tenant_idx 
+CREATE INDEX IF NOT EXISTS asset_tracking_tenant_idx 
     ON asset_tracking(tenant_id);
 
-CREATE INDEX asset_tracking_created_at_idx 
+CREATE INDEX IF NOT EXISTS asset_tracking_created_at_idx 
     ON asset_tracking(created_at DESC);
 
 -- ===================================================================
@@ -110,16 +110,16 @@ CREATE TABLE IF NOT EXISTS asset_usage_history (
 );
 
 -- Indexes
-CREATE INDEX usage_history_asset_idx 
+CREATE INDEX IF NOT EXISTS usage_history_asset_idx 
     ON asset_usage_history(asset_id);
 
-CREATE INDEX usage_history_employee_idx 
+CREATE INDEX IF NOT EXISTS usage_history_employee_idx 
     ON asset_usage_history(employee_id);
 
-CREATE INDEX usage_history_tenant_idx 
+CREATE INDEX IF NOT EXISTS usage_history_tenant_idx 
     ON asset_usage_history(tenant_id);
 
-CREATE INDEX usage_history_date_idx 
+CREATE INDEX IF NOT EXISTS usage_history_date_idx 
     ON asset_usage_history(usage_date DESC);
 
 -- ===================================================================

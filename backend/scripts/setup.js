@@ -176,9 +176,9 @@ async function setupDatabase() {
     "src/database/migrations/20260109_patch_missing_columns.sql",
     "src/database/migrations/20260109_patch_payroll_items.sql",
     "src/database/migrations/20260113_add_attendance_regularization.sql",
+    "src/database/migrations/20260124_geo_fencing.sql",
     "src/database/migrations/20260124_add_device_tracking.sql",
     "src/database/migrations/20260124_corporate_calendar.sql",
-    "src/database/migrations/20260124_geo_fencing.sql",
     "src/database/migrations/20260126_add_notifications.sql",
     "src/database/migrations/20260127_add_work_mode.sql",
     "src/database/migrations/20260127_enhanced_payroll_structures.sql",
@@ -208,14 +208,15 @@ async function setupDatabase() {
     "src/database/migrations/20260211_add_two_factor_auth.sql",
     "src/database/migrations/20260211_payroll_fixes.sql",
     "src/database/migrations/20260212_add_tax_config_tables.sql",
+    "src/database/migrations/river_framework.sql",
     "src/database/migrations/20260212_payroll_power_upgrade.sql",
     "src/database/migrations/20260213_enhance_attendance_multi_tenant.sql",
     "src/database/migrations/20260215_rbac_comprehensive.sql",
     "src/database/migrations/20260218_system_refinements_consolidated.sql",
-    "src/database/migrations/20260218_system_refinements_consolidated_2.sql",
-
-    // --- Framework migration ---
-    "src/database/migrations/river_framework.sql",
+    "src/database/migrations/20260219_executive_permissions.sql",
+    "src/database/migrations/20260219_scoped_employee_id.sql",
+    "src/database/migrations/20260220_global_rbac_alignment.sql",
+    "src/database/migrations/20260225_add_role_default_path.sql",
   ];
 
   for (const migrationFile of migrationFiles) {
@@ -271,22 +272,21 @@ async function setupDatabase() {
   }
 
   // -----------------------
-  // Step E: Seed initial roles
+  // Step D.1: Seed Statutory Config
   // -----------------------
-  console.log("Seeding roles...");
-  const seedRolesPath = "src/database/seed/seed_initial_roles.sql";
+  console.log("Seeding statutory config...");
+  const seedStatutoryPath = "scripts/seed_statutory_config.js";
 
-  if (fs.existsSync(seedRolesPath)) {
-    const seedCmd =
-      `psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f ${seedRolesPath}`;
+  if (fs.existsSync(seedStatutoryPath)) {
+    const statutoryCmd = `node ${seedStatutoryPath}`;
 
-    if (!run(seedCmd)) {
-      console.error(" Seeding roles failed");
+    if (!run(statutoryCmd)) {
+      console.error("Seeding statutory config failed");
       process.exit(1);
     }
-    console.log("✓ Roles seeded");
+    console.log("✓ Statutory config seeded");
   } else {
-    console.log("No roles seed file found");
+    console.log("No statutory config seed script found");
   }
 
   // -----------------------
@@ -328,6 +328,24 @@ async function setupDatabase() {
   }
 
   // -----------------------
+  // Step F.2: Seed Salary Structure
+  // -----------------------
+  console.log("Seeding salary structure...");
+  const seedSalaryStructurePath = "scripts/seed_salary_structure.js";
+
+  if (fs.existsSync(seedSalaryStructurePath)) {
+    const salaryStructureCmd = `node ${seedSalaryStructurePath}`;
+
+    if (!run(salaryStructureCmd)) {
+      console.error("Seeding salary structure failed");
+      process.exit(1);
+    }
+    console.log("✓ Salary structure seeded");
+  } else {
+    console.log("No salary structure seed script found");
+  }
+
+  // -----------------------
   // Step G: Seed Super Admin
   // -----------------------
   console.log("Seeding super admin user...");
@@ -347,22 +365,21 @@ async function setupDatabase() {
   }
 
   // -----------------------
-  // Step H: Seed Demo Data
+  // Step H: Seed Demo Data (optional)
   // -----------------------
   console.log("Seeding demo data...");
-  const seedDemoDataPath = "src/database/seed/seed_demo_data.sql";
+  const seedDemoDataPath = "scripts/run-demo-seed.js";
 
   if (fs.existsSync(seedDemoDataPath)) {
-    const seedCmd =
-      `psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f ${seedDemoDataPath}`;
+    const demoCmd = `node ${seedDemoDataPath}`;
 
-    if (!run(seedCmd)) {
-      console.error(" Seeding demo data failed");
+    if (!run(demoCmd)) {
+      console.error("Seeding demo data failed");
       process.exit(1);
     }
     console.log("✓ Demo data seeded");
   } else {
-    console.log("No demo data seed file found");
+    console.log("No demo data seed script found");
   }
 
   console.log("");

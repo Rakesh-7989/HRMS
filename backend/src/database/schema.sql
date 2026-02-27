@@ -97,6 +97,8 @@ CREATE TABLE permissions (
     name        VARCHAR(100) NOT NULL UNIQUE,  -- e.g. 'employees.view', 'leave.approve'
     category    VARCHAR(50) NOT NULL,           -- e.g. 'employees', 'leave', 'payroll'
     description TEXT,
+    resource    VARCHAR(50),
+    action      VARCHAR(20),
     created_at  TIMESTAMP DEFAULT now()
 );
 
