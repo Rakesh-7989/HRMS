@@ -3,14 +3,16 @@ import { useSearchParams } from 'react-router-dom';
 import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { Calendar, Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 
 export const UnifiedShiftsContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTab = (searchParams.get('subtab') as any) || 'roster';
     const [activeTab, setActiveTab] = useState<'roster' | 'manage'>(initialTab);
+
+    const canManageShifts = hasPermission('shifts', 'manage');
 
     // Sync subtab with URL
     const handleTabChange = (newTab: typeof activeTab) => {
@@ -46,9 +48,9 @@ export const UnifiedShiftsContent: React.FC = () => {
                     <Calendar size={16} />
                     Shift Roster
                 </button>
-                {['ADMIN', 'HR'].includes(user?.role || '') && (
+                {canManageShifts && (
                     <button
-                        onClick={() => setActiveTab('manage')}
+                        onClick={() => handleTabChange('manage')}
                         className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
                         ${activeTab === 'manage'

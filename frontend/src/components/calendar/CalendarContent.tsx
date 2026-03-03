@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
@@ -21,12 +20,14 @@ import {
     Bell
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/Card';
+
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 export const CalendarContent: React.FC = () => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
+    const { hasPermission } = usePermissions();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedState, setSelectedState] = useState<string>('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -54,10 +55,13 @@ export const CalendarContent: React.FC = () => {
         queryFn: () => calendarService.getStates(),
     });
 
+    const canManage = hasPermission('calendar', 'manage');
+    const canViewGlobal = hasPermission('calendar', 'view_global') || canManage;
+
     const { data: companyHolidays = [] } = useQuery({
         queryKey: ['company-holidays'],
         queryFn: () => calendarService.getCompanyHolidays(),
-        enabled: user?.role === 'ADMIN' || user?.role === 'HR'
+        enabled: canViewGlobal
     });
 
     const { data: announcements = [] } = useQuery({
@@ -130,8 +134,6 @@ export const CalendarContent: React.FC = () => {
             return acc;
         }, {} as Record<string, CalendarDay>);
     }, [calendarData]);
-
-    const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
 
     const variants = {
         enter: (direction: number) => ({

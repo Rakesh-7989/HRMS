@@ -42,6 +42,7 @@ import { KanbanSetupCard } from '@/components/projects/KanbanSetupCard';
 import { projectsService } from '@/services/projects.service';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
 
@@ -83,7 +84,11 @@ export const TasksPage: React.FC = () => {
         estimated_hours: '',
     });
 
-    const canManage = ['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManageProject = hasPermission('projects', 'manage');
+    const canViewKanban = hasPermission('projects', 'view_kanban') || canManageProject;
+    const canManageKanban = hasPermission('projects', 'manage_kanban') || canManageProject;
+    const canManage = canManageProject; // Maintain for general task management if needed
 
     // Queries
     const { data: serverProject, isLoading: projectLoading } = useQuery({
@@ -440,18 +445,20 @@ export const TasksPage: React.FC = () => {
                                 <List size={14} />
                                 List
                             </button>
-                            <button
-                                onClick={() => setActiveTab('board')}
-                                className={cn(
-                                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
-                                    activeTab === 'board'
-                                        ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
-                                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                                )}
-                            >
-                                <Columns3 size={14} />
-                                Board
-                            </button>
+                            {canViewKanban && (
+                                <button
+                                    onClick={() => setActiveTab('board')}
+                                    className={cn(
+                                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
+                                        activeTab === 'board'
+                                            ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+                                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                    )}
+                                >
+                                    <Columns3 size={14} />
+                                    Board
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -517,7 +524,7 @@ export const TasksPage: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                        {activeTab === 'board' && canManage && (
+                        {activeTab === 'board' && canManageKanban && (
                             <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)} title="Board Settings">
                                 <Settings size={16} />
                             </Button>

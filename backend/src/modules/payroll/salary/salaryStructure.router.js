@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const verifyJwt = require('../../../middleware/verifyJwt');
-const requireRole = require('../../../middleware/requireRole');
 const controller = require('./salaryStructure.controller');
+
+const requirePermission = require('../../../middleware/requirePermission');
 
 router.use(verifyJwt);
 
@@ -14,28 +15,28 @@ router.use(verifyJwt);
 // List all salary components
 router.get(
     '/components',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.listComponents
 );
 
 // Create a new salary component
 router.post(
     '/components',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.createComponent
 );
 
 // Update a salary component
 router.put(
     '/components/:id',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.updateComponent
 );
 
 // Delete (deactivate) a salary component
 router.delete(
     '/components/:id',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.deleteComponent
 );
 
@@ -46,42 +47,42 @@ router.delete(
 // List all salary structures
 router.get(
     '/structures',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.listStructures
 );
 
 // Get a specific salary structure with components
 router.get(
     '/structures/:id',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.getStructure
 );
 
 // Create a new salary structure
 router.post(
     '/structures',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.createStructure
 );
 
 // Update a salary structure
 router.put(
     '/structures/:id',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.updateStructure
 );
 
 // Delete a salary structure
 router.delete(
     '/structures/:id',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.deleteStructure
 );
 
 // Migrate active employees to a specific salary structure
 router.post(
     '/structures/:id/migrate',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.migrateStructure
 );
 
@@ -92,7 +93,7 @@ router.post(
 // Calculate CTC breakdown given a structure and amount
 router.post(
     '/calculate-ctc',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.calculateCTC
 );
 
@@ -103,21 +104,20 @@ router.post(
 // Get current salary for an employee
 router.get(
     '/employees/:employeeId/salary',
-    requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']),
     controller.getEmployeeSalary
 );
 
 // Assign/Update salary for an employee
 router.post(
     '/employees/:employeeId/salary',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.assignEmployeeSalary
 );
 
 // Get salary revision history for an employee
 router.get(
     '/employees/:employeeId/salary/history',
-    requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.getEmployeeSalaryHistory
 );
 
@@ -128,14 +128,14 @@ router.get(
 // List available structure templates
 router.get(
     '/templates',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.listTemplates
 );
 
 // Create structure from template
 router.post(
     '/structures/from-template',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_salary'),
     controller.createFromTemplate
 );
 
@@ -146,7 +146,7 @@ router.post(
 // Seed default components, types, and structure for tenant
 router.post(
     '/seed-defaults',
-    requireRole(['HR', 'ADMIN']),
+    requirePermission('payroll', 'manage_statutory'),
     controller.seedDefaults
 );
 

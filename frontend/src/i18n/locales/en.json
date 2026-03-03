@@ -224,6 +224,7 @@
         "payroll": "Payroll",
         "projects": "Projects",
         "chat": "Chat",
+        "roles": "Roles and Permissions",
         "activity": "Activity"
     },
     "chat": {

@@ -10,11 +10,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import payrollService from '@/services/payroll.service';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const LoanTypesPage: React.FC = () => {
-  const { user } = useAuth();
-  const role = user?.role || 'EMPLOYEE';
-  const canManage = ['HR', 'ADMIN'].includes(role);
+  useAuth();
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('payroll', 'manage');
 
   const queryClient = useQueryClient();
   const { data: loanTypes = [], isLoading } = useQuery({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });

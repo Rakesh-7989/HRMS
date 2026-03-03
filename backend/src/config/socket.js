@@ -9,7 +9,9 @@ let io;
 const initSocket = (httpServer) => {
     io = new Server(httpServer, {
         cors: {
-            origin: [env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"], // Add your frontend URLs
+            origin: env.NODE_ENV === 'production'
+                ? [env.FRONTEND_URL].filter(Boolean)
+                : [env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"].filter(Boolean),
             methods: ["GET", "POST"],
             credentials: true,
         },

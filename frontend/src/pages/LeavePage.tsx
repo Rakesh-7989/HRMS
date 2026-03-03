@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
 import { MyLeaveContent } from '@/components/leave/MyLeaveContent';
 import { TeamLeaveContent } from '@/components/leave/TeamLeaveContent';
 import { LeaveSettingsContent } from '@/components/leave/LeaveSettingsContent';
@@ -9,20 +8,22 @@ import { LeaveBalancesContent } from '@/components/leave/LeaveBalancesContent';
 import { LeaveAllocationContent } from '@/components/leave/LeaveAllocationContent';
 import { DelegationContent } from '@/components/leave/DelegationContent';
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { PermissionAction } from '@/services/permissions.service';
 
 export const LeavePage: React.FC = () => {
-  const { user } = useAuth();
   const { t } = useTranslation();
+  const { hasPermission } = usePermissions();
   const [searchParams] = useSearchParams();
 
-  const LEAVE_TABS = [
-    { id: 'my-leave', label: t('leave.tabs.myLeave'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'team-requests', label: t('leave.tabs.teamRequests'), roles: ['MANAGER', 'HR', 'ADMIN'] },
-    { id: 'allocation', label: t('leave.tabs.allocation'), roles: ['HR', 'ADMIN'] },
-    { id: 'balances', label: t('leave.tabs.balances'), roles: ['HR', 'ADMIN'] },
-    { id: 'delegations', label: 'Delegations', roles: ['MANAGER', 'HR', 'ADMIN'] },
-    { id: 'settings', label: t('leave.tabs.settings'), roles: ['HR', 'ADMIN'] },
-  ] as const;
+  const LEAVE_TABS: { id: string; label: string; action: PermissionAction }[] = [
+    { id: 'my-leave', label: t('leave.tabs.myLeave'), action: 'view' },
+    { id: 'team-requests', label: t('leave.tabs.teamRequests'), action: 'approve' },
+    { id: 'allocation', label: t('leave.tabs.allocation'), action: 'manage' },
+    { id: 'balances', label: t('leave.tabs.balances'), action: 'view' },
+    { id: 'delegations', label: 'Delegations', action: 'manage' },
+    { id: 'settings', label: t('leave.tabs.settings'), action: 'manage_settings' },
+  ];
 
   type TabId = typeof LEAVE_TABS[number]['id'];
   const tabParam = searchParams.get('tab') as TabId | null;
@@ -32,7 +33,7 @@ export const LeavePage: React.FC = () => {
     if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
       // Check if user has access to this tab
       const tab = LEAVE_TABS.find(t => t.id === tabParam);
-      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+      if (tab && hasPermission('leave', tab.action)) {
         return tabParam;
       }
     }
@@ -45,11 +46,11 @@ export const LeavePage: React.FC = () => {
   useEffect(() => {
     if (tabParam && LEAVE_TABS.some(t => t.id === tabParam)) {
       const tab = LEAVE_TABS.find(t => t.id === tabParam);
-      if (tab && (tab.roles as readonly string[]).includes(user?.role || '')) {
+      if (tab && hasPermission('leave', tab.action)) {
         setActiveTab(tabParam);
       }
     }
-  }, [tabParam, user?.role]);
+  }, [tabParam, hasPermission]);
 
   return (
     <DashboardLayout
@@ -62,7 +63,7 @@ export const LeavePage: React.FC = () => {
       {/* ===== TAB NAVIGATION ===== */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-3 px-1 custom-scrollbar flex-nowrap w-full snap-x">
         {LEAVE_TABS.map((tab) => {
-          if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
+          if (!hasPermission('leave', tab.action)) return null;
 
           const isActive = tab.id === activeTab;
           return (

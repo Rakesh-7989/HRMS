@@ -8,18 +8,20 @@ const { updateTenantProfileSchema } = require("./admin.validator");
 // Auth required
 router.use(verifyJwt);
 
-// ADMIN + HR CAN SEE DASHBOARD
-router.use(requireRole(["ADMIN", "HR"]));
+const requirePermission = require("../../middleware/requirePermission");
 
-// Tenant company profile (for settings page - future use)
-router.get("/tenant/profile", controller.getTenantProfile);
-router.put("/tenant/profile", requireRole(["ADMIN", "HR"]), validate(updateTenantProfileSchema), controller.updateTenantProfile);
+// Auth required
+router.use(verifyJwt);
+
+// Tenant company profile (Organisation view/manage)
+router.get("/tenant/profile", requirePermission("organisation", "view"), controller.getTenantProfile);
+router.put("/tenant/profile", requirePermission("organisation", "view"), validate(updateTenantProfileSchema), controller.updateTenantProfile);
 
 const { uploadImage } = require("../../utils/fileUpload");
-router.put("/tenant/logo", requireRole(["ADMIN", "HR"]), uploadImage.single('logo'), controller.uploadLogo);
-router.delete("/tenant/logo", requireRole(["ADMIN", "HR"]), controller.deleteLogo);
+router.put("/tenant/logo", requirePermission("organisation", "view"), uploadImage.single('logo'), controller.uploadLogo);
+router.delete("/tenant/logo", requirePermission("organisation", "view"), controller.deleteLogo);
 
-// Audit logs (admin only) - for audit trail feature (future use)
-router.get("/audit-logs", requireRole(["ADMIN"]), controller.getAuditLogs);
+// Audit logs
+router.get("/audit-logs", requirePermission("audit_logs", "view"), controller.getAuditLogs);
 
 module.exports = router;

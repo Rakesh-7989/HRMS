@@ -994,7 +994,7 @@ const EmployeeIdSection: React.FC<{
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={idSettings?.usePrefix}
+              checked={idSettings?.usePrefix ?? false}
               onChange={(e) => toggleModeMutation.mutate(e.target.checked)}
               className="sr-only peer"
               disabled={toggleModeMutation.isPending}

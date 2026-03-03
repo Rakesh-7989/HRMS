@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
 import { DailyAttendanceContent } from '@/components/attendance/DailyAttendanceContent';
 import { AttendanceReportsContent } from '@/components/attendance/AttendanceReportsContent';
 import { RegularizationRequestsContent } from '@/components/attendance/RegularizationRequestsContent';
@@ -9,21 +8,23 @@ import { GeoFencingSettingsContent } from '@/components/attendance/GeoFencingSet
 import { UnifiedBreaksContent } from '@/components/attendance/UnifiedBreaksContent';
 import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApprovalsContent';
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { PermissionAction } from '@/services/permissions.service';
 
 export const AttendancePage: React.FC = () => {
-  const { user } = useAuth();
   const { t } = useTranslation();
+  const { hasPermission } = usePermissions();
   const [activeTab, setActiveTab] = useState<string>('daily');
 
-  const ATTENDANCE_TABS = [
-    { id: 'reports', label: t('attendance.tabs.reports'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'daily', label: t('attendance.tabs.daily'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'history', label: t('attendance.tabs.history'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'breaks', label: t('attendance.tabs.breaks'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'regularization', label: t('attendance.tabs.regularization'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'approvals', label: t('attendance.tabs.approvals'), roles: ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'] },
-    { id: 'geofence', label: t('attendance.tabs.geofence'), roles: ['HR', 'ADMIN'] },
-  ] as const;
+  const ATTENDANCE_TABS: { id: string; label: string; action: PermissionAction }[] = [
+    { id: 'reports', label: t('attendance.tabs.reports'), action: 'view_reports' },
+    { id: 'daily', label: t('attendance.tabs.daily'), action: 'view' },
+    { id: 'history', label: t('attendance.tabs.history'), action: 'view' },
+    { id: 'breaks', label: t('attendance.tabs.breaks'), action: 'view' },
+    { id: 'regularization', label: t('attendance.tabs.regularization'), action: 'view' },
+    { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve' },
+    { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_settings' },
+  ];
 
   return (
     <DashboardLayout
@@ -42,7 +43,7 @@ export const AttendancePage: React.FC = () => {
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-nowrap -mb-px gap-6 overflow-x-auto pb-1 scrollbar-hide">
             {ATTENDANCE_TABS.map((tab) => {
-              if (!user?.role || !tab.roles.includes(user.role as any)) return null;
+              if (!hasPermission('attendance', tab.action)) return null;
 
               const isActive = tab.id === activeTab;
               return (

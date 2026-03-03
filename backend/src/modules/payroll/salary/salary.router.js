@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+// Removed requireRole
 const validate = require("../../../middleware/validate");
 
 const controller = require("./salary.controller");
@@ -53,6 +53,8 @@ const approveRevisionSchema = z.object({
     })
 });
 
+const requirePermission = require("../../../middleware/requirePermission");
+
 router.use(verifyJwt);
 
 // =====================
@@ -60,33 +62,33 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/templates",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     validate(createTemplateSchema),
     controller.createTemplate
 );
 
 router.get(
     "/templates",
-    requireRole(["ADMIN", "HR", "MANAGER"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getTemplates
 );
 
 router.get(
     "/templates/:id",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getTemplateById
 );
 
 router.put(
     "/templates/:id",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     validate(createTemplateSchema),
     controller.updateTemplate
 );
 
 router.delete(
     "/templates/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_salary"),
     controller.deleteTemplate
 );
 
@@ -95,26 +97,26 @@ router.delete(
 // =====================
 router.post(
     "/assign",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     validate(assignSalarySchema),
     controller.assignSalary
 );
 
 router.get(
     "/all",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getAllEmployeeSalaries
 );
 
 router.get(
     "/employee/:employeeId",
-    requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+    // Individuals can see their own, Managers/Admin/HR need permission
     controller.getEmployeeSalary
 );
 
 router.get(
     "/employee/:employeeId/history",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getEmployeeSalaryHistory
 );
 
@@ -123,20 +125,20 @@ router.get(
 // =====================
 router.post(
     "/revisions",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     validate(createRevisionSchema),
     controller.createRevision
 );
 
 router.get(
     "/revisions",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getRevisions
 );
 
 router.patch(
     "/revisions/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "approve_payrun"),
     validate(approveRevisionSchema),
     controller.approveRevision
 );

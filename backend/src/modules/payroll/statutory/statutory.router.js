@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+// Removed requireRole
 const validate = require("../../../middleware/validate");
 
 const controller = require("./statutory.controller");
@@ -78,6 +78,8 @@ const createCostCentreSchema = z.object({
     })
 });
 
+const requirePermission = require("../../../middleware/requirePermission");
+
 router.use(verifyJwt);
 
 // =====================
@@ -85,13 +87,13 @@ router.use(verifyJwt);
 // =====================
 router.get(
     "/config",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.getStatutoryConfig
 );
 
 router.put(
     "/config",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     validate(upsertStatutorySchema),
     controller.upsertStatutoryConfig
 );
@@ -101,20 +103,20 @@ router.put(
 // =====================
 router.get(
     "/pt-slabs",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.getPTSlabs
 );
 
 router.post(
     "/pt-slabs",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     validate(createPTSlabSchema),
     controller.createPTSlab
 );
 
 router.delete(
     "/pt-slabs/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.deletePTSlab
 );
 
@@ -123,20 +125,20 @@ router.delete(
 // =====================
 router.get(
     "/deduction-types",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.getDeductionTypes
 );
 
 router.post(
     "/deduction-types",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     validate(createDeductionTypeSchema),
     controller.createDeductionType
 );
 
 router.put(
     "/deduction-types/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.updateDeductionType
 );
 
@@ -145,20 +147,20 @@ router.put(
 // =====================
 router.get(
     "/deductions/employee/:employeeId",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.getEmployeeDeductions
 );
 
 router.post(
     "/deductions",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     validate(addEmployeeDeductionSchema),
     controller.addEmployeeDeduction
 );
 
 router.delete(
     "/deductions/:id",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_salary"),
     controller.removeEmployeeDeduction
 );
 
@@ -167,26 +169,26 @@ router.delete(
 // =====================
 router.get(
     "/cost-centres",
-    requireRole(["ADMIN", "HR", "MANAGER"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.getCostCentres
 );
 
 router.post(
     "/cost-centres",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     validate(createCostCentreSchema),
     controller.createCostCentre
 );
 
 router.put(
     "/cost-centres/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.updateCostCentre
 );
 
 router.delete(
     "/cost-centres/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.deleteCostCentre
 );
 

@@ -25,6 +25,8 @@ const payrunService = require('./payrun/payrun.service');
 const salaryService = require('./salary/salary.service');
 const statutoryService = require('./statutory/statutory.service');
 
+const requirePermission = require('../../middleware/requirePermission');
+
 // ===================================================================
 // MOUNT SUB-MODULE ROUTERS
 // ===================================================================
@@ -45,7 +47,7 @@ router.use('/arrears', arrearsRouter);
 // ===================================================================
 // PAYROLL SUMMARY (Dashboard Data)
 // ===================================================================
-router.get('/summary', verifyJwt, requireRole(['ADMIN', 'HR']), async (req, res) => {
+router.get('/summary', verifyJwt, requirePermission('payroll', 'view_dashboard'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
 
@@ -131,7 +133,7 @@ router.get('/cost-centers', verifyJwt, async (req, res) => {
   }
 });
 
-router.post('/cost-centers', verifyJwt, requireRole(['ADMIN']), async (req, res) => {
+router.post('/cost-centers', verifyJwt, requirePermission('payroll', 'manage_statutory'), async (req, res) => {
   try {
     const data = await statutoryService.createCostCentre(req.user.tenantId, req.user.id, req.body);
     res.status(201).json({ status: 'success', data });

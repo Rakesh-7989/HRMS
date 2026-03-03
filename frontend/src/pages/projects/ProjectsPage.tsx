@@ -29,12 +29,11 @@ import { ProjectMembersModal } from '@/components/projects/ProjectMembersModal';
 import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 
 import { projectsService } from '@/services/projects.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';
 
 export const ProjectsPage: React.FC = () => {
-    const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -76,7 +75,10 @@ export const ProjectsPage: React.FC = () => {
         budget: '',
     });
 
-    const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('projects', 'manage');
+    const canViewReports = hasPermission('projects', 'view_reports') || canManage;
+    const canManageMembers = hasPermission('projects', 'manage_members') || canManage;
 
     // Fetch Projects
     const { data: projects = [], isLoading: projectsLoading } = useQuery({
@@ -236,7 +238,7 @@ export const ProjectsPage: React.FC = () => {
                             <List size={16} />
                             List
                         </button>
-                        {canManage && (
+                        {canViewReports && (
                             <button
                                 onClick={() => setActiveTab('reports')}
                                 className={cn(
@@ -384,27 +386,33 @@ export const ProjectsPage: React.FC = () => {
                                                 {canManage && (
                                                     <TableCell>
                                                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                            <button
-                                                                onClick={() => handleOpenMembersModal(project)}
-                                                                className="p-2 text-gray-400 hover:text-purple-500 transition-colors"
-                                                                title="Manage Members"
-                                                            >
-                                                                <Users size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleOpenEditModal(project)}
-                                                                className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
-                                                                title="Edit Project"
-                                                            >
-                                                                <Edit size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setProjectToDelete(project)}
-                                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                                title="Delete Project"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
+                                                            {canManageMembers && (
+                                                                <button
+                                                                    onClick={() => handleOpenMembersModal(project)}
+                                                                    className="p-2 text-gray-400 hover:text-purple-500 transition-colors"
+                                                                    title="Manage Members"
+                                                                >
+                                                                    <Users size={16} />
+                                                                </button>
+                                                            )}
+                                                            {canManage && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleOpenEditModal(project)}
+                                                                        className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
+                                                                        title="Edit Project"
+                                                                    >
+                                                                        <Edit size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setProjectToDelete(project)}
+                                                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                                        title="Delete Project"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 )}
@@ -554,7 +562,7 @@ export const ProjectsPage: React.FC = () => {
                     project={selectedProjectForMembers}
                     isOpen={isMembersModalOpen}
                     onClose={handleCloseMembersModal}
-                    canManage={canManage}
+                    canManage={canManageMembers}
                 />
 
                 {/* Delete Confirmation Dialog */}

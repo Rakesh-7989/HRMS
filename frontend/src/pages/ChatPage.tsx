@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useTranslation } from 'react-i18next';
 import api from '@/services/api';
@@ -401,6 +402,11 @@ export const ChatPage = () => {
     } | null>(null);
     const [hoverPosition, setHoverPosition] = useState<{ x: number, y: number } | null>(null);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const { hasPermission } = usePermissions();
+    const canManageChat = hasPermission('chat', 'manage');
+    const canVoiceCall = hasPermission('chat', 'voice_call');
+    const canVideoCall = hasPermission('chat', 'video_call');
 
     // Reset view tab and close search when switching conversations
     useEffect(() => {
@@ -1053,13 +1059,15 @@ export const ChatPage = () => {
                             </div>
                         </div>
                         <div className="flex gap-1">
-                            <button
-                                onClick={() => setIsGroupModalOpen(true)}
-                                className="p-2.5 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105"
-                                title="New Group"
-                            >
-                                <Users className="h-5 w-5" />
-                            </button>
+                            {canManageChat && (
+                                <button
+                                    onClick={() => setIsGroupModalOpen(true)}
+                                    className="p-2.5 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105"
+                                    title="New Group"
+                                >
+                                    <Users className="h-5 w-5" />
+                                </button>
+                            )}
                             <button
                                 onClick={() => setIsSelectingContact(!isSelectingContact)}
                                 className="p-2.5 bg-primary-gradient hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
@@ -1443,36 +1451,40 @@ export const ChatPage = () => {
                                             <span className="text-[11px] font-bold">Join</span>
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => {
-                                            if (activeCall) { toggleAudio(); return; }
-                                            const conv = conversations?.find(c => c.id === selectedConversationId);
-                                            if (conv) {
-                                                const details = getConversationDetails(conv);
-                                                if (details.participantId) initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
-                                                else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
-                                            }
-                                        }}
-                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-purple-500" : "text-gray-400")}
-                                        title={activeCall ? "Toggle Audio" : "Audio Call"}
-                                    >
-                                        {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (activeCall) { toggleVideo(); return; }
-                                            const conv = conversations?.find(c => c.id === selectedConversationId);
-                                            if (conv) {
-                                                const details = getConversationDetails(conv);
-                                                if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
-                                                else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
-                                            }
-                                        }}
-                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-primary" : "text-gray-400")}
-                                        title={activeCall ? "Toggle Video" : "Video Call"}
-                                    >
-                                        {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
-                                    </button>
+                                    {canVoiceCall && (
+                                        <button
+                                            onClick={() => {
+                                                if (activeCall) { toggleAudio(); return; }
+                                                const conv = conversations?.find(c => c.id === selectedConversationId);
+                                                if (conv) {
+                                                    const details = getConversationDetails(conv);
+                                                    if (details.participantId) initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
+                                                    else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
+                                                }
+                                            }}
+                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-purple-500" : "text-gray-400")}
+                                            title={activeCall ? "Toggle Audio" : "Audio Call"}
+                                        >
+                                            {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
+                                        </button>
+                                    )}
+                                    {canVideoCall && (
+                                        <button
+                                            onClick={() => {
+                                                if (activeCall) { toggleVideo(); return; }
+                                                const conv = conversations?.find(c => c.id === selectedConversationId);
+                                                if (conv) {
+                                                    const details = getConversationDetails(conv);
+                                                    if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
+                                                    else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
+                                                }
+                                            }}
+                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-primary" : "text-gray-400")}
+                                            title={activeCall ? "Toggle Video" : "Video Call"}
+                                        >
+                                            {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setShowMessageSearch(!showMessageSearch)}
                                         className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-primary")}
@@ -1480,42 +1492,44 @@ export const ChatPage = () => {
                                     >
                                         <Search size={20} />
                                     </button>
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
-                                            className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-primary bg-primary/10" : "text-gray-500")}
-                                            title="More options"
-                                        >
-                                            <MoreHorizontal size={20} />
-                                        </button>
-                                        {showHeaderMoreMenu && (
-                                            <>
-                                                <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
-                                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
-                                                    <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
+                                    {canManageChat && (
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
+                                                className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-primary bg-primary/10" : "text-gray-500")}
+                                                title="More options"
+                                            >
+                                                <MoreHorizontal size={20} />
+                                            </button>
+                                            {showHeaderMoreMenu && (
+                                                <>
+                                                    <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
+                                                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                                        <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
+                                                        </div>
+                                                        <button onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                            <User size={16} className="text-gray-400" />
+                                                            View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
+                                                        </button>
+                                                        <button onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                            <Pin size={16} className={cn("text-gray-400", showPins && "text-primary fill-primary")} />
+                                                            {showPins ? 'Hide' : 'Show'} Pinned Messages
+                                                        </button>
+                                                        <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
+                                                        <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                                                            <Eraser size={16} />
+                                                            Clear Chat History
+                                                        </button>
+                                                        <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                            <Trash2 size={16} />
+                                                            Delete Conversation
+                                                        </button>
                                                     </div>
-                                                    <button onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                                        <User size={16} className="text-gray-400" />
-                                                        View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
-                                                    </button>
-                                                    <button onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                                        <Pin size={16} className={cn("text-gray-400", showPins && "text-primary fill-primary")} />
-                                                        {showPins ? 'Hide' : 'Show'} Pinned Messages
-                                                    </button>
-                                                    <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
-                                                    <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                                        <Eraser size={16} />
-                                                        Clear Chat History
-                                                    </button>
-                                                    <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                                        <Trash2 size={16} />
-                                                        Delete Conversation
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

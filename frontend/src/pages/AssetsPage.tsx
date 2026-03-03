@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
 import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   Plus,
   Search,
@@ -34,6 +35,7 @@ import type { Asset, AssetStatus, AssetCategory } from '@/types';
 
 export const AssetsPage: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AssetStatus | 'All'>('All');
@@ -79,11 +81,11 @@ export const AssetsPage: React.FC = () => {
     staleTime: 30000, // 30 seconds
   });
 
-  // Fetch dashboard stats (ADMIN/HR only)
+  // Fetch dashboard stats (those with view_dashboard or manage permission)
   const { data: dashboard } = useQuery({
     queryKey: ['asset-dashboard'],
     queryFn: () => assetsService.getDashboard(),
-    enabled: ['ADMIN', 'HR'].includes(user?.role || ''),
+    enabled: hasPermission('assets', 'view_dashboard') || hasPermission('assets', 'manage'),
     staleTime: 60000,
   });
 
@@ -105,7 +107,7 @@ export const AssetsPage: React.FC = () => {
   const { data: employees = [] } = useQuery<Array<import('@/services/users.service').User & { employee_uuid?: string }>>({
     queryKey: ['users', 'employees'],
     queryFn: () => usersService.getUsers({ is_active: true }),
-    enabled: showAssignModal && ['ADMIN', 'HR'].includes(user?.role || ''),
+    enabled: showAssignModal && hasPermission('assets', 'assign'),
   });
 
   const assignMutation = useMutation({
@@ -140,10 +142,12 @@ export const AssetsPage: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const canManage = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canViewDetails = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
-  const canRequestAsset = ['HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
-  const canViewBarcode = ['ADMIN', 'HR'].includes(user?.role || '');
+  const canManage = hasPermission('assets', 'manage');
+  const canViewDetails = hasPermission('assets', 'view');
+  const canRequestAsset = hasPermission('assets', 'view');
+  const canViewBarcode = hasPermission('assets', 'view_barcode') || canManage;
+  const canExportAssets = hasPermission('assets', 'export') || canManage;
+  const canAssign = hasPermission('assets', 'assign') || canManage;
 
   const handleAssign = (assetId: string) => {
     setAssignForm({ assetId, employeeId: '' });
@@ -450,7 +454,7 @@ export const AssetsPage: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
-            {canManage && (
+            {canExportAssets && (
               <motion.button
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
@@ -659,9 +663,9 @@ export const AssetsPage: React.FC = () => {
                             </button>
                           )}
 
-                          {canManage ? (
+                          {(canManage || canAssign) ? (
                             <>
-                              {user?.role === 'ADMIN' && (
+                              {canManage && (
                                 <button
                                   onClick={() => navigate(`/assets/${asset.id}/edit`)}
                                   className="text-violet-600 hover:text-violet-800"

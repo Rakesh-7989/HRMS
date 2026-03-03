@@ -6,8 +6,11 @@ import { wfhService } from '@/services/wfh.service';
 import { format } from 'date-fns';
 import { Calendar, Clock, Home, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
 import { WFHRequestDialog } from '@/components/wfh/WFHRequestDialog';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const MyWFHRequestsContent: React.FC = () => {
+    const { hasPermission } = usePermissions();
+    const canCreate = hasPermission('wfh', 'create');
     const [isWFHDialogOpen, setIsWFHDialogOpen] = useState(false);
     const { data: myRequests = [], isLoading } = useQuery({
         queryKey: ['wfh-requests', 'my'],
@@ -41,14 +44,16 @@ export const MyWFHRequestsContent: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         My WFH Requests
                     </h3>
-                    <Button
-                        size="sm"
-                        onClick={() => setIsWFHDialogOpen(true)}
-                        className="flex items-center gap-2"
-                    >
-                        <Plus size={16} />
-                        New Request
-                    </Button>
+                    {canCreate && (
+                        <Button
+                            size="sm"
+                            onClick={() => setIsWFHDialogOpen(true)}
+                            className="flex items-center gap-2"
+                        >
+                            <Plus size={16} />
+                            New Request
+                        </Button>
+                    )}
                 </div>
 
                 {isLoading ? (

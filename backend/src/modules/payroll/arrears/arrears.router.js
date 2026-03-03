@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const arrearsController = require('./arrears.controller');
 const verifyJwt = require('../../../middleware/verifyJwt');
-const requireRole = require('../../../middleware/requireRole');
+const requirePermission = require("../../../middleware/requirePermission");
 
 router.use(verifyJwt);
 
-router.get('/list', requireRole(['ADMIN', 'HR']), arrearsController.listArrears);
-router.get('/summary', requireRole(['ADMIN', 'HR']), arrearsController.getSummary);
+router.get('/list', requirePermission('payroll', 'manage_salary'), arrearsController.listArrears);
 router.get('/pending/:employeeId', arrearsController.getPendingArrears);
+router.get('/summary', arrearsController.getSummary);
 
 module.exports = router;

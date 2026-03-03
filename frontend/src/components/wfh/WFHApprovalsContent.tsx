@@ -6,8 +6,11 @@ import { wfhService, WFHRequest } from '@/services/wfh.service';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, Calendar, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const WFHApprovalsContent: React.FC = () => {
+    const { hasPermission } = usePermissions();
+    const canApprove = hasPermission('wfh', 'approve');
     const queryClient = useQueryClient();
     const [selectedRequest, setSelectedRequest] = useState<WFHRequest | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
@@ -167,24 +170,26 @@ export const WFHApprovalsContent: React.FC = () => {
                                             {format(new Date(request.created_at), 'MMM dd, hh:mm a')}
                                         </td>
                                         <td className="py-3 px-4">
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="primary"
-                                                    onClick={() => handleApprove(request)}
-                                                >
-                                                    <CheckCircle size={14} className="mr-1" />
-                                                    Approve
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => handleReject(request)}
-                                                >
-                                                    <XCircle size={14} className="mr-1" />
-                                                    Reject
-                                                </Button>
-                                            </div>
+                                            {canApprove && (
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="primary"
+                                                        onClick={() => handleApprove(request)}
+                                                    >
+                                                        <CheckCircle size={14} className="mr-1" />
+                                                        Approve
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => handleReject(request)}
+                                                    >
+                                                        <XCircle size={14} className="mr-1" />
+                                                        Reject
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

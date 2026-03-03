@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const verifyJwt = require('../../../middleware/verifyJwt');
-const requireRole = require('../../../middleware/requireRole');
+// Removed requireRole
 const taxController = require('./tax.controller');
+
+const requirePermission = require('../../../middleware/requirePermission');
 
 // Sections (Config)
 router.get('/sections', verifyJwt, taxController.getTaxSections);
-router.post('/sections', verifyJwt, requireRole(['ADMIN', 'HR']), taxController.createTaxSection);
+router.post('/sections', verifyJwt, requirePermission('payroll', 'manage_statutory'), taxController.createTaxSection);
 
 // Regime Selection (Employee)
 router.get('/regime', verifyJwt, taxController.getRegime);
@@ -18,8 +20,8 @@ router.post('/declarations', verifyJwt, taxController.upsertDeclaration);
 router.delete('/declarations/:id', verifyJwt, taxController.deleteDeclaration);
 
 // Admin Review
-router.get('/admin/reviews', verifyJwt, requireRole(['ADMIN', 'HR']), taxController.getAdminReviewList);
-router.patch('/admin/declarations/:id', verifyJwt, requireRole(['ADMIN', 'HR']), taxController.adminReviewDeclaration);
+router.get('/admin/reviews', verifyJwt, requirePermission('payroll', 'manage_statutory'), taxController.getAdminReviewList);
+router.patch('/admin/declarations/:id', verifyJwt, requirePermission('payroll', 'manage_statutory'), taxController.adminReviewDeclaration);
 
 // Form 16
 router.get('/form16/part-b', verifyJwt, taxController.downloadForm16PartB);

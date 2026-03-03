@@ -1,4 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE' | (string & {});
 export interface TenantSettings {
   logo_url?: string;
   [key: string]: any;
@@ -11,6 +11,7 @@ export interface User {
   last_name?: string;
   phone?: string;
   role: UserRole;
+  permissions?: string[];
   tenant_id?: string;
   employee_id?: string;
   department_id?: string;

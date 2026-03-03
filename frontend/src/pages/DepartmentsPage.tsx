@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { departmentService, Department } from '@/services/department.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
@@ -13,8 +13,8 @@ import { showToast } from '@/utils/toast';
 export const DepartmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
-  const { user } = useAuth();
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('departments', 'manage');
   const [createBit, setCreateBit] = useState(false); // Controls create dialog
   const [editItem, setEditItem] = useState<Department | null>(null); // Controls edit dialog
 

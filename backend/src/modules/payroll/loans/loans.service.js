@@ -131,10 +131,40 @@ const createLoanAdmin = async (tenantId, createdBy, payload) => {
 const getLoans = async (tenantId) => {
   return (
     await db.query(
-      `SELECT * FROM employee_loans
-       WHERE tenant_id = $1
-       ORDER BY created_at DESC`,
+      `SELECT l.*, e.first_name, e.last_name, e.employee_id as emp_code, lt.name as loan_type_name
+       FROM employee_loans l
+       JOIN employees e ON e.id = l.employee_id
+       JOIN loan_types lt ON lt.id = l.loan_type_id
+       WHERE l.tenant_id = $1
+       ORDER BY l.created_at DESC`,
       [tenantId]
+    )
+  ).rows;
+};
+
+const getLoansByEmployee = async (tenantId, employeeId) => {
+  return (
+    await db.query(
+      `SELECT l.*, lt.name as loan_type_name
+       FROM employee_loans l
+       JOIN loan_types lt ON lt.id = l.loan_type_id
+       WHERE l.tenant_id = $1 AND l.employee_id = $2
+       ORDER BY l.created_at DESC`,
+      [tenantId, employeeId]
+    )
+  ).rows;
+};
+
+const getLoansByManager = async (tenantId, managerId) => {
+  return (
+    await db.query(
+      `SELECT l.*, e.first_name, e.last_name, e.employee_id as emp_code, lt.name as loan_type_name
+       FROM employee_loans l
+       JOIN employees e ON e.id = l.employee_id
+       JOIN loan_types lt ON lt.id = l.loan_type_id
+       WHERE l.tenant_id = $1 AND e.reporting_manager_id = $2
+       ORDER BY l.created_at DESC`,
+      [tenantId, managerId]
     )
   ).rows;
 };
@@ -481,5 +511,7 @@ module.exports = {
   deleteLoanType,
   applyEmiPayment,
   closeLoan,
-  processLoanEmi
+  processLoanEmi,
+  getLoansByEmployee,
+  getLoansByManager
 };

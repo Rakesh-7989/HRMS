@@ -95,8 +95,27 @@ module.exports = async function verifyJwt(req, res, next) {
       employeeId: user.employee_id || null,
       role: user.role,
       empCode: user.emp_code || null,
-      mustChangePassword: user.must_change_password
+      mustChangePassword: user.must_change_password,
+      permissions: []
     };
+
+    // Load effective permissions for this user
+    try {
+      const permService = require("../modules/permissions/permissions.service");
+      const perms = await permService.getUserEffectivePermissions(
+        user.tenant_id,
+        user.id,
+        user.role
+      );
+      req.user.permissions = perms || [];
+    } catch (permErr) {
+      // Gracefully handle case where permissions tables don't exist yet
+      // (migration hasn't been run), fall back to empty permissions
+      if (permErr.code !== '42P01') { // 42P01 = undefined_table
+        console.warn("Failed to load user permissions:", permErr.message);
+      }
+      req.user.permissions = [];
+    }
 
     // Set PostgreSQL RLS session variables
     // We update the async context store so that the db middleware (src/middleware/db.js)

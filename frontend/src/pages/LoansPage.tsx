@@ -11,22 +11,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import LoanTypesPanel from '@/components/LoanTypesPanel';
 
 const LoansPage: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canManageLoans = hasPermission('payroll', 'manage_loans');
+  const canManagePayroll = hasPermission('payroll', 'manage');
   const userRole = user?.role || 'EMPLOYEE';
 
-
   // Helper: check if role can create loans (EMPLOYEE, HR, ADMIN)
-  const canCreateLoan = (role?: string) => ['EMPLOYEE', 'HR', 'ADMIN'].includes(role || '');
+  const canCreateLoan = userRole === 'EMPLOYEE' || canManageLoans || canManagePayroll;
   // Simple UUID v4-ish check used for validating loanTypeId or employee id inputs
   const isUuid = (s: string) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(s);
 
   const queryClient = useQueryClient();
   // Fetch loan types for selection and display (HR/Admin only per backend)
-  const canManage = ['HR', 'ADMIN'].includes(userRole);
-  const { data: loanTypes = [] } = useQuery<any[]>({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });
+  const { data: loanTypes = [] } = useQuery<any[]>({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManagePayroll || canManageLoans });
   const { data: loans = [], isLoading } = useQuery<any[]>({
     queryKey: ['payroll', 'loans', userRole], queryFn: () => {
       if (userRole === 'EMPLOYEE') return payrollService.listLoans('employee');
@@ -93,7 +95,7 @@ const LoansPage: React.FC = () => {
 
   const handleSaveLoan = () => {
     setLoansError(null);
-    if (!canCreateLoan(userRole)) {
+    if (!canCreateLoan) {
       setLoansError('You are not permitted to create loans.');
       return;
     }
@@ -177,13 +179,12 @@ const LoansPage: React.FC = () => {
 
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
-          {canCreateLoan(userRole) ? (
+          {canCreateLoan ? (
             <Button onClick={() => setAddOpen(true)}>Add Loan</Button>
           ) : (
-            <div className="text-sm text-muted-foreground">Only Employee, HR and Admin can add loans.</div>
+            <div className="text-sm text-muted-foreground">You do not have permission to apply for or add loans.</div>
           )}
-          {/* Loan Types modal trigger for HR/Admin */}
-          {/* Loan Types trigger - visible to all users (read-only for non-HR/Admin) */}
+          {/* Loan Types modal trigger - visible to all users (read-only for non-HR/Admin) */}
           <Button variant="ghost" onClick={() => setLoanTypesOpen(true)}>Loan Types</Button>
         </div>
       </div>
@@ -230,13 +231,13 @@ const LoansPage: React.FC = () => {
                     <TableCell>{outstanding ? `₹${Number(outstanding).toLocaleString('en-IN')}` : '—'}</TableCell>
                     <TableCell>{l.status ?? '—'}</TableCell>
                     <TableCell>
-                      {(userRole === 'MANAGER' || userRole === 'HR') && (
+                      {canManageLoans && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => handleApprove(l.id)} disabled={l.status === 'APPROVED' || approveLoanMut.isPending}>Approve</Button>
                           <Button size="sm" variant="outline" className="ml-2" onClick={() => handleOpenReject(l)} disabled={l.status === 'REJECTED' || approveLoanMut.isPending}>Reject</Button>
                         </>
                       )}
-                      {(userRole === 'HR' || userRole === 'ADMIN') && Number(outstanding) <= 0 ? (
+                      {canManageLoans && Number(outstanding) <= 0 ? (
                         <Button size="sm" variant="ghost" onClick={() => handleClose(l.id)} disabled={closeLoanMut.isPending}>Close</Button>
                       ) : null}
                     </TableCell>
@@ -298,7 +299,7 @@ const LoansPage: React.FC = () => {
             {userRole === 'EMPLOYEE' && (
               <>
                 <Label>Loan Type Id</Label>
-                <Input value={loanTypeIdInput} onChange={(e) => setLoanTypeIdInput(e.target.value)} placeholder={canManage ? "Select or enter loan type id" : "Enter loan type id (contact HR for available loan types)"} />
+                <Input value={loanTypeIdInput} onChange={(e) => setLoanTypeIdInput(e.target.value)} placeholder={canManageLoans ? "Select or enter loan type id" : "Enter loan type id (contact HR for available loan types)"} />
 
                 <Label>Principal Amount</Label>
                 <Input type="number" value={String(loanPrincipal)} onChange={(e) => setLoanPrincipal(Number(e.target.value) || '')} placeholder="Principal" />

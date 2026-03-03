@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./settlement.controller");
 const { z } = require("zod");
 
-// Validators
+// Validators (Inlined to avoid missing module errors)
 const createReimbursementSchema = z.object({
     body: z.object({
         category: z.enum(["MEDICAL", "TRAVEL", "PHONE", "FOOD", "OTHER"]),
@@ -34,7 +34,8 @@ const createFnFSchema = z.object({
     body: z.object({
         employeeId: z.string().uuid(),
         lastWorkingDay: z.string(),
-        resignationDate: z.string().optional()
+        resignationDate: z.string().optional(),
+        remarks: z.string().optional()
     })
 });
 
@@ -54,26 +55,24 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/reimbursements",
-    requireRole(["EMPLOYEE", "MANAGER"]),
     validate(createReimbursementSchema),
     controller.createReimbursement
 );
 
 router.get(
     "/reimbursements/my",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyReimbursements
 );
 
 router.get(
     "/reimbursements",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_payruns"),
     controller.getReimbursements
 );
 
 router.patch(
     "/reimbursements/:id/approve",
-    requireRole(["MANAGER", "HR", "ADMIN"]),
+    requirePermission("payroll", "approve_payrun"),
     validate(approveReimbursementSchema),
     controller.approveReimbursement
 );
@@ -83,48 +82,48 @@ router.patch(
 // =====================
 router.post(
     "/fnf",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_payruns"),
     validate(createFnFSchema),
     controller.createFnFSettlement
 );
 
 router.get(
     "/fnf",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_payruns"),
     controller.getFnFSettlements
 );
 
 router.get(
     "/fnf/:id",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_payruns"),
     validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.getFnFSettlementById
 );
 
 router.put(
     "/fnf/:id",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_payruns"),
     validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.updateFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/submit",
-    requireRole(["HR"]),
+    requirePermission("payroll", "manage_payruns"),
     validate(z.object({ params: z.object({ id: z.string().uuid() }) })),
     controller.submitFnFForApproval
 );
 
 router.patch(
     "/fnf/:id/approve",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "approve_payrun"),
     validate(approveFnFSchema),
     controller.approveFnFSettlement
 );
 
 router.patch(
     "/fnf/:id/pay",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_payruns"),
     controller.markFnFPaid
 );
 

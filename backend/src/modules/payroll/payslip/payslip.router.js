@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./payslip.controller");
@@ -45,7 +45,7 @@ router.use(verifyJwt);
 // Generate payslips for a month (creates and calculates a payrun)
 router.post(
     "/generate",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "create_payrun"),
     async (req, res) => {
         try {
             const tenantId = req.user.tenantId;
@@ -85,35 +85,32 @@ router.post(
 // Employee views their payslips
 router.get(
     "/my",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyPayslips
 );
 
 // Admin/HR views all payslips
 router.get(
     "/",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_payslips"),
     controller.getAllPayslips
 );
 
 // Get specific payslip data
 router.get(
     "/:payrollRunId/employee/:employeeId",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getPayslipData
 );
 
 // Download payslip PDF
 router.get(
     "/:id/download",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.downloadPayslip
 );
 
 // Email payslip as PDF
 router.post(
     "/:id/email",
-    requireRole(["HR"]),
+    requirePermission("payroll", "manage_payruns"),
     controller.emailPayslip
 );
 
@@ -124,14 +121,12 @@ router.post(
 // Employee views their tax declaration
 router.get(
     "/tax-declaration",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyTaxDeclaration
 );
 
 // Employee saves tax declaration
 router.put(
     "/tax-declaration",
-    requireRole(["EMPLOYEE", "MANAGER"]),
     validate(taxDeclarationSchema),
     controller.saveTaxDeclaration
 );
@@ -139,14 +134,13 @@ router.put(
 // Submit for verification
 router.patch(
     "/tax-declaration/:id/submit",
-    requireRole(["EMPLOYEE", "MANAGER"]),
     controller.submitTaxDeclaration
 );
 
 // HR verifies declaration
 router.patch(
     "/tax-declaration/:id/verify",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.verifyTaxDeclaration
 );
 

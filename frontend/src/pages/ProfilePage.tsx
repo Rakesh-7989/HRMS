@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/Label';
 
 import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
@@ -787,13 +788,13 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
 };
 
 const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('employees', 'update');
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['employee-documents', employeeId],

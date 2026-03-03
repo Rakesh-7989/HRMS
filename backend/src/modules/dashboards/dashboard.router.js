@@ -1,83 +1,89 @@
-// src/modules/dashboards/dashboard.router.js
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const controller = require("./dashboard.controller");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const requirePermission = require("../../middleware/requirePermission");
 
 // All dashboard routes require authentication
 router.use(verifyJwt);
 
 /* ==================== SUPER_ADMIN DASHBOARD ==================== */
 
-/**
- * GET /api/dashboards/system
- * System-wide dashboard with global analytics
- * Accessible: SUPER_ADMIN only
- */
+router.get(
+  "/super-admin/stats",
+  requirePermission('audit_logs', 'view'),
+  controller.getSuperAdminDashboard
+);
+// Frontend alias
 router.get(
   "/system",
-  requireRole("SUPER_ADMIN"),
+  requirePermission('audit_logs', 'view'),
   controller.getSuperAdminDashboard
 );
 
-/**
- * GET /api/dashboards/system/reports
- * System reports with SaaS analytics
- */
+router.get(
+  "/super-admin/tenants",
+  requirePermission('audit_logs', 'view'),
+  controller.getSuperAdminReports
+);
+// Frontend alias
 router.get(
   "/system/reports",
-  requireRole("SUPER_ADMIN"),
+  requirePermission('audit_logs', 'view'),
   controller.getSuperAdminReports
 );
 
 /* ==================== ADMIN DASHBOARD ==================== */
 
-/**
- * GET /api/dashboards/organization
- * Organization dashboard with tenant analytics
- * Accessible: ADMIN and HR
- */
+router.get(
+  "/admin/stats",
+  requirePermission('organisation', 'view'),
+  controller.getAdminDashboard
+);
+// Frontend alias
 router.get(
   "/organization",
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('organisation', 'view'),
   controller.getAdminDashboard
 );
 
-/* ==================== HR DASHBOARD ==================== */
+/* ==================== HR/LEAVE DASHBOARD ==================== */
 
-/**
- * GET /api/dashboards/hr
- * HR analytics dashboard with leave and attendance metrics
- * Accessible: HR and ADMIN
- */
+router.get(
+  "/leave-attendance",
+  requirePermission('leave', 'view'),
+  controller.getHRDashboard
+);
+// Frontend alias
 router.get(
   "/hr",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission('leave', 'view'),
   controller.getHRDashboard
 );
 
+/* ==================== MANAGER DASHBOARD ==================== */
 
-/**
- * GET /api/dashboards/team
- * Team dashboard with comprehensive team analytics
- * Accessible: MANAGER only
- */
+router.get(
+  "/manager/team",
+  requirePermission('attendance', 'view_team'),
+  controller.getManagerDashboard
+);
+// Frontend alias
 router.get(
   "/team",
-  requireRole("MANAGER"),
+  requirePermission('attendance', 'view_team'),
   controller.getManagerDashboard
 );
 
 /* ==================== EMPLOYEE DASHBOARD ==================== */
 
-/**
- * GET /api/dashboards/personal
- * Personal employee dashboard with self-service analytics
- * Accessible: All authenticated users (EMPLOYEE, MANAGER, ADMIN, HR)
- */
+router.get(
+  "/employee/personal",
+  controller.getEmployeeDashboard
+);
+// Frontend alias
 router.get(
   "/personal",
-  requireRole(["EMPLOYEE", "MANAGER", "ADMIN", "HR"]),
   controller.getEmployeeDashboard
 );
 

@@ -5,7 +5,7 @@ import api from '@/services/api';
 import { toast } from 'react-hot-toast';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { PayrollSummary } from '@/components/payroll/PayrollSummary';
 import { PayslipsContent } from '@/components/payroll/PayslipsContent';
 import { SalaryStructuresContent } from '@/components/payroll/SalaryStructuresContent';
@@ -14,22 +14,23 @@ import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
 import { TaxDeclaration } from '@/pages/payroll/TaxDeclaration';
 import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
 import { FnFSettlementsContent } from '@/pages/payroll/FnFSettlementsContent';
+import { PermissionAction } from '@/services/permissions.service';
 
-const PAYROLL_TABS = [
-  { id: 'dashboard', label: 'Overview', roles: ['ADMIN', 'HR'] },
-  { id: 'summary', label: 'Summary', roles: ['ADMIN', 'HR'] },
-  { id: 'payslips', label: 'Payslips', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
-  { id: 'tax', label: 'Tax & Compliance', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'] },
-  { id: 'salary_details', label: 'Salary Structure', roles: ['ADMIN', 'HR'] },
-  { id: 'arrears', label: 'Arrears', roles: ['ADMIN', 'HR'] },
-  { id: 'fnf', label: 'F&F Settlements', roles: ['ADMIN', 'HR'] },
-] as const;
+const PAYROLL_TABS: { id: string; label: string; action: PermissionAction }[] = [
+  { id: 'dashboard', label: 'Overview', action: 'view' },
+  { id: 'summary', label: 'Summary', action: 'view' },
+  { id: 'payslips', label: 'Payslips', action: 'view' },
+  { id: 'tax', label: 'Tax & Compliance', action: 'view' },
+  { id: 'salary_details', label: 'Salary Structure', action: 'manage' },
+  { id: 'arrears', label: 'Arrears', action: 'manage' },
+  { id: 'fnf', label: 'F&F Settlements', action: 'manage' },
+];
 
 export const Payroll: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const isHRorAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
-  const [activeTab, setActiveTab] = useState<typeof PAYROLL_TABS[number]['id']>(isHRorAdmin ? 'dashboard' : 'payslips');
+  const { hasPermission } = usePermissions();
+  const canRunPayroll = hasPermission('payroll', 'run');
+  const [activeTab, setActiveTab] = useState<string>(hasPermission('payroll', 'manage') ? 'dashboard' : 'payslips');
   const [payRunLoading, setPayRunLoading] = useState(false);
 
   const handlePayRun = async () => {
@@ -62,16 +63,16 @@ export const Payroll: React.FC = () => {
     <DashboardLayout
       title="Payroll Management"
       breadcrumbs={[
-        { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
+        { label: 'Dashboard', href: hasPermission('payroll', 'manage') ? '/dashboard/organization' : '/dashboard/personal' },
         { label: 'Payroll' },
       ]}
     >
 
       {/* ===== CATEGORY CONTROLS ===== */}
-      {PAYROLL_TABS.filter(t => (t.roles as readonly string[]).includes(user?.role || '')).length > 1 && (
+      {PAYROLL_TABS.filter(t => hasPermission('payroll', t.action)).length > 1 && (
         <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700">
           {PAYROLL_TABS.map((tab) => {
-            if (!(tab.roles as readonly string[]).includes(user?.role || '')) return null;
+            if (!hasPermission('payroll', tab.action)) return null;
             const isActive = tab.id === activeTab;
             return (
               <button
@@ -88,7 +89,7 @@ export const Payroll: React.FC = () => {
           })}
 
           {/* Pay Run Button */}
-          {isHRorAdmin && (
+          {canRunPayroll && (
             <button
               onClick={handlePayRun}
               disabled={payRunLoading}

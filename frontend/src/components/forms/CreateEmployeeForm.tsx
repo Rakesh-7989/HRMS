@@ -22,6 +22,7 @@ import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
 import { showToast } from '@/utils/toast';
 import { useTimezones } from '@/utils/timezone';
+import { permissionsService, TenantRole } from '@/services/permissions.service';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -269,6 +270,12 @@ export const CreateEmployeeForm = ({
   const { data: shifts = [] } = useQuery({
     queryKey: ['shifts'],
     queryFn: () => getShifts(),
+  });
+
+  // Fetch tenant roles (system + custom)
+  const { data: tenantRoles = [] } = useQuery<TenantRole[]>({
+    queryKey: ['tenant-roles'],
+    queryFn: () => permissionsService.getTenantRoles(),
   });
 
   // Fetch employee ID settings
@@ -872,12 +879,25 @@ export const CreateEmployeeForm = ({
                 onChange={formik.handleChange}
                 disabled={!['ADMIN', 'SUPER_ADMIN', 'HR'].includes(user?.role || '')}
               >
-                <option value="EMPLOYEE">Employee</option>
-                <option value="MANAGER">Manager</option>
-                <option value="HR">HR</option>
-                {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && (
+                {tenantRoles.length > 0 ? (
+                  tenantRoles.map((r) => {
+                    // Only ADMIN/SUPER_ADMIN can assign the ADMIN role
+                    if (r.role === 'ADMIN' && !['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '')) return null;
+                    return (
+                      <option key={r.role} value={r.role}>
+                        {r.role.replace(/_/g, ' ')}
+                      </option>
+                    );
+                  })
+                ) : (
+                  /* Fallback if roles haven't loaded yet */
                   <>
-                    <option value="ADMIN">Admin</option>
+                    <option value="EMPLOYEE">Employee</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="HR">HR</option>
+                    {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && (
+                      <option value="ADMIN">Admin</option>
+                    )}
                   </>
                 )}
               </Select>

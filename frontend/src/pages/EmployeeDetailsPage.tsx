@@ -11,6 +11,7 @@ import { designationService } from '@/services/designation.service';
 import { leaveService } from '@/services/leave.service';
 import { getShifts } from '@/services/shift.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import {
     User as UserIcon,
@@ -54,7 +55,11 @@ export const EmployeeDetailsPage: React.FC = () => {
         termination_reason: '',
     });
 
-    const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
+    const { hasPermission } = usePermissions();
+    const canUpdate = hasPermission('employees', 'update');
+    const canTerminate = hasPermission('employees', 'terminate');
+    const canManageStatus = hasPermission('employees', 'manage_status');
+    const canManage = canUpdate; // Keep canManage for legacy components or general update access
 
     // Sensitive field reveal state
     const [revealedFields, setRevealedFields] = useState<Record<string, string>>({});
@@ -157,25 +162,7 @@ export const EmployeeDetailsPage: React.FC = () => {
         onError: (err: Error) => toast.error(err.message),
     });
 
-    const rehireMutation = useMutation({
-        mutationFn: () => usersService.rehireEmployee(id!),
-        onSuccess: (result) => {
-            // Update cache to reflect rehired user immediately
-            queryClient.setQueryData(['employee', id], (old: any) => {
-                if (!old) return old;
-                return {
-                    ...old,
-                    is_active: true,
-                    is_terminated: false,
-                    termination_date: null,
-                    termination_reason: null,
-                };
-            });
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-            toast.success(result.message);
-        },
-        onError: (err: Error) => toast.error(err.message),
-    });
+
 
     // Find department and designation names
     const getDepartmentName = (deptId?: string) => {
@@ -293,53 +280,50 @@ export const EmployeeDetailsPage: React.FC = () => {
 
                         {canManage && (
                             <div className="flex items-center gap-2 flex-wrap">
-                                <Button variant="outline" onClick={() => navigate(`/dashboard/employees/${id}/edit`)}>
+                                <Button variant="outline" onClick={() => navigate(`/dashboard/employees/${id}/edit`)} disabled={!canUpdate}>
                                     <Edit size={16} className="mr-2" />
                                     Edit
                                 </Button>
 
                                 {employee.is_terminated ? (
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => rehireMutation.mutate()}
-                                        isLoading={rehireMutation.isPending}
-                                    >
-                                        <UserCheck size={16} className="mr-2" />
-                                        Rehire
-                                    </Button>
+                                    null // Rehire removed as per user request
                                 ) : (
                                     <>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => toggleStatusMutation.mutate({
-                                                userId: employee.id,
-                                                isActive: !employee.is_active
-                                            })}
-                                            isLoading={toggleStatusMutation.isPending}
-                                            disabled={toggleStatusMutation.isPending || currentUser?.id === employee.id}
-                                            title={
-                                                currentUser?.id === employee.id
-                                                    ? "You cannot deactivate your own account"
-                                                    : employee.is_active ? 'Deactivate' : 'Activate'
-                                            }
-                                            className={cn(
-                                                currentUser?.id === employee.id ? 'opacity-50 cursor-not-allowed' : '',
-                                                employee.is_active ? 'text-red-600 border-red-300 hover:bg-red-50' : 'text-green-600 border-green-300 hover:bg-green-50'
-                                            )}
-                                        >
-                                            {employee.is_active ? <UserX size={16} className="mr-2" /> : <UserCheck size={16} className="mr-2" />}
-                                            {employee.is_active ? 'Deactivate' : 'Activate'}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            onClick={() => setTerminateDialogOpen(true)}
-                                            disabled={currentUser?.id === employee.id}
-                                            title={currentUser?.id === employee.id ? "You cannot terminate your own account" : "Terminate Employee"}
-                                        >
-                                            <UserX size={16} className="mr-2" />
-                                            Terminate
-                                        </Button>
+                                        {canManageStatus && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => toggleStatusMutation.mutate({
+                                                    userId: employee.id,
+                                                    isActive: !employee.is_active
+                                                })}
+                                                isLoading={toggleStatusMutation.isPending}
+                                                disabled={toggleStatusMutation.isPending || currentUser?.id === employee.id}
+                                                title={
+                                                    currentUser?.id === employee.id
+                                                        ? "You cannot deactivate your own account"
+                                                        : employee.is_active ? 'Deactivate' : 'Activate'
+                                                }
+                                                className={cn(
+                                                    currentUser?.id === employee.id ? 'opacity-50 cursor-not-allowed' : '',
+                                                    employee.is_active ? 'text-red-600 border-red-300 hover:bg-red-50' : 'text-green-600 border-green-300 hover:bg-green-50'
+                                                )}
+                                            >
+                                                {employee.is_active ? <UserX size={16} className="mr-2" /> : <UserCheck size={16} className="mr-2" />}
+                                                {employee.is_active ? 'Deactivate' : 'Activate'}
+                                            </Button>
+                                        )}
+                                        {canTerminate && (
+                                            <Button
+                                                variant="outline"
+                                                className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={() => setTerminateDialogOpen(true)}
+                                                disabled={currentUser?.id === employee.id}
+                                                title={currentUser?.id === employee.id ? "You cannot terminate your own account" : "Terminate Employee"}
+                                            >
+                                                <UserX size={16} className="mr-2" />
+                                                Terminate
+                                            </Button>
+                                        )}
                                     </>
                                 )}
                             </div>

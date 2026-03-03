@@ -2,7 +2,7 @@ const express = require("express");
 const ctrl = require("./asset_management.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const requirePermission = require("../../middleware/requirePermission");
 
 const {
   createAssetSchema,
@@ -34,12 +34,11 @@ const router = express.Router();
 /**
  * POST /api/assets/create
  * Create a new asset
- * Requires: ADMIN, HR
  */
 router.post(
   "/create",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets", "create"),
   validate(createAssetSchema),
   ctrl.createAsset
 );
@@ -47,16 +46,13 @@ router.post(
 /**
  * GET /api/assets/list
  * List all assets with optional filters
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE
- * Role-based filtering:
- * - ADMIN/HR: See all assets
- * - MANAGER: See assets assigned to their team
- * - EMPLOYEE: See only their assigned assets
+ * Role-based filtering is handled within the service/controller logic.
+ * Enforce 'view' permission here.
  */
 router.get(
   "/list",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("assets", "view"),
   validate(listAssetsSchema),
   ctrl.listAssets
 );
@@ -64,48 +60,44 @@ router.get(
 /**
  * GET /api/assets/dashboard
  * Get asset dashboard stats
- * Requires: ADMIN, HR
  */
 router.get(
   "/dashboard",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view_dashboard"),
   ctrl.getAssetDashboard
 );
 
 /**
  * GET /api/assets/export/csv
  * Export all assets as CSV
- * Requires: ADMIN, HR
  */
 router.get(
   "/export/csv",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "export"),
   ctrl.exportAssetsCSV
 );
 
 /**
  * GET /api/assets/warranty-alerts
- * Get assets with warranty expiring soon
- * Requires: ADMIN, HR
+ * Get assets with warranty expiring soon (View permission appropriate)
  */
 router.get(
   "/warranty-alerts",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view"),
   ctrl.getWarrantyAlerts
 );
 
 /**
  * GET /api/assets/:id
  * Get asset details by ID
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only)
  */
 router.get(
   "/list/:id",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("assets", "view"),
   validate(getAssetByIdSchema),
   ctrl.getAssetById
 );
@@ -113,12 +105,11 @@ router.get(
 /**
  * PUT /api/assets/:id
  * Update asset details
- * Requires: ADMIN
  */
 router.put(
   "/update/:id",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets", "update"),
   validate(updateAssetSchema),
   ctrl.updateAsset
 );
@@ -126,12 +117,11 @@ router.put(
 /**
  * DELETE /api/assets/:id
  * Retire asset (soft delete)
- * Requires: ADMIN
  */
 router.delete(
   "/delete/:id",
   verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission("assets", "delete"),
   validate(deleteAssetSchema),
   ctrl.retireAsset
 );
@@ -139,13 +129,11 @@ router.delete(
 /**
  * GET /api/assets/:id/barcode
  * Generate barcode for asset
- * Returns: Base64 encoded PNG image
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only)
  */
 router.get(
   "/:id/barcode",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view_barcode"),
   validate(getBarcodeSchema),
   ctrl.generateBarcode
 );
@@ -153,13 +141,11 @@ router.get(
 /**
  * GET /api/assets/:id/qrcode
  * Generate QR code for asset
- * Returns: Base64 encoded PNG QR code image
- * Requires: ADMIN, HR
  */
 router.get(
   "/:id/qrcode",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view_barcode"),
   validate(getBarcodeSchema),
   ctrl.generateQRCode
 );
@@ -167,12 +153,11 @@ router.get(
 /**
  * POST /api/assets/:id/assign
  * Assign asset to employee
- * Requires: ADMIN, HR
  */
 router.post(
   "/:id/assign",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "assign"),
   validate(assignAssetSchema),
   ctrl.assignAsset
 );
@@ -180,12 +165,11 @@ router.post(
 /**
  * POST /api/assets/:id/return
  * Return asset from employee
- * Requires: ADMIN, HR
  */
 router.post(
   "/:id/return",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "assign"),
   validate(returnAssetSchema),
   ctrl.returnAsset
 );
@@ -193,25 +177,23 @@ router.post(
 /**
  * GET /api/assets/:id/accessories
  * Get active accessories assigned with this asset
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only — enforced via getAssetById check)
  */
 router.get(
   "/:id/accessories",
   verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("assets", "view"),
   validate(getAccessoriesSchema),
   ctrl.getAssetAccessories
 );
 
 /**
  * POST /api/assets/:id/swap
- * Swap asset — atomically return old and assign new to same employee
- * Requires: ADMIN, HR
+ * Swap asset
  */
 router.post(
   "/:id/swap",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "assign"),
   validate(swapAssetSchema),
   ctrl.swapAsset
 );
@@ -219,12 +201,11 @@ router.post(
 /**
  * GET /api/assets/:id/tracking
  * Get asset tracking events
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only)
  */
 router.get(
   "/:id/tracking",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view_tracking"),
   validate(getTrackingSchema),
   ctrl.getAssetTracking
 );
@@ -232,12 +213,11 @@ router.get(
 /**
  * GET /api/assets/:id/usage-history
  * Get asset usage history
- * Requires: ADMIN, HR, MANAGER, EMPLOYEE (own assets only)
  */
 router.get(
   "/:id/usage-history",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "view_tracking"),
   validate(getTrackingSchema),
   ctrl.getAssetUsageHistory
 );
@@ -250,7 +230,7 @@ router.get(
 
 /**
  * POST /api/assets/requests/create
- * Submit new asset request
+ * Submit new asset request (Anyone can request if authed)
  */
 router.post(
   "/requests/create",
@@ -261,7 +241,7 @@ router.post(
 
 /**
  * GET /api/assets/requests/list
- * List all asset requests (Admin/HR see all, others see own)
+ * List all asset requests (Filtering logic in controller)
  */
 router.get(
   "/requests/list",
@@ -272,12 +252,11 @@ router.get(
 /**
  * POST /api/assets/requests/:id/handle
  * Approve or Reject asset request
- * Requires: ADMIN, HR
  */
 router.post(
   "/requests/:id/handle",
   verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("assets", "manage_requests"),
   validate(handleAssetRequestSchema),
   ctrl.handleAssetRequest
 );

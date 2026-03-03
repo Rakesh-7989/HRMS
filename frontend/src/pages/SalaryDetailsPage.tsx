@@ -10,7 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 
+import { usePermissions } from '@/contexts/PermissionsContext';
+
 const SalaryDetailsPage: React.FC = () => {
+  const { hasPermission } = usePermissions();
+  const canManageSalary = hasPermission('payroll', 'manage_salary');
   const queryClient = useQueryClient();
   const { data: components = [] } = useQuery<any[]>({ queryKey: ['payroll', 'salary-components'], queryFn: () => payrollService.listSalaryComponents() });
   const { data: structure = {} } = useQuery<any>({ queryKey: ['payroll', 'salary-structure'], queryFn: () => payrollService.getSalaryStructure() });
@@ -44,8 +48,12 @@ const SalaryDetailsPage: React.FC = () => {
 
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
-          <Button onClick={() => setAddOpen(true)}>Add Component</Button>
-          <Button onClick={handleSaveStructure} variant="outline">Save Structure</Button>
+          {canManageSalary && (
+            <>
+              <Button onClick={() => setAddOpen(true)}>Add Component</Button>
+              <Button onClick={handleSaveStructure} variant="outline">Save Structure</Button>
+            </>
+          )}
           <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-components'] })}>Refresh</Button>
         </div>
       </div>

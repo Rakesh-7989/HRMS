@@ -3,7 +3,11 @@ const express = require('express');
 const dbSessionContext = require('../middleware/dbSessionContext');
 const verifyJwt = require('../middleware/verifyJwt');
 const requireRole = require('../middleware/requireRole');
+const requirePermission = require('../middleware/requirePermission');
 const { requireFeature, checkAccess } = require('../middleware/subscription.middleware');
+
+// Permissions module
+const permissionsRouter = require('../modules/permissions/permissions.router');
 
 // Module routers
 const authRoutes = require('../modules/auth/auth.router');
@@ -55,6 +59,9 @@ router.use('/subscriptions', subscriptionAdminRouter);
 // Everything below requires authentication
 router.use(verifyJwt);
 
+// Permissions module (all authenticated users can fetch their own perms)
+router.use('/permissions', permissionsRouter);
+
 // Tenant module (requires auth — tenant settings are sensitive)
 router.use('/tenants', tenantRouter);
 
@@ -89,7 +96,7 @@ router.use('/users', userRouter.selfService);
 router.use('/users', checkAccess(), userRouter);
 
 // Attendance module
-router.use('/attendance', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('attendance_tracker'), attendanceRouter);
+router.use('/attendance', requireFeature('attendance_tracker'), attendanceRouter);
 
 // Geo-Fencing module (for attendance location validation)
 router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRouter);
@@ -102,7 +109,7 @@ router.use('/events', eventsRouter);
 router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
 
 // Leave module
-router.use('/leave', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('leave_tracker'), leaveRouter);
+router.use('/leave', requireFeature('leave_tracker'), leaveRouter);
 
 // Inbox module
 router.use('/inbox', inboxRouter);
@@ -114,7 +121,7 @@ router.use('/documents', requireFeature('employee_management.document_storage'),
 router.use('/projects', requireFeature('project_management'), projectManagementRouter);
 
 // WFH (Work From Home) Request module
-router.use('/wfh', requireRole(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']), requireFeature('attendance_tracker'), wfhRouter);
+router.use('/wfh', requireFeature('attendance_tracker'), wfhRouter);
 
 router.use('/chat', requireFeature('collaboration'), chatRouter);
 router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);

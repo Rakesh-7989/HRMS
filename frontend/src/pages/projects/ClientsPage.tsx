@@ -26,11 +26,10 @@ import {
 import { StatusBadge } from '@/components/projects/StatusBadge';
 
 import { projectsService } from '@/services/projects.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Client, ClientStatus } from '@/types/project.types';
 
 export const ClientsPage: React.FC = () => {
-    const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +53,8 @@ export const ClientsPage: React.FC = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('projects', 'manage');
 
     // Fetch Clients
     const { data: clients = [], isLoading } = useQuery({

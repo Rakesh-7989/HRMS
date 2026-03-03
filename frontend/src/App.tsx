@@ -62,6 +62,7 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
 import { PlansPage } from '@/pages/PlansPage';
 import { CouponsPage } from '@/pages/CouponsPage';
+import { RolesPermissionsPage } from '@/pages/RolesPermissionsPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
 
@@ -536,6 +537,19 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+
+      {/* Roles & Permissions (ADMIN only) */}
+      <Route
+        path="/roles-permissions"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage">
+            <DashboardLayout title="Roles & Permissions">
+              <RolesPermissionsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
       {/* Payroll Route */}
       <Route
         path="/payroll"

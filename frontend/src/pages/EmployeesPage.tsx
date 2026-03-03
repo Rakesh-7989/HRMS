@@ -8,6 +8,7 @@ import { usersService, EmployeeFilters } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { resolveImageUrl } from '@/utils/image';
 import { cn } from '@/utils/cn';
 import {
@@ -30,8 +31,9 @@ import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
+import { permissionsService } from '@/services/permissions.service';
 
-const ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
+
 const PAGE_SIZE = 10;
 
 export const EmployeesPage: React.FC = () => {
@@ -49,7 +51,13 @@ export const EmployeesPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { hasPermission } = usePermissions();
+
+  // Permission-based access (replaces old role-based canManage)
+  const canCreate = hasPermission('employees', 'create');
+  const canUpdate = hasPermission('employees', 'update');
+  const canDelete = hasPermission('employees', 'delete');
+  const canImport = hasPermission('employees', 'import');
 
   // Build filter params
   const filterParams: EmployeeFilters = {
@@ -80,6 +88,12 @@ export const EmployeesPage: React.FC = () => {
   const { data: designations = [] } = useQuery({
     queryKey: ['designations'],
     queryFn: () => designationService.getDesignations(),
+  });
+
+  // Fetch tenant roles (system + custom)
+  const { data: tenantRoles = [] } = useQuery({
+    queryKey: ['tenant-roles'],
+    queryFn: () => permissionsService.getTenantRoles(),
   });
 
   // Mutations
@@ -213,27 +227,31 @@ export const EmployeesPage: React.FC = () => {
             </Button>
           </div>
 
-          {canManage && (
+          {(canCreate || canImport) && (
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsBulkImportOpen(true)}
-                  disabled={isLimitReached}
-                  title="Import employees from Excel"
-                >
-                  <FileText size={18} className="mr-2" />
-                  Bulk Import
-                </Button>
-                <Button
-                  onClick={() => navigate('/dashboard/employees/new')}
-                  disabled={isLimitReached}
-                  title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
-                  className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
-                >
-                  <Plus size={18} className="mr-2" />
-                  Add Employee
-                </Button>
+                {canImport && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsBulkImportOpen(true)}
+                    disabled={isLimitReached}
+                    title="Import employees from Excel"
+                  >
+                    <FileText size={18} className="mr-2" />
+                    Bulk Import
+                  </Button>
+                )}
+                {canCreate && (
+                  <Button
+                    onClick={() => navigate('/dashboard/employees/new')}
+                    disabled={isLimitReached}
+                    title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
+                    className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
+                  >
+                    <Plus size={18} className="mr-2" />
+                    Add Employee
+                  </Button>
+                )}
               </div>
               {isLimitReached && (
                 <p className="text-xs text-red-500 mt-1 font-medium">
@@ -270,8 +288,8 @@ export const EmployeesPage: React.FC = () => {
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">All Roles</option>
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>{role}</option>
+                  {tenantRoles.map((r) => (
+                    <option key={r.role} value={r.role}>{r.role.replace(/_/g, ' ')}</option>
                   ))}
                 </select>
               </div>
@@ -413,7 +431,7 @@ export const EmployeesPage: React.FC = () => {
                           >
                             <Eye size={16} />
                           </Button>
-                          {canManage && (
+                          {canUpdate && (
                             <>
                               <Button
                                 variant="ghost"
@@ -445,30 +463,30 @@ export const EmployeesPage: React.FC = () => {
                               >
                                 {emp.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
                               </Button>
-                              {user?.role === 'ADMIN' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={async () => {
-                                    const result = await confirm({
-                                      title: 'Delete Employee',
-                                      message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
-                                      type: 'destructive',
-                                      confirmText: 'Delete Employee',
-                                      cancelText: 'Cancel'
-                                    });
-                                    if (result) {
-                                      deleteMutation.mutate(emp.id);
-                                    }
-                                  }}
-                                  disabled={deleteMutation.isPending || user?.id === emp.id}
-                                  title="Delete"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
-                              )}
                             </>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                const result = await confirm({
+                                  title: 'Delete Employee',
+                                  message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
+                                  type: 'destructive',
+                                  confirmText: 'Delete Employee',
+                                  cancelText: 'Cancel'
+                                });
+                                if (result) {
+                                  deleteMutation.mutate(emp.id);
+                                }
+                              }}
+                              disabled={deleteMutation.isPending || user?.id === emp.id}
+                              title="Delete"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
                           )}
                         </div>
                       </td>
@@ -516,7 +534,7 @@ export const EmployeesPage: React.FC = () => {
         onOpenChange={setIsBulkImportOpen}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['employees'] })}
       />
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };
 

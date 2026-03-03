@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import { Calendar, Gift, PartyPopper, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 import { format, isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
@@ -16,7 +17,8 @@ export const HolidaysPage: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const today = startOfDay(new Date());
 
-    const isHROrAdmin = user?.role === 'HR' || user?.role === 'ADMIN';
+    const { hasPermission } = usePermissions();
+    const isHROrAdmin = hasPermission('leave', 'manage');
 
     // Queries
     const { data: publicHolidays = [], isLoading: publicLoading, refetch: refetchPublic } = useQuery({

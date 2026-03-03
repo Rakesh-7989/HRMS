@@ -3,7 +3,7 @@ const router = express.Router();
 const controller = require("./user.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const requirePermission = require("../../middleware/requirePermission");
 const { checkLimit } = require("../../middleware/subscription.middleware");
 
 const {
@@ -11,72 +11,70 @@ const {
   getUsersSchema,
   updateUserSchema,
   updateEmployeeSchema,
-  updateProfileSchema,
-  changeRoleSchema,
   changeManagerSchema,
   assignDeptSchema,
-  assignDesignationSchema,
-  statusSchema
+  assignDesignationSchema
 } = require("./user.validator");
 
 const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
 
-// REAL-TIME UNIQUENESS CHECK (for inline form validation)
+// Auth required for all routes
+router.use(verifyJwt);
+
+// REAL-TIME UNIQUENESS CHECK
 router.get(
   "/check-unique",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'create'),
   controller.checkFieldUniqueness
 );
 
-// CREATE EMPLOYEE (Admin + HR)
+// CREATE EMPLOYEE
 router.post(
   "/",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'create'),
   checkLimit('employees'),
   validate(createUserSchema),
   controller.createUser
 );
 
-// BULK IMPORT EMPLOYEES
+// BULK IMPORT
 router.post(
   "/bulk-import",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'import'),
   checkLimit('employees'),
   uploadTemp.single("file"),
   controller.bulkImportEmployees
 );
 
-// LIST EMPLOYEES / USERS
+// LIST EMPLOYEES
 router.get(
   "/",
-  verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission('employees', 'view'),
   validate(getUsersSchema),
   controller.getUsers
 );
 
-// Organization Tree
-router.get("/tree", verifyJwt, controller.getOrgTree);
+// Org Tree
+router.get("/tree", controller.getOrgTree);
 
-// REVEAL SENSITIVE FIELD (audit-logged)
+// REVEAL SENSITIVE (another user)
 router.get(
   "/:id/reveal",
-  verifyJwt,
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission('employees', 'view'),
   controller.revealSensitiveField
 );
 
 // GET USER BY ID
-router.get("/:id", verifyJwt, requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]), controller.getUserById);
+router.get(
+  "/:id",
+  requirePermission('employees', 'view'),
+  controller.getUserById
+);
 
-// UPDATE BASIC USER (email + status)
+// UPDATE USER (basic)
 router.put(
   "/:id",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'update'),
   validate(updateUserSchema),
   controller.updateUser
 );
@@ -84,34 +82,30 @@ router.put(
 // UPDATE EMPLOYEE DETAILS
 router.put(
   "/:id/employee",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'update'),
   validate(updateEmployeeSchema),
   controller.updateEmployee
 );
 
-// CHANGE ROLE
-router.put(
+// ROLE MANAGEMENT
+router.patch(
   "/:id/role",
-  verifyJwt,
-  requireRole(["ADMIN", "SUPER_ADMIN"]),
-  validate(changeRoleSchema),
+  requirePermission('roles', 'manage'),
   controller.changeRole
 );
 
-// CHANGE REPORTING MANAGER (Only HR can assign managers)
+// CHANGE MANAGER
 router.put(
   "/:id/manager",
-  verifyJwt,
-  requireRole(["HR"]),
+  requirePermission('employees', 'change_manager'),
   validate(changeManagerSchema),
   controller.changeManager
 );
 
+// ASSIGN DEPARTMENT
 router.put(
   "/:id/department",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'assign_department'),
   validate(assignDeptSchema),
   controller.assignDepartment
 );
@@ -119,76 +113,43 @@ router.put(
 // ASSIGN DESIGNATION
 router.put(
   "/:id/designation",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'assign_designation'),
   validate(assignDesignationSchema),
   controller.assignDesignation
 );
 
-// TERMINATE EMPLOYEE
+// TERMINATE
 router.post(
   "/:id/terminate",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
+  requirePermission('employees', 'terminate'),
   controller.terminateEmployee
 );
 
-// REHIRE EMPLOYEE
-router.post(
-  "/:id/rehire",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
-  controller.rehireEmployee
-);
-
-// SOFT DELETE
+// DELETE (Soft Delete)
 router.delete(
   "/:id",
-  verifyJwt,
-  requireRole(["ADMIN"]),
+  requirePermission('employees', 'delete'),
   controller.softDeleteUser
 );
 
-// TOGGLE ACTIVE STATUS
-router.put(
-  "/:id/status",
-  verifyJwt,
-  requireRole(["ADMIN", "HR"]),
-  validate(statusSchema),
-  controller.updateUserStatus
-);
+// =====================
+// SELF-SERVICE ROUTES (any authenticated user)
+// =====================
+const selfService = express.Router();
+selfService.use(verifyJwt);
+
+selfService.get("/me/profile", controller.getMyProfile);
+selfService.put("/me/profile", controller.updateMyProfile);
+selfService.get("/me/reveal", controller.revealOwnSensitiveField);
+
+// Profile photo
+const uploadPhoto = require("multer")({
+  storage: require("multer").memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
+selfService.post("/me/photo", uploadPhoto.single("photo"), controller.uploadProfilePhoto);
+selfService.delete("/me/photo", controller.removeProfilePhoto);
 
 // Export both routers
+router.selfService = selfService;
 module.exports = router;
-module.exports.selfService = express.Router();
-
-// Self-service routes (no role restrictions)
-const selfRouter = module.exports.selfService;
-selfRouter.get("/me/profile", verifyJwt, controller.getMyProfile);
-selfRouter.get("/me/reveal", verifyJwt, controller.revealOwnSensitiveField);
-selfRouter.put(
-  "/me/profile",
-  verifyJwt,
-  validate(updateProfileSchema),
-  controller.updateMyProfile
-);
-
-const upload = require("../../middleware/upload");
-
-selfRouter.post(
-  "/me/profile-photo",
-  verifyJwt,
-  (req, res, next) => {
-    console.log("[Router Debug] HIT /me/profile-photo");
-    console.log("[Router Debug] Headers:", req.headers['content-type']);
-    next();
-  },
-  upload.single('photo'),
-  controller.uploadProfilePhoto
-);
-
-selfRouter.delete(
-  "/me/profile-photo",
-  verifyJwt,
-  controller.removeProfilePhoto
-);

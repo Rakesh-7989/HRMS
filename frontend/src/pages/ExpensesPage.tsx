@@ -10,11 +10,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
 
 const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+
+  const canCreate = hasPermission('expenses', 'create');
+  const canApprove = hasPermission('expenses', 'approve');
+  const canManageCategories = hasPermission('expenses', 'manage_categories');
+  const canTogglePayroll = hasPermission('expenses', 'toggle_payroll');
+  const canUpdate = hasPermission('payroll', 'manage'); // Falling back to payroll:manage for edit/delete if specific not found
+  const canDelete = hasPermission('payroll', 'manage');
 
   const { data: expenses = [], refetch } = useQuery<any[]>({ queryKey: ['payroll', 'expenses'], queryFn: () => payrollService.listExpenses(), enabled: !!user });
   const { data: categories = [] } = useQuery<any[]>({ queryKey: ['payroll', 'expense-categories'], queryFn: () => payrollService.listExpenseCategories(), enabled: !!user });
@@ -108,10 +117,17 @@ const ExpensesPage: React.FC = () => {
       {/* Sidebar removed - already in DashboardLayout */}
 
       <div className="flex items-center justify-between mb-4">
-        <div className="space-x-2">
-          <Button onClick={() => setAddOpen(true)}>Add Expense</Button>
-          <Button onClick={() => setCatOpen(true)}>Add Category</Button>
-          <Button variant="outline" onClick={() => refetch()}>Refresh</Button>
+        <div className="flex items-center gap-2">
+          {canCreate && (
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
+          )}
+          {canManageCategories && (
+            <Button variant="outline" onClick={() => setCatOpen(true)}>Add Category</Button>
+          )}
+          <Button variant="ghost" onClick={() => refetch()}>Refresh</Button>
         </div>
       </div>
 
@@ -152,25 +168,25 @@ const ExpensesPage: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {(['HR', 'ADMIN'].includes(user?.role || '') ? (
+                    {canTogglePayroll ? (
                       <input type="checkbox" checked={!!e.payroll_included} onChange={(ev) => togglePayrollMut.mutate({ expenseId: e.id, payrollIncluded: !!ev.target.checked })} />
                     ) : (
                       <span>{String(e.payroll_included ?? false)}</span>
-                    ))}
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {(['MANAGER', 'HR', 'ADMIN'].includes(user?.role || '')) && (
+                      {canApprove && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => handleApprove(e)} disabled={((e.status || '').toUpperCase() === 'APPROVED') || approveExpenseMut.isPending}>Approve</Button>
                           <Button size="sm" variant="outline" onClick={() => openReject(e)} disabled={((e.status || '').toUpperCase() === 'REJECTED') || approveExpenseMut.isPending}>Reject</Button>
                         </>
                       )}
 
-                      {(['HR', 'ADMIN'].includes(user?.role || '')) && (
+                      {(canUpdate || canDelete) && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => openEdit(e)}>Edit</Button>
-                          <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>Delete</Button>
+                          {canUpdate && <Button size="sm" variant="ghost" onClick={() => openEdit(e)}>Edit</Button>}
+                          {canDelete && <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>Delete</Button>}
                         </>
                       )}
                     </div>
