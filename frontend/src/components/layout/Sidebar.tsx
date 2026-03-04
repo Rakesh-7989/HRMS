@@ -32,6 +32,8 @@ interface NavItem {
   roles: UserRole[];
   /** Optional permission check: [module, action] */
   permission?: [string, string];
+  /** Minimum plan level required: 1=STANDARD, 2=PREMIUM, 3=ELITE */
+  minPlan?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -51,20 +53,21 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Reports', icon: BarChart3, path: '/reports', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['reports', 'view'] },
 
   // Asset Management
-  { label: 'Assets', icon: Package, path: '/assets', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['assets', 'view'] },
+  { label: 'Assets', icon: Package, path: '/assets', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['assets', 'view'], minPlan: 3 },
 
   // Payroll
-  { label: 'Payroll', icon: Wallet, path: '/payroll', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'], permission: ['payroll', 'view'] },
+  { label: 'Payroll', icon: Wallet, path: '/payroll', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'], permission: ['payroll', 'view'], minPlan: 2 },
 
   // Project Management
-  { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'], permission: ['projects', 'view'] },
+  { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'], permission: ['projects', 'view'], minPlan: 2 },
 
   // System
-  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['chat', 'view'] },
+  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['chat', 'view'], minPlan: 3 },
+  // Activity
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'], permission: ['audit_logs', 'view'] },
 
-  // Roles & Permissions (ADMIN only)
-  { label: 'Roles', icon: Shield, path: '/roles-permissions', roles: ['ADMIN'], permission: ['roles', 'manage'] },
+  // Roles & Permissions (ADMIN only + SUPER_ADMIN)
+  { label: 'Roles', icon: Shield, path: '/roles-permissions', roles: ['ADMIN', 'SUPER_ADMIN'], permission: ['roles', 'manage'] },
 ];
 
 interface SidebarProps {
@@ -78,23 +81,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { totalUnreadCount } = useChat();
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const { atLeastPlan } = useAuth() as any;
 
   if (!user) return null;
 
-  const SYSTEM_TENANT_ROLES = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'];
-  const isCustomRole = !['SUPER_ADMIN', ...SYSTEM_TENANT_ROLES].includes(user.role);
 
   const visibleItems = NAV_ITEMS.filter(item => {
-    // For items with a permission field: custom roles get access if they have the permission
+    // Plan check
+    if (item.minPlan && atLeastPlan && !atLeastPlan(item.minPlan)) return false;
+
+    // SUPER ADMIN bypasses all visibility filters
+    if (user.role === 'SUPER_ADMIN') return true;
+
+    // For items with a permission field
     if (item.permission) {
       if (!hasPermission(item.permission[0], item.permission[1])) return false;
-      // For system roles, still check the role gate
-      if (!isCustomRole && !item.roles.includes(user.role)) return false;
+      // If it's a system role (non-custom), still check the role gate if any
+      const isSystemRole = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
+      if (isSystemRole && item.roles && !item.roles.includes(user.role)) return false;
       return true;
     }
-    // For items without permission (dashboards etc): strict role gate
-    if (!item.roles.includes(user.role)) {
-      // Custom roles without a matching dashboard default to the personal dashboard
+
+    // For items without permission (dashboards etc): role gate
+    if (item.roles && !item.roles.includes(user.role)) {
+      // Custom roles without a specific dashboard default to the personal dashboard
+      const isCustomRole = !['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
       if (isCustomRole && item.path === '/dashboard/personal') return true;
       return false;
     }

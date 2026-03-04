@@ -27,7 +27,8 @@ exports.login = async (req, res) => {
           u.two_factor_enabled,
           u.last_login_at,
           e.id AS employee_id,
-          t.is_active AS tenant_is_active
+          t.is_active AS tenant_is_active,
+          t.plan_type
        FROM users u
        LEFT JOIN employees e ON e.user_id = u.id
        LEFT JOIN tenants t ON t.id = u.tenant_id
@@ -104,6 +105,7 @@ exports.login = async (req, res) => {
       status: "success",
       role: user.role,
       tenantId: user.tenant_id,
+      planType: user.plan_type || 1,
       mustChangePassword: user.must_change_password,
       ...tokens
     });
@@ -589,6 +591,7 @@ exports.verify2FALogin = async (req, res) => {
       status: "success",
       role: user.role,
       tenantId: user.tenant_id,
+      planType: user.plan_type || 1,
       mustChangePassword: user.must_change_password,
       ...tokens
     });

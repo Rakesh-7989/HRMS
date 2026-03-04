@@ -9,6 +9,7 @@ interface LoginResponse {
   tenantId?: string;
   mustChangePassword?: boolean;
   preAuthToken?: string;
+  planType?: number;
   message?: string;
 }
 
@@ -56,7 +57,7 @@ export const authService = {
       throw new Error('Login failed');
     }
 
-    const { accessToken, refreshToken, role, tenantId } = response.data as Required<LoginResponse>;
+    const { accessToken, refreshToken, role, tenantId, planType } = response.data as Required<LoginResponse>;
 
     // Decode JWT to get user ID and other info
     const decoded = decodeJWT(accessToken);
@@ -71,6 +72,7 @@ export const authService = {
       role: role as User['role'],
       tenant_id: tenantId || decoded.tenantId,
       employee_id: decoded.employeeId,
+      plan_type: planType,
       is_active: true,
     };
 
@@ -255,7 +257,7 @@ export const authService = {
       throw new Error('2FA verification failed');
     }
 
-    const { accessToken, refreshToken, role, tenantId, mustChangePassword } = response.data as Required<LoginResponse>;
+    const { accessToken, refreshToken, role, tenantId, mustChangePassword, planType } = response.data as Required<LoginResponse>;
     const decoded = decodeJWT(accessToken);
     if (!decoded) throw new Error('Failed to decode authentication token');
 
@@ -266,6 +268,7 @@ export const authService = {
       role: role as User['role'],
       tenant_id: tenantId || decoded.tenantId,
       employee_id: decoded.employeeId,
+      plan_type: planType,
       is_active: true,
     };
 

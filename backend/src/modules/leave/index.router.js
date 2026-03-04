@@ -9,12 +9,14 @@ const holidayRouter = require('./holidays/holiday.router');
 const delegationRouter = require('./delegations/delegation.router');
 const leaveReportRouter = require('./reports/leaveReport.router');
 
+const planGuard = require('../../middleware/planGuard');
+
 // Mount sub-routers
 router.use('/types', leaveTypeRouter);
-router.use('/policies', leavePolicyRouter);
+router.use('/policies', planGuard('leave.policy_config'), leavePolicyRouter);
 router.use('/balances', leaveBalanceRouter);
 router.use('/holidays', holidayRouter);
-router.use('/delegations', delegationRouter);
+router.use('/delegations', planGuard('leave.workflow_delegation'), delegationRouter);
 router.use('/reports', leaveReportRouter);
 
 // Core leave request routes (apply, approve, etc.)

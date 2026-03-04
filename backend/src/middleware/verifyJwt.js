@@ -37,9 +37,11 @@ module.exports = async function verifyJwt(req, res, next) {
           u.is_active,
           u.portal_access_until,
           e.id AS employee_id,
-          e.employee_id AS emp_code
+          e.employee_id AS emp_code,
+          t.plan_type
       FROM users u
       LEFT JOIN employees e ON u.id = e.user_id
+      JOIN tenants t ON u.tenant_id = t.id
       WHERE u.id = $1
       `,
       [decoded.id]
@@ -96,6 +98,7 @@ module.exports = async function verifyJwt(req, res, next) {
       role: user.role,
       empCode: user.emp_code || null,
       mustChangePassword: user.must_change_password,
+      planType: user.plan_type || 1, // Default and attach plan_type
       permissions: []
     };
 

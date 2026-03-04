@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { permissionsService, Permission, TenantRole } from '@/services/permissions.service';
 import { usersService } from '@/services/users.service';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 import {
     Shield,
@@ -92,10 +93,15 @@ const ROLE_COLORS: Record<string, string> = {
 const DEFAULT_GRADIENT = 'from-rose-500 to-pink-600';
 
 export const RolesPermissionsPage: React.FC = () => {
-    // Role state
     const [roles, setRoles] = useState<TenantRole[]>([]);
     const [activeRole, setActiveRole] = useState<string>('');
     const [rolesLoading, setRolesLoading] = useState(true);
+    const { atLeastPlan, user: currentUser } = useAuth();
+    const isStandard = !atLeastPlan(2);
+
+    // Usage state
+    const [adminCount, setAdminCount] = useState(0);
+    const adminLimit = isStandard ? 1 : (currentUser?.plan_type === 2 ? 5 : 9999);
 
     // Permissions state
     const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -129,12 +135,16 @@ export const RolesPermissionsPage: React.FC = () => {
             if (r.length > 0 && !activeRole) {
                 setActiveRole(r[0].role);
             }
+
+            // Fetch admin count for usage display
+            const users = await usersService.getUsers({ role: 'ADMIN' });
+            setAdminCount(Array.isArray(users) ? users.length : 0);
         } catch (err: any) {
             toast.error('Failed to load roles');
         } finally {
             setRolesLoading(false);
         }
-    }, []);
+    }, [activeRole]);
 
     useEffect(() => {
         fetchRoles();
@@ -345,12 +355,51 @@ export const RolesPermissionsPage: React.FC = () => {
                             <span className="hidden sm:inline">User Overrides</span>
                         </button>
                         <button
-                            onClick={() => setShowAddRole(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-md transition-all"
+                            onClick={() => {
+                                if (isStandard) {
+                                    toast.error('Custom roles are a Premium feature. Please upgrade your plan.');
+                                    return;
+                                }
+                                setShowAddRole(true);
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-md transition-all ${isStandard
+                                ? 'bg-gray-400 cursor-not-allowed grayscale'
+                                : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'}`}
                         >
                             <Plus className="h-4 w-4" />
                             Add Role
+                            {isStandard && <Shield className="h-3 w-3 ml-1 fill-white/20" />}
                         </button>
+                    </div>
+                </div>
+
+                {/* Admin Usage Indicator */}
+                <div className="mb-6 flex flex-wrap gap-4">
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${adminCount >= adminLimit ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}`}>
+                            <Users className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Admin Seats</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                {adminCount} <span className="text-gray-400 font-medium">/ {adminLimit === 9999 ? '∞' : adminLimit}</span>
+                            </p>
+                        </div>
+                        {adminCount >= adminLimit && adminLimit !== 9999 && (
+                            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">LIMIT REACHED</span>
+                        )}
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isStandard ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
+                            <Shield className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Plan Access</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                {isStandard ? 'Standard (Fixed Roles)' : (currentUser?.plan_type === 2 ? 'Premium (Custom)' : 'Elite (Full)')}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

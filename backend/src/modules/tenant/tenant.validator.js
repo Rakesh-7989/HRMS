@@ -34,7 +34,11 @@ exports.tenantRegisterSchema = z.object({
     email: z.string()
       .email("Invalid email format")
       .max(255, "Email must not exceed 255 characters"),
-    settings: z.object({}).optional()
+    settings: z.object({}).optional(),
+    plan_id: z.string().uuid("Invalid plan ID").optional(),
+    billing_cycle: z.enum(['MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY']).optional(),
+    employee_count: z.number().int().positive().optional(),
+    coupon_code: z.string().max(50).optional()
   })
 });
 

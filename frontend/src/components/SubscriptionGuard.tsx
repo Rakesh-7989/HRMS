@@ -1,22 +1,26 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle } from 'lucide-react';
+import { UpgradeBanner } from './UpgradeBanner';
 
 interface SubscriptionGuardProps {
     children: React.ReactNode;
     fallback?: React.ReactNode;
     mode?: 'hide' | 'disable' | 'message';
+    minPlan?: number; // Added: 1=STANDARD, 2=PREMIUM, 3=ELITE
 }
 
 export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     children,
     fallback,
-    mode = 'message'
+    mode = 'message',
+    minPlan = 1
 }) => {
-    const { hasActivePlan, user } = useAuth();
+    const { hasActivePlan, user, atLeastPlan } = useAuth() as any;
 
-    // Super admins are always allowed
-    if (user?.role === 'SUPER_ADMIN' || hasActivePlan) {
+    const isAllowed = user?.role === 'SUPER_ADMIN' || (hasActivePlan && (atLeastPlan ? atLeastPlan(minPlan) : true));
+
+    // Super admins are always allowed or if plan matches
+    if (isAllowed) {
         return <>{children}</>;
     }
 
@@ -29,28 +33,24 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     }
 
     if (mode === 'disable') {
+        const planNames: Record<number, string> = { 1: 'STANDARD', 2: 'PREMIUM', 3: 'ELITE' };
         return (
             <div className="relative opacity-60 cursor-not-allowed pointer-events-none select-none">
                 {children}
-                <div className="absolute inset-0 z-10" title="Requires active subscription" />
+                <div className="absolute inset-0 z-10" title={`Requires ${planNames[minPlan] || 'Active'} subscription`} />
             </div>
         );
     }
 
+    const planNames: Record<number, string> = { 1: 'STANDARD', 2: 'PREMIUM', 3: 'ELITE' };
+    const requiredPlan = planNames[minPlan] || 'Active';
+
     return (
-        <div className="bg-fuchsia-50 dark:bg-fuchsia-900/20 border border-fuchsia-200 dark:border-fuchsia-900/50 rounded-lg p-6 flex flex-col items-center text-center gap-4">
-            <div className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/30 rounded-full">
-                <AlertCircle className="w-8 h-8 text-fuchsia-600 dark:text-fuchsia-500" />
-            </div>
-            <div>
-                <h3 className="text-lg font-semibold text-fuchsia-900 dark:text-fuchsia-100">
-                    Subscription Plan Required
-                </h3>
-                <p className="text-fuchsia-700 dark:text-fuchsia-300 mt-1 max-w-md">
-                    Your organization does not have an active subscription plan.
-                    Please contact your administrator to activate a plan and access this feature.
-                </p>
-            </div>
+        <div className="py-8">
+            <UpgradeBanner
+                planName={requiredPlan}
+                message={`This feature is part of our ${requiredPlan} tier. Upgrade to access premium HR tools and advanced analytics.`}
+            />
         </div>
     );
 };

@@ -5,6 +5,7 @@ const verifyJwt = require('../middleware/verifyJwt');
 const requireRole = require('../middleware/requireRole');
 const requirePermission = require('../middleware/requirePermission');
 const { requireFeature, checkAccess } = require('../middleware/subscription.middleware');
+const planGuard = require('../middleware/planGuard');
 
 // Permissions module
 const permissionsRouter = require('../modules/permissions/permissions.router');
@@ -45,7 +46,7 @@ const router = express.Router();
 // Always attach RLS/ALS context
 router.use(dbSessionContext);
 
-router.use('/assets', verifyJwt, requireFeature('asset_management'), assetManagementRouter);
+router.use('/assets', verifyJwt, planGuard('assets.full_access'), assetManagementRouter);
 
 // Public routes (no auth required)
 router.use('/auth', authRoutes);
@@ -56,14 +57,14 @@ router.use('/common', commonRouter);
 router.use('/subscriptions', billingRouter);
 router.use('/subscriptions', subscriptionAdminRouter);
 
+// Tenant module (Public registration & OTP, plus protected settings)
+router.use('/tenants', tenantRouter);
+
 // Everything below requires authentication
 router.use(verifyJwt);
 
 // Permissions module (all authenticated users can fetch their own perms)
 router.use('/permissions', permissionsRouter);
-
-// Tenant module (requires auth — tenant settings are sensitive)
-router.use('/tenants', tenantRouter);
 
 // Audit Logs (requires auth)
 router.use('/audit-logs', auditRouter);
@@ -99,14 +100,14 @@ router.use('/users', checkAccess(), userRouter);
 router.use('/attendance', requireFeature('attendance_tracker'), attendanceRouter);
 
 // Geo-Fencing module (for attendance location validation)
-router.use('/geo-fencing', requireFeature('attendance_tracker'), geoFencingRouter);
+router.use('/geo-fencing', planGuard('attendance.geofencing'), geoFencingRouter);
 
 // Events module
 router.use('/events', eventsRouter);
 
 // Payroll module (includes: salary, payrun, statutory, settlement,
 // consultants, payslips, expenses, loans, merchants)
-router.use('/payroll', requireFeature('payroll_automation'), payrollRouter);
+router.use('/payroll', planGuard('payroll.full_access'), payrollRouter);
 
 // Leave module
 router.use('/leave', requireFeature('leave_tracker'), leaveRouter);
@@ -123,8 +124,8 @@ router.use('/projects', requireFeature('project_management'), projectManagementR
 // WFH (Work From Home) Request module
 router.use('/wfh', requireFeature('attendance_tracker'), wfhRouter);
 
-router.use('/chat', requireFeature('collaboration'), chatRouter);
+router.use('/chat', planGuard('collaboration.chat'), chatRouter);
 router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);
-router.use('/shifts', requireFeature('attendance_tracker'), shiftRouter);
+router.use('/shifts', planGuard('attendance.scheduling'), shiftRouter);
 
 module.exports = router;

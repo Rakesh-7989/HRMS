@@ -1,6 +1,7 @@
 import { createBrowserRouter, createRoutesFromElements, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { RootLayout } from '@/layouts/RootLayout';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -40,7 +41,6 @@ import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
 import { AssetsPage } from '@/pages/AssetsPage';
 import { AddAssetPage } from '@/pages/AddAssetPage';
 import { AssetDetailsPage } from '@/pages/AssetDetailsPage';
-import { AssetReturnPage } from '@/pages/AssetReturnPage';
 import { ProjectsPage } from '@/pages/projects/ProjectsPage';
 import { ClientsPage } from '@/pages/projects/ClientsPage';
 import { TasksPage } from '@/pages/projects/TasksPage';
@@ -54,7 +54,6 @@ import { HolidaysPage } from '@/pages/HolidaysPage';
 import { EmployeeDetailsPage } from '@/pages/EmployeeDetailsPage';
 import { EditEmployeePage } from '@/pages/EditEmployeePage';
 import { EmployeeDocumentsPage } from '@/pages/EmployeeDocumentsPage';
-import { AssetRequestsPage } from '@/pages/AssetRequestsPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
@@ -217,7 +216,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermission="employees:view">
             <EmployeesPage />
           </ProtectedRoute>
         }
@@ -225,7 +224,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/new"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermission="employees:create">
             <AddEmployeePage />
           </ProtectedRoute>
         }
@@ -241,7 +240,7 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermission="employees:update">
             <EditEmployeePage />
           </ProtectedRoute>
         }
@@ -257,7 +256,7 @@ const router = createBrowserRouter(
       <Route
         path="/attendance"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermission="attendance:view">
             <AttendancePage />
           </ProtectedRoute>
         }
@@ -273,98 +272,18 @@ const router = createBrowserRouter(
       <Route
         path="/inbox"
         element={
-          <ProtectedRoute allowedRoles={['HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermission="chat:view">
             <InboxPage />
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/chat"
         element={
           <ProtectedRoute>
-            <ChatPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/leave"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <LeavePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/departments"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DepartmentsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/designations"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DesignationsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/new"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AddAssetPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id/edit"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AddAssetPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/:id/return"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AssetReturnPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assets/requests"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetRequestsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
+            <SubscriptionGuard minPlan={3}>
+              <ChatPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -376,6 +295,7 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+
 
 
       <Route
@@ -390,7 +310,9 @@ const router = createBrowserRouter(
         path="/organization/shifts"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <ShiftsPage />
+            <SubscriptionGuard minPlan={2}>
+              <ShiftsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -398,7 +320,7 @@ const router = createBrowserRouter(
       <Route
         path="/leave"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute requiredPermission="leave:view">
             <LeavePage />
           </ProtectedRoute>
         }
@@ -414,7 +336,7 @@ const router = createBrowserRouter(
       <Route
         path="/leave/balances"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute requiredPermission="leave:view">
             <LeaveBalancesPage />
           </ProtectedRoute>
         }
@@ -446,15 +368,17 @@ const router = createBrowserRouter(
       <Route
         path="/assets"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetsPage />
+          <ProtectedRoute requiredPermission="assets:view">
+            <SubscriptionGuard minPlan={3}>
+              <AssetsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
       <Route
         path="/assets/new"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute requiredPermission="assets:create">
             <AddAssetPage />
           </ProtectedRoute>
         }
@@ -463,14 +387,16 @@ const router = createBrowserRouter(
         path="/assets/:id"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <AssetDetailsPage />
+            <SubscriptionGuard minPlan={3}>
+              <AssetDetailsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
       <Route
         path="/assets/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute requiredPermission="assets:update">
             <AddAssetPage />
           </ProtectedRoute>
         }
@@ -497,16 +423,20 @@ const router = createBrowserRouter(
       <Route
         path="/projects"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <ProjectsPage />
+          <ProtectedRoute requiredPermission="projects:view">
+            <SubscriptionGuard minPlan={2}>
+              <ProjectsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
       <Route
         path="/projects/clients"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
-            <ClientsPage />
+          <ProtectedRoute requiredPermission="projects:manage">
+            <SubscriptionGuard minPlan={3}>
+              <ClientsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -532,17 +462,16 @@ const router = createBrowserRouter(
       <Route
         path="/activity"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER']}>
+          <ProtectedRoute requiredPermission="audit_logs:view">
             <ActivityPage />
           </ProtectedRoute>
         }
       />
 
-      {/* Roles & Permissions (ADMIN only) */}
       <Route
         path="/roles-permissions"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage">
+          <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']} requiredPermission="roles:manage">
             <DashboardLayout title="Roles & Permissions">
               <RolesPermissionsPage />
             </DashboardLayout>
@@ -554,18 +483,22 @@ const router = createBrowserRouter(
       <Route
         path="/payroll"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER', 'SUPER_ADMIN']}>
-            <Payroll />
+          <ProtectedRoute requiredPermission="payroll:view">
+            <SubscriptionGuard minPlan={2}>
+              <Payroll />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
       <Route
         path="/payroll/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DashboardLayout title="Payroll Command Center">
-              <PayrollDashboard />
-            </DashboardLayout>
+          <ProtectedRoute requiredPermission="payroll:manage">
+            <SubscriptionGuard minPlan={2}>
+              <DashboardLayout title="Payroll Command Center">
+                <PayrollDashboard />
+              </DashboardLayout>
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -573,7 +506,9 @@ const router = createBrowserRouter(
         path="/payroll/process/:runId"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
-            <RiverProcess />
+            <SubscriptionGuard minPlan={2}>
+              <RiverProcess />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -581,7 +516,9 @@ const router = createBrowserRouter(
         path="/payroll/fnf"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
-            <FnFSettlementsPage />
+            <SubscriptionGuard minPlan={2}>
+              <FnFSettlementsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -589,7 +526,9 @@ const router = createBrowserRouter(
         path="/payroll/fnf/:id"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
-            <FnFSettlementDetailsPage />
+            <SubscriptionGuard minPlan={2}>
+              <FnFSettlementDetailsPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -597,9 +536,11 @@ const router = createBrowserRouter(
         path="/payroll/arrears"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
-            <DashboardLayout title="Arrears Management">
-              <ArrearsPage />
-            </DashboardLayout>
+            <SubscriptionGuard minPlan={2}>
+              <DashboardLayout title="Arrears Management">
+                <ArrearsPage />
+              </DashboardLayout>
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />

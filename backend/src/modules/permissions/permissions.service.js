@@ -1,12 +1,33 @@
 const pool = require("../../config/db");
 
 /**
+ * Helper to get SQL fragment for plan-based filtering
+ */
+const getPlanFilter = (planType) => {
+    // Standard Plan (1) excludes: payroll, assets, projects, chat, wfh, shifts, audit_logs
+    // Premium Plan (2) excludes: assets, chat
+    // Elite Plan (3) excludes: nothing
+    if (planType === 1) {
+        return "module NOT IN ('payroll', 'assets', 'projects', 'chat', 'wfh', 'shifts', 'audit_logs')";
+    } else if (planType === 2) {
+        return "module NOT IN ('assets', 'chat')";
+    }
+    return "1=1"; // No filter for Elite
+};
+
+/**
  * Get all permissions from the master catalog
  */
-exports.getAllPermissions = async () => {
+exports.getAllPermissions = async (tenantId) => {
+    // Get plan type for tenant
+    const tenantRes = await pool.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const filter = getPlanFilter(planType);
+
     const res = await pool.query(
         `SELECT id, module, action, label, description
      FROM permissions
+     WHERE ${filter}
      ORDER BY module, action`
     );
     return res.rows;
@@ -15,10 +36,15 @@ exports.getAllPermissions = async () => {
 /**
  * Get permissions grouped by module (for UI display)
  */
-exports.getPermissionsGrouped = async () => {
+exports.getPermissionsGrouped = async (tenantId) => {
+    const tenantRes = await pool.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const filter = getPlanFilter(planType);
+
     const res = await pool.query(
         `SELECT id, module, action, label, description
      FROM permissions
+     WHERE ${filter}
      ORDER BY module, action`
     );
 
@@ -36,6 +62,10 @@ exports.getPermissionsGrouped = async () => {
  * Get role permissions for a specific tenant + role
  */
 exports.getRolePermissions = async (tenantId, role) => {
+    const tenantRes = await pool.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const filter = getPlanFilter(planType);
+
     const res = await pool.query(
         `SELECT 
         p.id AS permission_id,
@@ -49,6 +79,7 @@ exports.getRolePermissions = async (tenantId, role) => {
         ON rp.permission_id = p.id 
         AND rp.tenant_id = $1 
         AND rp.role = $2
+     WHERE ${filter}
      ORDER BY p.module, p.action`,
         [tenantId, role]
     );
@@ -60,10 +91,14 @@ exports.getRolePermissions = async (tenantId, role) => {
  * Returns array of permission key strings like ['employees:view', 'attendance:manage']
  */
 exports.getUserEffectivePermissions = async (tenantId, userId, role) => {
-    // For SUPER_ADMIN, return ALL permissions
+    const tenantRes = await pool.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const filter = getPlanFilter(planType);
+
+    // For SUPER_ADMIN, return ALL permissions (filtered by plan)
     if (role === "SUPER_ADMIN") {
         const allPerms = await pool.query(
-            `SELECT module, action FROM permissions`
+            `SELECT module, action FROM permissions WHERE ${filter}`
         );
         return allPerms.rows.map((p) => `${p.module}:${p.action}`);
     }
@@ -82,6 +117,7 @@ exports.getUserEffectivePermissions = async (tenantId, userId, role) => {
         ON upo.permission_id = p.id 
         AND upo.tenant_id = $1 
         AND upo.user_id = $2
+     WHERE ${filter}
      ORDER BY p.module, p.action`,
         [tenantId, userId, role]
     );
@@ -95,6 +131,10 @@ exports.getUserEffectivePermissions = async (tenantId, userId, role) => {
  * Get detailed effective permissions for a user (with override info) - for admin UI
  */
 exports.getUserPermissionsDetailed = async (tenantId, userId, role) => {
+    const tenantRes = await pool.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const filter = getPlanFilter(planType);
+
     const res = await pool.query(
         `SELECT 
         p.id AS permission_id,
@@ -114,6 +154,7 @@ exports.getUserPermissionsDetailed = async (tenantId, userId, role) => {
         ON upo.permission_id = p.id 
         AND upo.tenant_id = $1 
         AND upo.user_id = $2
+     WHERE ${filter}
      ORDER BY p.module, p.action`,
         [tenantId, userId, role]
     );
@@ -276,6 +317,14 @@ exports.createCustomRole = async (tenantId, roleName, description, actorId) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+
+        // [CUSTOM ROLE PLAN CHECK]
+        const tenantRes = await client.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+        const planType = tenantRes.rows[0]?.plan_type || 1;
+
+        if (planType === 1) { // Standard
+            throw new Error("Custom roles are not available on the STANDARD plan. Please upgrade to PREMIUM or ELITE.");
+        }
 
         // Insert into roles table if not exists
         await client.query(

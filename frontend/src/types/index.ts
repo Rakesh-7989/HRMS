@@ -22,6 +22,7 @@ export interface User {
   profile_photo_url?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
+  plan_type?: number;
   two_factor_enabled?: boolean;
   tenant_settings?: TenantSettings;
 
@@ -61,6 +62,7 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  planType?: number;
   mustChangePassword?: boolean;
 }
 

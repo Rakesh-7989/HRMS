@@ -3,6 +3,7 @@ const ctrl = require("./project_management.controller");
 const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
 const requirePermission = require("../../middleware/requirePermission");
+const planGuard = require("../../middleware/planGuard");
 
 const {
   createClientSchema,
@@ -37,9 +38,10 @@ const router = express.Router();
 
 /**
  * ============================================================================
- * CLIENT ROUTES
+ * CLIENT ROUTES (Elite Only)
  * ============================================================================
  */
+router.use('/clients', planGuard('project.client_management'));
 
 /**
  * POST /api/project-management/clients
@@ -187,9 +189,10 @@ router.delete(
 
 /**
  * ============================================================================
- * KANBAN BOARD ROUTES
+ * KANBAN BOARD ROUTES (Premium+)
  * ============================================================================
  */
+router.use('/projects/:project_id/board', planGuard('project.task_board'));
 
 /**
  * GET /api/project-management/projects/:project_id/board/exists
@@ -307,9 +310,10 @@ router.delete(
 
 /**
  * ============================================================================
- * TIMESHEET ROUTES
+ * TIMESHEET ROUTES (Premium+)
  * ============================================================================
  */
+router.use('/timesheets', planGuard('project.timesheets'));
 
 /**
  * POST /api/project-management/timesheets/entry

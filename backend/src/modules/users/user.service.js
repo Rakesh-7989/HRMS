@@ -130,8 +130,31 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
     }
 
     // Only SUPER_ADMIN or ADMIN can create ADMIN role
-    if (data.role === "ADMIN" && !["SUPER_ADMIN", "ADMIN"].includes(actor.role)) {
-      throw new Error("Only SUPER_ADMIN or ADMIN can create ADMIN role");
+    // [ADMIN LIMIT CHECK]
+    if (data.role === 'ADMIN') {
+      const tenantRes = await client.query('SELECT plan_type FROM tenants WHERE id = $1', [actor.tenantId]);
+      const planType = tenantRes.rows[0]?.plan_type || 1;
+
+      const adminCountRes = await client.query(
+        'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_deleted = false',
+        [actor.tenantId, 'ADMIN']
+      );
+      const currentAdmins = parseInt(adminCountRes.rows[0].count, 10);
+
+      const limits = { 1: 1, 2: 5, 3: 999999 }; // Standard: 1, Premium: 5, Elite: Unlimited
+      if (currentAdmins >= limits[planType]) {
+        throw new Error(`Your ${planType === 1 ? 'STANDARD' : 'PREMIUM'} plan is limited to ${limits[planType]} Admin user${limits[planType] > 1 ? 's' : ''}. Please upgrade to add more.`);
+      }
+    }
+
+    // [CUSTOM ROLE CHECK]
+    const systemRoles = ["EMPLOYEE", "MANAGER", "HR", "ADMIN", "SUPER_ADMIN"];
+    if (!systemRoles.includes(data.role)) {
+      const tenantRes = await client.query('SELECT plan_type FROM tenants WHERE id = $1', [actor.tenantId]);
+      const planType = tenantRes.rows[0]?.plan_type || 1;
+      if (planType === 1) {
+        throw new Error("Custom roles are not available on the STANDARD plan. Please upgrade to PREMIUM or ELITE.");
+      }
     }
 
     // Check employee limit
@@ -560,9 +583,11 @@ exports.getUserById = async (db, id, tenantId, requester) => {
             m.id AS manager_uuid, m.first_name AS manager_first_name, m.last_name AS manager_last_name,
             COALESCE(sh.name, e.shift) as shift,
             sh.week_offs as shift_week_offs,
-            esd.ctc
+            esd.ctc,
+            t.plan_type
      FROM users u 
      LEFT JOIN employees e ON e.user_id = u.id
+     JOIN tenants t ON u.tenant_id = t.id
      LEFT JOIN employees m ON m.id = e.reports_to
      LEFT JOIN shifts sh ON sh.id = e.shift_id
      LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
@@ -781,6 +806,33 @@ exports.updateEmployee = async (db, id, updates, actor) => {
 
     // Role Change Logic
     if (updates.role) {
+      // [ADMIN LIMIT CHECK FOR ROLE CHANGE]
+      if (updates.role === 'ADMIN') {
+        const adminCountRes = await client.query(
+          'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_deleted = false',
+          [tenantId, 'ADMIN']
+        );
+        const currentAdmins = parseInt(adminCountRes.rows[0].count, 10);
+
+        const tenantRes = await client.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+        const planType = tenantRes.rows[0]?.plan_type || 1;
+        const limits = { 1: 1, 2: 5, 3: 999999 };
+
+        if (currentAdmins >= limits[planType]) {
+          throw new Error(`Your ${planType === 1 ? 'STANDARD' : 'PREMIUM'} plan is limited to ${limits[planType]} Admin user${limits[planType] > 1 ? 's' : ''}. Please upgrade to promote more users.`);
+        }
+      }
+
+      // [CUSTOM ROLE CHECK FOR ROLE CHANGE]
+      const systemRoles = ["EMPLOYEE", "MANAGER", "HR", "ADMIN", "SUPER_ADMIN"];
+      if (!systemRoles.includes(updates.role)) {
+        const tenantRes = await client.query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+        const planType = tenantRes.rows[0]?.plan_type || 1;
+        if (planType === 1) {
+          throw new Error("Custom roles are not available on the STANDARD plan.");
+        }
+      }
+
       await query(
         `UPDATE users SET role = $1, updated_at = now() WHERE id = $2 AND tenant_id = $3`,
         [updates.role, result.rows[0].user_id, tenantId]
@@ -990,9 +1042,38 @@ exports.updateUser = async (db, id, updates, actor) => {
 /* ---------------------- ROLE & ASSIGNMENT UPDATES ---------------------- */
 exports.changeRole = async (db, id, newRole, actor) => {
   const query = getQuery(db);
+  const tenantId = actor.tenantId;
+
+  // [ADMIN LIMIT CHECK]
+  if (newRole === 'ADMIN') {
+    const adminCountRes = await query(
+      'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_deleted = false',
+      [tenantId, 'ADMIN']
+    );
+    const currentAdmins = parseInt(adminCountRes.rows[0].count, 10);
+
+    const tenantRes = await query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    const limits = { 1: 1, 2: 5, 3: 999999 };
+
+    if (currentAdmins >= limits[planType]) {
+      throw new Error(`Your ${planType === 1 ? 'STANDARD' : 'PREMIUM'} plan is limited to ${limits[planType]} Admin user${limits[planType] > 1 ? 's' : ''}. Please upgrade to promote more users.`);
+    }
+  }
+
+  // [CUSTOM ROLE CHECK]
+  const systemRoles = ["EMPLOYEE", "MANAGER", "HR", "ADMIN", "SUPER_ADMIN"];
+  if (!systemRoles.includes(newRole)) {
+    const tenantRes = await query('SELECT plan_type FROM tenants WHERE id = $1', [tenantId]);
+    const planType = tenantRes.rows[0]?.plan_type || 1;
+    if (planType === 1) {
+      throw new Error("Custom roles are not available on the STANDARD plan.");
+    }
+  }
+
   const res = await query(
     `UPDATE users SET role=$1, updated_at=now() WHERE id=$2 AND tenant_id=$3 RETURNING *`,
-    [newRole, id, actor.tenantId]
+    [newRole, id, tenantId]
   );
   return res.rows[0];
 };

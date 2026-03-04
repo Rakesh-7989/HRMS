@@ -321,7 +321,7 @@ exports.registerTenant = async (data, req = null) => {
     // Create subscription - trial if no plan selected, pending payment if plan selected
     if (data.plan_id) {
       // User selected a specific plan - create pending subscription awaiting payment
-      await subscriptionService.createPendingSubscription(tenant.id, client, data.plan_id, data.billing_cycle || 'MONTHLY', data.coupon_code || null);
+      await subscriptionService.createPendingSubscription(tenant.id, c, data.plan_id, data.billing_cycle || 'MONTHLY', data.coupon_code || null);
     } else {
       // No plan selected - create trial subscription
       await subscriptionService.createTrial(tenant.id, c, null, 'MONTHLY');

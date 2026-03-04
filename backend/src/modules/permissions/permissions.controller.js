@@ -5,7 +5,7 @@ const service = require("./permissions.service");
  */
 exports.getAllPermissions = async (req, res, next) => {
     try {
-        const grouped = await service.getPermissionsGrouped();
+        const grouped = await service.getPermissionsGrouped(req.user.tenantId);
         res.json({ status: "success", data: grouped });
     } catch (err) {
         next(err);

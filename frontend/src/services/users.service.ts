@@ -61,6 +61,7 @@ export interface User {
   timezone?: string;
   subscription_status?: string;
   subscription_plan_name?: string;
+  plan_type?: number;
   two_factor_enabled?: boolean;
   profile_photo_url?: string;
   // Joined data

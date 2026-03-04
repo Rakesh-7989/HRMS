@@ -72,7 +72,7 @@ class SubscriptionService {
         const trialEndsAt = new Date();
         trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
 
-        return await this.createSubscription({
+        const subscription = await this.createSubscription({
             tenant_id: tenantId,
             plan_id: targetPlanId,
             billing_cycle: billingCycle,
@@ -82,6 +82,20 @@ class SubscriptionService {
             amount_paid: 0,
             coupon_code: null
         }, executor);
+
+        // Sync to tenants table
+        const planTierRes = await executor.query('SELECT tier FROM plans WHERE id = $1', [targetPlanId]);
+        const tier = planTierRes.rows[0]?.tier || 1;
+
+        await executor.query(`
+            UPDATE tenants
+            SET plan_type = $1,
+                plan_expiry_date = $2,
+                updated_at = NOW()
+            WHERE id = $3
+        `, [tier, trialEndsAt, tenantId]);
+
+        return subscription;
     }
 
     /**
@@ -333,6 +347,18 @@ class SubscriptionService {
                     updated_at = NOW()
                 WHERE id = $4
             `, [invoice.plan_id, invoice.billing_period_end, invoice.amount, subscription.id]);
+
+            // Sync to tenants table for fast lookup in middleware/frontend
+            const planTierRes = await db.query('SELECT tier FROM plans WHERE id = $1', [invoice.plan_id]);
+            const tier = planTierRes.rows[0]?.tier || 1;
+
+            await db.query(`
+                UPDATE tenants
+                SET plan_type = $1,
+                    plan_expiry_date = $2,
+                    updated_at = NOW()
+                WHERE id = $3
+            `, [tier, invoice.billing_period_end, tenantId]);
 
             // Create record in subscription_payments
             await db.query(`
