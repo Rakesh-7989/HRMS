@@ -41,7 +41,7 @@ module.exports = async function verifyJwt(req, res, next) {
           t.plan_type
       FROM users u
       LEFT JOIN employees e ON u.id = e.user_id
-      JOIN tenants t ON u.tenant_id = t.id
+      LEFT JOIN tenants t ON u.tenant_id = t.id
       WHERE u.id = $1
       `,
       [decoded.id]

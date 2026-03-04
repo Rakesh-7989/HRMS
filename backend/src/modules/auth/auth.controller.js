@@ -548,8 +548,9 @@ exports.verify2FALogin = async (req, res) => {
 
     const userId = decoded.id;
     const userRes = await pool.query(
-      `SELECT u.*, e.id AS employee_id FROM users u 
+      `SELECT u.*, e.id AS employee_id, t.plan_type FROM users u 
        LEFT JOIN employees e ON e.user_id = u.id
+       LEFT JOIN tenants t ON t.id = u.tenant_id
        WHERE u.id = $1`,
       [userId]
     );
