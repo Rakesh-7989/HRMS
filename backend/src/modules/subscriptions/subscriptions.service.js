@@ -115,7 +115,7 @@ class SubscriptionService {
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + durationMonths);
 
-        return await this.createSubscription({
+        const subscription = await this.createSubscription({
             tenant_id: tenantId,
             plan_id: planId,
             billing_cycle: billingCycle,
@@ -126,6 +126,20 @@ class SubscriptionService {
             amount_paid: 0,
             coupon_code: couponCode
         }, executor);
+
+        // Sync to tenants table
+        const planTierRes = await executor.query('SELECT tier FROM plans WHERE id = $1', [planId]);
+        const tier = planTierRes.rows[0]?.tier || 1;
+
+        await executor.query(`
+            UPDATE tenants
+            SET plan_type = $1,
+                plan_expiry_date = $2,
+                updated_at = NOW()
+            WHERE id = $3
+        `, [tier, endDate, tenantId]);
+
+        return subscription;
     }
 
     /**

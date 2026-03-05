@@ -237,6 +237,9 @@ exports.registerTenant = async (data, req = null) => {
 
       const tenant = tenantInsert.rows[0];
 
+      // SEED PERMISSIONS for the new tenant
+      await client.query("SELECT seed_role_permissions_for_tenant($1)", [tenant.id]);
+
       const userInsert = await client.query(
         `
         INSERT INTO users
@@ -305,6 +308,9 @@ exports.registerTenant = async (data, req = null) => {
     );
 
     const tenant = tenantInsert.rows[0];
+
+    // SEED PERMISSIONS for the new tenant
+    await c.query("SELECT seed_role_permissions_for_tenant($1)", [tenant.id]);
 
     const userInsert = await c.query(
       `

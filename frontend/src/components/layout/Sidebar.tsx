@@ -67,7 +67,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'], permission: ['audit_logs', 'view'] },
 
   // Roles & Permissions (ADMIN only + SUPER_ADMIN)
-  { label: 'Roles', icon: Shield, path: '/roles-permissions', roles: ['ADMIN', 'SUPER_ADMIN'], permission: ['roles', 'manage'] },
+  { label: 'Roles', icon: Shield, path: '/roles-permissions', roles: ['ADMIN'], permission: ['roles', 'manage'] },
 ];
 
 interface SidebarProps {
@@ -90,14 +90,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     // Plan check
     if (item.minPlan && atLeastPlan && !atLeastPlan(item.minPlan)) return false;
 
-    // SUPER ADMIN bypasses all visibility filters
-    if (user.role === 'SUPER_ADMIN') return true;
-
     // For items with a permission field
     if (item.permission) {
       if (!hasPermission(item.permission[0], item.permission[1])) return false;
       // If it's a system role (non-custom), still check the role gate if any
-      const isSystemRole = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
+      const isSystemRole = ['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
       if (isSystemRole && item.roles && !item.roles.includes(user.role)) return false;
       return true;
     }

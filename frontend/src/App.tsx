@@ -471,7 +471,7 @@ const router = createBrowserRouter(
       <Route
         path="/roles-permissions"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']} requiredPermission="roles:manage">
+          <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage">
             <DashboardLayout title="Roles & Permissions">
               <RolesPermissionsPage />
             </DashboardLayout>
