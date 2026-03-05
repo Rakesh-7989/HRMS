@@ -5,6 +5,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { dashboardService } from '@/services/dashboard.service';
 import { attendanceService } from '@/services/attendance.service';
 import { eventsService } from '@/services/events.service';
+import { leaveService, Holiday } from '@/services/leave.service';
+import { usersService } from '@/services/users.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { useConfirm } from '@/contexts/ConfirmContext';
@@ -14,7 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, TrendingUp, Coffee, CheckCircle, LogIn, LogOut,
   CalendarPlus, Loader2, Sparkles, Timer,
-  Award, ChevronRight, MapPin, Gift, Cake, Activity
+  Award, ChevronRight, MapPin, Gift, Cake, Activity,
+  UserPlus, Users, CalendarDays, ExternalLink
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import {
@@ -131,7 +134,7 @@ const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
 // --- Main Component ---
 
 export const EmployeeDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, atLeastPlan } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
@@ -187,7 +190,7 @@ export const EmployeeDashboard: React.FC = () => {
   });
 
   const handleClockIn = async () => {
-    if (geoSettings?.is_enabled) {
+    if (geoSettings?.is_enabled && atLeastPlan(2)) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
         alert(check.errorMessage || 'Geo-fence validation failed');
@@ -214,7 +217,7 @@ export const EmployeeDashboard: React.FC = () => {
 
     if (!isConfirmed) return;
 
-    if (geoSettings?.is_enabled) {
+    if (geoSettings?.is_enabled && atLeastPlan(2)) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
         alert(check.errorMessage || 'Geo-fence validation failed');
@@ -286,12 +289,6 @@ export const EmployeeDashboard: React.FC = () => {
 
   const workingTime = getWorkingTime();
 
-  // Task Data Processing
-  const taskChartData = (data?.taskMetrics || []).map((m: any) => ({
-    name: m.column_key.replace('_', ' '),
-    value: Number(m.count)
-  }));
-
   const attendanceChartData = monthlyAttendance
     .reduce((acc: any[], att: any) => {
       const date = format(new Date(att.date), 'MMM dd');
@@ -325,6 +322,19 @@ export const EmployeeDashboard: React.FC = () => {
       };
     });
   }, [data?.weeklyActivity]);
+
+  // Fetch Department Members
+  const { data: departmentMembers, isLoading: isLoadingDept } = useQuery({
+    queryKey: ['department-members', user?.department_id],
+    queryFn: () => usersService.getUsers({ department_id: user?.department_id }),
+    enabled: !!user?.department_id
+  });
+
+  // Fetch Public Holidays
+  const { data: holidays, isLoading: isLoadingHolidays } = useQuery({
+    queryKey: ['public-holidays'],
+    queryFn: () => leaveService.getPublicHolidays({ year: new Date().getFullYear() })
+  });
 
   if (isLoading) {
     return (
@@ -493,20 +503,20 @@ export const EmployeeDashboard: React.FC = () => {
             {/* Celebrations */}
             <ChartCard title="Celebrations" delay={0.6}>
               <div className="space-y-3">
-                {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || [])].slice(0, 3).map((evt: any, i: number) => (
+                {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 3).map((evt: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
-                      {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : <Award className="w-6 h-6" />}
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
+                      {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                     </div>
                     <div>
                       <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : 'Anniversary'}
+                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
                       </p>
                     </div>
                   </div>
                 ))}
-                {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length) && (
+                {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length && !peopleEventsData?.joiners?.length) && (
                   <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
                     <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
                     <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No events this week</p>
@@ -602,7 +612,7 @@ export const EmployeeDashboard: React.FC = () => {
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
                       <Tooltip
                         cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '3 3' }}
-                        content={({ active, payload, label }) => {
+                        content={({ active, payload, label }: any) => {
                           if (active && payload && payload.length) {
                             const actual = payload[0].value;
                             const target = 9;
@@ -642,21 +652,59 @@ export const EmployeeDashboard: React.FC = () => {
               </ChartCard>
             </div>
 
-            {/* Task Overview */}
-
-
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Task Distribution */}
+              {/* Department Members Overview */}
+              <ChartCard
+                title="Department Members"
+                subtitle={user?.department_id ? "My Team" : "Across Organization"}
+                delay={0.65}
+              >
+                <div className="space-y-4 mt-4 max-h-[280px] overflow-y-auto pr-2 no-scrollbar">
+                  {isLoadingDept ? (
+                    <div className="flex items-center justify-center h-32">
+                      <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                    </div>
+                  ) : (departmentMembers?.length || 0) > 0 ? (
+                    departmentMembers?.filter((m: any) => m.id !== user?.id).slice(0, 6).map((member: any) => (
+                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-white dark:border-slate-800 shadow-sm">
+                            {member.profile_image ? (
+                              <img src={member.profile_image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs">{member.first_name?.[0] || ''}{member.last_name?.[0] || ''}</span>
+                            )}
+                          </div>
+                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${member.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.first_name} {member.last_name}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-widest">{member.designation_name || 'Team Member'}</p>
+                        </div>
+                        <button className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-indigo-500 transition-colors shadow-sm">
+                          <ExternalLink size={14} />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-32 text-center opacity-60">
+                      <Users className="w-10 h-10 text-slate-300 mb-2" />
+                      <p className="text-sm font-bold text-slate-400 text-xs">No team members found</p>
+                    </div>
+                  )}
+                </div>
+              </ChartCard>
+
+              {/* Leave Utilization */}
               <ChartCard title={t('dashboard.leaveUtilization')} subtitle={t('dashboard.entitlementUsage')} delay={0.5}>
-                <div className="h-[300px]">
+                <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={[
-                          { name: t('dashboard.approvedRequests'), value: leaveMetrics.approved },
-                          { name: t('dashboard.pendingLeaves'), value: leaveMetrics.pending },
-                          { name: t('dashboard.rejected'), value: leaveMetrics.rejected },
+                          { name: t('dashboard.approvedRequests'), value: Number(leaveMetrics.approved || 0) },
+                          { name: t('dashboard.pendingLeaves'), value: Number(leaveMetrics.pending || 0) },
+                          { name: t('dashboard.rejected'), value: Number(leaveMetrics.rejected || 0) },
                         ]}
                         cx="50%"
                         cy="50%"
@@ -665,9 +713,9 @@ export const EmployeeDashboard: React.FC = () => {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {taskChartData.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name.replace(' ', '_').toUpperCase()] || '#cbd5e1'} />
-                        ))}
+                        <Cell fill={STATUS_COLORS.DONE} />
+                        <Cell fill={STATUS_COLORS.TODO} />
+                        <Cell fill="#ef4444" />
                       </Pie>
                       <Tooltip />
                       <Legend
@@ -683,38 +731,80 @@ export const EmployeeDashboard: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
               </ChartCard>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Upcoming Leaves */}
               <ChartCard title="Upcoming Leaves" delay={0.7}>
-                {upcomingLeaves.length > 0 ? (
-                  <div className="space-y-3">
-                    {upcomingLeaves.slice(0, 3).map((leave: any, i: number) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                          <Coffee className="w-5 h-5" />
+                <div className="mt-4">
+                  {(upcomingLeaves?.length || 0) > 0 ? (
+                    <div className="space-y-3">
+                      {upcomingLeaves.slice(0, 4).map((leave: any, i: number) => (
+                        <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-indigo-500/5 group">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                            <Coffee className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{leave.leave_type}</p>
+                            <p className="text-xs font-semibold text-slate-400">
+                              {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd')}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${leave.status === 'APPROVED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' :
+                            leave.status === 'PENDING' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-slate-100 text-slate-600'
+                            }`}>
+                            {leave.status}
+                          </span>
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-800 dark:text-white text-sm">{leave.leave_type}</p>
-                          <p className="text-xs font-semibold text-slate-400">
-                            {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd')}
-                          </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-[200px] text-center opacity-60">
+                      <Coffee className="w-10 h-10 text-slate-300 mb-2" />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-[10px]">No upcoming leaves</p>
+                    </div>
+                  )}
+                </div>
+              </ChartCard>
+
+              {/* Upcoming Holidays */}
+              <ChartCard title="Upcoming Holidays" delay={0.75}>
+                <div className="space-y-3 mt-4">
+                  {isLoadingHolidays ? (
+                    <div className="flex items-center justify-center h-48">
+                      <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                    </div>
+                  ) : (holidays?.filter((h: Holiday) => new Date(h.date) >= new Date()).length || 0) > 0 ? (
+                    holidays?.filter((h: Holiday) => new Date(h.date) >= new Date())
+                      .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .slice(0, 4)
+                      .map((holiday: Holiday) => (
+                        <div key={holiday.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow group">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:rotate-3 transition-transform">
+                            <span className="text-[10px] font-black uppercase leading-none mb-0.5">{format(new Date(holiday.date), 'MMM')}</span>
+                            <span className="text-lg font-black leading-none">{format(new Date(holiday.date), 'dd')}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{holiday.name}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-1">
+                              {format(new Date(holiday.date), 'EEEE')}
+                            </p>
+                          </div>
+                          {holiday.is_optional && (
+                            <span className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Optional</span>
+                          )}
                         </div>
-                        <span className="ml-auto px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-[10px] font-bold text-emerald-600">
-                          {leave.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-[150px] text-center opacity-60">
-                    <Coffee className="w-10 h-10 text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-400">No upcoming leaves</p>
-                  </div>
-                )}
+                      ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-48 text-center opacity-60">
+                      <CalendarDays className="w-10 h-10 text-slate-300 mb-2" />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-[10px]">No upcoming holidays</p>
+                    </div>
+                  )}
+                </div>
               </ChartCard>
             </div>
           </div>
-
         </div>
       </motion.div>
     </DashboardLayout>

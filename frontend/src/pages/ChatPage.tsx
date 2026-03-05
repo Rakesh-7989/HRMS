@@ -351,7 +351,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
 };
 
 export const ChatPage = () => {
-    const { user } = useAuth();
+    const { user, atLeastPlan } = useAuth();
     const { t } = useTranslation();
     const {
         socket, joinRoom, markAsRead, initiateCall,
@@ -1451,7 +1451,7 @@ export const ChatPage = () => {
                                             <span className="text-[11px] font-bold">Join</span>
                                         </button>
                                     )}
-                                    {canVoiceCall && (
+                                    {canVoiceCall && atLeastPlan(3) && (
                                         <button
                                             onClick={() => {
                                                 if (activeCall) { toggleAudio(); return; }
@@ -1468,7 +1468,7 @@ export const ChatPage = () => {
                                             {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
                                         </button>
                                     )}
-                                    {canVideoCall && (
+                                    {canVideoCall && atLeastPlan(3) && (
                                         <button
                                             onClick={() => {
                                                 if (activeCall) { toggleVideo(); return; }

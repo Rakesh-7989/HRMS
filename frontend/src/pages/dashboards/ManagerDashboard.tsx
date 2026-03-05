@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, UserCheck, Calendar, ChevronRight, ChevronLeft, Sparkles, UserX,
   CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, CheckSquare,
-  Filter, ExternalLink, Folder
+  Filter, ExternalLink, Folder, Gift, Cake, Award, UserPlus, Coffee,
+  CalendarDays, Loader2
 } from 'lucide-react';
 import { format, isAfter, parseISO, eachDayOfInterval, subDays, getDay, differenceInDays } from 'date-fns';
 import { getGreeting, formatInTimezone } from '@/utils/timeFormat';
@@ -22,8 +23,9 @@ import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { dashboardService } from '@/services/dashboard.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { attendanceService } from '@/services/attendance.service';
-import { leaveService } from '@/services/leave.service';
+import { leaveService, Holiday } from '@/services/leave.service';
 import { projectsService } from '@/services/projects.service';
+import { eventsService } from '@/services/events.service';
 
 // --- Types ---
 interface Task {
@@ -286,6 +288,19 @@ export const ManagerDashboard: React.FC = () => {
   const { data: pendingRequests } = useQuery({
     queryKey: ['dashboard', 'pending-leaves'],
     queryFn: () => leaveService.getPendingApprovals(),
+    enabled: user?.role === 'MANAGER',
+  });
+
+  const { data: peopleEventsData } = useQuery({
+    queryKey: ['peopleEvents', 'team'],
+    queryFn: () => eventsService.getPeopleEvents('team'),
+    staleTime: 1000 * 60 * 5,
+    enabled: user?.role === 'MANAGER',
+  });
+
+  const { data: holidays, isLoading: isLoadingHolidays } = useQuery({
+    queryKey: ['public-holidays'],
+    queryFn: () => leaveService.getPublicHolidays(),
     enabled: user?.role === 'MANAGER',
   });
 
@@ -1484,6 +1499,71 @@ export const ManagerDashboard: React.FC = () => {
                   </div>
                 )}
               </AnimatePresence>
+            </div>
+          </ChartCard>
+        </div>
+
+        {/* --- Celebrations & Holidays Row --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Celebrations */}
+          <ChartCard title="Team Celebrations" subtitle="Birthdays, Anniversaries & New Joinees" delay={1.3}>
+            <div className="space-y-3 mt-2">
+              {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 4).map((evt: any, i: number) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
+                    {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                      {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length && !peopleEventsData?.joiners?.length) && (
+                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+                  <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                  <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No events this week</p>
+                </div>
+              )}
+            </div>
+          </ChartCard>
+
+          {/* Upcoming Holidays */}
+          <ChartCard title="Upcoming Holidays" subtitle="Public & Seasonal Holidays" delay={1.4}>
+            <div className="space-y-3 mt-2">
+              {isLoadingHolidays ? (
+                <div className="flex items-center justify-center h-48">
+                  <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                </div>
+              ) : (holidays?.filter((h: Holiday) => new Date(h.date) >= new Date()).length || 0) > 0 ? (
+                holidays?.filter((h: Holiday) => new Date(h.date) >= new Date())
+                  .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .slice(0, 4)
+                  .map((holiday: Holiday) => (
+                    <div key={holiday.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow group">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:rotate-3 transition-transform">
+                        <span className="text-[10px] font-black uppercase leading-none mb-0.5">{format(new Date(holiday.date), 'MMM')}</span>
+                        <span className="text-lg font-black leading-none">{format(new Date(holiday.date), 'dd')}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{holiday.name}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-1">
+                          {format(new Date(holiday.date), 'EEEE')}
+                        </p>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                        <Coffee className="w-4 h-4 text-amber-500" />
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+                  <CalendarDays className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                  <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No upcoming holidays</p>
+                </div>
+              )}
             </div>
           </ChartCard>
         </div>

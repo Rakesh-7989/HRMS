@@ -260,7 +260,7 @@ exports.removeUserOverride = async (tenantId, userId, permissionId) => {
  * Seed default permissions for a new tenant (called during tenant creation)
  */
 exports.seedDefaultPermissionsForTenant = async (tenantId) => {
-    await pool.query(`SELECT seed_role_permissions_for_tenant($1)`, [tenantId]);
+    await pool.query(`SELECT seed_role_permissions_for_tenant($1::uuid)`, [tenantId]);
 };
 
 // ===================================================================

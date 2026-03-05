@@ -62,7 +62,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'], permission: ['projects', 'view'], minPlan: 2 },
 
   // System
-  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['chat', 'view'], minPlan: 3 },
+  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['chat', 'view'], minPlan: 2 },
   // Activity
   { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'], permission: ['audit_logs', 'view'] },
 
