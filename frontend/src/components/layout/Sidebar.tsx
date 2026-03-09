@@ -8,66 +8,64 @@ import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
 import logo from '../../../Assests/logo.png';
 import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Clock,
-  Building2,
-  BarChart3,
-  Package,
-  FolderKanban,
-  Activity,
-  CalendarRange,
-  Wallet,
-  MessageSquare,
   CreditCard,
   Shield,
+  LayoutDashboard,
+  Building2,
+  Users,
+  Clock,
+  CalendarRange,
+  Calendar,
+  BarChart3,
+  Package,
+  Wallet,
+  FolderKanban,
+  MessageSquare,
+  Activity,
 } from 'lucide-react';
-import type { UserRole } from '@/types';
+
 
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
-  roles: UserRole[];
   /** Optional permission check: [module, action] */
   permission?: [string, string];
-  /** Minimum plan level required: 1=STANDARD, 2=PREMIUM, 3=ELITE */
-  minPlan?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal', roles: ['EMPLOYEE'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team', roles: ['MANAGER'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr', roles: ['HR'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization', roles: ['ADMIN'] },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system', roles: ['SUPER_ADMIN'] },
-  { label: 'Tenants', icon: Building2, path: '/tenants', roles: ['SUPER_ADMIN'] },
-  { label: 'Plans', icon: CreditCard, path: '/plans', roles: ['SUPER_ADMIN'] },
-  { label: 'Employees', icon: Users, path: '/dashboard/employees', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['employees', 'view'] },
-  { label: 'Organisation', icon: Building2, path: '/organisation', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['organisation', 'view'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/personal' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/team' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/hr' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/organization' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system' },
+  { label: 'Tenants', icon: Building2, path: '/tenants' },
+  { label: 'Plans', icon: CreditCard, path: '/plans' },
+  { label: 'Employees', icon: Users, path: '/dashboard/employees', permission: ['employees', 'view'] },
+  { label: 'Organisation', icon: Building2, path: '/organisation', permission: ['organisation', 'view'] },
 
-  { label: 'Attendance', icon: Clock, path: '/attendance', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'], permission: ['attendance', 'view'] },
-  { label: 'Calendar', icon: CalendarRange, path: '/calendar', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'], permission: ['calendar', 'view'] },
-  { label: 'Leave', icon: Calendar, path: '/leave', roles: ['HR', 'MANAGER', 'EMPLOYEE', 'ADMIN'], permission: ['leave', 'view'] },
-  { label: 'Reports', icon: BarChart3, path: '/reports', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['reports', 'view'] },
+  { label: 'Attendance', icon: Clock, path: '/attendance', permission: ['attendance', 'view'] },
+  { label: 'Calendar', icon: CalendarRange, path: '/calendar', permission: ['calendar', 'view'] },
+  { label: 'Leave', icon: Calendar, path: '/leave', permission: ['leave', 'view'] },
+  { label: 'Reports', icon: BarChart3, path: '/reports', permission: ['reports', 'view'] },
 
   // Asset Management
-  { label: 'Assets', icon: Package, path: '/assets', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['assets', 'view'], minPlan: 3 },
+  { label: 'Assets', icon: Package, path: '/assets', permission: ['assets', 'view'] },
 
   // Payroll
-  { label: 'Payroll', icon: Wallet, path: '/payroll', roles: ['ADMIN', 'HR', 'EMPLOYEE', 'MANAGER'], permission: ['payroll', 'view'], minPlan: 2 },
+  { label: 'Payroll', icon: Wallet, path: '/payroll', permission: ['payroll', 'view'] },
 
   // Project Management
-  { label: 'Projects', icon: FolderKanban, path: '/projects', roles: ['ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'], permission: ['projects', 'view'], minPlan: 2 },
+  { label: 'Projects', icon: FolderKanban, path: '/projects', permission: ['projects', 'view'] },
 
   // System
-  { label: 'Chat', icon: MessageSquare, path: '/chat', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], permission: ['chat', 'view'], minPlan: 2 },
-  // Activity
-  { label: 'Activity', icon: Activity, path: '/activity', roles: ['SUPER_ADMIN', 'ADMIN', 'HR'], permission: ['audit_logs', 'view'] },
+  { label: 'Chat', icon: MessageSquare, path: '/chat', permission: ['chat', 'view'] },
 
-  // Roles & Permissions (ADMIN only + SUPER_ADMIN)
-  { label: 'Roles', icon: Shield, path: '/roles-permissions', roles: ['ADMIN'], permission: ['roles', 'manage'] },
+  // Settings / Activity
+  { label: 'Activity', icon: Activity, path: '/activity', permission: ['audit_logs', 'view'] },
+
+  // Roles & Permissions
+  { label: 'Roles', icon: Shield, path: '/roles-permissions', permission: ['roles', 'manage'] },
 ];
 
 interface SidebarProps {
@@ -81,30 +79,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { totalUnreadCount } = useChat();
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { atLeastPlan } = useAuth() as any;
 
   if (!user) return null;
 
 
   const visibleItems = NAV_ITEMS.filter(item => {
-    // Plan check
-    if (item.minPlan && atLeastPlan && !atLeastPlan(item.minPlan)) return false;
-
     // For items with a permission field
     if (item.permission) {
-      if (!hasPermission(item.permission[0], item.permission[1])) return false;
-      // If it's a system role (non-custom), still check the role gate if any
-      const isSystemRole = ['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
-      if (isSystemRole && item.roles && !item.roles.includes(user.role)) return false;
-      return true;
+      return hasPermission(item.permission[0], item.permission[1]);
     }
 
-    // For items without permission (dashboards etc): role gate
-    if (item.roles && !item.roles.includes(user.role)) {
-      // Custom roles without a specific dashboard default to the personal dashboard
-      const isCustomRole = !['SUPER_ADMIN', 'ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user.role);
-      if (isCustomRole && item.path === '/dashboard/personal') return true;
+    // Role-based routing for Dashboards (since they don't have unique permissions usually)
+    // We keep these specific to the role to ensure they land on the right "Main" page
+    if (item.path.includes('/dashboard/')) {
+      // System dashboards
+      if (item.path === '/dashboard/system' && user.role === 'SUPER_ADMIN') return true;
+      if (item.path === '/dashboard/organization' && user.role === 'ADMIN') return true;
+      if (item.path === '/dashboard/hr' && user.role === 'HR') return true;
+      if (item.path === '/dashboard/team' && user.role === 'MANAGER') return true;
+      if (item.path === '/dashboard/personal' && (user.role === 'EMPLOYEE' || !['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN'].includes(user.role))) return true;
       return false;
+    }
+
+    // Super Admin specific items without explicit permission keys in master catalog
+    const superAdminPaths = ['/tenants', '/plans'];
+    if (superAdminPaths.includes(item.path)) {
+      return user.role === 'SUPER_ADMIN';
     }
     return true;
   });

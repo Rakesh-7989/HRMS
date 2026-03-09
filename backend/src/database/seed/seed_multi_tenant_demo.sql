@@ -6,9 +6,9 @@
 DO $$
 DECLARE
     -- Plan IDs (Verified from DB)
-    v_plan_std UUID := '4f0ef514-28fe-4a6c-995d-305f89b77fb0';
-    v_plan_prm UUID := 'f9ff9a1a-77c1-4002-a699-aeaf95338bf0';
-    v_plan_elt UUID := '814a8807-bdd6-4e6b-8c39-277a6972a31f';
+    v_plan_std UUID := (SELECT id FROM plans WHERE name = 'STANDARD' LIMIT 1);
+    v_plan_prm UUID := (SELECT id FROM plans WHERE name = 'PREMIUM' LIMIT 1);
+    v_plan_elt UUID := (SELECT id FROM plans WHERE name = 'ELITE' LIMIT 1);
 
     -- Tenant IDs
     v_tenant_std UUID;

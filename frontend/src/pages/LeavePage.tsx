@@ -10,7 +10,6 @@ import { DelegationContent } from '@/components/leave/DelegationContent';
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
-import { PlanGuard } from '@/components/guards/PlanGuard';
 
 export const LeavePage: React.FC = () => {
   const { t } = useTranslation();
@@ -22,7 +21,7 @@ export const LeavePage: React.FC = () => {
     { id: 'team-requests', label: t('leave.tabs.teamRequests'), action: 'approve' },
     { id: 'allocation', label: t('leave.tabs.allocation'), action: 'manage' },
     { id: 'balances', label: t('leave.tabs.balances'), action: 'view' },
-    { id: 'delegations', label: 'Delegations', action: 'manage', minPlan: 2 },
+    { id: 'delegations', label: 'Delegations', action: 'manage' },
     { id: 'settings', label: t('leave.tabs.settings'), action: 'manage_settings' },
   ];
 
@@ -68,21 +67,16 @@ export const LeavePage: React.FC = () => {
 
           const isActive = tab.id === activeTab;
           return (
-            <PlanGuard
+            <button
               key={tab.id}
-              minPlan={tab.minPlan || 1}
-              showLock={true}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0 snap-start ${isActive
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
+                }`}
             >
-              <button
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0 snap-start ${isActive
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
-                  }`}
-              >
-                {tab.label}
-              </button>
-            </PlanGuard>
+              {tab.label}
+            </button>
           );
         })}
       </div>

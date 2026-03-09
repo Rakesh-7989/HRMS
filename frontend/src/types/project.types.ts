@@ -193,14 +193,7 @@ export interface Timesheet {
         first_name: string;
         last_name: string;
     };
-    employee?: {
-        id: string;
-        first_name: string;
-        last_name: string;
-        email?: string;
-        role?: string;
-        shift_week_offs?: string[];
-    };
+    employee?: Employee;
     project?: Project;
     task?: Task;
     is_billable?: boolean;
@@ -237,7 +230,7 @@ export interface ProjectReport {
     project_id: string;
     total_hours: number;
     total_timesheets: number;
-    employees: any[]; // TODO: Define employee structure
+    employees: Employee[];
     financials?: {
         total_billable_value: number;
         invoiced_amount: number;
@@ -294,9 +287,27 @@ export interface MentionableUser {
     first_name: string;
     last_name: string;
     display_name: string;
+
+// Employee Interface
+export interface Employee {
+    id: string;
+    tenant_id?: string;
+    user_id?: string;
+    employee_id?: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    department?: string;
+    designation?: string;
+    joining_date?: string;
+    status: 'ACTIVE' | 'TERMINATED' | 'ON_LEAVE' | 'OFFBOARDED';
+    role?: string;
+    shift_week_offs?: string[];
+    profile_photo_url?: string;
+    created_at?: string;
+    updated_at?: string;
 }
-
-
 // Dashboard Interfaces
 export interface TimesheetDashboardStats {
     total_time: {

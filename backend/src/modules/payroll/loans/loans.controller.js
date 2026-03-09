@@ -2,8 +2,8 @@ const loanService = require("./loans.service.js");
 const { createLoanSchema, approveLoanSchema, createLoanTypeSchema } = require("./loans.validator.js");
 
 const createLoan = async (req, res) => {
-  // Employees use the detailed flow (validated schema). Admin/HR may create loans via simplified payload from UI.
-  if (req.user && (req.user.role === 'ADMIN' || req.user.role === 'HR')) {
+  // Employees use the detailed flow (validated schema). Those with management permissions may create loans via simplified payload.
+  if (req.user && req.user.permissions.includes('payroll:manage')) {
     // accept simplified payload from frontend: { employee_id, amount, outstanding, type }
     const payload = req.body;
     const loan = await loanService.createLoanAdmin(req.user.tenantId, req.user.id, payload);

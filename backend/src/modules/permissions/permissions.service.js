@@ -1,4 +1,6 @@
 const pool = require("../../config/db");
+const { ForbiddenError } = require("../../utils/customErrors");
+
 
 /**
  * Helper to get SQL fragment for plan-based filtering
@@ -8,7 +10,7 @@ const getPlanFilter = (planType) => {
     // Premium Plan (2) excludes: assets, chat
     // Elite Plan (3) excludes: nothing
     if (planType === 1) {
-        return "module NOT IN ('payroll', 'assets', 'projects', 'chat', 'wfh', 'shifts', 'audit_logs')";
+        return "module NOT IN ('payroll', 'assets', 'chat', 'audit_logs')";
     } else if (planType === 2) {
         return "module NOT IN ('assets', 'chat')";
     }
@@ -323,8 +325,9 @@ exports.createCustomRole = async (tenantId, roleName, description, actorId) => {
         const planType = tenantRes.rows[0]?.plan_type || 1;
 
         if (planType === 1) { // Standard
-            throw new Error("Custom roles are not available on the STANDARD plan. Please upgrade to PREMIUM or ELITE.");
+            throw new ForbiddenError("Custom roles are not available on the STANDARD plan. Please upgrade to PREMIUM or ELITE.");
         }
+
 
         // Insert into roles table if not exists
         await client.query(

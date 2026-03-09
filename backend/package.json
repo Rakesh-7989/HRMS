@@ -10,6 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "lint": "eslint .",
+    "test": "jest",
     "seed:salary": "node scripts/seed_salary_structure.js",
     "fix:payroll": "node scripts/fix_payroll_assignments.js"
   },

@@ -351,8 +351,10 @@ export const attendanceService = {
   getWeeklyAttendanceHours: async (params: {
     week_start: string;
     week_end: string;
+    employee_id?: string;
   }): Promise<WeeklyAttendanceHours> => {
-    const response = await api.get<{ status: string; data: WeeklyAttendanceHours }>('/attendance/my-weekly-hours', { params });
+    const route = params.employee_id ? `/attendance/weekly-hours/${params.employee_id}` : '/attendance/my-weekly-hours';
+    const response = await api.get<{ status: string; data: WeeklyAttendanceHours }>(route, { params: { week_start: params.week_start, week_end: params.week_end } });
     return response.data.data!;
   },
 };

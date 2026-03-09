@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { RootLayout } from '@/layouts/RootLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
@@ -79,6 +78,7 @@ const ProjectReportsPage = React.lazy(() => import('@/pages/projects/ProjectRepo
 
 // DashboardLayout (eagerly loaded since it wraps most pages)
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { SubscriptionGuard } from './components/SubscriptionGuard';
 
 // Loading fallback for lazy-loaded pages
 const PageLoader = () => (
@@ -308,6 +308,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
             </SubscriptionGuard>
+            <ChatPage />
           </ProtectedRoute>
         }
       />
@@ -337,6 +338,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><ShiftsPage /></Suspense>
             </SubscriptionGuard>
+            <ShiftsPage />
           </ProtectedRoute>
         }
       />
@@ -396,6 +398,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><AssetsPage /></Suspense>
             </SubscriptionGuard>
+            <AssetsPage />
           </ProtectedRoute>
         }
       />
@@ -414,6 +417,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><AssetDetailsPage /></Suspense>
             </SubscriptionGuard>
+            <AssetDetailsPage />
           </ProtectedRoute>
         }
       />
@@ -451,6 +455,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense>
             </SubscriptionGuard>
+            <ProjectsPage />
           </ProtectedRoute>
         }
       />
@@ -461,6 +466,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><ClientsPage /></Suspense>
             </SubscriptionGuard>
+            <ClientsPage />
           </ProtectedRoute>
         }
       />
@@ -511,6 +517,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
             </SubscriptionGuard>
+            <Payroll />
           </ProtectedRoute>
         }
       />
@@ -523,6 +530,9 @@ const router = createBrowserRouter(
                 <Suspense fallback={<PageLoader />}><PayrollDashboard /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
+            <DashboardLayout title="Payroll Command Center">
+              <PayrollDashboard />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -533,6 +543,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><RiverProcess /></Suspense>
             </SubscriptionGuard>
+            <RiverProcess />
           </ProtectedRoute>
         }
       />
@@ -543,6 +554,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><FnFSettlementsPage /></Suspense>
             </SubscriptionGuard>
+            <FnFSettlementsPage />
           </ProtectedRoute>
         }
       />
@@ -553,6 +565,7 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><FnFSettlementDetailsPage /></Suspense>
             </SubscriptionGuard>
+            <FnFSettlementDetailsPage />
           </ProtectedRoute>
         }
       />
@@ -565,6 +578,9 @@ const router = createBrowserRouter(
                 <Suspense fallback={<PageLoader />}><ArrearsPage /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
+            <DashboardLayout title="Arrears Management">
+              <ArrearsPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />

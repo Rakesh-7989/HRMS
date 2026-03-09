@@ -225,7 +225,10 @@
         "projects": "Projects",
         "chat": "Chat",
         "roles": "Roles and Permissions",
-        "activity": "Activity"
+        "activity": "Activity",
+        "shifts": "Shifts",
+        "wfh": "WFH",
+        "geo-fencing": "Geo-Fencing"
     },
     "chat": {
         "searchConversations": "Search conversations...",

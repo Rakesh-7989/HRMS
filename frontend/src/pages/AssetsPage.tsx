@@ -170,8 +170,16 @@ export const AssetsPage: React.FC = () => {
   };
 
   const handleRequest = (assetId: string) => {
-    // TODO: Implement asset request backend endpoint
-    toast.success(`Asset request for ${assetId} has been noted. Please contact your administrator.`);
+    const asset = assets.find(a => a.id === assetId);
+    if (asset) {
+      setRequestForm({
+        assetName: `Request for ${asset.name} (${asset.asset_code})`,
+        category: asset.category,
+        reason: '',
+        priority: 'Medium',
+      });
+      setShowRequestModal(true);
+    }
   };
 
   const handlePrintBarcode = async (assetId: string) => {

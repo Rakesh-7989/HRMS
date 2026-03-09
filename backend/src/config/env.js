@@ -16,7 +16,7 @@ module.exports = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: parseInt(process.env.PORT || '5000', 10),
 
-    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://hrms_user:root@localhost:5432/hrms_saas_db',
+    DATABASE_URL: required('DATABASE_URL'),
     JWT_ACCESS_SECRET: required('JWT_ACCESS_SECRET'),
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
     JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),

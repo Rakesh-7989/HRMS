@@ -1053,10 +1053,10 @@ exports.createAssetRequest = async (tenantId, userId, data) => {
       crypto.randomUUID(),
       tenantId,
       employeeId,
-      data.asset_name,
-      data.category,
-      data.priority,
-      data.reason
+      data.asset_name || 'Generic Request',
+      data.category || 'Other',
+      data.priority || 'MEDIUM',
+      data.reason || ''
     ]
   );
 
@@ -1139,7 +1139,7 @@ exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => 
   // 3. Update request
   const result = await pool.query(
     `UPDATE asset_requests
-     SET status = $1, admin_notes = $2, reviewed_by = $3, reviewed_at = NOW(), updated_at = NOW()
+     SET status = $1, admin_notes = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW()
      WHERE id = $4 AND tenant_id = $5
      RETURNING *`,
     [data.status, data.admin_notes, userId, requestId, tenantId]
@@ -1614,3 +1614,4 @@ exports.getWarrantyAlerts = async (tenantId, daysAhead = 30) => {
 
   return result.rows;
 };
+

@@ -96,12 +96,12 @@ export const RolesPermissionsPage: React.FC = () => {
     const [roles, setRoles] = useState<TenantRole[]>([]);
     const [activeRole, setActiveRole] = useState<string>('');
     const [rolesLoading, setRolesLoading] = useState(true);
-    const { atLeastPlan, user: currentUser } = useAuth();
-    const isStandard = !atLeastPlan(2);
+    const { user: currentUser } = useAuth();
+    const isStandard = false; // Plan restrictions removed as per request
 
     // Usage state
     const [adminCount, setAdminCount] = useState(0);
-    const adminLimit = isStandard ? 1 : (currentUser?.plan_type === 2 ? 5 : 9999);
+    const adminLimit = 9999;
 
     // Permissions state
     const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -356,19 +356,12 @@ export const RolesPermissionsPage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => {
-                                if (isStandard) {
-                                    toast.error('Custom roles are a Premium feature. Please upgrade your plan.');
-                                    return;
-                                }
                                 setShowAddRole(true);
                             }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-md transition-all ${isStandard
-                                ? 'bg-gray-400 cursor-not-allowed grayscale'
-                                : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-md transition-all bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
                         >
                             <Plus className="h-4 w-4" />
                             Add Role
-                            {isStandard && <Shield className="h-3 w-3 ml-1 fill-white/20" />}
                         </button>
                     </div>
                 </div>
@@ -397,7 +390,7 @@ export const RolesPermissionsPage: React.FC = () => {
                         <div>
                             <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Plan Access</p>
                             <p className="text-sm font-bold text-gray-900 dark:text-white">
-                                {isStandard ? 'Standard (Fixed Roles)' : (currentUser?.plan_type === 2 ? 'Premium (Custom)' : 'Elite (Full)')}
+                                {currentUser?.plan_type === 1 ? 'Standard (Trial)' : (currentUser?.plan_type === 2 ? 'Premium' : 'Elite')}
                             </p>
                         </div>
                     </div>

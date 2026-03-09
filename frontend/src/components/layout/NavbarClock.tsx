@@ -13,7 +13,7 @@ import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 export const NavbarClock: React.FC = () => {
-    const { user, atLeastPlan } = useAuth();
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const { alert: showAlert, confirm } = useConfirm();
     const { t } = useTranslation();
@@ -192,7 +192,7 @@ export const NavbarClock: React.FC = () => {
     });
 
     const handleClockIn = async () => {
-        if (geoSettings?.is_enabled && atLeastPlan(2)) {
+        if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
                 showAlert({
@@ -222,7 +222,7 @@ export const NavbarClock: React.FC = () => {
 
         if (!isConfirmed) return;
 
-        if (geoSettings?.is_enabled && atLeastPlan(2)) {
+        if (geoSettings?.is_enabled) {
             const check = await geoFencingService.performGeoFenceCheck(geoSettings);
             if (!check.allowed) {
                 showAlert({

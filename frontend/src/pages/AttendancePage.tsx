@@ -11,7 +11,6 @@ import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApproval
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
-import { PlanGuard } from '@/components/guards/PlanGuard';
 
 export const AttendancePage: React.FC = () => {
   const { t } = useTranslation();
@@ -24,8 +23,8 @@ export const AttendancePage: React.FC = () => {
     { id: 'history', label: t('attendance.tabs.history'), action: 'view' },
     { id: 'breaks', label: t('attendance.tabs.breaks'), action: 'view' },
     { id: 'regularization', label: t('attendance.tabs.regularization'), action: 'view' },
-    { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve', minPlan: 2 },
-    { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_settings', minPlan: 2 },
+    { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve' },
+    { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_settings' },
   ];
 
   const tabParam = searchParams.get('tab');
@@ -74,21 +73,16 @@ export const AttendancePage: React.FC = () => {
 
               const isActive = tab.id === activeTab;
               return (
-                <PlanGuard
+                <button
                   key={tab.id}
-                  minPlan={tab.minPlan || 1}
-                  showLock={true}
-                >
-                  <button
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${isActive
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${isActive
                       ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
-                  >
-                    {tab.label}
-                  </button>
-                </PlanGuard>
+                    }`}
+                >
+                  {tab.label}
+                </button>
               );
             })}
           </div>

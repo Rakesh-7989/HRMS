@@ -141,7 +141,7 @@ exports.getBreakHistory = async (req, res) => {
     // Let's implement basics: EMPLOYEE sees self. ADMIN/HR sees all. MANAGER sees self (or could be team if we added that logic).
     // For safety: if EMPLOYEE, force employee_id.
 
-    if (req.user.role === 'EMPLOYEE') {
+    if (!req.user.permissions.includes('attendance:manage') && !req.user.permissions.includes('attendance:approve')) {
       filters.employee_id = req.user.employeeId;
     } else {
       // ADMIN/HR/MANAGER can filter by specific employee if they want
@@ -414,14 +414,14 @@ exports.getAttendanceAnalytics = async (req, res) => {
 
     let analytics;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
+    if (req.user.permissions.includes('attendance:manage')) {
       // HR/Admin: Organization-wide analytics
       analytics = await attendanceService.getOrganizationAttendanceAnalytics(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
+    } else if (req.user.permissions.includes('attendance:approve')) {
       // Manager: Self + team analytics
       analytics = await attendanceService.getManagerAttendanceAnalytics(
         req.db,
@@ -469,14 +469,14 @@ exports.getAttendanceReports = async (req, res) => {
 
     let reports;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
+    if (req.user.permissions.includes('attendance:manage')) {
       // HR/Admin: Organization-wide reports
       reports = await attendanceService.getOrganizationAttendanceReports(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
+    } else if (req.user.permissions.includes('attendance:approve')) {
       // Manager: Self + team reports
       reports = await attendanceService.getManagerAttendanceReports(
         req.db,
@@ -621,13 +621,13 @@ exports.getIndividualEmployeeReport = async (req, res) => {
     // Permission Check: 
     // Employee can see own logic. Manager/Admin can see others.
     // If not self, verify role.
-    if (req.user.role === 'EMPLOYEE' && req.user.employeeId !== employeeId) {
+    if (!req.user.permissions.includes('attendance:manage') && !req.user.permissions.includes('attendance:approve') && req.user.employeeId !== employeeId) {
       return res.status(403).json({ status: "error", message: "Access denied" });
     }
     // Managers should ideally check if employee is in team. 
     // For now assuming Manager/Admin/HR can view any employee's report for simplicity or rely on service/middleware.
     // Service doesn't check role ownership for this report yet, so let's stick to simple role check here.
-    if (req.user.role === 'MANAGER') {
+    if (req.user.permissions.includes('attendance:approve')) {
       // Ideally check logic here, but let's assume if they have the ID, they can see it or relying on frontend to not show links.
     }
 
@@ -653,6 +653,7 @@ exports.getIndividualEmployeeReport = async (req, res) => {
 exports.getWeeklyAttendanceHours = async (req, res) => {
   try {
     const { week_start, week_end } = req.query;
+    const { employeeId } = req.params;
 
     if (!week_start || !week_end) {
       return res.status(400).json({
@@ -661,9 +662,12 @@ exports.getWeeklyAttendanceHours = async (req, res) => {
       });
     }
 
+    // Use requested employeeId if provided (and allowed by permission), otherwise use self
+    const targetEmployeeId = employeeId || req.user.employeeId;
+
     const result = await attendanceService.getWeeklyAttendanceHours(
       req.db,
-      req.user.employeeId,
+      targetEmployeeId,
       req.user.tenantId,
       week_start,
       week_end

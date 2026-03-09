@@ -177,6 +177,12 @@ router.get(
   controller.getWeeklyAttendanceHours
 );
 
+router.get(
+  "/weekly-hours/:employeeId",
+  requirePermission("attendance", "view_team"),
+  controller.getWeeklyAttendanceHours
+);
+
 // ===== REGULARIZATION ENDPOINTS =====
 
 // Apply for regularization

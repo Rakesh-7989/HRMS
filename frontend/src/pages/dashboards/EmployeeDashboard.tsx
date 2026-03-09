@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { dashboardService } from '@/services/dashboard.service';
 import { attendanceService } from '@/services/attendance.service';
 import { eventsService } from '@/services/events.service';
@@ -134,13 +135,14 @@ const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
 // --- Main Component ---
 
 export const EmployeeDashboard: React.FC = () => {
-  const { user, atLeastPlan } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const { t } = useTranslation();
+  const { hasPermission } = usePermissions();
 
-  const canClockIn = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
+  const canClockIn = hasPermission('attendance', 'clock_in');
 
   // Greeting Logic
   const greeting = useMemo(() => {
@@ -190,7 +192,7 @@ export const EmployeeDashboard: React.FC = () => {
   });
 
   const handleClockIn = async () => {
-    if (geoSettings?.is_enabled && atLeastPlan(2)) {
+    if (geoSettings?.is_enabled) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
         alert(check.errorMessage || 'Geo-fence validation failed');
@@ -217,7 +219,7 @@ export const EmployeeDashboard: React.FC = () => {
 
     if (!isConfirmed) return;
 
-    if (geoSettings?.is_enabled && atLeastPlan(2)) {
+    if (geoSettings?.is_enabled) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
         alert(check.errorMessage || 'Geo-fence validation failed');

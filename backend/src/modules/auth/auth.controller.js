@@ -42,8 +42,8 @@ exports.login = async (req, res) => {
 
     const user = userRes.rows[0];
 
-    // Check if tenant is active (unless super admin, maybe? assuming even super admin belongs to a tenant usually, or null tenant for root super admin)
-    if (user.tenant_id && user.tenant_is_active === false) {
+    // Check if tenant is active (unless super admin)
+    if (user.role !== 'SUPER_ADMIN' && user.tenant_id && user.tenant_is_active === false) {
       return res.status(403).json({ message: "Your organization account has been deactivated. Please contact support." });
     }
 

@@ -218,10 +218,10 @@ exports.createProject = async (tenantId, userId, data) => {
  * Others: sees only projects they are members of
  */
 exports.listProjects = async (tenantId, filters = {}) => {
-  const { client_id, status, search, skip = 0, limit = 20, userRole, userEmployeeId, userId } = filters;
+  const { client_id, status, search, skip = 0, limit = 20, userPermissions, userEmployeeId, userId } = filters;
 
-  const canViewAll = ['ADMIN'].includes(userRole);
-  const isManager = userRole === 'MANAGER';
+  const canViewAll = userPermissions.includes('projects:view_all') || userPermissions.includes('projects:manage');
+  const isManager = userPermissions.includes('projects:manage');
 
   let query = `SELECT DISTINCT p.*, c.name as client_name FROM projects p
                LEFT JOIN clients c ON p.client_id = c.id`;
@@ -324,8 +324,8 @@ exports.getProjectById = async (tenantId, projectId, userContext = null) => {
 
   // SECURITY FIX: Validate user access if userContext is provided
   if (userContext) {
-    const { role, employeeId, userId } = userContext;
-    const canViewAll = ['ADMIN', 'SUPER_ADMIN'].includes(role);
+    const { permissions, employeeId, userId } = userContext;
+    const canViewAll = permissions.includes('projects:view_all') || permissions.includes('projects:manage');
 
     if (!canViewAll) {
       // Managers can view projects they created OR are members of
@@ -333,7 +333,7 @@ exports.getProjectById = async (tenantId, projectId, userContext = null) => {
       const isCreator = project.created_by === userId;
       const isMember = employeeId ? await this.isProjectMember(tenantId, projectId, employeeId) : false;
 
-      if (role === 'MANAGER') {
+      if (permissions.includes('projects:manage')) {
         if (!isCreator && !isMember) {
           throw new ForbiddenError("You do not have access to this project");
         }

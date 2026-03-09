@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { dashboardService } from '@/services/dashboard.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { attendanceService } from '@/services/attendance.service';
 import { leaveService, Holiday } from '@/services/leave.service';
 import { projectsService } from '@/services/projects.service';
@@ -198,6 +199,7 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
 export const ManagerDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { hasPermission, hasAnyPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [activePieIndex, setActivePieIndex] = useState<number | undefined>(undefined);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -235,7 +237,7 @@ export const ManagerDashboard: React.FC = () => {
   const { data: teamData, isLoading: isTeamLoading } = useQuery({
     queryKey: ['dashboard', 'team'],
     queryFn: () => dashboardService.getTeamDashboard(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasAnyPermission([['employees', 'view'], ['attendance', 'approve'], ['leave', 'approve']]),
   });
 
   // Attendance Analytics with dynamic date range
@@ -245,7 +247,7 @@ export const ManagerDashboard: React.FC = () => {
       from_date: attendanceDateRange.start,
       to_date: attendanceDateRange.end
     }),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasAnyPermission([['attendance', 'view'], ['attendance', 'approve']]),
     placeholderData: keepPreviousData,
     refetchInterval: 5000,
   });
@@ -270,38 +272,38 @@ export const ManagerDashboard: React.FC = () => {
       to_date: attendanceDateRange.end,
       limit: 1000
     }),
-    enabled: !!gridFetchStart && !!attendanceDateRange.end && user?.role === 'MANAGER',
+    enabled: !!gridFetchStart && !!attendanceDateRange.end && hasAnyPermission([['attendance', 'view'], ['attendance', 'approve']]),
   });
 
   const { data: taskData, isLoading: isTasksLoading } = useQuery({
     queryKey: ['dashboard', 'team-tasks'],
     queryFn: () => projectsService.getTasks(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('projects', 'view'),
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsService.getProjects(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('projects', 'view'),
   });
 
   const { data: pendingRequests } = useQuery({
     queryKey: ['dashboard', 'pending-leaves'],
     queryFn: () => leaveService.getPendingApprovals(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('leave', 'approve'),
   });
 
   const { data: peopleEventsData } = useQuery({
     queryKey: ['peopleEvents', 'team'],
     queryFn: () => eventsService.getPeopleEvents('team'),
     staleTime: 1000 * 60 * 5,
-    enabled: user?.role === 'MANAGER',
+    enabled: hasAnyPermission([['employees', 'view'], ['attendance', 'approve']]),
   });
 
   const { data: holidays, isLoading: isLoadingHolidays } = useQuery({
     queryKey: ['public-holidays'],
     queryFn: () => leaveService.getPublicHolidays(),
-    enabled: user?.role === 'MANAGER',
+    enabled: hasPermission('calendar', 'view'),
   });
 
   // --- Mutations ---

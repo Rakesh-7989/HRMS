@@ -82,10 +82,10 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
         queryKey: ['attendance', 'weekly-hours', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd'), preloadedTimesheet?.employee?.id],
         queryFn: () => attendanceService.getWeeklyAttendanceHours({
             week_start: format(weekStart, 'yyyy-MM-dd'),
-            week_end: format(weekEnd, 'yyyy-MM-dd')
-            // TODO: Add employee_id param to service if viewing another user's attendance
+            week_end: format(weekEnd, 'yyyy-MM-dd'),
+            employee_id: preloadedTimesheet?.employee?.id
         }),
-        enabled: !isApprovalMode // Only fetch for self for now, or update service to support employeeId
+        enabled: true // Enable for everyone now that it supports employee_id
     });
 
     // Fetch existing timesheet entries for the week (if not preloaded)

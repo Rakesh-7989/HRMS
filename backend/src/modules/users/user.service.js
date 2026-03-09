@@ -60,6 +60,35 @@ async function checkEncryptedDuplicates(client, tenantId, data, excludeUserId = 
   }
 }
 
+/* ---------- CIRCULAR REPORTING CHECK ---------- */
+async function checkCircularReporting(client, employeeId, potentialManagerId, tenantId) {
+  if (!potentialManagerId) return;
+  if (employeeId === potentialManagerId) {
+    throw new Error("An employee cannot report to themselves");
+  }
+
+  let currentId = potentialManagerId;
+  const visited = new Set([employeeId]);
+
+  while (currentId) {
+    if (visited.has(currentId)) {
+      throw new Error("Circular reporting detected: This would create an infinite loop in the organization hierarchy");
+    }
+    visited.add(currentId);
+
+    const res = await client.query(
+      "SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2",
+      [currentId, tenantId]
+    );
+
+    if (res.rowCount === 0) break;
+    currentId = res.rows[0].reports_to;
+
+    // Safety break for deep hierarchies
+    if (visited.size > 50) break;
+  }
+}
+
 /* ---------- REAL-TIME UNIQUENESS CHECK ---------- */
 exports.checkFieldUniqueness = async (db, field, value, tenantId, excludeUserId = null) => {
   const query = getQuery(db);
@@ -406,6 +435,33 @@ exports.softDeleteUser = async (db, id, actor) => {
     throw new Error("Only admins can delete users");
   }
 
+  // FINANCIAL INTEGRITY CHECK
+  const empRes = await query("SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2", [id, actor.tenantId]);
+  if (empRes.rowCount > 0) {
+    const employeeId = empRes.rows[0].id;
+
+    // Check for active loans
+    const loanRes = await query(
+      "SELECT id FROM employee_loans WHERE employee_id = $1 AND tenant_id = $2 AND status = 'APPROVED' AND outstanding_amount > 0",
+      [employeeId, actor.tenantId]
+    );
+    if (loanRes.rowCount > 0) throw new Error("Employee has active loans. Please settle loans before deleting.");
+
+    // Check for pending expenses
+    const expRes = await query(
+      "SELECT id FROM employee_expenses WHERE employee_id = $1 AND tenant_id = $2 AND status = 'PENDING' AND is_deleted = false",
+      [employeeId, actor.tenantId]
+    );
+    if (expRes.rowCount > 0) throw new Error("Employee has pending expense claims. Please process or reject them first.");
+
+    // Check for pending leaves
+    const leaveRes = await query(
+      "SELECT id FROM leave_applications WHERE employee_id = $1 AND tenant_id = $2 AND status IN ('PENDING', 'PENDING_HR')",
+      [employeeId, actor.tenantId]
+    );
+    if (leaveRes.rowCount > 0) throw new Error("Employee has pending leave requests. Please approve or reject them before deleting.");
+  }
+
   // Set is_deleted = true in both tables
   await query(
     `UPDATE users SET is_deleted = true, is_active = false, updated_at = now() WHERE id = $1 AND tenant_id = $2`,
@@ -428,18 +484,48 @@ exports.terminateEmployee = async (db, id, data, actor) => {
     throw new Error("Not allowed to terminate employees");
   }
 
+  // FINANCIAL INTEGRITY CHECK
+  const empCheck = await query("SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2", [id, actor.tenantId]);
+  if (empCheck.rowCount > 0) {
+    const employeeId = empCheck.rows[0].id;
+
+    const loanRes = await query(
+      "SELECT id FROM employee_loans WHERE employee_id = $1 AND tenant_id = $2 AND status = 'APPROVED' AND outstanding_amount > 0",
+      [employeeId, actor.tenantId]
+    );
+    if (loanRes.rowCount > 0) throw new Error("Employee has active loans. Please settle loans before termination.");
+
+    const expRes = await query(
+      "SELECT id FROM employee_expenses WHERE employee_id = $1 AND tenant_id = $2 AND status = 'PENDING' AND is_deleted = false",
+      [employeeId, actor.tenantId]
+    );
+    if (expRes.rowCount > 0) throw new Error("Employee has pending expense claims. Please process or reject them first.");
+
+    // Check for pending leaves
+    const leaveRes = await query(
+      "SELECT id FROM leave_applications WHERE employee_id = $1 AND tenant_id = $2 AND status IN ('PENDING', 'PENDING_HR')",
+      [employeeId, actor.tenantId]
+    );
+    if (leaveRes.rowCount > 0) throw new Error("Employee has pending leave requests. Please approve or reject them before termination.");
+  }
+
   const { termination_date, termination_reason, portal_access_until } = data;
 
   // Update employee record
   await query(
-    `UPDATE employees 
-     SET status = 'TERMINATED', 
-         is_deleted = true,
-         termination_date = $1, 
-         termination_reason = $2, 
-         updated_at = now() 
-     WHERE user_id = $3 AND tenant_id = $4`,
-    [termination_date || 'now()', termination_reason || null, id, actor.tenantId]
+    `UPDATE employees SET status = 'TERMINATED', termination_date = $1, termination_reason = $2, portal_access_until = $3, updated_at = now() WHERE user_id = $4 AND tenant_id = $5`,
+    [termination_date, termination_reason, portal_access_until, id, actor.tenantId]
+  );
+
+  // AUTO-CANCEL FUTURE LEAVES
+  const empId = empCheck.rows[0].id;
+  await query(
+    `UPDATE leave_applications 
+     SET status = 'CANCELLED', updated_at = now(), rejection_reason = 'Auto-cancelled due to termination'
+     WHERE employee_id = $1 AND tenant_id = $2 
+     AND status IN ('PENDING', 'PENDING_HR', 'APPROVED')
+     AND start_date >= CURRENT_DATE`,
+    [empId, actor.tenantId]
   );
 
   // Update user record (portal access)
@@ -724,6 +810,14 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     // Check for duplicate sensitive fields (exclude current user from check)
     await checkEncryptedDuplicates(client, tenantId, updates, id);
 
+    // CIRCULAR REPORTING CHECK
+    if (updates.reports_to) {
+      const empRes = await query("SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2", [id, tenantId]);
+      if (empRes.rowCount > 0) {
+        await checkCircularReporting(client, empRes.rows[0].id, updates.reports_to, tenantId);
+      }
+    }
+
     // Encrypt sensitive fields before building update query
     const sensitiveSet = new Set(SENSITIVE_FIELDS);
 
@@ -977,13 +1071,13 @@ exports.updateMyProfile = async (db, user, updates) => {
   );
 
   if (existing.rowCount === 0) {
+    logger.info(`Creating missing employee record for user ${user.id}`);
     // Create employee record if it doesn't exist
-    const empRes = await query(
+    await query(
       `
       INSERT INTO employees
-        (tenant_id, user_id, first_name, last_name, phone, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id
+        (tenant_id, user_id, first_name, last_name, phone, created_by, email, role)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       `,
       [
         user.tenantId,
@@ -991,7 +1085,9 @@ exports.updateMyProfile = async (db, user, updates) => {
         updates.first_name || '',
         updates.last_name || '',
         updates.phone || null,
-        user.id
+        user.id,
+        user.email,
+        user.role
       ]
     );
   }

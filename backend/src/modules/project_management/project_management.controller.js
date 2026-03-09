@@ -184,8 +184,8 @@ exports.listProjects = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
-      // Pass user info for role-based filtering
-      userRole: role,
+      // Pass user info for permission-based filtering
+      userPermissions: req.user.permissions,
       userEmployeeId: employeeId,
       userId: req.user.id,
     });
@@ -347,7 +347,7 @@ exports.checkKanbanExists = async (req, res, next) => {
     const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const result = await service.checkKanbanExists(tenantId, project_id, { role, employeeId, userId });
+    const result = await service.checkKanbanExists(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -404,7 +404,7 @@ exports.getKanbanBoard = async (req, res, next) => {
     const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const board = await service.getKanbanBoard(tenantId, project_id, { role, employeeId, userId });
+    const board = await service.getKanbanBoard(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -494,7 +494,7 @@ exports.listTasks = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
-      userRole: role,
+      userPermissions: req.user.permissions,
       userEmployeeId: employeeId,
     });
 
@@ -527,7 +527,7 @@ exports.updateTask = async (req, res, next) => {
       priority,
       due_date,
       estimated_hours,
-    }, { role, employeeId });
+    }, { permissions: req.user.permissions, employeeId });
 
     return res.status(200).json({
       status: 'success',
@@ -550,7 +550,7 @@ exports.updateTaskColumn = async (req, res, next) => {
     const { id } = req.params;
     const { column_key, order_index } = req.body;
 
-    const task = await service.updateTaskColumn(tenantId, userId, id, column_key, order_index, { role, employeeId });
+    const task = await service.updateTaskColumn(tenantId, userId, id, column_key, order_index, { permissions: req.user.permissions, employeeId });
 
     return res.status(200).json({
       status: 'success',
@@ -572,7 +572,7 @@ exports.deleteTask = async (req, res, next) => {
     const { tenantId, id: userId, role } = req.user;
     const { id } = req.params;
 
-    const result = await service.deleteTask(tenantId, id, { role, userId });
+    const result = await service.deleteTask(tenantId, id, { permissions: req.user.permissions, userId });
 
     return res.status(200).json({
       status: 'success',
