@@ -193,6 +193,7 @@ export const AdminDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'organization'],
     queryFn: () => dashboardService.getOrganizationDashboard(),
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
 
   const { data: peopleEventsData } = useQuery({

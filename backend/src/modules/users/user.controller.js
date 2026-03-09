@@ -64,7 +64,8 @@ exports.getUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
-    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId, req.user);
+    const unmask = req.query.unmask === 'true';
+    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId, req.user, { unmask });
     if (!user) return res.status(404).json({ status: "error", message: "User not found" });
 
     res.json({ status: "success", user });

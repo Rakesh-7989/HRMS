@@ -175,16 +175,21 @@ export const OrgTreeContent: React.FC = () => {
     const isExpanded = (id: string) => !!expandedIds[id];
     const toggleNode = (id: string) => setExpandedIds((s) => ({ ...s, [id]: !s[id] }));
 
-    // Expand all on load
+    // Expand limited depth on load
     useEffect(() => {
         if (treeData) {
-            const all: Record<string, boolean> = {};
-            const walk = (n: any) => {
-                all[n.id] = true;
-                (n.children || []).forEach(walk);
+            const initialExpanded: Record<string, boolean> = {};
+            // Expand ONLY the root and its immediate children (depth <= 1)
+            const walk = (n: any, depth: number) => {
+                if (depth <= 1) {
+                    initialExpanded[n.id] = true;
+                }
+                if (depth < 1) {
+                    (n.children || []).forEach((c: any) => walk(c, depth + 1));
+                }
             };
-            walk(treeData);
-            setExpandedIds(all);
+            walk(treeData, 0);
+            setExpandedIds(initialExpanded);
 
             // Initial centering
             setTimeout(handleFitToScreen, 500);

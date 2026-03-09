@@ -56,10 +56,11 @@ export const TimesheetApprovals: React.FC = () => {
     const [weekFilter, setWeekFilter] = useState<string>('');
 
     // Fetch Employees for filter
-    const { data: employees = [] } = useQuery({
+    const { data: usersResponse } = useQuery({
         queryKey: ['employees', 'list'],
         queryFn: () => usersService.getUsers(),
     });
+    const employees = usersResponse?.data || [];
 
     // Fetch Pending Approvals (now returns week-level timesheets)
     const { data: rawPendingData, isLoading: loadingPending } = useQuery({

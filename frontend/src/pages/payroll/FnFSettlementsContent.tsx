@@ -24,10 +24,11 @@ export const FnFSettlementsContent: React.FC = () => {
         queryFn: () => payrollService.getFnFSettlements()
     });
 
-    const { data: employees = [] } = useQuery({
+    const { data: usersResponse } = useQuery({
         queryKey: ['users-for-fnf'],
         queryFn: () => usersService.getUsers({ is_active: true })
     });
+    const employees = usersResponse?.data || [];
 
     // Filter only those with employee profile
     const availableEmployees = employees.filter(e => e.employee_uuid);

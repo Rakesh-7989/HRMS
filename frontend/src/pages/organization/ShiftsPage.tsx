@@ -36,10 +36,11 @@ export const ShiftsPage = () => {
         queryFn: getShifts
     });
 
-    const { data: employees = [] } = useQuery<User[]>({
+    const { data: usersResponse } = useQuery({
         queryKey: ['users'],
         queryFn: () => usersService.getUsers({ limit: 1000 })
     });
+    const employees = usersResponse?.data || [];
 
     const createMutation = useMutation({
         mutationFn: createShift,

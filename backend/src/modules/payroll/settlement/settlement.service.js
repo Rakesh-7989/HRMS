@@ -1,4 +1,5 @@
 const db = require("../../../config/db");
+const inboxService = require("../../inbox/inbox.service");
 
 // ===================================================================
 // REIMBURSEMENTS
@@ -29,7 +30,30 @@ const createReimbursement = async (tenantId, employeeId, userId, payload) => {
         ]
     );
 
-    return result.rows[0];
+    const created = result.rows[0];
+
+    // Notify admin/HR: new reimbursement submitted
+    try {
+        const empRes = await db.query(
+            `SELECT first_name, last_name FROM employees WHERE id = $1`, [employeeId]
+        );
+        const emp = empRes.rows[0];
+        const hrUsers = await db.query(
+            `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, userId]
+        );
+        for (const hr of hrUsers.rows) {
+            await inboxService.createNotification(db, {
+                tenant_id: tenantId, user_id: hr.id,
+                title: 'New Reimbursement Claim',
+                message: `${emp?.first_name} ${emp?.last_name} submitted a reimbursement of ₹${amount}`,
+                type: 'info', link: '/payroll/settlement'
+            });
+        }
+    } catch (notifErr) {
+        console.error('Reimbursement create notification error:', notifErr.message);
+    }
+
+    return created;
 };
 
 const getReimbursements = async (tenantId, filters = {}) => {
@@ -93,7 +117,29 @@ const approveReimbursement = async (tenantId, reimbursementId, userId, status, i
         throw new Error('Reimbursement not found or already processed');
     }
 
-    return result.rows[0];
+    const updated = result.rows[0];
+
+    // Notify employee: reimbursement approved/rejected
+    try {
+        const empUserRes = await db.query(
+            `SELECT user_id FROM employees WHERE id = $1`, [updated.employee_id]
+        );
+        if (empUserRes.rows[0]) {
+            const isApproved = status === 'APPROVED';
+            await inboxService.createNotification(db, {
+                tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                title: isApproved ? 'Reimbursement Approved ✅' : 'Reimbursement Rejected',
+                message: isApproved
+                    ? `Your reimbursement of ₹${updated.amount} has been approved.`
+                    : `Your reimbursement of ₹${updated.amount} was rejected.`,
+                type: isApproved ? 'success' : 'warning', link: '/payroll/settlement'
+            });
+        }
+    } catch (notifErr) {
+        console.error('Reimbursement approve notification error:', notifErr.message);
+    }
+
+    return updated;
 };
 
 const markReimbursementPaid = async (tenantId, reimbursementId, payrollRunId) => {
@@ -283,7 +329,26 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
             ]
         );
 
-        return result.rows[0];
+        const fnfCreated = result.rows[0];
+
+        // Notify employee: FnF initiated
+        try {
+            const empUserRes = await db.query(
+                `SELECT user_id FROM employees WHERE id = $1`, [employeeId]
+            );
+            if (empUserRes.rows[0]) {
+                await inboxService.createNotification(db, {
+                    tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'Full & Final Settlement Initiated',
+                    message: `Your Full & Final settlement has been initiated. Last working day: ${lastWorkingDay}`,
+                    type: 'info', link: '/payroll/settlement'
+                });
+            }
+        } catch (notifErr) {
+            console.error('FnF create notification error:', notifErr.message);
+        }
+
+        return fnfCreated;
     } catch (err) {
         console.error('[FnF Create Error]', err);
         throw err; // Re-throw to controller
@@ -433,7 +498,30 @@ const approveFnFSettlement = async (tenantId, settlementId, userId, status) => {
         }
 
         console.log(`[FnF Approve] Success. New status: ${result.rows[0].status}`);
-        return result.rows[0];
+
+        const approved = result.rows[0];
+
+        // Notify employee: FnF approved/rejected
+        try {
+            const empUserRes = await db.query(
+                `SELECT user_id FROM employees WHERE id = $1`, [approved.employee_id]
+            );
+            if (empUserRes.rows[0]) {
+                const isApproved = status === 'APPROVED';
+                await inboxService.createNotification(db, {
+                    tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: isApproved ? 'F&F Settlement Approved ✅' : 'F&F Settlement Returned',
+                    message: isApproved
+                        ? `Your Full & Final settlement has been approved. Net payable: ₹${approved.net_payable}`
+                        : 'Your Full & Final settlement was returned for revisions.',
+                    type: isApproved ? 'success' : 'warning', link: '/payroll/settlement'
+                });
+            }
+        } catch (notifErr) {
+            console.error('FnF approve notification error:', notifErr.message);
+        }
+
+        return approved;
     } catch (err) {
         console.error('[FnF Approve Error]', err);
         throw err;

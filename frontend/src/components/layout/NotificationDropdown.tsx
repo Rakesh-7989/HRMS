@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService, Notification } from '@/services/notifications.service';
 import { Bell, CheckCheck, X, Info, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -16,6 +17,7 @@ interface NotificationDropdownProps {
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, onToggle }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     // Fetch notifications
     const { data: notificationsData } = useQuery({
@@ -75,7 +77,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             markAsReadMutation.mutate(notification.id);
         }
         if (notification.link) {
-            window.location.href = notification.link;
+            navigate(notification.link);
+            onClose();
         }
     };
 

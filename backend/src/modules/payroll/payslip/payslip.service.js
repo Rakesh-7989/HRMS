@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const converter = require("number-to-words");
 const mailer = require("../../../config/mailer");
+const inboxService = require("../../inbox/inbox.service");
 
 // ===================================================================
 // PAYSLIP GENERATION
@@ -691,6 +692,32 @@ const generateBulk = async (tenantId, runId) => {
     }
 
     console.log(`[Payslip Service] Bulk generation completed. Processed ${successCount} payslips.`);
+
+    // Notify employees: payslip ready
+    try {
+        const runRes = await db.query(
+            `SELECT period_month, period_year FROM payroll_runs WHERE id = $1`, [runId]
+        );
+        const run = runRes.rows[0];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthStr = run ? `${monthNames[run.period_month - 1]} ${run.period_year}` : '';
+        for (const item of itemsRes.rows) {
+            try {
+                const empUserRes = await db.query(`SELECT user_id FROM employees WHERE id = $1`, [item.employee_id]);
+                if (empUserRes.rows[0]) {
+                    await inboxService.createNotification(db, {
+                        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                        title: 'Payslip Available 📄',
+                        message: `Your payslip for ${monthStr} is now available.`,
+                        type: 'success', link: '/payroll?tab=payslips'
+                    });
+                }
+            } catch (e) { /* skip individual notification errors */ }
+        }
+    } catch (notifErr) {
+        console.error('Payslip bulk notification error:', notifErr.message);
+    }
+
     return { generated: successCount };
 };
 

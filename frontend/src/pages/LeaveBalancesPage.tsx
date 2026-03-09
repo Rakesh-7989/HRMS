@@ -39,11 +39,12 @@ export const LeaveBalancesPage: React.FC = () => {
     }, [searchQuery]);
 
     // Queries
-    const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+    const { data: searchResponse, isLoading: searchLoading } = useQuery({
         queryKey: ['users', 'search', debouncedSearch],
         queryFn: () => usersService.getUsers({ search: debouncedSearch, limit: 10 }),
         enabled: debouncedSearch.length > 2,
     });
+    const searchResults = searchResponse?.data || [];
 
     const { data: balances = [], isLoading: balancesLoading, refetch: refetchBalances } = useQuery({
         queryKey: ['leave-balances', selectedEmployee?.id],

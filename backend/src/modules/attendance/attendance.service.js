@@ -2,6 +2,7 @@ const pool = require("../../config/db");
 const logger = require("../../config/logger");
 const geoFencingService = require("../geo_fencing/geoFencing.service");
 const timeService = require("../../utils/timeService");
+const inboxService = require("../inbox/inbox.service");
 
 const getQuery = (db) => {
   if (db && typeof db.query === "function") return db.query.bind(db);
@@ -1756,7 +1757,41 @@ RETURNING *
     ]
   );
 
-  return result.rows[0];
+  const created = result.rows[0];
+
+  // Notify manager/HR about regularization request
+  try {
+    const empRes = await pool.query(
+      `SELECT e.first_name, e.last_name, e.user_id, e.reports_to FROM employees e WHERE e.id = $1`, [employeeId]
+    );
+    const emp = empRes.rows[0];
+    if (emp?.reports_to) {
+      const mgrRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [emp.reports_to]);
+      if (mgrRes.rows[0]) {
+        await inboxService.createNotification(pool, {
+          tenant_id: tenantId, user_id: mgrRes.rows[0].user_id,
+          title: 'Attendance Regularization Request',
+          message: `${emp.first_name} ${emp.last_name} requested attendance regularization for ${data.date}`,
+          type: 'info', link: '/attendance?tab=regularization&subTab=team'
+        });
+      }
+    }
+    const hrUsers = await pool.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, emp?.user_id]
+    );
+    for (const hr of hrUsers.rows) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: hr.id,
+        title: 'Attendance Regularization Request',
+        message: `${emp.first_name} ${emp.last_name} requested attendance regularization for ${data.date}`,
+        type: 'info', link: '/attendance?tab=regularization&subTab=team'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Regularization request notification error:', notifErr.message);
+  }
+
+  return created;
 };
 
 /**
@@ -1892,6 +1927,21 @@ VALUES($1, $2, $3, $4, $5, 'APPROVED', $6, $7)
     );
   }
 
+  // Notify employee: regularization approved
+  try {
+    const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
+    if (empUserRes.rows[0]) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: 'Regularization Approved ✅',
+        message: `Your attendance regularization for ${request.date instanceof Date ? request.date.toISOString().split('T')[0] : request.date} has been approved.`,
+        type: 'success', link: '/attendance'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Regularization approve notification error:', notifErr.message);
+  }
+
   return request;
 };
 
@@ -1916,7 +1966,24 @@ RETURNING *
 
   if (result.rowCount === 0) throw new Error("Request not found");
 
-  return result.rows[0];
+  const rejected = result.rows[0];
+
+  // Notify employee: regularization rejected
+  try {
+    const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [rejected.employee_id]);
+    if (empUserRes.rows[0]) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: 'Regularization Rejected',
+        message: `Your attendance regularization request has been rejected.${reason ? ' Reason: ' + reason : ''}`,
+        type: 'warning', link: '/attendance?tab=regularization&subTab=my'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Regularization reject notification error:', notifErr.message);
+  }
+
+  return rejected;
 };
 
 /**

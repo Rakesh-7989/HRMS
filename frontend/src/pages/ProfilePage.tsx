@@ -135,11 +135,12 @@ export const ProfilePage: React.FC = () => {
   });
 
   // Resolve Employee UUID (required for Documents, as backend links documents to Employee UUID, not User UUID)
-  const { data: usersList = [] } = useQuery({
+  const { data: usersResponse } = useQuery({
     queryKey: ['users-lookup', profile?.email],
     queryFn: () => usersService.getUsers({ search: profile?.email }),
     enabled: !!profile?.email,
   });
+  const usersList: any[] = usersResponse?.data || [];
 
   const [photoMenuOpen, setPhotoMenuOpen] = React.useState(false);
   const [viewPhotoOpen, setViewPhotoOpen] = React.useState(false);

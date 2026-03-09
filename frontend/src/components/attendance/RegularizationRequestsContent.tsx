@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, RegularizationRequest } from '@/services/attendance.service';
@@ -19,7 +20,16 @@ import { CheckCircle, XCircle, Clock, Calendar } from 'lucide-react';
 export const RegularizationRequestsContent: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'my' | 'team'>('my');
+    const [searchParams] = useSearchParams();
+
+    const subTabParam = searchParams.get('subTab') as 'my' | 'team' | null;
+
+    const [activeTab, setActiveTab] = useState<'my' | 'team'>(() => {
+        if (subTabParam === 'team' && ['MANAGER', 'HR', 'ADMIN'].includes(user?.role || '')) {
+            return 'team';
+        }
+        return 'my';
+    });
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<RegularizationRequest | null>(null);
     const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null);

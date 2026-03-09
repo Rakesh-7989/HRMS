@@ -1,69 +1,93 @@
+import React, { Suspense } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { RootLayout } from '@/layouts/RootLayout';
-import { LandingPage } from '@/pages/LandingPage';
-import { LoginPage } from '@/pages/LoginPage';
-import { RegisterPage } from '@/pages/RegisterPage';
-import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
-import { PricingPage } from '@/pages/PricingPage';
-import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
-import { PaymentFailurePage } from '@/pages/PaymentFailurePage';
-import { BillingPortalPage } from '@/pages/BillingPortalPage';
-import { SuperAdminDashboard } from '@/pages/dashboards/SuperAdminDashboard';
-import { DBADashboard } from '@/pages/dashboards/DBADashboard';
-import { AdminDashboard } from '@/pages/dashboards/AdminDashboard';
-import { HRDashboard } from '@/pages/dashboards/HRDashboard';
-import { ManagerDashboard } from '@/pages/dashboards/ManagerDashboard';
-import { EmployeeDashboard } from '@/pages/dashboards/EmployeeDashboard';
-import { SystemReportsPage } from '@/pages/dashboards/SystemReportsPage';
-import { EmployeesPage } from '@/pages/EmployeesPage';
-import { AddEmployeePage } from '@/pages/AddEmployeePage';
-import { AttendancePage } from '@/pages/AttendancePage';
-
-import { LeavePage } from '@/pages/LeavePage';
-import { DepartmentsPage } from '@/pages/DepartmentsPage';
-import { ProfilePage } from '@/pages/ProfilePage';
-import { ReportsPage } from '@/pages/ReportsPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { ActivityPage } from '@/pages/ActivityPage';
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
-import { TenantsPage } from '@/pages/TenantsPage';
-import { DesignationsPage } from '@/pages/DesignationsPage';
-import Payroll from '@/pages/Payroll';
-import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
-import { RiverProcess } from '@/pages/payroll/RiverProcess';
-import FnFSettlementsPage from '@/pages/payroll/FnFSettlementsPage';
-import FnFSettlementDetailsPage from '@/pages/payroll/FnFSettlementDetailsPage';
-import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
-import { AssetsPage } from '@/pages/AssetsPage';
-import { AddAssetPage } from '@/pages/AddAssetPage';
-import { AssetDetailsPage } from '@/pages/AssetDetailsPage';
-import { ProjectsPage } from '@/pages/projects/ProjectsPage';
-import { ClientsPage } from '@/pages/projects/ClientsPage';
-import { TasksPage } from '@/pages/projects/TasksPage';
-
-import { ProjectReportsPage } from '@/pages/projects/ProjectReportsPage';
-import InboxPage from './pages/InboxPage';
-import { ChatPage } from '@/pages/ChatPage';
-import OrganisationPage from '@/pages/OrganisationPage';
-import { LeaveSettingsPage } from '@/pages/LeaveSettingsPage';
-import { HolidaysPage } from '@/pages/HolidaysPage';
-import { EmployeeDetailsPage } from '@/pages/EmployeeDetailsPage';
-import { EditEmployeePage } from '@/pages/EditEmployeePage';
-import { EmployeeDocumentsPage } from '@/pages/EmployeeDocumentsPage';
-import { SearchPage } from '@/pages/SearchPage';
-import { LeaveBalancesPage } from '@/pages/LeaveBalancesPage';
-import { CalendarPage } from '@/pages/CalendarPage';
-import { NotificationsPage } from '@/pages/NotificationsPage';
-import { ShiftsPage } from '@/pages/organization/ShiftsPage';
-import { PlansPage } from '@/pages/PlansPage';
-import { CouponsPage } from '@/pages/CouponsPage';
-import { RolesPermissionsPage } from '@/pages/RolesPermissionsPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
+
+// Lazy-load all pages for code splitting — only the visited page's JS is downloaded
+const LandingPage = React.lazy(() => import('@/pages/LandingPage').then(m => ({ default: m.LandingPage })));
+const LoginPage = React.lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage = React.lazy(() => import('@/pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = React.lazy(() => import('@/pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = React.lazy(() => import('@/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const ChangePasswordPage = React.lazy(() => import('@/pages/ChangePasswordPage').then(m => ({ default: m.ChangePasswordPage })));
+const PricingPage = React.lazy(() => import('@/pages/PricingPage').then(m => ({ default: m.PricingPage })));
+const PaymentSuccessPage = React.lazy(() => import('@/pages/PaymentSuccessPage').then(m => ({ default: m.PaymentSuccessPage })));
+const PaymentFailurePage = React.lazy(() => import('@/pages/PaymentFailurePage').then(m => ({ default: m.PaymentFailurePage })));
+const BillingPortalPage = React.lazy(() => import('@/pages/BillingPortalPage').then(m => ({ default: m.BillingPortalPage })));
+
+// Dashboards
+const SuperAdminDashboard = React.lazy(() => import('@/pages/dashboards/SuperAdminDashboard').then(m => ({ default: m.SuperAdminDashboard })));
+const DBADashboard = React.lazy(() => import('@/pages/dashboards/DBADashboard').then(m => ({ default: m.DBADashboard })));
+const AdminDashboard = React.lazy(() => import('@/pages/dashboards/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const HRDashboard = React.lazy(() => import('@/pages/dashboards/HRDashboard').then(m => ({ default: m.HRDashboard })));
+const ManagerDashboard = React.lazy(() => import('@/pages/dashboards/ManagerDashboard').then(m => ({ default: m.ManagerDashboard })));
+const EmployeeDashboard = React.lazy(() => import('@/pages/dashboards/EmployeeDashboard').then(m => ({ default: m.EmployeeDashboard })));
+const SystemReportsPage = React.lazy(() => import('@/pages/dashboards/SystemReportsPage').then(m => ({ default: m.SystemReportsPage })));
+
+// Employee pages
+const EmployeesPage = React.lazy(() => import('@/pages/EmployeesPage').then(m => ({ default: m.EmployeesPage })));
+const AddEmployeePage = React.lazy(() => import('@/pages/AddEmployeePage').then(m => ({ default: m.AddEmployeePage })));
+const EmployeeDetailsPage = React.lazy(() => import('@/pages/EmployeeDetailsPage').then(m => ({ default: m.EmployeeDetailsPage })));
+const EditEmployeePage = React.lazy(() => import('@/pages/EditEmployeePage').then(m => ({ default: m.EditEmployeePage })));
+const EmployeeDocumentsPage = React.lazy(() => import('@/pages/EmployeeDocumentsPage').then(m => ({ default: m.EmployeeDocumentsPage })));
+
+// Core feature pages
+const AttendancePage = React.lazy(() => import('@/pages/AttendancePage').then(m => ({ default: m.AttendancePage })));
+const LeavePage = React.lazy(() => import('@/pages/LeavePage').then(m => ({ default: m.LeavePage })));
+const LeaveSettingsPage = React.lazy(() => import('@/pages/LeaveSettingsPage').then(m => ({ default: m.LeaveSettingsPage })));
+const LeaveBalancesPage = React.lazy(() => import('@/pages/LeaveBalancesPage').then(m => ({ default: m.LeaveBalancesPage })));
+const HolidaysPage = React.lazy(() => import('@/pages/HolidaysPage').then(m => ({ default: m.HolidaysPage })));
+const CalendarPage = React.lazy(() => import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
+const DepartmentsPage = React.lazy(() => import('@/pages/DepartmentsPage').then(m => ({ default: m.DepartmentsPage })));
+const DesignationsPage = React.lazy(() => import('@/pages/DesignationsPage').then(m => ({ default: m.DesignationsPage })));
+const ProfilePage = React.lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const ReportsPage = React.lazy(() => import('@/pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const SettingsPage = React.lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const ActivityPage = React.lazy(() => import('@/pages/ActivityPage').then(m => ({ default: m.ActivityPage })));
+const SearchPage = React.lazy(() => import('@/pages/SearchPage').then(m => ({ default: m.SearchPage })));
+const NotificationsPage = React.lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const TenantsPage = React.lazy(() => import('@/pages/TenantsPage').then(m => ({ default: m.TenantsPage })));
+const PlansPage = React.lazy(() => import('@/pages/PlansPage').then(m => ({ default: m.PlansPage })));
+const CouponsPage = React.lazy(() => import('@/pages/CouponsPage').then(m => ({ default: m.CouponsPage })));
+const RolesPermissionsPage = React.lazy(() => import('@/pages/RolesPermissionsPage').then(m => ({ default: m.RolesPermissionsPage })));
+const OrganisationPage = React.lazy(() => import('@/pages/OrganisationPage'));
+const ShiftsPage = React.lazy(() => import('@/pages/organization/ShiftsPage').then(m => ({ default: m.ShiftsPage })));
+const InboxPage = React.lazy(() => import('./pages/InboxPage'));
+const ChatPage = React.lazy(() => import('@/pages/ChatPage').then(m => ({ default: m.ChatPage })));
+
+// Payroll
+const Payroll = React.lazy(() => import('@/pages/Payroll'));
+const PayrollDashboard = React.lazy(() => import('@/pages/payroll/PayrollDashboard').then(m => ({ default: m.PayrollDashboard })));
+const RiverProcess = React.lazy(() => import('@/pages/payroll/RiverProcess').then(m => ({ default: m.RiverProcess })));
+const FnFSettlementsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementsPage'));
+const FnFSettlementDetailsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementDetailsPage'));
+const ArrearsPage = React.lazy(() => import('@/pages/payroll/ArrearsPage').then(m => ({ default: m.ArrearsPage })));
+
+// Assets
+const AssetsPage = React.lazy(() => import('@/pages/AssetsPage').then(m => ({ default: m.AssetsPage })));
+const AddAssetPage = React.lazy(() => import('@/pages/AddAssetPage').then(m => ({ default: m.AddAssetPage })));
+const AssetDetailsPage = React.lazy(() => import('@/pages/AssetDetailsPage').then(m => ({ default: m.AssetDetailsPage })));
+
+// Projects
+const ProjectsPage = React.lazy(() => import('@/pages/projects/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const ClientsPage = React.lazy(() => import('@/pages/projects/ClientsPage').then(m => ({ default: m.ClientsPage })));
+const TasksPage = React.lazy(() => import('@/pages/projects/TasksPage').then(m => ({ default: m.TasksPage })));
+const ProjectReportsPage = React.lazy(() => import('@/pages/projects/ProjectReportsPage').then(m => ({ default: m.ProjectReportsPage })));
+
+// DashboardLayout (eagerly loaded since it wraps most pages)
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+
+// Loading fallback for lazy-loaded pages
+const PageLoader = () => (
+  <div className="h-screen flex items-center justify-center bg-[var(--background)]">
+    <div className="relative">
+      <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
+    </div>
+  </div>
+);
 
 // Smart redirect component
 const DashboardRedirect = () => {
@@ -87,19 +111,19 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />}>
       {/* Public Routes */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+      <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+      <Route path="/register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
+      <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPasswordPage /></Suspense>} />
+      <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPasswordPage /></Suspense>} />
+      <Route path="/change-password" element={<Suspense fallback={<PageLoader />}><ChangePasswordPage /></Suspense>} />
 
       {/* Protected Dashboard Routes */}
       <Route
         path="/dashboard/system"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <SuperAdminDashboard />
+            <Suspense fallback={<PageLoader />}><SuperAdminDashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -107,7 +131,7 @@ const router = createBrowserRouter(
         path="/dashboard/dba"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <DBADashboard />
+            <Suspense fallback={<PageLoader />}><DBADashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -115,7 +139,7 @@ const router = createBrowserRouter(
         path="/dashboard/system/reports"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <SystemReportsPage />
+            <Suspense fallback={<PageLoader />}><SystemReportsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -123,7 +147,7 @@ const router = createBrowserRouter(
         path="/tenants"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <TenantsPage />
+            <Suspense fallback={<PageLoader />}><TenantsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -131,7 +155,7 @@ const router = createBrowserRouter(
         path="/plans"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <PlansPage />
+            <Suspense fallback={<PageLoader />}><PlansPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -139,7 +163,7 @@ const router = createBrowserRouter(
         path="/coupons"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <CouponsPage />
+            <Suspense fallback={<PageLoader />}><CouponsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -147,7 +171,7 @@ const router = createBrowserRouter(
         path="/dashboard/organization"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <AdminDashboard />
+            <Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -155,7 +179,7 @@ const router = createBrowserRouter(
         path="/dashboard/hr"
         element={
           <ProtectedRoute allowedRoles={['HR', 'ADMIN']}>
-            <HRDashboard />
+            <Suspense fallback={<PageLoader />}><HRDashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -163,7 +187,7 @@ const router = createBrowserRouter(
         path="/dashboard/team"
         element={
           <ProtectedRoute allowedRoles={['MANAGER']}>
-            <ManagerDashboard />
+            <Suspense fallback={<PageLoader />}><ManagerDashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -171,23 +195,23 @@ const router = createBrowserRouter(
         path="/dashboard/personal"
         element={
           <ProtectedRoute>
-            <EmployeeDashboard />
+            <Suspense fallback={<PageLoader />}><EmployeeDashboard /></Suspense>
           </ProtectedRoute>
         }
       />
 
       {/* Pricing Route */}
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/payment-success" element={<PaymentSuccessPage />} />
-      <Route path="/payment-failure" element={<PaymentFailurePage />} />
-      <Route path="/billing" element={<BillingPortalPage />} />
+      <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
+      <Route path="/payment-success" element={<Suspense fallback={<PageLoader />}><PaymentSuccessPage /></Suspense>} />
+      <Route path="/payment-failure" element={<Suspense fallback={<PageLoader />}><PaymentFailurePage /></Suspense>} />
+      <Route path="/billing" element={<Suspense fallback={<PageLoader />}><BillingPortalPage /></Suspense>} />
 
       {/* Super Admin Protected Routes */}
       <Route
         path="/search"
         element={
           <ProtectedRoute>
-            <SearchPage />
+            <Suspense fallback={<PageLoader />}><SearchPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -197,7 +221,7 @@ const router = createBrowserRouter(
         path="/dba-control-panel-access"
         element={
           <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <DBADashboard />
+            <Suspense fallback={<PageLoader />}><DBADashboard /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -207,7 +231,7 @@ const router = createBrowserRouter(
         path="/notifications"
         element={
           <ProtectedRoute>
-            <NotificationsPage />
+            <Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -217,7 +241,7 @@ const router = createBrowserRouter(
         path="/dashboard/employees"
         element={
           <ProtectedRoute requiredPermission="employees:view">
-            <EmployeesPage />
+            <Suspense fallback={<PageLoader />}><EmployeesPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -225,7 +249,7 @@ const router = createBrowserRouter(
         path="/dashboard/employees/new"
         element={
           <ProtectedRoute requiredPermission="employees:create">
-            <AddEmployeePage />
+            <Suspense fallback={<PageLoader />}><AddEmployeePage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -233,7 +257,7 @@ const router = createBrowserRouter(
         path="/dashboard/employees/:id"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <EmployeeDetailsPage />
+            <Suspense fallback={<PageLoader />}><EmployeeDetailsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -241,7 +265,7 @@ const router = createBrowserRouter(
         path="/dashboard/employees/:id/edit"
         element={
           <ProtectedRoute requiredPermission="employees:update">
-            <EditEmployeePage />
+            <Suspense fallback={<PageLoader />}><EditEmployeePage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -249,7 +273,7 @@ const router = createBrowserRouter(
         path="/dashboard/employees/:id/documents"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <EmployeeDocumentsPage />
+            <Suspense fallback={<PageLoader />}><EmployeeDocumentsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -257,7 +281,7 @@ const router = createBrowserRouter(
         path="/attendance"
         element={
           <ProtectedRoute requiredPermission="attendance:view">
-            <AttendancePage />
+            <Suspense fallback={<PageLoader />}><AttendancePage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -265,7 +289,7 @@ const router = createBrowserRouter(
         path="/calendar"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <CalendarPage />
+            <Suspense fallback={<PageLoader />}><CalendarPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -273,7 +297,7 @@ const router = createBrowserRouter(
         path="/inbox"
         element={
           <ProtectedRoute requiredPermission="chat:view">
-            <InboxPage />
+            <Suspense fallback={<PageLoader />}><InboxPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -282,7 +306,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <SubscriptionGuard minPlan={3}>
-              <ChatPage />
+              <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -291,7 +315,7 @@ const router = createBrowserRouter(
         path="/reports"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN']}>
-            <ReportsPage />
+            <Suspense fallback={<PageLoader />}><ReportsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -302,7 +326,7 @@ const router = createBrowserRouter(
         path="/organisation"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <OrganisationPage />
+            <Suspense fallback={<PageLoader />}><OrganisationPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -311,7 +335,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <SubscriptionGuard minPlan={2}>
-              <ShiftsPage />
+              <Suspense fallback={<PageLoader />}><ShiftsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -321,7 +345,7 @@ const router = createBrowserRouter(
         path="/leave"
         element={
           <ProtectedRoute requiredPermission="leave:view">
-            <LeavePage />
+            <Suspense fallback={<PageLoader />}><LeavePage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -329,7 +353,7 @@ const router = createBrowserRouter(
         path="/leave/settings"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <LeaveSettingsPage />
+            <Suspense fallback={<PageLoader />}><LeaveSettingsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -337,7 +361,7 @@ const router = createBrowserRouter(
         path="/leave/balances"
         element={
           <ProtectedRoute requiredPermission="leave:view">
-            <LeaveBalancesPage />
+            <Suspense fallback={<PageLoader />}><LeaveBalancesPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -345,7 +369,7 @@ const router = createBrowserRouter(
         path="/holidays"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <HolidaysPage />
+            <Suspense fallback={<PageLoader />}><HolidaysPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -353,7 +377,7 @@ const router = createBrowserRouter(
         path="/departments"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DepartmentsPage />
+            <Suspense fallback={<PageLoader />}><DepartmentsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -361,7 +385,7 @@ const router = createBrowserRouter(
         path="/designations"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <DesignationsPage />
+            <Suspense fallback={<PageLoader />}><DesignationsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -370,7 +394,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute requiredPermission="assets:view">
             <SubscriptionGuard minPlan={3}>
-              <AssetsPage />
+              <Suspense fallback={<PageLoader />}><AssetsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -379,7 +403,7 @@ const router = createBrowserRouter(
         path="/assets/new"
         element={
           <ProtectedRoute requiredPermission="assets:create">
-            <AddAssetPage />
+            <Suspense fallback={<PageLoader />}><AddAssetPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -388,7 +412,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
             <SubscriptionGuard minPlan={3}>
-              <AssetDetailsPage />
+              <Suspense fallback={<PageLoader />}><AssetDetailsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -397,7 +421,7 @@ const router = createBrowserRouter(
         path="/assets/:id/edit"
         element={
           <ProtectedRoute requiredPermission="assets:update">
-            <AddAssetPage />
+            <Suspense fallback={<PageLoader />}><AddAssetPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -405,7 +429,7 @@ const router = createBrowserRouter(
         path="/profile"
         element={
           <ProtectedRoute>
-            <ProfilePage />
+            <Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -416,7 +440,7 @@ const router = createBrowserRouter(
         path="/projects/reports"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <ProjectReportsPage />
+            <Suspense fallback={<PageLoader />}><ProjectReportsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -425,7 +449,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute requiredPermission="projects:view">
             <SubscriptionGuard minPlan={2}>
-              <ProjectsPage />
+              <Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -435,7 +459,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute requiredPermission="projects:manage">
             <SubscriptionGuard minPlan={3}>
-              <ClientsPage />
+              <Suspense fallback={<PageLoader />}><ClientsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -444,7 +468,7 @@ const router = createBrowserRouter(
         path="/projects/:id/tasks"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <TasksPage />
+            <Suspense fallback={<PageLoader />}><TasksPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -455,7 +479,7 @@ const router = createBrowserRouter(
         path="/settings"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER', 'EMPLOYEE']}>
-            <SettingsPage />
+            <Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -463,7 +487,7 @@ const router = createBrowserRouter(
         path="/activity"
         element={
           <ProtectedRoute requiredPermission="audit_logs:view">
-            <ActivityPage />
+            <Suspense fallback={<PageLoader />}><ActivityPage /></Suspense>
           </ProtectedRoute>
         }
       />
@@ -473,7 +497,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage">
             <DashboardLayout title="Roles & Permissions">
-              <RolesPermissionsPage />
+              <Suspense fallback={<PageLoader />}><RolesPermissionsPage /></Suspense>
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -485,7 +509,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute requiredPermission="payroll:view">
             <SubscriptionGuard minPlan={2}>
-              <Payroll />
+              <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -496,7 +520,7 @@ const router = createBrowserRouter(
           <ProtectedRoute requiredPermission="payroll:manage">
             <SubscriptionGuard minPlan={2}>
               <DashboardLayout title="Payroll Command Center">
-                <PayrollDashboard />
+                <Suspense fallback={<PageLoader />}><PayrollDashboard /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
           </ProtectedRoute>
@@ -507,7 +531,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
             <SubscriptionGuard minPlan={2}>
-              <RiverProcess />
+              <Suspense fallback={<PageLoader />}><RiverProcess /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -517,7 +541,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
             <SubscriptionGuard minPlan={2}>
-              <FnFSettlementsPage />
+              <Suspense fallback={<PageLoader />}><FnFSettlementsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -527,7 +551,7 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
             <SubscriptionGuard minPlan={2}>
-              <FnFSettlementDetailsPage />
+              <Suspense fallback={<PageLoader />}><FnFSettlementDetailsPage /></Suspense>
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -538,7 +562,7 @@ const router = createBrowserRouter(
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
             <SubscriptionGuard minPlan={2}>
               <DashboardLayout title="Arrears Management">
-                <ArrearsPage />
+                <Suspense fallback={<PageLoader />}><ArrearsPage /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
           </ProtectedRoute>
@@ -554,5 +578,3 @@ const router = createBrowserRouter(
 );
 
 export default router;
-
-

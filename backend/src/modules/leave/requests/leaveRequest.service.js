@@ -5,6 +5,7 @@ const holidayService = require("../holidays/holiday.service");
 const timeService = require("../../../utils/timeService");
 const logger = require("../../../config/logger"); // Issue 26
 const { BadRequestError, NotFoundError } = require("../../../utils/customErrors");
+const inboxService = require("../../inbox/inbox.service");
 
 const getQuery = (db) => {
     if (db && typeof db.query === "function") {
@@ -168,6 +169,42 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
         }
 
         await client.query('COMMIT');
+
+        // Notify HR & Managers about new leave application
+        try {
+            const empRes = await pool.query(
+                `SELECT e.first_name, e.last_name, e.user_id, e.reports_to FROM employees e WHERE e.id = $1`, [employeeId]
+            );
+            const emp = empRes.rows[0];
+            const dateRange = start_date === end_date ? start_date : `${start_date} to ${end_date}`;
+            // Notify direct manager
+            if (emp?.reports_to) {
+                const mgrRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [emp.reports_to]);
+                if (mgrRes.rows[0]) {
+                    await inboxService.createNotification(pool, {
+                        tenant_id: tenantId, user_id: mgrRes.rows[0].user_id,
+                        title: 'New Leave Request',
+                        message: `${emp.first_name} ${emp.last_name} applied for leave (${dateRange})`,
+                        type: 'info', link: '/leave?tab=team-requests'
+                    });
+                }
+            }
+            // Notify all HR users
+            const hrUsers = await pool.query(
+                `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, emp?.user_id]
+            );
+            for (const hr of hrUsers.rows) {
+                await inboxService.createNotification(pool, {
+                    tenant_id: tenantId, user_id: hr.id,
+                    title: 'New Leave Request',
+                    message: `${emp.first_name} ${emp.last_name} applied for leave (${dateRange})`,
+                    type: 'info', link: '/leave?tab=team-requests'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Leave apply notification error:', notifErr.message);
+        }
+
         return res.rows[0];
     } catch (err) {
         await client.query('ROLLBACK');
@@ -384,6 +421,22 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
             );
 
             await query('COMMIT');
+
+            // Notify employee: manager approved, forwarded to HR
+            try {
+                const empUserRes = await pool.query(`SELECT user_id, first_name, last_name FROM employees WHERE id = $1`, [leave.employee_id]);
+                if (empUserRes.rows[0]) {
+                    await inboxService.createNotification(pool, {
+                        tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                        title: 'Leave Request Update',
+                        message: 'Your leave request has been approved by your manager and forwarded to HR for final approval.',
+                        type: 'info', link: '/leave'
+                    });
+                }
+            } catch (notifErr) {
+                console.error('Leave manager-approve notification error:', notifErr.message);
+            }
+
             return res.rows[0];
         }
 
@@ -434,6 +487,25 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
             }
 
             await query('COMMIT');
+
+            // Notify employee: leave fully approved
+            try {
+                const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [leave.employee_id]);
+                if (empUserRes.rows[0]) {
+                    const sd = leave.start_date instanceof Date ? leave.start_date.toISOString().split('T')[0] : leave.start_date;
+                    const ed = leave.end_date instanceof Date ? leave.end_date.toISOString().split('T')[0] : leave.end_date;
+                    const dateRange = sd === ed ? sd : `${sd} to ${ed}`;
+                    await inboxService.createNotification(pool, {
+                        tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                        title: 'Leave Approved ✅',
+                        message: `Your leave request (${dateRange}) has been approved.`,
+                        type: 'success', link: '/leave?tab=my-leave'
+                    });
+                }
+            } catch (notifErr) {
+                console.error('Leave approve notification error:', notifErr.message);
+            }
+
             return res.rows[0];
         }
 
@@ -525,6 +597,22 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
         }
 
         await query('COMMIT');
+
+        // Notify employee: leave rejected
+        try {
+            const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [leave.employee_id]);
+            if (empUserRes.rows[0]) {
+                await inboxService.createNotification(pool, {
+                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'Leave Request Rejected',
+                    message: `Your leave request has been rejected.${reason ? ' Reason: ' + reason : ''}`,
+                    type: 'warning', link: '/leave'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Leave reject notification error:', notifErr.message);
+        }
+
         return res.rows[0];
     } catch (err) {
         await client.query('ROLLBACK');
@@ -610,6 +698,32 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
         }
 
         await client.query('COMMIT');
+
+        // Notify HR/managers about leave cancellation
+        try {
+            const empRes = await pool.query(
+                `SELECT first_name, last_name, user_id, reports_to FROM employees WHERE id = $1`, [employeeId]
+            );
+            const emp = empRes.rows[0];
+            const sd = leave.start_date instanceof Date ? leave.start_date.toISOString().split('T')[0] : leave.start_date;
+            const ed = leave.end_date instanceof Date ? leave.end_date.toISOString().split('T')[0] : leave.end_date;
+            const dateRange = sd === ed ? sd : `${sd} to ${ed}`;
+            // Notify manager
+            if (emp?.reports_to) {
+                const mgrRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [emp.reports_to]);
+                if (mgrRes.rows[0]) {
+                    await inboxService.createNotification(pool, {
+                        tenant_id: tenantId, user_id: mgrRes.rows[0].user_id,
+                        title: 'Leave Cancelled',
+                        message: `${emp.first_name} ${emp.last_name} cancelled their leave (${dateRange})`,
+                        type: 'info', link: '/leave'
+                    });
+                }
+            }
+        } catch (notifErr) {
+            console.error('Leave cancel notification error:', notifErr.message);
+        }
+
         return res.rows[0];
     } catch (err) {
         await client.query('ROLLBACK');

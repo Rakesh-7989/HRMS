@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DailyAttendanceContent } from '@/components/attendance/DailyAttendanceContent';
 import { AttendanceReportsContent } from '@/components/attendance/AttendanceReportsContent';
@@ -15,7 +16,7 @@ import { PlanGuard } from '@/components/guards/PlanGuard';
 export const AttendancePage: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
-  const [activeTab, setActiveTab] = useState<string>('daily');
+  const [searchParams] = useSearchParams();
 
   const ATTENDANCE_TABS: { id: string; label: string; action: PermissionAction; minPlan?: number }[] = [
     { id: 'reports', label: t('attendance.tabs.reports'), action: 'view_reports' },
@@ -26,6 +27,31 @@ export const AttendancePage: React.FC = () => {
     { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve', minPlan: 2 },
     { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_settings', minPlan: 2 },
   ];
+
+  const tabParam = searchParams.get('tab');
+
+  // Initialize from URL param if valid
+  const getInitialTab = (): string => {
+    if (tabParam && ATTENDANCE_TABS.some(t => t.id === tabParam)) {
+      const tab = ATTENDANCE_TABS.find(t => t.id === tabParam);
+      if (tab && hasPermission('attendance', tab.action)) {
+        return tabParam;
+      }
+    }
+    return 'daily';
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab);
+
+  // Sync with URL if it changes
+  useEffect(() => {
+    if (tabParam && ATTENDANCE_TABS.some(t => t.id === tabParam)) {
+      const tab = ATTENDANCE_TABS.find(t => t.id === tabParam);
+      if (tab && hasPermission('attendance', tab.action)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, [tabParam, hasPermission]);
 
   return (
     <DashboardLayout

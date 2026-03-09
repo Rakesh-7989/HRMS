@@ -45,11 +45,12 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
     });
 
     // Fetch all users/employees for dropdown - same pattern as TasksPage
-    const { data: allEmployees = [] } = useQuery({
+    const { data: usersResponse } = useQuery({
         queryKey: ['users-for-members'],
         queryFn: () => usersService.getUsers({ is_active: true }),
         enabled: isOpen,
     });
+    const allEmployees = usersResponse?.data || [];
 
     // Filter out employees who are already members
     // Show all users (even those without employee_id) for debugging

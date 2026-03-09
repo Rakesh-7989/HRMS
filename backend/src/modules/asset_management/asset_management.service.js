@@ -10,6 +10,7 @@ const JsBarcode = require("jsbarcode");
 const Canvas = require("canvas");
 const QRCode = require("qrcode");
 const logger = require("../../config/logger");
+const inboxService = require("../inbox/inbox.service");
 
 /**
  * CREATE ASSET
@@ -752,6 +753,22 @@ exports.assignAsset = async (
     }
 
     await client.query('COMMIT');
+
+    // Notify employee: asset assigned
+    try {
+      const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [employeeId]);
+      if (empUserRes.rows[0]) {
+        await inboxService.createNotification(pool, {
+          tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+          title: 'Asset Assigned',
+          message: `Asset '${asset.name}' (${asset.asset_code}) has been assigned to you.`,
+          type: 'info', link: '/assets'
+        });
+      }
+    } catch (notifErr) {
+      console.error('Asset assign notification error:', notifErr.message);
+    }
+
     return updateResult.rows[0];
   } catch (error) {
     await client.query('ROLLBACK');
@@ -915,6 +932,24 @@ exports.returnAsset = async (
     }
 
     await client.query('COMMIT');
+
+    // Notify admin/HR: asset returned
+    try {
+      const hrUsers = await pool.query(
+        `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN')`, [tenantId]
+      );
+      for (const hr of hrUsers.rows) {
+        await inboxService.createNotification(pool, {
+          tenant_id: tenantId, user_id: hr.id,
+          title: 'Asset Returned',
+          message: `${asset.first_name} ${asset.last_name} returned asset '${asset.name}' in ${condition || 'GOOD'} condition.`,
+          type: 'info', link: '/assets'
+        });
+      }
+    } catch (notifErr) {
+      console.error('Asset return notification error:', notifErr.message);
+    }
+
     return updateResult.rows[0];
   } catch (error) {
     await client.query('ROLLBACK');
@@ -1025,7 +1060,30 @@ exports.createAssetRequest = async (tenantId, userId, data) => {
     ]
   );
 
-  return result.rows[0];
+  const created = result.rows[0];
+
+  // Notify admin/HR: new asset request
+  try {
+    const empRes = await pool.query(
+      `SELECT first_name, last_name FROM employees WHERE id = $1`, [employeeId]
+    );
+    const emp = empRes.rows[0];
+    const hrUsers = await pool.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, userId]
+    );
+    for (const hr of hrUsers.rows) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: hr.id,
+        title: 'New Asset Request',
+        message: `${emp?.first_name} ${emp?.last_name} requested '${data.asset_name}' (${data.category})`,
+        type: 'info', link: '/assets'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Asset request notification error:', notifErr.message);
+  }
+
+  return created;
 };
 
 /**
@@ -1087,7 +1145,29 @@ exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => 
     [data.status, data.admin_notes, userId, requestId, tenantId]
   );
 
-  return result.rows[0];
+  const updated = result.rows[0];
+
+  // Notify employee: asset request approved/rejected
+  try {
+    const empUserRes = await pool.query(
+      `SELECT e.user_id FROM employees e WHERE e.id = $1`, [request.employee_id]
+    );
+    if (empUserRes.rows[0]) {
+      const isApproved = data.status === 'APPROVED';
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: isApproved ? 'Asset Request Approved ✅' : 'Asset Request Rejected',
+        message: isApproved
+          ? `Your request for '${request.asset_name}' has been approved.`
+          : `Your request for '${request.asset_name}' was rejected.${data.admin_notes ? ' Notes: ' + data.admin_notes : ''}`,
+        type: isApproved ? 'success' : 'warning', link: '/assets'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Asset request handle notification error:', notifErr.message);
+  }
+
+  return updated;
 };
 
 /**

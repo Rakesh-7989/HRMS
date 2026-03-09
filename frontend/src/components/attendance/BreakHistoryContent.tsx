@@ -16,11 +16,12 @@ export const BreakHistoryContent: React.FC = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
     // Fetch employees for filter (Only for HR/Admin/Manager)
-    const { data: employees } = useQuery({
+    const { data: usersResponse } = useQuery({
         queryKey: ['employees-list'],
         queryFn: () => usersService.getUsers({ is_active: true }),
         enabled: ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || ''),
     });
+    const employees = usersResponse?.data || [];
 
     const { data: history, isLoading, refetch } = useQuery({
         queryKey: ['break-history', date, selectedEmployeeId],

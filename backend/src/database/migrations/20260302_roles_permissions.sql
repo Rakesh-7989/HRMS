@@ -4,6 +4,10 @@
 -- ===================================================================
 
 -- 1. PERMISSIONS – master catalog of all granular permissions
+DROP TABLE IF EXISTS role_permissions CASCADE;
+DROP TABLE IF EXISTS user_permission_overrides CASCADE;
+DROP TABLE IF EXISTS permissions CASCADE;
+
 CREATE TABLE IF NOT EXISTS permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     module VARCHAR(50) NOT NULL,

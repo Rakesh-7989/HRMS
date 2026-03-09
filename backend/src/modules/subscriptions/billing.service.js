@@ -27,6 +27,18 @@ class BillingService {
     }
 
     /**
+     * Map internal interval string to Cashfree interval type
+     */
+    mapIntervalToCashfree(interval) {
+        if (!interval) return 'MONTH';
+        const upper = String(interval).toUpperCase();
+        if (upper === 'MONTHLY' || upper === 'MONTH') return 'MONTH';
+        if (upper === 'YEARLY' || upper === 'YEAR') return 'YEAR';
+        if (upper === 'WEEKLY' || upper === 'WEEK') return 'WEEK';
+        if (upper === 'DAILY' || upper === 'DAY') return 'DAY';
+        return upper;
+    }
+    /**
      * Initialize a new subscription for a tenant
      */
     async createSubscription(tenantId, { planId, priceId, quantity = 1, successUrl, cancelUrl, couponCode }) {
@@ -117,8 +129,14 @@ class BillingService {
 
         // 4. Call Cashfree to get Auth Link
         // Fetch Tenant User info
-        const userRes = await db.query('SELECT email, first_name, last_name, phone FROM users WHERE tenant_id = $1 AND role = \'ADMIN\' LIMIT 1', [tenantId]);
-        const admin = userRes.rows[0];
+        const userRes = await db.query(`
+            SELECT u.email, e.first_name, e.last_name, e.phone 
+            FROM users u
+            LEFT JOIN employees e ON u.id = e.user_id 
+            WHERE u.tenant_id = $1 AND u.role = 'ADMIN' 
+            LIMIT 1
+        `, [tenantId]);
+        const admin = userRes.rows[0] || {};
 
         const cfResponse = await cashfreeService.createSubscription({
             subscriptionId: subscriptionId,

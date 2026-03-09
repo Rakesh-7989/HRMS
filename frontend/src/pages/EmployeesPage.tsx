@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { usersService, EmployeeFilters } from '@/services/users.service';
+import { usersService, EmployeeFilters, User } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,10 +75,11 @@ export const EmployeesPage: React.FC = () => {
   }, [searchTerm, roleFilter, departmentFilter, statusFilter]);
 
   // Queries
-  const { data: employees = [], isLoading } = useQuery({
+  const { data: usersResponse, isLoading } = useQuery({
     queryKey: ['employees', filterParams],
     queryFn: () => usersService.getUsers(filterParams),
   });
+  const employees: User[] = usersResponse?.data || [];
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],

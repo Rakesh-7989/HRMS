@@ -9,7 +9,7 @@ import { departmentService } from '@/services/department.service';
 import { usersService } from '@/services/users.service';
 
 import type { Tenant } from '@/services/superAdmin.service';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
 import { superAdminService } from '@/services/superAdmin.service';
@@ -45,61 +45,32 @@ export const OrganisationPage: React.FC = () => {
     }
   }, [searchParams]);
   const [selectedDept, setSelectedDept] = useState<string>('all');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 16;
 
+  // sync tab state with URL
+  useEffect(() => {
+    setPage(0);
+  }, [selectedDept]);
 
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: departmentService.getDepartments });
-
-  // Ensure these commonly used departments are available in the dropdown even if backend doesn't return them
-
   type Dept = { id?: string; name?: string };
   const displayDepartments = useMemo(() => departments, [departments]);
 
-
-
-  // Fetch all employees once (used for both counts and filtered views)
-  const { data: allEmployees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ['allEmployees'],
-    queryFn: () => usersService.getUsers({ limit: 1000 }),
-    // Enable for MANAGER too
+  // Fetch paginated employees
+  const { data: usersResponse, isLoading: employeesLoading } = useQuery({
+    queryKey: ['allEmployees', page, selectedDept],
+    queryFn: () => usersService.getUsers({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      department_id: selectedDept !== 'all' ? selectedDept : undefined
+    }),
     enabled: ['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '')
   });
 
-  // Client-side filtering: apply selected department or fallback on department name
-  const filteredEmployees = useMemo(() => {
-    if (selectedDept === 'all') return allEmployees;
-
-    // First try to match by department_id exactly
-    const byId = allEmployees.filter((emp: any) => emp.department_id === selectedDept);
-    if (byId.length > 0) return byId;
-
-    // Fallback to match by department name (handles placeholder departments or inconsistent ids)
-    const selectedLower = String(selectedDept).toLowerCase();
-    return allEmployees.filter((emp: any) => {
-      const dep = departments.find((d: Dept) => d.id === emp.department_id);
-      const empDeptName = (dep && dep.name) ? dep.name.toLowerCase() : '';
-      if (empDeptName && empDeptName.includes(selectedLower)) return true;
-      // Also try matching the department_id string itself (in case selectedDept is a name)
-      if (String(emp.department_id || '').toLowerCase().includes(selectedLower)) return true;
-      return false;
-    });
-  }, [allEmployees, selectedDept, departments]);
-
-  const deptCounts = useMemo(() => {
-    type Emp = { department_id?: string };
-    const m = new Map<string, number>();
-    allEmployees.forEach((emp: Emp) => {
-      const id = emp.department_id || 'none';
-      m.set(id, (m.get(id) || 0) + 1);
-    });
-    // also compute by department name (for placeholders mapped by name)
-    const nameMap = new Map<string, number>();
-    allEmployees.forEach((emp: Emp) => {
-      const dep = departments.find((d: Dept) => d.id === emp.department_id);
-      const name = (dep && dep.name) ? dep.name.toLowerCase() : 'none';
-      nameMap.set(name, (nameMap.get(name) || 0) + 1);
-    });
-    return { byId: m, byName: nameMap };
-  }, [allEmployees, departments]);
+  const filteredEmployees = usersResponse?.data || [];
+  const totalEmployees = usersResponse?.pagination?.total || filteredEmployees.length;
+  const displayEmployees = filteredEmployees.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // SUPER_ADMIN tenant directory state & queries
   const [searchTenants, setSearchTenants] = useState('');
@@ -293,12 +264,9 @@ export const OrganisationPage: React.FC = () => {
                         <label className="text-sm text-muted">Filter by Department:</label>
                         <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
                           <option value="all">All Departments</option>
-                          {displayDepartments.map((d: Dept) => {
-                            const count = deptCounts.byId.get(d.id || '') || deptCounts.byName.get((d.name || '').toLowerCase()) || 0;
-                            return (
-                              <option key={d.id} value={d.id}>{d.name} ({count})</option>
-                            );
-                          })}
+                          {displayDepartments.map((d: Dept) => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -310,7 +278,7 @@ export const OrganisationPage: React.FC = () => {
                         <div className="text-center text-muted">No employees found</div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                          {filteredEmployees.map((emp) => (
+                          {displayEmployees.map((emp: any) => (
                             <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
                               <div className="min-w-0">
@@ -320,6 +288,35 @@ export const OrganisationPage: React.FC = () => {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                      {/* Pagination Controls */}
+                      {!employeesLoading && filteredEmployees.length > 0 && totalEmployees > PAGE_SIZE && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 mt-6 bg-white dark:bg-gray-800 rounded-md">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalEmployees)} of {totalEmployees} employees
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage((p) => Math.max(0, p - 1))}
+                              disabled={page === 0}
+                            >
+                              <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Page {page + 1}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage((p) => p + 1)}
+                              disabled={(page + 1) * PAGE_SIZE >= totalEmployees}
+                            >
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

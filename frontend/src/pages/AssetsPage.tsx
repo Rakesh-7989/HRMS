@@ -104,11 +104,12 @@ export const AssetsPage: React.FC = () => {
 
   // Fetch employees for the assign modal
   // Backend returns employee_uuid (actual employee table ID) which we need for asset assignment
-  const { data: employees = [] } = useQuery<Array<import('@/services/users.service').User & { employee_uuid?: string }>>({
+  const { data: usersResponse } = useQuery({
     queryKey: ['users', 'employees'],
     queryFn: () => usersService.getUsers({ is_active: true }),
     enabled: showAssignModal && hasPermission('assets', 'assign'),
   });
+  const employees = usersResponse?.data || [];
 
   const assignMutation = useMutation({
     mutationFn: ({ id, employeeId, accessories }: { id: string; employeeId: string; accessories?: string[] }) =>

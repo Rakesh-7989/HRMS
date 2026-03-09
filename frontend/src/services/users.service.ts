@@ -207,19 +207,25 @@ export const usersService = {
   // LIST & GET USERS
   // ==========================================================================
 
-  getUsers: async (params?: EmployeeFilters): Promise<User[]> => {
+  getUsers: async (params?: EmployeeFilters): Promise<{ data: User[], pagination?: any }> => {
     try {
       const response = await api.get('/users', { params });
-      return extractData<User[]>(response, 'users') || [];
+      const resData = response.data;
+      if (resData && resData.data !== undefined && resData.pagination !== undefined) {
+        return { data: resData.data, pagination: resData.pagination };
+      }
+      const data = extractData<User[]>(response, 'users') || [];
+      return { data };
     } catch (error) {
       console.error('Error fetching users:', error);
-      return [];
+      return { data: [] };
     }
   },
 
-  getUserById: async (id: string): Promise<User | null> => {
+  getUserById: async (id: string, options?: { unmask?: boolean }): Promise<User | null> => {
     try {
-      const response = await api.get(`/users/${id}`);
+      const params = options?.unmask ? '?unmask=true' : '';
+      const response = await api.get(`/users/${id}${params}`);
       return extractData<User>(response, 'user');
     } catch (error) {
       console.error('Error fetching user:', error);

@@ -1,5 +1,6 @@
 const db = require("../../../config/db.js");
 const { ConflictError, BadRequestError } = require("../../../utils/customErrors.js");
+const inboxService = require("../../inbox/inbox.service");
 
 const createLoan = async (tenantId, userId, payload) => {
   // Fetch loan type and validate constraints
@@ -68,7 +69,30 @@ const createLoan = async (tenantId, userId, payload) => {
     userId
   ];
 
-  return (await db.query(query, values)).rows[0];
+  const created = (await db.query(query, values)).rows[0];
+
+  // Notify admin/HR: new loan application
+  try {
+    const empRes = await db.query(
+      `SELECT first_name, last_name, user_id FROM employees WHERE id = $1`, [payload.employeeId]
+    );
+    const emp = empRes.rows[0];
+    const hrUsers = await db.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, userId]
+    );
+    for (const hr of hrUsers.rows) {
+      await inboxService.createNotification(db, {
+        tenant_id: tenantId, user_id: hr.id,
+        title: 'New Loan Application',
+        message: `${emp?.first_name} ${emp?.last_name} applied for a loan of ₹${payload.principalAmount}`,
+        type: 'info', link: '/payroll/loans'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Loan create notification error:', notifErr.message);
+  }
+
+  return created;
 };
 
 /* ADMIN/HR create loan with simplified payload from frontend */
@@ -279,6 +303,27 @@ const approveOrRejectLoan = async (
     }
 
     await client.query("COMMIT");
+
+    // Notify employee: loan approved/rejected
+    try {
+      const empUserRes = await db.query(
+        `SELECT user_id FROM employees WHERE id = $1`, [updatedLoan.employee_id]
+      );
+      if (empUserRes.rows[0]) {
+        const isApproved = status === 'APPROVED';
+        await inboxService.createNotification(db, {
+          tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+          title: isApproved ? 'Loan Approved ✅' : 'Loan Rejected',
+          message: isApproved
+            ? `Your loan of ₹${updatedLoan.principal_amount} has been approved.`
+            : `Your loan request was rejected.${remarks ? ' Remarks: ' + remarks : ''}`,
+          type: isApproved ? 'success' : 'warning', link: '/payroll/loans'
+        });
+      }
+    } catch (notifErr) {
+      console.error('Loan approve/reject notification error:', notifErr.message);
+    }
+
     return updatedLoan;
   } catch (err) {
     await client.query("ROLLBACK");

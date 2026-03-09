@@ -8,6 +8,7 @@ const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
 const tenantService = require("../tenant/tenant.service");
 const { encrypt, decrypt, encryptFields, decryptFields, decryptAndMaskFields, canRevealField, SENSITIVE_FIELDS, FIELD_CONFIG } = require("../../utils/encryption");
+const inboxService = require("../inbox/inbox.service");
 
 const getQuery = (db) =>
   db && typeof db.query === "function" ? db.query : dbQuery;
@@ -349,6 +350,20 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
       tempPassword
     ).catch(err => logger.error("Email sending error:", err));
 
+    // Welcome Notification
+    try {
+      await inboxService.createNotification(client, {
+        tenant_id: actor.tenantId,
+        user_id: userRes.rows[0].id,
+        title: 'Welcome! 👋',
+        message: `Welcome to the organization, ${data.first_name}! We're glad to have you here.`,
+        type: 'info',
+        link: '/profile'
+      });
+    } catch (notifErr) {
+      console.error('Welcome notification error:', notifErr.message);
+    }
+
     return {
       user: userRes.rows[0],
       employee: empRes.rows[0],
@@ -566,7 +581,7 @@ exports.getUsers = async (db, opts, actor) => {
 };
 
 /* ------------------------- GET ONE USER ------------------------- */
-exports.getUserById = async (db, id, tenantId, requester) => {
+exports.getUserById = async (db, id, tenantId, requester, options = {}) => {
   const query = getQuery(db);
   const res = await query(
     `
@@ -605,17 +620,24 @@ exports.getUserById = async (db, id, tenantId, requester) => {
     };
   }
 
-  // Decrypt and mask sensitive fields before returning
   if (user) {
-    decryptAndMaskFields(user);
+    // Determine requester's relationship to this user
+    const isSelf = requester ? requester.id === id : false;
+    const isHRAdmin = requester ? ['ADMIN', 'HR'].includes(requester.role) : false;
+    const isManager = requester ? requester.role === 'MANAGER' : false;
+    const isDirectReport = requester ? user.reports_to === requester.id : false;
+    const isAuthorized = isSelf || isHRAdmin || (isManager && isDirectReport);
+
+    // If unmask=true AND the requester is authorized, decrypt WITHOUT masking (for Edit form)
+    // Otherwise, decrypt and mask as usual (for Profile View)
+    if (options.unmask && isAuthorized) {
+      decryptFields(user);
+    } else {
+      decryptAndMaskFields(user);
+    }
 
     // Apply strict filtering based on the requester's role
     if (requester) {
-      const isSelf = requester.id === id;
-      const isHRAdmin = ['ADMIN', 'HR'].includes(requester.role);
-      const isManager = requester.role === 'MANAGER';
-      const isDirectReport = user.reports_to === requester.id;
-
       if (!isSelf && !isHRAdmin && !(isManager && isDirectReport)) {
         // Hide sensitive fields completely from unauthorized eyes
         delete user.ctc;

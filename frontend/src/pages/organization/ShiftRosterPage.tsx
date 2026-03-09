@@ -1,20 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usersService } from '@/services/users.service';
 import { getShifts } from '@/services/shift.service';
 import { departmentService } from '@/services/department.service';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Clock, Search, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export const ShiftRosterPage = () => {
-    const [search, setSearch] = useState('');
+export const ShiftRosterPage = ({ searchTerm = '' }: { searchTerm?: string }) => {
+    const [page, setPage] = useState(0);
+    const PAGE_SIZE = 16;
+    const search = searchTerm;
 
-    // Fetch Employees
-    const { data: employees = [], isLoading: loadingEmployees } = useQuery({
-        queryKey: ['employees', search], // Refetch when search changes
-        queryFn: () => usersService.getUsers(search ? { search } : undefined),
+    // Reset page on search
+    useEffect(() => {
+        setPage(0);
+    }, [search]);
+
+    // Fetch Employees with Pagination
+    const { data: usersResponse, isLoading: loadingEmployees } = useQuery({
+        queryKey: ['employees', search, page],
+        queryFn: () => usersService.getUsers({
+            search: search || undefined,
+            limit: PAGE_SIZE,
+            offset: page * PAGE_SIZE
+        }),
     });
+
+    const employees = usersResponse?.data || [];
+    const totalEmployees = usersResponse?.pagination?.total || employees.length;
+    const displayEmployees = employees.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     // Fetch Shifts (to map IDs to details)
     const { data: shifts = [] } = useQuery({
@@ -60,31 +75,7 @@ export const ShiftRosterPage = () => {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Shift Roster</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        View employee shift assignments and schedules.
-                    </p>
-                </div>
-                {/* Only allow editing if implemented? For now just view. */}
-            </div>
-
-            {/* Filters */}
-            <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                        placeholder="Search employees..."
-                        className="pl-9 h-10" // Force standard height
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-                {/* Maybe Department Filter in future */}
-            </div>
-
+        <div className="p-2 space-y-6">
             {/* Roster Grid/Table */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {loadingEmployees ? (
@@ -92,7 +83,7 @@ export const ShiftRosterPage = () => {
                 ) : employees.length === 0 ? (
                     <p className="col-span-full text-center text-gray-500 py-10">No employees found.</p>
                 ) : (
-                    employees.map((employee) => {
+                    displayEmployees.map((employee: any) => {
                         const shift = getShiftDetails(employee.shift_id, employee.shift);
                         const isAssigned = !!shift;
 
@@ -155,6 +146,36 @@ export const ShiftRosterPage = () => {
                     })
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {!loadingEmployees && employees.length > 0 && totalEmployees > PAGE_SIZE && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 mt-6">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalEmployees)} of {totalEmployees} employees
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage((p) => Math.max(0, p - 1))}
+                            disabled={page === 0}
+                        >
+                            <ChevronLeft size={16} />
+                        </Button>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Page {page + 1}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage((p) => p + 1)}
+                            disabled={(page + 1) * PAGE_SIZE >= totalEmployees}
+                        >
+                            <ChevronRight size={16} />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

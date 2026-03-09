@@ -1,4 +1,5 @@
 const db = require("../../../config/db");
+const inboxService = require("../../inbox/inbox.service");
 
 /* =========================
    EXPENSE CATEGORIES
@@ -72,7 +73,7 @@ const createExpense = async (tenantId, employeeId, userId, payload) => {
     throw new Error("Expense date cannot be in the future");
   }
 
-  return (
+  const created = (
     await db.query(
       `
       INSERT INTO employee_expenses
@@ -101,6 +102,29 @@ const createExpense = async (tenantId, employeeId, userId, payload) => {
       ]
     )
   ).rows[0];
+
+  // Notify admin/HR: new expense submitted
+  try {
+    const empRes = await db.query(
+      `SELECT first_name, last_name FROM employees WHERE id = $1`, [employeeId]
+    );
+    const emp = empRes.rows[0];
+    const hrUsers = await db.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, userId]
+    );
+    for (const hr of hrUsers.rows) {
+      await inboxService.createNotification(db, {
+        tenant_id: tenantId, user_id: hr.id,
+        title: 'New Expense Submitted',
+        message: `${emp?.first_name} ${emp?.last_name} submitted an expense of ₹${amount}`,
+        type: 'info', link: '/payroll/expenses'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Expense submit notification error:', notifErr.message);
+  }
+
+  return created;
 };
 
 const getExpenses = async (tenantId) => {
@@ -145,7 +169,29 @@ const approveExpense = async (tenantId, expenseId, status, approverId) => {
     throw new Error("Expense not found or already processed");
   }
 
-  return result.rows[0];
+  const updated = result.rows[0];
+
+  // Notify employee: expense approved/rejected
+  try {
+    const empUserRes = await db.query(
+      `SELECT e.user_id FROM employees e WHERE e.id = $1`, [updated.employee_id]
+    );
+    if (empUserRes.rows[0]) {
+      const isApproved = status === 'APPROVED';
+      await inboxService.createNotification(db, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: isApproved ? 'Expense Approved ✅' : 'Expense Rejected',
+        message: isApproved
+          ? `Your expense claim of ₹${updated.amount} has been approved.`
+          : `Your expense claim of ₹${updated.amount} was rejected.`,
+        type: isApproved ? 'success' : 'warning', link: '/payroll/expenses'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Expense approve notification error:', notifErr.message);
+  }
+
+  return updated;
 };
 
 const togglePayroll = async (tenantId, expenseId, payrollIncluded) => {

@@ -32,11 +32,12 @@ export const LeaveAllocationContent: React.FC = () => {
         queryFn: () => leaveService.getLeaveTypes(),
     });
 
-    const { data: employees = [], isLoading: loadingEmployees } = useQuery({
+    const { data: usersResponse, isLoading: loadingEmployees } = useQuery({
         queryKey: ['users', 'employees'],
         queryFn: () => usersService.getUsers({ role: 'EMPLOYEE' }),
         enabled: target === 'selected',
     });
+    const employees = usersResponse?.data || [];
 
     // Mutations
     const allocateMutation = useMutation({

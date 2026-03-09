@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, Loader2 } from 'lucide-react';
 import api from '@/services/api';
 import { toast } from 'react-hot-toast';
@@ -28,9 +28,35 @@ const PAYROLL_TABS: { id: string; label: string; action: PermissionAction }[] = 
 
 export const Payroll: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
   const canRunPayroll = hasPermission('payroll', 'run');
-  const [activeTab, setActiveTab] = useState<string>(hasPermission('payroll', 'manage') ? 'dashboard' : 'payslips');
+
+  const tabParam = searchParams.get('tab');
+
+  // Initialize from URL param if valid
+  const getInitialTab = (): string => {
+    if (tabParam && PAYROLL_TABS.some(t => t.id === tabParam)) {
+      const tab = PAYROLL_TABS.find(t => t.id === tabParam);
+      if (tab && hasPermission('payroll', tab.action)) {
+        return tabParam;
+      }
+    }
+    return hasPermission('payroll', 'manage') ? 'dashboard' : 'payslips';
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab);
+
+  // Sync with URL if it changes
+  useEffect(() => {
+    if (tabParam && PAYROLL_TABS.some(t => t.id === tabParam)) {
+      const tab = PAYROLL_TABS.find(t => t.id === tabParam);
+      if (tab && hasPermission('payroll', tab.action)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, [tabParam, hasPermission]);
+
   const [payRunLoading, setPayRunLoading] = useState(false);
 
   const handlePayRun = async () => {

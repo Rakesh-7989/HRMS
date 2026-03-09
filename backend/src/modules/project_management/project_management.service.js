@@ -8,6 +8,7 @@ const {
 const crypto = require("crypto");
 const logger = require("../../config/logger");
 const moment = require("moment");
+const inboxService = require("../inbox/inbox.service");
 
 /**
  * ============================================================================
@@ -464,7 +465,25 @@ exports.addProjectMember = async (tenantId, userId, projectId, employeeId, role 
     [memberId]
   );
 
-  return memberWithDetails.rows[0];
+  const member = memberWithDetails.rows[0];
+
+  // Notify employee: added to project
+  try {
+    const projRes = await pool.query(`SELECT name FROM projects WHERE id = $1`, [projectId]);
+    const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [employeeId]);
+    if (empUserRes.rows[0] && projRes.rows[0]) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: 'Added to Project',
+        message: `You've been added to project '${projRes.rows[0].name}'.`,
+        type: 'info', link: '/projects'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Project member add notification error:', notifErr.message);
+  }
+
+  return member;
 };
 
 /**
@@ -863,7 +882,26 @@ exports.createTask = async (tenantId, userId, data) => {
     );
   }
 
-  return await this.getTaskById(tenantId, taskId);
+  const createdTask = await this.getTaskById(tenantId, taskId);
+
+  // Notify assignees: new task assigned
+  try {
+    for (const empId of assignees) {
+      const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [empId]);
+      if (empUserRes.rows[0] && empUserRes.rows[0].user_id !== userId) {
+        await inboxService.createNotification(pool, {
+          tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+          title: 'New Task Assigned',
+          message: `You've been assigned task '${title}' in project '${project.name}'.`,
+          type: 'info', link: '/projects'
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.error('Task assign notification error:', notifErr.message);
+  }
+
+  return createdTask;
 };
 
 /**

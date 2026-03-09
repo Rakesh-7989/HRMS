@@ -43,11 +43,12 @@ export const AttendanceReportsContent: React.FC = () => {
     // Employee Search Config
     const [employeeSearch] = useState('');
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
-    const { data: employees = [] } = useQuery({
+    const { data: usersResponse } = useQuery({
         queryKey: ['users', 'list', employeeSearch],
         queryFn: () => usersService.getUsers({ search: employeeSearch, limit: 100 }),
         enabled: showFilters,
     });
+    const employees = usersResponse?.data || [];
 
     // Calculate date range based on selection
     const dateRange = useMemo(() => {

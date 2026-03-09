@@ -13,8 +13,8 @@ export const EditEmployeePage: React.FC = () => {
     const navigate = useNavigate();
 
     const { data: employee, isLoading, error } = useQuery({
-        queryKey: ['employee', id],
-        queryFn: () => usersService.getUserById(id!),
+        queryKey: ['employee-edit', id],
+        queryFn: () => usersService.getUserById(id!, { unmask: true }),
         enabled: !!id,
     });
 

@@ -20,8 +20,8 @@ export const EmployeeDocumentsPage: React.FC = () => {
     const { data: employee } = useQuery({
         queryKey: ['employee', id],
         queryFn: async () => {
-            const employees = await usersService.getUsers({});
-            return employees.find(e => e.id === id);
+            const res = await usersService.getUsers({});
+            return (res.data || []).find(e => e.id === id);
         },
         enabled: !!id
     });

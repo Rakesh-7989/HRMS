@@ -1,6 +1,7 @@
 const timeService = require("../../utils/timeService");
 const delegationService = require("../leave/delegations/delegation.service");
 const pool = require("../../config/db");
+const inboxService = require("../inbox/inbox.service");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -46,7 +47,30 @@ exports.requestWFH = async (db, data, actor) => {
         [actor.tenantId, actor.employeeId, request_date, reason, actor.id]
     );
 
-    return result.rows[0];
+    const created = result.rows[0];
+
+    // Notify manager/HR about WFH request
+    try {
+        const empRes = await pool.query(
+            `SELECT first_name, last_name, reports_to FROM employees WHERE id = $1`, [actor.employeeId]
+        );
+        const emp = empRes.rows[0];
+        if (emp?.reports_to) {
+            const mgrRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [emp.reports_to]);
+            if (mgrRes.rows[0]) {
+                await inboxService.createNotification(pool, {
+                    tenant_id: actor.tenantId, user_id: mgrRes.rows[0].user_id,
+                    title: 'New WFH Request',
+                    message: `${emp.first_name} ${emp.last_name} requested WFH for ${request_date}`,
+                    type: 'info', link: '/wfh'
+                });
+            }
+        }
+    } catch (notifErr) {
+        console.error('WFH request notification error:', notifErr.message);
+    }
+
+    return created;
 };
 
 /* ========================== GET MY WFH REQUESTS ========================== */
@@ -188,6 +212,21 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
              RETURNING *`,
             [actor.id, comment, requestId, actor.tenantId]
         );
+        // Notify employee: manager forwarded to HR
+        try {
+            const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
+            if (empUserRes.rows[0]) {
+                await inboxService.createNotification(pool, {
+                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'WFH Request Update',
+                    message: 'Your WFH request has been approved by your manager and forwarded to HR.',
+                    type: 'info', link: '/wfh'
+                });
+            }
+        } catch (notifErr) {
+            console.error('WFH manager-approve notification error:', notifErr.message);
+        }
+
         return result.rows[0];
     }
 
@@ -210,6 +249,21 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
              RETURNING *`,
             [actor.id, comment, requestId, actor.tenantId]
         );
+        // Notify employee: WFH approved
+        try {
+            const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
+            if (empUserRes.rows[0]) {
+                await inboxService.createNotification(pool, {
+                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'WFH Approved ✅',
+                    message: `Your WFH request for ${request.request_date instanceof Date ? request.request_date.toISOString().split('T')[0] : request.request_date} has been approved.`,
+                    type: 'success', link: '/wfh'
+                });
+            }
+        } catch (notifErr) {
+            console.error('WFH approve notification error:', notifErr.message);
+        }
+
         return result.rows[0];
     }
 
@@ -282,7 +336,24 @@ exports.rejectWFH = async (db, requestId, actor, reason) => {
         [actor.id, reason, requestId, actor.tenantId]
     );
 
-    return result.rows[0];
+    const rejected = result.rows[0];
+
+    // Notify employee: WFH rejected
+    try {
+        const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
+        if (empUserRes.rows[0]) {
+            await inboxService.createNotification(pool, {
+                tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                title: 'WFH Request Rejected',
+                message: `Your WFH request has been rejected. Reason: ${reason}`,
+                type: 'warning', link: '/wfh'
+            });
+        }
+    } catch (notifErr) {
+        console.error('WFH reject notification error:', notifErr.message);
+    }
+
+    return rejected;
 };
 
 /* ========================== CHECK WFH FOR DATE ========================== */

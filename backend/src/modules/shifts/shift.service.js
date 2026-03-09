@@ -1,6 +1,7 @@
 const pool = require("../../config/db");
 const logger = require("../../config/logger");
 const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
+const inboxService = require("../inbox/inbox.service");
 
 const getQuery = (db) => {
     if (db && typeof db.query === "function") return db.query.bind(db);
@@ -225,6 +226,27 @@ exports.assignShiftToEmployees = async (db, tenantId, shiftId, employeeIds, assi
              RETURNING id`,
             [shiftId, tenantId, employeeIds]
         );
-        return { count: result.rowCount };
+        const assignResult = { count: result.rowCount };
+
+        // Notify assigned employees
+        try {
+            const shiftRes = await pool.query(`SELECT name FROM shifts WHERE id = $1`, [shiftId]);
+            const shiftName = shiftRes.rows[0]?.name || 'new shift';
+            for (const row of result.rows) {
+                const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [row.id]);
+                if (empUserRes.rows[0]) {
+                    await inboxService.createNotification(pool, {
+                        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                        title: 'Shift Assigned',
+                        message: `You have been assigned to the '${shiftName}' shift.`,
+                        type: 'info', link: '/organization/shifts'
+                    });
+                }
+            }
+        } catch (notifErr) {
+            console.error('Shift assign notification error:', notifErr.message);
+        }
+
+        return assignResult;
     }
 };

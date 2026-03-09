@@ -395,7 +395,7 @@ class SubscriptionService {
 
         return {
             plan_name: sub?.plan_name || 'NONE',
-            max_employees: sub?.max_employees || 0,
+            max_employees: sub?.max_employees === null ? null : (sub?.max_employees ?? 0),
             current_employees: currentCount,
             status: sub?.status || 'INACTIVE',
             end_date: sub?.end_date

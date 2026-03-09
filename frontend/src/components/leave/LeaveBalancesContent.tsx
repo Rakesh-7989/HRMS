@@ -34,11 +34,12 @@ export const LeaveBalancesContent: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+    const { data: usersResponse, isLoading: searchLoading } = useQuery({
         queryKey: ['users', 'search', debouncedSearch],
         queryFn: () => usersService.getUsers({ search: debouncedSearch, limit: 10 }),
         enabled: debouncedSearch.length > 2,
     });
+    const searchResults = usersResponse?.data || [];
 
     const { data: balances = [], isLoading: balancesLoading, refetch: refetchBalances } = useQuery({
         queryKey: ['leave-balances', selectedEmployee?.id],
