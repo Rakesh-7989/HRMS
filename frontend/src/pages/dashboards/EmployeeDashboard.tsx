@@ -666,8 +666,8 @@ export const EmployeeDashboard: React.FC = () => {
                     <div className="flex items-center justify-center h-32">
                       <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                     </div>
-                  ) : (departmentMembers?.length || 0) > 0 ? (
-                    departmentMembers?.filter((m: any) => m.id !== user?.id).slice(0, 6).map((member: any) => (
+                  ) : (departmentMembers?.data?.length || 0) > 0 ? (
+                    departmentMembers?.data?.filter((m: any) => m.id !== user?.id).slice(0, 6).map((member: any) => (
                       <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
                         <div className="relative">
                           <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-white dark:border-slate-800 shadow-sm">

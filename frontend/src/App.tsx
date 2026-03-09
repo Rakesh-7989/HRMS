@@ -308,7 +308,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
             </SubscriptionGuard>
-            <ChatPage />
           </ProtectedRoute>
         }
       />
@@ -338,7 +337,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><ShiftsPage /></Suspense>
             </SubscriptionGuard>
-            <ShiftsPage />
           </ProtectedRoute>
         }
       />
@@ -398,7 +396,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><AssetsPage /></Suspense>
             </SubscriptionGuard>
-            <AssetsPage />
           </ProtectedRoute>
         }
       />
@@ -417,7 +414,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><AssetDetailsPage /></Suspense>
             </SubscriptionGuard>
-            <AssetDetailsPage />
           </ProtectedRoute>
         }
       />
@@ -455,7 +451,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense>
             </SubscriptionGuard>
-            <ProjectsPage />
           </ProtectedRoute>
         }
       />
@@ -466,7 +461,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={3}>
               <Suspense fallback={<PageLoader />}><ClientsPage /></Suspense>
             </SubscriptionGuard>
-            <ClientsPage />
           </ProtectedRoute>
         }
       />
@@ -517,7 +511,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
             </SubscriptionGuard>
-            <Payroll />
           </ProtectedRoute>
         }
       />
@@ -530,9 +523,6 @@ const router = createBrowserRouter(
                 <Suspense fallback={<PageLoader />}><PayrollDashboard /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
-            <DashboardLayout title="Payroll Command Center">
-              <PayrollDashboard />
-            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -543,7 +533,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><RiverProcess /></Suspense>
             </SubscriptionGuard>
-            <RiverProcess />
           </ProtectedRoute>
         }
       />
@@ -554,7 +543,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><FnFSettlementsPage /></Suspense>
             </SubscriptionGuard>
-            <FnFSettlementsPage />
           </ProtectedRoute>
         }
       />
@@ -565,7 +553,6 @@ const router = createBrowserRouter(
             <SubscriptionGuard minPlan={2}>
               <Suspense fallback={<PageLoader />}><FnFSettlementDetailsPage /></Suspense>
             </SubscriptionGuard>
-            <FnFSettlementDetailsPage />
           </ProtectedRoute>
         }
       />
@@ -578,9 +565,6 @@ const router = createBrowserRouter(
                 <Suspense fallback={<PageLoader />}><ArrearsPage /></Suspense>
               </DashboardLayout>
             </SubscriptionGuard>
-            <DashboardLayout title="Arrears Management">
-              <ArrearsPage />
-            </DashboardLayout>
           </ProtectedRoute>
         }
       />

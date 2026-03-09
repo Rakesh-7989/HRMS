@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/Dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { getShifts, createShift, updateShift, deleteShift, assignShift, Shift } from '@/services/shift.service';
-import { usersService, User } from '@/services/users.service';
+import { usersService } from '@/services/users.service';
 import { Plus, Edit2, Trash2, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 

@@ -287,6 +287,7 @@ export interface MentionableUser {
     first_name: string;
     last_name: string;
     display_name: string;
+}
 
 // Employee Interface
 export interface Employee {
