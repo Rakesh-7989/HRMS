@@ -51,7 +51,12 @@ pool.query = async (text, params) => {
     await withContext(client);
     return await client.query(text, params);
   } finally {
-    await client.query("RESET ALL");
+    try {
+      await client.query("RESET ALL");
+    } catch (err) {
+      // If RESET ALL fails, it's likely the connection is dead. 
+      // We still want to release it back to the pool (it will likely be discarded).
+    }
     client.release();
   }
 };
@@ -91,7 +96,7 @@ module.exports = pool;
 // // Log unexpected errors
 // pool.on("error", (err) => {
 //   logger.error("Unexpected PG pool error", err);
-//   // Optional: process.exit(1); 
+//   // Optional: process.exit(1);
 // });
 
 // // ---------- RLS SESSION SETUP ----------
@@ -106,7 +111,7 @@ module.exports = pool;
 
 //   /**
 //    * IMPORTANT: 'SET' command in PostgreSQL does not support bind parameters ($1).
-//    * We use 'SELECT set_config(setting_name, new_value, is_local)' which is a 
+//    * We use 'SELECT set_config(setting_name, new_value, is_local)' which is a
 //    * function and allows parameter binding, making it both safe and functional.
 //    */
 
@@ -136,7 +141,7 @@ module.exports = pool;
 // const originalConnect = pool.connect.bind(pool);
 
 // /**
-//  * Patch pool.connect to automatically apply RLS context 
+//  * Patch pool.connect to automatically apply RLS context
 //  * to every client acquired from the pool.
 //  */
 // pool.connect = async (...args) => {
@@ -164,6 +169,6 @@ module.exports = pool;
 // };
 
 // // ---------- EXPORT ----------
-// // Exporting the pool instance directly ensures compatibility with all 
+// // Exporting the pool instance directly ensures compatibility with all
 // // modules expecting a PgPool (with .on, .connect, .query, etc.)
 // module.exports = pool;

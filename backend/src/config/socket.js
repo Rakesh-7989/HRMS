@@ -221,16 +221,21 @@ const initSocket = (httpServer) => {
                     // Broadcast to all conversation participants that the call is totally over
                     try {
                         const client = await pool.connect();
-                        // Manual RLS
-                        await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                        try {
+                            // Manual RLS
+                            await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
 
-                        const parts = await client.query("SELECT user_id FROM conversation_participants WHERE conversation_id = $1", [to]);
-                        client.release();
+                            const parts = await client.query("SELECT user_id FROM conversation_participants WHERE conversation_id = $1", [to]);
 
-                        parts.rows.forEach(p => {
-                            io.to(`user_${String(p.user_id)}`).emit("group-call-ended", { conversationId: to });
-                        });
-                    } catch (e) { console.error("End broadcast failed", e); }
+                            parts.rows.forEach(p => {
+                                io.to(`user_${String(p.user_id)}`).emit("group-call-ended", { conversationId: to });
+                            });
+                        } finally {
+                            client.release();
+                        }
+                    } catch (e) {
+                        logger.error("End broadcast failed", e);
+                    }
                 }
             } else {
                 const targetRoom = `user_${String(to)}`;
@@ -278,24 +283,28 @@ const initSocket = (httpServer) => {
         });
 
         socket.on("disconnect", async () => {
-            logger.info(`User disconnected: ${socket.user.id}`);
+            try {
+                logger.info(`User disconnected: ${socket.user.id}`);
 
-            // Update status to OFFLINE if this was the last connection
-            const userRoom = `user_${String(socket.user.id)}`;
-            const userSockets = io.sockets.adapter.rooms.get(userRoom);
-            if (!userSockets || userSockets.size === 0) {
-                const client = await pool.connect();
-                try {
-                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
-                    await client.query(`SET app.user_id = '${socket.user.id}'`);
-                    await client.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
-                    io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'OFFLINE' });
-                    logger.info(`User ${socket.user.id} status updated to OFFLINE`);
-                } catch (err) {
-                    logger.error(`Failed to update disconnect status for user ${socket.user.id}`, err);
-                } finally {
-                    client.release();
+                // Update status to OFFLINE if this was the last connection
+                const userRoom = `user_${String(socket.user.id)}`;
+                const userSockets = io.sockets.adapter.rooms.get(userRoom);
+                if (!userSockets || userSockets.size === 0) {
+                    const client = await pool.connect();
+                    try {
+                        await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                        await client.query(`SET app.user_id = '${socket.user.id}'`);
+                        await client.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
+                        io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'OFFLINE' });
+                        logger.info(`User ${socket.user.id} status updated to OFFLINE`);
+                    } catch (err) {
+                        logger.error(`Failed to update disconnect status for user ${socket.user.id}`, err);
+                    } finally {
+                        client.release();
+                    }
                 }
+            } catch (err) {
+                logger.error(`Socket disconnect error for user ${socket.user.id}`, err);
             }
         });
     });
