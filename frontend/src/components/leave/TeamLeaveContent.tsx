@@ -4,7 +4,6 @@ import { cn } from '@/utils/cn';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType } from '@/services/leave.service';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, subDays } from 'date-fns';
@@ -12,7 +11,6 @@ import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { LeaveApplication } from '@/services/leave.service';
 
 export const TeamLeaveContent: React.FC = () => {
-    const { user } = useAuth();
     const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');

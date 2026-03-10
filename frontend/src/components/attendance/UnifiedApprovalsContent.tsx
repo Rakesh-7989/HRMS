@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { WFHApprovalsContent } from '@/components/wfh/WFHApprovalsContent';
 import { MyWFHRequestsContent } from '@/components/wfh/MyWFHRequestsContent';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 
 type SubTab = 'team' | 'wfh-approvals' | 'my-wfh';
 
 export const UnifiedApprovalsContent: React.FC = () => {
-    const { user } = useAuth();
     const { hasPermission } = usePermissions();
     const canApproveAttendance = hasPermission('attendance', 'approve');
     const canApproveWFH = hasPermission('wfh', 'approve');

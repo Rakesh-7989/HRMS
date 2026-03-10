@@ -66,7 +66,6 @@ export const AssetDetailsPage: React.FC = () => {
 
   // For legacy compatibility or general management access
   const canManage = canUpdate || hasPermission('assets', 'manage');
-  const canReturn = canAssign;
 
   if (!canView) {
     return (

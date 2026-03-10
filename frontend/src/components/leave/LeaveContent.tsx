@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, CheckCircle, XCircle, Search, Filter, Calendar, User, TrendingUp } from 'lucide-react';
@@ -12,7 +11,6 @@ import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { LeaveApplication } from '@/services/leave.service';
 
 export const LeaveContent: React.FC = () => {
-    const { user } = useAuth();
     const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);

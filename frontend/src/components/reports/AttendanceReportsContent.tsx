@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { format, subDays } from 'date-fns';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { BarChart } from '@/components/charts/BarChart';
@@ -30,7 +30,6 @@ import {
 import { adminService } from '@/services/admin.service';
 
 export const AttendanceReportsContent: React.FC = () => {
-    const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -41,7 +40,6 @@ export const AttendanceReportsContent: React.FC = () => {
     const canManage = hasPermission('attendance', 'manage');
     const canViewAll = hasPermission('attendance', 'view_all') || canManage;
     const canViewTeam = hasPermission('attendance', 'view_team') || canManage;
-    const canViewAnalytics = hasPermission('attendance', 'view_analytics') || canManage;
 
     // Calculate date range based on selection
     const dateRange = useMemo(() => {

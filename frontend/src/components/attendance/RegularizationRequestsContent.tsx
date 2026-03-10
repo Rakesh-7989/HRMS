@@ -14,16 +14,14 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Textarea } from '@/components/ui/Textarea';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { CheckCircle, XCircle, Clock, Calendar } from 'lucide-react';
 
 export const RegularizationRequestsContent: React.FC = () => {
-    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     const { hasPermission } = usePermissions();
     const canManage = hasPermission('attendance', 'manage');
-    const canRegularize = hasPermission('attendance', 'regularize') || canManage;
     const canApprove = hasPermission('attendance', 'approve') || canManage;
     const canReview = canApprove || canManage;
 
