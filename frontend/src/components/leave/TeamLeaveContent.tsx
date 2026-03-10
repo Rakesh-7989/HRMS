@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
@@ -12,13 +13,14 @@ import { LeaveApplication } from '@/services/leave.service';
 
 export const TeamLeaveContent: React.FC = () => {
     const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
     const rangeTo = format(new Date(), 'yyyy-MM-dd');
     const rangeFrom = format(subDays(new Date(), 29), 'yyyy-MM-dd');
 
-    const canApprove = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+    const canApprove = hasPermission('leave', 'approve');
 
     // Fetch leave types dynamically
     const { data: leaveTypes = [] } = useQuery<LeaveType[]>({
@@ -92,7 +94,7 @@ export const TeamLeaveContent: React.FC = () => {
         });
     }, [currentList, searchTerm, typeFilter]);
 
-    if (!canApprove) return <div className="p-8 text-center bg-red-50 text-red-600 rounded-lg">Access Denied: Insufficient permissions</div>;
+
 
     return (
         <div className="space-y-6">

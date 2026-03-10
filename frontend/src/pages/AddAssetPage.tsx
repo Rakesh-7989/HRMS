@@ -5,9 +5,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
 
 interface AssetFormData {
@@ -35,7 +35,6 @@ interface AssetFormData {
 }
 
 export const AddAssetPage: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
@@ -225,13 +224,31 @@ export const AddAssetPage: React.FC = () => {
     }));
   };
 
-  const canManage = user?.role === 'ADMIN';
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('assets', 'create');
+  const canUpdate = hasPermission('assets', 'update');
+  const canManage = isEdit ? canUpdate : canCreate;
 
   if (!canManage) {
     return (
       <DashboardLayout title="Access Denied">
         <Card>
-          <p className="text-center text-gray-500">You don't have permission to manage assets.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <X className="text-red-600 dark:text-red-400" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+              You don't have permission to {isEdit ? 'edit' : 'create'} assets. Please contact your administrator if you believe this is an error.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/assets')}
+              className="mt-6"
+            >
+              Back to Assets
+            </Button>
+          </div>
         </Card>
       </DashboardLayout>
     );

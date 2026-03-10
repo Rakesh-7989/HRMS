@@ -20,13 +20,27 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const AssetRequestsPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { confirm, prompt: showPrompt } = useConfirm();
-    const isAdminOrHR = ['ADMIN', 'HR'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManageRequests = hasPermission('assets', 'manage_requests') || hasPermission('assets', 'manage');
+    const canRequest = hasPermission('assets', 'request');
+    const canView = hasPermission('assets', 'view') || canManageRequests;
+
+    if (!canView && !canRequest) {
+        return (
+            <DashboardLayout title="Access Denied">
+                <Card>
+                    <p className="p-8 text-center text-gray-500">You do not have permission to view asset requests.</p>
+                </Card>
+            </DashboardLayout>
+        );
+    }
 
     // Edit/Delete State
     const [showModal, setShowModal] = useState(false);
@@ -177,7 +191,7 @@ export const AssetRequestsPage: React.FC = () => {
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Asset Requests</h2>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                {isAdminOrHR
+                                {canManageRequests
                                     ? 'Review and manage asset requests from all employees.'
                                     : 'View your submitted asset requests and their status.'}
                             </p>
@@ -264,7 +278,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                                 );
                                                             }
 
-                                                            if (isAdminOrHR) {
+                                                            if (canManageRequests) {
                                                                 return (
                                                                     <>
                                                                         <Button

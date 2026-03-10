@@ -144,11 +144,17 @@ export const AssetsPage: React.FC = () => {
   });
 
   const canManage = hasPermission('assets', 'manage');
-  const canViewDetails = hasPermission('assets', 'view');
-  const canRequestAsset = hasPermission('assets', 'view');
+  const canManageRequests = hasPermission('assets', 'manage_requests') || canManage;
+  const canCreate = hasPermission('assets', 'create') || canManage;
+  const canUpdate = hasPermission('assets', 'update') || canManage;
+  const canDelete = hasPermission('assets', 'delete') || canManage;
+  const canViewDetails = hasPermission('assets', 'view') || canManage;
+  const canRequestAsset = hasPermission('assets', 'request');
   const canViewBarcode = hasPermission('assets', 'view_barcode') || canManage;
   const canExportAssets = hasPermission('assets', 'export') || canManage;
   const canAssign = hasPermission('assets', 'assign') || canManage;
+
+  const isAnyAdmin = canCreate || canUpdate || canDelete || canAssign || canManageRequests;
 
   const handleAssign = (assetId: string) => {
     setAssignForm({ assetId, employeeId: '' });
@@ -355,15 +361,15 @@ export const AssetsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title={canManage ? 'Asset Management' : 'My Assets'}
+      title={isAnyAdmin ? 'Asset Management' : 'My Assets'}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: canManage ? 'Assets' : 'My Assets' },
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: isAnyAdmin ? 'Assets' : 'My Assets' },
       ]}
     >
-      <div className="space-y-6">
-        {/* Dashboard Stats (ADMIN/HR only) */}
-        {canManage && dashboard && (
+      <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Statistics Dashboard */}
+        {isAnyAdmin && dashboard && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { label: 'Total Assets', value: dashboard.summary.total_assets, sub: `₹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
@@ -492,7 +498,7 @@ export const AssetsPage: React.FC = () => {
                 </motion.button>
               )}
 
-              {canManage && (
+              {canAssign && (
                 <motion.button
                   key="assign"
                   initial={{ opacity: 0, x: 20 }}
@@ -517,10 +523,10 @@ export const AssetsPage: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl text-sm font-bold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 shadow-sm transition-all whitespace-nowrap min-w-fit"
               >
                 <ClipboardList size={18} />
-                <span>{canManage || user?.role === 'HR' ? 'Requests' : 'My Requests'}</span>
+                <span>{canManageRequests ? 'Requests' : 'My Requests'}</span>
               </motion.button>
 
-              {user?.role === 'ADMIN' && (
+              {canCreate && (
                 <motion.button
                   key="add"
                   initial={{ opacity: 0, x: 20 }}
@@ -584,7 +590,7 @@ export const AssetsPage: React.FC = () => {
                 ) : filteredAssets.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                      {canManage ? 'No assets found' : 'No assets assigned to you'}
+                      {isAnyAdmin ? 'No assets found' : 'No assets assigned to you'}
                     </td>
                   </tr>
                 ) : (
@@ -672,9 +678,9 @@ export const AssetsPage: React.FC = () => {
                             </button>
                           )}
 
-                          {(canManage || canAssign) ? (
+                          {(canUpdate || canAssign || canDelete) ? (
                             <>
-                              {canManage && (
+                              {canUpdate && (
                                 <button
                                   onClick={() => navigate(`/assets/${asset.id}/edit`)}
                                   className="text-violet-600 hover:text-violet-800"
@@ -683,32 +689,34 @@ export const AssetsPage: React.FC = () => {
                                   <Edit size={16} />
                                 </button>
                               )}
-                              {asset.status === 'AVAILABLE' ? (
-                                <button
-                                  onClick={() => handleAssign(asset.id)}
-                                  className="text-green-600 hover:text-green-800"
-                                  title="Assign Asset"
-                                >
-                                  <UserCheck size={16} />
-                                </button>
-                              ) : asset.status === 'ASSIGNED' ? (
-                                <>
+                              {canAssign && (
+                                asset.status === 'AVAILABLE' ? (
                                   <button
-                                    onClick={() => handleSwap(asset.id)}
-                                    className="text-amber-600 hover:text-amber-800"
-                                    title="Swap / Upgrade Asset"
+                                    onClick={() => handleAssign(asset.id)}
+                                    className="text-green-600 hover:text-green-800"
+                                    title="Assign Asset"
                                   >
-                                    <RefreshCw size={16} />
+                                    <UserCheck size={16} />
                                   </button>
-                                  <button
-                                    onClick={() => handleUnassign(asset.id)}
-                                    className="text-red-600 hover:text-red-800"
-                                    title="Return Asset"
-                                  >
-                                    <UserX size={16} />
-                                  </button>
-                                </>
-                              ) : null}
+                                ) : asset.status === 'ASSIGNED' ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleSwap(asset.id)}
+                                      className="text-amber-600 hover:text-amber-800"
+                                      title="Swap / Upgrade Asset"
+                                    >
+                                      <RefreshCw size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleUnassign(asset.id)}
+                                      className="text-red-600 hover:text-red-800"
+                                      title="Return Asset"
+                                    >
+                                      <UserX size={16} />
+                                    </button>
+                                  </>
+                                ) : null
+                              )}
                             </>
                           ) : (
                             canRequestAsset &&

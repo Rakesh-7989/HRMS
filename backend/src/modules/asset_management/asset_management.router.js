@@ -230,22 +230,24 @@ router.get(
 
 /**
  * POST /api/assets/requests/create
- * Submit new asset request (Anyone can request if authed)
+ * Submit new asset request
  */
 router.post(
   "/requests/create",
   verifyJwt,
+  requirePermission("assets", "request"),
   validate(createAssetRequestSchema),
   ctrl.createAssetRequest
 );
 
 /**
  * GET /api/assets/requests/list
- * List all asset requests (Filtering logic in controller)
+ * List all asset requests
  */
 router.get(
   "/requests/list",
   verifyJwt,
+  requirePermission("assets", "view"),
   ctrl.listAssetRequests
 );
 

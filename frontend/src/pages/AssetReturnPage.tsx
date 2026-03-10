@@ -5,8 +5,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
-import { ArrowLeft, Save, AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, AlertTriangle, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ChecklistItem {
     item_name: string;
@@ -24,6 +25,9 @@ export const AssetReturnPage: React.FC = () => {
         condition: 'GOOD',
         notes: '',
     });
+
+    const { hasPermission } = usePermissions();
+    const canReturn = hasPermission('assets', 'assign');
 
     const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
     const [newItemName, setNewItemName] = useState('');
@@ -131,6 +135,31 @@ export const AssetReturnPage: React.FC = () => {
         return (
             <DashboardLayout title="Asset Not Found">
                 <div className="text-center p-8">Asset not found</div>
+            </DashboardLayout>
+        );
+    }
+
+    if (!canReturn) {
+        return (
+            <DashboardLayout title="Access Denied">
+                <Card>
+                    <div className="flex flex-col items-center justify-center p-12 text-center">
+                        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                            <X className="text-red-600 dark:text-red-400" size={32} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                            You don't have permission to return assets. Please contact your administrator if you believe this is an error.
+                        </p>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/assets')}
+                            className="mt-6"
+                        >
+                            Back to Assets
+                        </Button>
+                    </div>
+                </Card>
             </DashboardLayout>
         );
     }

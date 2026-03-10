@@ -5,7 +5,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeft,
   Edit,
@@ -25,12 +24,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { AssetStatus } from '@/types';
 
 export const AssetDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const { data: asset, isLoading: isLoadingAsset } = useQuery({
     queryKey: ['asset', id],
@@ -58,10 +57,16 @@ export const AssetDetailsPage: React.FC = () => {
     enabled: !!id && historyView === 'usage',
   });
 
-  const canManage = user?.role === 'ADMIN';
-  const canReturn = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canViewBarcode = ['ADMIN', 'HR'].includes(user?.role || '');
-  const canView = ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '');
+  const { hasPermission } = usePermissions();
+  const canUpdate = hasPermission('assets', 'update');
+  const canAssign = hasPermission('assets', 'assign');
+  const canViewBarcode = hasPermission('assets', 'view_barcode');
+  const canView = hasPermission('assets', 'view');
+  const canViewTracking = hasPermission('assets', 'view_tracking');
+
+  // For legacy compatibility or general management access
+  const canManage = canUpdate || hasPermission('assets', 'manage');
+  const canReturn = canAssign;
 
   if (!canView) {
     return (
@@ -497,8 +502,8 @@ export const AssetDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* History Section - Only for ADMIN and HR */}
-        {canReturn && (
+        {/* History Section - Only for those with view_tracking permission or management */}
+        {(canViewTracking || canAssign) && (
           <div className="mt-8">
             <Card>
               <div className="p-6">

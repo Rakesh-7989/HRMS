@@ -55,7 +55,7 @@ router.get(
 // Get Currently On Break (Manager/HR/Admin)
 router.get(
   "/break/current",
-  requirePermission("attendance", "view_team"),
+  requirePermission("attendance", ["view_team", "manage"]),
   controller.getCurrentBreaks
 );
 
@@ -90,7 +90,7 @@ router.post(
 // Get team attendance
 router.get(
   "/team/attendance",
-  requirePermission("attendance", "view_team"),
+  requirePermission("attendance", ["view_team", "manage"]),
   validate(validator.teamAttendanceQuerySchema),
   controller.getTeamAttendance
 );
@@ -100,7 +100,7 @@ router.get(
 // Get all attendance records
 router.get(
   "/records",
-  requirePermission("attendance", "view_all"),
+  requirePermission("attendance", ["view_all", "manage"]),
   validate(validator.attendanceRecordsQuerySchema),
   controller.getAttendanceRecords
 );
@@ -108,7 +108,7 @@ router.get(
 // Approve attendance
 router.put(
   "/:id/approve",
-  requirePermission("attendance", "approve"),
+  requirePermission("attendance", ["approve", "manage"]),
   validate(validator.approveAttendanceSchema),
   controller.approveAttendance
 );
@@ -116,7 +116,7 @@ router.put(
 // Reject attendance
 router.put(
   "/:id/reject",
-  requirePermission("attendance", "approve"),
+  requirePermission("attendance", ["approve", "manage"]),
   validate(validator.rejectAttendanceSchema),
   controller.rejectAttendance
 );
@@ -124,7 +124,7 @@ router.put(
 // Get attendance summary for payroll period
 router.get(
   "/summary",
-  requirePermission("attendance", "manage_settings"),
+  requirePermission("attendance", ["manage_settings", "manage"]),
   validate(validator.summaryQuerySchema),
   controller.getAttendanceSummary
 );
@@ -132,7 +132,7 @@ router.get(
 // Get all pending checkouts
 router.get(
   "/pending",
-  requirePermission("attendance", "view_all"),
+  requirePermission("attendance", ["view_all", "manage"]),
   validate(validator.pendingCheckoutsQuerySchema),
   controller.getPendingCheckouts
 );
@@ -140,7 +140,7 @@ router.get(
 // Auto-approve all pending checkouts
 router.post(
   "/pending/auto-approve",
-  requirePermission("attendance", "manage_settings"),
+  requirePermission("attendance", ["manage_settings", "manage"]),
   validate(validator.autoApprovePendingSchema),
   controller.autoApprovePendingCheckouts
 );
@@ -150,7 +150,7 @@ router.post(
 // Analytics
 router.get(
   "/analytics",
-  requirePermission("attendance", "view_analytics"),
+  requirePermission("attendance", ["view_analytics", "manage"]),
   validate(validator.analyticsQuerySchema),
   controller.getAttendanceAnalytics
 );
@@ -158,7 +158,7 @@ router.get(
 // Reports
 router.get(
   "/reports",
-  requirePermission("attendance", "view_analytics"),
+  requirePermission("attendance", ["view_analytics", "manage"]),
   validate(validator.reportsQuerySchema),
   controller.getAttendanceReports
 );
@@ -166,7 +166,7 @@ router.get(
 // Individual Report
 router.get(
   "/report/individual/:employeeId",
-  requirePermission("attendance", "view_team"),
+  requirePermission("attendance", ["view_team", "manage"]),
   controller.getIndividualEmployeeReport
 );
 
@@ -179,7 +179,7 @@ router.get(
 
 router.get(
   "/weekly-hours/:employeeId",
-  requirePermission("attendance", "view_team"),
+  requirePermission("attendance", ["view_team", "manage"]),
   controller.getWeeklyAttendanceHours
 );
 
@@ -203,7 +203,7 @@ router.get(
 // Get pending regularization requests for team
 router.get(
   "/regularize/pending",
-  requirePermission("attendance", "regularize"),
+  requirePermission("attendance", ["regularize", "approve", "manage"]),
   validate(validator.pendingRegularizationQuerySchema),
   controller.getPendingRegularizations
 );
@@ -211,7 +211,7 @@ router.get(
 // Review regularization (Approve/Reject)
 router.put(
   "/regularize/:id/review",
-  requirePermission("attendance", "regularize"),
+  requirePermission("attendance", ["regularize", "approve", "manage"]),
   validate(validator.regularizationReviewSchema),
   controller.reviewRegularization
 );

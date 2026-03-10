@@ -17,50 +17,39 @@ router.use(verifyJwt);
 
 router.get(
     "/settings",
-    requirePermission("geo_fencing", "view"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getSettings
 );
 
-router.put(
-    "/settings",
-    requirePermission("geo_fencing", "manage_settings"),
-    validate(validator.updateSettingsSchema),
-    controller.updateSettings
-);
-
-// ==========================================================================
-// LOCATIONS
-// ==========================================================================
-
 router.get(
     "/locations",
-    requirePermission("geo_fencing", "view"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getLocations
 );
 
 router.get(
     "/locations/:id",
-    requirePermission("geo_fencing", "view"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getLocation
 );
 
 router.post(
     "/locations",
-    requirePermission("geo_fencing", "manage_locations"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     validate(validator.createLocationSchema),
     controller.createLocation
 );
 
 router.put(
     "/locations/:id",
-    requirePermission("geo_fencing", "manage_locations"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     validate(validator.updateLocationSchema),
     controller.updateLocation
 );
 
 router.delete(
     "/locations/:id",
-    requirePermission("geo_fencing", "manage_locations"),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.deleteLocation
 );
 
@@ -70,7 +59,7 @@ router.delete(
 
 router.post(
     "/validate",
-    requirePermission("geo_fencing", "view"),
+    requirePermission("attendance", "clock_in_out"),
     validate(validator.validateLocationSchema),
     controller.validateLocation
 );
@@ -81,7 +70,7 @@ router.post(
 
 router.get(
     "/violations",
-    requirePermission("geo_fencing", "view_violations"),
+    requirePermission("attendance", ["view_geofence_violations", "manage"]),
     controller.getViolations
 );
 

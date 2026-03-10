@@ -17,11 +17,11 @@ export const LeavePage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   const LEAVE_TABS: { id: string; label: string; action: PermissionAction; minPlan?: number }[] = [
-    { id: 'my-leave', label: t('leave.tabs.myLeave'), action: 'view' },
+    { id: 'my-leave', label: t('leave.tabs.myLeave'), action: 'create' },
     { id: 'team-requests', label: t('leave.tabs.teamRequests'), action: 'approve' },
-    { id: 'allocation', label: t('leave.tabs.allocation'), action: 'manage' },
-    { id: 'balances', label: t('leave.tabs.balances'), action: 'view' },
-    { id: 'delegations', label: 'Delegations', action: 'manage' },
+    { id: 'allocation', label: t('leave.tabs.allocation'), action: 'manage_policies' },
+    { id: 'balances', label: t('leave.tabs.balances'), action: 'view_balances' },
+    { id: 'delegations', label: 'Delegations', action: 'approve' },
     { id: 'settings', label: t('leave.tabs.settings'), action: 'manage_settings' },
   ];
 

@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatTime12Hour, formatDuration, calculateWorkDuration, getCurrentDate } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 import {
     Dialog,
@@ -37,7 +38,12 @@ export const DailyAttendanceContent: React.FC = () => {
 
     // For HR/Manager View
     const [searchQuery, setSearchQuery] = useState('');
-    const isHrOrManager = ['HR', 'ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+
+    const canManage = hasPermission('attendance', 'manage');
+    const canViewTeam = hasPermission('attendance', 'view_team') || canManage;
+    const canViewAll = hasPermission('attendance', 'view_all') || canManage;
+    const isAnyAdmin = canViewTeam || canViewAll;
 
     const { data: todayAttendance } = useQuery({
         queryKey: ['attendance', 'today'],
@@ -48,14 +54,14 @@ export const DailyAttendanceContent: React.FC = () => {
     const { data: myAttendance = [], isLoading: isLoadingMyAttendance } = useQuery({
         queryKey: ['attendance', 'my'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
-        enabled: !isHrOrManager // Only fetch if NOT HR/Manager (default view)
+        enabled: true // Always fetch for personal view unless specifically denied
     });
 
     // Employee: Fetches their own pending checkouts
     const { data: myPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'my-pending'],
         queryFn: () => attendanceService.getMyPendingCheckouts(),
-        enabled: !isHrOrManager
+        enabled: true
     });
 
     // HR/Manager: Fetches Today's Attendance Log (Team/All)
@@ -65,14 +71,14 @@ export const DailyAttendanceContent: React.FC = () => {
             from_date: getCurrentDate(user?.timezone),
             to_date: getCurrentDate(user?.timezone)
         }),
-        enabled: isHrOrManager
+        enabled: isAnyAdmin
     });
 
     // HR/Manager: Fetches Pending Checkouts (Team/All - API handles filtering based on role)
     const { data: teamPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'team-pending'],
         queryFn: () => attendanceService.getPendingCheckouts({}),
-        enabled: isHrOrManager
+        enabled: isAnyAdmin
     });
 
     const { data: geoSettings } = useQuery({
@@ -425,14 +431,14 @@ export const DailyAttendanceContent: React.FC = () => {
                 </div>
             </Card>
 
-            {/* CONDITIONAL RENDERING BASED ON ROLE */}
-            {isHrOrManager ? (
+            {/* CONDITIONAL RENDERING BASED ON PERMISSIONS */}
+            {isAnyAdmin ? (
                 <>
                     {/* HR/MANAGER VIEW: TODAY'S TEAM ATTENDANCE LOG */}
                     <Card>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Today's Attendance Log {user?.role === 'MANAGER' ? '(My Team)' : '(All Employees)'}
+                                Today's Attendance Log {canViewAll ? '(All Employees)' : '(My Team)'}
                             </h3>
                             <div className="relative w-full sm:w-64">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -487,7 +493,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     {/* HR/MANAGER VIEW: PENDING CHECKOUTS (TEAM/ALL) */}
                     <Card>
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                            Pending Checkout Confirmations {user?.role === 'MANAGER' ? '(My Team)' : '(All)'}
+                            Pending Checkout Confirmations {canViewAll ? '(All)' : '(My Team)'}
                         </h3>
                         {teamPendingCheckouts.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts to review</div>

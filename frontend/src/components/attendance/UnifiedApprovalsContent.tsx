@@ -3,26 +3,18 @@ import { Button } from '@/components/ui/Button';
 import { WFHApprovalsContent } from '@/components/wfh/WFHApprovalsContent';
 import { MyWFHRequestsContent } from '@/components/wfh/MyWFHRequestsContent';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 type SubTab = 'team' | 'wfh-approvals' | 'my-wfh';
 
 export const UnifiedApprovalsContent: React.FC = () => {
     const { user } = useAuth();
-    const [activeSubTab, setActiveSubTab] = useState<SubTab>('team');
+    const { hasPermission } = usePermissions();
+    const canApproveAttendance = hasPermission('attendance', 'approve');
+    const canApproveWFH = hasPermission('wfh', 'approve');
+    const canSeeApprovals = canApproveAttendance || canApproveWFH;
 
-    // Helper to check if user has access to specific tabs if needed
-    // Assuming MANAGER/HR/ADMIN can see team/approvals, everyone can see my-wfh
-    // But the parent page tab "Team & Approvals" likely restricts this whole component to MANAGER/HR/ADMIN?
-    // Let's check the logic in AttendancePage. "My WFH Requests" was for all. "Team" and "WFH Approvals" for managers.
-    // So if a normal employee accesses this, they might only see "My WFH Requests"?
-    // The user requested merging "Team and approvals" and "wfh approval" and "My wfh request".
-    // "Team & Approvals" tab in AttendancePage was for ['MANAGER', 'HR', 'ADMIN'].
-    // "My WFH Requests" was for ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'].
-
-    // So this Unified component needs to handle role visibility internally if it replaces all of them.
-    // Or users see all buttons but some are disabled/hidden?
-
-    const canSeeApprovals = ['MANAGER', 'HR', 'ADMIN', 'SUPER_ADMIN'].includes(user?.role || '');
+    const [activeSubTab, setActiveSubTab] = useState<SubTab>(canSeeApprovals ? 'wfh-approvals' : 'my-wfh');
 
     return (
         <div className="space-y-6">

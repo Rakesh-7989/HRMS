@@ -21,11 +21,16 @@ export const RegularizationRequestsContent: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('attendance', 'manage');
+    const canRegularize = hasPermission('attendance', 'regularize') || canManage;
+    const canApprove = hasPermission('attendance', 'approve') || canManage;
+    const canReview = canApprove || canManage;
 
     const subTabParam = searchParams.get('subTab') as 'my' | 'team' | null;
 
     const [activeTab, setActiveTab] = useState<'my' | 'team'>(() => {
-        if (subTabParam === 'team' && ['MANAGER', 'HR', 'ADMIN'].includes(user?.role || '')) {
+        if (subTabParam === 'team' && canReview) {
             return 'team';
         }
         return 'my';
@@ -51,7 +56,7 @@ export const RegularizationRequestsContent: React.FC = () => {
 
     const { data: teamRequests = [], isLoading: teamLoading } = useQuery({
         queryKey: ['regularization', 'team'],
-        enabled: activeTab === 'team' && ['MANAGER', 'HR', 'ADMIN'].includes(user?.role || ''),
+        enabled: activeTab === 'team' && canReview,
         queryFn: () => attendanceService.getPendingRegularizations(),
     });
 
@@ -97,7 +102,7 @@ export const RegularizationRequestsContent: React.FC = () => {
         });
     };
 
-    const canReview = ['MANAGER', 'HR', 'ADMIN'].includes(user?.role || '');
+    // canReview already defined above
 
     return (
         <div className="space-y-6">

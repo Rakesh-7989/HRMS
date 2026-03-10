@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, CheckCircle, XCircle, Search, Filter, Calendar, User, TrendingUp } from 'lucide-react';
 import { format, subDays } from 'date-fns';
@@ -12,6 +13,7 @@ import { LeaveApplication } from '@/services/leave.service';
 
 export const LeaveContent: React.FC = () => {
     const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,8 +23,8 @@ export const LeaveContent: React.FC = () => {
     const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
 
-    const canApply = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
-    const canApprove = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+    const canApply = hasPermission('leave', 'create');
+    const canApprove = hasPermission('leave', 'approve');
     const rangeTo = format(new Date(), 'yyyy-MM-dd');
     const rangeFrom = format(subDays(new Date(), 29), 'yyyy-MM-dd');
 

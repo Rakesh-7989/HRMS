@@ -9,8 +9,8 @@ const { ForbiddenError } = require('../utils/customErrors');
  * SUPER_ADMIN always bypasses permission checks.
  * Permissions are loaded by verifyJwt into req.user.permissions.
  */
-module.exports = function requirePermission(module, action) {
-    const permKey = `${module}:${action}`;
+module.exports = function requirePermission(module, actions) {
+    const actionList = Array.isArray(actions) ? actions : [actions];
 
     return function (req, res, next) {
         // SUPER_ADMIN always has full access
@@ -25,13 +25,18 @@ module.exports = function requirePermission(module, action) {
             );
         }
 
-        // Check if the user has the required permission
-        if (req.user.permissions.includes(permKey)) {
+        // Check if the user has ANY of the required permissions
+        const hasPermission = actionList.some(action => {
+            const permKey = `${module}:${action}`;
+            return req.user.permissions.includes(permKey);
+        });
+
+        if (hasPermission) {
             return next();
         }
 
         return next(
-            new ForbiddenError(`You do not have the "${permKey}" permission`)
+            new ForbiddenError(`You do not have the required "${module}" permission`)
         );
     };
 };

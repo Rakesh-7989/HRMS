@@ -16,7 +16,7 @@ router.use(verifyJwt);
 router.post("/upload-attachment", uploadDocument.single('attachment'), controller.uploadAttachment);
 
 // Employee routes
-router.post("/apply", validate(v.applyLeaveSchema), controller.applyLeave);
+router.post("/apply", requirePermission("leave", "create"), validate(v.applyLeaveSchema), controller.applyLeave);
 router.get("/my-leaves", controller.getMyLeaves);
 router.post("/:id/cancel", validate(v.cancelLeaveSchema), controller.cancelApprovedLeave);
 

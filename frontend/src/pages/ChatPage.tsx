@@ -405,8 +405,13 @@ export const ChatPage = () => {
 
     const { hasPermission } = usePermissions();
     const canManageChat = hasPermission('chat', 'manage');
-    const canVoiceCall = hasPermission('chat', 'voice_call');
-    const canVideoCall = hasPermission('chat', 'video_call');
+    const canSend = hasPermission('chat', 'send') || canManageChat;
+    const canVoiceCall = hasPermission('chat', 'voice_call') || canManageChat;
+    const canVideoCall = hasPermission('chat', 'video_call') || canManageChat;
+    const canCreateGroup = hasPermission('chat', 'create_group') || canManageChat;
+    const canManageGroup = hasPermission('chat', 'manage_group') || canManageChat;
+    const canEditMessages = hasPermission('chat', 'edit_messages') || canManageChat;
+    const canDeleteMessages = hasPermission('chat', 'delete_messages') || canManageChat;
 
     // Reset view tab and close search when switching conversations
     useEffect(() => {
@@ -1059,7 +1064,7 @@ export const ChatPage = () => {
                             </div>
                         </div>
                         <div className="flex gap-1">
-                            {canManageChat && (
+                            {canCreateGroup && (
                                 <button
                                     onClick={() => setIsGroupModalOpen(true)}
                                     className="p-2.5 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105"
@@ -1068,13 +1073,15 @@ export const ChatPage = () => {
                                     <Users className="h-5 w-5" />
                                 </button>
                             )}
-                            <button
-                                onClick={() => setIsSelectingContact(!isSelectingContact)}
-                                className="p-2.5 bg-primary-gradient hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
-                                title="New Chat"
-                            >
-                                <Plus className="h-5 w-5" />
-                            </button>
+                            {canSend && (
+                                <button
+                                    onClick={() => setIsSelectingContact(!isSelectingContact)}
+                                    className="p-2.5 bg-primary-gradient hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
+                                    title="New Chat"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -1516,15 +1523,19 @@ export const ChatPage = () => {
                                                             <Pin size={16} className={cn("text-gray-400", showPins && "text-primary fill-primary")} />
                                                             {showPins ? 'Hide' : 'Show'} Pinned Messages
                                                         </button>
-                                                        <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
-                                                        <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                                            <Eraser size={16} />
-                                                            Clear Chat History
-                                                        </button>
-                                                        <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                                            <Trash2 size={16} />
-                                                            Delete Conversation
-                                                        </button>
+                                                        {canManageChat && (
+                                                            <>
+                                                                <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
+                                                                <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                                                                    <Eraser size={16} />
+                                                                    Clear Chat History
+                                                                </button>
+                                                                <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                                    <Trash2 size={16} />
+                                                                    Delete Conversation
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </>
                                             )}
@@ -1956,7 +1967,7 @@ export const ChatPage = () => {
                                                                                             {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
                                                                                         </button>
 
-                                                                                        {isMe && msg.type === 'TEXT' && (
+                                                                                         {isMe && msg.type === 'TEXT' && canEditMessages && (
                                                                                             <>
                                                                                                 <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
                                                                                                 <button
@@ -1969,14 +1980,18 @@ export const ChatPage = () => {
                                                                                             </>
                                                                                         )}
 
-                                                                                        <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
-                                                                                        <button
-                                                                                            onClick={() => { setDeletingMessage(msg); setShowMoreMenu(null); }}
-                                                                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                                                                        >
-                                                                                            <Trash2 size={16} />
-                                                                                            Delete
-                                                                                        </button>
+                                                                                        {canDeleteMessages && (
+                                                                                            <>
+                                                                                                <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+                                                                                                <button
+                                                                                                    onClick={() => { setDeletingMessage(msg); setShowMoreMenu(null); }}
+                                                                                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                                                                >
+                                                                                                    <Trash2 size={16} />
+                                                                                                    Delete
+                                                                                                </button>
+                                                                                            </>
+                                                                                        )}
                                                                                     </div>
                                                                                 </>
                                                                             )}
@@ -2144,114 +2159,122 @@ export const ChatPage = () => {
 
                                             {/* Teams-style Input Area */}
                                             <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                                                {replyToMessage && (
-                                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-5 py-2 border-b border-gray-100 dark:border-gray-700">
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <div className="w-1 h-8 bg-primary rounded-full" />
-                                                            <div>
-                                                                <span className="font-semibold text-primary text-xs">{replyToMessage.sender_first_name || 'User'}</span>
-                                                                <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
-                                                            </div>
-                                                        </div>
-                                                        <button onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></button>
+                                                {!canSend ? (
+                                                    <div className="px-5 py-4 text-center">
+                                                        <p className="text-sm text-gray-500 italic">You don't have permission to send messages in this chat.</p>
                                                     </div>
+                                                ) : (
+                                                    <>
+                                                        {replyToMessage && (
+                                                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-5 py-2 border-b border-gray-100 dark:border-gray-700">
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <div className="w-1 h-8 bg-primary rounded-full" />
+                                                                    <div>
+                                                                        <span className="font-semibold text-primary text-xs">{replyToMessage.sender_first_name || 'User'}</span>
+                                                                        <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <button onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></button>
+                                                            </div>
+                                                        )}
+                                                        <form onSubmit={handleSendMessage} className="px-5 py-3">
+                                                            <input
+                                                                type="file"
+                                                                ref={fileInputRef}
+                                                                className="hidden"
+                                                                onChange={handleFileSelect}
+                                                            />
+
+                                                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all bg-white dark:bg-gray-900">
+                                                                <input
+                                                                    type="text"
+                                                                    value={messageInput}
+                                                                    onChange={handleInputChange}
+                                                                    placeholder="Type a message"
+                                                                    className="flex-1 bg-transparent border-0 outline-none focus:ring-0 text-sm py-3 px-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                                                />
+
+                                                                <div className="flex items-center gap-0.5 pr-2">
+                                                                    {/* Emoji */}
+                                                                    <div className="relative">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                            title="Emoji"
+                                                                        >
+                                                                            <Smile size={20} />
+                                                                        </button>
+                                                                        {showEmojiPicker && (
+                                                                            <>
+                                                                                <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
+                                                                                <EmojiPicker
+                                                                                    onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
+                                                                                    onClose={() => setShowEmojiPicker(false)}
+                                                                                    className="left-auto -right-10 sm:right-0 origin-bottom-right z-[100]"
+                                                                                />
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Image/GIF */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const input = document.createElement('input');
+                                                                            input.type = 'file';
+                                                                            input.accept = 'image/*';
+                                                                            input.onchange = (e) => {
+                                                                                const file = (e.target as HTMLInputElement).files?.[0];
+                                                                                if (file && fileInputRef.current) {
+                                                                                    const dt = new DataTransfer();
+                                                                                    dt.items.add(file);
+                                                                                    fileInputRef.current.files = dt.files;
+                                                                                    fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+                                                                                }
+                                                                            };
+                                                                            input.click();
+                                                                        }}
+                                                                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                        title="Send image"
+                                                                    >
+                                                                        <Image size={20} />
+                                                                    </button>
+
+                                                                    {/* Attachment */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => fileInputRef.current?.click()}
+                                                                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                        title="Attach file"
+                                                                    >
+                                                                        <Paperclip size={20} />
+                                                                    </button>
+
+                                                                    {/* More options */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setShowPins(!showPins)}
+                                                                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                                                                        title="More options"
+                                                                    >
+                                                                        <Plus size={20} />
+                                                                    </button>
+
+                                                                    {/* Send */}
+                                                                    <button
+                                                                        type="submit"
+                                                                        disabled={!messageInput.trim()}
+                                                                        className="p-2 text-gray-400 hover:text-primary disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-primary/10"
+                                                                        title="Send"
+                                                                    >
+                                                                        <Send size={20} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </>
                                                 )}
-                                                <form onSubmit={handleSendMessage} className="px-5 py-3">
-                                                    <input
-                                                        type="file"
-                                                        ref={fileInputRef}
-                                                        className="hidden"
-                                                        onChange={handleFileSelect}
-                                                    />
-
-                                                    <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all bg-white dark:bg-gray-900">
-                                                        <input
-                                                            type="text"
-                                                            value={messageInput}
-                                                            onChange={handleInputChange}
-                                                            placeholder="Type a message"
-                                                            className="flex-1 bg-transparent border-0 outline-none focus:ring-0 text-sm py-3 px-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
-                                                        />
-
-                                                        <div className="flex items-center gap-0.5 pr-2">
-                                                            {/* Emoji */}
-                                                            <div className="relative">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                    title="Emoji"
-                                                                >
-                                                                    <Smile size={20} />
-                                                                </button>
-                                                                {showEmojiPicker && (
-                                                                    <>
-                                                                        <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
-                                                                        <EmojiPicker
-                                                                            onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
-                                                                            onClose={() => setShowEmojiPicker(false)}
-                                                                            className="left-auto -right-10 sm:right-0 origin-bottom-right z-[100]"
-                                                                        />
-                                                                    </>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Image/GIF */}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const input = document.createElement('input');
-                                                                    input.type = 'file';
-                                                                    input.accept = 'image/*';
-                                                                    input.onchange = (e) => {
-                                                                        const file = (e.target as HTMLInputElement).files?.[0];
-                                                                        if (file && fileInputRef.current) {
-                                                                            const dt = new DataTransfer();
-                                                                            dt.items.add(file);
-                                                                            fileInputRef.current.files = dt.files;
-                                                                            fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
-                                                                        }
-                                                                    };
-                                                                    input.click();
-                                                                }}
-                                                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                title="Send image"
-                                                            >
-                                                                <Image size={20} />
-                                                            </button>
-
-                                                            {/* Attachment */}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => fileInputRef.current?.click()}
-                                                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                title="Attach file"
-                                                            >
-                                                                <Paperclip size={20} />
-                                                            </button>
-
-                                                            {/* More options */}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setShowPins(!showPins)}
-                                                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                title="More options"
-                                                            >
-                                                                <Plus size={20} />
-                                                            </button>
-
-                                                            {/* Send */}
-                                                            <button
-                                                                type="submit"
-                                                                disabled={!messageInput.trim()}
-                                                                className="p-2 text-gray-400 hover:text-primary disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-primary/10"
-                                                                title="Send"
-                                                            >
-                                                                <Send size={20} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </form>
                                             </div>
                                         </>
                                     }
@@ -2325,7 +2348,7 @@ export const ChatPage = () => {
                             <div className="p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{activeConversation.type === 'GROUP' ? 'Team Members' : 'Participants'}</h4>
-                                    {activeConversation.type === 'GROUP' && (
+                                    {activeConversation.type === 'GROUP' && canManageGroup && (
                                         <button
                                             onClick={() => setIsAddingParticipant(true)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
@@ -2349,7 +2372,7 @@ export const ChatPage = () => {
                                             {p.id === user?.id ? (
                                                 <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
                                             ) : (
-                                                activeConversation.type === 'GROUP' && (
+                                                activeConversation.type === 'GROUP' && canManageGroup && (
                                                     <button
                                                         onClick={() => handleRemoveParticipant(p.id)}
                                                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"

@@ -37,6 +37,11 @@ export const AttendanceReportsContent: React.FC = () => {
     const [reportType, setReportType] = useState<'summary' | 'detailed' | 'trends' | 'compliance'>('summary');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedView, setSelectedView] = useState<'analytics' | 'reports'>('analytics');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('attendance', 'manage');
+    const canViewAll = hasPermission('attendance', 'view_all') || canManage;
+    const canViewTeam = hasPermission('attendance', 'view_team') || canManage;
+    const canViewAnalytics = hasPermission('attendance', 'view_analytics') || canManage;
 
     // Calculate date range based on selection
     const dateRange = useMemo(() => {
@@ -101,9 +106,9 @@ export const AttendanceReportsContent: React.FC = () => {
         return checkOut < target;
     };
 
-    // Role-based access control
-    const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
-    const canViewTeamAnalytics = user?.role === 'MANAGER';
+    // Role-based access control replaced with permissions
+    const canViewOrgAnalytics = canViewAll;
+    const canViewTeamAnalytics = canViewTeam;
 
     // Prepare chart data based on user role
     const chartData = useMemo(() => {

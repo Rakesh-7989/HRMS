@@ -4,19 +4,21 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, Search, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const MyLeaveContent: React.FC = () => {
     const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
-    const canApply = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR' || user?.role === 'ADMIN';
+    const canApply = hasPermission('leave', 'create');
 
     // Fetch leave types dynamically
     const { data: leaveTypes = [] } = useQuery<LeaveType[]>({
@@ -60,7 +62,7 @@ export const MyLeaveContent: React.FC = () => {
         });
     }, [myLeaves, searchTerm, statusFilter, typeFilter]);
 
-    if (!canApply) return <div>Access Denied</div>;
+
 
     return (
         <div className="space-y-6">
@@ -148,14 +150,16 @@ export const MyLeaveContent: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Apply Button */}
-                <div className="flex-shrink-0">
-                    <Button onClick={() => setApplyDialogOpen(true)} size="md" className="w-full lg:w-auto">
-                        <Plus className="mr-2" size={18} />
-                        Request Leave / WFH
-                    </Button>
-                    <ApplyLeaveForm open={applyDialogOpen} onOpenChange={setApplyDialogOpen} />
-                </div>
+                {/* Apply Button — only shown if user has leave:create permission */}
+                {canApply && (
+                    <div className="flex-shrink-0">
+                        <Button onClick={() => setApplyDialogOpen(true)} size="md" className="w-full lg:w-auto">
+                            <Plus className="mr-2" size={18} />
+                            Request Leave / WFH
+                        </Button>
+                        <ApplyLeaveForm open={applyDialogOpen} onOpenChange={setApplyDialogOpen} />
+                    </div>
+                )}
             </div>
 
             {/* My Leaves Table */}

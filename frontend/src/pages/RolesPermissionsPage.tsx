@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { permissionsService, Permission, TenantRole } from '@/services/permissions.service';
 import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import toast from 'react-hot-toast';
 import {
     Shield,
@@ -16,7 +17,6 @@ import {
     MessageSquare,
     CalendarRange,
     Activity,
-    MapPin,
     Timer,
     Home,
     Receipt,
@@ -50,7 +50,6 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
     organisation: Building2,
     roles: Shield,
     audit_logs: Activity,
-    geo_fencing: MapPin,
     shifts: Timer,
     wfh: Home,
     expenses: Receipt,
@@ -74,7 +73,6 @@ const MODULE_LABELS: Record<string, string> = {
     organisation: 'Organisation',
     roles: 'Roles & Permissions',
     audit_logs: 'Audit Logs',
-    geo_fencing: 'Geofencing',
     shifts: 'Shifts & Rostering',
     wfh: 'Work From Home',
     expenses: 'Expenses',
@@ -93,6 +91,7 @@ const ROLE_COLORS: Record<string, string> = {
 const DEFAULT_GRADIENT = 'from-rose-500 to-pink-600';
 
 export const RolesPermissionsPage: React.FC = () => {
+    const { refreshPermissions } = usePermissions();
     const [roles, setRoles] = useState<TenantRole[]>([]);
     const [activeRole, setActiveRole] = useState<string>('');
     const [rolesLoading, setRolesLoading] = useState(true);
@@ -185,9 +184,10 @@ export const RolesPermissionsPage: React.FC = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const changed = permissions
-                .filter((p, i) => p.enabled !== originalPermissions[i]?.enabled)
-                .map(p => ({ permission_id: p.permission_id, enabled: p.enabled }));
+            const changed = permissions.filter(p => {
+                const original = originalPermissions.find(op => op.permission_id === p.permission_id);
+                return original && p.enabled !== original.enabled;
+            }).map(p => ({ permission_id: p.permission_id, enabled: p.enabled }));
 
             if (changed.length === 0) {
                 toast('No changes to save');
@@ -198,6 +198,10 @@ export const RolesPermissionsPage: React.FC = () => {
             await permissionsService.updateRolePermissions(activeRole, changed);
             setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
             setHasChanges(false);
+
+            // Refresh current user's permissions in context so they see changes immediately
+            await refreshPermissions();
+
             toast.success(`Permissions updated for ${activeRole} role`);
         } catch (err: any) {
             toast.error(err?.response?.data?.message || 'Failed to save permissions');

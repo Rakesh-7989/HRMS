@@ -4,7 +4,6 @@ import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
-import { adminService } from '@/services/admin.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays, parseISO } from 'date-fns';
 import { AreaChart } from '@/components/charts/AreaChart';
@@ -12,6 +11,7 @@ import { PieChart } from '@/components/charts/PieChart';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Table } from '@/components/ui/Table';
 import { motion } from 'framer-motion';
@@ -33,6 +33,7 @@ import { IndividualAttendanceReport } from './IndividualAttendanceReport';
 
 export const AttendanceReportsContent: React.FC = () => {
     const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -81,28 +82,23 @@ export const AttendanceReportsContent: React.FC = () => {
         };
     }, [selectedPeriod, customFromDate, customToDate, user?.timezone]);
 
+    // Role-based access control
+    const canViewOrgAnalytics = hasPermission('attendance', 'view_all');
+    const canViewTeamAnalytics = hasPermission('attendance', 'view_team');
+
     // Fetch analytics data
     const { data: analytics } = useQuery<AttendanceAnalytics>({
         queryKey: ['attendance', 'analytics', dateRange],
         queryFn: () => attendanceService.getAttendanceAnalytics(dateRange),
-        enabled: selectedView === 'analytics'
+        enabled: selectedView === 'analytics' && (canViewOrgAnalytics || canViewTeamAnalytics || true) // Personal analytics is always allowed if they can see the tab
     });
 
     // Fetch reports data
     const { data: reports, isLoading: reportsLoading } = useQuery<AttendanceReports>({
         queryKey: ['attendance', 'reports', dateRange, reportType],
         queryFn: () => attendanceService.getAttendanceReports({ ...dateRange, report_type: reportType, limit: 100 }),
-        enabled: selectedView === 'reports'
+        enabled: selectedView === 'reports' && (canViewOrgAnalytics || canViewTeamAnalytics)
     });
-
-    useQuery({
-        queryKey: ['tenant-profile'],
-        queryFn: () => adminService.getTenantProfile(),
-    });
-
-    // Role-based access control
-    const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
-    const canViewTeamAnalytics = user?.role === 'MANAGER';
 
 
     // Prepare chart data based on user role
@@ -299,7 +295,7 @@ export const AttendanceReportsContent: React.FC = () => {
                             Filters
                         </Button>
                     )}
-                    {selectedView === 'reports' && !selectedEmployeeId && user?.role !== 'EMPLOYEE' && (
+                    {selectedView === 'reports' && !selectedEmployeeId && (canViewOrgAnalytics || canViewTeamAnalytics) && (
                         <Button
                             variant="outline"
                             onClick={exportReports}

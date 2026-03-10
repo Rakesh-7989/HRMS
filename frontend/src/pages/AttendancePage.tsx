@@ -15,16 +15,17 @@ import { PermissionAction } from '@/services/permissions.service';
 export const AttendancePage: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
+  const canManage = hasPermission('attendance', 'manage');
   const [searchParams] = useSearchParams();
 
   const ATTENDANCE_TABS: { id: string; label: string; action: PermissionAction; minPlan?: number }[] = [
-    { id: 'reports', label: t('attendance.tabs.reports'), action: 'view_reports' },
-    { id: 'daily', label: t('attendance.tabs.daily'), action: 'view' },
-    { id: 'history', label: t('attendance.tabs.history'), action: 'view' },
-    { id: 'breaks', label: t('attendance.tabs.breaks'), action: 'view' },
-    { id: 'regularization', label: t('attendance.tabs.regularization'), action: 'view' },
+    { id: 'reports', label: t('attendance.tabs.reports'), action: 'view_analytics' },
+    { id: 'daily', label: t('attendance.tabs.daily'), action: 'view_my' },
+    { id: 'history', label: t('attendance.tabs.history'), action: 'view_my' },
+    { id: 'breaks', label: t('attendance.tabs.breaks'), action: 'view_my' },
+    { id: 'regularization', label: t('attendance.tabs.regularization'), action: 'regularize' },
     { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve' },
-    { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_settings' },
+    { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_geofence' },
   ];
 
   const tabParam = searchParams.get('tab');
@@ -33,11 +34,17 @@ export const AttendancePage: React.FC = () => {
   const getInitialTab = (): string => {
     if (tabParam && ATTENDANCE_TABS.some(t => t.id === tabParam)) {
       const tab = ATTENDANCE_TABS.find(t => t.id === tabParam);
-      if (tab && hasPermission('attendance', tab.action)) {
-        return tabParam;
+      if (tab) {
+        // Special case: Geofence tab should be strictly gated
+        if (tab.id === 'geofence') {
+          if (hasPermission('attendance', 'manage_geofence') || hasPermission('attendance', 'manage')) return tabParam;
+        } else if (hasPermission('attendance', tab.action) || canManage) {
+          return tabParam;
+        }
       }
     }
-    return 'daily';
+    const defaultTab = (hasPermission('attendance', 'view_my') || canManage) ? 'daily' : (ATTENDANCE_TABS.find(t => hasPermission('attendance', t.action) || canManage)?.id || 'daily');
+    return defaultTab;
   };
 
   const [activeTab, setActiveTab] = useState<string>(getInitialTab);
@@ -46,11 +53,20 @@ export const AttendancePage: React.FC = () => {
   useEffect(() => {
     if (tabParam && ATTENDANCE_TABS.some(t => t.id === tabParam)) {
       const tab = ATTENDANCE_TABS.find(t => t.id === tabParam);
-      if (tab && hasPermission('attendance', tab.action)) {
-        setActiveTab(tabParam);
+      if (tab) {
+        let allowed = false;
+        if (tab.id === 'geofence') {
+          allowed = hasPermission('attendance', 'manage_geofence') || canManage;
+        } else {
+          allowed = hasPermission('attendance', tab.action) || canManage;
+        }
+
+        if (allowed) {
+          setActiveTab(tabParam);
+        }
       }
     }
-  }, [tabParam, hasPermission]);
+  }, [tabParam, hasPermission, canManage]);
 
   return (
     <DashboardLayout
@@ -69,7 +85,12 @@ export const AttendancePage: React.FC = () => {
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-nowrap -mb-px gap-6 overflow-x-auto pb-1 scrollbar-hide">
             {ATTENDANCE_TABS.map((tab) => {
-              if (!hasPermission('attendance', tab.action)) return null;
+              // Geofence tab: strict check
+              if (tab.id === 'geofence') {
+                if (!hasPermission('attendance', 'manage_geofence') && !canManage) return null;
+              } else {
+                if (!hasPermission('attendance', tab.action) && !canManage) return null;
+              }
 
               const isActive = tab.id === activeTab;
               return (
@@ -77,8 +98,8 @@ export const AttendancePage: React.FC = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${isActive
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                 >
                   {tab.label}
