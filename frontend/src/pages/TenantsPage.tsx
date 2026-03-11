@@ -284,7 +284,7 @@ export const TenantsPage: React.FC = () => {
           ) : tenants.length === 0 ? (
             <div className="py-12 text-center text-muted">No tenants available.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full">
               <table className="w-full">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
@@ -313,7 +313,7 @@ export const TenantsPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
                   {tenants.map((tenant) => (
-                    <tr key={tenant.id} className="hover:bg-primary/10 transition-colors">
+                    <tr key={tenant.id} className="hover:bg-primary/10 transition-colors relative group/row hover:z-20">
                       <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{tenant.name}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">{tenant.email}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -382,7 +382,7 @@ export const TenantsPage: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-fuchsia-500 text-fuchsia-600 hover:bg-fuchsia-50 h-8 text-xs"
+                                className="border-fuchsia-500 text-fuchsia-600 hover:bg-fuchsia-50 hover:text-fuchsia-700 h-8 text-xs"
                                 onClick={() => {
                                   setConfirmConfig({
                                     isOpen: true,
@@ -408,7 +408,7 @@ export const TenantsPage: React.FC = () => {
                                 <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                   <MoreVertical size={16} className="text-gray-500" />
                                 </button>
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 overflow-hidden">
+                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 hidden group-hover:opacity-100 group-hover:block transition-all z-[100] overflow-hidden">
                                   <div className="flex flex-col py-1">
                                     <button
                                       onClick={() => {

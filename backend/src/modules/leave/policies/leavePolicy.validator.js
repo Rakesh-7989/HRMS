@@ -15,7 +15,9 @@ exports.createPolicySchema = z.object({
         accrual_rate: z.number().min(0).max(100).optional(),
         max_balance: z.number().min(0).optional().nullable(),
         year_start_month: z.number().int().min(1).max(12).optional(),
-        priority: z.number().int().min(1).optional()
+        priority: z.number().int().min(1).optional(),
+        carry_forward_enabled: z.boolean().optional(),
+        max_carry_forward: z.number().min(0).optional()
     })
 });
 
@@ -33,7 +35,9 @@ exports.updatePolicySchema = z.object({
         max_balance: z.number().min(0).optional().nullable(),
         year_start_month: z.number().int().min(1).max(12).optional(),
         priority: z.number().int().min(1).optional(),
-        is_active: z.boolean().optional()
+        is_active: z.boolean().optional(),
+        carry_forward_enabled: z.boolean().optional(),
+        max_carry_forward: z.number().min(0).optional()
     })
 });
 

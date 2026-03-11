@@ -319,8 +319,19 @@ exports.runMonthlyAccrual = async (db, tenantId) => {
 
                         if (prevBal.rowCount > 0) {
                             const unused = parseFloat(prevBal.rows[0].current_balance);
-                            const maxDays = policy.max_carry_forward > 0
-                                ? policy.max_carry_forward * policy.accrual_rate : Infinity;
+                            let maxDays = Infinity;
+
+                            if (policy.max_carry_forward > 0) {
+                                // max_carry_forward is stored as number of "months" of accrual to carry over.
+                                if (policy.accrual_type === 'YEARLY') {
+                                    // For a yearly policy, the rate is per year. So to get 1 month's worth, divide by 12.
+                                    maxDays = policy.max_carry_forward * (policy.accrual_rate / 12);
+                                } else {
+                                    // For monthly, the rate is per month.
+                                    maxDays = policy.max_carry_forward * policy.accrual_rate;
+                                }
+                            }
+
                             carryForwardAmount = Math.min(unused, maxDays);
                         }
                     }
@@ -352,28 +363,38 @@ exports.runMonthlyAccrual = async (db, tenantId) => {
                 }
 
                 // Issue 25: Calculate actual accrual based on type
-                let actualAccrual;
+                let actualAccrual = 0;
+
                 if (policy.accrual_type === 'YEARLY') {
-                    // Only accrue in January (or year_start_month)
-                    if (currentMonth !== (policy.year_start_month || 1)) continue;
+                    // Check if this is the first accrual for a new joiner in their joining year
+                    const isNewJoinerFirstYear = emp.join_date && new Date(emp.join_date).getFullYear() === currentYear;
+
+                    if (isNewJoinerFirstYear && bal.accrued == 0) {
+                        // New joiner: Prorate the yearly amount
+                        const joinMonth = new Date(emp.join_date).getMonth() + 1;
+                        const remainingMonths = 12 - joinMonth + 1;
+                        actualAccrual = Number(((policy.accrual_rate / 12) * remainingMonths).toFixed(2));
+                    } else if (currentMonth === (policy.year_start_month || 1)) {
+                        // Normal yearly accrual in the start month
+                        actualAccrual = policy.accrual_rate;
+                    }
+                } else if (policy.accrual_type === 'MONTHLY') {
                     actualAccrual = policy.accrual_rate;
-                } else {
-                    actualAccrual = policy.accrual_rate;
-                }
 
-                // Pro-rata for new joinees
-                if (emp.join_date && policy.accrual_type === 'MONTHLY') {
-                    const joinDate = new Date(emp.join_date);
-                    const joinMonth = joinDate.getMonth() + 1;
-                    const joinYear = joinDate.getFullYear();
+                    // Pro-rata for new joinees
+                    if (emp.join_date) {
+                        const joinDate = new Date(emp.join_date);
+                        const joinMonth = joinDate.getMonth() + 1;
+                        const joinYear = joinDate.getFullYear();
 
-                    if (joinMonth === currentMonth && joinYear === currentYear) {
-                        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-                        const joinDay = joinDate.getDate();
-                        const workedDays = daysInMonth - joinDay + 1;
+                        if (joinMonth === currentMonth && joinYear === currentYear) {
+                            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                            const joinDay = joinDate.getDate();
+                            const workedDays = daysInMonth - joinDay + 1;
 
-                        if (workedDays < daysInMonth) {
-                            actualAccrual = Number((policy.accrual_rate * (workedDays / daysInMonth)).toFixed(2));
+                            if (workedDays < daysInMonth) {
+                                actualAccrual = Number((policy.accrual_rate * (workedDays / daysInMonth)).toFixed(2));
+                            }
                         }
                     }
                 }

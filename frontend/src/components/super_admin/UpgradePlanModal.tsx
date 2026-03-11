@@ -2,11 +2,19 @@ import React, { useState } from 'react';
 import { Dialog, DialogFooter } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 
+interface PlanPrice {
+    id: string;
+    interval: string;
+    unit_amount: string | number;
+    currency: string;
+}
+
 interface Plan {
     id: string;
     name: string;
     description?: string;
     price: string | number;
+    prices?: PlanPrice[];
     max_employees?: number;
 }
 
@@ -33,6 +41,14 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
         if (selectedPlanId) {
             onUpgrade(selectedPlanId);
         }
+    };
+
+    const getPlanPrice = (plan: Plan) => {
+        if (plan.prices && Array.isArray(plan.prices)) {
+            const monthlyPrice = plan.prices.find(p => p && p.interval === 'MONTHLY');
+            if (monthlyPrice) return monthlyPrice.unit_amount;
+        }
+        return plan.price;
     };
 
     return (
@@ -65,7 +81,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                                     </p>
                                 </div>
                                 <div className="text-right text-sm">
-                                    <p className="font-bold text-gray-900 dark:text-white">₹{plan.price}/mo</p>
+                                    <p className="font-bold text-gray-900 dark:text-white">₹{getPlanPrice(plan)}/mo</p>
                                 </div>
                             </div>
                         ))

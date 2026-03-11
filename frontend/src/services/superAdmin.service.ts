@@ -91,7 +91,7 @@ export const superAdminService = {
 
   getPlans: async (): Promise<any[]> => {
     const response = await api.get('/subscriptions/plans');
-    return response.data.plans || [];
+    return response.data.data || [];
   },
 };
 

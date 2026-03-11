@@ -187,9 +187,6 @@ class SubscriptionService {
         return result.rows[0];
     }
 
-    /**
-     * Reactivate status (from CANCELLED or SUSPENDED)
-     */
     async reactivateStatus(tenantId, client = null) {
         const executor = client || db;
         const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
@@ -204,6 +201,53 @@ class SubscriptionService {
             WHERE id = $1
             RETURNING *
         `, [subscription.id]);
+
+        return result.rows[0];
+    }
+
+    /**
+     * Admin upgrade/change subscription plan manually without payment
+     */
+    async upgradeSubscription(tenantId, planId, billingCycle, client = null) {
+        const executor = client || db;
+
+        // 1. Verify plan exists
+        const planRes = await executor.query('SELECT * FROM plans WHERE id = $1', [planId]);
+        if (planRes.rowCount === 0) throw new Error('Selected plan not found.');
+        const plan = planRes.rows[0];
+
+        // 2. Fetch active/current subscription
+        const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
+        if (!subscription) {
+            throw new Error('No active subscription found to upgrade.');
+        }
+
+        const durationMonths = billingCycle === 'YEARLY' ? 12 :
+            billingCycle === 'HALF_YEARLY' ? 6 :
+                billingCycle === 'QUARTERLY' ? 3 : 1;
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + durationMonths);
+
+        // 3. Update subscription linearly
+        const result = await executor.query(`
+            UPDATE subscriptions
+            SET plan_id = $1,
+                billing_cycle = $2,
+                end_date = $3,
+                updated_at = NOW()
+            WHERE id = $4
+            RETURNING *
+        `, [planId, billingCycle, endDate, subscription.id]);
+
+        // 4. Sync tenant table
+        const tier = plan.tier || 1;
+        await executor.query(`
+            UPDATE tenants
+            SET plan_type = $1,
+                plan_expiry_date = $2,
+                updated_at = NOW()
+            WHERE id = $3
+        `, [tier, endDate, tenantId]);
 
         return result.rows[0];
     }

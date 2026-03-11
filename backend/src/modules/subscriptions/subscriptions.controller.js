@@ -281,22 +281,67 @@ class SubscriptionController {
     async adminEnableSubscription(req, res) {
         try {
             const { tenantId } = req.params;
+            const { planId, days } = req.body;
+
+            const trialDays = days || 30;
+
+            let targetPlanId = planId;
+            if (!targetPlanId) {
+                const standardPlan = await db.query("SELECT id FROM plans WHERE name = 'STANDARD' LIMIT 1");
+                if (standardPlan.rowCount > 0) {
+                    targetPlanId = standardPlan.rows[0].id;
+                }
+            }
+
+            if (!targetPlanId) throw new Error('Default plan (STANDARD) not found for enablement.');
+
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + trialDays);
+
+            // Create a new subscription record
+            await subscriptionService.createSubscription({
+                tenant_id: tenantId,
+                plan_id: targetPlanId,
+                billing_cycle: 'MONTHLY',
+                is_trial: true,
+                status: 'ACTIVE',
+                trial_ends_at: null,
+                end_date: endDate,
+                amount_paid: 0,
+                coupon_code: null
+            });
+
+            // Update tenants table to reflect active plan
+            const planTierRes = await db.query('SELECT tier FROM plans WHERE id = $1', [targetPlanId]);
+            const tier = planTierRes.rows[0]?.tier || 1;
+
+            await db.query(`
+                UPDATE tenants
+                SET plan_type = $1,
+                    plan_expiry_date = $2,
+                    updated_at = NOW()
+                WHERE id = $3
+            `, [tier, endDate, tenantId]);
 
             // Fetch tenant details to send enablement email (Send Pricing)
             const tenantRes = await db.query('SELECT name, email FROM tenants WHERE id = $1', [tenantId]);
             if (tenantRes.rowCount > 0) {
                 const tenant = tenantRes.rows[0];
-                await mailer.sendSubscriptionPricingEmail(tenant.email, tenant.name, tenantId);
+                try {
+                    await mailer.sendSubscriptionPricingEmail(tenant.email, tenant.name, tenantId);
+                } catch (emailError) {
+                    console.error('Failed to send pricing email:', emailError.message);
+                }
             }
 
             res.status(200).json({
                 success: true,
-                message: 'Pricing email sent successfully to the tenant.'
+                message: 'Subscription enabled successfully.'
             });
         } catch (error) {
             res.status(500).json({
                 success: false,
-                message: 'Failed to send pricing email',
+                message: 'Failed to enable subscription',
                 error: error.message
             });
         }
