@@ -341,8 +341,91 @@ export const EmployeeDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <DashboardLayout title="My Dashboard">
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+        <div className="space-y-8 pb-10 animate-pulse">
+          {/* Welcome Banner Skeleton */}
+          <div className="rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-3">
+                <div className="w-24 h-4 rounded-full bg-slate-200 dark:bg-slate-800" />
+                <div className="w-72 h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
+                <div className="w-48 h-5 rounded-lg bg-slate-200 dark:bg-slate-800" />
+              </div>
+              <div className="w-56 h-20 rounded-3xl bg-slate-100 dark:bg-slate-800" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column Skeleton */}
+            <div className="space-y-8">
+              {/* Clock Status Skeleton */}
+              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
+                <div className="w-full h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-6" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 h-20" />
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 h-20" />
+                  <div className="col-span-2 p-5 rounded-[1.5rem] bg-indigo-50/50 dark:bg-indigo-500/5 h-24" />
+                </div>
+              </div>
+
+              {/* Quick Actions Skeleton */}
+              <div className="space-y-3">
+                <div className="w-32 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mx-2" />
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="w-full p-4 rounded-[1.5rem] bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 h-16" />
+                ))}
+              </div>
+
+              {/* Celebrations Skeleton */}
+              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                <div className="w-32 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 h-16" />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column Skeleton */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Stat Cards Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="rounded-[1.5rem] p-5 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none h-32">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 mb-4" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 mb-2" />
+                    <div className="w-24 h-3 rounded bg-slate-200 dark:bg-slate-800" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Chart Cards Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                    <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-2" />
+                    <div className="w-28 h-4 rounded bg-slate-200 dark:bg-slate-800 mb-6" />
+                    <div className="w-full h-[250px] rounded-2xl bg-slate-100 dark:bg-slate-800/50" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                    <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
+                    <div className="space-y-3">
+                      {[...Array(4)].map((_, j) => (
+                        <div key={j} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 h-14" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );

@@ -320,7 +320,7 @@ export const attendanceService = {
     return response.data.data || [];
   },
 
-  reviewRegularization: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; rejection_reason?: string }): Promise<RegularizationRequest> => {
+  reviewRegularization: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; rejection_reason?: string; check_in_time?: string; check_out_time?: string }): Promise<RegularizationRequest> => {
     const response = await api.put<{ status: string; data: RegularizationRequest }>(`/attendance/regularize/${id}/review`, data);
     return response.data.data!;
   },

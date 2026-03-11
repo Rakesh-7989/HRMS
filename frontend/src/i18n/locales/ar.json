@@ -200,6 +200,7 @@
             "busy": "مشغول",
             "dnd": "رجاء عدم الإزعاج",
             "away": "بالخارج",
+            "offline": "غير متصل",
             "setStatusMessage": "تحديد رسالة الحالة",
             "whatIsHappening": "ماذا يحدث؟",
             "expiresAfter": "تنتهي الصلاحية بعد",

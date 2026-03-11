@@ -1,28 +1,29 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
 import type { UserRole } from '@/types';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
   /** Optional granular permission check: 'module:action' */
   requiredPermission?: string;
+  /** Optional skeleton to show while auth/permissions are loading and while lazy component loads */
+  fallback?: React.ReactNode;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles, requiredPermission }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles, requiredPermission, fallback }) => {
   const { isAuthenticated, user, loading } = useAuth();
   const { hasPermission, loading: permLoading } = usePermissions();
   const location = useLocation();
 
+  const skeleton = fallback ?? <PageSkeleton />;
+
   if (loading || permLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-bg">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <>{skeleton}</>;
   }
 
   if (!isAuthenticated || !user) {
@@ -77,5 +78,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     }
   }
 
-  return <>{children}</>;
+  return <Suspense fallback={skeleton}>{children}</Suspense>;
 };

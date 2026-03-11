@@ -37,6 +37,8 @@ export const RegularizationRequestsContent: React.FC = () => {
     const [selectedRequest, setSelectedRequest] = useState<RegularizationRequest | null>(null);
     const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [overrideCheckIn, setOverrideCheckIn] = useState('');
+    const [overrideCheckOut, setOverrideCheckOut] = useState('');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -72,14 +74,16 @@ export const RegularizationRequestsContent: React.FC = () => {
     });
 
     const reviewMutation = useMutation({
-        mutationFn: ({ id, status, reason }: { id: string, status: 'APPROVED' | 'REJECTED', reason?: string }) =>
-            attendanceService.reviewRegularization(id, { status, rejection_reason: reason }),
+        mutationFn: ({ id, status, reason, check_in_time, check_out_time }: { id: string, status: 'APPROVED' | 'REJECTED', reason?: string, check_in_time?: string, check_out_time?: string }) =>
+            attendanceService.reviewRegularization(id, { status, rejection_reason: reason, check_in_time, check_out_time }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['regularization'] });
             queryClient.invalidateQueries({ queryKey: ['attendance'] }); // Refresh attendance logs too
             setReviewAction(null);
             setSelectedRequest(null);
             setRejectionReason('');
+            setOverrideCheckIn('');
+            setOverrideCheckOut('');
         },
         onError: (error: any) => {
             alert(error.message || 'Failed to review request');
@@ -96,7 +100,9 @@ export const RegularizationRequestsContent: React.FC = () => {
         reviewMutation.mutate({
             id: selectedRequest.id,
             status: activeTab === 'team' ? reviewAction : 'APPROVED', // Should only happen in team tab anyway
-            reason: reviewAction === 'REJECTED' ? rejectionReason : undefined
+            reason: reviewAction === 'REJECTED' ? rejectionReason : undefined,
+            check_in_time: reviewAction === 'APPROVED' ? (overrideCheckIn || undefined) : undefined,
+            check_out_time: reviewAction === 'APPROVED' ? (overrideCheckOut || undefined) : undefined,
         });
     };
 
@@ -201,7 +207,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                                                 <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
                                                     <Button
                                                         size="sm"
-                                                        onClick={() => { setSelectedRequest(req); setReviewAction('APPROVED'); }}
+                                                        onClick={() => { setSelectedRequest(req); setReviewAction('APPROVED'); setOverrideCheckIn(req.check_in_time || ''); setOverrideCheckOut(req.check_out_time || ''); }}
                                                         className="bg-green-600 hover:bg-green-700 text-white"
                                                     >
                                                         <CheckCircle size={14} className="mr-1" /> Approve
@@ -290,8 +296,28 @@ export const RegularizationRequestsContent: React.FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-300">
                             Are you sure you want to {reviewAction?.toLowerCase()} the regularization request for <b>{selectedRequest?.first_name}</b> on <b>{selectedRequest?.date ? format(new Date(selectedRequest.date), 'MMM dd, yyyy') : ''}</b>?
                         </p>
+                        {reviewAction === 'APPROVED' && (
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <Label>Check In Time</Label>
+                                    <Input
+                                        type="time"
+                                        value={overrideCheckIn}
+                                        onChange={e => setOverrideCheckIn(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Check Out Time</Label>
+                                    <Input
+                                        type="time"
+                                        value={overrideCheckOut}
+                                        onChange={e => setOverrideCheckOut(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        )}
                         {reviewAction === 'REJECTED' && (
-                            <div>
+                            <div className="mt-2">
                                 <Label>Rejection Reason</Label>
                                 <Textarea
                                     value={rejectionReason}
@@ -302,7 +328,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                             </div>
                         )}
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button variant="outline" onClick={() => setSelectedRequest(null)}>Cancel</Button>
+                            <Button variant="outline" onClick={() => { setSelectedRequest(null); setOverrideCheckIn(''); setOverrideCheckOut(''); }}>Cancel</Button>
                             <Button
                                 variant={reviewAction === 'REJECTED' ? 'destructive' : 'primary'}
                                 onClick={handleReview}

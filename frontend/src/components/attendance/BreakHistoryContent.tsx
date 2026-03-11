@@ -59,7 +59,7 @@ export const BreakHistoryContent: React.FC = () => {
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
-                                className="pl-9 w-full sm:w-40 h-9"
+                                className="pl-9 w-full sm:w-48 h-9"
                             />
                         </div>
                         <div className="flex gap-2">

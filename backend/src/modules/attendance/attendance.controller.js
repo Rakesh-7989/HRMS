@@ -575,7 +575,7 @@ exports.getPendingRegularizations = async (req, res) => {
 exports.reviewRegularization = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, rejection_reason } = req.body;
+    const { status, rejection_reason, check_in_time, check_out_time } = req.body;
 
     let result;
     if (status === 'APPROVED') {
@@ -583,7 +583,9 @@ exports.reviewRegularization = async (req, res) => {
         req.db,
         id,
         req.user.id, // Approver User ID
-        req.user.tenantId
+        req.user.tenantId,
+        check_in_time,
+        check_out_time
       );
     } else {
       result = await attendanceService.rejectRegularization(

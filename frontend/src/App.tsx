@@ -80,14 +80,19 @@ const ProjectReportsPage = React.lazy(() => import('@/pages/projects/ProjectRepo
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SubscriptionGuard } from './components/SubscriptionGuard';
 
+import {
+  DashboardSkeleton,
+  TableSkeleton,
+  TabbedSkeleton,
+  FormSkeleton,
+  AuthSkeleton,
+  MinimalSkeleton
+} from '@/components/ui/PageSkeleton';
+
 // Loading fallback for lazy-loaded pages
-const PageLoader = () => (
-  <div className="h-screen flex items-center justify-center bg-[var(--background)]">
-    <div className="relative">
-      <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
-    </div>
-  </div>
-);
+
+
+
 
 // Smart redirect component
 const DashboardRedirect = () => {
@@ -111,107 +116,107 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />}>
       {/* Public Routes */}
-      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
-      <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
-      <Route path="/register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
-      <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPasswordPage /></Suspense>} />
-      <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPasswordPage /></Suspense>} />
-      <Route path="/change-password" element={<Suspense fallback={<PageLoader />}><ChangePasswordPage /></Suspense>} />
+      <Route path="/" element={<Suspense fallback={<AuthSkeleton />}><LandingPage /></Suspense>} />
+      <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
+      <Route path="/register" element={<Suspense fallback={<AuthSkeleton />}><RegisterPage /></Suspense>} />
+      <Route path="/forgot-password" element={<Suspense fallback={<AuthSkeleton />}><ForgotPasswordPage /></Suspense>} />
+      <Route path="/reset-password" element={<Suspense fallback={<AuthSkeleton />}><ResetPasswordPage /></Suspense>} />
+      <Route path="/change-password" element={<Suspense fallback={<AuthSkeleton />}><ChangePasswordPage /></Suspense>} />
 
       {/* Protected Dashboard Routes */}
       <Route
         path="/dashboard/system"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><SuperAdminDashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<DashboardSkeleton />}>
+            <SuperAdminDashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/dba"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><DBADashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<DashboardSkeleton />}>
+            <DBADashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/system/reports"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><SystemReportsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<DashboardSkeleton />}>
+            <SystemReportsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/tenants"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><TenantsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<TableSkeleton />}>
+            <TenantsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/plans"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><PlansPage /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<TableSkeleton />}>
+            <PlansPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/coupons"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><CouponsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<TableSkeleton />}>
+            <CouponsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/organization"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<DashboardSkeleton />}>
+            <AdminDashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/hr"
         element={
-          <ProtectedRoute allowedRoles={['HR', 'ADMIN']}>
-            <Suspense fallback={<PageLoader />}><HRDashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['HR', 'ADMIN']} fallback={<DashboardSkeleton />}>
+            <HRDashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/team"
         element={
-          <ProtectedRoute allowedRoles={['MANAGER']}>
-            <Suspense fallback={<PageLoader />}><ManagerDashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['MANAGER']} fallback={<DashboardSkeleton />}>
+            <ManagerDashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/personal"
         element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader />}><EmployeeDashboard /></Suspense>
+          <ProtectedRoute fallback={<DashboardSkeleton />}>
+            <EmployeeDashboard />
           </ProtectedRoute>
         }
       />
 
       {/* Pricing Route */}
-      <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
-      <Route path="/payment-success" element={<Suspense fallback={<PageLoader />}><PaymentSuccessPage /></Suspense>} />
-      <Route path="/payment-failure" element={<Suspense fallback={<PageLoader />}><PaymentFailurePage /></Suspense>} />
-      <Route path="/billing" element={<Suspense fallback={<PageLoader />}><BillingPortalPage /></Suspense>} />
+      <Route path="/pricing" element={<Suspense fallback={<AuthSkeleton />}><PricingPage /></Suspense>} />
+      <Route path="/payment-success" element={<Suspense fallback={<AuthSkeleton />}><PaymentSuccessPage /></Suspense>} />
+      <Route path="/payment-failure" element={<Suspense fallback={<AuthSkeleton />}><PaymentFailurePage /></Suspense>} />
+      <Route path="/billing" element={<Suspense fallback={<AuthSkeleton />}><BillingPortalPage /></Suspense>} />
 
       {/* Super Admin Protected Routes */}
       <Route
         path="/search"
         element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader />}><SearchPage /></Suspense>
+          <ProtectedRoute fallback={<MinimalSkeleton />}>
+            <SearchPage />
           </ProtectedRoute>
         }
       />
@@ -220,8 +225,8 @@ const router = createBrowserRouter(
       <Route
         path="/dba-control-panel-access"
         element={
-          <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><DBADashboard /></Suspense>
+          <ProtectedRoute allowedRoles={['SUPER_ADMIN']} fallback={<DashboardSkeleton />}>
+            <DBADashboard />
           </ProtectedRoute>
         }
       />
@@ -230,8 +235,8 @@ const router = createBrowserRouter(
       <Route
         path="/notifications"
         element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>
+          <ProtectedRoute fallback={<MinimalSkeleton />}>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />
@@ -240,73 +245,73 @@ const router = createBrowserRouter(
       <Route
         path="/dashboard/employees"
         element={
-          <ProtectedRoute requiredPermission="employees:view">
-            <Suspense fallback={<PageLoader />}><EmployeesPage /></Suspense>
+          <ProtectedRoute requiredPermission="employees:view" fallback={<TableSkeleton />}>
+            <EmployeesPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/employees/new"
         element={
-          <ProtectedRoute requiredPermission="employees:create">
-            <Suspense fallback={<PageLoader />}><AddEmployeePage /></Suspense>
+          <ProtectedRoute requiredPermission="employees:create" fallback={<FormSkeleton />}>
+            <AddEmployeePage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/employees/:id"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <Suspense fallback={<PageLoader />}><EmployeeDetailsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']} fallback={<FormSkeleton />}>
+            <EmployeeDetailsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/employees/:id/edit"
         element={
-          <ProtectedRoute requiredPermission="employees:update">
-            <Suspense fallback={<PageLoader />}><EditEmployeePage /></Suspense>
+          <ProtectedRoute requiredPermission="employees:update" fallback={<FormSkeleton />}>
+            <EditEmployeePage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/dashboard/employees/:id/documents"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <Suspense fallback={<PageLoader />}><EmployeeDocumentsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']} fallback={<FormSkeleton />}>
+            <EmployeeDocumentsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/attendance"
         element={
-          <ProtectedRoute requiredPermission="attendance:view">
-            <Suspense fallback={<PageLoader />}><AttendancePage /></Suspense>
+          <ProtectedRoute requiredPermission="attendance:view" fallback={<TabbedSkeleton />}>
+            <AttendancePage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/calendar"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <Suspense fallback={<PageLoader />}><CalendarPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TabbedSkeleton />}>
+            <CalendarPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/inbox"
         element={
-          <ProtectedRoute requiredPermission="chat:view">
-            <Suspense fallback={<PageLoader />}><InboxPage /></Suspense>
+          <ProtectedRoute requiredPermission="chat:view" fallback={<MinimalSkeleton />}>
+            <InboxPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/chat"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute fallback={<MinimalSkeleton />}>
             <SubscriptionGuard minPlan={3}>
-              <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
+              <ChatPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -314,8 +319,8 @@ const router = createBrowserRouter(
       <Route
         path="/reports"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN']}>
-            <Suspense fallback={<PageLoader />}><ReportsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN']} fallback={<TabbedSkeleton />}>
+            <ReportsPage />
           </ProtectedRoute>
         }
       />
@@ -325,17 +330,17 @@ const router = createBrowserRouter(
       <Route
         path="/organisation"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <Suspense fallback={<PageLoader />}><OrganisationPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TabbedSkeleton />}>
+            <OrganisationPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/organization/shifts"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TabbedSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><ShiftsPage /></Suspense>
+              <ShiftsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -344,57 +349,57 @@ const router = createBrowserRouter(
       <Route
         path="/leave"
         element={
-          <ProtectedRoute requiredPermission="leave:view">
-            <Suspense fallback={<PageLoader />}><LeavePage /></Suspense>
+          <ProtectedRoute requiredPermission="leave:view" fallback={<TabbedSkeleton />}>
+            <LeavePage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/leave/settings"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <Suspense fallback={<PageLoader />}><LeaveSettingsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TabbedSkeleton />}>
+            <LeaveSettingsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/leave/balances"
         element={
-          <ProtectedRoute requiredPermission="leave:view">
-            <Suspense fallback={<PageLoader />}><LeaveBalancesPage /></Suspense>
+          <ProtectedRoute requiredPermission="leave:view" fallback={<TabbedSkeleton />}>
+            <LeaveBalancesPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/holidays"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <Suspense fallback={<PageLoader />}><HolidaysPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TableSkeleton />}>
+            <HolidaysPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/departments"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <Suspense fallback={<PageLoader />}><DepartmentsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <DepartmentsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/designations"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
-            <Suspense fallback={<PageLoader />}><DesignationsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <DesignationsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/assets"
         element={
-          <ProtectedRoute requiredPermission="assets:view">
+          <ProtectedRoute requiredPermission="assets:view" fallback={<TableSkeleton />}>
             <SubscriptionGuard minPlan={3}>
-              <Suspense fallback={<PageLoader />}><AssetsPage /></Suspense>
+              <AssetsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -402,17 +407,17 @@ const router = createBrowserRouter(
       <Route
         path="/assets/new"
         element={
-          <ProtectedRoute requiredPermission="assets:create">
-            <Suspense fallback={<PageLoader />}><AddAssetPage /></Suspense>
+          <ProtectedRoute requiredPermission="assets:create" fallback={<FormSkeleton />}>
+            <AddAssetPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/assets/:id"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<FormSkeleton />}>
             <SubscriptionGuard minPlan={3}>
-              <Suspense fallback={<PageLoader />}><AssetDetailsPage /></Suspense>
+              <AssetDetailsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -420,16 +425,16 @@ const router = createBrowserRouter(
       <Route
         path="/assets/:id/edit"
         element={
-          <ProtectedRoute requiredPermission="assets:update">
-            <Suspense fallback={<PageLoader />}><AddAssetPage /></Suspense>
+          <ProtectedRoute requiredPermission="assets:update" fallback={<FormSkeleton />}>
+            <AddAssetPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/profile"
         element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>
+          <ProtectedRoute fallback={<FormSkeleton />}>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />
@@ -439,17 +444,17 @@ const router = createBrowserRouter(
       <Route
         path="/projects/reports"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']}>
-            <Suspense fallback={<PageLoader />}><ProjectReportsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER']} fallback={<TabbedSkeleton />}>
+            <ProjectReportsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/projects"
         element={
-          <ProtectedRoute requiredPermission="projects:view">
+          <ProtectedRoute requiredPermission="projects:view" fallback={<TableSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense>
+              <ProjectsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -457,9 +462,9 @@ const router = createBrowserRouter(
       <Route
         path="/projects/clients"
         element={
-          <ProtectedRoute requiredPermission="projects:manage">
+          <ProtectedRoute requiredPermission="projects:manage" fallback={<TableSkeleton />}>
             <SubscriptionGuard minPlan={3}>
-              <Suspense fallback={<PageLoader />}><ClientsPage /></Suspense>
+              <ClientsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -467,8 +472,8 @@ const router = createBrowserRouter(
       <Route
         path="/projects/:id/tasks"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']}>
-            <Suspense fallback={<PageLoader />}><TasksPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TableSkeleton />}>
+            <TasksPage />
           </ProtectedRoute>
         }
       />
@@ -478,16 +483,16 @@ const router = createBrowserRouter(
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER', 'EMPLOYEE']}>
-            <Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER', 'EMPLOYEE']} fallback={<TabbedSkeleton />}>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/activity"
         element={
-          <ProtectedRoute requiredPermission="audit_logs:view">
-            <Suspense fallback={<PageLoader />}><ActivityPage /></Suspense>
+          <ProtectedRoute requiredPermission="audit_logs:view" fallback={<TableSkeleton />}>
+            <ActivityPage />
           </ProtectedRoute>
         }
       />
@@ -495,9 +500,9 @@ const router = createBrowserRouter(
       <Route
         path="/roles-permissions"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage">
+          <ProtectedRoute allowedRoles={['ADMIN']} requiredPermission="roles:manage" fallback={<FormSkeleton />}>
             <DashboardLayout title="Roles & Permissions">
-              <Suspense fallback={<PageLoader />}><RolesPermissionsPage /></Suspense>
+              <RolesPermissionsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -507,9 +512,9 @@ const router = createBrowserRouter(
       <Route
         path="/payroll"
         element={
-          <ProtectedRoute requiredPermission="payroll:view">
+          <ProtectedRoute requiredPermission="payroll:view" fallback={<TabbedSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
+              <Payroll />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -517,10 +522,10 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/dashboard"
         element={
-          <ProtectedRoute requiredPermission="payroll:manage">
+          <ProtectedRoute requiredPermission="payroll:manage" fallback={<DashboardSkeleton />}>
             <SubscriptionGuard minPlan={2}>
               <DashboardLayout title="Payroll Command Center">
-                <Suspense fallback={<PageLoader />}><PayrollDashboard /></Suspense>
+                <PayrollDashboard />
               </DashboardLayout>
             </SubscriptionGuard>
           </ProtectedRoute>
@@ -529,9 +534,9 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/process/:runId"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<FormSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><RiverProcess /></Suspense>
+              <RiverProcess />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -539,9 +544,9 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/fnf"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<TableSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><FnFSettlementsPage /></Suspense>
+              <FnFSettlementsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -549,9 +554,9 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/fnf/:id"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<FormSkeleton />}>
             <SubscriptionGuard minPlan={2}>
-              <Suspense fallback={<PageLoader />}><FnFSettlementDetailsPage /></Suspense>
+              <FnFSettlementDetailsPage />
             </SubscriptionGuard>
           </ProtectedRoute>
         }
@@ -559,10 +564,10 @@ const router = createBrowserRouter(
       <Route
         path="/payroll/arrears"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<TabbedSkeleton />}>
             <SubscriptionGuard minPlan={2}>
               <DashboardLayout title="Arrears Management">
-                <Suspense fallback={<PageLoader />}><ArrearsPage /></Suspense>
+                <ArrearsPage />
               </DashboardLayout>
             </SubscriptionGuard>
           </ProtectedRoute>

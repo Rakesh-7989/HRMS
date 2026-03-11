@@ -200,6 +200,7 @@
             "busy": "Busy",
             "dnd": "Do not disturb",
             "away": "Away",
+            "offline": "Offline",
             "setStatusMessage": "Set status message",
             "whatIsHappening": "What's happening?",
             "expiresAfter": "Expires after",

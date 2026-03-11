@@ -1865,7 +1865,7 @@ ar.*,
  * - Updates status to APPROVED
  * - Updates/Inserts into attendance table
  */
-exports.approveRegularization = async (db, requestId, approverUserId, tenantId) => {
+exports.approveRegularization = async (db, requestId, approverUserId, tenantId, checkInTime, checkOutTime) => {
   const query = getQuery(db);
   const { calculateHoursDifference } = require('../../utils/dateHelper');
 
@@ -1880,12 +1880,16 @@ exports.approveRegularization = async (db, requestId, approverUserId, tenantId) 
 
   if (request.status !== 'PENDING') throw new Error("Request is not pending");
 
+  const finalCheckIn = checkInTime || request.check_in_time;
+  const finalCheckOut = checkOutTime || request.check_out_time;
+
   // 2. Mark as APPROVED
   await query(
     `UPDATE attendance_regularizations 
-     SET status = 'APPROVED', approver_id = $1, updated_at = now() 
+     SET status = 'APPROVED', approver_id = $1, updated_at = now(),
+         check_in_time = $3, check_out_time = $4
      WHERE id = $2`,
-    [approverUserId, requestId]
+    [approverUserId, requestId, finalCheckIn, finalCheckOut]
   );
 
   // 3. Upsert into Attendance Table
@@ -1906,7 +1910,7 @@ exports.approveRegularization = async (db, requestId, approverUserId, tenantId) 
   updated_at = now()
       WHERE id = $3
   `,
-      [request.check_in_time, request.check_out_time, attRes.rows[0].id]
+      [finalCheckIn, finalCheckOut, attRes.rows[0].id]
     );
   } else {
     // Insert new
@@ -1920,8 +1924,8 @@ VALUES($1, $2, $3, $4, $5, 'APPROVED', $6, $7)
         tenantId,
         request.employee_id,
         request.date,
-        request.check_in_time,
-        request.check_out_time,
+        finalCheckIn,
+        finalCheckOut,
         'Regularized entry',
         approverUserId
       ]

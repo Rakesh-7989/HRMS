@@ -12,10 +12,7 @@ VALUES
     ('chat', 'delete_messages', 'Delete Messages', 'Delete messages (own or moderate others)')
 ON CONFLICT (module, action) DO NOTHING;
 
--- 2. Update existing 'create' label to be more specific (optional but recommended for consistency)
-UPDATE permissions 
-SET action = 'create_group', label = 'Create Groups', description = 'Create new group conversations'
-WHERE module = 'chat' AND action = 'create';
+
 
 -- 3. Assign new permissions to roles across all existing tenants
 -- We'll give most permissions to ADMIN, HR, MANAGER, and basic send/view to EMPLOYEE

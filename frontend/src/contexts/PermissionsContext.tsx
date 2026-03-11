@@ -13,16 +13,20 @@ interface PermissionsContextType {
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
 
 export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [permissions, setPermissions] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchPermissions = useCallback(async () => {
+        if (authLoading) return;
+
         if (!isAuthenticated || !user) {
             setPermissions([]);
             setLoading(false);
             return;
         }
+
+        setLoading(true);
 
         try {
             const perms = await permissionsService.getMyPermissions();
@@ -33,7 +37,7 @@ export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ childre
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, authLoading]);
 
     useEffect(() => {
         fetchPermissions();
