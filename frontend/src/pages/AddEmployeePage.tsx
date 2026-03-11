@@ -81,11 +81,15 @@ export const AddEmployeePage: React.FC = () => {
         { label: 'Add Employee' },
       ]}
     >
-      <Card className="p-6 flex flex-col flex-1 overflow-hidden">
-        <p className="text-sm text-muted mb-3">Fill all required fields to onboard a new employee.</p>
-        <CreateEmployeeForm open={true} onOpenChange={() => { }} asPage onSuccess={handleSuccess} />
+      <Card className="flex flex-col flex-1 overflow-hidden">
+        <div className="px-6 pt-6 pb-2 shrink-0">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Add New Employee</h2>
+          <p className="text-sm text-muted">Fill all required fields to onboard a new employee.</p>
+        </div>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CreateEmployeeForm open={true} onOpenChange={() => { }} asPage onSuccess={handleSuccess} />
+        </div>
       </Card>
     </DashboardLayout>
   );
 };
-

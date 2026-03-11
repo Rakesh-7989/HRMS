@@ -60,20 +60,27 @@ export const EditEmployeePage: React.FC = () => {
                 { label: 'Edit' },
             ]}
         >
-            <Card className="p-6">
-                <div className="mb-6">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/employees/${id}`)}>
+            <Card className="flex flex-col flex-1 overflow-hidden">
+                <div className="px-6 pt-6 pb-2 shrink-0">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/dashboard/employees/${id}`)}
+                        className="hover:bg-gray-100 hover:text-gray-900 border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    >
                         <ArrowLeft size={16} className="mr-2" />
                         Back to Details
                     </Button>
                 </div>
-                <CreateEmployeeForm
-                    open={true}
-                    onOpenChange={() => navigate(`/dashboard/employees/${id}`)}
-                    asPage
-                    editEmployee={employee}
-                    onSuccess={() => navigate(`/dashboard/employees/${id}`)}
-                />
+                <div className="flex-1 overflow-hidden flex flex-col">
+                    <CreateEmployeeForm
+                        open={true}
+                        onOpenChange={() => navigate(`/dashboard/employees/${id}`)}
+                        asPage
+                        editEmployee={employee}
+                        onSuccess={() => navigate(`/dashboard/employees/${id}`)}
+                    />
+                </div>
             </Card>
         </DashboardLayout>
     );

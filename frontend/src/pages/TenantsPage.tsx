@@ -81,6 +81,8 @@ export const TenantsPage: React.FC = () => {
     tenantName: '',
   });
 
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
   const activateMutation = useMutation({
     mutationFn: (id: string) => superAdminService.activateTenant(id),
     onSuccess: () => {
@@ -404,14 +406,18 @@ export const TenantsPage: React.FC = () => {
                               </Button>
 
                               {/* Action Menu */}
-                              <div className="relative group">
-                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                              <div className="relative" onMouseLeave={() => setOpenDropdownId(null)}>
+                                <button
+                                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                  onClick={() => setOpenDropdownId(openDropdownId === tenant.id ? null : tenant.id)}
+                                >
                                   <MoreVertical size={16} className="text-gray-500" />
                                 </button>
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 hidden group-hover:opacity-100 group-hover:block transition-all z-[100] overflow-hidden">
+                                <div className={`absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl transition-all z-[100] overflow-hidden ${openDropdownId === tenant.id ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
                                   <div className="flex flex-col py-1">
                                     <button
                                       onClick={() => {
+                                        setOpenDropdownId(null);
                                         setUpgradeConfig({
                                           isOpen: true,
                                           tenantId: tenant.id,
@@ -425,6 +431,7 @@ export const TenantsPage: React.FC = () => {
 
                                     <button
                                       onClick={() => {
+                                        setOpenDropdownId(null);
                                         setBillingConfig({
                                           isOpen: true,
                                           tenantId: tenant.id,
@@ -440,14 +447,14 @@ export const TenantsPage: React.FC = () => {
 
                                     {tenant.is_active ? (
                                       <button
-                                        onClick={() => deactivateMutation.mutate(tenant.id)}
+                                        onClick={() => { setOpenDropdownId(null); deactivateMutation.mutate(tenant.id); }}
                                         className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-orange-600 flex items-center gap-2"
                                       >
                                         <Ban size={14} /> Deactivate Account
                                       </button>
                                     ) : (
                                       <button
-                                        onClick={() => activateMutation.mutate(tenant.id)}
+                                        onClick={() => { setOpenDropdownId(null); activateMutation.mutate(tenant.id); }}
                                         className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-green-600 flex items-center gap-2"
                                       >
                                         <BadgeCheck size={14} /> Activate Account
@@ -456,6 +463,7 @@ export const TenantsPage: React.FC = () => {
 
                                     <button
                                       onClick={() => {
+                                        setOpenDropdownId(null);
                                         setConfirmConfig({
                                           isOpen: true,
                                           title: 'Cancel Subscription',
@@ -471,6 +479,7 @@ export const TenantsPage: React.FC = () => {
 
                                     <button
                                       onClick={() => {
+                                        setOpenDropdownId(null);
                                         setConfirmConfig({
                                           isOpen: true,
                                           title: 'Suspend Organization',

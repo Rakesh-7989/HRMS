@@ -95,10 +95,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       return hasPermission(item.permission[0], item.permission[1]);
     }
 
-    // Role-based routing for Dashboards (since they don't have unique permissions usually)
-    // We keep these specific to the role to ensure they land on the right "Main" page
+    // Role-based routing for Dashboards
     if (item.path.includes('/dashboard/')) {
-      // System dashboards
       if (item.path === '/dashboard/system' && user.role === 'SUPER_ADMIN') return true;
       if (item.path === '/dashboard/organization' && user.role === 'ADMIN') return true;
       if (item.path === '/dashboard/hr' && user.role === 'HR') return true;
@@ -112,6 +110,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (superAdminPaths.includes(item.path)) {
       return user.role === 'SUPER_ADMIN';
     }
+
+    // Default fallback for any unhandled public items
     return true;
   });
 

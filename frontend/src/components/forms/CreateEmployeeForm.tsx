@@ -575,7 +575,7 @@ export const CreateEmployeeForm = ({
   };
 
   const formFields = (
-    <div className="flex flex-col h-full space-y-3 pb-6">
+    <div className="flex flex-col space-y-3 pb-2">
       {/* Progress Indicator */}
       <div className="mb-2 px-4">
         <div className="flex items-center justify-between relative">
@@ -1556,11 +1556,11 @@ export const CreateEmployeeForm = ({
   return (
     <>
       {asPage ? (
-        <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
+        <form onSubmit={formik.handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {formFields}
           </div>
-          <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 bg-white dark:bg-gray-900 z-10">
+          <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
             {footerContent}
           </div>
         </form>
