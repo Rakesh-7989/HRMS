@@ -84,6 +84,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
 
   const visibleItems = NAV_ITEMS.filter(item => {
+    // Super Admin only sees Dashboard, Tenants, and Plans
+    if (user.role === 'SUPER_ADMIN') {
+      const allowedPaths = ['/dashboard/system', '/tenants', '/plans'];
+      return allowedPaths.includes(item.path);
+    }
+
     // For items with a permission field
     if (item.permission) {
       return hasPermission(item.permission[0], item.permission[1]);
