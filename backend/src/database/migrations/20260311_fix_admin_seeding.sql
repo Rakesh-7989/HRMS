@@ -3,53 +3,71 @@
 -- Migration: 20260311_fix_admin_seeding.sql
 -- ===================================================================
 
+-- Drop the function to avoid parameter name conflict: `cannot change name of input parameter "p_tenant"`
+DROP FUNCTION IF EXISTS seed_role_permissions_for_tenant(uuid);
+
 CREATE OR REPLACE FUNCTION seed_role_permissions_for_tenant(p_tenant_id UUID) RETURNS void AS $$
 DECLARE
-    v_admin_role_id UUID;
-    v_hr_role_id UUID;
-    v_manager_role_id UUID;
-    v_employee_role_id UUID;
+    perm RECORD;
 BEGIN
-    -- 1. Ensure core roles exist for the tenant
-    INSERT INTO roles (tenant_id, name, description, is_system_role)
-    VALUES 
-        (p_tenant_id, 'ADMIN', 'Full access to all tenant modules and settings', true),
-        (p_tenant_id, 'HR', 'Human Resources management', true),
-        (p_tenant_id, 'MANAGER', 'Team and departmental management', true),
-        (p_tenant_id, 'EMPLOYEE', 'Standard employee access', true)
-    ON CONFLICT (tenant_id, name) DO NOTHING;
+    -- Loop through all existing permissions in the catalog
+    FOR perm IN SELECT id, module, action FROM permissions LOOP
+        -- ADMIN: full access to everything
+        INSERT INTO role_permissions (tenant_id, role, permission_id, enabled)
+        VALUES (p_tenant_id, 'ADMIN', perm.id, TRUE)
+        ON CONFLICT (tenant_id, role, permission_id) DO UPDATE SET enabled = TRUE;
 
-    -- Get Role IDs
-    SELECT id INTO v_admin_role_id FROM roles WHERE tenant_id = p_tenant_id AND name = 'ADMIN';
-    SELECT id INTO v_hr_role_id FROM roles WHERE tenant_id = p_tenant_id AND name = 'HR';
-    SELECT id INTO v_manager_role_id FROM roles WHERE tenant_id = p_tenant_id AND name = 'MANAGER';
-    SELECT id INTO v_employee_role_id FROM roles WHERE tenant_id = p_tenant_id AND name = 'EMPLOYEE';
+        -- HR: full access except roles:manage and employees:delete and employees:change_role
+        INSERT INTO role_permissions (tenant_id, role, permission_id, enabled)
+        VALUES (p_tenant_id, 'HR', perm.id,
+            CASE
+                WHEN perm.module = 'roles' AND perm.action = 'manage' THEN FALSE
+                WHEN perm.module = 'employees' AND perm.action = 'delete' THEN FALSE
+                WHEN perm.module = 'employees' AND perm.action = 'change_role' THEN FALSE
+                ELSE TRUE
+            END
+        )
+        ON CONFLICT (tenant_id, role, permission_id) DO NOTHING;
 
-    -- 2. ADMIN: Grant ALL existing permissions dynamically
-    INSERT INTO role_permissions (role_id, module, action)
-    SELECT v_admin_role_id, module, action FROM permissions
-    ON CONFLICT (role_id, module, action) DO NOTHING;
+        -- MANAGER: view most things, approve attendance/leave, manage tasks
+        INSERT INTO role_permissions (tenant_id, role, permission_id, enabled)
+        VALUES (p_tenant_id, 'MANAGER', perm.id,
+            CASE
+                WHEN perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'attendance' AND perm.action = 'approve' THEN TRUE
+                WHEN perm.module = 'leave' AND perm.action = 'approve' THEN TRUE
+                WHEN perm.module = 'leave' AND perm.action = 'create' THEN TRUE
+                WHEN perm.module = 'projects' AND perm.action IN ('create', 'manage', 'manage_tasks') THEN TRUE
+                WHEN perm.module = 'chat' AND perm.action IN ('view', 'create') THEN TRUE
+                WHEN perm.module = 'wfh' AND perm.action IN ('view', 'create', 'approve') THEN TRUE
+                WHEN perm.module = 'shifts' AND perm.action = 'view' THEN TRUE
+                ELSE FALSE
+            END
+        )
+        ON CONFLICT (tenant_id, role, permission_id) DO NOTHING;
 
-    -- 3. HR: Grant most permissions (Excluding billing, advanced system settings, etc)
-    INSERT INTO role_permissions (role_id, module, action)
-    SELECT v_hr_role_id, module, action FROM permissions
-    WHERE module NOT IN ('system', 'billing', 'db_admin', 'super_admin')
-    ON CONFLICT (role_id, module, action) DO NOTHING;
-
-    -- 4. MANAGER: Managerial permissions
-    INSERT INTO role_permissions (role_id, module, action)
-    SELECT v_manager_role_id, module, action FROM permissions
-    WHERE module IN ('attendance', 'leave', 'projects', 'documents') 
-    AND action IN ('view', 'approve', 'view_team')
-    ON CONFLICT (role_id, module, action) DO NOTHING;
-
-    -- 5. EMPLOYEE: Basic self-service permissions
-    INSERT INTO role_permissions (role_id, module, action)
-    SELECT v_employee_role_id, module, action FROM permissions
-    WHERE module IN ('attendance', 'leave', 'documents', 'projects') 
-    AND action IN ('view_my', 'view_personal', 'view', 'clock_in_out')
-    ON CONFLICT (role_id, module, action) DO NOTHING;
-
+        -- EMPLOYEE: view own, create leave, manage own tasks, chat
+        INSERT INTO role_permissions (tenant_id, role, permission_id, enabled)
+        VALUES (p_tenant_id, 'EMPLOYEE', perm.id,
+            CASE
+                WHEN perm.module = 'employees' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'attendance' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'leave' AND perm.action IN ('view', 'create') THEN TRUE
+                WHEN perm.module = 'payroll' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'departments' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'designations' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'assets' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'projects' AND perm.action IN ('view', 'manage_tasks') THEN TRUE
+                WHEN perm.module = 'chat' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'calendar' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'organisation' AND perm.action = 'view' THEN TRUE
+                WHEN perm.module = 'wfh' AND perm.action IN ('view', 'create') THEN TRUE
+                WHEN perm.module = 'shifts' AND perm.action = 'view' THEN TRUE
+                ELSE FALSE
+            END
+        )
+        ON CONFLICT (tenant_id, role, permission_id) DO NOTHING;
+    END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -12,8 +12,8 @@ async function runMigration() {
         console.log('Connecting to DB...');
         await client.connect();
 
-        console.log('Reading migration file: 20260225_multi_stage_approval.sql');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260225_multi_stage_approval.sql');
+        console.log('Reading migration file: 20260311_fix_admin_seeding.sql');
+        const migrationPath = path.join(__dirname, '../src/database/migrations/20260311_fix_admin_seeding.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');
