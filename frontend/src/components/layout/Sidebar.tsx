@@ -22,6 +22,7 @@ import {
   FolderKanban,
   MessageSquare,
   Activity,
+  Ticket,
 } from 'lucide-react';
 
 
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/system' },
   { label: 'Tenants', icon: Building2, path: '/tenants' },
   { label: 'Plans', icon: CreditCard, path: '/plans' },
+  { label: 'Coupons', icon: Ticket, path: '/coupons' },
   { label: 'Employees', icon: Users, path: '/dashboard/employees', permission: ['employees', 'view'] },
   { label: 'Organisation', icon: Building2, path: '/organisation', permission: ['organisation', 'view'] },
 
@@ -86,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const visibleItems = NAV_ITEMS.filter(item => {
     // Super Admin only sees Dashboard, Tenants, and Plans
     if (user.role === 'SUPER_ADMIN') {
-      const allowedPaths = ['/dashboard/system', '/tenants', '/plans'];
+      const allowedPaths = ['/dashboard/system', '/tenants', '/plans', '/coupons'];
       return allowedPaths.includes(item.path);
     }
 
@@ -106,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     }
 
     // Super Admin specific items without explicit permission keys in master catalog
-    const superAdminPaths = ['/tenants', '/plans'];
+    const superAdminPaths = ['/tenants', '/plans', '/coupons'];
     if (superAdminPaths.includes(item.path)) {
       return user.role === 'SUPER_ADMIN';
     }

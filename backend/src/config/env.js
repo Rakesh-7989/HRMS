@@ -34,6 +34,7 @@ module.exports = {
     SMTP_PASS: process.env.SMTP_PASS,
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply.hrms@WellZo.com',
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HR WellZo',
+    CONTACT_SALES_EMAIL: process.env.CONTACT_SALES_EMAIL || 'mukkaajith@gmail.com',
     DBA_PASSWORD: process.env.DBA_PASSWORD || 'dba_secret',
 
     // Encryption key for sensitive employee data (32-byte hex = 64 chars)

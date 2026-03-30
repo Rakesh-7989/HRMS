@@ -42,13 +42,10 @@ export const calendarService = {
         return response.data.data;
     },
 
-    addCompanyHoliday: async (date: string, holiday_name: string): Promise<CompanyHoliday> => {
-        const response = await api.post<{ status: string; data: CompanyHoliday }>('/calendar/company/holidays', {
-            date,
-            holiday_name
-        });
-        return response.data.data;
-    },
+   async addCompanyHoliday(date: string, holiday_name: string, state?: string): Promise<any> {
+    const response = await api.post('/calendar/company/holidays', { date, holiday_name, state });
+    return response.data;
+  },
 
     deleteCompanyHoliday: async (id: number): Promise<void> => {
         await api.delete(`/calendar/company/holidays/${id}`);
@@ -70,6 +67,17 @@ export const calendarService = {
 
     deleteAnnouncement: async (id: number): Promise<void> => {
         await api.delete(`/calendar/announcements/${id}`);
+    },
+
+    importHolidays: async (file: File): Promise<{ imported: number; years: number[]; errors?: string[] }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post<{ status: string; message: string; data: { imported: number; years: number[]; errors?: string[] } }>(
+            '/calendar/company/holidays/import',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        return response.data.data;
     }
 };
 

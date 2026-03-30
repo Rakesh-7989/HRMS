@@ -5,6 +5,7 @@ import { RootLayout } from '@/layouts/RootLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
 
+
 // Lazy-load all pages for code splitting — only the visited page's JS is downloaded
 const LandingPage = React.lazy(() => import('@/pages/LandingPage').then(m => ({ default: m.LandingPage })));
 const LoginPage = React.lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -116,7 +117,21 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />}>
       {/* Public Routes */}
-      <Route path="/" element={<Suspense fallback={<AuthSkeleton />}><LandingPage /></Suspense>} />
+      <Route
+        path="/"
+        element={
+          <Suspense fallback={
+            <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center animate-pulse">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-gray-200 dark:bg-gray-800" />
+                <div className="w-32 h-4 rounded-lg bg-gray-200 dark:bg-gray-800" />
+              </div>
+            </div>
+          }>
+            <LandingPage />
+          </Suspense>
+        }
+      />
       <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
       <Route path="/register" element={<Suspense fallback={<AuthSkeleton />}><RegisterPage /></Suspense>} />
       <Route path="/forgot-password" element={<Suspense fallback={<AuthSkeleton />}><ForgotPasswordPage /></Suspense>} />

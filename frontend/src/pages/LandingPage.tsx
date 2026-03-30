@@ -17,6 +17,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { plansService } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
+import { ContactSalesModal } from '@/components/ContactSalesModal';
 import rolesVisual from '@/assets/hrms_roles.png';
 
 const FloatingBackground = () => {
@@ -674,6 +675,7 @@ export const LandingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [highlightedFeature, setHighlightedFeature] = React.useState<string | null>(null);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -1331,9 +1333,6 @@ export const LandingPage: React.FC = () => {
                         <div className="flex items-baseline gap-2">
                           <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
                             ₹{plan.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </span>
-                          <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                            / {plan.duration} mo{plan.duration > 1 ? 's' : ''}
                           </span>
                         </div>
                       </div>

@@ -9,4 +9,9 @@ const verifyJwt = require('../../middleware/verifyJwt');
  */
 router.get('/timezones', commonController.getTimezones);
 
+/**
+ * Route for handling "Contact Sales" inquiries from the public website
+ */
+router.post('/contact-sales', commonController.handleContactSales);
+
 module.exports = router;

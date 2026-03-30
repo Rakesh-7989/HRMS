@@ -492,4 +492,80 @@ exports.sendDailyReport = async (to, reportData) => {
   });
 };
 
+/**
+ * Send contact sales inquiry email
+ */
+exports.sendContactSalesEmail = async (inquiryData) => {
+  const { fullName, workEmail, company, teamSize, phoneNumber, message } = inquiryData;
+  const to = env.CONTACT_SALES_EMAIL;
+
+  return exports.sendMail({
+    to,
+    subject: `New Sales Inquiry from ${fullName} (${company})`,
+    html: emailWrapper(`
+            <h1 style="margin:0 0 8px;font-size:24px;color:#1a1a2e;font-weight:700;">New Sales Inquiry</h1>
+            <p style="margin:0 0 28px;font-size:15px;color:#666;line-height:1.6;">A new prospect has requested contact regarding a Custom Enterprise Plan.</p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;border:1px solid #e8ddf0;overflow:hidden;margin-bottom:24px;">
+              <tr>
+                <td style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff 0%,#f0e8f5 100%);padding:20px 24px;border-bottom:1px solid #e8ddf0;">
+                  <p style="margin:0;font-size:18px;font-weight:700;color:#42275a;">Prospect Details</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;width:50%;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Name</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">${fullName}</p>
+                      </td>
+                      <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Email</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;"><a href="mailto:${workEmail}">${workEmail}</a></p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Company</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">${company}</p>
+                      </td>
+                      <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Team Size</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">${teamSize}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:16px 24px;border-bottom:1px solid #f0f0f0;" colspan="2">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Phone Number</p>
+                        <p style="margin:4px 0 0;font-size:15px;color:#333;font-weight:600;">${phoneNumber || 'Not provided'}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  ${message ? `
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:16px 24px;">
+                        <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Message</p>
+                        <p style="margin:8px 0 0;font-size:14px;color:#333;line-height:1.6;white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:8px;border:1px solid #f3f4f6;">${message}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  ` : ''}
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+              <tr>
+                <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                  <a href="mailto:${workEmail}" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Reply to Prospect →</a>
+                </td>
+              </tr>
+            </table>
+        `, `New sales inquiry from ${fullName}`)
+  });
+};
+
 module.exports.transporter = transporter;

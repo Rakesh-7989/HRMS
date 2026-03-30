@@ -1,6 +1,8 @@
 /**
  * Controller for common/utility operations.
  */
+const mailer = require('../../config/mailer');
+
 
 /**
  * Generate a local list of IANA timezones using Node's built-in Intl API.
@@ -64,3 +66,54 @@ exports.getTimezones = async (req, res) => {
         });
     }
 };
+
+/**
+ * Handle Contact Sales Form Submission
+ */
+exports.handleContactSales = async (req, res) => {
+    try {
+        const { fullName, workEmail, company, teamSize, phoneNumber, message } = req.body;
+
+        // Basic validation
+        if (!fullName || !workEmail || !company || !phoneNumber || !message) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'All fields (Full Name, Work Email, Company, Phone Number, and Message) are required.'
+            });
+        }
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(workEmail)) {
+             return res.status(400).json({
+                status: 'ERROR',
+                message: 'Please provide a valid email address.'
+            });
+        }
+        
+        // Basic phone validation (allowing digits, spaces, +, -, or ())
+        const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+        if (!phoneRegex.test(phoneNumber) || phoneNumber.replace(/\D/g, '').length < 7) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Please provide a valid phone number.'
+            });
+        }
+
+        // Send the email using the mailer utility
+        await mailer.sendContactSalesEmail({ fullName, workEmail, company, teamSize, phoneNumber, message });
+
+        return res.status(200).json({
+            status: 'OK',
+            message: 'Inquiry sent successfully.'
+        });
+
+    } catch (error) {
+        console.error('Error handling contact sales inquiry:', error.message);
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'Failed to process inquiry.'
+        });
+    }
+};
+

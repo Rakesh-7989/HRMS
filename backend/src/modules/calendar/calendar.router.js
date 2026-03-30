@@ -44,6 +44,15 @@ router.delete(
     controller.deleteCompanyHoliday
 );
 
+// Bulk Import Holidays from Excel
+const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
+router.post(
+    "/company/holidays/import",
+    requirePermission("calendar", "manage_holidays"),
+    uploadTemp.single("file"),
+    controller.bulkImportHolidays
+);
+
 // State Holidays Management
 router.post(
     "/state/holidays",

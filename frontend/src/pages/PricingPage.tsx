@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 import { AnimatedLogo } from '@/components/AnimatedLogo';
-
+import { ContactSalesModal } from '@/components/ContactSalesModal';
 declare global {
   interface Window {
     Razorpay: any;
@@ -349,14 +349,16 @@ const FeatureCategory: React.FC<{
   );
 };
 
+
+
 export const PricingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tenantId = searchParams.get('tenantId');
-  console.log('PricingPage params:', { tenantId, params: Object.fromEntries(searchParams) });
   const navigate = useNavigate();
   const { user } = useAuth();
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [employeeCount] = React.useState<number>(1);
+  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
 
 
 
@@ -534,7 +536,6 @@ export const PricingPage: React.FC = () => {
               <div className="flex items-center gap-6">
                 <ThemeToggle />
                 <button onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">Login</button>
-                <button onClick={() => navigate('/register')} className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">Start Free</button>
               </div>
             )}
 
@@ -643,9 +644,6 @@ export const PricingPage: React.FC = () => {
                         <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
                           ₹{plan.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
-                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                          / {plan.duration} mo{plan.duration > 1 ? 's' : ''}
-                        </span>
                       </div>
                     </div>
 
@@ -720,6 +718,41 @@ export const PricingPage: React.FC = () => {
           })}
         </div>
 
+        {/* Custom Plan Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-20 max-w-4xl mx-auto"
+        >
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-[#111] text-gray-900 dark:text-white p-12 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl">
+            {/* Decorative background */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 dark:bg-primary/20 rounded-full blur-[100px] -mr-48 -mt-48" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 dark:bg-primary/10 rounded-full blur-[80px] -ml-32 -mb-32" />
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 mb-4">
+                  <Star className="w-3 h-3 text-primary fill-primary" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary">Enterprise Only</span>
+                </div>
+                <h2 className="text-3xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">Custom Enterprise Plan</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg leading-relaxed">
+                  For organizations with more than 500+ employees, complex compliance needs, or custom integration requirements. Get a dedicated instance with white-labeling.
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => setIsContactModalOpen(true)}
+                  className="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-gray-900/10 dark:shadow-white/10"
+                >
+                  Contact Sales
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Compressed Feature Comparison */}
         <div className="max-w-4xl mx-auto border border-gray-200 dark:border-white/5 rounded-[2.5rem] bg-gray-50 dark:bg-[#080808] overflow-hidden shadow-xl dark:shadow-none transition-colors">
           <div className="p-8 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-white/[0.5] dark:bg-white/[0.01]">
@@ -746,15 +779,10 @@ export const PricingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-16 text-center">
-          <button
-            onClick={() => window.open('mailto:engineering@WellZo.com')}
-            className="text-primary hover:text-black dark:hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em]"
-          >
-            Contact Engineering Team
-          </button>
-        </div>
+
       </div>
+
+      <ContactSalesModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
 
       <SuccessModal
         isOpen={errorConfig.isOpen}

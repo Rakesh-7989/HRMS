@@ -87,6 +87,13 @@ router.put(
   controller.updateEmployee
 );
 
+// ACTIVATE / DEACTIVATE (status toggle)
+router.put(
+  "/:id/status",
+  requirePermission('employees', 'update'),
+  controller.updateUserStatus
+);
+
 // ROLE MANAGEMENT
 router.patch(
   "/:id/role",
