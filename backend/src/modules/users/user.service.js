@@ -513,8 +513,8 @@ exports.terminateEmployee = async (db, id, data, actor) => {
 
   // Update employee record
   await query(
-    `UPDATE employees SET status = 'TERMINATED', termination_date = $1, termination_reason = $2, portal_access_until = $3, updated_at = now() WHERE user_id = $4 AND tenant_id = $5`,
-    [termination_date, termination_reason, portal_access_until, id, actor.tenantId]
+    `UPDATE employees SET status = 'TERMINATED', termination_date = $1, termination_reason = $2, updated_at = now() WHERE user_id = $3 AND tenant_id = $4`,
+    [termination_date, termination_reason, id, actor.tenantId]
   );
 
   // AUTO-CANCEL FUTURE LEAVES
@@ -599,7 +599,7 @@ exports.getUsers = async (db, opts, actor) => {
   // Restricted Visibility for MANAGER and EMPLOYEE
   // Managers see: Direct reports, Project-mates, Self
   // Employees see: Teammates (same manager), Manager, Project-mates, Self
-  if (['MANAGER', 'EMPLOYEE'].includes(actor.role)) {
+  if (actor.role === 'MANAGER') {
     if (!actor.employeeId) {
       // If user has no employee record, they can only see themselves
       filter.push(`u.id = $${i}`);
@@ -609,6 +609,23 @@ exports.getUsers = async (db, opts, actor) => {
       filter.push(`(
         e.id = $${i} -- Self
         OR e.reports_to = $${i} -- Direct reports (for managers)
+        OR EXISTS (
+          SELECT 1 FROM project_members pm1 
+          JOIN project_members pm2 ON pm1.project_id = pm2.project_id 
+          WHERE pm1.employee_id = $${i} AND pm2.employee_id = e.id
+        ) -- Project mates
+      )`);
+      params.push(actor.employeeId);
+      i++;
+    }
+  } else if (actor.role === 'EMPLOYEE') {
+    if (!actor.employeeId) {
+      filter.push(`u.id = $${i}`);
+      params.push(actor.id);
+      i++;
+    } else {
+      filter.push(`(
+        e.id = $${i} -- Self
         OR EXISTS (
           SELECT 1 FROM employees emp_self 
           WHERE emp_self.id = $${i} 

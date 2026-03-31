@@ -16,7 +16,7 @@ router.use('/types', leaveTypeRouter);
 router.use('/policies', planGuard('leave.policy_config'), leavePolicyRouter);
 router.use('/balances', leaveBalanceRouter);
 router.use('/holidays', holidayRouter);
-router.use('/delegations', planGuard('leave.workflow_delegation'), delegationRouter);
+router.use('/delegations', delegationRouter);
 router.use('/reports', leaveReportRouter);
 
 // Core leave request routes (apply, approve, etc.)
