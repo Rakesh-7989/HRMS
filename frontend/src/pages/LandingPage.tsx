@@ -17,7 +17,6 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { plansService } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
-import { ContactSalesModal } from '@/components/ContactSalesModal';
 import rolesVisual from '@/assets/hrms_roles.png';
 import { useTranslation } from 'react-i18next';
 
@@ -677,7 +676,7 @@ export const LandingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [highlightedFeature, setHighlightedFeature] = React.useState<string | null>(null);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
-  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
+
 
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
