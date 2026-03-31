@@ -32,8 +32,10 @@ import { projectsService } from '@/services/projects.service';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';
+import { useTranslation } from 'react-i18next';
 
 export const ProjectsPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -216,10 +218,10 @@ export const ProjectsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Projects"
+            title={t('projects.title')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects') },
             ]}
         >
             <div className="space-y-6">
@@ -236,7 +238,7 @@ export const ProjectsPage: React.FC = () => {
                             )}
                         >
                             <List size={16} />
-                            List
+                            {t('projects.list')}
                         </button>
                         {canViewReports && (
                             <button
@@ -249,7 +251,7 @@ export const ProjectsPage: React.FC = () => {
                                 )}
                             >
                                 <BarChart3 size={16} />
-                                Reports
+                                {t('projects.reports')}
                             </button>
                         )}
                         <button
@@ -262,7 +264,7 @@ export const ProjectsPage: React.FC = () => {
                             )}
                         >
                             <Clock size={16} />
-                            Timesheets
+                            {t('projects.timesheets')}
                         </button>
                     </div>
 
@@ -271,11 +273,11 @@ export const ProjectsPage: React.FC = () => {
                             {canManage && (
                                 <>
                                     <Button variant="outline" onClick={() => navigate('/projects/clients')}>
-                                        Manage Clients
+                                        {t('projects.manageClients')}
                                     </Button>
                                     <Button onClick={handleOpenCreateModal}>
                                         <Plus size={18} />
-                                        Add Project
+                                        {t('projects.addProject')}
                                     </Button>
                                 </>
                             )}
@@ -290,7 +292,7 @@ export const ProjectsPage: React.FC = () => {
                             <div className="relative flex-1 max-w-xs w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <Input
-                                    placeholder="Search projects..."
+                                    placeholder={t('projects.searchProjects')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
@@ -302,7 +304,7 @@ export const ProjectsPage: React.FC = () => {
                                 onChange={(e) => setClientFilter(e.target.value)}
                                 className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
                             >
-                                <option value="All">All Clients</option>
+                                <option value="All">{t('projects.allClients')}</option>
                                 {clients.map(client => (
                                     <option key={client.id} value={client.id}>{client.name}</option>
                                 ))}
@@ -313,7 +315,7 @@ export const ProjectsPage: React.FC = () => {
                                 onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'All')}
                                 className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
                             >
-                                <option value="All">All Status</option>
+                                <option value="All">{t('projects.allStatus')}</option>
                                 <option value="PLANNING">Planning</option>
                                 <option value="ACTIVE">Active</option>
                                 <option value="ON_HOLD">On Hold</option>
@@ -327,11 +329,11 @@ export const ProjectsPage: React.FC = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Project Name</TableHead>
-                                        <TableHead>Client</TableHead>
-                                        <TableHead>Timeline</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        {canManage && <TableHead>Actions</TableHead>}
+                                        <TableHead>{t('projects.projectName')}</TableHead>
+                                        <TableHead>{t('projects.client')}</TableHead>
+                                        <TableHead>{t('projects.timeline')}</TableHead>
+                                        <TableHead>{t('projects.status')}</TableHead>
+                                        {canManage && <TableHead>{t('projects.actions')}</TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

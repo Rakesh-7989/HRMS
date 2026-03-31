@@ -8,10 +8,12 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '@/components/ui/Button';
 import { tenantRegistrationService } from '@/services/tenantRegistration.service';
+import { useTranslation } from 'react-i18next';
 
 type Step = 'details' | 'otp' | 'success';
 
 export const RegisterPage: React.FC = () => {
+    const { t } = useTranslation();
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -150,33 +152,33 @@ export const RegisterPage: React.FC = () => {
                     {step === 'details' && (
                         <>
                             <div className="mb-4">
-                                <h1 className="text-xl font-bold mb-1 text-gray-900 dark:text-white">Create account</h1>
-                                <p className="text-sm text-gray-600 dark:text-muted">Register your organization to get started</p>
+                                <h1 className="text-xl font-bold mb-1 text-gray-900 dark:text-white">{t('auth.createAccount')}</h1>
+                                <p className="text-sm text-gray-600 dark:text-muted">{t('auth.registerOrg')}</p>
                             </div>
                             {error && <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-sm text-red-500">{error}</div>}
                             <form onSubmit={formik.handleSubmit} className="space-y-4">
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Organization Name *</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.organizationName')} *</label>
                                             <input name="name" value={formik.values.name} onChange={formik.handleChange} onBlur={formik.handleBlur} onInput={handleInput}
                                                 className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.name && formik.errors.name ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Acme Innovations Pvt Ltd" />
                                             {formik.touched.name && formik.errors.name && <p className="text-xs text-red-500 mt-1">{formik.errors.name}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Admin Email *</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.adminEmail')} *</label>
                                             <input name="email" type="email" value={formik.values.email} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                 className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.email && formik.errors.email ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="admin@acme.com" />
                                             {formik.touched.email && formik.errors.email && <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Domain</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.domain')}</label>
                                             <input name="domain" value={formik.values.domain} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                 className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.domain && formik.errors.domain ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="acme.com" />
                                             {formik.touched.domain && formik.errors.domain && <p className="text-xs text-red-500 mt-1">{formik.errors.domain}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Phone *</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('common.phone')} *</label>
                                             <input name="phone" value={formik.values.phone} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                 className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.phone && formik.errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="+91 98765 43210" />
                                             {formik.touched.phone && formik.errors.phone && <p className="text-xs text-red-500 mt-1">{formik.errors.phone}</p>}
@@ -185,13 +187,13 @@ export const RegisterPage: React.FC = () => {
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">City *</label>
+                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.city')} *</label>
                                                 <input name="city" value={formik.values.city} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                     className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.city && formik.errors.city ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Hyderabad" />
                                                 {formik.touched.city && formik.errors.city && <p className="text-xs text-red-500 mt-1">{formik.errors.city}</p>}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">State *</label>
+                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.state')} *</label>
                                                 <input name="state" value={formik.values.state} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                     className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.state && formik.errors.state ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Telangana" />
                                                 {formik.touched.state && formik.errors.state && <p className="text-xs text-red-500 mt-1">{formik.errors.state}</p>}
@@ -199,20 +201,20 @@ export const RegisterPage: React.FC = () => {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Country *</label>
+                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.country')} *</label>
                                                 <input name="country" value={formik.values.country} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                     className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.country && formik.errors.country ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="India" />
                                                 {formik.touched.country && formik.errors.country && <p className="text-xs text-red-500 mt-1">{formik.errors.country}</p>}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Zip *</label>
+                                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.zip')} *</label>
                                                 <input name="zip_code" value={formik.values.zip_code} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                     className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.zip_code && formik.errors.zip_code ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="500081" />
                                                 {formik.touched.zip_code && formik.errors.zip_code && <p className="text-xs text-red-500 mt-1">{formik.errors.zip_code}</p>}
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Address</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('common.address')}</label>
                                             <input name="address" value={formik.values.address} onChange={formik.handleChange} onBlur={formik.handleBlur}
                                                 className={`w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border ${formik.touched.address && formik.errors.address ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'} focus:outline-none focus:ring-1 focus:ring-primary`} placeholder="Hitech City, Madhapur" />
                                             {formik.touched.address && formik.errors.address && <p className="text-xs text-red-500 mt-1">{formik.errors.address}</p>}
@@ -222,7 +224,7 @@ export const RegisterPage: React.FC = () => {
                                 <div className="flex justify-end pt-2">
                                     <Button type="submit" disabled={loading} className="px-8">
                                         {loading && <Loader2 className="animate-spin mr-2" size={18} />}
-                                        Register Tenant
+                                        {t('auth.registerTenant')}
                                     </Button>
                                 </div>
                             </form>
@@ -233,13 +235,13 @@ export const RegisterPage: React.FC = () => {
                     {step === 'otp' && (
                         <>
                             <div className="mb-6">
-                                <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Verify your email</h1>
+                                <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{t('auth.verifyEmail')}</h1>
                                 <p className="text-gray-600 dark:text-muted">We sent a 6-digit code to <strong>{formik.values.email}</strong></p>
                             </div>
                             {error && <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-sm text-red-500">{error}</div>}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Verification Code *</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">{t('auth.verificationCode')} *</label>
                                     <input
                                         type="text"
                                         maxLength={6}
@@ -251,7 +253,7 @@ export const RegisterPage: React.FC = () => {
                                 </div>
                                 <Button onClick={handleVerifyOtp} disabled={loading} className="w-full">
                                     {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : <CheckCircle className="mr-2" size={18} />}
-                                    Verify & Register
+                                    {t('auth.verifyAndRegister')}
                                 </Button>
                                 <div className="flex flex-col gap-2">
                                     <button
@@ -260,14 +262,14 @@ export const RegisterPage: React.FC = () => {
                                         disabled={loading}
                                         className="w-full text-sm text-primary hover:underline disabled:opacity-50"
                                     >
-                                        Resend verification code
+                                        {t('auth.resendCode')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => { setStep('details'); setOtpCode(''); setError(null); }}
                                         className="w-full text-sm text-gray-600 dark:text-muted hover:text-gray-900 dark:hover:text-white"
                                     >
-                                        ← Edit registration details
+                                        ← {t('auth.editDetails')}
                                     </button>
                                 </div>
                             </div>
@@ -279,13 +281,13 @@ export const RegisterPage: React.FC = () => {
                     {step === 'success' && (
                         <div className="text-center py-8">
                             <CheckCircle className="mx-auto text-green-500 mb-4" size={64} />
-                            <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Registration Complete!</h1>
+                            <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{t('auth.registrationComplete')}</h1>
                             <p className="text-gray-600 dark:text-muted mb-6">
                                 A temporary password has been sent to <strong>{formik.values.email}</strong>.<br />
                                 Please check your email and login to continue.
                             </p>
                             <Button onClick={() => navigate('/login')} className="px-8">
-                                Go to Login
+                                {t('auth.goToLogin')}
                             </Button>
                         </div>
                     )}
@@ -294,7 +296,7 @@ export const RegisterPage: React.FC = () => {
                         <div className="pt-6 border-t border-gray-200 dark:border-dark-border mt-6">
                             <a href="/" className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted hover:text-gray-900 dark:hover:text-white transition-colors">
                                 <ArrowLeft size={16} />
-                                Back to home
+                                {t('auth.backToHome')}
                             </a>
                         </div>
                     )}

@@ -21,32 +21,32 @@ const getEffectiveTz = async (query, tenantId, employeeId = null) => {
             `SELECT settings->>'timezone' as tz FROM tenants WHERE id = $1`,
             [tenantId]
         );
-        return tenantRes.rows[0]?.tz || 'UTC';
+        return tenantRes.rows[0]?.tz || 'Asia/Kolkata';
     } catch (err) {
         console.error('Error resolving timezone:', err);
-        return 'UTC';
+        return 'Asia/Kolkata';
     }
 };
 
 /**
  * Returns current date in YYYY-MM-DD format for a given timezone.
  */
-const todayDate = (timeZone = 'UTC') => {
+const todayDate = (timeZone = 'Asia/Kolkata') => {
     try {
         return new Date().toLocaleDateString('en-CA', { timeZone });
     } catch (err) {
-        return new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' });
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     }
 };
 
 /**
  * Returns current time in HH:mm:ss format for a given timezone.
  */
-const nowTime = (timeZone = 'UTC') => {
+const nowTime = (timeZone = 'Asia/Kolkata') => {
     try {
         return new Date().toLocaleTimeString('en-GB', { timeZone, hour12: false }).slice(0, 8);
     } catch (err) {
-        return new Date().toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false }).slice(0, 8);
+        return new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }).slice(0, 8);
     }
 };
 

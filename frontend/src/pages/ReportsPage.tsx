@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 export const ReportsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
   const [reportType, setReportType] = useState<'attendance' | 'leave' | 'employee' | 'overview'>('overview');
 
@@ -246,10 +248,10 @@ export const ReportsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Reports & Analytics"
+      title={t('reports.reportsAndAnalytics')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Reports' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.reports') },
       ]}
     >
       <div className="space-y-6">
@@ -258,10 +260,10 @@ export const ReportsPage: React.FC = () => {
           <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                Reports & Analytics
+                {t('reports.reportsAndAnalytics')}
               </h2>
               <p className="text-sm text-gray-600 dark:text-muted">
-                Comprehensive insights into your organization&apos;s HR data
+                {t('reports.description')}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
@@ -279,7 +281,7 @@ export const ReportsPage: React.FC = () => {
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       )}
                     >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                      {t(`reports.${type}`)}
                     </button>
                   ))}
                 </div>
@@ -292,10 +294,10 @@ export const ReportsPage: React.FC = () => {
                     onChange={(e) => setDateRange(e.target.value as any)}
                     className="w-full sm:w-auto px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="7d">Last 7 days</option>
-                    <option value="30d">Last 30 days</option>
-                    <option value="90d">Last 90 days</option>
-                    <option value="custom">Custom</option>
+                    <option value="7d">{t('reports.last7Days')}</option>
+                    <option value="30d">{t('reports.last30Days')}</option>
+                    <option value="90d">{t('reports.last90Days')}</option>
+                    <option value="custom">{t('reports.custom')}</option>
                   </select>
                   {dateRange === 'custom' && (
                     <DateRangePicker
@@ -323,13 +325,13 @@ export const ReportsPage: React.FC = () => {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-muted mb-1">Total Employees</p>
+                    <p className="text-sm text-gray-600 dark:text-muted mb-1">{t('reports.totalEmployees')}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {orgData?.orgMetrics.total_employees || 0}
                     </p>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                       <TrendingUp size={12} className="inline mr-1" />
-                      +{orgData?.orgMetrics.active_employees || 0} active
+                      +{orgData?.orgMetrics.active_employees || 0} {t('reports.active')}
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary-10">
@@ -341,12 +343,12 @@ export const ReportsPage: React.FC = () => {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-muted mb-1">Departments</p>
+                    <p className="text-sm text-gray-600 dark:text-muted mb-1">{t('reports.departments')}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {orgData?.orgMetrics.total_departments || 0}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-muted mt-1">
-                      {orgData?.orgMetrics.total_designations || 0} designations
+                      {orgData?.orgMetrics.total_designations || 0} {t('reports.designations')}
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-accent-blue/10">
@@ -358,12 +360,12 @@ export const ReportsPage: React.FC = () => {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-muted mb-1">Leave Requests</p>
+                    <p className="text-sm text-gray-600 dark:text-muted mb-1">{t('reports.leaveRequests')}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {hrData?.leaveMetrics.total_requests || 0}
                     </p>
                     <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                      {hrData?.leaveMetrics.pending || 0} pending
+                      {hrData?.leaveMetrics.pending || 0} {t('reports.pending')}
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-yellow-500/10">
@@ -375,7 +377,7 @@ export const ReportsPage: React.FC = () => {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-muted mb-1">Attendance Rate</p>
+                    <p className="text-sm text-gray-600 dark:text-muted mb-1">{t('reports.attendanceRate')}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {orgData?.attendanceMetrics.length
                         ? Math.round(
@@ -404,7 +406,7 @@ export const ReportsPage: React.FC = () => {
             <div className="grid lg:grid-cols-2 gap-6">
               <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Role Distribution
+                  {t('reports.roleDistribution')}
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
@@ -412,7 +414,7 @@ export const ReportsPage: React.FC = () => {
                   </div>
                 ) : (
                   <PieChart
-                    data={orgData?.roleDistribution.map((r) => ({ name: r.role, value: Number(r.count) })) || []}
+                    data={orgData?.roleDistribution.map((r) => ({ name: r.role === 'EMPLOYEE' ? t('common.roleEmployee') : r.role === 'MANAGER' ? t('common.roleManager') : r.role === 'HR' ? t('common.roleHr') : r.role === 'ADMIN' ? t('common.roleAdmin') : r.role, value: Number(r.count) })) || []}
                     height={300}
                   />
                 )}
@@ -420,7 +422,7 @@ export const ReportsPage: React.FC = () => {
 
               <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Department Headcount
+                  {t('reports.departmentHeadcount')}
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
@@ -431,7 +433,7 @@ export const ReportsPage: React.FC = () => {
                     data={orgData?.departmentAnalytics.slice(0, 10).map(d => ({ ...d, employee_count: Number(d.employee_count) })) || []}
                     dataKey="employee_count"
                     xKey="name"
-                    name="Employees"
+                    name={t('reports.employees')}
                     color="#6B46C1"
                     height={300}
                   />
@@ -443,7 +445,7 @@ export const ReportsPage: React.FC = () => {
             <div className="grid lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Attendance Trend Analysis ({getDateRangeLabel()})
+                  {t('reports.attendanceTrendAnalysis')} ({getDateRangeLabel()})
                 </h3>
                 {isLoading ? (
                   <div className="h-[350px] flex items-center justify-center">
@@ -467,7 +469,7 @@ export const ReportsPage: React.FC = () => {
 
               <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Leave Type Distribution
+                  {t('reports.leaveTypeDistribution')}
                 </h3>
                 {isLoading ? (
                   <div className="h-[350px] flex items-center justify-center">
@@ -491,7 +493,7 @@ export const ReportsPage: React.FC = () => {
             <div className="grid lg:grid-cols-2 gap-6">
               <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Department Performance
+                  {t('reports.departmentPerformance')}
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
@@ -515,7 +517,7 @@ export const ReportsPage: React.FC = () => {
 
               <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Monthly Trends
+                  {t('reports.monthlyTrends')}
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">

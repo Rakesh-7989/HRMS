@@ -14,6 +14,7 @@ import {
 import { toast } from 'react-hot-toast';
 
 export const DBADashboard = () => {
+
     // Auth State for DBA Console
     const [isLocked, setIsLocked] = useState(true);
     const [password, setPassword] = useState('');

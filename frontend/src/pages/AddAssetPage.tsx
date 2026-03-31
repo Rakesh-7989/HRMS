@@ -9,6 +9,8 @@ import { ArrowLeft, Save, Loader2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AssetFormData {
   asset_code: string; // Changed from asset_id
@@ -35,6 +37,8 @@ interface AssetFormData {
 }
 
 export const AddAssetPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { user: _user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
@@ -270,8 +274,8 @@ export const AddAssetPage: React.FC = () => {
     <DashboardLayout
       title={isEdit ? 'Edit Asset' : 'Add New Asset'}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Assets', href: '/assets' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.assets'), href: '/assets' },
         { label: isEdit ? 'Edit' : 'Add' },
       ]}
     >

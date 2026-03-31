@@ -8,6 +8,7 @@ import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
+import { useTranslation } from 'react-i18next';
 
 const validationSchema = Yup.object({
     currentPassword: Yup.string().required('Current password is required'),
@@ -25,6 +26,7 @@ const validationSchema = Yup.object({
 });
 
 export const ChangePasswordPage: React.FC = () => {
+  const { t: _t } = useTranslation();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [showCurrent, setShowCurrent] = useState(false);

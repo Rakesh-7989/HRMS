@@ -45,8 +45,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
+import { useTranslation } from 'react-i18next';
 
 export const TasksPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id: projectId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -377,8 +379,8 @@ export const TasksPage: React.FC = () => {
             <DashboardLayout
                 title={project?.name || 'Tasks'}
                 breadcrumbs={[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: 'Projects', href: '/projects' },
+                    { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                    { label: t('common.breadcrumbs.projects'), href: '/projects' },
                     { label: project?.name || 'Project Details' },
                 ]}
             >
@@ -395,8 +397,8 @@ export const TasksPage: React.FC = () => {
             <DashboardLayout
                 title={project?.name || 'Tasks'}
                 breadcrumbs={[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: 'Projects', href: '/projects' },
+                    { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                    { label: t('common.breadcrumbs.projects'), href: '/projects' },
                     { label: project?.name || 'Project Details' },
                 ]}
             >
@@ -418,8 +420,8 @@ export const TasksPage: React.FC = () => {
         <DashboardLayout
             title={project?.name || 'Tasks'}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects', href: '/projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects'), href: '/projects' },
                 { label: project?.name || 'Project Details' },
             ]}
         >

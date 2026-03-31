@@ -7,8 +7,10 @@ import { plansService, Plan } from '@/services/plans.service';
 import { Edit2, Plus, Save, X, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 export const PlansPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
@@ -166,7 +168,7 @@ export const PlansPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Subscription Plans"
-            breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/system' }, { label: 'Plans' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/system' }, { label: 'Plans' }]}
         >
             <div className="space-y-6">
                 <div className="flex justify-between items-center">

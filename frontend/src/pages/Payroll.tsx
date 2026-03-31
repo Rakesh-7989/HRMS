@@ -14,19 +14,21 @@ import { PayrollDashboard } from '@/pages/payroll/PayrollDashboard';
 import { TaxDeclaration } from '@/pages/payroll/TaxDeclaration';
 import { ArrearsPage } from '@/pages/payroll/ArrearsPage';
 import { FnFSettlementsContent } from '@/pages/payroll/FnFSettlementsContent';
+import { useTranslation } from 'react-i18next';
 import { PermissionAction } from '@/services/permissions.service';
 
-const PAYROLL_TABS: { id: string; label: string; action: PermissionAction }[] = [
-  { id: 'dashboard', label: 'Overview', action: 'view' },
-  { id: 'summary', label: 'Summary', action: 'view' },
-  { id: 'payslips', label: 'Payslips', action: 'view' },
-  { id: 'tax', label: 'Tax & Compliance', action: 'view' },
-  { id: 'salary_details', label: 'Salary Structure', action: 'manage' },
-  { id: 'arrears', label: 'Arrears', action: 'manage' },
-  { id: 'fnf', label: 'F&F Settlements', action: 'manage' },
+const PAYROLL_TABS: { id: string; labelKey: string; action: PermissionAction }[] = [
+  { id: 'dashboard', labelKey: 'payroll.overview', action: 'view' },
+  { id: 'summary', labelKey: 'payroll.summary', action: 'view' },
+  { id: 'payslips', labelKey: 'payroll.payslips', action: 'view' },
+  { id: 'tax', labelKey: 'payroll.taxAndCompliance', action: 'view' },
+  { id: 'salary_details', labelKey: 'payroll.salaryStructure', action: 'manage' },
+  { id: 'arrears', labelKey: 'payroll.arrears', action: 'manage' },
+  { id: 'fnf', labelKey: 'payroll.fnfSettlements', action: 'manage' },
 ];
 
 export const Payroll: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
@@ -87,10 +89,10 @@ export const Payroll: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Payroll Management"
+      title={t('payroll.payrollManagement')}
       breadcrumbs={[
-        { label: 'Dashboard', href: hasPermission('payroll', 'manage') ? '/dashboard/organization' : '/dashboard/personal' },
-        { label: 'Payroll' },
+        { label: t('common.breadcrumbs.dashboard'), href: hasPermission('payroll', 'manage') ? '/dashboard/organization' : '/dashboard/personal' },
+        { label: t('common.breadcrumbs.payroll') },
       ]}
     >
 
@@ -109,7 +111,7 @@ export const Payroll: React.FC = () => {
                   : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-700/50'
                   }`}
               >
-                {tab.label}
+                {t((tab as any).labelKey)}
               </button>
             );
           })}
@@ -126,7 +128,7 @@ export const Payroll: React.FC = () => {
               ) : (
                 <Play className="w-3.5 h-3.5" />
               )}
-              Pay Run
+              {t('payroll.payRun')}
             </button>
           )}
         </div>

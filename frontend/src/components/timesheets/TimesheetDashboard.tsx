@@ -9,6 +9,7 @@ import { timesheetService } from '@/services/timesheet.service';
 import { TimesheetDashboardStats, TimesheetDashboardCharts, TimesheetDashboardBreakdown } from '@/types/project.types';
 import { WeeklyTimesheetEntry } from './WeeklyTimesheetEntry';
 import { TimesheetHistory } from './TimesheetHistory';
+import { useTranslation } from 'react-i18next';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -26,6 +27,7 @@ const itemVariants = {
 };
 
 export const TimesheetDashboard: React.FC = () => {
+    const { t } = useTranslation();
     const [stats, setStats] = useState<TimesheetDashboardStats | null>(null);
     const [charts, setCharts] = useState<TimesheetDashboardCharts | null>(null);
     const [breakdown, setBreakdown] = useState<TimesheetDashboardBreakdown | null>(null);
@@ -73,7 +75,7 @@ export const TimesheetDashboard: React.FC = () => {
             {/* Header Section */}
             <motion.div variants={itemVariants} className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Timesheets</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{t('timesheets.title')}</h1>
                 </div>
 
                 <div className="flex items-center gap-6 w-full md:w-auto justify-end">
@@ -86,7 +88,7 @@ export const TimesheetDashboard: React.FC = () => {
                             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm shadow-purple-200"
                         >
                             <Plus size={16} />
-                            Log Time
+                            {t('timesheets.logTime')}
                         </button>
                     </div>
                 </div>
@@ -100,7 +102,7 @@ export const TimesheetDashboard: React.FC = () => {
                 {/* History Section */}
                 <motion.div variants={itemVariants}>
                     <div className="bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Timesheet History</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t('timesheets.history')}</h3>
                         <TimesheetHistory
                             onWeekSelect={(date) => {
                                 setSelectedDate(date);

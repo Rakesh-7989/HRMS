@@ -5,8 +5,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ResetPasswordPage: React.FC = () => {
+  const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');

@@ -11,8 +11,10 @@ import { leaveService, LeaveBalance, BalanceAdjustmentData } from '@/services/le
 import { usersService } from '@/services/users.service';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 export const LeaveBalancesPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
 
     // Search State
@@ -113,10 +115,10 @@ export const LeaveBalancesPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Leave Balances"
+            title={t('leave.tabs.balances')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Leave', href: '/leave' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.leave'), href: '/leave' },
                 { label: 'Balances' },
             ]}
         >

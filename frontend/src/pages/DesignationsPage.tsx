@@ -9,8 +9,10 @@ import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const DesignationsPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const { hasPermission } = usePermissions();
@@ -86,9 +88,9 @@ export const DesignationsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Designations"
+            title={t('organisation.designations')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
                 { label: 'Designations' },
             ]}
         >

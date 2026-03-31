@@ -9,10 +9,10 @@ import { Plus, Trash2, ArrowRight, Users, Shield, AlertCircle } from 'lucide-rea
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import api from '@/services/api';
 import type { User } from '@/services/users.service';
-
-
+import { useTranslation } from 'react-i18next';
 
 export const DelegationContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -98,10 +98,9 @@ export const DelegationContent: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">What are Delegations?</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('delegation.whatAreDelegations')}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            When you're away (on vacation, sick leave, etc.), you can delegate your leave approval authority to another manager.
-                            That person will then be able to approve or reject leave requests from your direct reports during the delegation period.
+                            {t('delegation.delegationsDesc')}
                         </p>
                     </div>
                 </div>
@@ -111,7 +110,7 @@ export const DelegationContent: React.FC = () => {
             <div className="flex justify-end">
                 <Button onClick={() => setShowCreateDialog(true)} size="md">
                     <Plus className="mr-2" size={18} />
-                    Create Delegation
+                    {t('delegation.createDelegation')}
                 </Button>
             </div>
 
@@ -119,8 +118,8 @@ export const DelegationContent: React.FC = () => {
             <Card>
                 <div className="flex items-center gap-2 mb-4">
                     <ArrowRight className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">My Delegations</h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">(Approval authority I've given to others)</span>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('delegation.myDelegations')}</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('delegation.myDelegationsDesc')}</span>
                 </div>
 
                 {loadingMine ? (
@@ -130,18 +129,18 @@ export const DelegationContent: React.FC = () => {
                 ) : myDelegations.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <Users className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p className="text-sm">No active delegations. Create one when you're going to be away.</p>
+                        <p className="text-sm">{t('delegation.noActiveDelegations')}</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Delegate</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Period</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Reason</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.delegate')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.period')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.reason')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.status')}</th>
+                                    <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -150,7 +149,7 @@ export const DelegationContent: React.FC = () => {
                                     return (
                                         <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                                             <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                {[(d as any).delegate_first_name, (d as any).delegate_last_name].filter(Boolean).join(' ') || 'Unknown'}
+                                                {[(d as any).delegate_first_name, (d as any).delegate_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
                                                 {d.delegate_email && (
                                                     <span className="block text-xs text-gray-500 dark:text-gray-400">{d.delegate_email}</span>
                                                 )}
@@ -166,7 +165,7 @@ export const DelegationContent: React.FC = () => {
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                                                     }`}>
-                                                    {isActive ? 'Active' : 'Expired'}
+                                                    {isActive ? t('delegation.active') : t('delegation.expired')}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-right">
@@ -175,7 +174,7 @@ export const DelegationContent: React.FC = () => {
                                                         onClick={() => revokeMutation.mutate(d.id)}
                                                         disabled={revokeMutation.isPending}
                                                         className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
-                                                        title="Revoke delegation"
+                                                        title={t('delegation.revokeDelegation')}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -194,8 +193,8 @@ export const DelegationContent: React.FC = () => {
             <Card>
                 <div className="flex items-center gap-2 mb-4">
                     <Users className="h-5 w-5 text-accent-green" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delegated To Me</h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">(Approval authority given to me by other managers)</span>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('delegation.delegatedToMe')}</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('delegation.delegatedToMeDesc')}</span>
                 </div>
 
                 {loadingToMe ? (
@@ -205,17 +204,17 @@ export const DelegationContent: React.FC = () => {
                 ) : delegationsToMe.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <Shield className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p className="text-sm">No one has delegated their approval authority to you.</p>
+                        <p className="text-sm">{t('delegation.noOneDelegated')}</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Delegated By</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Period</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Reason</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.delegatedBy')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.period')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.reason')}</th>
+                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -224,7 +223,7 @@ export const DelegationContent: React.FC = () => {
                                     return (
                                         <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                                             <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                {[(d as any).delegator_first_name, (d as any).delegator_last_name].filter(Boolean).join(' ') || 'Unknown'}
+                                                {[(d as any).delegator_first_name, (d as any).delegator_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
                                                 {d.delegator_email && (
                                                     <span className="block text-xs text-gray-500 dark:text-gray-400">{d.delegator_email}</span>
                                                 )}
@@ -240,7 +239,7 @@ export const DelegationContent: React.FC = () => {
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                                                     }`}>
-                                                    {isActive ? 'Active' : 'Expired'}
+                                                    {isActive ? t('delegation.active') : t('delegation.expired')}
                                                 </span>
                                             </td>
                                         </tr>
@@ -256,7 +255,7 @@ export const DelegationContent: React.FC = () => {
             <Dialog
                 open={showCreateDialog}
                 onOpenChange={setShowCreateDialog}
-                title="Create Delegation"
+                title={t('delegation.createDelegation')}
                 className="max-w-lg"
             >
                 <div className="flex flex-col">
@@ -265,14 +264,14 @@ export const DelegationContent: React.FC = () => {
                         <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg p-3 mb-4 flex items-start gap-2">
                             <AlertCircle size={16} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                             <p className="text-xs text-blue-800 dark:text-blue-400">
-                                The selected person will be able to approve/reject leave requests from your direct reports during this period.
+                                {t('delegation.dialogInfo')}
                             </p>
                         </div>
 
                         {/* Delegate Selector */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                Delegate To *
+                                {t('delegation.delegateToAsterisk')}
                             </label>
                             {selectedDelegate ? (
                                 <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -288,14 +287,14 @@ export const DelegationContent: React.FC = () => {
                                         onClick={() => { setSelectedDelegate(null); setDelegateSearch(''); }}
                                         className="text-xs text-red-600 dark:text-red-400 hover:underline"
                                     >
-                                        Change
+                                        {t('delegation.change')}
                                     </button>
                                 </div>
                             ) : (
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Search for a manager or HR..."
+                                        placeholder={t('delegation.searchDelegatePlaceholder')}
                                         value={delegateSearch}
                                         onChange={(e) => setDelegateSearch(e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -329,7 +328,7 @@ export const DelegationContent: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    Start Date *
+                                    {t('delegation.startDateAsterisk')}
                                 </label>
                                 <input
                                     type="date"
@@ -341,7 +340,7 @@ export const DelegationContent: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    End Date *
+                                    {t('delegation.endDateAsterisk')}
                                 </label>
                                 <input
                                     type="date"
@@ -356,14 +355,14 @@ export const DelegationContent: React.FC = () => {
                         {/* Reason */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                Reason (Optional)
+                                {t('delegation.reasonOptional')}
                             </label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 rows={2}
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="e.g., On vacation, attending conference..."
+                                placeholder={t('delegation.reasonPlaceholder')}
                             />
                         </div>
                     </DialogContent>
@@ -374,7 +373,7 @@ export const DelegationContent: React.FC = () => {
                             onClick={resetForm}
                             className="px-6 border-gray-300 dark:border-gray-600"
                         >
-                            Cancel
+                            {t('delegation.cancel')}
                         </Button>
                         <Button
                             onClick={() => {
@@ -391,7 +390,7 @@ export const DelegationContent: React.FC = () => {
                             disabled={!canSubmit}
                             className="px-6"
                         >
-                            Create Delegation
+                            {t('delegation.createDelegation')}
                         </Button>
                     </DialogFooter>
                 </div>

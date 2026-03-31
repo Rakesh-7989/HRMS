@@ -12,9 +12,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { subscriptionService } from '@/services/subscription.service';
 
 import { load } from '@cashfreepayments/cashfree-js';
+import { useTranslation } from 'react-i18next';
 
 
 export const BillingPortalPage: React.FC = () => {
+  const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -70,8 +72,8 @@ export const BillingPortalPage: React.FC = () => {
         <DashboardLayout
             title="Billing & Subscriptions"
             breadcrumbs={[
-                { label: 'Dashboard', href: user?.role === 'ADMIN' ? '/dashboard/organization' : '/dashboard/personal' },
-                { label: 'Settings', href: '/settings' },
+                { label: t('common.breadcrumbs.dashboard'), href: user?.role === 'ADMIN' ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: t('common.breadcrumbs.settings'), href: '/settings' },
                 { label: 'Billing' },
             ]}
         >

@@ -17,9 +17,11 @@ import { DepartmentsContent } from '@/components/organization/DepartmentsContent
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
 import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/UnifiedShiftsContent';
+import { useTranslation } from 'react-i18next';
 
 
 export const OrganisationPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'directory';
@@ -86,7 +88,7 @@ export const OrganisationPage: React.FC = () => {
   // Activate/deactivate actions removed from UI; mutations can be reintroduced if needed.
 
   const tenantFiltered = useMemo(
-    () => tenants.filter((t) => (t.name + (t.email || '') + (t.domain || '') + (t.city || '') + (t.country || '')).toLowerCase().includes(searchTenants.toLowerCase())),
+    () => tenants.filter((tenant) => (tenant.name + (tenant.email || '') + (tenant.domain || '') + (tenant.city || '') + (tenant.country || '')).toLowerCase().includes(searchTenants.toLowerCase())),
     [searchTenants, tenants]
   );
 
@@ -104,7 +106,7 @@ export const OrganisationPage: React.FC = () => {
 
 
   return (
-    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/organization' }, { label: 'Organisation' }]}>
+    <DashboardLayout title={t('organisation.title')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: t('common.breadcrumbs.organisation') }]}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
         {/* <div className="bg-white/5 p-3 rounded-md shadow-sm"></div> */}
@@ -115,22 +117,22 @@ export const OrganisationPage: React.FC = () => {
             <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
                 <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
-                  {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
+                  {user?.role === 'SUPER_ADMIN' ? t('organisation.tenantDirectory') : user?.role === 'MANAGER' ? t('organisation.myTeam') : t('organisation.employeeDirectory')}
                 </button>
               )}
 
 
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
+                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
-                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.departments')}</button>
+                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.designations')}</button>
                     </>
                   )}
                   {['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '') && (
-                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Shifts</button>
+                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</button>
                   )}
                 </>
               )}
@@ -164,30 +166,30 @@ export const OrganisationPage: React.FC = () => {
 
                     <div>
                       {tenantsLoading ? (
-                        <div className="h-40 flex items-center justify-center">Loading...</div>
+                        <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : tenantFiltered.length === 0 ? (
                         <div className="text-center text-muted">No tenants found</div>
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {tenantFiltered.map((t) => (
-                              <div key={t.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
+                            {tenantFiltered.map((tenant) => (
+                              <div key={tenant.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
                                 <div className="flex items-center justify-between">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white">{t.name}</div>
-                                  <div className={`text-xs font-medium ${t.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {t.is_active ? 'Active' : 'Inactive'}
+                                  <div className="font-semibold text-sm text-gray-900 dark:text-white">{tenant.name}</div>
+                                  <div className={`text-xs font-medium ${tenant.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    {tenant.is_active ? 'Active' : 'Inactive'}
                                   </div>
                                 </div>
 
-                                <div className="text-xs text-muted mt-2">{t.email}</div>
-                                {t.domain && <div className="text-xs text-muted">{t.domain}</div>}
-                                {(t.city || t.country) && (
-                                  <div className="text-xs text-muted mt-2">{[t.city, t.state, t.country].filter(Boolean).join(', ')}</div>
+                                <div className="text-xs text-muted mt-2">{tenant.email}</div>
+                                {tenant.domain && <div className="text-xs text-muted">{tenant.domain}</div>}
+                                {(tenant.city || tenant.country) && (
+                                  <div className="text-xs text-muted mt-2">{[tenant.city, tenant.state, tenant.country].filter(Boolean).join(', ')}</div>
                                 )}
-                                <div className="text-xs text-muted mt-2">Created: {format(new Date(t.created_at), 'MMM dd, yyyy')}</div>
+                                <div className="text-xs text-muted mt-2">Created: {format(new Date(tenant.created_at), 'MMM dd, yyyy')}</div>
 
                                 <div className="mt-4 flex items-center gap-2">
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(t)} className="text-primary hover:bg-primary/5 dark:hover:bg-primary/20">
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(tenant)} className="text-primary hover:bg-primary/5 dark:hover:bg-primary/20">
                                     <Eye size={14} />
                                     View
                                   </Button>
@@ -206,7 +208,7 @@ export const OrganisationPage: React.FC = () => {
                                     <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
                                     <p className="text-sm text-muted">{selectedTenant.email}</p>
                                   </div>
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)} className="self-end md:self-auto">Close</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)} className="self-end md:self-auto">{t('common.close')}</Button>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -261,9 +263,9 @@ export const OrganisationPage: React.FC = () => {
                   <>
                     <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
-                        <label className="text-sm text-muted">Filter by Department:</label>
+                        <label className="text-sm text-muted">{t('organisation.filterByDept')}</label>
                         <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
-                          <option value="all">All Departments</option>
+                          <option value="all">{t('organisation.allDepartments')}</option>
                           {displayDepartments.map((d: Dept) => (
                             <option key={d.id} value={d.id}>{d.name}</option>
                           ))}
@@ -273,7 +275,7 @@ export const OrganisationPage: React.FC = () => {
 
                     <div>
                       {employeesLoading ? (
-                        <div className="h-40 flex items-center justify-center">Loading...</div>
+                        <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : filteredEmployees.length === 0 ? (
                         <div className="text-center text-muted">No employees found</div>
                       ) : (

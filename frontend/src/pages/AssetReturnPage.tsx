@@ -8,6 +8,7 @@ import { assetsService } from '@/services/assets.service';
 import { ArrowLeft, Save, AlertTriangle, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useTranslation } from 'react-i18next';
 
 interface ChecklistItem {
     item_name: string;
@@ -16,6 +17,7 @@ interface ChecklistItem {
 }
 
 export const AssetReturnPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -126,7 +128,7 @@ export const AssetReturnPage: React.FC = () => {
     if (isLoading || accessoriesLoading) {
         return (
             <DashboardLayout title="Loading...">
-                <div className="flex justify-center p-8">Loading...</div>
+                <div className="flex justify-center p-8">{t('common.loading')}</div>
             </DashboardLayout>
         );
     }
@@ -168,7 +170,7 @@ export const AssetReturnPage: React.FC = () => {
         <DashboardLayout
             title="Return Asset"
             breadcrumbs={[
-                { label: 'Assets', href: '/assets' },
+                { label: t('common.breadcrumbs.assets'), href: '/assets' },
                 { label: asset.name, href: `/assets/${asset.id}` },
                 { label: 'Return' },
             ]}

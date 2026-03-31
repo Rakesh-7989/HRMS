@@ -8,11 +8,13 @@ import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useTranslation } from 'react-i18next';
 
 // Using a simple Modal if UI components not standard, but let's try to use standard logic or raw HTML for modal if needed.
 // I'll use a custom Modal implementation inside this file if needed to be safe, or just standard HTML fixed div.
 
 const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     const formik = useFormik({
@@ -118,7 +120,7 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                     </div>
 
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button type="button" variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
                         <Button type="submit" disabled={formik.isSubmitting}>Create Coupon</Button>
                     </div>
                 </form>
@@ -128,6 +130,7 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
 }
 
 export const CouponsPage: React.FC = () => {
+  const { t: _t } = useTranslation();
     const queryClient = useQueryClient();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

@@ -32,8 +32,10 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import type { Asset, AssetStatus, AssetCategory } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 export const AssetsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -361,10 +363,10 @@ export const AssetsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title={isAnyAdmin ? 'Asset Management' : 'My Assets'}
+      title={canManage ? t('assets.assetManagement') : t('assets.myAssets')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: isAnyAdmin ? 'Assets' : 'My Assets' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: canManage ? t('common.breadcrumbs.assets') : t('assets.myAssets') },
       ]}
     >
       <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -372,10 +374,10 @@ export const AssetsPage: React.FC = () => {
         {isAnyAdmin && dashboard && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: 'Total Assets', value: dashboard.summary.total_assets, sub: `₹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
-              { label: 'Available', value: dashboard.summary.available_count, icon: UserCheck, gradient: 'linear-gradient(135deg, #10b981, #059669)', status: 'text-emerald-500' },
-              { label: 'Assigned', value: dashboard.summary.assigned_count, icon: BarChart3, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', status: 'text-amber-500' },
-              { label: 'Under Repair', value: dashboard.summary.under_repair_count, icon: Wrench, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', status: 'text-rose-500' }
+              { label: t('assets.totalAssets'), value: dashboard.summary.total_assets, sub: `₹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
+              { label: t('assets.available'), value: dashboard.summary.available_count, icon: UserCheck, gradient: 'linear-gradient(135deg, #10b981, #059669)', status: 'text-emerald-500' },
+              { label: t('assets.assigned'), value: dashboard.summary.assigned_count, icon: BarChart3, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', status: 'text-amber-500' },
+              { label: t('assets.underRepair'), value: dashboard.summary.under_repair_count, icon: Wrench, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', status: 'text-rose-500' }
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
@@ -436,7 +438,7 @@ export const AssetsPage: React.FC = () => {
                 />
                 <input
                   type="text"
-                  placeholder="Search by asset name, code, barcode..."
+                  placeholder={t('assets.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-5 py-3 pl-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm transition-all focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 shadow-sm"
@@ -449,7 +451,7 @@ export const AssetsPage: React.FC = () => {
                 onChange={(e) => setStatusFilter(e.target.value as AssetStatus | 'All')}
                 className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm cursor-pointer appearance-none"
               >
-                <option value="All">All Status</option>
+                <option value="All">{t('assets.allStatus')}</option>
                 {['AVAILABLE', 'ASSIGNED', 'UNDER_REPAIR', 'RETIRED', 'DOA', 'LOST', 'WRITTEN_OFF', 'DISPOSED'].map(s => (
                   <option key={s} value={s}>{s.replace('_', ' ')}</option>
                 ))}
@@ -459,7 +461,7 @@ export const AssetsPage: React.FC = () => {
                 onChange={(e) => setCategoryFilter(e.target.value as AssetCategory | 'All')}
                 className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm cursor-pointer appearance-none"
               >
-                <option value="All">All Categories</option>
+                <option value="All">{t('assets.allCategories')}</option>
                 {Array.from(new Set(assets.map(a => a.category))).sort().map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -478,7 +480,7 @@ export const AssetsPage: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
               >
                 <Download size={18} className="text-indigo-500" />
-                <span>{exportingCSV ? 'Exporting...' : 'Export CSV'}</span>
+                <span>{exportingCSV ? 'Exporting...' : t('assets.exportCSV')}</span>
               </motion.button>
             )}
 
@@ -494,7 +496,7 @@ export const AssetsPage: React.FC = () => {
                   className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
                 >
                   <FileText size={18} className="text-amber-500" />
-                  <span>Request</span>
+                  <span>{t('assets.request')}</span>
                 </motion.button>
               )}
 
@@ -509,7 +511,7 @@ export const AssetsPage: React.FC = () => {
                   className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
                 >
                   <UserPlus size={18} className="text-emerald-500" />
-                  <span>Assign</span>
+                  <span>{t('assets.assign')}</span>
                 </motion.button>
               )}
 
@@ -523,7 +525,7 @@ export const AssetsPage: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl text-sm font-bold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 shadow-sm transition-all whitespace-nowrap min-w-fit"
               >
                 <ClipboardList size={18} />
-                <span>{canManageRequests ? 'Requests' : 'My Requests'}</span>
+                <span>{canManage || user?.role === 'HR' ? t('assets.requests') : t('assets.myRequests')}</span>
               </motion.button>
 
               {canCreate && (
@@ -550,15 +552,15 @@ export const AssetsPage: React.FC = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Asset</th>
-                  {canViewBarcode && <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Barcode</th>}
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Category</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Assigned To</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Assigned By</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Assigned Date</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Last Updated</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Actions</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.asset')}</th>
+                  {canViewBarcode && <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.barcode')}</th>}
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.category')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.status')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedTo')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedBy')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedDate')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.lastUpdated')}</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -590,7 +592,7 @@ export const AssetsPage: React.FC = () => {
                 ) : filteredAssets.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                      {isAnyAdmin ? 'No assets found' : 'No assets assigned to you'}
+                      {canManage ? t('assets.noAssetsFound') : t('assets.noAssetsAssigned')}
                     </td>
                   </tr>
                 ) : (

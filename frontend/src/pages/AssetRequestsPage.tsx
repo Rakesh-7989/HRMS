@@ -21,8 +21,10 @@ import {
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useTranslation } from 'react-i18next';
 
 export const AssetRequestsPage: React.FC = () => {
+  const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -180,7 +182,7 @@ export const AssetRequestsPage: React.FC = () => {
     };
 
     return (
-        <DashboardLayout title="Asset Requests">
+        <DashboardLayout title={t('assets.assetRequests')}>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">

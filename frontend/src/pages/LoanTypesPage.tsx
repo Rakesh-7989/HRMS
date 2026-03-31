@@ -11,9 +11,11 @@ import payrollService from '@/services/payroll.service';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useTranslation } from 'react-i18next';
 
 export const LoanTypesPage: React.FC = () => {
-  useAuth();
+  const { t } = useTranslation();
+  const { user: _user } = useAuth();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission('payroll', 'manage');
 
@@ -81,7 +83,7 @@ export const LoanTypesPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Loan Types' }]}>
+    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Loan Types' }]}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
           {canManage ? (
@@ -112,7 +114,7 @@ export const LoanTypesPage: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell>Loading...</TableCell>
+                <TableCell>{t('common.loading')}</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
@@ -177,7 +179,7 @@ export const LoanTypesPage: React.FC = () => {
 
           <DialogFooter>
             <Button isLoading={createMut.isPending} onClick={handleCreate}>Create</Button>
-            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -210,8 +212,8 @@ export const LoanTypesPage: React.FC = () => {
           </div>
 
           <DialogFooter>
-            <Button isLoading={updateMut.isPending} onClick={handleUpdate}>Save</Button>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button isLoading={updateMut.isPending} onClick={handleUpdate}>{t('common.save')}</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

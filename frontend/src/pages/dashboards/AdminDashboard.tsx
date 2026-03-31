@@ -314,10 +314,10 @@ export const AdminDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
-                Welcome back, {user?.first_name}!
+                {t('common.welcomeBack')}, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
-                Here's what's happening in your organization today
+                {t('common.heresWhatsHappeningOrg')}
               </p>
             </div>
 
@@ -536,8 +536,8 @@ export const AdminDashboard: React.FC = () => {
                 <Cake className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Birthdays</h3>
-                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">This month</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">{t('dashboard.birthdays')}</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">{t('dashboard.thisMonth')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -554,7 +554,7 @@ export const AdminDashboard: React.FC = () => {
               ))}
               {(!peopleEventsData?.birthdays || peopleEventsData.birthdays.length === 0) && (
                 <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No birthdays this month</p>
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noBirthdays')}</p>
                 </div>
               )}
             </div>
@@ -567,8 +567,8 @@ export const AdminDashboard: React.FC = () => {
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Anniversaries</h3>
-                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Work anniversaries</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">{t('dashboard.anniversaries')}</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">{t('dashboard.anniversariesDescription')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -585,7 +585,7 @@ export const AdminDashboard: React.FC = () => {
               ))}
               {(!peopleEventsData?.anniversaries || peopleEventsData.anniversaries.length === 0) && (
                 <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No anniversaries this month</p>
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noAnniversaries')}</p>
                 </div>
               )}
             </div>
@@ -598,8 +598,8 @@ export const AdminDashboard: React.FC = () => {
                 <UserPlus className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">New Joiners</h3>
-                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Recent hires</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">{t('dashboard.newJoiners')}</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">{t('dashboard.recentHires')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -616,7 +616,7 @@ export const AdminDashboard: React.FC = () => {
               ))}
               {(!peopleEventsData?.joiners || peopleEventsData.joiners.length === 0) && (
                 <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">No new joiners this month</p>
+                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noNewJoiners')}</p>
                 </div>
               )}
             </div>

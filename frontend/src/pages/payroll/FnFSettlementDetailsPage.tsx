@@ -9,8 +9,11 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import payrollService from '@/services/payroll.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveImageUrl } from '@/utils/image';
+import { useTranslation } from 'react-i18next';
 
 const FnFSettlementDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
+
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -61,7 +64,7 @@ const FnFSettlementDetailsPage: React.FC = () => {
         <DashboardLayout
             title="Settlement Details"
             breadcrumbs={[
-                { label: 'Payroll', href: '/payroll' },
+                { label: t('common.breadcrumbs.payroll'), href: '/payroll' },
                 { label: 'F&F', href: '/payroll/fnf' },
                 { label: 'Details' }
             ]}

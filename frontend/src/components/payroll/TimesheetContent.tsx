@@ -4,8 +4,10 @@ import { TimesheetApprovals } from '@/components/projects/TimesheetApprovals';
 import { TimesheetDashboard } from '@/components/timesheets/TimesheetDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 export const TimesheetContent: React.FC = () => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const canManage = ['ADMIN', 'MANAGER', 'HR'].includes(user?.role || '');
 
     const [activeTab, setActiveTab] = useState<'my' | 'approvals'>(canManage ? 'approvals' : 'my');
@@ -19,10 +21,10 @@ export const TimesheetContent: React.FC = () => {
                             <Clock size={22} className="stroke-[2.5px]" />
                         </div>
                         <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                            Time Portal
+                            {t('timesheets.timePortal')}
                         </h1>
                     </div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">High-fidelity employee auditing & logging</p>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">{t('timesheets.subTitle')}</p>
                 </div>
 
                 {canManage && (
@@ -37,7 +39,7 @@ export const TimesheetContent: React.FC = () => {
                             )}
                         >
                             <History size={14} />
-                            My Log
+                            {t('timesheets.myLog')}
                         </button>
                         <button
                             onClick={() => setActiveTab('approvals')}
@@ -49,7 +51,7 @@ export const TimesheetContent: React.FC = () => {
                             )}
                         >
                             <CheckCircle size={14} />
-                            Audit Queue
+                            {t('timesheets.auditQueue')}
                         </button>
                     </div>
                 )}

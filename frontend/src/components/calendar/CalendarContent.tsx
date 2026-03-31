@@ -28,8 +28,12 @@ import { Card } from '@/components/ui/Card';
 
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const CalendarContent: React.FC = () => {
+    const { t } = useTranslation();
+    const { user: _user } = useAuth();
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -197,13 +201,13 @@ export const CalendarContent: React.FC = () => {
                         className="flex items-center gap-2"
                     >
                         <div className="h-1.5 w-6 bg-primary rounded-full" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Corporate Calendar</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">{t('calendar.corporateCalendar')}</span>
                     </motion.div>
                     <h2 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">
                         {format(currentDate, 'MMMM')} <span className="text-primary">{format(currentDate, 'yyyy')}</span>
                     </h2>
                     <p className="text-sm font-medium text-gray-400 dark:text-gray-500 max-w-md">
-                        Track national, regional, and company holidays with high precision.
+                        {t('calendar.description')}
                     </p>
                 </div>
 

@@ -292,37 +292,39 @@ exports.uploadProfilePhoto = async (req, res) => {
       console.log("[uploadProfilePhoto LOG] req.file filename:", req.file.filename);
     }
 
-    if (!fs.existsSync(req.file.path)) {
-      throw new Error(`Multer reported success but file missing at: ${req.file.path}`);
-    }
-
-    // Force move to correct location manually to bypass Multer destination issues
-    const ext = path.extname(req.file.originalname);
-    // Use employee code if available, fallback to user ID for filename
-    const idToUse = req.user.empCode || req.user.id || 'unknown';
+    // Prepare filename and destination
+    const ext = path.extname(req.file.originalname) || '.jpg';
+    const idToUse = (req.user.empCode || req.user.id || 'unknown').toString();
     const safeId = idToUse.replace(/[^a-zA-Z0-9-]/g, '_');
-    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const dateStr = new Date().toISOString().split('T')[0];
     const filename = `${safeId}_${dateStr}${ext}`;
 
-    // Ensure creates uploads/profiles in backend root (CWD)
     const targetDir = path.join(process.cwd(), 'uploads', 'profiles');
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
     const finalPath = path.join(targetDir, filename);
 
-    // Rename/Move
-    try {
-      fs.renameSync(req.file.path, finalPath);
-      console.log(`[uploadProfilePhoto LOG] File moved manually to: ${finalPath}`);
-    } catch (mvErr) {
-      // Fallback copy+unlink if across devices
-      if (mvErr.code === 'EXDEV') {
-        fs.copyFileSync(req.file.path, finalPath);
-        fs.unlinkSync(req.file.path);
-      } else {
-        throw mvErr;
+    if (req.file.buffer) {
+      // If using memoryStorage, write buffer to final destination
+      fs.writeFileSync(finalPath, req.file.buffer);
+      console.log(`[uploadProfilePhoto LOG] Buffer written to: ${finalPath}`);
+    } else if (req.file.path) {
+      // If using diskStorage, move/rename the file
+      try {
+        fs.renameSync(req.file.path, finalPath);
+        console.log(`[uploadProfilePhoto LOG] File moved manually to: ${finalPath}`);
+      } catch (mvErr) {
+        // Fallback copy+unlink if across devices
+        if (mvErr.code === 'EXDEV') {
+          fs.copyFileSync(req.file.path, finalPath);
+          fs.unlinkSync(req.file.path);
+        } else {
+          throw mvErr;
+        }
       }
+    } else {
+      throw new Error("File data missing in request");
     }
 
     // Relative path for DB/URL

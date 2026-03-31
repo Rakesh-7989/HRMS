@@ -26,8 +26,10 @@ import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { AssetStatus } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 export const AssetDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -82,7 +84,7 @@ export const AssetDetailsPage: React.FC = () => {
       <DashboardLayout title="Loading Asset...">
         <Card>
           <div className="flex justify-center p-8">
-            <div className="animate-pulse">Loading...</div>
+            <div className="animate-pulse">{t('common.loading')}</div>
           </div>
         </Card>
       </DashboardLayout>
@@ -173,8 +175,8 @@ export const AssetDetailsPage: React.FC = () => {
     <DashboardLayout
       title={`Asset: ${asset.name}`}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Assets', href: '/assets' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.assets'), href: '/assets' },
         { label: asset.name },
       ]}
     >

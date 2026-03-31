@@ -16,8 +16,10 @@ import { getShifts, createShift, updateShift, deleteShift, assignShift, Shift } 
 import { usersService } from '@/services/users.service';
 import { Plus, Edit2, Trash2, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export const ShiftsPage = () => {
+  const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [editingShift, setEditingShift] = useState<Shift | null>(null);
@@ -213,7 +215,7 @@ export const ShiftsPage = () => {
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5}>{t('common.loading')}</TableCell></TableRow>
                         ) : shifts?.length === 0 ? (
                             <TableRow><TableCell colSpan={5}>No shifts found</TableCell></TableRow>
                         ) : shifts?.map((shift: Shift) => (
@@ -360,7 +362,7 @@ export const ShiftsPage = () => {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>{t('common.cancel')}</Button>
                             <Button type="submit">{editingShift ? 'Update' : 'Create'}</Button>
                         </DialogFooter>
                     </form>
@@ -434,7 +436,7 @@ export const ShiftsPage = () => {
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={() => setIsAssignModalOpen(false)}>{t('common.cancel')}</Button>
                             <Button type="submit" disabled={assignMutation.isPending}>
                                 {assignMutation.isPending ? 'Assigning...' : 'Assign Shift'}
                             </Button>
@@ -456,7 +458,7 @@ export const ShiftsPage = () => {
                         </p>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>{t('common.cancel')}</Button>
                         <Button
                             variant="destructive"
                             onClick={confirmDelete}

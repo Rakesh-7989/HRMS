@@ -20,12 +20,12 @@ router.post("/apply", requirePermission("leave", "create"), validate(v.applyLeav
 router.get("/my-leaves", controller.getMyLeaves);
 router.post("/:id/cancel", validate(v.cancelLeaveSchema), controller.cancelApprovedLeave);
 
-// Manager/Admin/HR routes
-router.get("/approvals", requirePermission("leave", "approve"), controller.getPendingApprovals);
-router.put("/:id/approve", requirePermission("leave", "approve"), validate(v.approveLeaveSchema), controller.approveLeave);
-router.put("/:id/reject", requirePermission("leave", "approve"), validate(v.rejectLeaveSchema), controller.rejectLeave);
-
 // Admin/HR summary
 router.get("/summary", requirePermission("leave", "view"), controller.getLeaveSummary);
+
+// Approvals list (Managers see direct reports, HR/Admin see all for visibility)
+router.get("/approvals", requirePermission("leave", ["view", "approve"]), controller.getPendingApprovals);
+router.put("/:id/approve", requirePermission("leave", "approve"), validate(v.approveLeaveSchema), controller.approveLeave);
+router.put("/:id/reject", requirePermission("leave", "approve"), validate(v.rejectLeaveSchema), controller.rejectLeave);
 
 module.exports = router;

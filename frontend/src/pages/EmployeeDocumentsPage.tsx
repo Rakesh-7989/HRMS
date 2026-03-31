@@ -9,8 +9,10 @@ import { FileText, Upload, Trash2, Download, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const EmployeeDocumentsPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
@@ -97,8 +99,8 @@ export const EmployeeDocumentsPage: React.FC = () => {
         <DashboardLayout
             title={`Documents: ${employee ? `${employee.first_name} ${employee.last_name}` : 'Loading...'}`}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/' },
-                { label: 'Employees', href: '/dashboard/employees' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/' },
+                { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
                 { label: 'Documents' }
             ]}
         >

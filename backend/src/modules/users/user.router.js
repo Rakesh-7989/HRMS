@@ -154,8 +154,8 @@ const uploadPhoto = require("multer")({
   storage: require("multer").memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
-selfService.post("/me/photo", uploadPhoto.single("photo"), controller.uploadProfilePhoto);
-selfService.delete("/me/photo", controller.removeProfilePhoto);
+selfService.post("/me/profile-photo", uploadPhoto.single("photo"), controller.uploadProfilePhoto);
+selfService.delete("/me/profile-photo", controller.removeProfilePhoto);
 
 // Export both routers
 router.selfService = selfService;

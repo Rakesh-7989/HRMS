@@ -609,7 +609,6 @@ exports.getUsers = async (db, opts, actor) => {
       filter.push(`(
         e.id = $${i} -- Self
         OR e.reports_to = $${i} -- Direct reports (for managers)
-        OR u.role IN ('HR', 'MANAGER') -- Managers can see HR and other managers
         OR EXISTS (
           SELECT 1 FROM employees emp_self 
           WHERE emp_self.id = $${i} 
@@ -709,10 +708,26 @@ exports.getUserById = async (db, id, tenantId, requester, options = {}) => {
   if (user) {
     // Determine requester's relationship to this user
     const isSelf = requester ? requester.id === id : false;
-    const isHRAdmin = requester ? ['ADMIN', 'HR'].includes(requester.role) : false;
-    const isManager = requester ? requester.role === 'MANAGER' : false;
-    const isDirectReport = requester ? user.reports_to === requester.id : false;
-    const isAuthorized = isSelf || isHRAdmin || (isManager && isDirectReport);
+    const isHRAdmin = requester ? ['ADMIN', 'HR', 'SUPER_ADMIN'].includes(requester.role) : false;
+    const isDirectManager = requester ? user.reports_to === requester.employeeId : false;
+    
+    // Check if the requester is a delegate who can see this employee
+    let isDelegate = false;
+    if (requester && requester.role === 'MANAGER' && !isDirectManager) {
+        const delegateCheck = await query(
+            `SELECT 1 FROM approval_delegations 
+             WHERE tenant_id = $1 AND delegate_id = $2 AND delegator_id = $3
+               AND is_active = true AND start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE`,
+            [tenantId, requester.id, user.reports_to]
+        );
+        if (delegateCheck.rowCount > 0) isDelegate = true;
+    }
+
+    const isAuthorized = isSelf || isHRAdmin || isDirectManager || isDelegate;
+
+    if (!isAuthorized) {
+        throw new Error("Unauthorized: You do not have permission to view this employee's profile");
+    }
 
     // If unmask=true AND the requester is authorized, decrypt WITHOUT masking (for Edit form)
     // Otherwise, decrypt and mask as usual (for Profile View)
@@ -749,7 +764,7 @@ exports.getUserById = async (db, id, tenantId, requester, options = {}) => {
 
 /* ---------------------- EMPLOYEE PROFILE UPDATE ---------------------- */
 exports.updateEmployee = async (db, id, updates, actor) => {
-  const isTransactionClient = typeof db.release === 'function';
+  const isTransactionClient = db && typeof db.release === 'function';
   const client = isTransactionClient ? db : await pool.connect();
 
   try {
@@ -825,8 +840,12 @@ exports.updateEmployee = async (db, id, updates, actor) => {
       if (updates[key] !== undefined) {
         const fieldName = key === 'ctc' ? 'annual_salary' : key;
         let value = updates[key];
+        
+        // Fix: Convert empty strings to null for PostgreSQL strictness
+        if (value === '') value = null;
+
         // Encrypt if this is a sensitive field and has a value
-        if (sensitiveSet.has(key) && value !== null && value !== '') {
+        if (sensitiveSet.has(key) && value !== null) {
           value = encrypt(value);
         }
         fields.push(`${fieldName}=$${i}`);
@@ -1042,11 +1061,22 @@ exports.getMyProfile = async (db, user) => {
     LEFT JOIN shifts sh ON sh.id = e.shift_id
     LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
     LEFT JOIN tenants t ON t.id = u.tenant_id
-    LEFT JOIN subscriptions s ON s.tenant_id = u.tenant_id AND s.status != 'CANCELLED'
+    LEFT JOIN LATERAL (
+      SELECT s2.* FROM subscriptions s2
+      WHERE s2.tenant_id = u.tenant_id
+        AND s2.status NOT IN ('EXPIRED', 'CANCELLED')
+      ORDER BY
+        CASE s2.status
+          WHEN 'ACTIVE' THEN 1
+          WHEN 'TRIAL' THEN 2
+          WHEN 'CANCEL_AT_PERIOD_END' THEN 3
+          ELSE 4
+        END,
+        s2.created_at DESC
+      LIMIT 1
+    ) s ON true
     LEFT JOIN plans p ON s.plan_id = p.id
     WHERE u.id=$1
-    ORDER BY s.created_at DESC
-    LIMIT 1
     `,
     [user.id]
   );
@@ -1072,12 +1102,16 @@ exports.updateMyProfile = async (db, user, updates) => {
 
   if (existing.rowCount === 0) {
     logger.info(`Creating missing employee record for user ${user.id}`);
+    
+    // Auto-generate employee ID using tenant's default
+    const employeeId = await tenantService.generateNextEmployeeId(user.tenantId);
+
     // Create employee record if it doesn't exist
     await query(
       `
       INSERT INTO employees
-        (tenant_id, user_id, first_name, last_name, phone, created_by, email, role)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (tenant_id, user_id, first_name, last_name, phone, employee_id, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       `,
       [
         user.tenantId,
@@ -1085,15 +1119,29 @@ exports.updateMyProfile = async (db, user, updates) => {
         updates.first_name || '',
         updates.last_name || '',
         updates.phone || null,
-        user.id,
-        user.email,
-        user.role
+        employeeId || `EMP-${user.id.substring(0, 8)}`,
+        user.id
       ]
     );
   }
 
+  // SECURITY: Only allow a user to update certain personal fields on their own.
+  // Prohibit them from updating their own Role, Professional Details, or Salary via this endpoint.
+  const personalUpdates = {};
+  const personalAllowed = [
+    "first_name", "last_name", "phone", "date_of_birth", "gender", 
+    "marital_status", "nationality", "address", "profile_photo_url",
+    "emergency_name", "emergency_phone", "emergency_relation", "timezone"
+  ];
+
+  for (const field of personalAllowed) {
+    if (updates[field] !== undefined) {
+      personalUpdates[field] = updates[field];
+    }
+  }
+
   // Now update the employee record
-  return this.updateEmployee(db, user.id, updates, user);
+  return this.updateEmployee(db, user.id, personalUpdates, user);
 };
 
 /* ---------------------- UPDATE USER STATUS ---------------------- */

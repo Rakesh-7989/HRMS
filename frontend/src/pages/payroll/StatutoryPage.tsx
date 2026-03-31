@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/Label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Trash2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const StatutoryPage: React.FC = () => {
+  const { t } = useTranslation();
+
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'config' | 'pt' | 'deductions' | 'cc'>('config');
@@ -132,7 +135,7 @@ const StatutoryPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Statutory & Compliance"
-            breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Statutory' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Statutory' }]}
             actions={
                 <Button variant="outline" onClick={() => navigate('/payroll')}>
                     Back

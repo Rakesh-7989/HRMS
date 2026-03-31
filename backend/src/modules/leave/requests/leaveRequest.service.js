@@ -273,16 +273,18 @@ exports.getPendingApprovals = async (db, actor, filters) => {
     const params = [actor.tenantId];
     let p = 2;
 
+    // Status filter: use provided filter or default to PENDING
     let statusFilter = filters.status;
     if (!statusFilter) {
-        statusFilter = (actor.role === 'HR' || actor.role === 'ADMIN') ? 'PENDING_HR' : 'PENDING';
+        statusFilter = 'PENDING';
     }
 
     let statusClause = `la.status = $${p}`;
 
     if (statusFilter.includes(',')) {
-        statusClause = `la.status IN (${statusFilter.split(',').map(() => `$${p++}`).join(',')})`;
-        params.push(...statusFilter.split(','));
+        const statuses = statusFilter.split(',').map(s => s.trim());
+        statusClause = `la.status IN (${statuses.map(() => `$${p++}`).join(',')})`;
+        params.push(...statuses);
     } else {
         params.push(statusFilter);
         p++;
@@ -290,12 +292,11 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 
     let where = `WHERE la.tenant_id = $1 AND ${statusClause}`;
 
-    // Issue 12: Delegation support — managers see their directs + any delegated reports
+    // Managers see their direct reports + any delegated reports
     if (actor.role === 'MANAGER') {
         if (!actor.employeeId) {
             return [];
         }
-        // Check if this manager has any active delegation authority
         where += ` AND (e.reports_to = $${p}`;
         params.push(actor.employeeId);
         p++;
@@ -312,20 +313,31 @@ exports.getPendingApprovals = async (db, actor, filters) => {
         params.push(actor.id);
         p++;
     }
+    // HR and ADMIN see all tenant requests (view-only)
 
     if (filters.from_date) {
-        where += ` AND la.created_at >= $${p}`;
+        // For resolved requests, filter by updated_at (to see what was processed in range)
+        // For pending, filter by created_at
+        where += ` AND (
+            (la.status = 'PENDING' AND la.created_at >= $${p}) OR
+            (la.status != 'PENDING' AND COALESCE(la.updated_at, la.created_at) >= $${p})
+        )`;
         params.push(filters.from_date);
         p++;
     }
 
     if (filters.to_date) {
-        where += ` AND la.created_at <= $${p}::date + interval '1 day'`;
+        where += ` AND (
+            (la.status = 'PENDING' AND la.created_at <= $${p}::date + interval '1 day') OR
+            (la.status != 'PENDING' AND COALESCE(la.updated_at, la.created_at) <= $${p}::date + interval '1 day')
+        )`;
         params.push(filters.to_date);
         p++;
     }
 
-    // Issue 1: Fixed — actor.role is now a bind parameter, not interpolated
+    // can_approve logic:
+    // ONLY the direct manager (reports_to) can approve/reject.
+    // HR and ADMIN can only VIEW — they cannot approve or reject.
     const res = await query(
         `SELECT
             la.*,
@@ -337,8 +349,7 @@ exports.getPendingApprovals = async (db, actor, filters) => {
             m.first_name AS manager_first_name,
             m.last_name AS manager_last_name,
             CASE 
-                WHEN e.reports_to = $${p} AND la.status = 'PENDING' THEN true 
-                WHEN $${p + 1} IN ('HR', 'ADMIN') AND la.status = 'PENDING_HR' THEN true
+                WHEN la.status = 'PENDING' AND e.reports_to = $${p} THEN true 
                 ELSE false 
             END AS can_approve
          FROM leave_applications la
@@ -348,7 +359,7 @@ exports.getPendingApprovals = async (db, actor, filters) => {
          LEFT JOIN employees m     ON m.id = e.reports_to
          ${where}
          ORDER BY la.start_date ASC`,
-        [...params, actor.employeeId, actor.role]
+        [...params, actor.employeeId]
     );
 
     return res.rows;
@@ -356,16 +367,20 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 
 /**
  * APPROVE LEAVE
- * Issues fixed: 2 (transaction), 6 (days_count fallback), 12 (delegations), 26 (logging)
+ * Single-stage: Only the reporting manager (or delegate) can approve.
+ * Manager approves -> status becomes APPROVED directly.
+ * HR/Admin can only VIEW, NOT approve.
  */
 exports.approveLeave = async (db, actor, leaveId, comment) => {
-    // SECURITY: Validate role authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can approve leave requests");
+    // SECURITY: Only MANAGER can approve (not HR/ADMIN)
+    if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        throw new Error("Only the reporting manager can approve leave requests. HR and Admin can only view.");
     }
 
-    // Issue 2: Wrap in transaction
+    if (actor.role !== 'MANAGER') {
+        throw new Error("Unauthorized: Only Managers can approve leave requests.");
+    }
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -392,124 +407,85 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
             throw new Error("You cannot approve your own leave requests.");
         }
 
-        // ---------------------------------------------------------
-        // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
-        // ---------------------------------------------------------
-        if (leave.status === 'PENDING') {
-            // Issue 12: Check delegation — actor is either the direct manager or a delegate
-            const isDirectManager = leave.reports_to === actor.employeeId;
-            const isDelegateApprover = await delegationService.canApprove(client, actor.id,
-                // Get the user_id of the reports_to employee
-                (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0]?.user_id,
-                actor.tenantId
-            );
-
-            if (!isDirectManager && !isDelegateApprover && actor.role !== 'ADMIN' && actor.role !== 'HR') {
-                throw new Error("You can only approve leave for employees who report directly to you.");
-            }
-
-            const res = await query(
-                `UPDATE leave_applications
-                 SET status              = 'PENDING_HR',
-                     manager_approved_by = $1,
-                     manager_approved_at = now(),
-                     manager_note        = $2,
-                     updated_at          = now()
-                 WHERE id = $3
-                 RETURNING *`,
-                [actor.id, comment || null, leaveId]
-            );
-
-            await query('COMMIT');
-
-            // Notify employee: manager approved, forwarded to HR
-            try {
-                const empUserRes = await pool.query(`SELECT user_id, first_name, last_name FROM employees WHERE id = $1`, [leave.employee_id]);
-                if (empUserRes.rows[0]) {
-                    await inboxService.createNotification(pool, {
-                        tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
-                        title: 'Leave Request Update',
-                        message: 'Your leave request has been approved by your manager and forwarded to HR for final approval.',
-                        type: 'info', link: '/leave'
-                    });
-                }
-            } catch (notifErr) {
-                console.error('Leave manager-approve notification error:', notifErr.message);
-            }
-
-            return res.rows[0];
+        // Must be PENDING
+        if (leave.status !== 'PENDING') {
+            throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
         }
 
-        // ---------------------------------------------------------
-        // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
-        // ---------------------------------------------------------
-        if (leave.status === 'PENDING_HR') {
-            if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
-                throw new Error("Only HR or Admin can finalize this leave request after manager approval.");
+        // STRICT: Only the direct reporting manager or delegate can approve
+        const isDirectManager = leave.reports_to === actor.employeeId;
+        let isDelegateApprover = false;
+        if (leave.reports_to) {
+            const reportsToUser = (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0];
+            if (reportsToUser) {
+                isDelegateApprover = await delegationService.canApprove(client, actor.id, reportsToUser.user_id, actor.tenantId);
             }
-
-            const res = await query(
-                `UPDATE leave_applications
-                 SET status       = 'APPROVED',
-                     approved_by  = $1,
-                     approved_at  = now(),
-                     hr_note      = $2,
-                     updated_at   = now()
-                 WHERE id = $3
-                 RETURNING *`,
-                [actor.id, comment || null, leaveId]
-            );
-
-            // Deduct balance for paid leave types (Except WFH)
-            if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
-                // Issue 6: Use stored days_count; fallback to holidayService instead of calendar days
-                let daysCount = parseFloat(leave.days_count);
-                if (!daysCount || isNaN(daysCount)) {
-                    if (leave.is_half_day) {
-                        daysCount = 0.5;
-                    } else {
-                        daysCount = await holidayService.countWorkingDays(
-                            client,
-                            leave.start_date.toISOString().split('T')[0],
-                            leave.end_date.toISOString().split('T')[0],
-                            actor.tenantId
-                        );
-                    }
-                }
-
-                // Balance deduction and pending balance clearance MUST be atomic
-                await leaveBalanceService.deductBalance(
-                    client, leave.employee_id, leave.leave_type_id, daysCount,
-                    actor.tenantId, `Approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, actor.id
-                );
-
-                await leaveBalanceService.decrementPending(client, leave.employee_id, leave.leave_type_id, daysCount, actor.tenantId);
-            }
-
-            await query('COMMIT');
-
-            // Notify employee: leave fully approved
-            try {
-                const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [leave.employee_id]);
-                if (empUserRes.rows[0]) {
-                    const sd = leave.start_date instanceof Date ? leave.start_date.toISOString().split('T')[0] : leave.start_date;
-                    const ed = leave.end_date instanceof Date ? leave.end_date.toISOString().split('T')[0] : leave.end_date;
-                    const dateRange = sd === ed ? sd : `${sd} to ${ed}`;
-                    await inboxService.createNotification(pool, {
-                        tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
-                        title: 'Leave Approved ✅',
-                        message: `Your leave request (${dateRange}) has been approved.`,
-                        type: 'success', link: '/leave?tab=my-leave'
-                    });
-                }
-            } catch (notifErr) {
-                console.error('Leave approve notification error:', notifErr.message);
-            }
-
-            return res.rows[0];
         }
 
-        throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
+        if (!isDirectManager && !isDelegateApprover) {
+            throw new Error("You can only approve leave for employees who report directly to you.");
+        }
+
+        // Single-stage: PENDING -> APPROVED directly
+        const res = await query(
+            `UPDATE leave_applications
+             SET status       = 'APPROVED',
+                 approved_by  = $1,
+                 approved_at  = now(),
+                 updated_at   = now(),
+                 manager_note = $2,
+                 updated_at   = now()
+             WHERE id = $3
+             RETURNING *`,
+            [actor.id, comment || null, leaveId]
+        );
+
+        // Deduct balance for paid leave types (Except WFH)
+        if (leave.is_paid && leave.leave_type_id && leave.leave_type_code !== 'WFH') {
+            let daysCount = parseFloat(leave.days_count);
+            if (!daysCount || isNaN(daysCount)) {
+                if (leave.is_half_day) {
+                    daysCount = 0.5;
+                } else {
+                    daysCount = await holidayService.countWorkingDays(
+                        client,
+                        leave.start_date.toISOString().split('T')[0],
+                        leave.end_date.toISOString().split('T')[0],
+                        actor.tenantId
+                    );
+                }
+            }
+
+            // Balance deduction and pending balance clearance
+            await leaveBalanceService.deductBalance(
+                client, leave.employee_id, leave.leave_type_id, daysCount,
+                actor.tenantId, `Approved leave: ${leave.start_date.toISOString().split('T')[0]} to ${leave.end_date.toISOString().split('T')[0]}`, actor.id
+            );
+
+            await leaveBalanceService.decrementPending(client, leave.employee_id, leave.leave_type_id, daysCount, actor.tenantId);
+        }
+
+        await query('COMMIT');
+
+        // Notify employee: leave approved
+        try {
+            const empUserRes = await pool.query(`SELECT user_id, first_name, last_name FROM employees WHERE id = $1`, [leave.employee_id]);
+            if (empUserRes.rows[0]) {
+                const sd = leave.start_date instanceof Date ? leave.start_date.toISOString().split('T')[0] : leave.start_date;
+                const ed = leave.end_date instanceof Date ? leave.end_date.toISOString().split('T')[0] : leave.end_date;
+                const dateRange = sd === ed ? sd : `${sd} to ${ed}`;
+                await inboxService.createNotification(pool, {
+                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'Leave Approved ✅',
+                    message: `Your leave request (${dateRange}) has been approved by your manager.`,
+                    type: 'success', link: '/leave?tab=my-leave'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Leave approve notification error:', notifErr.message);
+        }
+
+        return res.rows[0];
     } catch (err) {
         await client.query('ROLLBACK');
         throw err;
@@ -520,13 +496,17 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 
 /**
  * REJECT LEAVE
- * Issues fixed: 12 (delegations), 14 (pending balance)
+ * Only the reporting manager (or delegate) can reject.
+ * HR/Admin can only VIEW, NOT reject.
  */
 exports.rejectLeave = async (db, actor, leaveId, reason) => {
-    // SECURITY: Validate role authorization
-    const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
-    if (!allowedRoles.includes(actor.role)) {
-        throw new Error("Unauthorized: Only Admin, HR, or Managers can reject leave requests");
+    // SECURITY: Only MANAGER can reject (not HR/ADMIN)
+    if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        throw new Error("Only the reporting manager can reject leave requests. HR and Admin can only view.");
+    }
+
+    if (actor.role !== 'MANAGER') {
+        throw new Error("Unauthorized: Only Managers can reject leave requests.");
     }
 
     const client = await pool.connect();
@@ -556,23 +536,18 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
             throw new Error("You cannot reject your own leave requests.");
         }
 
-        // Authorization check
-        if (actor.role === 'MANAGER') {
-            // Issue 12: Check delegation
-            const isDirectManager = leave.reports_to === actor.employeeId;
-            const reportToUserId = (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0]?.user_id;
-            const isDelegateApprover = reportToUserId ? await delegationService.canApprove(client, actor.id, reportToUserId, actor.tenantId) : false;
+        // Must be PENDING to reject
+        if (leave.status !== 'PENDING') {
+            throw new Error(`Can only reject requests in PENDING status. This request is ${leave.status}.`);
+        }
 
-            if (!isDirectManager && !isDelegateApprover) {
-                throw new Error("You can only reject leave for employees who report directly to you.");
-            }
-            if (leave.status !== 'PENDING') {
-                throw new Error(`You can only reject requests in PENDING status. This request is already ${leave.status}.`);
-            }
-        } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
-            if (leave.status !== 'PENDING' && leave.status !== 'PENDING_HR') {
-                throw new Error(`Request is already ${leave.status}.`);
-            }
+        // Must be the direct reporting manager or a delegate
+        const isDirectManager = leave.reports_to === actor.employeeId;
+        const reportToUserId = (await query(`SELECT user_id FROM employees WHERE id = $1`, [leave.reports_to])).rows[0]?.user_id;
+        const isDelegateApprover = reportToUserId ? await delegationService.canApprove(client, actor.id, reportToUserId, actor.tenantId) : false;
+
+        if (!isDirectManager && !isDelegateApprover) {
+            throw new Error("You can only reject leave for employees who report directly to you.");
         }
 
         const res = await query(
@@ -736,53 +711,46 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
 /**
  * ADMIN / HR: LEAVE SUMMARY (Dashboard logic mostly)
  */
+
 exports.getLeaveSummary = async (db, actor, filters) => {
     const query = getQuery(db);
     const tenantId = actor.tenantId;
 
-    const params = [tenantId];
-    let p = 2;
-    let where = `WHERE la.tenant_id = $1`;
+    const fromDate = filters.from_date ? filters.from_date : '1970-01-01';
+    const toDate = filters.to_date ? filters.to_date : '2099-12-31';
+    const toDateInclusive = toDate + ' 23:59:59';
 
-    // Visibility: MANAGER sees only direct reports' summary. HR/ADMIN see whole tenant.
+    const params = [tenantId, fromDate, toDateInclusive];
+    let where = `la.tenant_id = $1`;
+    let p = 4;
+
+    // Visibility: MANAGER sees only direct reports + delegated reports. HR/ADMIN see whole tenant.
     if (actor.role === 'MANAGER') {
         if (!actor.employeeId) {
-            return {
-                approved: 0,
-                pending: 0,
-                rejected: 0,
-                cancelled: 0,
-                total: 0
-            };
+            return { total_applications: 0, pending: 0, approved: 0, rejected: 0, cancelled: 0, by_type: [] };
         }
-        where += ` AND e.reports_to = $${p}`;
-        params.push(actor.employeeId);
-        p++;
-    }
-
-    let dateFilter = '';
-    if (filters.from_date) {
-        dateFilter += ` AND la.created_at >= $${p}`;
-        params.push(filters.from_date);
-        p++;
-    }
-
-    if (filters.to_date) {
-        dateFilter += ` AND la.created_at <= $${p}::date + interval '1 day'`;
-        params.push(filters.to_date);
-        p++;
+        where += ` AND (e.reports_to = $${p} OR e.reports_to IN (
+            SELECT de.id FROM approval_delegations ad
+            JOIN users du ON du.id = ad.delegator_id
+            JOIN employees de ON de.user_id = du.id
+            WHERE ad.tenant_id = $1 AND ad.delegate_id = $${p+1}
+              AND ad.is_active = true
+              AND ad.start_date <= CURRENT_DATE AND ad.end_date >= CURRENT_DATE
+        ))`;
+        params.push(actor.employeeId, actor.id);
+        p += 2;
     }
 
     const countsRes = await query(
         `SELECT
-            COUNT(*) AS total_applications,
-            COUNT(CASE WHEN la.status = 'APPROVED' THEN 1 END) AS approved,
-            COUNT(CASE WHEN la.status = 'REJECTED' THEN 1 END) AS rejected,
-            COUNT(CASE WHEN la.status IN ('PENDING', 'PENDING_HR') THEN 1 END) AS pending,
-            COUNT(CASE WHEN la.status = 'CANCELLED' THEN 1 END) AS cancelled
+            COUNT(*) FILTER (WHERE la.created_at >= $2 AND la.created_at <= $3) AS total_applications,
+            COUNT(*) FILTER (WHERE la.status = 'APPROVED' AND la.approved_at >= $2 AND la.approved_at <= $3) AS approved,
+            COUNT(*) FILTER (WHERE la.status = 'REJECTED' AND la.rejected_at >= $2 AND la.rejected_at <= $3) AS rejected,
+            COUNT(*) FILTER (WHERE la.status = 'CANCELLED' AND la.cancelled_at >= $2 AND la.cancelled_at <= $3) AS cancelled,
+            COUNT(*) FILTER (WHERE la.status = 'PENDING') AS pending
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id
-         ${where} ${dateFilter}`,
+         WHERE ${where}`,
         params
     );
 
@@ -790,22 +758,18 @@ exports.getLeaveSummary = async (db, actor, filters) => {
         `SELECT
             lt.name AS leave_type_name,
             COUNT(*) AS requests,
-            SUM(
-                CASE
-                    WHEN la.is_half_day THEN 0.5
-                    ELSE la.days_count
-                END
-            ) AS total_days
+            SUM(CASE WHEN la.is_half_day THEN 0.5 ELSE la.days_count END) AS total_days
          FROM leave_applications la
          JOIN employees e ON e.id = la.employee_id
          LEFT JOIN leave_types lt ON lt.id = la.leave_type_id
-         ${where} ${dateFilter} AND la.status = 'APPROVED'
+         WHERE ${where} AND la.status = 'APPROVED' 
+           AND la.approved_at >= $2 AND la.approved_at <= $3
          GROUP BY lt.name
          ORDER BY lt.name`,
         params
     );
 
-    const counts = countsRes.rows[0];
+    const counts = countsRes.rows[0] || {};
     return {
         total_applications: parseInt(counts.total_applications || 0),
         approved: parseInt(counts.approved || 0),

@@ -13,8 +13,11 @@ import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import LoanTypesPanel from '@/components/LoanTypesPanel';
+import { useTranslation } from 'react-i18next';
 
 const LoansPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const canManageLoans = hasPermission('payroll', 'manage_loans');
@@ -174,7 +177,7 @@ const LoansPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Loans">
+    <DashboardLayout title={t('loans.title')}>
       <Sidebar />
 
       <div className="flex items-center justify-between mb-4">
@@ -204,7 +207,7 @@ const LoansPage: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell>Loading...</TableCell>
+                <TableCell>{t('common.loading')}</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
@@ -238,7 +241,7 @@ const LoansPage: React.FC = () => {
                         </>
                       )}
                       {canManageLoans && Number(outstanding) <= 0 ? (
-                        <Button size="sm" variant="ghost" onClick={() => handleClose(l.id)} disabled={closeLoanMut.isPending}>Close</Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleClose(l.id)} disabled={closeLoanMut.isPending}>{t('common.close')}</Button>
                       ) : null}
                     </TableCell>
                   </TableRow>
@@ -261,7 +264,7 @@ const LoansPage: React.FC = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setLoanTypesOpen(false)}>Close</Button>
+            <Button variant="ghost" onClick={() => setLoanTypesOpen(false)}>{t('common.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -333,7 +336,7 @@ const LoansPage: React.FC = () => {
 
           <DialogFooter>
             <Button isLoading={createLoanMut.isPending} onClick={handleSaveLoan}>Save Loan</Button>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -354,7 +357,7 @@ const LoansPage: React.FC = () => {
 
           <DialogFooter>
             <Button variant="destructive" isLoading={approveLoanMut.isPending} onClick={handleConfirmReject}>Reject</Button>
-            <Button variant="ghost" onClick={() => setApprovalDialogOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setApprovalDialogOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

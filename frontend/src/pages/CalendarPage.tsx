@@ -2,8 +2,10 @@ import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CalendarContent } from '@/components/calendar/CalendarContent';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export const CalendarPage: React.FC = () => {
+  const { t: _t } = useTranslation();
     return (
         <DashboardLayout>
             <motion.div

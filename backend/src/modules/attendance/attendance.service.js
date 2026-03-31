@@ -242,8 +242,9 @@ exports.clockOut = async (db, employeeId, actor, meta) => {
     LEFT JOIN shifts s ON a.shift_id = s.id
     WHERE a.employee_id = $1
       AND a.tenant_id = $2
+      AND a.date = $3
       AND a.check_out_time IS NULL
-    ORDER BY a.date DESC, a.check_in_time DESC
+    ORDER BY a.check_in_time DESC
     LIMIT 1`,
     [employeeId, actor.tenantId, today]
   );

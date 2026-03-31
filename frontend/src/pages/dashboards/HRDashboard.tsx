@@ -17,6 +17,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Sector,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 // Custom Tooltip
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -106,53 +107,55 @@ const StatCard = ({
 );
 
 // Leave Request Card - Enhanced Informational Layout
-const LeaveRequestCard = ({ request, index }: { request: any; index: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
-    className="group"
-  >
-    <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-lg transition-all duration-300">
-      <div className="flex items-center gap-3">
-        {/* Avatar with soft glow */}
-        <div className="relative shrink-0">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-md group-hover:scale-105 transition-transform">
-            {request.first_name?.charAt(0)}{request.last_name?.charAt(0)}
-          </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white dark:border-gray-900" />
-        </div>
-
-        {/* Informational Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm">
-              {request.first_name} {request.last_name}
-            </h4>
-            <span className="text-[9px] text-gray-400 font-bold uppercase">
-              {format(new Date(request.created_at), 'MMM dd')}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 mt-0.5">
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-wider">
-              <Calendar className="w-2.5 h-2.5" />
-              {format(new Date(request.start_date), 'MMM dd')} - {format(new Date(request.end_date), 'MMM dd')}
+const LeaveRequestCard = ({ request, index }: { request: any; index: number }) => {
+  const { t } = useTranslation();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="group"
+    >
+      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-lg transition-all duration-300">
+        <div className="flex items-center gap-3">
+          {/* Avatar with soft glow */}
+          <div className="relative shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-md group-hover:scale-105 transition-transform">
+              {request.first_name?.charAt(0)}{request.last_name?.charAt(0)}
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase truncate">• {request.department}</span>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white dark:border-gray-900" />
           </div>
-        </div>
 
-        {/* Status indicator */}
-        <div className="shrink-0 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-100/50 dark:border-amber-500/20">
-          <p className="text-[8px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest leading-none">STATUS</p>
-          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 mt-0.5">Pending</p>
+          {/* Informational Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm">
+                {request.first_name} {request.last_name}
+              </h4>
+              <span className="text-[9px] text-gray-400 font-bold uppercase">
+                {format(new Date(request.created_at), 'MMM dd')}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-wider">
+                <Calendar className="w-2.5 h-2.5" />
+                {format(new Date(request.start_date), 'MMM dd')} - {format(new Date(request.end_date), 'MMM dd')}
+              </div>
+              <span className="text-[9px] text-gray-400 font-bold uppercase truncate">• {request.department}</span>
+            </div>
+          </div>
+
+          {/* Status indicator */}
+          <div className="shrink-0 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-100/50 dark:border-amber-500/20">
+            <p className="text-[8px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest leading-none">{t('common.status')}</p>
+            <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 mt-0.5">{t('common.pending')}</p>
+          </div>
         </div>
       </div>
-    </div>
-  </motion.div>
-);
-
+    </motion.div>
+  );
+};
 // Loading Skeleton Component
 const Skeleton = ({ className }: { className: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl ${className}`} />
@@ -207,6 +210,7 @@ const ChartCard = ({
 export const HRDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activePieIndex, setActivePieIndex] = React.useState<number | undefined>(undefined);
   const [statusDateRange, setStatusDateRange] = React.useState({
     start: undefined as string | undefined,
@@ -290,9 +294,9 @@ export const HRDashboard: React.FC = () => {
   }));
 
   const leaveStatusData = [
-    { name: 'Approved', value: chartMetrics.approved, color: '#10b981' },
-    { name: 'Pending', value: chartMetrics.pending, color: '#f59e0b' },
-    { name: 'Rejected', value: chartMetrics.rejected, color: '#ef4444' },
+    { name: t('common.approved'), value: chartMetrics.approved, color: '#10b981' },
+    { name: t('common.pending'), value: chartMetrics.pending, color: '#f59e0b' },
+    { name: t('common.rejected'), value: chartMetrics.rejected, color: '#ef4444' },
   ];
 
 
@@ -300,7 +304,7 @@ export const HRDashboard: React.FC = () => {
   const totalRequests = leaveStatusData.reduce((acc, curr) => acc + curr.value, 0);
 
   return (
-    <DashboardLayout title="HR Dashboard">
+    <DashboardLayout title={t('dashboard.hrDashboard')}>
       <motion.div
         className="space-y-8"
         initial="initial"
@@ -333,10 +337,10 @@ export const HRDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}!
+                {t('common.welcomeBack')}, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
-                Here's what's happening with your people today
+                {t('common.heresWhatsHappening')}
               </p>
             </div>
 
@@ -369,33 +373,33 @@ export const HRDashboard: React.FC = () => {
           ) : (
             <>
               <StatCard
-                title="Pending Leaves"
+                title={t('dashboard.pendingLeaves')}
                 value={statsMetrics.pending}
-                subtitle="Awaiting review"
+                subtitle={t('dashboard.awaitingReview')}
                 icon={AlertCircle}
                 gradient="linear-gradient(135deg, #f59e0b, #d97706)"
                 delay={0.1}
               />
               <StatCard
-                title="On Leave Today"
+                title={t('dashboard.onLeaveToday')}
                 value={employeesOnLeave.length}
-                subtitle="Employees absent"
+                subtitle={t('dashboard.employeesAbsent')}
                 icon={UserX}
                 gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
                 delay={0.2}
               />
               <StatCard
-                title="Present Today"
+                title={t('dashboard.presentToday')}
                 value={attendanceOverview.total_checkins}
-                subtitle={`${attendanceOverview.late_count} late arrivals`}
+                subtitle={t('dashboard.lateArrivalsCount', { count: attendanceOverview.late_count })}
                 icon={UserCheck}
                 gradient="linear-gradient(135deg, #10b981, #059669)"
                 delay={0.3}
               />
               <StatCard
-                title="Approved Requests"
+                title={t('dashboard.approvedRequests')}
                 value={statsMetrics.approved}
-                subtitle="All time total"
+                subtitle={t('dashboard.allTimeTotal')}
                 icon={CheckCircle}
                 gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
                 delay={0.4}
@@ -409,8 +413,8 @@ export const HRDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Leave Status Radial Chart */}
           <ChartCard
-            title="Leave Request Status"
-            subtitle="Overview by result"
+            title={t('dashboard.leaveRequestStatus')}
+            subtitle={t('dashboard.overviewByResult')}
             delay={0.5}
             headerAction={
               <div className="flex items-center gap-2">
@@ -421,7 +425,7 @@ export const HRDashboard: React.FC = () => {
                     className="h-8 px-2 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50"
                     onClick={() => setStatusDateRange({ start: undefined, end: undefined })}
                   >
-                    CLEAR
+                    {t('common.clear')}
                   </Button>
                 )}
                 <div className="min-w-[200px]">
@@ -430,7 +434,7 @@ export const HRDashboard: React.FC = () => {
                     endDate={statusDateRange.end || ''}
                     onStartDateChange={(s) => setStatusDateRange(prev => ({ ...prev, start: s }))}
                     onEndDateChange={(e) => setStatusDateRange(prev => ({ ...prev, end: e }))}
-                    placeholder="Overall Data"
+                    placeholder={t('common.overallData')}
                     className="!px-2 !py-1 !rounded-lg text-[10px]"
                   />
                 </div>
@@ -449,8 +453,8 @@ export const HRDashboard: React.FC = () => {
                     <Calendar className="w-12 h-12" />
                   </div>
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest">No data for this period</p>
-                <p className="text-[10px] mt-1">Try selecting a broader date range</p>
+                <p className="text-sm font-bold uppercase tracking-widest">{t('dashboard.noData')}</p>
+                <p className="text-[10px] mt-1">{t('dashboard.selectBroaderRange')}</p>
               </div>
             ) : (
               <div className="flex flex-col lg:flex-row items-center gap-8 min-h-[300px]">
@@ -548,9 +552,9 @@ export const HRDashboard: React.FC = () => {
 
           {/* Leave Type Distribution */}
           <ChartCard
-            title="Leave Utilization"
-            subtitle="Entitlement usage"
-            badge={`${leaveTypeDist.length} Types`}
+            title={t('dashboard.leaveUtilization')}
+            subtitle={t('dashboard.entitlementUsage')}
+            badge={`${leaveTypeDist.length} ${t('common.types')}`}
             delay={0.6}
             headerAction={
               <div className="flex items-center gap-2">
@@ -561,7 +565,7 @@ export const HRDashboard: React.FC = () => {
                     className="h-8 px-2 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50"
                     onClick={() => setUtilizationDateRange({ start: undefined, end: undefined })}
                   >
-                    CLEAR
+                    {t('common.clear')}
                   </Button>
                 )}
                 <div className="min-w-[200px]">
@@ -570,7 +574,7 @@ export const HRDashboard: React.FC = () => {
                     endDate={utilizationDateRange.end || ''}
                     onStartDateChange={(s) => setUtilizationDateRange(prev => ({ ...prev, start: s }))}
                     onEndDateChange={(e) => setUtilizationDateRange(prev => ({ ...prev, end: e }))}
-                    placeholder="Overall Data"
+                    placeholder={t('common.overallData')}
                     className="!px-2 !py-1 !rounded-lg text-[10px]"
                   />
                 </div>
@@ -592,8 +596,8 @@ export const HRDashboard: React.FC = () => {
                 <div className="p-4 rounded-full bg-slate-50 dark:bg-slate-800/50 mb-3">
                   <Timer className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest">No Leave Types Found</p>
-                <p className="text-[10px] mt-1">Configure leave types in settings</p>
+                <p className="text-sm font-bold uppercase tracking-widest">{t('dashboard.noLeaveTypesFound')}</p>
+                <p className="text-[10px] mt-1">{t('dashboard.configureLeaveTypes')}</p>
               </div>
             ) : (
               <div className="h-72">
@@ -671,21 +675,21 @@ export const HRDashboard: React.FC = () => {
                   <Clock className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Today's Attendance</h3>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t('attendance.attendanceOverview')}</h3>
                   <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{format(new Date(), 'eeee, MMMM do')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Live Updates</span>
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t('attendance.liveUpdates')}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {[
                 {
-                  label: 'Total Employees',
-                  desc: 'Active workforce',
+                  label: t('attendance.totalEmployees'),
+                  desc: t('attendance.activeWorkforce'),
                   value: attendanceOverview.total_employees || 0,
                   icon: Users,
                   accent: 'text-indigo-400',
@@ -693,8 +697,8 @@ export const HRDashboard: React.FC = () => {
                   glow: 'shadow-indigo-500/10'
                 },
                 {
-                  label: 'Total Present',
-                  desc: 'Employees clocked in',
+                  label: t('attendance.totalPresent'),
+                  desc: t('attendance.employeesClockedIn'),
                   value: attendanceOverview.unique_employees,
                   icon: UserCheck,
                   accent: 'text-cyan-400',
@@ -702,8 +706,8 @@ export const HRDashboard: React.FC = () => {
                   glow: 'shadow-cyan-500/10'
                 },
                 {
-                  label: 'Not Clocked In',
-                  desc: 'Yet to check in',
+                  label: t('attendance.notClockedIn'),
+                  desc: t('attendance.yetToCheckIn'),
                   value: attendanceOverview.not_clocked_in || 0,
                   icon: UserX,
                   accent: 'text-slate-400',
@@ -711,8 +715,8 @@ export const HRDashboard: React.FC = () => {
                   glow: 'shadow-slate-500/10'
                 },
                 {
-                  label: 'On Time',
-                  desc: 'Arrived within schedule',
+                  label: t('attendance.onTime'),
+                  desc: t('attendance.arrivedWithinSchedule'),
                   value: Math.max(0, attendanceOverview.total_checkins - attendanceOverview.late_count),
                   icon: CheckCircle,
                   accent: 'text-emerald-400',
@@ -720,8 +724,8 @@ export const HRDashboard: React.FC = () => {
                   glow: 'shadow-emerald-500/10'
                 },
                 {
-                  label: 'Late Arrivals',
-                  desc: 'Clocked in after schedule',
+                  label: t('attendance.lateArrivals'),
+                  desc: t('attendance.clockedInAfterSchedule'),
                   value: attendanceOverview.late_count,
                   icon: Timer,
                   accent: 'text-amber-400',
@@ -757,16 +761,16 @@ export const HRDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
           {/* Pending Leave Requests */}
           <ChartCard
-            title="Pending Leave Requests"
-            subtitle={`${pendingRequests.length} submissions`}
-            badge="Review"
+            title={t('dashboard.pendingLeaveRequests')}
+            subtitle={`${pendingRequests.length} ${t('common.submissions')}`}
+            badge={t('common.review')}
             delay={0.9}
             headerAction={
               <button
                 onClick={() => navigate('/leave?tab=team-requests')}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100/50"
               >
-                Manage
+                {t('common.manage')}
                 <ExternalLink className="w-2.5 h-2.5" />
               </button>
             }
@@ -782,23 +786,23 @@ export const HRDashboard: React.FC = () => {
                 <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mx-auto mb-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <h4 className="text-[11px] font-black text-gray-900 dark:text-white mb-0.5 uppercase tracking-tighter">Queue Clear</h4>
-                <p className="text-[8px] text-gray-500 font-medium">No pending requests</p>
+                <h4 className="text-[11px] font-black text-gray-900 dark:text-white mb-0.5 uppercase tracking-tighter">{t('dashboard.queueClear')}</h4>
+                <p className="text-[8px] text-gray-500 font-medium">{t('dashboard.noPendingRequests')}</p>
               </div>
             )}
           </ChartCard>
 
           {/* Employees on Leave Today */}
           <ChartCard
-            title="Today's Out of Office"
-            subtitle={`${employeesOnLeave.length} staff away`}
+            title={t('dashboard.outOfOffice')}
+            subtitle={`${employeesOnLeave.length} ${t('common.staffAway')}`}
             delay={1.0}
             headerAction={
               <button
                 onClick={() => navigate('/attendance')}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100/50"
               >
-                Logs
+                {t('common.logs')}
                 <ExternalLink className="w-2.5 h-2.5" />
               </button>
             }
@@ -841,8 +845,8 @@ export const HRDashboard: React.FC = () => {
                     <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </div>
-                <h4 className="text-[11px] font-black text-gray-900 dark:text-white mb-0.5 uppercase tracking-tighter">Full Presence</h4>
-                <p className="text-[8px] text-gray-500 font-medium">All employees are active.</p>
+                <h4 className="text-[11px] font-black text-gray-900 dark:text-white mb-0.5 uppercase tracking-tighter">{t('attendance.fullPresence')}</h4>
+                <p className="text-[8px] text-gray-500 font-medium">{t('attendance.allEmployeesActive')}</p>
               </div>
             )}
           </ChartCard>

@@ -16,6 +16,7 @@ import {
   ResponsiveContainer, BarChart, Bar, Sector
 } from 'recharts';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -160,44 +161,48 @@ const StatCard = ({
   </motion.div>
 );
 
-const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?: number; onClick?: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0, x: -10 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ delay }}
-    whileHover={{ x: 5 }}
-    onClick={onClick}
-    className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer w-full"
-  >
-    <div className="flex items-center gap-4 flex-1 min-w-0">
-      <div className="relative shrink-0">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform">
-          {member.first_name[0]}{member.last_name[0]}
+const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?: number; onClick?: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay }}
+      whileHover={{ x: 5 }}
+      onClick={onClick}
+      className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer w-full"
+    >
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="relative shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform">
+            {member.first_name[0]}{member.last_name[0]}
+          </div>
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
         </div>
-        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+        <div className="flex-1 min-w-0">
+          <h4 className="font-black text-slate-900 dark:text-white text-sm break-words leading-tight">{member.first_name} {member.last_name}</h4>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation || t('common.teamMember')}</p>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-black text-slate-900 dark:text-white text-sm break-words leading-tight">{member.first_name} {member.last_name}</h4>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation || 'Team Member'}</p>
+      <div className="flex items-center gap-4 shrink-0 ml-3">
+        <div className="text-right hidden sm:block">
+          <p className={`text-[10px] font-black px-2 py-0.5 rounded-full ${member.on_leave_today > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
+            {member.on_leave_today > 0 ? t('profile.profileDropdown.away') : t('common.active')}
+          </p>
+        </div>
+        <button className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </button>
       </div>
-    </div>
-    <div className="flex items-center gap-4 shrink-0 ml-3">
-      <div className="text-right hidden sm:block">
-        <p className={`text-[10px] font-black px-2 py-0.5 rounded-full ${member.on_leave_today > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
-          {member.on_leave_today > 0 ? 'Away' : 'Active'}
-        </p>
-      </div>
-      <button className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
-        <ChevronRight className="w-4 h-4 text-slate-400" />
-      </button>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 // --- Main Dashboard Implementation ---
 
 export const ManagerDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { hasPermission, hasAnyPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -700,7 +705,7 @@ export const ManagerDashboard: React.FC = () => {
 
   if (isTeamLoading || isTasksLoading || isAttendanceLoading) {
     return (
-      <DashboardLayout title="Manager Dashboard">
+      <DashboardLayout title={t('dashboard.myDashboard')}>
         <div className="space-y-8 p-6">
           <Skeleton className="h-64 w-full rounded-[3rem]" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -716,7 +721,7 @@ export const ManagerDashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout title="Manager Dashboard">
+    <DashboardLayout title={t('dashboard.myDashboard')}>
       <motion.div
         className="space-y-5 pb-10 px-4 lg:px-6 mt-4"
         initial={{ opacity: 0 }}
@@ -749,7 +754,7 @@ export const ManagerDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {user?.first_name}!
+                {t('common.welcomeBack')}, {user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
                 {totalPending > 0 ? (
@@ -788,7 +793,7 @@ export const ManagerDashboard: React.FC = () => {
             icon={Users}
             gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
             delay={0.1}
-            subtitle="Overall Team Strength"
+            subtitle={t('dashboard.overallTeamStrength')}
           />
           <StatCard
             title="Active Workforce"
@@ -797,7 +802,7 @@ export const ManagerDashboard: React.FC = () => {
             gradient="linear-gradient(135deg, #10b981, #059669)"
             delay={0.2}
             trend={metrics.total_members > 0 ? Math.round((metrics.active_now / metrics.total_members) * 100) : 0}
-            subtitle="Currently Working"
+            subtitle={t('dashboard.currentlyWorking')}
           />
           <StatCard
             title="Current Absentees"
@@ -805,7 +810,7 @@ export const ManagerDashboard: React.FC = () => {
             icon={UserX}
             gradient="linear-gradient(135deg, #f59e0b, #d87706)"
             delay={0.3}
-            subtitle="Staff on Leave"
+            subtitle={t('dashboard.staffOnLeave')}
           />
           <StatCard
             title="Task Efficiency"
@@ -814,7 +819,7 @@ export const ManagerDashboard: React.FC = () => {
             gradient="linear-gradient(135deg, #ec4899, #db2777)"
             delay={0.4}
             trend={metrics.completion_rate > 80 ? 12 : -5}
-            subtitle="Sprint Progress"
+            subtitle={t('dashboard.sprintProgress')}
           />
         </div>
 

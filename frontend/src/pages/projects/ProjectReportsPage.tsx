@@ -17,10 +17,12 @@ import {
 import { Users, Briefcase, Calendar, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 type ReportType = 'project' | 'client' | 'utilization';
 
 export const ProjectReportsPage: React.FC = () => {
+  const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<ReportType>('project');
     const [selectedProject, setSelectedProject] = useState<string>('');
     const [selectedClient, setSelectedClient] = useState<string>('');
@@ -160,7 +162,7 @@ export const ProjectReportsPage: React.FC = () => {
         <DashboardLayout
             title="Project Reports"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
                 { label: 'Project Reports' },
             ]}
         >
@@ -236,7 +238,7 @@ export const ProjectReportsPage: React.FC = () => {
                 <div className="space-y-6">
                     {/* PROJECT REPORT */}
                     {activeTab === 'project' && (
-                        loadingProjectReport ? <div>Loading...</div> : projectReport ? (
+                        loadingProjectReport ? <div>{t('common.loading')}</div> : projectReport ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
@@ -265,7 +267,7 @@ export const ProjectReportsPage: React.FC = () => {
 
                     {/* CLIENT REPORT */}
                     {activeTab === 'client' && (
-                        loadingClientReport ? <div>Loading...</div> : clientReport ? (
+                        loadingClientReport ? <div>{t('common.loading')}</div> : clientReport ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
@@ -313,7 +315,7 @@ export const ProjectReportsPage: React.FC = () => {
 
                     {/* UTILIZATION REPORT */}
                     {activeTab === 'utilization' && (
-                        loadingUtilizationReport ? <div>Loading...</div> : utilizationReport ? (
+                        loadingUtilizationReport ? <div>{t('common.loading')}</div> : utilizationReport ? (
                             <Card className="overflow-hidden">
                                 <Table>
                                     <TableHeader>

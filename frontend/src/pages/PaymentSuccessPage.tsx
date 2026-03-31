@@ -5,8 +5,10 @@ import { CheckCircle, ArrowRight, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { subscriptionService } from '@/services/subscription.service';
+import { useTranslation } from 'react-i18next';
 
 export const PaymentSuccessPage: React.FC = () => {
+  const { t: _t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('order_id');

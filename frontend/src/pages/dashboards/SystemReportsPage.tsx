@@ -16,6 +16,7 @@ import { dashboardService } from '@/services/dashboard.service';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
@@ -58,6 +59,7 @@ const ReportCard = ({ title, children, icon: Icon, delay = 0 }: any) => (
 );
 
 export const SystemReportsPage: React.FC = () => {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { data: reports, isLoading } = useQuery({
         queryKey: ['system-reports'],
@@ -87,7 +89,7 @@ export const SystemReportsPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <DashboardLayout title="Reports">
+            <DashboardLayout title={t('reports.title')}>
                 <div className="p-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
@@ -111,8 +113,8 @@ export const SystemReportsPage: React.FC = () => {
         <DashboardLayout
             title="System Analytics"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/system' },
-                { label: 'Reports' }
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/system' },
+                { label: t('common.breadcrumbs.reports') }
             ]}
         >
             <div className="p-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto">

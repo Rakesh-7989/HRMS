@@ -12,10 +12,12 @@ import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, RefreshCw, AlertCircle, FileText, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'types' | 'policies';
 
 export const LeaveSettingsContent: React.FC = () => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const [activeTab, setActiveTab] = useState<TabType>('types');
@@ -72,7 +74,7 @@ export const LeaveSettingsContent: React.FC = () => {
             setTypeDialogOpen(false);
             resetTypeForm();
             setErrorMessage(null);
-            toast.success('Leave type created successfully');
+            toast.success(t('leaveSettings.leaveTypeCreated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to create leave type');
@@ -89,7 +91,7 @@ export const LeaveSettingsContent: React.FC = () => {
             setEditingType(null);
             resetTypeForm();
             setErrorMessage(null);
-            toast.success('Leave type updated successfully');
+            toast.success(t('leaveSettings.leaveTypeUpdated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to update leave type');
@@ -102,7 +104,7 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-types'] });
             setErrorMessage(null);
-            toast.success('Leave type deleted successfully');
+            toast.success(t('leaveSettings.leaveTypeDeleted'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to delete leave type');
@@ -118,7 +120,7 @@ export const LeaveSettingsContent: React.FC = () => {
             setPolicyDialogOpen(false);
             resetPolicyForm();
             setErrorMessage(null);
-            toast.success('Policy created successfully');
+            toast.success(t('leaveSettings.policyCreated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to create policy');
@@ -135,7 +137,7 @@ export const LeaveSettingsContent: React.FC = () => {
             setEditingPolicy(null);
             resetPolicyForm();
             setErrorMessage(null);
-            toast.success('Policy updated successfully');
+            toast.success(t('leaveSettings.policyUpdated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to update policy');
@@ -148,7 +150,7 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-policies'] });
             setErrorMessage(null);
-            toast.success('Policy deleted successfully');
+            toast.success(t('leaveSettings.policyDeleted'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to delete policy');
@@ -162,7 +164,7 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(`Allocation completed! Processed ${data.accruals_processed} employee records.`);
+            toast.success(t('leaveSettings.allocationCompleted', { count: data.accruals_processed }));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to run allocation');
@@ -172,11 +174,11 @@ export const LeaveSettingsContent: React.FC = () => {
 
     const handleRunAccrual = async () => {
         const result = await confirm({
-            title: 'Run Leave Accrual',
-            message: 'Run monthly leave allocation for all employees? This will credit leaves based on policies.',
+            title: t('leaveSettings.runAccrualConfirmTitle'),
+            message: t('leaveSettings.runAccrualConfirmMessage'),
             type: 'destructive',
-            confirmText: 'Run Now',
-            cancelText: 'Cancel'
+            confirmText: t('leaveSettings.runNow'),
+            cancelText: t('leaveSettings.cancel')
         });
         if (result) {
             runAccrualMutation.mutate();
@@ -286,11 +288,11 @@ export const LeaveSettingsContent: React.FC = () => {
     const handleDeleteType = async (id: string) => {
         if (!id) return;
         const result = await confirm({
-            title: 'Delete Leave Type',
-            message: 'Are you sure you want to delete this leave type? This action cannot be undone.',
+            title: t('leaveSettings.deleteTypeTitle'),
+            message: t('leaveSettings.deleteTypeMessage'),
             type: 'destructive',
-            confirmText: 'Delete Type',
-            cancelText: 'Cancel'
+            confirmText: t('leaveSettings.deleteType'),
+            cancelText: t('leaveSettings.cancel')
         });
         if (result) {
             deleteTypeMutation.mutate(id);
@@ -300,11 +302,11 @@ export const LeaveSettingsContent: React.FC = () => {
     const handleDeletePolicy = async (id: string) => {
         if (!id) return;
         const result = await confirm({
-            title: 'Delete Leave Policy',
-            message: 'Are you sure you want to delete this leave policy? This action cannot be undone.',
+            title: t('leaveSettings.deletePolicyTitle'),
+            message: t('leaveSettings.deletePolicyMessage'),
             type: 'destructive',
-            confirmText: 'Delete Policy',
-            cancelText: 'Cancel'
+            confirmText: t('leaveSettings.deletePolicy'),
+            cancelText: t('leaveSettings.cancel')
         });
         if (result) {
             deletePolicyMutation.mutate(id);
@@ -324,8 +326,8 @@ export const LeaveSettingsContent: React.FC = () => {
     };
 
     const tabs = [
-        { id: 'types' as TabType, label: 'Leave Types', icon: FileText },
-        { id: 'policies' as TabType, label: 'Leave Policies', icon: ClipboardList },
+        { id: 'types' as TabType, label: t('leaveSettings.leaveTypes'), icon: FileText },
+        { id: 'policies' as TabType, label: t('leaveSettings.leavePolicies'), icon: ClipboardList },
     ];
 
     return (
@@ -370,17 +372,17 @@ export const LeaveSettingsContent: React.FC = () => {
                 <Card>
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Types</h2>
-                            <p className="text-sm text-gray-500">Define leave categories (Annual, Sick, etc.)</p>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('leaveSettings.leaveTypes')}</h2>
+                            <p className="text-sm text-gray-500">{t('leaveSettings.defineLeaveCategories')}</p>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={() => refetchTypes()}>
                                 <RefreshCw size={16} className="mr-1" />
-                                Refresh
+                                {t('leave.refresh')}
                             </Button>
                             <Button size="sm" onClick={() => handleOpenTypeDialog()}>
                                 <Plus size={16} className="mr-1" />
-                                Add Type
+                                {t('leaveSettings.addType')}
                             </Button>
                         </div>
                     </div>
@@ -392,25 +394,25 @@ export const LeaveSettingsContent: React.FC = () => {
                     ) : leaveTypes.length === 0 ? (
                         <div className="text-center py-12">
                             <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No leave types</h3>
-                            <p className="mt-1 text-sm text-gray-500">Get started by creating a new leave type.</p>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{t('leaveSettings.noLeaveTypes')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('leaveSettings.getStartedCreatingType')}</p>
                             <Button className="mt-4" onClick={() => handleOpenTypeDialog()}>
                                 <Plus size={16} className="mr-1" />
-                                Add Leave Type
+                                {t('leaveSettings.addLeaveType')}
                             </Button>
                         </div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Code</TableHead>
-                                    <TableHead>Paid</TableHead>
-                                    <TableHead>Notice</TableHead>
-                                    <TableHead>Max Days</TableHead>
-                                    <TableHead>Attachment</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>{t('leaveSettings.name')}</TableHead>
+                                    <TableHead>{t('leaveSettings.code')}</TableHead>
+                                    <TableHead>{t('leaveSettings.paid')}</TableHead>
+                                    <TableHead>{t('leaveSettings.notice')}</TableHead>
+                                    <TableHead>{t('leaveSettings.maxDays')}</TableHead>
+                                    <TableHead>{t('leaveSettings.attachment')}</TableHead>
+                                    <TableHead>{t('leaveSettings.status')}</TableHead>
+                                    <TableHead className="text-right">{t('leaveSettings.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -459,7 +461,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                                         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                                 )}
                                             >
-                                                {type.is_active ? 'Active' : 'Inactive'}
+                                                {type.is_active ? t('leaveSettings.active') : t('leaveSettings.inactive')}
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -490,8 +492,8 @@ export const LeaveSettingsContent: React.FC = () => {
                 <Card>
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Policies</h2>
-                            <p className="text-sm text-gray-500">Auto-accrual rules (monthly/yearly)</p>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('leaveSettings.leavePolicies')}</h2>
+                            <p className="text-sm text-gray-500">{t('leaveSettings.autoAccrualRules')}</p>
                         </div>
                         <div className="flex gap-2">
                             <Button
@@ -502,15 +504,15 @@ export const LeaveSettingsContent: React.FC = () => {
                                 className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
                             >
                                 <RefreshCw size={16} className={cn("mr-1", runAccrualMutation.isPending && "animate-spin")} />
-                                Run Accrual
+                                {t('leaveSettings.runAccrual')}
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => refetchPolicies()}>
                                 <RefreshCw size={16} className="mr-1" />
-                                Refresh
+                                {t('leave.refresh')}
                             </Button>
                             <Button size="sm" onClick={() => handleOpenPolicyDialog()} disabled={leaveTypes.length === 0}>
                                 <Plus size={16} className="mr-1" />
-                                Add Policy
+                                {t('leaveSettings.addPolicy')}
                             </Button>
                         </div>
                     </div>
@@ -518,7 +520,7 @@ export const LeaveSettingsContent: React.FC = () => {
                     {leaveTypes.length === 0 && (
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
                             <p className="text-yellow-700 dark:text-yellow-400 text-sm">
-                                You need to create at least one leave type before creating a policy.
+                                {t('leaveSettings.createFirstTypeWarning')}
                             </p>
                         </div>
                     )}
@@ -530,24 +532,24 @@ export const LeaveSettingsContent: React.FC = () => {
                     ) : policies.length === 0 ? (
                         <div className="text-center py-12">
                             <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No policies</h3>
-                            <p className="mt-1 text-sm text-gray-500">Create leave policies to define entitlements.</p>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{t('leaveSettings.noPolicies')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('leaveSettings.createPoliciesDescription')}</p>
                             <Button className="mt-4" onClick={() => handleOpenPolicyDialog()} disabled={leaveTypes.length === 0}>
                                 <Plus size={16} className="mr-1" />
-                                Add Policy
+                                {t('leaveSettings.addPolicy')}
                             </Button>
                         </div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Policy</TableHead>
-                                    <TableHead>Leave Type</TableHead>
-                                    <TableHead>Accrual</TableHead>
-                                    <TableHead>Carry Forward</TableHead>
-                                    <TableHead>Probation</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>{t('leaveSettings.policy')}</TableHead>
+                                    <TableHead>{t('leaveSettings.leaveType')}</TableHead>
+                                    <TableHead>{t('leaveSettings.accrual')}</TableHead>
+                                    <TableHead>{t('leaveSettings.carryForward')}</TableHead>
+                                    <TableHead>{t('leaveSettings.probation')}</TableHead>
+                                    <TableHead>{t('leaveSettings.status')}</TableHead>
+                                    <TableHead className="text-right">{t('leaveSettings.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -562,21 +564,21 @@ export const LeaveSettingsContent: React.FC = () => {
                                         <TableCell>
                                             <span className="font-medium">{policy.accrual_rate}</span>
                                             <span className="text-xs text-gray-500 ml-1">
-                                                /{policy.accrual_type === 'MONTHLY' ? 'mo' : policy.accrual_type === 'YEARLY' ? 'yr' : 'fixed'}
+                                                /{policy.accrual_type === 'MONTHLY' ? t('leaveSettings.mo') : policy.accrual_type === 'YEARLY' ? t('leaveSettings.yr') : t('leaveSettings.fixed').toLowerCase()}
                                             </span>
                                         </TableCell>
                                         <TableCell>
                                             {policy.carry_forward_enabled ? (
                                                 <div className="flex flex-col">
                                                     <span className="text-green-600 flex items-center gap-1">
-                                                        <Check size={12} /> Enabled
+                                                        <Check size={12} /> {t('leaveSettings.enabled')}
                                                     </span>
                                                     {policy.max_carry_forward > 0 && (
-                                                        <span className="text-[10px] text-gray-500">Max: {policy.max_carry_forward}mo</span>
+                                                        <span className="text-[10px] text-gray-500">{t('leaveSettings.max', { val: policy.max_carry_forward })}</span>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-gray-400">Disabled</span>
+                                                <span className="text-gray-400">{t('leaveSettings.disabled')}</span>
                                             )}
                                         </TableCell>
                                         <TableCell>
@@ -595,7 +597,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                                         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                                 )}
                                             >
-                                                {policy.is_active ? 'Active' : 'Inactive'}
+                                                {policy.is_active ? t('leaveSettings.active') : t('leaveSettings.inactive')}
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -625,39 +627,39 @@ export const LeaveSettingsContent: React.FC = () => {
             <Dialog
                 open={typeDialogOpen}
                 onOpenChange={handleCloseTypeDialog}
-                title={editingType ? 'Edit Leave Type' : 'Add Leave Type'}
+                title={editingType ? t('leaveSettings.editLeaveType') : t('leaveSettings.addLeaveType')}
                 className="max-w-md"
             >
                 <form onSubmit={handleSubmitType}>
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="type-name" className="block mb-1.5">Name *</Label>
+                            <Label htmlFor="type-name" className="block mb-1.5">{t('leaveSettings.nameAsterisk')}</Label>
                             <Input
                                 id="type-name"
                                 value={typeForm.name}
                                 onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
-                                placeholder="e.g., Annual Leave"
+                                placeholder={t('leaveSettings.namePlaceholder')}
                                 required
                             />
                         </div>
                         <div>
-                            <Label htmlFor="type-code" className="block mb-1.5">Code *</Label>
+                            <Label htmlFor="type-code" className="block mb-1.5">{t('leaveSettings.codeAsterisk')}</Label>
                             <Input
                                 id="type-code"
                                 value={typeForm.code}
                                 onChange={(e) => setTypeForm({ ...typeForm, code: e.target.value.toUpperCase() })}
-                                placeholder="e.g., AL"
+                                placeholder={t('leaveSettings.codePlaceholder')}
                                 className="uppercase"
                                 required
                             />
                         </div>
                         <div>
-                            <Label htmlFor="type-description" className="block mb-1.5">Description</Label>
+                            <Label htmlFor="type-description" className="block mb-1.5">{t('leaveSettings.description')}</Label>
                             <Input
                                 id="type-description"
                                 value={typeForm.description}
                                 onChange={(e) => setTypeForm({ ...typeForm, description: e.target.value })}
-                                placeholder="Brief description of the leave type"
+                                placeholder={t('leaveSettings.descriptionPlaceholder')}
                             />
                         </div>
                         <div className="flex items-center gap-4">
@@ -668,7 +670,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     onChange={(e) => setTypeForm({ ...typeForm, is_paid: e.target.checked })}
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">Paid Leave</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.paidLeave')}</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -677,7 +679,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     onChange={(e) => setTypeForm({ ...typeForm, requires_approval: e.target.checked })}
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">Requires Approval</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.requiresApproval')}</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -686,12 +688,12 @@ export const LeaveSettingsContent: React.FC = () => {
                                     onChange={(e) => setTypeForm({ ...typeForm, requires_attachment: e.target.checked })}
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">Requires Attachment</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.requiresAttachment')}</span>
                             </label>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="type-min-notice" className="block mb-1.5">Min Days Notice</Label>
+                                <Label htmlFor="type-min-notice" className="block mb-1.5">{t('leaveSettings.minDaysNotice')}</Label>
                                 <Input
                                     id="type-min-notice"
                                     type="number"
@@ -701,7 +703,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="type-max-consecutive" className="block mb-1.5">Max Consecutive Days</Label>
+                                <Label htmlFor="type-max-consecutive" className="block mb-1.5">{t('leaveSettings.maxConsecutiveDays')}</Label>
                                 <Input
                                     id="type-max-consecutive"
                                     type="number"
@@ -714,10 +716,10 @@ export const LeaveSettingsContent: React.FC = () => {
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={handleCloseTypeDialog}>
-                            Cancel
+                            {t('leaveSettings.cancel')}
                         </Button>
                         <Button type="submit" isLoading={createTypeMutation.isPending || updateTypeMutation.isPending}>
-                            {editingType ? 'Update' : 'Create'}
+                            {editingType ? t('leaveSettings.update') : t('leaveSettings.create')}
                         </Button>
                     </div>
                 </form>
@@ -726,32 +728,32 @@ export const LeaveSettingsContent: React.FC = () => {
             <Dialog
                 open={policyDialogOpen}
                 onOpenChange={handleClosePolicyDialog}
-                title={editingPolicy ? 'Edit Leave Policy' : 'Add Leave Policy'}
+                title={editingPolicy ? t('leaveSettings.editLeavePolicy') : t('leaveSettings.addLeavePolicy')}
                 className="max-w-2xl"
             >
                 <form onSubmit={handleSubmitPolicy}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
-                            <Label htmlFor="policy-name" className="block mb-1.5">Policy Name *</Label>
+                            <Label htmlFor="policy-name" className="block mb-1.5">{t('leaveSettings.policyNameAsterisk')}</Label>
                             <Input
                                 id="policy-name"
                                 value={policyForm.name}
                                 onChange={(e) => setPolicyForm({ ...policyForm, name: e.target.value })}
-                                placeholder="e.g., Standard Annual Leave Policy"
+                                placeholder={t('leaveSettings.policyNamePlaceholder')}
                                 required
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <Label htmlFor="policy-description" className="block mb-1.5">Description</Label>
+                            <Label htmlFor="policy-description" className="block mb-1.5">{t('leaveSettings.description')}</Label>
                             <Input
                                 id="policy-description"
                                 value={policyForm.description}
                                 onChange={(e) => setPolicyForm({ ...policyForm, description: e.target.value })}
-                                placeholder="Description of the policy"
+                                placeholder={t('leaveSettings.policyDescPlaceholder')}
                             />
                         </div>
                         <div>
-                            <Label htmlFor="policy-type" className="block mb-1.5">Leave Type *</Label>
+                            <Label htmlFor="policy-type" className="block mb-1.5">{t('leaveSettings.leaveTypeAsterisk')}</Label>
                             <select
                                 id="policy-type"
                                 value={policyForm.leave_type_id}
@@ -759,7 +761,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             >
-                                <option value="">Select Leave Type</option>
+                                <option value="">{t('leaveSettings.selectLeaveType')}</option>
                                 {leaveTypes.map((type) => (
                                     <option key={type.id} value={type.id}>
                                         {type.name}
@@ -768,20 +770,20 @@ export const LeaveSettingsContent: React.FC = () => {
                             </select>
                         </div>
                         <div>
-                            <Label htmlFor="policy-accrual-type" className="block mb-1.5">Accrual Type</Label>
+                            <Label htmlFor="policy-accrual-type" className="block mb-1.5">{t('leaveSettings.accrualType')}</Label>
                             <select
                                 id="policy-accrual-type"
                                 value={policyForm.accrual_type}
                                 onChange={(e) => setPolicyForm({ ...policyForm, accrual_type: e.target.value as any })}
                                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             >
-                                <option value="MONTHLY">Monthly</option>
-                                <option value="YEARLY">Yearly</option>
-                                <option value="FIXED">Fixed</option>
+                                <option value="MONTHLY">{t('leaveSettings.monthly')}</option>
+                                <option value="YEARLY">{t('leaveSettings.yearly')}</option>
+                                <option value="FIXED">{t('leaveSettings.fixed')}</option>
                             </select>
                         </div>
                         <div>
-                            <Label htmlFor="policy-rate" className="block mb-1.5">Accrual Rate (days) *</Label>
+                            <Label htmlFor="policy-rate" className="block mb-1.5">{t('leaveSettings.accrualRate')}</Label>
                             <Input
                                 id="policy-rate"
                                 type="number"
@@ -791,11 +793,11 @@ export const LeaveSettingsContent: React.FC = () => {
                                 required
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                                Days accrued per period (e.g., 1.5 days/month)
+                                {t('leaveSettings.accrualRateDesc')}
                             </p>
                         </div>
                         <div>
-                            <Label htmlFor="policy-year-start" className="block mb-1.5">Cycle Start Month</Label>
+                            <Label htmlFor="policy-year-start" className="block mb-1.5">{t('leaveSettings.cycleStartMonth')}</Label>
                             <select
                                 id="policy-year-start"
                                 value={policyForm.year_start_month}
@@ -818,7 +820,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                    Eligible during probation period
+                                    {t('leaveSettings.probationEligible')}
                                 </span>
                             </label>
 
@@ -830,31 +832,31 @@ export const LeaveSettingsContent: React.FC = () => {
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                    Enable Carry Forward
+                                    {t('leaveSettings.enableCarryForward')}
                                 </span>
                             </label>
                         </div>
                         {policyForm.carry_forward_enabled && (
                             <div>
-                                <Label htmlFor="policy-max-carry" className="block mb-1.5">Max Carry Forward (Months)</Label>
+                                <Label htmlFor="policy-max-carry" className="block mb-1.5">{t('leaveSettings.maxCarryForward')}</Label>
                                 <Input
                                     id="policy-max-carry"
                                     type="number"
                                     step="0.1"
                                     value={policyForm.max_carry_forward}
                                     onChange={(e) => setPolicyForm({ ...policyForm, max_carry_forward: Number(e.target.value) })}
-                                    placeholder="e.g. 1.5"
+                                    placeholder={t('leaveSettings.maxCarryForwardPlaceholder')}
                                 />
-                                <p className="text-[10px] text-gray-500 mt-1">Months of accrual to carry (e.g. 1.0 = one month's worth)</p>
+                                <p className="text-[10px] text-gray-500 mt-1">{t('leaveSettings.maxCarryForwardDesc')}</p>
                             </div>
                         )}
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={handleClosePolicyDialog}>
-                            Cancel
+                            {t('leaveSettings.cancel')}
                         </Button>
                         <Button type="submit" isLoading={createPolicyMutation.isPending || updatePolicyMutation.isPending}>
-                            {editingPolicy ? 'Update' : 'Create'}
+                            {editingPolicy ? t('leaveSettings.update') : t('leaveSettings.create')}
                         </Button>
                     </div>
                 </form>

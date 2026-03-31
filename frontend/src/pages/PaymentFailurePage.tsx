@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useTranslation } from 'react-i18next';
 
 export const PaymentFailurePage: React.FC = () => {
+  const { t: _t } = useTranslation();
     const navigate = useNavigate();
 
     return (

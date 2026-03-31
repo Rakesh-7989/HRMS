@@ -6,6 +6,7 @@ import { Activity, RefreshCw, Search, History, Clock } from 'lucide-react';
 import { auditService, AuditLog } from '@/services/audit.service';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 // Utility for polling
 function useInterval(callback: () => void, delay: number | null) {
@@ -22,6 +23,7 @@ function useInterval(callback: () => void, delay: number | null) {
 }
 
 export const ActivityPage: React.FC = () => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -147,9 +149,9 @@ export const ActivityPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Audit Activity"
+      title={t('activity.title')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/system' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/system' },
         { label: 'Audit Activity' },
       ]}
     >

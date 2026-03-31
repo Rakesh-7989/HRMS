@@ -17,8 +17,10 @@ import {
     LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 export const SearchPage: React.FC = () => {
+  const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const initialQuery = searchParams.get('q') || '';
@@ -156,9 +158,9 @@ export const SearchPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Search"
+            title={t('common.search')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
                 { label: 'Search' },
             ]}
         >

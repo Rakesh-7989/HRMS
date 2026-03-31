@@ -12,8 +12,11 @@ import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ExpensesPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -113,7 +116,7 @@ const ExpensesPage: React.FC = () => {
   const openReject = (e: any) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
   const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id, payload: { status: 'REJECTED' } }); };
   return (
-    <DashboardLayout title="Expenses">
+    <DashboardLayout title={t('expenses.title')}>
       {/* Sidebar removed - already in DashboardLayout */}
 
       <div className="flex items-center justify-between mb-4">
@@ -127,7 +130,7 @@ const ExpensesPage: React.FC = () => {
           {canManageCategories && (
             <Button variant="outline" onClick={() => setCatOpen(true)}>Add Category</Button>
           )}
-          <Button variant="ghost" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="ghost" onClick={() => refetch()}>{t('common.refresh')}</Button>
         </div>
       </div>
 
@@ -186,7 +189,7 @@ const ExpensesPage: React.FC = () => {
                       {(canUpdate || canDelete) && (
                         <>
                           {canUpdate && <Button size="sm" variant="ghost" onClick={() => openEdit(e)}>Edit</Button>}
-                          {canDelete && <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>Delete</Button>}
+                          {canDelete && <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>{t('common.delete')}</Button>}
                         </>
                       )}
                     </div>
@@ -225,7 +228,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button onClick={handleCreateExpense} isLoading={createExpenseMut.isPending}>Create</Button>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -257,8 +260,8 @@ const ExpensesPage: React.FC = () => {
           </div>
 
           <DialogFooter>
-            <Button onClick={handleSaveEdit} isLoading={updateExpenseMut.isPending}>Save</Button>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} isLoading={updateExpenseMut.isPending}>{t('common.save')}</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -274,7 +277,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button variant="destructive" isLoading={approveExpenseMut.isPending} onClick={confirmReject}>Reject</Button>
-            <Button variant="ghost" onClick={() => setApproveDialogOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setApproveDialogOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -289,8 +292,8 @@ const ExpensesPage: React.FC = () => {
           <div>Are you sure you want to delete the expense for <strong>{selectedExpense?.category}</strong> of amount <strong>{selectedExpense?.amount}</strong> ? This is a soft delete.</div>
 
           <DialogFooter>
-            <Button variant="destructive" isLoading={deleteExpenseMut.isPending} onClick={confirmDelete}>Delete</Button>
-            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" isLoading={deleteExpenseMut.isPending} onClick={confirmDelete}>{t('common.delete')}</Button>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -314,7 +317,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button onClick={handleCreateCategory} isLoading={createCategoryMut.isPending}>Create</Button>
-            <Button variant="ghost" onClick={() => setCatOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setCatOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -28,8 +28,10 @@ import { StatusBadge } from '@/components/projects/StatusBadge';
 import { projectsService } from '@/services/projects.service';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Client, ClientStatus } from '@/types/project.types';
+import { useTranslation } from 'react-i18next';
 
 export const ClientsPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -207,8 +209,8 @@ export const ClientsPage: React.FC = () => {
         <DashboardLayout
             title="Clients"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects', href: '/projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects'), href: '/projects' },
                 { label: 'Clients' },
             ]}
         >
@@ -361,7 +363,7 @@ export const ClientsPage: React.FC = () => {
                                 </div>
                             </DialogContent>
                             <DialogFooter>
-                                <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+                                <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('common.close')}</Button>
                                 {canManage && (
                                     <Button onClick={handleSwitchToEdit}><Edit size={16} className="mr-2" /> Edit Client</Button>
                                 )}

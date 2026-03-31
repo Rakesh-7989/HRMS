@@ -15,6 +15,7 @@ import {
   AreaChart, Area, PieChart, Pie, Cell, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 // Custom Tooltip
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -180,6 +181,7 @@ const SystemStatusCard = ({
 );
 
 export const SuperAdminDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
@@ -290,7 +292,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="System Dashboard">
+      <DashboardLayout title={t('dashboard.systemDashboard')}>
         <div className="flex items-center justify-center h-96">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
@@ -302,7 +304,7 @@ export const SuperAdminDashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout title="System Dashboard">
+    <DashboardLayout title={t('dashboard.systemDashboard')}>
       <motion.div
         className="space-y-8"
         initial="initial"
@@ -333,10 +335,10 @@ export const SuperAdminDashboard: React.FC = () => {
                 <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">Super Administrator</span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
-                System Control Center
+                {t('dashboard.systemControlCenter')}
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
-                Monitor tenants, users, and platform health
+                {t('dashboard.monitorTenantsAndHealth')}
               </p>
             </div>
 
@@ -368,25 +370,25 @@ export const SuperAdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             {
-              title: 'Total Tenants',
+              title: t('sidebar.tenants'),
               value: systemMetrics.total_tenants,
               icon: Building2,
               gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
             },
             {
-              title: 'Total Employees',
+              title: t('attendance.totalEmployees'),
               value: systemMetrics.total_employees,
               icon: Users,
               gradient: 'linear-gradient(135deg, #10b981, #059669)',
             },
             {
-              title: 'Active Employees',
+              title: t('attendance.activeEmployees'),
               value: systemMetrics.active_employees,
               icon: Activity,
               gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
             },
             {
-              title: 'Inactive Employees',
+              title: t('attendance.inactiveEmployees'),
               value: systemMetrics.inactive_employees,
               icon: UserX,
               gradient: 'linear-gradient(135deg, #ec4899, #db2777)',

@@ -11,8 +11,10 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { FileText, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export const TaxDeclaration: React.FC = () => {
+  const { t } = useTranslation();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('regime');
     const [fy] = useState('2024-2025'); // Default FY, could be dynamic
@@ -262,8 +264,8 @@ export const TaxDeclaration: React.FC = () => {
                                                         />
                                                     </div>
                                                     <div className="flex gap-2 mt-2">
-                                                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
-                                                        <Button size="sm" onClick={() => handleSaveDeclaration(section.id)}>Save</Button>
+                                                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>{t('common.cancel')}</Button>
+                                                        <Button size="sm" onClick={() => handleSaveDeclaration(section.id)}>{t('common.save')}</Button>
                                                     </div>
                                                 </div>
                                             ) : (

@@ -175,7 +175,7 @@ export const EmployeeDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || 'Failed to clock in');
+      alert(serverMessage || t('attendance.failedClockIn'));
     },
   });
 
@@ -187,7 +187,7 @@ export const EmployeeDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || 'Failed to clock out');
+      alert(serverMessage || t('attendance.failedClockOut'));
     },
   });
 
@@ -195,7 +195,7 @@ export const EmployeeDashboard: React.FC = () => {
     if (geoSettings?.is_enabled) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
-        alert(check.errorMessage || 'Geo-fence validation failed');
+        alert(check.errorMessage || t('attendance.geoFenceValidationFailed'));
         return;
       }
       clockInMutation.mutate({
@@ -210,10 +210,10 @@ export const EmployeeDashboard: React.FC = () => {
 
   const handleClockOut = async () => {
     const isConfirmed = await confirm({
-      title: 'Confirm Clock Out',
-      message: 'Are you sure you want to clock out now? This will end your current working session.',
-      confirmText: 'Clock Out',
-      cancelText: 'Cancel',
+      title: t('attendance.confirmClockOutTitle'),
+      message: t('attendance.confirmClockOutMessage'),
+      confirmText: t('attendance.clockOut'),
+      cancelText: t('common.cancel'),
       type: 'destructive'
     });
 
@@ -222,7 +222,7 @@ export const EmployeeDashboard: React.FC = () => {
     if (geoSettings?.is_enabled) {
       const check = await geoFencingService.performGeoFenceCheck(geoSettings);
       if (!check.allowed) {
-        alert(check.errorMessage || 'Geo-fence validation failed');
+        alert(check.errorMessage || t('attendance.geoFenceValidationFailed'));
         return;
       }
       clockOutMutation.mutate({
@@ -340,7 +340,7 @@ export const EmployeeDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="My Dashboard">
+      <DashboardLayout title={t('dashboard.myDashboard')}>
         <div className="space-y-8 pb-10 animate-pulse">
           {/* Welcome Banner Skeleton */}
           <div className="rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none">
@@ -462,11 +462,11 @@ export const EmployeeDashboard: React.FC = () => {
                 </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
-                Welcome back, {profile?.first_name || user?.first_name}!
+                {t('common.welcomeBack')}, {profile?.first_name || user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-indigo-500" />
-                {profile?.designation || 'Team Member'} • {profile?.department || 'General'}
+                {profile?.designation || t('common.teamMember')} • {profile?.department || t('common.general')}
               </p>
             </div>
 
@@ -503,7 +503,7 @@ export const EmployeeDashboard: React.FC = () => {
             >
               <h3 className="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                 <Activity className="w-5 h-5 text-indigo-500" />
-                Attendance Status
+                {t('attendance.attendanceStatus')}
               </h3>
 
               {canClockIn && (
@@ -525,31 +525,31 @@ export const EmployeeDashboard: React.FC = () => {
                   {(clockInMutation.isPending || clockOutMutation.isPending) ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
                   ) : todayStatus.status === 'NOT_CHECKED_IN' ? (
-                    <> <LogIn className="w-6 h-6" /> CLOCK IN </>
+                    <> <LogIn className="w-6 h-6" /> {t('attendance.clockIn').toUpperCase()} </>
                   ) : todayStatus.status === 'CHECKED_IN' ? (
-                    <> <LogOut className="w-6 h-6" /> CLOCK OUT </>
+                    <> <LogOut className="w-6 h-6" /> {t('attendance.clockOut').toUpperCase()} </>
                   ) : (
-                    <> <CheckCircle className="w-6 h-6" /> COMPLETED </>
+                    <> <CheckCircle className="w-6 h-6" /> {t('common.completed').toUpperCase()} </>
                   )}
                 </motion.button>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check In</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('attendance.checkIn')}</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                     {formatTime12Hour(todayStatus.check_in_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check Out</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('attendance.checkOut')}</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                     {formatTime12Hour(todayStatus.check_out_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
                 <div className="col-span-2 p-5 rounded-[1.5rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10 flex items-center justify-between group">
                   <div>
-                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500/70 uppercase tracking-widest mb-2">Working Hours</p>
+                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500/70 uppercase tracking-widest mb-2">{t('attendance.workingHours')}</p>
                     <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter leading-none">
                       {workingTime ? `${workingTime.hours}h ${workingTime.mins}m` : '--:--'}
                     </p>
@@ -568,16 +568,16 @@ export const EmployeeDashboard: React.FC = () => {
               transition={{ delay: 0.3 }}
               className="space-y-3"
             >
-              <h3 className="text-lg font-black text-slate-800 dark:text-white px-2">Quick Actions</h3>
+              <h3 className="text-lg font-black text-slate-800 dark:text-white px-2">{t('dashboard.quickActions')}</h3>
               <ActionButton
-                icon={CalendarPlus} title="Apply Leave" subtitle="Request Time Off"
+                icon={CalendarPlus} title={t('leave.applyLeave')} subtitle={t('leave.requestTimeOff')}
                 onClick={() => navigate('/leave')}
                 colorClass="bg-white dark:bg-slate-900 border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-300 dark:hover:border-indigo-500"
                 gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
                 delay={0.4}
               />
               <ActionButton
-                icon={Calendar} title="My Attendance" subtitle="View History"
+                icon={Calendar} title={t('leave.myAttendance')} subtitle={t('leave.viewHistory')}
                 onClick={() => navigate('/attendance')}
                 colorClass="bg-white dark:bg-slate-900 border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500"
                 gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
@@ -586,7 +586,7 @@ export const EmployeeDashboard: React.FC = () => {
             </motion.div>
 
             {/* Celebrations */}
-            <ChartCard title="Celebrations" delay={0.6}>
+            <ChartCard title={t('dashboard.celebrations')} delay={0.6}>
               <div className="space-y-3">
                 {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 3).map((evt: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
@@ -596,7 +596,7 @@ export const EmployeeDashboard: React.FC = () => {
                     <div>
                       <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
+                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? t('dashboard.birthday') : evt.type === 'JOINER' ? 'New Joiner' : t('dashboard.anniversary')}
                       </p>
                     </div>
                   </div>
@@ -604,7 +604,7 @@ export const EmployeeDashboard: React.FC = () => {
                 {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length && !peopleEventsData?.joiners?.length) && (
                   <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
                     <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
-                    <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No events this week</p>
+                    <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">{t('dashboard.noEventsThisWeek')}</p>
                   </div>
                 )}
               </div>
@@ -649,7 +649,7 @@ export const EmployeeDashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ChartCard title="Attendance History" subtitle="Status Overview" delay={0.55}>
+              <ChartCard title={t('dashboard.attendanceHistory')} subtitle={t('dashboard.statusOverview')} delay={0.55}>
                 <div className="h-[250px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={attendanceChartData}>
@@ -682,7 +682,7 @@ export const EmployeeDashboard: React.FC = () => {
                 </div>
               </ChartCard>
 
-              <ChartCard title="Weekly Efficiency" subtitle="Hours Worked" delay={0.6}>
+              <ChartCard title={t('dashboard.weeklyEfficiency')} subtitle={t('dashboard.hoursWorked')} delay={0.6}>
                 <div className="h-[250px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={weeklyHoursData}>
@@ -706,11 +706,11 @@ export const EmployeeDashboard: React.FC = () => {
                                 <p className="font-bold text-slate-800 dark:text-white mb-2 text-sm">{label}</p>
                                 <div className="space-y-1.5">
                                   <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">Required:</span>
+                                    <span className="text-slate-500">{t('attendance.required')}:</span>
                                     <span className="font-semibold text-slate-700 dark:text-slate-300">{target} hrs</span>
                                   </div>
                                   <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">Worked:</span>
+                                    <span className="text-slate-500">{t('attendance.worked')}:</span>
                                     <span className={`font-bold ${Number(actual) >= target ? 'text-emerald-500' : 'text-amber-500'}`}>
                                       {actual} hrs
                                     </span>
@@ -820,7 +820,7 @@ export const EmployeeDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Upcoming Leaves */}
-              <ChartCard title="Upcoming Leaves" delay={0.7}>
+              <ChartCard title={t('leave.upcomingLeaves')} delay={0.7}>
                 <div className="mt-4">
                   {(upcomingLeaves?.length || 0) > 0 ? (
                     <div className="space-y-3">
@@ -846,14 +846,14 @@ export const EmployeeDashboard: React.FC = () => {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-[200px] text-center opacity-60">
                       <Coffee className="w-10 h-10 text-slate-300 mb-2" />
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-[10px]">No upcoming leaves</p>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-[10px]">{t('leave.noUpcomingLeaves')}</p>
                     </div>
                   )}
                 </div>
               </ChartCard>
 
               {/* Upcoming Holidays */}
-              <ChartCard title="Upcoming Holidays" delay={0.75}>
+              <ChartCard title={t('dashboard.upcomingHolidays')} delay={0.75}>
                 <div className="space-y-3 mt-4">
                   {isLoadingHolidays ? (
                     <div className="flex items-center justify-center h-48">

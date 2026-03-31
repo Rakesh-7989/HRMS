@@ -55,6 +55,7 @@ const CouponsPage = React.lazy(() => import('@/pages/CouponsPage').then(m => ({ 
 const RolesPermissionsPage = React.lazy(() => import('@/pages/RolesPermissionsPage').then(m => ({ default: m.RolesPermissionsPage })));
 const OrganisationPage = React.lazy(() => import('@/pages/OrganisationPage'));
 const ShiftsPage = React.lazy(() => import('@/pages/organization/ShiftsPage').then(m => ({ default: m.ShiftsPage })));
+const ShiftRosterPage = React.lazy(() => import('@/pages/organization/ShiftRosterPage').then(m => ({ default: m.ShiftRosterPage })));
 const InboxPage = React.lazy(() => import('./pages/InboxPage'));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage').then(m => ({ default: m.ChatPage })));
 
@@ -65,6 +66,24 @@ const RiverProcess = React.lazy(() => import('@/pages/payroll/RiverProcess').the
 const FnFSettlementsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementsPage'));
 const FnFSettlementDetailsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementDetailsPage'));
 const ArrearsPage = React.lazy(() => import('@/pages/payroll/ArrearsPage').then(m => ({ default: m.ArrearsPage })));
+const PayRunPage = React.lazy(() => import('@/pages/payroll/PayRunPage'));
+const SalaryTemplatesPage = React.lazy(() => import('@/pages/payroll/SalaryTemplatesPage'));
+const StatutoryPage = React.lazy(() => import('@/pages/payroll/StatutoryPage'));
+const TaxDeclarationsPage = React.lazy(() => import('@/pages/payroll/TaxDeclarationsPage'));
+
+// Payroll standalone pages
+const PayslipsPage = React.lazy(() => import('@/pages/PayslipsPage').then(m => ({ default: m.PayslipsPage })));
+const SalaryDetailsPage = React.lazy(() => import('@/pages/SalaryDetailsPage'));
+const ExpensesPage = React.lazy(() => import('@/pages/ExpensesPage'));
+const LoansPage = React.lazy(() => import('@/pages/LoansPage'));
+const LoanTypesPage = React.lazy(() => import('@/pages/LoanTypesPage'));
+const MerchantsPage = React.lazy(() => import('@/pages/MerchantsPage'));
+const CostCentersPage = React.lazy(() => import('@/pages/CostCentersPage'));
+const SubscriptionPage = React.lazy(() => import('@/pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
+
+// Asset sub-pages
+const AssetRequestsPage = React.lazy(() => import('@/pages/AssetRequestsPage').then(m => ({ default: m.AssetRequestsPage })));
+const AssetReturnPage = React.lazy(() => import('@/pages/AssetReturnPage').then(m => ({ default: m.AssetReturnPage })));
 
 // Assets
 const AssetsPage = React.lazy(() => import('@/pages/AssetsPage').then(m => ({ default: m.AssetsPage })));
@@ -76,6 +95,7 @@ const ProjectsPage = React.lazy(() => import('@/pages/projects/ProjectsPage').th
 const ClientsPage = React.lazy(() => import('@/pages/projects/ClientsPage').then(m => ({ default: m.ClientsPage })));
 const TasksPage = React.lazy(() => import('@/pages/projects/TasksPage').then(m => ({ default: m.TasksPage })));
 const ProjectReportsPage = React.lazy(() => import('@/pages/projects/ProjectReportsPage').then(m => ({ default: m.ProjectReportsPage })));
+const TimesheetPage = React.lazy(() => import('@/pages/projects/TimesheetPage').then(m => ({ default: m.TimesheetPage })));
 
 // DashboardLayout (eagerly loaded since it wraps most pages)
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -360,6 +380,18 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/organization/shift-roster"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <DashboardLayout title="Shift Roster">
+                <ShiftRosterPage />
+              </DashboardLayout>
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/leave"
@@ -446,6 +478,26 @@ const router = createBrowserRouter(
         }
       />
       <Route
+        path="/assets/requests"
+        element={
+          <ProtectedRoute requiredPermission="assets:view" fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={3}>
+              <AssetRequestsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assets/return"
+        element={
+          <ProtectedRoute requiredPermission="assets:view" fallback={<FormSkeleton />}>
+            <SubscriptionGuard minPlan={3}>
+              <AssetReturnPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/profile"
         element={
           <ProtectedRoute fallback={<FormSkeleton />}>
@@ -453,7 +505,14 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/subscription"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']} fallback={<FormSkeleton />}>
+            <SubscriptionPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Project Management Routes */}
       <Route
@@ -489,6 +548,16 @@ const router = createBrowserRouter(
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TableSkeleton />}>
             <TasksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/timesheets"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']} fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <TimesheetPage />
+            </SubscriptionGuard>
           </ProtectedRoute>
         }
       />
@@ -557,6 +626,126 @@ const router = createBrowserRouter(
         }
       />
       <Route
+        path="/payroll/payrun/:id"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<FormSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <PayRunPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/payruns"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <PayRunPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/templates"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <SalaryTemplatesPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/statutory"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <StatutoryPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/tax-declarations"
+        element={
+          <ProtectedRoute fallback={<FormSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <TaxDeclarationsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/payslips"
+        element={
+          <ProtectedRoute requiredPermission="payroll:view" fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <PayslipsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/salary-details"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<FormSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <SalaryDetailsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/expenses"
+        element={
+          <ProtectedRoute fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <ExpensesPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/loans"
+        element={
+          <ProtectedRoute fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <LoansPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/loan-types"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <LoanTypesPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/merchants"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <MerchantsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payroll/cost-centers"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']} fallback={<TableSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <CostCentersPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/payroll/fnf"
         element={
           <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<TableSkeleton />}>
@@ -591,8 +780,16 @@ const router = createBrowserRouter(
       {/* Redirect /dashboard to appropriate role dashboard */}
       <Route path="/dashboard" element={<DashboardRedirect />} />
 
-      {/* Catch all - redirect to home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch all - 404 Not Found */}
+      <Route path="*" element={
+        <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-6xl font-black text-gray-300 dark:text-gray-700">404</h1>
+            <p className="text-lg text-gray-500 dark:text-gray-400">Page not found</p>
+            <a href="/" className="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">Go Home</a>
+          </div>
+        </div>
+      } />
     </Route>
   )
 );

@@ -438,15 +438,15 @@ export const ProfilePage: React.FC = () => {
 
             <div className="flex gap-3">
               {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)}>
+                <Button type="button" onClick={() => setIsEditing(true)}>
                   <Edit className="mr-2" size={16} /> {t('profile.editProfile')}
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
                     <X className="mr-2" size={16} /> {t('common.cancel')}
                   </Button>
-                  <Button onClick={() => formik.handleSubmit()} isLoading={updateMutation.isPending}>
+                  <Button type="submit" onClick={() => formik.handleSubmit()} isLoading={updateMutation.isPending}>
                     <Save className="mr-2" size={16} /> {t('profile.saveChanges')}
                   </Button>
                 </div>

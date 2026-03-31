@@ -10,8 +10,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { UpgradePlanModal } from '@/components/super_admin/UpgradePlanModal';
 import { BillingHistoryModal } from '@/components/super_admin/BillingHistoryModal';
+import { useTranslation } from 'react-i18next';
 
 export const TenantsPage: React.FC = () => {
+  const { t } = useTranslation();
 
   const [selected, setSelected] = useState<Tenant | null>(null);
   const queryClient = useQueryClient();
@@ -247,9 +249,9 @@ export const TenantsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Tenants"
+      title={t('sidebar.tenants')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/system' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/system' },
         { label: 'Tenants' },
       ]}
     >

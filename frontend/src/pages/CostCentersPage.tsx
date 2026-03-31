@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { useTranslation } from 'react-i18next';
 
 const CostCentersPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: costCenters = [], isLoading, refetch } = useQuery<any[]>({ queryKey: ['payroll', 'cost-centers'], queryFn: () => payrollService.listCostCenters() });
 
@@ -26,13 +28,13 @@ const CostCentersPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Cost Centers">
+    <DashboardLayout title={t('organisation.costCenters')}>
       <Sidebar />
 
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
           <Button onClick={() => setOpen(true)}>Add Cost Center</Button>
-          <Button variant="outline" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="outline" onClick={() => refetch()}>{t('common.refresh')}</Button>
         </div>
       </div>
 
@@ -47,7 +49,7 @@ const CostCentersPage: React.FC = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell>Loading...</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></TableRow>
+              <TableRow><TableCell>{t('common.loading')}</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></TableRow>
             ) : costCenters.length === 0 ? (
               <TableRow><TableCell>No cost centers</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></TableRow>
             ) : (
@@ -70,7 +72,7 @@ const CostCentersPage: React.FC = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleCreate}>Create</Button>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

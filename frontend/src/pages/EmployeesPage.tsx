@@ -30,6 +30,7 @@ import {
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
 import { permissionsService } from '@/services/permissions.service';
 
@@ -38,6 +39,7 @@ const PAGE_SIZE = 10;
 
 export const EmployeesPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const navigate = useNavigate();
@@ -194,10 +196,10 @@ export const EmployeesPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Employees"
+      title={t('employees.title')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Employees' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.employees') },
       ]}
     >
       <div className="space-y-6">
@@ -209,7 +211,7 @@ export const EmployeesPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-muted" size={18} />
               <input
                 type="text"
-                placeholder="Search by name, email, or ID..."
+                placeholder={t('employees.searchEmployees')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm text-gray-900 dark:text-white"
@@ -224,7 +226,7 @@ export const EmployeesPage: React.FC = () => {
               className="relative"
             >
               <Filter size={16} className="mr-2" />
-              Filters
+              {t('common.filters')}
             </Button>
           </div>
 
@@ -239,7 +241,7 @@ export const EmployeesPage: React.FC = () => {
                     title="Import employees from Excel"
                   >
                     <FileText size={18} className="mr-2" />
-                    Bulk Import
+                    {t('employees.bulkImport')}
                   </Button>
                 )}
                 {canCreate && (
@@ -250,7 +252,7 @@ export const EmployeesPage: React.FC = () => {
                     className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
                   >
                     <Plus size={18} className="mr-2" />
-                    Add Employee
+                    {t('employees.addEmployee')}
                   </Button>
                 )}
               </div>
@@ -274,7 +276,7 @@ export const EmployeesPage: React.FC = () => {
                   onChange={(e) => { setDepartmentFilter(e.target.value); setPage(0); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
-                  <option value="">All Departments</option>
+                  <option value="">{t('employees.filterByDepartment')}</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>{dept.name}</option>
                   ))}
@@ -288,7 +290,7 @@ export const EmployeesPage: React.FC = () => {
                   onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
-                  <option value="">All Roles</option>
+                  <option value="">{t('employees.filterByRole')}</option>
                   {tenantRoles.map((r) => (
                     <option key={r.role} value={r.role}>{r.role.replace(/_/g, ' ')}</option>
                   ))}
@@ -302,16 +304,16 @@ export const EmployeesPage: React.FC = () => {
                   onChange={(e) => { setStatusFilter(e.target.value as any); setPage(0); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="">{t('employees.filterByStatus')}</option>
+                  <option value="active">{t('common.active')}</option>
+                  <option value="inactive">{t('common.inactive')}</option>
                 </select>
               </div>
 
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X size={14} className="mr-1" />
-                  Clear
+                  {t('employees.clearFilters')}
                 </Button>
               )}
             </div>
@@ -327,8 +329,8 @@ export const EmployeesPage: React.FC = () => {
           ) : displayEmployees.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <UserX className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-lg font-medium">No employees found</p>
-              <p className="text-sm">Try adjusting your search or filters</p>
+              <p className="text-lg font-medium">{t('employees.noEmployeesFound')}</p>
+              <p className="text-sm">{t('common.tryAgain')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -336,25 +338,25 @@ export const EmployeesPage: React.FC = () => {
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Employee
+                      {t('common.employee')}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Department
+                      {t('common.department')}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Designation
+                      {t('common.designation')}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Role
+                      {t('common.role')}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Status
+                      {t('common.status')}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Joined
+                      {t('common.joined')}
                     </th>
                     <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
+                      {t('common.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -408,12 +410,12 @@ export const EmployeesPage: React.FC = () => {
                         {emp.is_active ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
                             <UserCheck size={14} />
-                            Active
+                            {t('common.active')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400">
                             <UserX size={14} />
-                            Inactive
+                            {t('common.inactive')}
                           </span>
                         )}
                       </td>
@@ -502,7 +504,7 @@ export const EmployeesPage: React.FC = () => {
           {!isLoading && employees.length > 0 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800">
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {totalFiltered === 0 ? 0 : page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalFiltered)} of {totalFiltered} employees
+                {t('common.showing')} {totalFiltered === 0 ? 0 : page * PAGE_SIZE + 1} - {Math.min((page + 1) * PAGE_SIZE, totalFiltered)} {t('common.of')} {totalFiltered}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -514,7 +516,7 @@ export const EmployeesPage: React.FC = () => {
                   <ChevronLeft size={16} />
                 </Button>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Page {page + 1}
+                  {t('common.page')} {page + 1}
                 </span>
                 <Button
                   variant="outline"

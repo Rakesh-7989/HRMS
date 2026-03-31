@@ -189,8 +189,7 @@ export const LeaveContent: React.FC = () => {
                                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                             >
                                 <option value="ALL">All Status</option>
-                                <option value="PENDING">Pending (Manager)</option>
-                                <option value="PENDING_HR">Pending (HR)</option>
+                                <option value="PENDING">Pending</option>
                                 <option value="APPROVED">Approved</option>
                                 <option value="REJECTED">Rejected</option>
                                 <option value="CANCELLED">Cancelled</option>
@@ -313,12 +312,12 @@ export const LeaveContent: React.FC = () => {
                                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                             : leave.status === 'REJECTED'
                                                                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                                : leave.status === 'PENDING_HR'
-                                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                                : leave.status === 'CANCELLED'
+                                                                    ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                                                                     : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                                             }`}
                                                     >
-                                                        {leave.status === 'PENDING_HR' ? 'PENDING (HR)' : leave.status}
+                                                        {leave.status}
                                                     </span>
                                                     {leave.status === 'REJECTED' && leave.rejection_reason && (
                                                         <span className="text-[10px] text-red-600 dark:text-red-400 leading-tight max-w-[150px]">

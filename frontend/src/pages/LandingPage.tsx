@@ -19,6 +19,7 @@ import { plansService } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
 import { ContactSalesModal } from '@/components/ContactSalesModal';
 import rolesVisual from '@/assets/hrms_roles.png';
+import { useTranslation } from 'react-i18next';
 
 const FloatingBackground = () => {
   return (
@@ -669,6 +670,7 @@ const planMeta: Record<string, {
 };
 
 export const LandingPage: React.FC = () => {
+  const { t: _t } = useTranslation();
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const containerRef = React.useRef<HTMLDivElement>(null);

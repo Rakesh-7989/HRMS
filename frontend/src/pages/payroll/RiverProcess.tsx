@@ -17,6 +17,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const STAGES = ['REVIEW', 'INITIATE', 'VERIFY', 'RELEASE'];
 const STAGE_ICONS: any = { REVIEW: Eye, INITIATE: Zap, VERIFY: Shield, RELEASE: Send };
@@ -82,6 +83,7 @@ const COLOR_CLASSES: any = {
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
 export const RiverProcess = () => {
+    const { t } = useTranslation();
     const { runId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -152,7 +154,7 @@ export const RiverProcess = () => {
 
     if (loading) {
         return (
-            <DashboardLayout title="Payroll Process">
+            <DashboardLayout title={t('payroll.payrollManagement') || "Payroll Process"}>
                 <div className="flex items-center justify-center h-[60vh]">
                     <div className="text-center space-y-4">
                         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto" />
@@ -164,7 +166,7 @@ export const RiverProcess = () => {
     }
 
     return (
-        <DashboardLayout title="Payroll Process">
+        <DashboardLayout title={t('payroll.payrollManagement') || "Payroll Process"}>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
@@ -523,6 +525,7 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
 // VERIFY STAGE (Enhanced with full analytics)
 // =============================================================================
 const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
+    const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [showEmployees, setShowEmployees] = useState(false);
 
@@ -547,7 +550,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
-                    { label: 'Employees', value: data?.summary?.count || 0, icon: Users, color: 'blue', isCurrency: false },
+                    { label: t('common.breadcrumbs.employees'), value: data?.summary?.count || 0, icon: Users, color: 'blue', isCurrency: false },
                     { label: 'Total Gross', value: data?.summary?.total_gross || 0, icon: Wallet, color: 'indigo', isCurrency: true },
                     { label: 'Deductions', value: data?.summary?.total_deductions || 0, icon: IndianRupee, color: 'amber', isCurrency: true },
                     { label: 'Tax (TDS)', value: data?.summary?.total_tax || 0, icon: Shield, color: 'rose', isCurrency: true },

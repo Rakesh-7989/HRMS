@@ -14,6 +14,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { ContactSalesModal } from '@/components/ContactSalesModal';
+import { useTranslation } from 'react-i18next';
+
 declare global {
   interface Window {
     Razorpay: any;
@@ -352,6 +354,7 @@ const FeatureCategory: React.FC<{
 
 
 export const PricingPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const tenantId = searchParams.get('tenantId');
   const navigate = useNavigate();

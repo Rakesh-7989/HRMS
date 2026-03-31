@@ -4,8 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
+import { useTranslation } from 'react-i18next';
 
 export const AddEmployeePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleSuccess = () => {
@@ -32,15 +34,15 @@ export const AddEmployeePage: React.FC = () => {
     }
   }, [isLoading, isLimitReached, navigate]);
 
-  if (isLoading) return <div className="p-6">Loading...</div>;
+  if (isLoading) return <div className="p-6">{t('common.loading')}</div>;
 
   if (isLimitReached) {
     return (
       <DashboardLayout
-        title="Add Employee"
+        title={t('employees.addEmployee')}
         breadcrumbs={[
-          { label: 'Dashboard', href: '/dashboard/organization' },
-          { label: 'Employees', href: '/dashboard/employees' },
+          { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+          { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
           { label: 'Add Employee' },
         ]}
       >
@@ -74,10 +76,10 @@ export const AddEmployeePage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Add Employee"
+      title={t('employees.addEmployee')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Employees', href: '/dashboard/employees' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
         { label: 'Add Employee' },
       ]}
     >

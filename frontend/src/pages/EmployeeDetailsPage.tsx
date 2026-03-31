@@ -39,10 +39,12 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 import { SalaryAssignmentSection } from '@/components/payroll/SalaryAssignmentSection';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'personal' | 'employment' | 'financial' | 'documents';
 
 export const EmployeeDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
@@ -194,7 +196,7 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <DashboardLayout title="Employee Details">
+            <DashboardLayout title={t('employees.employeeDetails')}>
                 <div className="h-64 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                 </div>
@@ -204,7 +206,7 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     if (error || !employee) {
         return (
-            <DashboardLayout title="Employee Details">
+            <DashboardLayout title={t('employees.employeeDetails')}>
                 <Card>
                     <div className="text-center py-12">
                         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
@@ -228,10 +230,10 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Employee Details"
+            title={t('employees.employeeDetails')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Employees', href: '/dashboard/employees' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
                 { label: `${employee.first_name} ${employee.last_name}` },
             ]}
         >

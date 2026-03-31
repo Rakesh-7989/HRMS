@@ -10,8 +10,8 @@ router.get("/me", verifyJwt, controller.getMyPermissions);
 // Auth required for management
 router.use(verifyJwt);
 
-// Admin only: roles and permissions management
-router.use(requirePermission('roles', 'manage'));
+// Admin/HR: roles and permissions (View allowed for lists, manage for changes)
+router.use(requirePermission('roles', ['view', 'manage']));
 
 // Master permission catalog
 router.get("/", controller.getAllPermissions);

@@ -5,9 +5,12 @@ import { getShifts } from '@/services/shift.service';
 import { departmentService } from '@/services/department.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+
 import { Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ShiftRosterPage = ({ searchTerm = '' }: { searchTerm?: string }) => {
+    const { t: _t } = useTranslation();
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 16;
     const search = searchTerm;

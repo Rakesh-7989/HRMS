@@ -9,8 +9,10 @@ import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const DepartmentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const { hasPermission } = usePermissions();
@@ -85,9 +87,9 @@ export const DepartmentsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Departments"
+      title={t('organisation.departments')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
         { label: 'Departments' },
       ]}
     >

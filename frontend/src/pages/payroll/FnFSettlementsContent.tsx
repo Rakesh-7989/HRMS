@@ -12,8 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/Badge';
 import { Plus, CheckCircle, XCircle, Banknote, FileText, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export const FnFSettlementsContent: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
@@ -110,7 +112,7 @@ export const FnFSettlementsContent: React.FC = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow> :
+                        {isLoading ? <TableRow><TableCell colSpan={6}>{t('common.loading')}</TableCell></TableRow> :
                             settlements.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center">No settlements found</TableCell></TableRow> :
                                 settlements.map(item => (
                                     <TableRow key={item.id}>

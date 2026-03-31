@@ -15,7 +15,7 @@ export interface LeaveApplication {
   end_date: string;
   is_half_day: boolean;
   reason: string;
-  status: 'PENDING' | 'PENDING_HR' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   approved_by?: string;
   rejected_by?: string;
   approval_comment?: string;

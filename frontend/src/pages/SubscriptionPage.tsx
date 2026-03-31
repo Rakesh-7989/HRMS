@@ -8,6 +8,7 @@ import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 declare global {
     interface Window {
@@ -16,6 +17,7 @@ declare global {
 }
 
 export const SubscriptionPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('MONTHLY');
 
@@ -83,7 +85,7 @@ export const SubscriptionPage: React.FC = () => {
 
     if (loadingSub || loadingUsage || loadingPlans) {
         return (
-            <DashboardLayout title="Subscription">
+            <DashboardLayout title={t('billing.subscription')}>
                 <div className="flex items-center justify-center min-h-[400px]">
                     <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
@@ -94,7 +96,7 @@ export const SubscriptionPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Subscription Management"
-            breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/organization' }, { label: 'Subscription' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: 'Subscription' }]}
         >
             <div className="space-y-8">
                 {/* Current Plan & Usage */}

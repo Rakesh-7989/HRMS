@@ -12,10 +12,12 @@ import { cn } from '@/utils/cn';
 import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle, Power } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'types' | 'policies' | 'holidays';
 
 export const LeaveSettingsPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm, alert: showAlert } = useConfirm();
     const [activeTab, setActiveTab] = useState<TabType>('types');
@@ -406,11 +408,11 @@ export const LeaveSettingsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Leave Settings"
+            title={t('leave.tabs.settings')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Leave', href: '/leave' },
-                { label: 'Settings' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.leave'), href: '/leave' },
+                { label: t('common.breadcrumbs.settings') },
             ]}
         >
             <div className="space-y-6">

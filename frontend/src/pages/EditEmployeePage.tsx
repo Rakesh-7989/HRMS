@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
 import { usersService } from '@/services/users.service';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const EditEmployeePage: React.FC = () => {
+  const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -20,7 +22,7 @@ export const EditEmployeePage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <DashboardLayout title="Edit Employee">
+            <DashboardLayout title={t('employees.editEmployee')}>
                 <div className="h-64 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                 </div>
@@ -30,7 +32,7 @@ export const EditEmployeePage: React.FC = () => {
 
     if (error || !employee) {
         return (
-            <DashboardLayout title="Edit Employee">
+            <DashboardLayout title={t('employees.editEmployee')}>
                 <Card>
                     <div className="text-center py-12">
                         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
@@ -54,8 +56,8 @@ export const EditEmployeePage: React.FC = () => {
         <DashboardLayout
             title={`Edit ${employee.first_name} ${employee.last_name}`}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Employees', href: '/dashboard/employees' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
                 { label: `${employee.first_name} ${employee.last_name}`, href: `/dashboard/employees/${id}` },
                 { label: 'Edit' },
             ]}

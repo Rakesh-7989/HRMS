@@ -8,8 +8,10 @@ import { Bell, CheckCheck, Trash2, Info, AlertCircle, CheckCircle, AlertTriangle
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export const NotificationsPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [page, setPage] = useState(0);
     const limit = 20;
@@ -60,8 +62,8 @@ export const NotificationsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Notifications"
-            breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Notifications' }]}
+            title={t('notifications.title')}
+            breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard' }, { label: 'Notifications' }]}
         >
             <div className="space-y-6">
                 <div className="flex items-center justify-between">

@@ -25,6 +25,7 @@ import { SessionsModal } from '@/components/forms/SessionsModal';
 import { ChangePasswordModal } from '@/components/forms/ChangePasswordModal';
 import { subscriptionService } from '@/services/subscription.service';
 import { TwoFactorModal } from '@/components/forms/TwoFactorModal';
+import { useTranslation } from 'react-i18next';
 
 import { SuccessModal } from '@/components/ui/SuccessModal';
 
@@ -37,6 +38,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 export const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, setUser } = useAuth();
+  const { t } = useTranslation();
   const [isSessionsModalOpen, setIsSessionsModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
@@ -72,17 +74,17 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Settings"
+      title={t('settings.title')}
       breadcrumbs={[
         {
-          label: 'Dashboard',
+          label: t('common.breadcrumbs.dashboard'),
           href: user?.role === 'SUPER_ADMIN' ? '/dashboard/system' :
             user?.role === 'ADMIN' ? '/dashboard/organization' :
               user?.role === 'HR' ? '/dashboard/hr' :
                 user?.role === 'MANAGER' ? '/dashboard/team' :
                   '/dashboard/personal'
         },
-        { label: 'Settings' },
+        { label: t('common.breadcrumbs.settings') },
       ]}
     >
       <div className="max-w-4xl space-y-6">
@@ -111,12 +113,12 @@ export const SettingsPage: React.FC = () => {
                     <FileText size={20} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Leave Policies</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{t('dashboard.leavePolicies')}</p>
                     <p className="text-xs text-gray-600 dark:text-muted">Manage leave types and accrual rules</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => navigate('/leave/settings')}>
-                  Manage
+                  {t('common.manage')}
                 </Button>
               </div>
             </div>
@@ -130,7 +132,7 @@ export const SettingsPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <CreditCard className="text-primary" size={24} />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Subscription Management
+                  {t('billing.subscription')}
                 </h3>
               </div>
               <Button
@@ -139,7 +141,7 @@ export const SettingsPage: React.FC = () => {
                 onClick={() => navigate('/pricing')}
                 className="gap-2"
               >
-                Upgrade Plan
+                {t('billing.upgradePlan')}
                 <ExternalLink size={14} />
               </Button>
             </div>
@@ -152,11 +154,11 @@ export const SettingsPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-                    <p className="text-sm text-gray-500 mb-1">Current Plan</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('billing.currentPlan')}</p>
                     <p className="text-xl font-bold text-primary">{subscription.plan_name}</p>
                   </div>
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-                    <p className="text-sm text-gray-500 mb-1">Status</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('common.status')}</p>
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${subscription.status === 'ACTIVE' || subscription.status === 'TRIAL'
                       ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
                       : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
@@ -196,7 +198,7 @@ export const SettingsPage: React.FC = () => {
         <Card>
           <div className="flex items-center gap-3 mb-4">
             <Bell className="text-primary" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.notifications')}</h3>
           </div>
           <p className="text-gray-600 dark:text-muted mb-4">
             Configure notification preferences.
@@ -298,7 +300,7 @@ export const SettingsPage: React.FC = () => {
             ) : (
               <Sun className="text-primary" size={24} />
             )}
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.appearance')}</h3>
           </div>
           <p className="text-gray-600 dark:text-muted mb-4">Customize the appearance of the application.</p>
           <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -328,7 +330,7 @@ export const SettingsPage: React.FC = () => {
         <Card>
           <div className="flex items-center gap-3 mb-4">
             <Shield className="text-primary" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Security</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.security')}</h3>
           </div>
           <p className="text-gray-600 dark:text-muted mb-4">
             Manage security settings and access controls.
@@ -336,7 +338,7 @@ export const SettingsPage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
               <div>
-                <p className="font-medium text-gray-900 dark:text-white">Change Password</p>
+                <p className="font-medium text-gray-900 dark:text-white">{t('auth.changePassword')}</p>
                 <p className="text-sm text-gray-600 dark:text-muted">
                   Update your account password
                 </p>
@@ -352,7 +354,7 @@ export const SettingsPage: React.FC = () => {
                   <Shield size={20} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Two-Factor Authentication</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{t('settings.twoFactorAuth')}</p>
                   <p className="text-xs text-gray-600 dark:text-muted">
                     {user?.two_factor_enabled ? 'Securely enabled via Authenticator' : 'Add an extra layer of security'}
                   </p>

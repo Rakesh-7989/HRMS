@@ -138,8 +138,8 @@ exports.getPendingWFHRequests = async (db, actor) => {
         params.push(actor.employeeId);
         params.push(actor.id);
     } else if (actor.role === 'HR' || actor.role === 'ADMIN') {
-        // HR/Admin see PENDING_HR requests across the tenant
-        whereClause += ` AND wr.status = 'PENDING_HR'`;
+        // HR/Admin see ALL PENDING requests across the tenant for oversight
+        whereClause += ` AND wr.status = 'PENDING'`;
     } else {
         return [];
     }
@@ -177,97 +177,60 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
 
     const request = requestRes.rows[0];
 
-    // Authorization check
+    //Authorization check
     const allowedRoles = ['ADMIN', 'HR', 'MANAGER'];
     if (!allowedRoles.includes(actor.role)) {
         throw new Error("Unauthorized: Only Admin, HR, or Managers can approve WFH requests");
     }
 
-    if (request.employee_id === actor.employeeId) {
-        throw new Error("You cannot approve your own WFH requests.");
+    if (request.status !== 'PENDING') {
+        throw new Error(`Can only approve requests in PENDING status. This request is already ${request.status}.`);
     }
 
-    // ---------------------------------------------------------
-    // STAGE 1: MANAGER APPROVAL (PENDING -> PENDING_HR)
-    // ---------------------------------------------------------
-    if (request.status === 'PENDING') {
-        const isDirectManager = request.reports_to === actor.employeeId;
-        const isDelegateApprover = await delegationService.canApprove(query, actor.id,
-            (await query(`SELECT user_id FROM employees WHERE id = $1`, [request.reports_to])).rows[0]?.user_id,
-            actor.tenantId
-        );
-
-        if (!isDirectManager && !isDelegateApprover && actor.role !== 'ADMIN' && actor.role !== 'HR') {
-            throw new Error("You can only approve WFH requests for your direct reports or as a delegate");
-        }
-
-        const result = await query(
-            `UPDATE wfh_requests 
-             SET status = 'PENDING_HR', 
-                 manager_approved_by = $1, 
-                 manager_approved_at = NOW(),
-                 approval_comment = $2,
-                 updated_at = NOW()
-             WHERE id = $3 AND tenant_id = $4
-             RETURNING *`,
-            [actor.id, comment, requestId, actor.tenantId]
-        );
-        // Notify employee: manager forwarded to HR
-        try {
-            const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
-            if (empUserRes.rows[0]) {
-                await inboxService.createNotification(pool, {
-                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
-                    title: 'WFH Request Update',
-                    message: 'Your WFH request has been approved by your manager and forwarded to HR.',
-                    type: 'info', link: '/wfh'
-                });
-            }
-        } catch (notifErr) {
-            console.error('WFH manager-approve notification error:', notifErr.message);
-        }
-
-        return result.rows[0];
+    // HR/Admin can only VIEW, NOT approve.
+    if (actor.role === 'HR' || actor.role === 'ADMIN') {
+        throw new Error("Only the reporting manager can approve WFH requests. HR and Admin can only view.");
     }
 
-    // ---------------------------------------------------------
-    // STAGE 2: HR APPROVAL (PENDING_HR -> APPROVED)
-    // ---------------------------------------------------------
-    if (request.status === 'PENDING_HR') {
-        if (actor.role !== 'HR' && actor.role !== 'ADMIN') {
-            throw new Error("Only HR or Admin can finalize this WFH request after manager approval.");
-        }
+    // Must be the direct reporting manager or a delegate
+    const isDirectManager = request.reports_to === actor.employeeId;
+    const isDelegateApprover = await delegationService.canApprove(query, actor.id,
+        (await query(`SELECT user_id FROM employees WHERE id = $1`, [request.reports_to])).rows[0]?.user_id,
+        actor.tenantId
+    );
 
-        const result = await query(
-            `UPDATE wfh_requests 
-             SET status = 'APPROVED', 
-                 approved_by = $1, 
-                 approved_at = NOW(),
-                 approval_comment = $2,
-                 updated_at = NOW()
-             WHERE id = $3 AND tenant_id = $4
-             RETURNING *`,
-            [actor.id, comment, requestId, actor.tenantId]
-        );
-        // Notify employee: WFH approved
-        try {
-            const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
-            if (empUserRes.rows[0]) {
-                await inboxService.createNotification(pool, {
-                    tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
-                    title: 'WFH Approved ✅',
-                    message: `Your WFH request for ${request.request_date instanceof Date ? request.request_date.toISOString().split('T')[0] : request.request_date} has been approved.`,
-                    type: 'success', link: '/wfh'
-                });
-            }
-        } catch (notifErr) {
-            console.error('WFH approve notification error:', notifErr.message);
-        }
-
-        return result.rows[0];
+    if (!isDirectManager && !isDelegateApprover) {
+        throw new Error("You can only approve WFH requests for your direct reports or as a delegate");
     }
 
-    throw new Error(`Cannot approve a WFH request with status: ${request.status}`);
+    const result = await query(
+        `UPDATE wfh_requests 
+         SET status = 'APPROVED', 
+             approved_by = $1, 
+             approved_at = NOW(),
+             approval_comment = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND tenant_id = $4
+         RETURNING *`,
+        [actor.id, comment, requestId, actor.tenantId]
+    );
+
+    // Notify employee: WFH approved
+    try {
+        const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [request.employee_id]);
+        if (empUserRes.rows[0]) {
+            await inboxService.createNotification(pool, {
+                tenant_id: actor.tenantId, user_id: empUserRes.rows[0].user_id,
+                title: 'WFH Approved ✅',
+                message: `Your WFH request for ${request.request_date instanceof Date ? request.request_date.toISOString().split('T')[0] : request.request_date} has been approved.`,
+                type: 'success', link: '/wfh'
+            });
+        }
+    } catch (notifErr) {
+        console.error('WFH approve notification error:', notifErr.message);
+    }
+
+    return result.rows[0];
 };
 
 /* ========================== REJECT WFH REQUEST ========================== */

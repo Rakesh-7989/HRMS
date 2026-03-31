@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface Arrear {
     id: string;
@@ -31,6 +32,7 @@ interface Summary {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export const ArrearsPage: React.FC = () => {
+  const { t: _t } = useTranslation();
     const [arrears, setArrears] = useState<Arrear[]>([]);
     const [summary, setSummary] = useState<Summary | null>(null);
     const [loading, setLoading] = useState(true);

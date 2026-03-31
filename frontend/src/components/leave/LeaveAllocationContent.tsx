@@ -11,8 +11,10 @@ import { CheckCircle, AlertCircle, RefreshCw, Users, User as UserIcon } from 'lu
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 export const LeaveAllocationContent: React.FC = () => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const currentYear = new Date().getFullYear();
@@ -46,7 +48,7 @@ export const LeaveAllocationContent: React.FC = () => {
             setResult({ success: true, processed: data.processed || 0, failed: data.failed || 0 });
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(`Allocated to ${data.processed} employees`);
+            toast.success(t('leave.allocatedToMsg', { count: data.processed || 0 }));
             resetForm();
         },
         onError: (error: Error) => {
@@ -61,7 +63,7 @@ export const LeaveAllocationContent: React.FC = () => {
             setResult({ success: true, processed: data.processed || 0, failed: data.failed || 0 });
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(`Reset ${data.processed} balances successfully`);
+            toast.success(t('leave.resetSuccessMsg', { count: data.processed || 0 }));
             resetForm();
         },
         onError: (error: Error) => {
@@ -80,24 +82,24 @@ export const LeaveAllocationContent: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!leaveTypeId || days <= 0) {
-            toast.error('Select leave type and enter valid days');
+            toast.error(t('leave.selectLeaveTypeError'));
             return;
         }
         if (target === 'selected' && selectedIds.length === 0) {
-            toast.error('Select at least one employee');
+            toast.error(t('leave.selectEmployeeError'));
             return;
         }
 
         const typeName = leaveTypes.find((t: LeaveType) => t.id === leaveTypeId)?.name;
         const msg = target === 'all'
-            ? `Allocate ${days} days of ${typeName} to ALL employees for ${year}?`
-            : `Allocate ${days} days to ${selectedIds.length} employees for ${year}?`;
+            ? t('leave.confirmAllocationAllMsg', { days, typeName, year })
+            : t('leave.confirmAllocationSelectedMsg', { days, count: selectedIds.length, year });
 
         const result = await confirm({
-            title: 'Confirm Allocation',
+            title: t('leave.confirmAllocation'),
             message: msg,
-            confirmText: 'Allocate Now',
-            cancelText: 'Cancel'
+            confirmText: t('leave.allocateNow'),
+            cancelText: t('leave.cancel')
         });
         if (result) {
             allocateMutation.mutate({
@@ -113,15 +115,15 @@ export const LeaveAllocationContent: React.FC = () => {
     const handleResetAction = async () => {
         const typeName = leaveTypeId ? leaveTypes.find((t: LeaveType) => t.id === leaveTypeId)?.name : 'ALL';
         const msg = target === 'all'
-            ? `RESET ${typeName} leave balances for ALL employees for ${year}? This will set balances to 0!`
-            : `RESET ${typeName} leave balances for ${selectedIds.length} selected employees for ${year}? This will set balances to 0!`;
+            ? t('leave.confirmResetAllMsg', { typeName, year })
+            : t('leave.confirmResetSelectedMsg', { typeName, count: selectedIds.length, year });
 
         const result = await confirm({
-            title: 'Reset Leave Balances',
+            title: t('leave.confirmResetBalances'),
             message: msg,
             type: 'destructive',
-            confirmText: 'Reset Now',
-            cancelText: 'Cancel'
+            confirmText: t('leave.resetNow'),
+            cancelText: t('leave.cancel')
         });
         if (result) {
             resetBalancesMutation.mutate({
@@ -144,13 +146,13 @@ export const LeaveAllocationContent: React.FC = () => {
         <div className="space-y-6">
             {/* Allocation Form */}
             <Card>
-                <h2 className="text-lg font-semibold mb-4">Allocate Leave</h2>
+                <h2 className="text-lg font-semibold mb-4">{t('leave.allocateLeave')}</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Row 1: Year, Type, Days */}
                     <div className="grid md:grid-cols-3 gap-4">
                         <div>
-                            <Label className="mb-1.5">Year</Label>
+                            <Label className="mb-1.5">{t('leave.year')}</Label>
                             <select
                                 value={year}
                                 onChange={(e) => setYear(Number(e.target.value))}
@@ -162,21 +164,21 @@ export const LeaveAllocationContent: React.FC = () => {
                             </select>
                         </div>
                         <div>
-                            <Label className="mb-1.5">Leave Type</Label>
+                            <Label className="mb-1.5">{t('leave.leaveType')}</Label>
                             <select
                                 value={leaveTypeId}
                                 onChange={(e) => setLeaveTypeId(e.target.value)}
                                 className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600"
                                 required
                             >
-                                <option value="">Select type</option>
+                                <option value="">{t('leave.selectType')}</option>
                                 {leaveTypes.map((t: LeaveType) => (
                                     <option key={t.id} value={t.id}>{t.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <Label className="mb-1.5">Days</Label>
+                            <Label className="mb-1.5">{t('leave.daysAmount')}</Label>
                             <Input
                                 type="number"
                                 step="0.5"
@@ -191,7 +193,7 @@ export const LeaveAllocationContent: React.FC = () => {
 
                     {/* Row 2: Target Selection */}
                     <div>
-                        <Label className="mb-2">Allocate To</Label>
+                        <Label className="mb-2">{t('leave.allocateTo')}</Label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
@@ -205,8 +207,8 @@ export const LeaveAllocationContent: React.FC = () => {
                             >
                                 <Users size={20} className={target === 'all' ? "text-green-600" : "text-gray-400"} />
                                 <div>
-                                    <p className="font-medium">All Employees</p>
-                                    <p className="text-xs text-gray-500">All active employees</p>
+                                    <p className="font-medium">{t('leave.allEmployeesTitle')}</p>
+                                    <p className="text-xs text-gray-500">{t('leave.allActiveEmployees')}</p>
                                 </div>
                             </button>
                             <button
@@ -221,8 +223,8 @@ export const LeaveAllocationContent: React.FC = () => {
                             >
                                 <UserIcon size={20} className={target === 'selected' ? "text-violet-600" : "text-gray-400"} />
                                 <div>
-                                    <p className="font-medium">Selected Only</p>
-                                    <p className="text-xs text-gray-500">Choose employees</p>
+                                    <p className="font-medium">{t('leave.selectedOnly')}</p>
+                                    <p className="text-xs text-gray-500">{t('leave.chooseEmployees')}</p>
                                 </div>
                             </button>
                         </div>
@@ -232,13 +234,13 @@ export const LeaveAllocationContent: React.FC = () => {
                     {target === 'selected' && (
                         <div className="border rounded-lg p-4">
                             <div className="flex justify-between items-center mb-3">
-                                <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                                <span className="text-sm font-medium">{selectedIds.length} {t('leave.selected')}</span>
                                 <div className="flex gap-2">
                                     <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds(employees.map((e: User) => (e.employee_uuid || e.id)))}>
-                                        Select All
+                                        {t('leave.selectAll')}
                                     </Button>
                                     <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
-                                        Clear
+                                        {t('leave.clear')}
                                     </Button>
                                 </div>
                             </div>
@@ -252,8 +254,8 @@ export const LeaveAllocationContent: React.FC = () => {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="w-8">{' '}</TableHead>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Email</TableHead>
+                                                <TableHead>{t('leave.name')}</TableHead>
+                                                <TableHead>{t('leave.email')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -291,7 +293,7 @@ export const LeaveAllocationContent: React.FC = () => {
 
                     {/* Reason */}
                     <div>
-                        <Label className="mb-1.5">Reason (optional)</Label>
+                        <Label className="mb-1.5">{t('leave.reasonOptional')}</Label>
                         <Input
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
@@ -303,27 +305,27 @@ export const LeaveAllocationContent: React.FC = () => {
                     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
                         <div className="grid grid-cols-4 gap-4 text-center">
                             <div>
-                                <p className="text-xs text-gray-500 uppercase">Year</p>
+                                <p className="text-xs text-gray-500 uppercase">{t('leave.year')}</p>
                                 <p className="font-bold text-lg">{year}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-500 uppercase">Type</p>
+                                <p className="text-xs text-gray-500 uppercase">{t('leave.type')}</p>
                                 <p className="font-medium truncate">{typeName}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-500 uppercase">Days</p>
+                                <p className="text-xs text-gray-500 uppercase">{t('leave.daysAmount')}</p>
                                 <p className="font-bold text-lg text-green-600">{days || 0}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-500 uppercase">Target</p>
-                                <p className="font-medium">{target === 'all' ? 'All' : `${selectedIds.length} selected`}</p>
+                                <p className="text-xs text-gray-500 uppercase">{t('leave.target')}</p>
+                                <p className="font-medium">{target === 'all' ? t('leave.allEmployeesTitle') : `${selectedIds.length} ${t('leave.selected')}`}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex justify-end gap-3">
-                        <Button type="button" variant="ghost" onClick={resetForm}>Clear Form</Button>
+                        <Button type="button" variant="ghost" onClick={resetForm}>{t('leave.clearForm')}</Button>
                         <Button
                             type="button"
                             variant="destructive"
@@ -331,7 +333,7 @@ export const LeaveAllocationContent: React.FC = () => {
                             isLoading={resetBalancesMutation.isPending}
                             disabled={allocateMutation.isPending || (target === 'selected' && selectedIds.length === 0)}
                         >
-                            Reset Balances
+                            {t('leave.resetBalances')}
                         </Button>
                         <Button
                             type="submit"
@@ -339,7 +341,7 @@ export const LeaveAllocationContent: React.FC = () => {
                             disabled={!leaveTypeId || days <= 0 || (target === 'selected' && selectedIds.length === 0) || resetBalancesMutation.isPending}
                             className="bg-green-600 hover:bg-green-700"
                         >
-                            Allocate
+                            {t('leave.allocate')}
                         </Button>
                     </div>
                 </form>
@@ -358,10 +360,11 @@ export const LeaveAllocationContent: React.FC = () => {
                     )}
                     <div>
                         <p className={cn("font-medium", result.success ? "text-green-800" : "text-red-800")}>
-                            {result.success ? 'Success' : 'Failed'}
+                            {result.success ? t('leave.success') : t('leave.failed')}
                         </p>
                         <p className="text-sm text-gray-600">
-                            {result.processed} processed{result.failed > 0 && `, ${result.failed} failed`}
+                            {t('leave.processedMsg', { processed: result.processed })}
+                            {result.failed > 0 && t('leave.failedMsg', { failed: result.failed })}
                         </p>
                     </div>
                 </Card>

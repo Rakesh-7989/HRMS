@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { AnimatedText, StaggerText } from '@/components/ui/AnimatedText';
 import { ArrowRight, CheckCircle, TrendingUp, Users, Clock, Shield } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 const features = [
   {
@@ -72,6 +73,7 @@ const testimonials = [
 ];
 
 export const LandingPage: React.FC = () => {
+  const { t: _t } = useTranslation();
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const containerRef = React.useRef<HTMLDivElement>(null);

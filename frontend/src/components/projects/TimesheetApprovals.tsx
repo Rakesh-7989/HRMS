@@ -12,6 +12,7 @@ import { WeeklyTimesheetEntry } from '@/components/timesheets/WeeklyTimesheetEnt
 import { timesheetService } from '@/services/timesheet.service';
 import { usersService } from '@/services/users.service';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 interface TimesheetEntry {
     id: string;
@@ -44,6 +45,7 @@ interface WeekTimesheet {
 }
 
 export const TimesheetApprovals: React.FC = () => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm, alert: showAlert, prompt: showPrompt } = useConfirm();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -231,7 +233,7 @@ export const TimesheetApprovals: React.FC = () => {
                                 : "text-gray-400 hover:text-gray-900"
                         )}
                     >
-                        Pending
+                        {t('timesheets.pending')}
                     </button>
                     <button
                         onClick={() => setActiveTab('history')}
@@ -242,7 +244,7 @@ export const TimesheetApprovals: React.FC = () => {
                                 : "text-gray-400 hover:text-gray-900"
                         )}
                     >
-                        History
+                        {t('timesheets.historyTab')}
                     </button>
                 </div>
 
@@ -253,7 +255,7 @@ export const TimesheetApprovals: React.FC = () => {
                             onChange={(e) => setEmployeeFilter(e.target.value)}
                             className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-w-[140px]"
                         >
-                            <option value="">All Employees</option>
+                            <option value="">{t('timesheets.allEmployees')}</option>
                             {employees.map((emp: any) => (
                                 <option key={emp.id} value={emp.employee_uuid || emp.id}>
                                     {emp.first_name} {emp.last_name}
@@ -265,7 +267,7 @@ export const TimesheetApprovals: React.FC = () => {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         >
-                            <option value="">All Statuses</option>
+                            <option value="">{t('timesheets.allStatuses')}</option>
                             <option value="APPROVED">Approved</option>
                             <option value="REJECTED">Rejected</option>
                             <option value="SUBMITTED">Submitted</option>
@@ -290,9 +292,9 @@ export const TimesheetApprovals: React.FC = () => {
                                     {selectedIds.length}
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">Bulk Approval Mode</h4>
+                                    <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('timesheets.bulkApprovalMode')}</h4>
                                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none mt-1">
-                                        {selectedIds.length} weekly timesheet{selectedIds.length !== 1 ? 's' : ''} selected
+                                        {selectedIds.length} {selectedIds.length !== 1 ? t('timesheets.weeklyTimesheets') : t('timesheets.weeklyTimesheet')} {t('timesheets.selected')}
                                     </p>
                                 </div>
                             </div>
@@ -303,14 +305,14 @@ export const TimesheetApprovals: React.FC = () => {
                                     onClick={() => setSelectedIds([])}
                                     className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900"
                                 >
-                                    Cancel
+                                    {t('timesheets.cancel')}
                                 </Button>
                                 <Button
                                     onClick={handleBulkApprove}
                                     isLoading={bulkApproveMutation.isPending}
                                     className="bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl px-6 h-10 shadow-xl"
                                 >
-                                    {bulkApproveMutation.isPending ? 'Processing...' : 'Approve Selected'}
+                                    {bulkApproveMutation.isPending ? t('timesheets.processing') : t('timesheets.approveSelected')}
                                 </Button>
                             </div>
                         </div>
@@ -325,10 +327,10 @@ export const TimesheetApprovals: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                                    {activeTab === 'pending' ? 'Pending Approvals' : 'Historical Portal'}
+                                    {activeTab === 'pending' ? t('timesheets.pendingApprovals') : t('timesheets.historicalPortal')}
                                 </h3>
                                 <p className="text-[10px] text-gray-500 mt-1 font-bold uppercase tracking-widest opacity-60">
-                                    {activeTab === 'pending' ? 'Weekly timesheets awaiting review' : 'Comprehensive audit of all logged time'}
+                                    {activeTab === 'pending' ? t('timesheets.awaitingReview') : t('timesheets.comprehensiveAudit')}
                                 </p>
                             </div>
                         </div>
@@ -343,14 +345,14 @@ export const TimesheetApprovals: React.FC = () => {
                                     ) : (
                                         <Square size={14} />
                                     )}
-                                    Select All
+                                    {t('timesheets.selectAll')}
                                 </button>
                             )}
                             <div className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-full ring-1 text-[9px] font-black uppercase tracking-widest",
                                 activeTab === 'pending' ? "bg-amber-50 dark:bg-amber-500/10 ring-amber-500/20 text-amber-600" : "bg-blue-50 dark:bg-blue-500/10 ring-blue-500/20 text-blue-600"
                             )}>
-                                Count: {timesheets.length}
+                                {t('timesheets.count')}: {timesheets.length}
                             </div>
                         </div>
                     </div>
@@ -358,15 +360,15 @@ export const TimesheetApprovals: React.FC = () => {
                     {isLoading ? (
                         <div className="flex flex-col items-center gap-3 py-24">
                             <Loader2 className="animate-spin text-primary" size={32} />
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Loading Portal Data...</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{t('timesheets.loadingData')}</p>
                         </div>
                     ) : timesheets.length === 0 ? (
                         <div className="flex flex-col items-center py-24">
                             <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-gray-100 dark:border-gray-800">
                                 <Check size={24} className="text-gray-200" />
                             </div>
-                            <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">All Clear</h4>
-                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">No pending timesheets to review</p>
+                            <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('timesheets.allClear')}</h4>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">{t('timesheets.noPending')}</p>
                         </div>
                     ) : (
                         <div className="flex flex-col">
@@ -382,7 +384,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                 {group.employee ? `${group.employee.first_name} ${group.employee.last_name}` : 'Internal/Unknown Employee'}
                                             </h3>
                                             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                                                {group.items.length} {group.items.length === 1 ? 'Timesheet' : 'Timesheets'} Recorded
+                                                {group.items.length} {group.items.length === 1 ? t('timesheets.weeklyTimesheet') : t('timesheets.weeklyTimesheets')} {t('timesheets.recorded')}
                                             </p>
                                         </div>
                                     </div>
@@ -422,7 +424,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <Calendar size={12} className="text-primary/60" strokeWidth={3} />
-                                                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Week Period</span>
+                                                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t('timesheets.weekPeriod')}</span>
                                                                 </div>
                                                                 <span className="font-black text-gray-800 dark:text-gray-200 text-xs">
                                                                     {format(parseISO(ts.week_start_date), 'MMM dd')} — {format(parseISO(ts.week_end_date), 'MMM dd, yyyy')}
@@ -434,10 +436,10 @@ export const TimesheetApprovals: React.FC = () => {
                                                                 <div className="flex items-center justify-end gap-1.5">
                                                                     <Clock size={14} className="text-primary/60" />
                                                                     <span className="text-sm font-black text-gray-900 dark:text-white tabular-nums">{Number(ts.total_hours).toFixed(1)}</span>
-                                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Hrs</span>
+                                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{t('timesheets.hrs')}</span>
                                                                 </div>
                                                                 <p className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-0.5">
-                                                                    {ts.entries?.length || 0} RECORDINGS
+                                                                    {ts.entries?.length || 0} {t('timesheets.recordings')}
                                                                 </p>
                                                             </div>
 
@@ -456,7 +458,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                                             disabled={isMutating}
                                                                         >
                                                                             <X size={12} className="stroke-[4px]" />
-                                                                            Reject
+                                                                            {t('timesheets.reject')}
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"
@@ -468,7 +470,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                                             disabled={isMutating}
                                                                         >
                                                                             <Check size={12} className="stroke-[4px]" />
-                                                                            Approve
+                                                                            {t('timesheets.approve')}
                                                                         </Button>
                                                                     </div>
                                                                 ) : (
@@ -499,7 +501,7 @@ export const TimesheetApprovals: React.FC = () => {
                 <Dialog
                     open={!!selectedTimesheet}
                     onOpenChange={(open) => !open && setSelectedTimesheet(null)}
-                    title={activeTab === 'pending' ? "Timesheet Approval" : "Timesheet Review"}
+                    title={activeTab === 'pending' ? t('timesheets.timesheetApproval') : t('timesheets.timesheetReview')}
                     // size="4xl" // Dialog component doesn't seem to have size prop based on previous read, checking...
                     // The Dialog component I read earlier uses className for size control: max-w-lg by default.
                     // I should probably override className to make it wider.

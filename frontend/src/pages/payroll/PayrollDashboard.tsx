@@ -15,6 +15,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, AreaChart, Area
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardStats {
     runStatus: {
@@ -93,6 +94,7 @@ const formatCurrency = (val: number) => {
 const cardClass = "bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 rounded-[1.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300";
 
 export const PayrollDashboard = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -184,10 +186,10 @@ export const PayrollDashboard = () => {
                 {/* Cost Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Cost to Company', value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-indigo-600', sub: `${stats?.costSummary.processedCount || 0} employees` },
-                        { label: 'Total Net Payout', value: stats?.costSummary.totalNet || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: 'Bank transfer amount' },
-                        { label: 'Total Deductions', value: stats?.costSummary.totalDeductions || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: 'PF + ESI + PT + TDS' },
-                        { label: 'Tax Deducted (TDS)', value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', accent: 'text-pink-600', sub: 'Income tax withheld' }
+                        { label: t('payroll.totalCostToCompany'), value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-indigo-600', sub: `${stats?.costSummary.processedCount || 0} ${t('payroll.employeesCount')}` },
+                        { label: t('payroll.totalNetPayout'), value: stats?.costSummary.totalNet || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: t('payroll.bankTransferAmount') },
+                        { label: t('payroll.totalDeductions'), value: stats?.costSummary.totalDeductions || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: t('payroll.pfEsiPtTds') },
+                        { label: t('payroll.taxDeductedTds'), value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', accent: 'text-pink-600', sub: t('payroll.incomeTaxWithheld') }
                     ].map((card, idx) => (
                         <motion.div
                             key={idx}
@@ -232,7 +234,7 @@ export const PayrollDashboard = () => {
                 {/* Headcount Row */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {[
-                        { label: 'Total Employees', value: stats?.headcount.total || 0, icon: Users, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-100 dark:border-indigo-500/20' },
+                        { label: t('reports.totalEmployees'), value: stats?.headcount.total || 0, icon: Users, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-100 dark:border-indigo-500/20' },
                         { label: 'Included', value: stats?.headcount.included || 0, icon: UserCheck, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-100 dark:border-emerald-500/20' },
                         { label: 'Excluded', value: stats?.headcount.excluded || 0, icon: UserMinus, accent: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-white/5', border: 'border-slate-100 dark:border-white/5' },
                         { label: 'Incomplete', value: stats?.headcount.incomplete || 0, icon: AlertCircle, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-100 dark:border-amber-500/20', alert: true },

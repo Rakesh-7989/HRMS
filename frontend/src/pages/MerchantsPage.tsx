@@ -10,8 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { useTranslation } from 'react-i18next';
 
 const MerchantsPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const qc = useQueryClient();
   const { data: merchants = [], isLoading } = useQuery<any[]>({ queryKey: ['payroll', 'merchants'], queryFn: () => payrollService.listMerchants() });
   const { data: vendorPayments = [] } = useQuery<any[]>({ queryKey: ['payroll', 'vendor-payments'], queryFn: () => payrollService.listVendorPayments() });
@@ -167,7 +170,7 @@ const MerchantsPage: React.FC = () => {
         <div className="space-x-2">
           <Button onClick={() => setVendorOpen(true)}>Vendor Payout</Button>
           <Button onClick={() => setThirdOpen(true)}>3rd-party Payout</Button>
-          <Button variant="outline" onClick={() => { qc.invalidateQueries({ queryKey: ['payroll', 'merchants'] }); qc.invalidateQueries({ queryKey: ['payroll', 'vendor-payments'] }); qc.invalidateQueries({ queryKey: ['payroll', 'third-party-payouts'] }); qc.invalidateQueries({ queryKey: ['payroll', 'merchant-transactions'] }); }}>Refresh</Button>
+          <Button variant="outline" onClick={() => { qc.invalidateQueries({ queryKey: ['payroll', 'merchants'] }); qc.invalidateQueries({ queryKey: ['payroll', 'vendor-payments'] }); qc.invalidateQueries({ queryKey: ['payroll', 'third-party-payouts'] }); qc.invalidateQueries({ queryKey: ['payroll', 'merchant-transactions'] }); }}>{t('common.refresh')}</Button>
           <Button size="sm" variant="ghost" onClick={() => setShowHidden(s => !s)}>{showHidden ? 'Hide Deleted' : 'Show Deleted'}</Button>
         </div>
       </div>
@@ -184,7 +187,7 @@ const MerchantsPage: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell>Loading...</TableCell>
+                <TableCell>{t('common.loading')}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
             ) : merchants.length === 0 ? (
@@ -235,7 +238,7 @@ const MerchantsPage: React.FC = () => {
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleVendorPaid(v.id, v.paid)} isLoading={markVendorPaidMut.isPending}>{(v.paid || localVendorPaid.includes(v.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localVendorHidden.includes(v.id) ? (
-                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this vendor payment?')) return; toggleVendorHidden(v.id); }}>Delete</Button>
+                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this vendor payment?')) return; toggleVendorHidden(v.id); }}>{t('common.delete')}</Button>
                           ) : (
                             <Button size="sm" variant="outline" onClick={() => toggleVendorHidden(v.id)}>Restore</Button>
                           )}
@@ -284,7 +287,7 @@ const MerchantsPage: React.FC = () => {
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleThirdPaid(t.id, t.paid)} isLoading={markThirdPaidMut.isPending}>{(t.paid || localThirdPaid.includes(t.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localThirdHidden.includes(t.id) ? (
-                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this third-party payout?')) return; toggleThirdHidden(t.id); }}>Delete</Button>
+                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this third-party payout?')) return; toggleThirdHidden(t.id); }}>{t('common.delete')}</Button>
                           ) : (
                             <Button size="sm" variant="outline" onClick={() => toggleThirdHidden(t.id)}>Restore</Button>
                           )}
@@ -315,7 +318,7 @@ const MerchantsPage: React.FC = () => {
               const blob = new Blob([csv], { type: 'text/csv' });
               const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'merchant-transactions.csv'; a.click(); window.URL.revokeObjectURL(url);
             }}>Export Transactions</Button>
-            <Button size="sm" variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ['payroll', 'merchant-transactions'] })}>Refresh</Button>
+            <Button size="sm" variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ['payroll', 'merchant-transactions'] })}>{t('common.refresh')}</Button>
           </div>
         </div>
         <Table>
@@ -371,8 +374,8 @@ const MerchantsPage: React.FC = () => {
             </div>
 
             <DialogFooter>
-              <Button type="submit" isLoading={createVendorMut.isPending} disabled={!vendorName || !vendorAmount}>Submit</Button>
-              <Button variant="ghost" onClick={() => setVendorOpen(false)}>Cancel</Button>
+              <Button type="submit" isLoading={createVendorMut.isPending} disabled={!vendorName || !vendorAmount}>{t('common.submit')}</Button>
+              <Button variant="ghost" onClick={() => setVendorOpen(false)}>{t('common.cancel')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -397,8 +400,8 @@ const MerchantsPage: React.FC = () => {
             </div>
 
             <DialogFooter>
-              <Button type="submit" isLoading={createThirdMut.isPending} disabled={!thirdName || !thirdAmount}>Submit</Button>
-              <Button variant="ghost" onClick={() => setThirdOpen(false)}>Cancel</Button>
+              <Button type="submit" isLoading={createThirdMut.isPending} disabled={!thirdName || !thirdAmount}>{t('common.submit')}</Button>
+              <Button variant="ghost" onClick={() => setThirdOpen(false)}>{t('common.cancel')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

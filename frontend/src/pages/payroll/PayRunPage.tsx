@@ -12,8 +12,11 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Play, Lock, FileText, CheckCircle, RefreshCw, Trash2, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const PayRunPage: React.FC = () => {
+  const { t } = useTranslation();
+
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
@@ -102,7 +105,7 @@ const PayRunPage: React.FC = () => {
     };
 
     return (
-        <DashboardLayout title="Pay Runs" breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Pay Runs' }]}>
+        <DashboardLayout title="Pay Runs" breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Pay Runs' }]}>
 
             <div className="flex justify-end mb-4">
                 <Button onClick={() => setCreateOpen(true)}><Play size={16} className="mr-2" /> Run Payroll</Button>
@@ -120,7 +123,7 @@ const PayRunPage: React.FC = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow> :
+                        {isLoading ? <TableRow><TableCell colSpan={5}>{t('common.loading')}</TableCell></TableRow> :
                             runs.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center p-4">No pay runs found</TableCell></TableRow> :
                                 runs.map(run => (
                                     <TableRow key={run.id}>
@@ -220,7 +223,7 @@ const PayRunPage: React.FC = () => {
                         </p>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>{t('common.cancel')}</Button>
                         <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => targetRun && deleteMut.mutate(targetRun.id)} isLoading={deleteMut.isPending}>Delete Permanently</Button>
                     </DialogFooter>
                 </DialogContent>
@@ -242,7 +245,7 @@ const PayRunPage: React.FC = () => {
                         </p>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setVoidConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setVoidConfirmOpen(false)}>{t('common.cancel')}</Button>
                         <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => targetRun && voidMut.mutate(targetRun.id)} isLoading={voidMut.isPending}>Void Pay Run</Button>
                     </DialogFooter>
                 </DialogContent>

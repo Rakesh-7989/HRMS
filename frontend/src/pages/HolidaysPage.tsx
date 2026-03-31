@@ -9,8 +9,10 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import { Calendar, Gift, PartyPopper, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 import { format, isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 export const HolidaysPage: React.FC = () => {
+  const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const currentYear = new Date().getFullYear();
@@ -76,9 +78,9 @@ export const HolidaysPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Holidays"
+            title={t('calendar.holidays')}
             breadcrumbs={[
-                { label: 'Dashboard', href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
+                { label: t('common.breadcrumbs.dashboard'), href: user?.role === 'ADMIN' || user?.role === 'HR' ? '/dashboard/organization' : '/dashboard/personal' },
                 { label: 'Holidays' },
             ]}
         >

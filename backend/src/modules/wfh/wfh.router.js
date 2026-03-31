@@ -9,8 +9,8 @@ const requirePermission = require('../../middleware/requirePermission');
 router.post('/request', requirePermission('wfh', 'create'), wfhController.requestWFH);
 router.get('/my-requests', requirePermission('wfh', 'view'), wfhController.getMyRequests);
 
-// Manager/HR routes
-router.get('/pending', requirePermission('wfh', 'approve'), wfhController.getPendingRequests);
+// Admin/HR routes (Managers see direct reports, HR/Admin see all for visibility)
+router.get('/pending', requirePermission('wfh', ['view', 'approve']), wfhController.getPendingRequests);
 router.get('/capacity-stats', requirePermission('wfh', 'view_team_stats'), wfhController.getCapacityStats);
 router.put('/:id/approve', requirePermission('wfh', 'approve'), wfhController.approveRequest);
 router.put('/:id/reject', requirePermission('wfh', 'approve'), wfhController.rejectRequest);
