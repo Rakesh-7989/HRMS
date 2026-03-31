@@ -380,11 +380,11 @@ exports.getPendingApprovals = async (db, actor, filters) => {
 exports.approveLeave = async (db, actor, leaveId, comment) => {
     // SECURITY: Only MANAGER can approve (not HR/ADMIN)
     if (actor.role === 'HR' || actor.role === 'ADMIN') {
-        throw new Error("Only the reporting manager can approve leave requests. HR and Admin can only view.");
+        throw new BadRequestError("Only the reporting manager can approve leave requests. HR and Admin can only view.");
     }
 
     if (actor.role !== 'MANAGER') {
-        throw new Error("Unauthorized: Only Managers can approve leave requests.");
+        throw new BadRequestError("Unauthorized: Only Managers can approve leave requests.");
     }
 
     const client = await pool.connect();
@@ -403,19 +403,19 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
         );
 
         if (leaveRes.rowCount === 0) {
-            throw new Error("Leave application not found");
+            throw new NotFoundError("Leave application not found");
         }
 
         const leave = leaveRes.rows[0];
 
         // BLOCK SELF-APPROVAL
         if (leave.employee_id === actor.employeeId) {
-            throw new Error("You cannot approve your own leave requests.");
+            throw new BadRequestError("You cannot approve your own leave requests.");
         }
 
         // Must be PENDING
         if (leave.status !== 'PENDING') {
-            throw new Error(`Cannot approve a leave request with status: ${leave.status}`);
+            throw new BadRequestError(`Cannot approve a leave request with status: ${leave.status}`);
         }
 
         // STRICT: Only the direct reporting manager or delegate can approve
@@ -429,7 +429,7 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
         }
 
         if (!isDirectManager && !isDelegateApprover) {
-            throw new Error("You can only approve leave for employees who report directly to you.");
+            throw new BadRequestError("You can only approve leave for employees who report directly to you.");
         }
 
         // Single-stage: PENDING -> APPROVED directly
@@ -438,7 +438,6 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
              SET status       = 'APPROVED',
                  approved_by  = $1,
                  approved_at  = now(),
-                 updated_at   = now(),
                  manager_note = $2,
                  updated_at   = now()
              WHERE id = $3
@@ -508,11 +507,11 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
 exports.rejectLeave = async (db, actor, leaveId, reason) => {
     // SECURITY: Only MANAGER can reject (not HR/ADMIN)
     if (actor.role === 'HR' || actor.role === 'ADMIN') {
-        throw new Error("Only the reporting manager can reject leave requests. HR and Admin can only view.");
+        throw new BadRequestError("Only the reporting manager can reject leave requests. HR and Admin can only view.");
     }
 
     if (actor.role !== 'MANAGER') {
-        throw new Error("Unauthorized: Only Managers can reject leave requests.");
+        throw new BadRequestError("Unauthorized: Only Managers can reject leave requests.");
     }
 
     const client = await pool.connect();
@@ -532,19 +531,19 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
         );
 
         if (leaveCheck.rowCount === 0) {
-            throw new Error("Leave application not found");
+            throw new NotFoundError("Leave application not found");
         }
 
         const leave = leaveCheck.rows[0];
 
         // Block self-rejection
         if (leave.employee_id === actor.employeeId) {
-            throw new Error("You cannot reject your own leave requests.");
+            throw new BadRequestError("You cannot reject your own leave requests.");
         }
 
         // Must be PENDING to reject
         if (leave.status !== 'PENDING') {
-            throw new Error(`Can only reject requests in PENDING status. This request is ${leave.status}.`);
+            throw new BadRequestError(`Can only reject requests in PENDING status. This request is ${leave.status}.`);
         }
 
         // Must be the direct reporting manager or a delegate
@@ -553,7 +552,7 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
         const isDelegateApprover = reportToUserId ? await delegationService.canApprove(client, actor.id, reportToUserId, actor.tenantId) : false;
 
         if (!isDirectManager && !isDelegateApprover) {
-            throw new Error("You can only reject leave for employees who report directly to you.");
+            throw new BadRequestError("You can only reject leave for employees who report directly to you.");
         }
 
         const res = await query(

@@ -97,8 +97,8 @@ exports.getUserEffectivePermissions = async (tenantId, userId, role) => {
     const planType = tenantRes.rows[0]?.plan_type || 1;
     const filter = getPlanFilter(planType);
 
-    // For SUPER_ADMIN, return ALL permissions (filtered by plan)
-    if (role === "SUPER_ADMIN") {
+    // For SUPER_ADMIN and Tenant ADMIN, return ALL permissions (filtered by plan)
+    if (role === "SUPER_ADMIN" || role === "ADMIN") {
         const allPerms = await pool.query(
             `SELECT module, action FROM permissions WHERE ${filter}`
         );

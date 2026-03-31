@@ -77,7 +77,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission } = usePermissions();
   const { totalUnreadCount } = useChat();
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -94,7 +94,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     // For items with a permission field
     if (item.permission) {
-      return hasPermission(item.permission[0], item.permission[1]);
+      const [mod, act] = item.permission;
+
+      switch (mod) {
+        case 'attendance':
+          return hasAnyPermission([['attendance', 'view_my'], ['attendance', 'view_team'], ['attendance', 'view_all'], ['attendance', 'view_analytics'], ['attendance', 'manage']]);
+        case 'leave':
+          return hasAnyPermission([['leave', 'view'], ['leave', 'view_balances'], ['leave', 'approve'], ['leave', 'create']]);
+        case 'assets':
+          return hasAnyPermission([['assets', 'view'], ['assets', 'view_dashboard'], ['assets', 'request']]);
+        case 'payroll':
+          return hasAnyPermission([['payroll', 'view'], ['payroll', 'view_dashboard'], ['payroll', 'view_payslips']]);
+        case 'projects':
+          return hasAnyPermission([['projects', 'view'], ['projects', 'view_kanban'], ['projects', 'view_reports']]);
+        case 'chat':
+          return hasAnyPermission([['chat', 'view'], ['chat', 'send']]);
+        default:
+          return hasPermission(mod, act);
+      }
     }
 
     // Role-based routing for Dashboards
