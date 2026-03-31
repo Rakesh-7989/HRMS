@@ -49,13 +49,19 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
 
         const leaveType = leaveTypeRes.rows[0];
 
+        // Ensure no backdated leaves are applied comparing to local timezone today
+        // Use pool (not client) for timezone lookup — read-only, no need for transaction
+        const tz = await timeService.getEffectiveTz(pool.query.bind(pool), tenantId, employeeId);
+        const todayStr = timeService.todayDate(tz);
+        const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+        const startMs = new Date(start_date + 'T00:00:00').getTime();
+
+        if (startMs < todayMs) {
+            throw new BadRequestError("Please select a future or current date. Backdated leave applications are not allowed.");
+        }
+
         // Issue 17: Use consistent timezone-aware date comparison for min_days_notice
         if (leaveType.min_days_notice > 0) {
-            // Use pool (not client) for timezone lookup — read-only, no need for transaction
-            const tz = await timeService.getEffectiveTz(pool.query.bind(pool), tenantId, employeeId);
-            const todayStr = timeService.todayDate(tz);
-            const todayMs = new Date(todayStr + 'T00:00:00').getTime();
-            const startMs = new Date(start_date + 'T00:00:00').getTime();
             const diffDays = Math.ceil((startMs - todayMs) / (1000 * 60 * 60 * 24));
             if (diffDays < leaveType.min_days_notice) {
                 throw new BadRequestError(`This leave type requires at least ${leaveType.min_days_notice} days advance notice`);

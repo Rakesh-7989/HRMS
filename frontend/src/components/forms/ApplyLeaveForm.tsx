@@ -7,6 +7,7 @@ import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Upload, X, FileText } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ApplyLeaveFormProps {
   open: boolean;
@@ -231,6 +232,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               endDate={formik.values.end_date}
               onStartDateChange={(date) => formik.setFieldValue('start_date', date)}
               onEndDateChange={(date) => formik.setFieldValue('end_date', date)}
+              minDate={format(new Date(), 'yyyy-MM-dd')}
             />
             {((formik.touched.start_date && formik.errors.start_date) ||
               (formik.touched.end_date && formik.errors.end_date)) && (

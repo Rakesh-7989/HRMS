@@ -33,6 +33,7 @@ interface DateRangePickerProps {
     minYear?: number;
     maxYear?: number;
     customTrigger?: React.ReactNode;
+    minDate?: string; // Add minDate prop
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -49,6 +50,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     minYear = 2024,
     maxYear = 2100,
     customTrigger,
+    minDate,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(startDate ? new Date(startDate) : new Date());
@@ -372,27 +374,33 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 const isStart = isRangeStart(day);
                 const isEnd = isRangeEnd(day);
                 const isSunday = day.getDay() === 0;
+                
+                const parsedMinDate = minDate ? new Date(minDate + 'T00:00:00') : null;
+                const isBeforeMinDate = parsedMinDate ? (day.getTime() < parsedMinDate.getTime()) : false;
 
                 days.push(
                     <button
                         type="button"
                         key={day.toString()}
+                        disabled={isBeforeMinDate}
                         onClick={(e) => { e.stopPropagation(); handleDateClick(cloneDay); }}
                         onMouseEnter={() => setHoverDate(cloneDay)}
                         onMouseLeave={() => setHoverDate(null)}
                         className={cn(
                             'relative h-10 text-sm font-medium transition-all',
-                            isCurrentMonth
-                                ? isSunday
-                                    ? 'text-red-500 dark:text-red-400'
-                                    : 'text-gray-800 dark:text-gray-200'
-                                : 'text-gray-300 dark:text-gray-700',
-                            inRange && !isStart && !isEnd && 'bg-primary/10 dark:bg-primary/20',
-                            isStart && 'bg-gradient-to-r from-primary to-primary/90 text-white rounded-l-xl',
-                            isEnd && !isStart && 'bg-gradient-to-l from-primary to-primary/90 text-white rounded-r-xl',
-                            isStart && isEnd && 'rounded-xl',
-                            isTodayDate && !isStart && !isEnd && 'font-bold text-primary ring-2 ring-primary/30 rounded-full',
-                            !inRange && !isStart && !isEnd && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl'
+                            isBeforeMinDate 
+                                ? 'opacity-30 cursor-not-allowed text-gray-400 dark:text-gray-600'
+                                : isCurrentMonth
+                                    ? isSunday
+                                        ? 'text-red-500 dark:text-red-400'
+                                        : 'text-gray-800 dark:text-gray-200'
+                                    : 'text-gray-300 dark:text-gray-700',
+                            !isBeforeMinDate && inRange && !isStart && !isEnd && 'bg-primary/10 dark:bg-primary/20',
+                            !isBeforeMinDate && isStart && 'bg-gradient-to-r from-primary to-primary/90 text-white rounded-l-xl',
+                            !isBeforeMinDate && isEnd && !isStart && 'bg-gradient-to-l from-primary to-primary/90 text-white rounded-r-xl',
+                            !isBeforeMinDate && isStart && isEnd && 'rounded-xl',
+                            !isBeforeMinDate && isTodayDate && !isStart && !isEnd && 'font-bold text-primary ring-2 ring-primary/30 rounded-full',
+                            !isBeforeMinDate && !inRange && !isStart && !isEnd && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl'
                         )}
                     >
                         <span className={cn(
