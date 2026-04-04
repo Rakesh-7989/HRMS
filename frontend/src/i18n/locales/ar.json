@@ -140,7 +140,18 @@
         "leavePolicies": "سياسات الإجازات",
         "configuredLeaveTypes": "أنواع الإجازات المكونة",
         "topDepartments": "أهم الأقسام",
-        "byHeadcount": "حسب عدد الموظفين"
+        "byHeadcount": "حسب عدد الموظفين",
+        "publicHolidays": "العطل الرسمية",
+        "rejected": "مرفوض",
+        "quickActions": "إجراءات سريعة",
+        "celebrations": "احتفالات",
+        "birthday": "عيد ميلاد",
+        "anniversary": "ذكرى سنوية",
+        "noEventsThisWeek": "لا توجد فعاليات هذا الأسبوع",
+        "attendanceHistory": "سجل الحضور",
+        "statusOverview": "نظرة عامة على الحالة",
+        "weeklyEfficiency": "الكفاءة الأسبوعية",
+        "hoursWorked": "ساعات العمل"
     },
     "profile": {
         "title": "ملفي الشخصي",

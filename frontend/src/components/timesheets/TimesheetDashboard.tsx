@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Dialog } from '@/components/ui/Dialog';
 
 import { StatsSection } from './StatsSection';
 import { MiddleSection } from './MiddleSection';
@@ -114,33 +115,22 @@ export const TimesheetDashboard: React.FC = () => {
             </div>
 
             {/* Modal Overlay for Entry Form */}
-            <AnimatePresence>
-                {showEntryForm && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            key="modal"
-                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="bg-white dark:bg-dark-card rounded-2xl w-full max-w-6xl shadow-2xl relative m-4"
-                        >
-                            <div className="max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-dark-card">
-                                <WeeklyTimesheetEntry
-                                    onSuccess={handleEntrySuccess}
-                                    onCancel={() => setShowEntryForm(false)}
-                                    initialDate={selectedDate}
-                                />
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <Dialog
+                open={showEntryForm}
+                onOpenChange={setShowEntryForm}
+                onBack={() => setShowEntryForm(false)}
+                title={t('timesheets.logTime')}
+                description="Record your weekly project activities and hours"
+                className="max-w-[1200px]"
+            >
+                <div className="p-1">
+                    <WeeklyTimesheetEntry
+                        onSuccess={handleEntrySuccess}
+                        onCancel={() => setShowEntryForm(false)}
+                        initialDate={selectedDate}
+                    />
+                </div>
+            </Dialog>
         </motion.div>
     );
 };

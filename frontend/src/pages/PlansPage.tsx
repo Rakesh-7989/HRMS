@@ -8,6 +8,7 @@ import { Edit2, Plus, Save, X, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useTranslation } from 'react-i18next';
+import { Dialog } from '@/components/ui/Dialog';
 
 export const PlansPage: React.FC = () => {
   const { t } = useTranslation();
@@ -244,137 +245,136 @@ export const PlansPage: React.FC = () => {
                     )}
                 </div>
 
-                {(editingPlan || isCreating) && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                            <div className="p-6">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-2xl font-bold">
-                                        {isCreating ? 'Create New Plan' : `Edit Plan: ${editingPlan?.name}`}
-                                    </h3>
-                                    <Button variant="ghost" size="sm" onClick={() => { setEditingPlan(null); setIsCreating(false); }}>
-                                        <X size={20} />
-                                    </Button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Plan Name</label>
-                                            <input
-                                                type="text"
-                                                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary/20 outline-none"
-                                                value={isCreating ? newPlan.name : editingPlan?.name}
-                                                onChange={(e) => isCreating
-                                                    ? setNewPlan({ ...newPlan, name: e.target.value })
-                                                    : setEditingPlan({ ...editingPlan!, name: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Base Monthly Price (Yearly will be x12)</label>
-                                            <input
-                                                type="number"
-                                                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary/20 outline-none"
-                                                value={isCreating ? newPlan.price : editingPlan?.price}
-                                                onChange={(e) => isCreating
-                                                    ? setNewPlan({ ...newPlan, price: parseFloat(e.target.value) || 0 })
-                                                    : setEditingPlan({ ...editingPlan!, price: parseFloat(e.target.value) || 0 })
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Max Employees (Leave empty for unlimited)</label>
-                                            <input
-                                                type="number"
-                                                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary/20 outline-none"
-                                                value={isCreating ? (newPlan.max_employees || '') : (editingPlan?.max_employees || '')}
-                                                onChange={(e) => {
-                                                    const val = e.target.value ? parseInt(e.target.value) : null;
-                                                    isCreating ? setNewPlan({ ...newPlan, max_employees: val }) : setEditingPlan({ ...editingPlan!, max_employees: val });
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2 pt-2">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-primary"
-                                                checked={isCreating ? newPlan.is_active : editingPlan?.is_active}
-                                                onChange={(e) => isCreating
-                                                    ? setNewPlan({ ...newPlan, is_active: e.target.checked })
-                                                    : setEditingPlan({ ...editingPlan!, is_active: e.target.checked })
-                                                }
-                                                id="is_active"
-                                            />
-                                            <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">Is Active</label>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <p className="text-sm font-medium">Features Selection</p>
-                                        <div className="h-[300px] overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50/50 dark:bg-dark-bg/50">
-                                            {Object.entries(categoryLabels).map(([cat, label]) => {
-                                                const currentFeatures = (isCreating ? newPlan.features : editingPlan?.features) || {};
-                                                const catFeatures = currentFeatures[cat as keyof typeof currentFeatures];
-
-                                                return (
-                                                    <div key={cat} className="space-y-2">
-                                                        <p className="text-xs font-bold uppercase text-muted tracking-wider border-b pb-1">{label}</p>
-                                                        <div className="grid grid-cols-1 gap-1.5 pl-2">
-                                                            {catFeatures && typeof catFeatures === 'object' ? (
-                                                                Object.entries(catFeatures).map(([feat, isEnabled]) => (
-                                                                    <div key={feat} className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            className="w-3.5 h-3.5 rounded border-input bg-background text-primary focus:ring-primary"
-                                                                            checked={isEnabled as boolean}
-                                                                            onChange={(e) => {
-                                                                                if (isCreating) {
-                                                                                    const newFeats = { ...newPlan.features } as any;
-                                                                                    if (!newFeats[cat]) newFeats[cat] = {};
-                                                                                    newFeats[cat][feat] = e.target.checked;
-                                                                                    setNewPlan({ ...newPlan, features: newFeats });
-                                                                                } else {
-                                                                                    const newFeats = { ...editingPlan!.features } as any;
-                                                                                    if (!newFeats[cat]) newFeats[cat] = {};
-                                                                                    newFeats[cat][feat] = e.target.checked;
-                                                                                    setEditingPlan({ ...editingPlan!, features: newFeats });
-                                                                                }
-                                                                            }}
-                                                                            id={`${cat}-${feat}`}
-                                                                        />
-                                                                        <label htmlFor={`${cat}-${feat}`} className="text-xs cursor-pointer hover:text-primary transition-colors">
-                                                                            {feat.replace(/_/g, ' ')}
-                                                                        </label>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <p className="text-[10px] text-muted italic">No specific features defined</p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-4 border-t">
-                                    <Button variant="outline" onClick={() => { setEditingPlan(null); setIsCreating(false); }}>
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={isCreating ? handleCreate : handleSave}
-                                        isLoading={isCreating ? createMutation.isPending : updateMutation.isPending}
-                                    >
-                                        <Save size={16} className="mr-2" />
-                                        {isCreating ? 'Create Plan' : 'Save Changes'}
-                                    </Button>
+                <Dialog
+                    open={!!editingPlan || isCreating}
+                    onOpenChange={(open) => { if (!open) { setEditingPlan(null); setIsCreating(false); } }}
+                    onBack={() => { setEditingPlan(null); setIsCreating(false); }}
+                    title={isCreating ? 'Create New Plan' : `Edit Plan: ${editingPlan?.name}`}
+                    description="Configure the details and features for this plan"
+                    className="max-w-4xl"
+                    footer={
+                        <div className="flex justify-end gap-3 w-full">
+                            <Button variant="outline" onClick={() => { setEditingPlan(null); setIsCreating(false); }} className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold">
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={isCreating ? handleCreate : handleSave}
+                                isLoading={isCreating ? createMutation.isPending : updateMutation.isPending}
+                                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2"
+                            >
+                                <Save size={16} />
+                                {isCreating ? 'Create Plan' : 'Save Changes'}
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Plan Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                    value={isCreating ? newPlan.name : editingPlan?.name}
+                                    onChange={(e) => isCreating
+                                        ? setNewPlan({ ...newPlan, name: e.target.value })
+                                        : setEditingPlan({ ...editingPlan!, name: e.target.value })
+                                    }
+                                    placeholder="e.g. Basic, Professional, Enterprise"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Base Monthly Price</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+                                    <input
+                                        type="number"
+                                        className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                        value={isCreating ? newPlan.price : editingPlan?.price}
+                                        onChange={(e) => isCreating
+                                            ? setNewPlan({ ...newPlan, price: parseFloat(e.target.value) || 0 })
+                                            : setEditingPlan({ ...editingPlan!, price: parseFloat(e.target.value) || 0 })
+                                        }
+                                    />
                                 </div>
                             </div>
-                        </Card>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Max Employees</label>
+                                <input
+                                    type="number"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                    placeholder="Leave empty for unlimited"
+                                    value={isCreating ? (newPlan.max_employees || '') : (editingPlan?.max_employees || '')}
+                                    onChange={(e) => {
+                                        const val = e.target.value ? parseInt(e.target.value) : null;
+                                        isCreating ? setNewPlan({ ...newPlan, max_employees: val }) : setEditingPlan({ ...editingPlan!, max_employees: val });
+                                    }}
+                                />
+                            </div>
+                            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 rounded-lg border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
+                                    checked={isCreating ? newPlan.is_active : editingPlan?.is_active}
+                                    onChange={(e) => isCreating
+                                        ? setNewPlan({ ...newPlan, is_active: e.target.checked })
+                                        : setEditingPlan({ ...editingPlan!, is_active: e.target.checked })
+                                    }
+                                    id="is_active"
+                                />
+                                <label htmlFor="is_active" className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer">Active and Available for Subscription</label>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Features Selection</label>
+                            <div className="flex-1 min-h-[300px] max-h-[400px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-2xl p-4 space-y-5 bg-gray-50/30 dark:bg-gray-900/30 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
+                                {Object.entries(categoryLabels).map(([cat, label]) => {
+                                    const currentFeatures = (isCreating ? newPlan.features : editingPlan?.features) || {};
+                                    const catFeatures = currentFeatures[cat as keyof typeof currentFeatures];
+
+                                    return (
+                                        <div key={cat} className="space-y-3">
+                                            <p className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/5 dark:bg-primary/10 px-3 py-1 rounded-full inline-block">{label}</p>
+                                            <div className="grid grid-cols-1 gap-2 pl-2">
+                                                {catFeatures && typeof catFeatures === 'object' ? (
+                                                    Object.entries(catFeatures).map(([feat, isEnabled]) => (
+                                                        <div key={feat} className="flex items-center gap-3 group">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
+                                                                checked={isEnabled as boolean}
+                                                                onChange={(e) => {
+                                                                    if (isCreating) {
+                                                                        const newFeats = { ...newPlan.features } as any;
+                                                                        if (!newFeats[cat]) newFeats[cat] = {};
+                                                                        newFeats[cat][feat] = e.target.checked;
+                                                                        setNewPlan({ ...newPlan, features: newFeats });
+                                                                    } else {
+                                                                        const newFeats = { ...editingPlan!.features } as any;
+                                                                        if (!newFeats[cat]) newFeats[cat] = {};
+                                                                        newFeats[cat][feat] = e.target.checked;
+                                                                        setEditingPlan({ ...editingPlan!, features: newFeats });
+                                                                    }
+                                                                }}
+                                                                id={`${cat}-${feat}`}
+                                                            />
+                                                            <label htmlFor={`${cat}-${feat}`} className="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer group-hover:text-primary transition-colors">
+                                                                {feat.replace(/_/g, ' ')}
+                                                            </label>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic font-medium">No specific features defined</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
-                )}
+                </Dialog>
             </div>
         </DashboardLayout>
     );

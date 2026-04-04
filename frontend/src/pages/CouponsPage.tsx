@@ -9,13 +9,10 @@ import { format } from 'date-fns';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useTranslation } from 'react-i18next';
-
-// Using a simple Modal if UI components not standard, but let's try to use standard logic or raw HTML for modal if needed.
-// I'll use a custom Modal implementation inside this file if needed to be safe, or just standard HTML fixed div.
+import { Dialog } from '@/components/ui/Dialog';
 
 const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) => {
     const { t } = useTranslation();
-    if (!isOpen) return null;
 
     const formik = useFormik({
         initialValues: {
@@ -49,83 +46,92 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
     });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-2xl">
-                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Create New Coupon</h2>
-                <form onSubmit={formik.handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
-                        <input
-                            type="text"
-                            name="code"
-                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 uppercase"
-                            placeholder="SUMMER2026"
-                            value={formik.values.code}
-                            onChange={(e) => {
-                                formik.handleChange(e);
-                                formik.setFieldValue('code', e.target.value.toUpperCase());
-                            }}
-                        />
-                        {formik.touched.code && formik.errors.code && <div className="text-red-500 text-xs mt-1">{formik.errors.code}</div>}
-                    </div>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            onBack={onClose}
+            title="Create New Coupon"
+            description="Generate a new discount code for subscriptions"
+            className="max-w-md"
+            footer={
+                <div className="flex justify-end gap-3 w-full">
+                    <Button type="button" variant="outline" onClick={onClose} className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5">
+                        {t('common.cancel')}
+                    </Button>
+                    <Button type="submit" form="create-coupon-form" disabled={formik.isSubmitting} className="rounded-2xl bg-primary text-white font-bold min-w-[140px]">
+                        Create Coupon
+                    </Button>
+                </div>
+            }
+        >
+            <form id="create-coupon-form" onSubmit={formik.handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
+                    <input
+                        type="text"
+                        name="code"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 uppercase"
+                        placeholder="SUMMER2026"
+                        value={formik.values.code}
+                        onChange={(e) => {
+                            formik.handleChange(e);
+                            formik.setFieldValue('code', e.target.value.toUpperCase());
+                        }}
+                    />
+                    {formik.touched.code && formik.errors.code && <div className="text-red-500 text-xs mt-1">{formik.errors.code}</div>}
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-                            <select
-                                name="discount_type"
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                value={formik.values.discount_type}
-                                onChange={formik.handleChange}
-                            >
-                                <option value="PERCENT">Percentage (%)</option>
-                                <option value="FIXED">Fixed Amount (₹)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value</label>
-                            <input
-                                type="number"
-                                name="discount_value"
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                placeholder="e.g. 10"
-                                value={formik.values.discount_value}
-                                onChange={formik.handleChange}
-                            />
-                        </div>
-                    </div>
-
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Redemptions (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                        <select
+                            name="discount_type"
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            value={formik.values.discount_type}
+                            onChange={formik.handleChange}
+                        >
+                            <option value="PERCENT">Percentage (%)</option>
+                            <option value="FIXED">Fixed Amount (₹)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value</label>
                         <input
                             type="number"
-                            name="max_redemptions"
+                            name="discount_value"
                             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            placeholder="e.g. 100"
-                            value={formik.values.max_redemptions}
+                            placeholder="e.g. 10"
+                            value={formik.values.discount_value}
                             onChange={formik.handleChange}
                         />
                     </div>
+                </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date (Optional)</label>
-                        <input
-                            type="date"
-                            name="expires_at"
-                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            value={formik.values.expires_at}
-                            onChange={formik.handleChange}
-                        />
-                        {formik.touched.expires_at && formik.errors.expires_at && <div className="text-red-500 text-xs mt-1">{formik.errors.expires_at as string}</div>}
-                    </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Redemptions (Optional)</label>
+                    <input
+                        type="number"
+                        name="max_redemptions"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="e.g. 100"
+                        value={formik.values.max_redemptions}
+                        onChange={formik.handleChange}
+                    />
+                </div>
 
-                    <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-                        <Button type="submit" disabled={formik.isSubmitting}>Create Coupon</Button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date (Optional)</label>
+                    <input
+                        type="date"
+                        name="expires_at"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        value={formik.values.expires_at}
+                        onChange={formik.handleChange}
+                    />
+                    {formik.touched.expires_at && formik.errors.expires_at && <div className="text-red-500 text-xs mt-1">{formik.errors.expires_at as string}</div>}
+                </div>
+            </form>
+        </Dialog>
     );
 }
 

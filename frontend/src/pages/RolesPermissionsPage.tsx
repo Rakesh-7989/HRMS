@@ -4,6 +4,8 @@ import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import toast from 'react-hot-toast';
+import { Dialog } from '@/components/ui/Dialog';
+import { Button } from '@/components/ui/Button';
 import {
     Shield,
     Users,
@@ -32,7 +34,6 @@ import {
     Loader2,
     Plus,
     Trash2,
-    X,
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
@@ -447,57 +448,57 @@ export const RolesPermissionsPage: React.FC = () => {
             </div>
 
             {/* Add Role Modal */}
-            {showAddRole && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Create Custom Role</h3>
-                            <button onClick={() => setShowAddRole(false)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <X className="h-5 w-5 text-gray-500" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role Name *</label>
-                                <input
-                                    type="text"
-                                    value={newRoleName}
-                                    onChange={e => setNewRoleName(e.target.value)}
-                                    placeholder="e.g. TEAM_LEAD, FINANCE, INTERN"
-                                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                                />
-                                <p className="text-xs text-gray-400 mt-1">Will be converted to UPPERCASE with underscores</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                                <input
-                                    type="text"
-                                    value={newRoleDesc}
-                                    onChange={e => setNewRoleDesc(e.target.value)}
-                                    placeholder="Brief description of this role"
-                                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                            <button
-                                onClick={() => setShowAddRole(false)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreateRole}
-                                disabled={creating || !newRoleName.trim()}
-                                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-md disabled:opacity-50"
-                            >
-                                {creating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                Create Role
-                            </button>
-                        </div>
+            <Dialog
+                open={showAddRole}
+                onOpenChange={setShowAddRole}
+                onBack={() => setShowAddRole(false)}
+                title="Create Custom Role"
+                description="Define a new role for your organization"
+                className="max-w-md"
+                footer={
+                    <div className="flex justify-end gap-3 w-full">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowAddRole(false)}
+                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateRole}
+                            disabled={creating || !newRoleName.trim()}
+                            isLoading={creating}
+                            className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                        >
+                            Create Role
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role Name *</label>
+                        <input
+                            type="text"
+                            value={newRoleName}
+                            onChange={e => setNewRoleName(e.target.value)}
+                            placeholder="e.g. TEAM_LEAD, FINANCE, INTERN"
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">Will be converted to UPPERCASE with underscores</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <input
+                            type="text"
+                            value={newRoleDesc}
+                            onChange={e => setNewRoleDesc(e.target.value)}
+                            placeholder="Brief description of this role"
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
                     </div>
                 </div>
-            )}
+            </Dialog>
 
             {/* Action Bar */}
             {hasChanges && (

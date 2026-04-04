@@ -140,7 +140,18 @@
         "leavePolicies": "अल्पावकाश नीतियां",
         "configuredLeaveTypes": "कॉन्फ़िगर किए गए अवकाश प्रकार",
         "topDepartments": "शीर्ष विभाग",
-        "byHeadcount": "संख्या के अनुसार"
+        "byHeadcount": "संख्या के अनुसार",
+        "publicHolidays": "सार्वजनिक अवकाश",
+        "rejected": "अस्वीकृत",
+        "quickActions": "त्वरित कार्रवाई",
+        "celebrations": "उत्सव",
+        "birthday": "जन्मदिन",
+        "anniversary": "वर्षगांठ",
+        "noEventsThisWeek": "इस सप्ताह कोई कार्यक्रम नहीं",
+        "attendanceHistory": "उपस्थिति इतिहास",
+        "statusOverview": "स्थिति अवलोकन",
+        "weeklyEfficiency": "साप्ताहिक दक्षता",
+        "hoursWorked": "काम किए गए घंटे"
     },
     "profile": {
         "title": "मेरी प्रोफ़ाइल",

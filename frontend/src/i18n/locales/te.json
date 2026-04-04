@@ -399,6 +399,8 @@
         "statusOverview": "స్థితి అవలోకనం",
         "weeklyEfficiency": "వారపు సామర్థ్యం",
         "hoursWorked": "పని చేసిన గంటలు",
+        "publicHolidays": "ప్రభుత్వ సెలవులు",
+        "rejected": "తిరస్కరించబడింది",
         "noLeaveTypesFound": "సెలవు రకాలు కనుగొనబడలేదు",
         "configureLeaveTypes": "సెట్టింగ్‌లలో సెలవు రకాలను కాన్ఫిగర్ చేయండి",
         "taken": "తీసుకున్నవి",

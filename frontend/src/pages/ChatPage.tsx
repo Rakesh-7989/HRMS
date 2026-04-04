@@ -61,49 +61,51 @@ interface Conversation {
     updated_at: string;
 }
 
+import { Dialog } from '@/components/ui/Dialog';
+
 const ForwardModal = ({ isOpen, onClose, conversations, onForward, message }: { isOpen: boolean; onClose: () => void; conversations: Conversation[]; onForward: (conversationId: string) => void; message: Message | null }) => {
     const [search, setSearch] = useState('');
     const { t } = useTranslation();
-    if (!isOpen || !message) return null;
 
     const filtered = conversations.filter(c => (c.name || t('chat.groupChat')).toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5 border dark:border-gray-800 animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-lg">{t('chat.forwardMessage')}</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><X size={20} /></button>
-                </div>
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder={t('chat.searchConversations')}
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20"
-                    />
-                </div>
-                <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                    {filtered.map(conv => (
-                        <button
-                            key={conv.id}
-                            onClick={() => { onForward(conv.id); onClose(); }}
-                            className="w-full flex items-center gap-3 p-3 hover:bg-primary-10 dark:hover:bg-primary-20 rounded-xl transition-colors text-left"
-                        >
-                            <div className="h-10 w-10 rounded-xl bg-primary-gradient flex items-center justify-center text-white font-bold text-sm shadow-md">
-                                {(conv.name || 'G').slice(0, 1).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{conv.name || t('chat.groupChat')}</p>
-                            </div>
-                            <ArrowRight size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
-                        </button>
-                    ))}
-                </div>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            onBack={onClose}
+            title={t('chat.forwardMessage')}
+            description="Select a conversation to forward this message"
+            className="max-w-sm"
+        >
+            <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                    type="text"
+                    placeholder={t('chat.searchConversations')}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20"
+                />
             </div>
-        </div>
+            <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                {filtered.map(conv => (
+                    <button
+                        key={conv.id}
+                        onClick={() => { onForward(conv.id); onClose(); }}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-primary-10 dark:hover:bg-primary-20 rounded-xl transition-colors text-left"
+                    >
+                        <div className="h-10 w-10 rounded-xl bg-primary-gradient flex items-center justify-center text-white font-bold text-sm shadow-md">
+                            {(conv.name || 'G').slice(0, 1).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{conv.name || t('chat.groupChat')}</p>
+                        </div>
+                        <ArrowRight size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                    </button>
+                ))}
+            </div>
+        </Dialog>
     );
 };
 
@@ -122,8 +124,6 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
         }
     }, [isOpen, initialSelectedUserIds]);
 
-    if (!isOpen) return null;
-
     const filteredContacts = contacts.filter(c =>
         `${c.first_name} ${c.last_name} ${c.email} ${c.phone_number || ''}`.toLowerCase().includes(contactSearch.toLowerCase())
     );
@@ -140,131 +140,119 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200/50 dark:border-gray-800/50 animate-in zoom-in-95 duration-300">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Start a group chat</h3>
-                        <p className="text-xs text-gray-400 mt-0.5">Add people to start a new collaboration</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-                        <X className="h-5 w-5 text-gray-400" />
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            onBack={onClose}
+            title="Start a group chat"
+            description="Add people to start a new collaboration"
+            className="max-w-md"
+            footer={
+                <div className="flex justify-end gap-3 w-full">
+                    <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</button>
+                    <button
+                        type="submit"
+                        form="create-group-form"
+                        disabled={!groupName || selectedUsers.length === 0}
+                        className="px-5 py-2.5 text-sm font-medium bg-primary-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                    >
+                        Create
                     </button>
                 </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-5">
+            }
+        >
+            <form id="create-group-form" onSubmit={handleSubmit}>
+                <div className="mb-5">
+                    <input
+                        type="text"
+                        value={groupName}
+                        onChange={e => setGroupName(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-t-xl focus:border-primary transition-all text-sm outline-none"
+                        placeholder="Enter name of the group"
+                        required
+                    />
+                </div>
+                <div className="mb-5">
+                    <div className="relative mb-3">
                         <input
                             type="text"
-                            value={groupName}
-                            onChange={e => setGroupName(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-t-xl focus:border-primary transition-all text-sm outline-none"
-                            placeholder="Enter name of the group"
-                            required
+                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm outline-none"
+                            value={contactSearch}
+                            onChange={(e) => setContactSearch(e.target.value)}
+                            placeholder="Enter name, email or phone number"
                         />
                     </div>
-                    <div className="mb-5">
-                        <div className="relative mb-3">
-                            <input
-                                type="text"
-                                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm outline-none"
-                                value={contactSearch}
-                                onChange={(e) => setContactSearch(e.target.value)}
-                                placeholder="Enter name, email or phone number"
-                            />
-                        </div>
-                        <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">Add Participants</label>
-                        <div className="max-h-52 min-h-[120px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1.5 bg-gray-50/50 dark:bg-gray-800/30">
-                            {isLoading ? (
-                                <p className="text-sm text-gray-500 text-center py-8">Loading contacts...</p>
-                            ) : filteredContacts.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-8">No contacts found</p>
-                            ) : (
-                                filteredContacts.map(user => (
-                                    <div
-                                        key={user.id}
-                                        onClick={() => toggleUser(user.id)}
-                                        className={cn(
-                                            "p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200",
-                                            selectedUsers.includes(user.id)
-                                                ? "bg-primary-gradient text-white shadow-md shadow-primary/20"
-                                                : "hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                            selectedUsers.includes(user.id)
-                                                ? 'border-white/40 bg-white/20'
-                                                : 'border-gray-300 dark:border-gray-600'
-                                        )}>
-                                            {selectedUsers.includes(user.id) && <Check size={12} className="text-white" />}
-                                        </div>
-                                        <span className="text-sm font-medium">{user.first_name} {user.last_name}</span>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">Add Participants</label>
+                    <div className="max-h-52 min-h-[120px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1.5 bg-gray-50/50 dark:bg-gray-800/30">
+                        {isLoading ? (
+                            <p className="text-sm text-gray-500 text-center py-8">Loading contacts...</p>
+                        ) : filteredContacts.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center py-8">No contacts found</p>
+                        ) : (
+                            filteredContacts.map(user => (
+                                <div
+                                    key={user.id}
+                                    onClick={() => toggleUser(user.id)}
+                                    className={cn(
+                                        "p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200",
+                                        selectedUsers.includes(user.id)
+                                            ? "bg-primary-gradient text-white shadow-md shadow-primary/20"
+                                            : "hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
+                                        selectedUsers.includes(user.id)
+                                            ? 'border-white/40 bg-white/20'
+                                            : 'border-gray-300 dark:border-gray-600'
+                                    )}>
+                                        {selectedUsers.includes(user.id) && <Check size={12} className="text-white" />}
                                     </div>
-                                ))
-                            )}
-                        </div>
-                        {selectedUsers.length > 0 && (
-                            <p className="text-xs text-primary mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
+                                    <span className="text-sm font-medium">{user.first_name} {user.last_name}</span>
+                                </div>
+                            ))
                         )}
                     </div>
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</button>
-                        <button
-                            type="submit"
-                            disabled={!groupName || selectedUsers.length === 0}
-                            className="px-5 py-2.5 text-sm font-medium bg-primary-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                        >
-                            Create
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    {selectedUsers.length > 0 && (
+                        <p className="text-xs text-primary mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
+                    )}
+                </div>
+            </form>
+        </Dialog>
     );
 };
 
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+
 const DeleteMessageModal = ({ isOpen, onClose, onDelete, isMe }: { isOpen: boolean; onClose: () => void; onDelete: (mode: 'me' | 'everyone') => void; isMe: boolean }) => {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-[320px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Delete message?</h3>
-
-                <div className="flex flex-col gap-2">
-                    {isMe && (
-                        <button
-                            onClick={() => { onDelete('everyone'); onClose(); }}
-                            className="w-full py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95"
-                        >
-                            Delete for everyone
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => { onDelete('me'); onClose(); }}
-                        className="w-full py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95"
-                    >
-                        Delete for me
-                    </button>
-
-                    <button
-                        onClick={onClose}
-                        className="w-full py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 mt-2"
-                    >
-                        Cancel
-                    </button>
-                </div>
+        <ConfirmDialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            onBack={onClose}
+            onConfirm={() => { onDelete('everyone'); onClose(); }}
+            title="Delete this message?"
+            description="This action will remove the message for participants"
+            confirmLabel="Delete for everyone"
+            variant="danger"
+            showCancel={true}
+            cancelLabel="Cancel"
+        >
+            <div className="flex flex-col gap-2 w-full mt-2">
+                <button
+                    onClick={() => { onDelete('me'); onClose(); }}
+                    className="w-full py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30"
+                >
+                    Delete for me
+                </button>
             </div>
-        </div>
+        </ConfirmDialog>
     );
 }
 
 const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticipantIds }: { isOpen: boolean; onClose: () => void; contacts: User[]; onAdd: (userIds: string[]) => void; alreadyParticipantIds: string[] }) => {
     const [search, setSearch] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-    if (!isOpen) return null;
 
     const filtered = contacts.filter(c =>
         !alreadyParticipantIds.includes(c.id) &&
@@ -278,64 +266,15 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
     };
 
     return (
-        <div className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6 border dark:border-gray-800 animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold dark:text-white">Add People</h3>
-                        <p className="text-xs text-gray-500 mt-1">Select contacts to add to this group</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 transition-colors"><X size={20} /></button>
-                </div>
-
-                <div className="relative mb-4 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
-                        autoFocus
-                    />
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar mb-6 min-h-[200px]">
-                    {filtered.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8">
-                            <Users size={32} className="mb-2 opacity-20" />
-                            <p className="text-sm font-medium">No contacts found</p>
-                        </div>
-                    ) : filtered.map(contact => {
-                        const isSelected = selectedIds.includes(contact.id);
-                        return (
-                            <button
-                                key={contact.id}
-                                onClick={() => toggleUser(contact.id)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group border ${isSelected ? 'bg-primary/5 border-primary/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent'}`}
-                            >
-                                <div className="relative">
-                                    <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                                        {contact.profile_pic ? (
-                                            <img src={resolveImageUrl(contact.profile_pic)} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="font-bold text-gray-500 dark:text-gray-400">{(contact.first_name?.[0] || contact.email[0]).toUpperCase()}</span>
-                                        )}
-                                    </div>
-                                    {isSelected && <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-0.5 ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-200"><Check size={10} strokeWidth={4} /></div>}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-gray-900 dark:text-gray-100'}`}>
-                                        {contact.first_name} {contact.last_name}
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">{contact.email}</p>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            onBack={onClose}
+            title="Add People"
+            description="Select contacts to add to this group"
+            className="max-w-md"
+            footer={
+                <div className="flex justify-end gap-3 w-full">
                     <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-xl transition-colors">Cancel</button>
                     <button
                         onClick={() => { onAdd(selectedIds); onClose(); }}
@@ -345,8 +284,55 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                         Add {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
                     </button>
                 </div>
+            }
+        >
+            <div className="relative mb-4 group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
+                <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
+                    autoFocus
+                />
             </div>
-        </div>
+
+            <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 custom-scrollbar mb-2 min-h-[200px]">
+                {filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8">
+                        <Users size={32} className="mb-2 opacity-20" />
+                        <p className="text-sm font-medium">No contacts found</p>
+                    </div>
+                ) : filtered.map(contact => {
+                    const isSelected = selectedIds.includes(contact.id);
+                    return (
+                        <button
+                            key={contact.id}
+                            onClick={() => toggleUser(contact.id)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group border ${isSelected ? 'bg-primary/5 border-primary/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent'}`}
+                        >
+                            <div className="relative">
+                                <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                                    {contact.profile_pic ? (
+                                        <img src={resolveImageUrl(contact.profile_pic)} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="font-bold text-gray-500 dark:text-gray-400">{(contact.first_name?.[0] || contact.email[0]).toUpperCase()}</span>
+                                    )}
+                                </div>
+                                {isSelected && <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-0.5 ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-200"><Check size={10} strokeWidth={4} /></div>}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-gray-900 dark:text-gray-100'}`}>
+                                    {contact.first_name} {contact.last_name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">{contact.email}</p>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+        </Dialog>
     );
 };
 
@@ -2332,70 +2318,77 @@ export const ChatPage = () => {
             />
             {
                 isViewingGroupProfile && activeConversation && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                                <h3 className="font-black uppercase tracking-widest text-sm text-gray-900 dark:text-white">Group Info</h3>
-                                <button onClick={() => setIsViewingGroupProfile(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"><X size={18} /></button>
-                            </div>
-                            <div className="p-8 text-center bg-gradient-to-b from-primary/5 to-transparent">
-                                <div className="w-24 h-24 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
-                                    {getConversationDetails(activeConversation).initials}
-                                </div>
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation).name}</h2>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation.participants?.length || 0} Operatives Enrolled</p>
-                            </div>
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{activeConversation.type === 'GROUP' ? 'Team Members' : 'Participants'}</h4>
-                                    {activeConversation.type === 'GROUP' && canManageGroup && (
-                                        <button
-                                            onClick={() => setIsAddingParticipant(true)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
-                                        >
-                                            <UserPlus size={12} strokeWidth={3} /> Add
-                                        </button>
+            <Dialog
+                open={isViewingGroupProfile && !!activeConversation}
+                onOpenChange={(open) => !open && setIsViewingGroupProfile(false)}
+                onBack={() => setIsViewingGroupProfile(false)}
+                title="Group Profile"
+                description="View team members and group details"
+                className="max-w-md"
+                footer={
+                    <div className="flex justify-end w-full">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsViewingGroupProfile(false)}
+                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5 w-full"
+                        >
+                            Dismiss
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-6">
+                    <div className="text-center bg-gradient-to-b from-primary/5 to-transparent p-6 rounded-3xl border border-primary/5">
+                        <div className="w-20 h-20 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
+                            {getConversationDetails(activeConversation!).initials}
+                        </div>
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation!).name}</h2>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation?.participants?.length || 0} Operatives Enrolled</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Team Members</h4>
+                            {activeConversation?.type === 'GROUP' && canManageGroup && (
+                                <button
+                                    onClick={() => setIsAddingParticipant(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                                >
+                                    <UserPlus size={12} strokeWidth={3} /> Add
+                                </button>
+                            )}
+                        </div>
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                            {activeConversation?.participants?.map((p: any) => (
+                                <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 group/participant">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
+                                            {p.first_name?.[0]}{p.last_name?.[0]}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
+                                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
+                                        </div>
+                                    </div>
+                                    {p.id === user?.id ? (
+                                        <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
+                                    ) : (
+                                        activeConversation?.type === 'GROUP' && canManageGroup && (
+                                            <button
+                                                onClick={() => handleRemoveParticipant(p.id)}
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
+                                                title="Remove participant"
+                                            >
+                                                <UserMinus size={14} />
+                                            </button>
+                                        )
                                     )}
                                 </div>
-                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                    {activeConversation.participants?.map((p: any) => (
-                                        <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 group/participant">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
-                                                    {p.first_name?.[0]}{p.last_name?.[0]}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
-                                                    <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
-                                                </div>
-                                            </div>
-                                            {p.id === user?.id ? (
-                                                <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
-                                            ) : (
-                                                activeConversation.type === 'GROUP' && canManageGroup && (
-                                                    <button
-                                                        onClick={() => handleRemoveParticipant(p.id)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
-                                                        title="Remove participant"
-                                                    >
-                                                        <UserMinus size={14} />
-                                                    </button>
-                                                )
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 mt-2">
-                                <button
-                                    onClick={() => setIsViewingGroupProfile(false)}
-                                    className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
+                            ))}
                         </div>
                     </div>
+                </div>
+            </Dialog>
                 )
             }
             <DeleteMessageModal

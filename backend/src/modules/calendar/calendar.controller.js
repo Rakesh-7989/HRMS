@@ -13,7 +13,7 @@ exports.getCalendar = async (req, res) => {
         );
         res.json({ status: "success", data });
     } catch (error) {
-        logger.error("Get calendar error:", error.message);
+        logger.error(`[CalendarController] getCalendar Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -23,6 +23,7 @@ exports.getCompanyHolidays = async (req, res) => {
         const data = await calendarService.getCompanyHolidays(req.db, req.user.tenantId);
         res.json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] getCompanyHolidays Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -39,6 +40,7 @@ exports.createCompanyHoliday = async (req, res) => {
         );
         res.status(201).json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] createCompanyHoliday Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -48,6 +50,7 @@ exports.deleteCompanyHoliday = async (req, res) => {
         await calendarService.deleteCompanyHoliday(req.db, req.user.tenantId, req.params.id);
         res.json({ status: "success", message: "Company holiday deleted" });
     } catch (error) {
+        logger.error(`[CalendarController] deleteCompanyHoliday Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -57,17 +60,18 @@ exports.getStates = async (req, res) => {
         const data = await calendarService.getStates(req.db);
         res.json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] getStates Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
 
 exports.createStateHoliday = async (req, res) => {
     try {
-        // Restricted to ADMIN/SUPER_ADMIN locally
         const { state, date, holiday_name } = req.body;
         const data = await calendarService.createStateHoliday(req.db, state, date, holiday_name);
         res.status(201).json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] createStateHoliday Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -78,6 +82,7 @@ exports.getAnnouncements = async (req, res) => {
         const data = await calendarService.getAnnouncements(req.db, req.user.tenantId);
         res.json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] getAnnouncements Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -87,6 +92,7 @@ exports.createAnnouncement = async (req, res) => {
         const data = await calendarService.createAnnouncement(req.db, req.user.tenantId, req.user.id, req.body);
         res.status(201).json({ status: "success", data });
     } catch (error) {
+        logger.error(`[CalendarController] createAnnouncement Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -96,6 +102,7 @@ exports.deleteAnnouncement = async (req, res) => {
         await calendarService.deleteAnnouncement(req.db, req.user.tenantId, req.params.id);
         res.json({ status: "success", message: "Announcement deleted" });
     } catch (error) {
+        logger.error(`[CalendarController] deleteAnnouncement Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };
@@ -116,7 +123,6 @@ exports.bulkImportHolidays = async (req, res) => {
             return res.status(400).json({ status: "error", message: "Excel file is empty" });
         }
 
-        // Try to find the date and name columns (flexible matching)
         const firstRow = rows[0];
         const keys = Object.keys(firstRow);
         
@@ -131,7 +137,6 @@ exports.bulkImportHolidays = async (req, res) => {
             });
         }
 
-        // Parse and validate rows
         const holidays = [];
         const errors = [];
 
@@ -145,10 +150,8 @@ exports.bulkImportHolidays = async (req, res) => {
                 return;
             }
 
-            // Parse date — handle Excel serial numbers and string dates
             let parsedDate;
             if (typeof rawDate === 'number') {
-                // Excel serial date number
                 const excelEpoch = new Date(1899, 11, 30);
                 parsedDate = new Date(excelEpoch.getTime() + rawDate * 86400000);
             } else {
@@ -184,7 +187,7 @@ exports.bulkImportHolidays = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error("Bulk import holidays error:", error.message);
+        logger.error(`[CalendarController] bulkImportHolidays Error: ${error.message}`, error);
         res.status(400).json({ status: "error", message: error.message });
     }
 };

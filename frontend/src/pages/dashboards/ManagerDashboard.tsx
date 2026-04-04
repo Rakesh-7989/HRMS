@@ -1544,8 +1544,8 @@ export const ManagerDashboard: React.FC = () => {
                 <div className="flex items-center justify-center h-48">
                   <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                 </div>
-              ) : (holidays?.filter((h: Holiday) => new Date(h.date) >= new Date()).length || 0) > 0 ? (
-                holidays?.filter((h: Holiday) => new Date(h.date) >= new Date())
+              ) : (holidays?.filter((h: Holiday) => format(parseISO(h.date as string), 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')).length || 0) > 0 ? (
+                holidays?.filter((h: Holiday) => format(parseISO(h.date as string), 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd'))
                   .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
                   .slice(0, 4)
                   .map((holiday: Holiday) => (

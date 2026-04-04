@@ -133,7 +133,13 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange} title="Bulk Employee Import" className="max-w-2xl">
+        <Dialog 
+            open={open} 
+            onOpenChange={onOpenChange} 
+            onBack={step > 1 ? () => setStep(prev => prev - 1) : () => onOpenChange(false)}
+            title="Bulk Employee Import" 
+            className="max-w-2xl"
+        >
             <div className="p-1">
                 {step === 1 && (
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-12 bg-gray-50 dark:bg-gray-800/30 transition-all hover:bg-gray-100 dark:hover:bg-gray-800/50">

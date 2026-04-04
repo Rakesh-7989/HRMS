@@ -14,14 +14,13 @@ import {
     ClipboardList,
     ArrowLeft,
     Edit,
-    Trash2,
-    X,
-    FileText
+    Trash2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
+import { Dialog } from '@/components/ui/Dialog';
 
 export const AssetRequestsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -333,105 +332,99 @@ export const AssetRequestsPage: React.FC = () => {
             </div>
 
             {/* Edit Asset Request Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/10 to-purple-500/10">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <FileText size={22} className="text-primary" />
-                                {isEditMode ? 'Edit Asset Request' : 'New Asset Request'}
-                            </h2>
-                            <button
-                                onClick={() => { setShowModal(false); resetForm(); }}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Asset Name / Description *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.asset_name}
-                                    onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Category *
-                                </label>
-                                <select
-                                    required
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                >
-                                    <option value="Laptop">Laptop</option>
-                                    <option value="Desktop">Desktop</option>
-                                    <option value="Mobile">Mobile</option>
-                                    <option value="Monitor">Monitor</option>
-                                    <option value="Printer">Printer</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Priority *
-                                </label>
-                                <select
-                                    required
-                                    value={formData.priority}
-                                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                >
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Reason *
-                                </label>
-                                <textarea
-                                    required
-                                    value={formData.reason}
-                                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                                    rows={4}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => { setShowModal(false); resetForm(); }}
-                                    disabled={isSubmitting}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    isLoading={isSubmitting}
-                                >
-                                    {isEditMode ? 'Update Request' : 'Submit Request'}
-                                </Button>
-                            </div>
-                        </form>
+            <Dialog
+                open={showModal}
+                onOpenChange={(open) => { if (!open) { setShowModal(false); resetForm(); } }}
+                onBack={() => { setShowModal(false); resetForm(); }}
+                title={isEditMode ? 'Edit Asset Request' : 'New Asset Request'}
+                description="Provide details for your asset request"
+                className="max-w-md"
+                footer={
+                    <div className="flex items-center justify-end gap-3 w-full">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => { setShowModal(false); resetForm(); }}
+                            disabled={isSubmitting}
+                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="edit-request-form"
+                            disabled={isSubmitting}
+                            isLoading={isSubmitting}
+                            className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                        >
+                            {isEditMode ? 'Update Request' : 'Submit Request'}
+                        </Button>
                     </div>
-                </div>
-            )}
+                }
+            >
+                <form id="edit-request-form" onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Asset Name / Description *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.asset_name}
+                            onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Category *
+                        </label>
+                        <select
+                            required
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+                        >
+                            <option value="Laptop">Laptop</option>
+                            <option value="Desktop">Desktop</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="Monitor">Monitor</option>
+                            <option value="Printer">Printer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Priority *
+                        </label>
+                        <select
+                            required
+                            value={formData.priority}
+                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+                        >
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Reason *
+                        </label>
+                        <textarea
+                            required
+                            value={formData.reason}
+                            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                            rows={4}
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none font-medium"
+                        />
+                    </div>
+                </form>
+            </Dialog>
         </DashboardLayout>
     );
 };

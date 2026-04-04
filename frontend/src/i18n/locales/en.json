@@ -399,6 +399,8 @@
         "statusOverview": "Status Overview",
         "weeklyEfficiency": "Weekly Efficiency",
         "hoursWorked": "Hours Worked",
+        "publicHolidays": "Public Holidays",
+        "rejected": "Rejected",
         "noLeaveTypesFound": "No Leave Types Found",
         "configureLeaveTypes": "Configure leave types in settings",
         "taken": "Taken",

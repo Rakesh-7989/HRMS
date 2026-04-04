@@ -20,7 +20,7 @@ import {
   Award, ChevronRight, MapPin, Gift, Cake, Activity,
   UserPlus, Users, CalendarDays, ExternalLink
 } from 'lucide-react';
-import { format, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes, parseISO } from 'date-fns';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, ComposedChart, Line
@@ -118,7 +118,7 @@ const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
-    className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none"
+    className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden"
   >
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -744,7 +744,7 @@ export const EmployeeDashboard: React.FC = () => {
                 subtitle={user?.department_id ? "My Team" : "Across Organization"}
                 delay={0.65}
               >
-                <div className="space-y-4 mt-4 max-h-[280px] overflow-y-auto pr-2 no-scrollbar">
+                <div className="space-y-4 mt-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar pb-2">
                   {isLoadingDept ? (
                     <div className="flex items-center justify-center h-32">
                       <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
@@ -782,7 +782,7 @@ export const EmployeeDashboard: React.FC = () => {
 
               {/* Leave Utilization */}
               <ChartCard title={t('dashboard.leaveUtilization')} subtitle={t('dashboard.entitlementUsage')} delay={0.5}>
-                <div className="h-[280px]">
+                <div className="h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -805,7 +805,7 @@ export const EmployeeDashboard: React.FC = () => {
                       <Tooltip />
                       <Legend
                         verticalAlign="bottom"
-                        height={36}
+                        height={48}
                         formatter={(value, entry: any) => (
                           <span className="text-slate-600 dark:text-slate-400 font-bold ml-2">
                             {value} <span className="text-slate-400 dark:text-slate-500 font-normal">({entry.payload.value})</span>
@@ -852,38 +852,38 @@ export const EmployeeDashboard: React.FC = () => {
                 </div>
               </ChartCard>
 
-              {/* Upcoming Holidays */}
-              <ChartCard title={t('dashboard.upcomingHolidays')} delay={0.75}>
+              {/* Public Holidays */}
+              <ChartCard title={t('dashboard.publicHolidays')} delay={0.75}>
                 <div className="space-y-3 mt-4">
                   {isLoadingHolidays ? (
                     <div className="flex items-center justify-center h-48">
                       <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                     </div>
-                  ) : (holidays?.filter((h: Holiday) => new Date(h.date) >= new Date()).length || 0) > 0 ? (
-                    holidays?.filter((h: Holiday) => new Date(h.date) >= new Date())
+                  ) : (holidays?.filter((h: Holiday) => format(parseISO(h.date as string), 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')).length || 0) > 0 ? (
+                    holidays?.filter((h: Holiday) => format(parseISO(h.date as string), 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd'))
                       .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .slice(0, 4)
                       .map((holiday: Holiday) => (
-                        <div key={holiday.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow group">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:rotate-3 transition-transform">
+                        <div key={holiday.id} className="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 shadow-premium hover:shadow-premium-hover transition-all group">
+                          <div className="w-12 h-12 rounded-2xl bg-primary-gradient flex flex-col items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-3 transition-transform">
                             <span className="text-[10px] font-black uppercase leading-none mb-0.5">{format(new Date(holiday.date), 'MMM')}</span>
                             <span className="text-lg font-black leading-none">{format(new Date(holiday.date), 'dd')}</span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{holiday.name}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-1">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">
                               {format(new Date(holiday.date), 'EEEE')}
                             </p>
                           </div>
                           {holiday.is_optional && (
-                            <span className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Optional</span>
+                            <span className="px-2 py-1 rounded-lg bg-primary/10 text-[9px] font-black text-primary uppercase tracking-tighter shadow-sm">Optional</span>
                           )}
                         </div>
                       ))
                   ) : (
                     <div className="flex flex-col items-center justify-center h-48 text-center opacity-60">
                       <CalendarDays className="w-10 h-10 text-slate-300 mb-2" />
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-[10px]">No upcoming holidays</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No upcoming holidays</p>
                     </div>
                   )}
                 </div>

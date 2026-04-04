@@ -16,7 +16,10 @@ export interface ConfirmDialogProps {
     cancelText?: string;
     defaultValue?: string;
     placeholder?: string;
+    onBack?: () => void;
 }
+
+import { X, ArrowLeft } from 'lucide-react';
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     isOpen,
@@ -29,6 +32,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     cancelText = 'Cancel',
     defaultValue = '',
     placeholder = '',
+    onBack,
 }) => {
     const [inputValue, setInputValue] = useState(defaultValue);
 
@@ -89,6 +93,27 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                             className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
+                            {/* Header with Close and optional Back */}
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    {onBack && (
+                                        <button
+                                            onClick={onBack}
+                                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
+                                        >
+                                            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                                        </button>
+                                    )}
+                                    <span className="font-semibold text-gray-700 dark:text-gray-200">Confirmation</span>
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
                             <div className="p-6">
                                 <div className="flex items-start gap-4">
                                     <div className={cn(

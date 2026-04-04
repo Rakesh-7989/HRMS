@@ -48,8 +48,12 @@ exports.getPublicHolidays = async (db, tenantId, year = null) => {
     const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const res = await query(
-        `SELECT * FROM public_holidays 
+        `SELECT id::text, name, date, year, is_paid, is_optional FROM public_holidays 
          WHERE tenant_id = $1 AND year = $2
+         UNION ALL
+         SELECT id::text, holiday_name as name, date, EXTRACT(YEAR FROM date)::int as year, true as is_paid, false as is_optional 
+         FROM company_holidays 
+         WHERE tenant_id = $1 AND EXTRACT(YEAR FROM date) = $2
          ORDER BY date ASC`,
         [tenantId, targetYear]
     );
@@ -230,11 +234,17 @@ exports.countWorkingDays = async (db, startDate, endDate, tenantId) => {
 
     const holidays = await query(
         `SELECT date FROM public_holidays 
+         WHERE tenant_id = $1 AND date >= $2 AND date <= $3
+         UNION
+         SELECT date FROM company_holidays
          WHERE tenant_id = $1 AND date >= $2 AND date <= $3`,
         [tenantId, startDate, endDate]
     );
 
-    const holidayDates = new Set(holidays.rows.map(h => h.date.toISOString().split('T')[0]));
+    const holidayDates = new Set(holidays.rows.map(h => {
+        const d = new Date(h.date);
+        return d.toISOString().split('T')[0];
+    }));
 
     let workingDays = 0;
     let current = new Date(startDate);

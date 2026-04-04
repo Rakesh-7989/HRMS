@@ -1,22 +1,36 @@
 const pool = require("../../config/db");
 
 const getQuery = (db) => {
-    if (db && typeof db.query === "function") return db.query;
+    if (db && typeof db.query === "function") {
+        return (text, params) => db.query(text, params);
+    }
     return pool.query.bind(pool);
 };
 
 exports.getCalendar = async (db, tenantId, month, year, state) => {
     const query = getQuery(db);
 
-    // 1. Generate all days for the month dynamically (works for ANY year)
+    // 1. Generate all days for the month dynamically
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Get days in month by seeking to day 0 of the next month
     const daysInMonth = new Date(year, month, 0).getDate();
     const generatedDays = [];
+    
     for (let d = 1; d <= daysInMonth; d++) {
+        // Use month - 1 for 0-indexed month
         const dateObj = new Date(year, month - 1, d);
-        const dateStr = dateObj.toISOString().split('T')[0];
-        const dayName = daysOfWeek[dateObj.getDay()];
-        const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+        
+        // Formulate dateStr as YYYY-MM-DD manually to avoid timezone shifts from toISOString()
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        
+        const dayIndex = dateObj.getDay();
+        const dayName = daysOfWeek[dayIndex];
+        const isWeekend = (dayIndex === 0 || dayIndex === 6);
+        
         generatedDays.push({
             date_str: dateStr,
             day: dayName,
@@ -26,7 +40,7 @@ exports.getCalendar = async (db, tenantId, month, year, state) => {
         });
     }
 
-    // 2. Fetch Central/National holidays from base_calendar (if they exist for this year)
+    // 2. Fetch Central/National holidays from base_calendar
     const baseRes = await query(
         `SELECT TO_CHAR(date, 'YYYY-MM-DD') as date_str, holiday_name, holiday_type 
          FROM base_calendar 
@@ -49,7 +63,6 @@ exports.getCalendar = async (db, tenantId, month, year, state) => {
     }
 
     // 4. Fetch Company Holidays for the tenant
-    // Fetch both tenant-wide holidays (state IS NULL) AND state-specific holidays if a state is selected
     const companyRes = await query(
         `SELECT TO_CHAR(date, 'YYYY-MM-DD') as date_str, holiday_name, state 
          FROM company_holidays 
@@ -59,36 +72,33 @@ exports.getCalendar = async (db, tenantId, month, year, state) => {
     );
     const companyHolidays = companyRes.rows;
 
-    // Determine if we should use ONLY company holidays (strict scoping)
-    // If a tenant has uploaded any holidays for this year (either tenant-wide or for this specific state), they override system defaults completely
+    // Fetch if any company holidays exist for this year to toggle override
     const hasCompanyHolidaysForYearRes = await query(
         `SELECT 1 FROM company_holidays WHERE tenant_id = $1 AND EXTRACT(YEAR FROM date) = $2 LIMIT 1`,
         [tenantId, year]
     );
     const useOnlyCompanyHolidays = hasCompanyHolidaysForYearRes.rowCount > 0;
 
-    // 5. Merge using Priority Rules: 1. Company, 2. State, 3. Central, 4. Weekend
+    // 5. Merge using Priority Rules
     const calendar = generatedDays.map(day => {
         const dateStr = day.date_str;
-
         let finalHolidayName = day.holiday_name;
         let finalType = day.holiday_type;
 
-        // Check Central Holiday (Priority 3)
+        // Priority 3: Central Holiday (only if no company holidays for year exist)
         const centralHoliday = centralHolidays.find(h => h.date_str === dateStr);
-        if (centralHoliday && !useOnlyCompanyHolidays) { // Only apply if no company holidays exist for the year
+        if (centralHoliday && !useOnlyCompanyHolidays) {
             finalHolidayName = centralHoliday.holiday_name;
             finalType = 'Central';
         }
 
-        // Check State Holiday (Priority 2)
+        // Priority 2: State Holiday
         const stateHoliday = stateHolidays.find(h => h.date_str === dateStr);
         if (stateHoliday) {
             finalHolidayName = stateHoliday.holiday_name;
             finalType = 'State';
         }
-
-        // Check Company Holiday (Priority 1 - Overrides everything)
+        // Priority 1: Company Holiday (Overrides everything)
         const companyHoliday = companyHolidays.find(h => h.date_str === dateStr);
         if (companyHoliday) {
             finalHolidayName = companyHoliday.holiday_name;
@@ -112,12 +122,12 @@ exports.createCompanyHoliday = async (db, tenantId, date, holidayName, state = n
     const res = await query(
         `INSERT INTO company_holidays (tenant_id, date, holiday_name, state) 
          VALUES ($1, $2, $3, $4) 
-         ON CONFLICT (tenant_id, date, COALESCE(state, 'ALL_REGIONS')) DO UPDATE SET holiday_name = $3
+         ON CONFLICT (tenant_id, date, (COALESCE(state, 'ALL_REGIONS'))) DO UPDATE SET holiday_name = $3
          RETURNING *`,
         [tenantId, date, holidayName, state]
     );
 
-    // Broadcast holiday notification (fire and forget)
+    // Broadcast holiday notification
     try {
         const usersRes = await query(
             `SELECT id FROM users WHERE tenant_id = $1 AND is_active = true AND is_deleted = false`,
@@ -126,19 +136,17 @@ exports.createCompanyHoliday = async (db, tenantId, date, holidayName, state = n
 
         if (usersRes.rowCount > 0) {
             const regionText = state ? ` (Region: ${state})` : '';
-            const title = `New Holiday: ${holidayName}${regionText}`;
-            const message = `A new company holiday has been added for ${date}.`;
-            // Note: In a production system, you might only notify users in that state,
-            // but for now we broadcast to all so they can see regional holidays
+            const title = `New Holiday: ${holidayName}${regionText}`.replace(/'/g, "''");
+            const message = `A new company holiday has been added for ${date}.`.replace(/'/g, "''");
+            
             const values = usersRes.rows.map(u =>
                 `('${tenantId}', '${u.id}', '${title}', '${message}', 'info')`
             ).join(',');
 
-            // Do NOT await this query so it doesn't block the API response
-            query(
+            await query(
                 `INSERT INTO notifications (tenant_id, user_id, title, message, type)
                  VALUES ${values}`
-            ).catch(err => console.error('Error inserting holiday notifications (background):', err));
+            );
         }
     } catch (err) {
         console.error('Error broadcasting holiday notifications:', err);
@@ -256,29 +264,28 @@ exports.bulkImportHolidays = async (db, tenantId, holidays) => {
             await query(
                 `INSERT INTO company_holidays (tenant_id, date, holiday_name, state)
                  VALUES ($1, $2, $3, $4)
-                 ON CONFLICT (tenant_id, date, COALESCE(state, 'ALL_REGIONS')) DO UPDATE SET holiday_name = $3`,
+                 ON CONFLICT (tenant_id, date, (COALESCE(state, 'ALL_REGIONS'))) DO UPDATE SET holiday_name = $3`,
                 [tenantId, h.date, h.holiday_name, h.state || null]
             );
             imported++;
         }
 
-        // Broadcast notifications to all active users (fire and forget)
+        // Broadcast notifications to all active users
         try {
             const usersRes = await query(
                 `SELECT id FROM users WHERE tenant_id = $1 AND is_active = true AND is_deleted = false`,
                 [tenantId]
             );
             if (usersRes.rowCount > 0) {
-                const title = `Holiday Calendar Updated`;
-                const message = `${imported} company holidays have been imported for ${years.join(', ')}.`;
+                const title = `Holiday Calendar Updated`.replace(/'/g, "''");
+                const message = `${imported} company holidays have been imported for ${years.join(', ')}.`.replace(/'/g, "''");
                 const values = usersRes.rows.map(u =>
-                    `('${tenantId}', '${u.id}', '${title}', '${message.replace(/'/g, "''")}', 'info')`
+                    `('${tenantId}', '${u.id}', '${title}', '${message}', 'info')`
                 ).join(',');
                 
-                // Do NOT await this query so it doesn't block the API response
-                query(
+                await query(
                     `INSERT INTO notifications (tenant_id, user_id, title, message, type) VALUES ${values}`
-                ).catch(err => console.error('Error inserting holiday import notifications (background):', err));
+                );
             }
         } catch (notifErr) {
             console.error('Error broadcasting holiday import notifications:', notifErr);

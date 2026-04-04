@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { AlertCircle, Info, X } from 'lucide-react';
+import { Dialog } from '@/components/ui/Dialog';
+import { AlertCircle, Info } from 'lucide-react';
 import { tenantService } from '@/services/tenant.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { createPortal } from 'react-dom';
 
 interface SetEmployeeIdPrefixDialogProps {
     open: boolean;
@@ -48,128 +48,109 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
         mutation.mutate(upperPrefix);
     };
 
-    if (!open) return null;
-
-    // Use inline portal to document.body with very high z-index
-    return createPortal(
-        <div
-            className="fixed inset-0 flex items-center justify-center p-4"
-            style={{ zIndex: 999999 }}
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={onOpenChange}
+            onBack={() => onOpenChange(false)}
+            title="Set Employee ID Prefix"
+            description="One-time configuration for your organization's employee ID format"
+            className="max-w-md"
         >
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={() => onOpenChange(false)}
-            />
-
-            {/* Modal Content */}
-            <div
-                className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Set Employee ID Prefix
-                    </h2>
-                    <button
-                        onClick={() => onOpenChange(false)}
-                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
-                    >
-                        <X size={20} />
-                    </button>
+            <form onSubmit={handleSubmit} className="p-1 space-y-5">
+                {/* Info Banner */}
+                <div className="p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl">
+                    <div className="flex gap-3">
+                        <div className="w-10 h-10 bg-violet-100 dark:bg-violet-500/20 rounded-xl flex items-center justify-center shrink-0">
+                            <Info className="h-5 w-5 text-violet-500" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-violet-700 dark:text-violet-300 font-bold uppercase tracking-wider text-[10px]">
+                                One-time Configuration
+                            </p>
+                            <p className="text-xs text-violet-600 dark:text-violet-400 mt-0.5 font-medium leading-relaxed">
+                                IDs will auto-increment (e.g., {prefix || 'EMP'}001, {prefix || 'EMP'}002...)
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Info Banner */}
-                    <div className="p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg">
-                        <div className="flex gap-2">
-                            <Info className="h-5 w-5 text-violet-500 mt-0.5 flex-shrink-0" />
-                            <div>
-                                <p className="text-sm text-violet-700 dark:text-violet-300 font-medium">
-                                    One-time Configuration
-                                </p>
-                                <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">
-                                    Employee IDs will auto-increment (AM001, AM002, AM003...)
-                                </p>
-                            </div>
-                        </div>
+                {/* Error */}
+                {error && (
+                    <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50 rounded-xl flex items-start gap-2 animate-shake">
+                        <AlertCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                        <p className="text-[12px] text-rose-700 dark:text-rose-400 font-medium">{error}</p>
                     </div>
+                )}
 
-                    {/* Error */}
-                    {error && (
-                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
-                            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-                        </div>
-                    )}
+                {/* Input */}
+                <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
+                        Prefix <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        value={prefix}
+                        onChange={(e) => {
+                            const value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+                            if (value.length <= 5) {
+                                setPrefix(value);
+                                setError(null);
+                            }
+                        }}
+                        placeholder="e.g., AM, EMP, GZ"
+                        maxLength={5}
+                        autoFocus
+                        className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary text-xl uppercase font-black tracking-[0.2em] transition-all shadow-sm"
+                    />
+                    <p className="text-[9px] text-gray-400 font-medium ml-1">Must be 2-5 uppercase characters</p>
+                </div>
 
-                    {/* Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Prefix <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={prefix}
-                            onChange={(e) => {
-                                const value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
-                                if (value.length <= 5) {
-                                    setPrefix(value);
-                                    setError(null);
-                                }
-                            }}
-                            placeholder="e.g., AM, EMP, GZ"
-                            maxLength={5}
-                            autoFocus
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg uppercase font-mono tracking-wider"
-                        />
+                {/* Preview */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-inner">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-3">Sequence Projection:</p>
+                    <div className="flex gap-2 flex-wrap">
+                        {[1, 2, 3, 10].map((num) => (
+                            <span
+                                key={num}
+                                className="px-3 py-1.5 bg-white dark:bg-gray-800 text-primary border border-primary/10 dark:border-primary/20 rounded-xl font-black text-xs shadow-sm"
+                            >
+                                {prefix || 'XX'}{String(num).padStart(3, '0')}
+                            </span>
+                        ))}
                     </div>
+                </div>
 
-                    {/* Preview */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                        <div className="flex gap-2 flex-wrap">
-                            {[1, 2, 3, 10].map((num) => (
-                                <span
-                                    key={num}
-                                    className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded font-mono text-sm"
-                                >
-                                    {prefix || 'XX'}{String(num).padStart(3, '0')}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+                {/* Warning */}
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-tight">
+                        <strong>Warning:</strong> The prefix cannot be modified once set.
+                    </p>
+                </div>
 
-                    {/* Warning */}
-                    <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-900/20 border border-fuchsia-200 dark:border-fuchsia-800 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-fuchsia-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-fuchsia-700 dark:text-fuchsia-400">
-                            <strong>Warning:</strong> Prefix cannot be changed after setting.
-                        </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={mutation.isPending}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={!prefix || prefix.length < 2 || mutation.isPending}
-                        >
-                            {mutation.isPending ? 'Saving...' : 'Set Prefix'}
-                        </Button>
-                    </div>
-                </form>
-            </div>
-        </div>,
-        document.body
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        disabled={mutation.isPending}
+                        className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        disabled={!prefix || prefix.length < 2 || mutation.isPending}
+                        isLoading={mutation.isPending}
+                        className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                    >
+                        Set Prefix
+                    </Button>
+                </div>
+            </form>
+        </Dialog>
     );
 };
 

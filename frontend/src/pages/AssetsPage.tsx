@@ -17,7 +17,6 @@ import {
   UserX,
   Download,
   Printer,
-  X,
   Loader2,
   AlertCircle,
   ClipboardList,
@@ -27,12 +26,15 @@ import {
   BarChart3,
   Package,
   Wrench,
+  CheckCircle2,
+  PlusCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import type { Asset, AssetStatus, AssetCategory } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { Dialog } from '@/components/ui/Dialog';
 
 export const AssetsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -744,369 +746,336 @@ export const AssetsPage: React.FC = () => {
       </div>
 
       {/* Request Asset Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/10 to-purple-500/10">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <FileText size={22} className="text-primary" />
-                Request New Asset
-              </h2>
-              <button
+      <Dialog
+        open={showRequestModal}
+        onOpenChange={(open) => !open && setShowRequestModal(false)}
+        onBack={() => setShowRequestModal(false)}
+        title="Request New Asset"
+        description="Submit a request for a new asset"
+        className="max-w-md"
+          footer={
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowRequestModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={requestSubmitting}
+                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
               >
-                <X size={24} />
-              </button>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="request-asset-form"
+                disabled={requestSubmitting}
+                isLoading={requestSubmitting}
+                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+              >
+                <PlusCircle size={18} />
+                Submit Request
+              </Button>
             </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleRequestAssetSubmit} className="p-6 space-y-5">
-              {/* Asset Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Asset Name / Description *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={requestForm.assetName}
-                  onChange={(e) => setRequestForm({ ...requestForm, assetName: e.target.value })}
-                  placeholder="e.g., MacBook Pro 16-inch, Dell Monitor 27-inch"
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Category *
-                </label>
-                <select
-                  required
-                  value={requestForm.category}
-                  onChange={(e) => setRequestForm({ ...requestForm, category: e.target.value as AssetCategory })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="Laptop">Laptop</option>
-                  <option value="Desktop">Desktop</option>
-                  <option value="Mobile">Mobile</option>
-                  <option value="Monitor">Monitor</option>
-                  <option value="Printer">Printer</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Priority *
-                </label>
-                <select
-                  required
-                  value={requestForm.priority}
-                  onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="Low">Low - Can wait</option>
-                  <option value="Medium">Medium - Needed soon</option>
-                  <option value="High">High - Urgent</option>
-                </select>
-              </div>
-
-              {/* Reason */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Reason for Request *
-                </label>
-                <textarea
-                  required
-                  value={requestForm.reason}
-                  onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
-                  placeholder="Please provide a brief explanation of why you need this asset..."
-                  rows={4}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none"
-                />
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowRequestModal(false)}
-                  disabled={requestSubmitting}
-                  className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={requestSubmitting}
-                  isLoading={requestSubmitting}
-                  className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2"
-                >
-                  <FileText size={18} />
-                  Submit Request
-                </Button>
-              </div>
-            </form>
+          }
+      >
+        <form id="request-asset-form" onSubmit={handleRequestAssetSubmit} className="space-y-5">
+          {/* Asset Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Asset Name / Description *
+            </label>
+            <input
+              type="text"
+              required
+              value={requestForm.assetName}
+              onChange={(e) => setRequestForm({ ...requestForm, assetName: e.target.value })}
+              placeholder="e.g., MacBook Pro 16-inch, Dell Monitor 27-inch"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 font-medium"
+            />
           </div>
-        </div>
-      )}
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category *
+            </label>
+            <select
+              required
+              value={requestForm.category}
+              onChange={(e) => setRequestForm({ ...requestForm, category: e.target.value as AssetCategory })}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+            >
+              <option value="Laptop">Laptop</option>
+              <option value="Desktop">Desktop</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Monitor">Monitor</option>
+              <option value="Printer">Printer</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Priority *
+            </label>
+            <select
+              required
+              value={requestForm.priority}
+              onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+            >
+              <option value="Low">Low - Can wait</option>
+              <option value="Medium">Medium - Needed soon</option>
+              <option value="High">High - Urgent</option>
+            </select>
+          </div>
+
+          {/* Reason */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Reason for Request *
+            </label>
+            <textarea
+              required
+              value={requestForm.reason}
+              onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
+              placeholder="Please provide a brief explanation of why you need this asset..."
+              rows={4}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none font-medium"
+            />
+          </div>
+        </form>
+      </Dialog>
 
       {/* Assign Asset Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500/10 to-primary/10">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <UserPlus size={22} className="text-violet-500" />
-                Assign Asset to Employee
-              </h2>
-              <button
+      <Dialog
+        open={showAssignModal}
+        onOpenChange={(open) => !open && setShowAssignModal(false)}
+        onBack={() => setShowAssignModal(false)}
+        title="Assign Asset"
+        description="Assign an available asset to an employee"
+        className="max-w-md"
+          footer={
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowAssignModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={assignSubmitting}
+                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
               >
-                <X size={24} />
-              </button>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="assign-asset-form"
+                disabled={assignSubmitting || availableAssets.length === 0}
+                isLoading={assignSubmitting}
+                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+              >
+                <CheckCircle2 size={18} />
+                Assign Asset
+              </Button>
             </div>
+          }
+      >
+        <form id="assign-asset-form" onSubmit={handleAssignAssetSubmit} className="p-1 space-y-5">
+          {/* Select Asset */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Select Asset *
+            </label>
+            <select
+              required
+              value={assignForm.assetId}
+              onChange={(e) => setAssignForm({ ...assignForm, assetId: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+            >
+              <option value="">-- Select an available asset --</option>
+              {availableAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.name} ({asset.asset_code}) - {asset.category}
+                </option>
+              ))}
+            </select>
+            {availableAssets.length === 0 && (
+              <p className="mt-2 text-sm text-fuchsia-600 dark:text-fuchsia-400 font-medium">
+                No available assets to assign.
+              </p>
+            )}
+          </div>
 
-            {/* Modal Body */}
-            <form onSubmit={handleAssignAssetSubmit} className="p-6 space-y-5">
-              {/* Select Asset */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Select Asset *
-                </label>
-                <select
-                  required
-                  value={assignForm.assetId}
-                  onChange={(e) => setAssignForm({ ...assignForm, assetId: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">-- Select an available asset --</option>
-                  {availableAssets.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.name} ({asset.asset_code}) - {asset.category}
-                    </option>
-                  ))}
-                </select>
-                {availableAssets.length === 0 && (
-                  <p className="mt-2 text-sm text-fuchsia-600 dark:text-fuchsia-400">
-                    No available assets to assign. All assets are currently assigned or unavailable.
-                  </p>
-                )}
-              </div>
+          {/* Select Employee */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Select Employee *
+            </label>
+            <select
+              required
+              value={assignForm.employeeId}
+              onChange={(e) => setAssignForm({ ...assignForm, employeeId: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+            >
+              <option value="">-- Select an employee --</option>
+              {employees
+                .filter((employee) => {
+                  if (employee.role === 'ADMIN') return false;
+                  if (user?.role === 'HR' && employee.role === 'HR') return false;
+                  return true;
+                })
+                .map((employee) => (
+                  <option key={employee.id} value={employee.employee_uuid || employee.id}>
+                    {employee.first_name} {employee.last_name} ({employee.email})
+                  </option>
+                ))}
+            </select>
+          </div>
 
-              {/* Select Employee */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Select Employee *
-                </label>
-                <select
-                  required
-                  value={assignForm.employeeId}
-                  onChange={(e) => setAssignForm({ ...assignForm, employeeId: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">-- Select an employee --</option>
-                  {employees
-                    .filter((employee) => {
-                      // Always exclude ADMIN from assignment
-                      if (employee.role === 'ADMIN') return false;
-
-                      // If logged-in user is HR, exclude HR role (only show MANAGER and EMPLOYEE)
-                      if (user?.role === 'HR' && employee.role === 'HR') return false;
-
-                      // Show all other employees
-                      return true;
-                    })
-                    .map((employee) => (
-                      <option key={employee.id} value={employee.employee_uuid || employee.id}>
-                        {employee.first_name} {employee.last_name} ({employee.email})
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              {/* Accessories */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Accessories Being Given
-                </label>
-                <div className="space-y-2">
-                  {assignAccessories.map((acc, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded">{acc}</span>
-                      <button type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newAccessoryName}
-                      onChange={(e) => setNewAccessoryName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddAccessory();
-                        }
-                      }}
-                      placeholder="e.g. Charger, Mouse, Bag..."
-                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAddAccessory}
-                      disabled={!newAccessoryName.trim()}
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
-                      + Add
-                    </Button>
-                  </div>
+          {/* Accessories */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Accessories Being Given
+            </label>
+            <div className="space-y-3">
+              {assignAccessories.map((acc, idx) => (
+                <div key={idx} className="flex items-center gap-2 group">
+                  <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
+                  <button type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
                 </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              ))}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newAccessoryName}
+                  onChange={(e) => setNewAccessoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddAccessory();
+                    }
+                  }}
+                  placeholder="e.g. Charger, Mouse..."
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                />
                 <Button
                   type="button"
+                  onClick={handleAddAccessory}
+                  disabled={!newAccessoryName.trim()}
                   variant="outline"
-                  onClick={() => setShowAssignModal(false)}
-                  disabled={assignSubmitting}
-                  className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                  size="sm"
+                  className="whitespace-nowrap px-4 rounded-xl border-primary text-primary font-bold hover:bg-primary/5"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={assignSubmitting || availableAssets.length === 0}
-                  isLoading={assignSubmitting}
-                  className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2"
-                >
-                  <UserPlus size={18} />
-                  Assign Asset
+                  + Add
                 </Button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+        </form>
+      </Dialog>
 
       {/* Swap Asset Modal */}
-      {showSwapModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <RefreshCw size={22} className="text-amber-500" />
-                Swap / Upgrade Asset
-              </h2>
-              <button
+      <Dialog
+        open={showSwapModal}
+        onOpenChange={(open) => !open && setShowSwapModal(false)}
+        onBack={() => setShowSwapModal(false)}
+        title="Swap / Upgrade Asset"
+        description="Replace an existing asset with a new one"
+        className="max-w-md"
+          footer={
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowSwapModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={swapSubmitting}
+                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
               >
-                <X size={24} />
-              </button>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="swap-asset-form"
+                disabled={swapSubmitting || !swapNewAssetId}
+                isLoading={swapSubmitting}
+                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+              >
+                <RefreshCw size={18} />
+                Swap Asset
+              </Button>
             </div>
+          }
+      >
+        <form id="swap-asset-form" onSubmit={handleSwapSubmit} className="p-1 space-y-5">
+          {/* Old Asset Info */}
+          <div className="p-4 bg-amber-50/50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl">
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Returning Current Asset</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              {assets.find(a => a.id === swapOldAssetId)?.name}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">#{assets.find(a => a.id === swapOldAssetId)?.asset_code}</p>
+          </div>
 
-            <form onSubmit={handleSwapSubmit} className="p-6 space-y-5">
-              {/* Old Asset Info */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Returning</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {assets.find(a => a.id === swapOldAssetId)?.name} ({assets.find(a => a.id === swapOldAssetId)?.asset_code})
-                </p>
-              </div>
+          {/* Select New Asset */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Replacement Asset *
+            </label>
+            <select
+              required
+              value={swapNewAssetId}
+              onChange={(e) => setSwapNewAssetId(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+            >
+              <option value="">-- Select a replacement --</option>
+              {availableAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.name} ({asset.asset_code}) - {asset.category}
+                </option>
+              ))}
+            </select>
+          </div>
 
-              {/* Select New Asset */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Replacement Asset *
-                </label>
-                <select
-                  required
-                  value={swapNewAssetId}
-                  onChange={(e) => setSwapNewAssetId(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">-- Select a replacement --</option>
-                  {availableAssets.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.name} ({asset.asset_code}) - {asset.category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Accessories for new asset */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Accessories for New Asset
-                </label>
-                <div className="space-y-2">
-                  {swapAccessories.map((acc, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded">{acc}</span>
-                      <button type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={swapNewAccessoryName}
-                      onChange={(e) => setSwapNewAccessoryName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddSwapAccessory();
-                        }
-                      }}
-                      placeholder="e.g. Charger, Mouse, Bag..."
-                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAddSwapAccessory}
-                      disabled={!swapNewAccessoryName.trim()}
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
-                      + Add
-                    </Button>
-                  </div>
+          {/* Accessories for new asset */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Accessories for New Asset
+            </label>
+            <div className="space-y-3">
+              {swapAccessories.map((acc, idx) => (
+                <div key={idx} className="flex items-center gap-2 group">
+                  <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
+                  <button type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              ))}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={swapNewAccessoryName}
+                  onChange={(e) => setSwapNewAccessoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddSwapAccessory();
+                    }
+                  }}
+                  placeholder="e.g. Charger, Mouse..."
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                />
                 <Button
                   type="button"
+                  onClick={handleAddSwapAccessory}
+                  disabled={!swapNewAccessoryName.trim()}
                   variant="outline"
-                  onClick={() => setShowSwapModal(false)}
-                  disabled={swapSubmitting}
-                  className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                  size="sm"
+                  className="whitespace-nowrap px-4 rounded-xl border-primary text-primary font-bold hover:bg-primary/5"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={swapSubmitting || !swapNewAssetId}
-                  isLoading={swapSubmitting}
-                  className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2"
-                >
-                  <RefreshCw size={18} />
-                  Swap Asset
+                  + Add
                 </Button>
               </div>
-            </form>
-          </div >
-        </div >
-      )}
+            </div>
+          </div>
+        </form>
+      </Dialog>
     </DashboardLayout >
   );
 };

@@ -33,6 +33,7 @@ import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
 import { permissionsService } from '@/services/permissions.service';
+import { Dialog } from '@/components/ui/Dialog';
 
 
 const PAGE_SIZE = 10;
@@ -550,39 +551,30 @@ export const EmployeesPage: React.FC = () => {
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['employees'] })}
       />
 
-      {selectedViewEmployee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedViewEmployee(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setSelectedViewEmployee(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <X size={20} />
-            </button>
-            
-            <div className="flex flex-col items-center mt-4 mb-6">
-              <div className="relative mb-4 group ring-4 ring-primary/10 rounded-full">
-                <div className={cn(
-                  'w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-inner',
-                  selectedViewEmployee.is_active ? 'bg-gradient-to-br from-primary to-primary-dark/80' : 'bg-gray-400'
-                )}>
-                  {selectedViewEmployee.profile_photo_url ? (
-                    <img src={resolveImageUrl(selectedViewEmployee.profile_photo_url)} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <>{selectedViewEmployee.first_name?.charAt(0)}{selectedViewEmployee.last_name?.charAt(0)}</>
-                  )}
-                </div>
+      <Dialog
+        open={!!selectedViewEmployee}
+        onOpenChange={(open) => !open && setSelectedViewEmployee(null)}
+        onBack={() => setSelectedViewEmployee(null)}
+        title={`${selectedViewEmployee?.first_name} ${selectedViewEmployee?.last_name}`}
+        description={getDesignationName(selectedViewEmployee?.designation_id)}
+        className="max-w-sm"
+      >
+        {selectedViewEmployee && (
+          <div className="flex flex-col items-center">
+            <div className="relative mb-6 group ring-4 ring-primary/10 rounded-full">
+              <div className={cn(
+                'w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-inner',
+                selectedViewEmployee.is_active ? 'bg-gradient-to-br from-primary to-primary-dark/80' : 'bg-gray-400'
+              )}>
+                {selectedViewEmployee.profile_photo_url ? (
+                  <img src={resolveImageUrl(selectedViewEmployee.profile_photo_url)} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <>{selectedViewEmployee.first_name?.charAt(0)}{selectedViewEmployee.last_name?.charAt(0)}</>
+                )}
               </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center">
-                {selectedViewEmployee.first_name} {selectedViewEmployee.last_name}
-              </h3>
-              <p className="text-primary font-medium mt-1">
-                {getDesignationName(selectedViewEmployee.designation_id)}
-              </p>
             </div>
-            
-            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700/60">
+
+            <div className="w-full space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700/60">
               <div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Department</p>
                 <div className="flex items-center gap-2 text-gray-800 dark:text-gray-200 font-medium">
@@ -612,8 +604,8 @@ export const EmployeesPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Dialog>
     </DashboardLayout >
   );
 };

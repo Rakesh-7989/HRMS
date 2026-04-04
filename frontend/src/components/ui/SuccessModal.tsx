@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Info, X, ArrowLeft } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface SuccessModalProps {
@@ -11,6 +11,7 @@ interface SuccessModalProps {
     message?: string;
     buttonText?: string;
     onButtonClick?: () => void;
+    onBack?: () => void;
 }
 
 const iconConfig = {
@@ -55,6 +56,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
     message,
     buttonText = 'OK',
     onButtonClick,
+    onBack,
 }) => {
     const config = iconConfig[type];
     const IconComponent = config.icon;
@@ -92,13 +94,25 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                             <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full" />
                             <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-full" />
 
-                            {/* Close button */}
-                            <button
-                                onClick={onClose}
-                                className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <X size={18} className="text-gray-400" />
-                            </button>
+                            {/* Navigation Buttons */}
+                            <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
+                                {onBack ? (
+                                    <button
+                                        onClick={onBack}
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
+                                        title="Back"
+                                    >
+                                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                                    </button>
+                                ) : <div />}
+                                <button
+                                    onClick={onClose}
+                                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
+                                    title="Close"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
 
                             {/* Content */}
                             <div className="flex flex-col items-center text-center relative z-10">
