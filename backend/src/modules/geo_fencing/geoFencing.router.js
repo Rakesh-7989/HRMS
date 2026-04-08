@@ -21,6 +21,13 @@ router.get(
     controller.getSettings
 );
 
+router.put(
+    "/settings",
+    requirePermission("attendance", ["manage_geofence", "manage"]),
+    validate(validator.updateSettingsSchema),
+    controller.updateSettings
+);
+
 router.get(
     "/locations",
     requirePermission("attendance", ["manage_geofence", "manage"]),

@@ -20,6 +20,7 @@ import { useFormGuard } from '@/hooks/useFormGuard';
 import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { showToast } from '@/utils/toast';
 import { useTimezones } from '@/utils/timezone';
 import { permissionsService, TenantRole } from '@/services/permissions.service';
@@ -42,9 +43,9 @@ const createValidationSchema = Yup.object({
     .required('Last name is required'),
   role: Yup.string().required('Role is required'),
   phone: Yup.string()
-    .matches(/^[0-9+\-()\s\.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number cannot exceed 20 digits')
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long')
     .required('Phone is required'),
   department_id: Yup.string().required('Department is required'),
   designation_id: Yup.string().required('Designation is required'),
@@ -103,9 +104,9 @@ const createValidationSchema = Yup.object({
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('Emergency contact is required'),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+]*$/, 'Emergency phone number can only contain numbers')
-    .min(10, 'Emergency phone number must be at least 10 digits')
-    .max(20, 'Emergency phone number cannot exceed 20 digits')
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long')
     .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
     .required('Emergency phone is required'),
   emergency_relation: Yup.string().required('Emergency relation is required'),
@@ -148,9 +149,9 @@ const editValidationSchema = Yup.object({
       return new Date(value) >= minJoinDate;
     }),
   phone: Yup.string()
-    .matches(/^[0-9+\-()\s\.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number cannot exceed 20 digits')
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long')
     .required('Phone is required'),
   gender: Yup.string().required('Gender is required'),
   marital_status: Yup.string().required('Marital status is required'),
@@ -181,9 +182,9 @@ const editValidationSchema = Yup.object({
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('Emergency contact is required'),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+]*$/, 'Emergency phone number can only contain numbers')
-    .min(10, 'Emergency phone number must be at least 10 digits')
-    .max(20, 'Emergency phone number cannot exceed 20 digits')
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long')
     .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
     .required('Emergency phone is required'),
   emergency_relation: Yup.string().required('Emergency relation is required'),
@@ -605,7 +606,7 @@ export const CreateEmployeeForm = ({
                 <div className="relative">
                   {/* Pulse ring for active step */}
                   {isActive && (
-                    <div className="absolute inset-0 w-10 h-10 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    <div className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse ring-4 ring-primary/10" />
                   )}
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${isActive
@@ -670,7 +671,7 @@ export const CreateEmployeeForm = ({
 
       {/* Step 1: Basic Information */}
       <div
-        className={currentStep === 1 ? 'block flex-1 overflow-y-auto px-5 py-2' : 'hidden'}
+        className={currentStep === 1 ? 'block flex-1 overflow-y-auto px-8 py-6 custom-scrollbar' : 'hidden'}
         style={{
           animation: currentStep === 1 && !isTransitioning ? `stepSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards` : undefined,
           opacity: isTransitioning && currentStep === 1 ? 0 : 1,
@@ -749,19 +750,17 @@ export const CreateEmployeeForm = ({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
               Phone *
             </label>
-            <Input
-              type="tel"
+            <PhoneInput
               name="phone"
               value={formik.values.phone}
-              onChange={formik.handleChange}
+              onChange={(val) => formik.setFieldValue('phone', val)}
               onBlur={(e) => {
                 formik.handleBlur(e);
-                checkUnique('phone', e.target.value);
+                checkUnique('phone', formik.values.phone);
               }}
-              onInput={handleInput}
               error={(formik.touched.phone && Boolean(formik.errors.phone)) || Boolean(uniqueErrors.phone)}
-              placeholder="+91 9876543210"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              placeholder="e.g. 9876543210"
+              className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl"
             />
             <FormError message={uniqueErrors.phone || (formik.touched.phone ? formik.errors.phone : undefined)} />
           </div>
@@ -1434,15 +1433,14 @@ export const CreateEmployeeForm = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
                 Contact Phone *
               </label>
-              <input
-                type="tel"
+              <PhoneInput
                 name="emergency_phone"
                 value={formik.values.emergency_phone}
-                onChange={formik.handleChange}
+                onChange={(val) => formik.setFieldValue('emergency_phone', val)}
                 onBlur={formik.handleBlur}
-                onInput={handleInput}
-                placeholder="+91 9876543210"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                error={formik.touched.emergency_phone && Boolean(formik.errors.emergency_phone)}
+                placeholder="e.g. 9876543210"
+                className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl"
               />
               {formik.touched.emergency_phone && formik.errors.emergency_phone && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_phone}</p>

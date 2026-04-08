@@ -14,6 +14,13 @@ const requireFeature = (featurePath) => {
             }
 
             const subscription = await subscriptionService.getSubscriptionByTenantId(tenantId);
+            
+            if (!subscription) {
+                console.warn(`[DEBUG_MIDDLEWARE] No active subscription found for Tenant: ${tenantId}`);
+                return next();
+            }
+
+            console.log(`[DEBUG_MIDDLEWARE] tenantId: ${tenantId}, Feature: ${featurePath}, Plan: ${subscription.plan_name}, Status: ${subscription.status}`);
 
             // --- SUBSCRIPTION STATUS ENFORCEMENT ---
             const status = subscription.status;
@@ -63,7 +70,7 @@ const requireFeature = (featurePath) => {
 
             res.status(403).json({
                 success: false,
-                message: `Feature '${featurePath}' is not included in your current '${subscription.plan_name}' plan. Please upgrade to access this feature.`,
+                message: `Feature '${featurePath}' is not included in your current '${subscription.plan_name || 'N/A'}' plan. Please upgrade to access this feature.`,
                 code: 'FEATURE_DISABLED'
             });
         } catch (error) {

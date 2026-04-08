@@ -129,8 +129,8 @@ exports.getPlans = async (db) => {
 
 exports.updatePlan = async (db, id, data) => {
   const query = getQuery(db);
-  const { name, price, max_employees, features, is_active } = data;
-
+  const { name, price, max_employees, features, is_active, setup_fee } = data;
+  
   // 1. Update Plan Basic Info
   // We determine if we need to update the price history
   // First, get current plan to check logic
@@ -141,11 +141,11 @@ exports.updatePlan = async (db, id, data) => {
   const res = await query(
     `
       UPDATE plans
-      SET name = $1, price = $2, max_employees = $3, features = $4, is_active = $5, updated_at = now()
-      WHERE id = $6
+      SET name = $1, price = $2, max_employees = $3, features = $4, is_active = $5, setup_fee = $6, updated_at = now()
+      WHERE id = $7
       RETURNING *
     `,
-    [name, price, max_employees, JSON.stringify(features), is_active, id]
+    [name, price, max_employees, JSON.stringify(features), is_active, setup_fee || 0, id]
   );
 
   // 2. Handle Price Versioning (If price changed)
@@ -191,16 +191,16 @@ exports.updatePlan = async (db, id, data) => {
 
 exports.createPlan = async (db, data) => {
   const query = getQuery(db);
-  const { name, price, max_employees, features, is_active = true } = data;
-
+  const { name, price, max_employees, features, is_active = true, setup_fee = 0 } = data;
+  
   // 1. Insert Plan
   const res = await query(
     `
-      INSERT INTO plans (name, price, max_employees, features, is_active, code)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO plans (name, price, max_employees, features, is_active, code, setup_fee)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `,
-    [name, price, max_employees, JSON.stringify(features), is_active, name.toUpperCase().replace(/\s+/g, '_')]
+    [name, price, max_employees, JSON.stringify(features), is_active, name.toUpperCase().replace(/\s+/g, '_'), setup_fee]
   );
 
   const plan = res.rows[0];

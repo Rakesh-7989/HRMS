@@ -243,6 +243,8 @@ export const ManagerDashboard: React.FC = () => {
     queryKey: ['dashboard', 'team'],
     queryFn: () => dashboardService.getTeamDashboard(),
     enabled: hasAnyPermission([['employees', 'view'], ['attendance', 'approve'], ['leave', 'approve']]),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   // Attendance Analytics with dynamic date range
@@ -254,7 +256,8 @@ export const ManagerDashboard: React.FC = () => {
     }),
     enabled: hasAnyPermission([['attendance', 'view'], ['attendance', 'approve']]),
     placeholderData: keepPreviousData,
-    refetchInterval: 5000,
+    refetchInterval: 60000, // Reduced to once a minute for stability
+    retry: false,
   });
 
   // Fetch detailed team attendance records for the matrix view
@@ -278,37 +281,48 @@ export const ManagerDashboard: React.FC = () => {
       limit: 1000
     }),
     enabled: !!gridFetchStart && !!attendanceDateRange.end && hasAnyPermission([['attendance', 'view'], ['attendance', 'approve']]),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   const { data: taskData, isLoading: isTasksLoading } = useQuery({
     queryKey: ['dashboard', 'team-tasks'],
     queryFn: () => projectsService.getTasks(),
     enabled: hasPermission('projects', 'view'),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsService.getProjects(),
     enabled: hasPermission('projects', 'view'),
+    staleTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   const { data: pendingRequests } = useQuery({
     queryKey: ['dashboard', 'pending-leaves'],
     queryFn: () => leaveService.getPendingApprovals(),
     enabled: hasPermission('leave', 'approve'),
+    staleTime: 1000 * 60 * 2, // Check for new leaves every 2 mins
+    retry: false,
   });
 
   const { data: peopleEventsData } = useQuery({
     queryKey: ['peopleEvents', 'team'],
     queryFn: () => eventsService.getPeopleEvents('team'),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
     enabled: hasAnyPermission([['employees', 'view'], ['attendance', 'approve']]),
+    retry: false,
   });
 
   const { data: holidays, isLoading: isLoadingHolidays } = useQuery({
     queryKey: ['public-holidays'],
     queryFn: () => leaveService.getPublicHolidays(),
     enabled: hasPermission('calendar', 'view'),
+    staleTime: 1000 * 60 * 60, // Holidays don't change often
+    retry: false,
   });
 
   // --- Mutations ---

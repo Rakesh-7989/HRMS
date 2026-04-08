@@ -182,8 +182,13 @@ export const CouponsPage: React.FC = () => {
                                         <div className="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1 rounded-lg font-mono font-bold text-lg tracking-wider border border-purple-100 dark:border-purple-800 border-dashed">
                                             {coupon.code}
                                         </div>
-                                        <div className={`px-2 py-1 rounded-md text-xs font-bold ${coupon.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {coupon.is_active ? 'ACTIVE' : 'INACTIVE'}
+                                        <div className={`px-2 py-1 rounded-md text-xs font-bold ${
+                                            coupon.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                                            coupon.status === 'INACTIVE' ? 'bg-gray-100 text-gray-500' :
+                                            coupon.status === 'EXPIRED' ? 'bg-red-100 text-red-600' :
+                                            'bg-amber-100 text-amber-600' // LIMIT EXCEEDED
+                                        }`}>
+                                            {coupon.status}
                                         </div>
                                     </div>
 

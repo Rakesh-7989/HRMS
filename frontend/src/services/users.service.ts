@@ -202,6 +202,8 @@ const extractData = <T>(response: any, key?: string): T => {
 // SERVICE
 // ============================================================================
 
+import { deobfuscateId } from '@/utils/obfuscation';
+
 export const usersService = {
   // ==========================================================================
   // LIST & GET USERS
@@ -224,8 +226,9 @@ export const usersService = {
 
   getUserById: async (id: string, options?: { unmask?: boolean }): Promise<User | null> => {
     try {
+      const deid = deobfuscateId(id);
       const params = options?.unmask ? '?unmask=true' : '';
-      const response = await api.get(`/users/${id}${params}`);
+      const response = await api.get(`/users/${deid}${params}`);
       return extractData<User>(response, 'user');
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -252,7 +255,8 @@ export const usersService = {
 
   updateUser: async (id: string, data: UpdateUserData): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}`, data);
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}`, data);
       return extractData<User>(response, 'updated');
     } catch (error) {
       return handleApiError(error);
@@ -261,7 +265,8 @@ export const usersService = {
 
   updateEmployee: async (id: string, data: UpdateEmployeeData): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/employee`, data);
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/employee`, data);
       return extractData<User>(response, 'updated');
     } catch (error) {
       return handleApiError(error);
@@ -274,7 +279,8 @@ export const usersService = {
 
   changeRole: async (id: string, role: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/role`, { role });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/role`, { role });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -284,7 +290,8 @@ export const usersService = {
   // Backend expects 'manager_employee_id' not 'manager_id'
   changeManager: async (id: string, managerEmployeeId: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/manager`, { manager_employee_id: managerEmployeeId });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/manager`, { manager_employee_id: managerEmployeeId });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -293,7 +300,8 @@ export const usersService = {
 
   assignDepartment: async (id: string, departmentId: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/department`, { department_id: departmentId });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/department`, { department_id: departmentId });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -315,7 +323,8 @@ export const usersService = {
 
   updateStatus: async (id: string, isActive: boolean): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/status`, { is_active: isActive });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/status`, { is_active: isActive });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -328,7 +337,8 @@ export const usersService = {
 
   terminateEmployee: async (id: string, data?: TerminateEmployeeData): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.post(`/users/${id}/terminate`, data || {});
+      const deid = deobfuscateId(id);
+      const response = await api.post(`/users/${deid}/terminate`, data || {});
       return { success: true, message: response.data.message || 'Employee terminated successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -337,7 +347,8 @@ export const usersService = {
 
   rehireEmployee: async (id: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.post(`/users/${id}/rehire`, {});
+      const deid = deobfuscateId(id);
+      const response = await api.post(`/users/${deid}/rehire`, {});
       return { success: true, message: response.data.message || 'Employee rehired successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -350,7 +361,8 @@ export const usersService = {
 
   softDeleteUser: async (id: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.delete(`/users/${id}`);
+      const deid = deobfuscateId(id);
+      const response = await api.delete(`/users/${deid}`);
       return { success: true, message: response.data.message || 'User deleted successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -480,7 +492,8 @@ export const usersService = {
   /** Reveal a sensitive field for another employee (HR/Admin) */
   revealSensitiveField: async (userId: string, field: string): Promise<{ field: string; value: string }> => {
     try {
-      const response = await api.get(`/users/${userId}/reveal`, { params: { field } });
+      const deid = deobfuscateId(userId);
+      const response = await api.get(`/users/${deid}/reveal`, { params: { field } });
       return extractData<{ field: string; value: string }>(response, 'data');
     } catch (error) {
       return handleApiError(error);

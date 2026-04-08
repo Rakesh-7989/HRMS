@@ -17,6 +17,12 @@ router.get('/plans', validate(planSearchSchema), subscriptionController.getPlans
 // Webhook (Public, signature verified inside)
 router.post('/webhook', subscriptionController.handleWebhook);
 
+// Cashfree: Verify payment (Publicly accessible to verify registration completion)
+router.post('/verify-payment', subscriptionController.verifyPayment);
+
+// Public: Initiate payment for pending-payment tenant (used during registration retry / login gate)
+router.post('/initiate-tenant-payment', subscriptionController.initiatePaymentForTenant);
+
 // Authenticated routes
 router.use(verifyJwt);
 
@@ -37,9 +43,6 @@ router.post('/cancel', requireRole(['ADMIN']), subscriptionController.cancelSubs
 
 // Cashfree: Create order (initiate subscription)
 router.post('/create-order', requireRole(['ADMIN']), subscriptionController.createOrder);
-
-// Cashfree: Verify payment
-router.post('/verify-payment', requireRole(['ADMIN']), subscriptionController.verifyPayment);
 
 // Retry payment for a failed/pending invoice
 router.post('/retry-payment/:invoiceId', requireRole(['ADMIN']), subscriptionController.retryPayment);

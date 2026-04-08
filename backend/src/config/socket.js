@@ -11,7 +11,7 @@ const initSocket = (httpServer) => {
         cors: {
             origin: env.NODE_ENV === 'production'
                 ? [env.FRONTEND_URL].filter(Boolean)
-                : [env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"].filter(Boolean),
+                : true, // Allow all origins for easier LAN testing in development
             methods: ["GET", "POST"],
             credentials: true,
         },

@@ -1,314 +1,175 @@
-const db = require('../../middleware/db');
-const cashfree = require('../../config/cashfree');
-const crypto = require('crypto');
-const invoiceService = require('./invoice.service');
+const db = require("../../config/db");
+const invoiceService = require("./invoice.service");
+const logger = require("../../config/logger");
+const cashfree = require("../../config/cashfree");
+const mailer = require("../../config/mailer");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 class SubscriptionService {
-    async getPlans(client = null) {
-        const executor = client || db;
-        // Fetch plans (Standard, Premium, Elite, Custom)
-        const plansRes = await executor.query('SELECT * FROM plans WHERE is_active = true ORDER BY setup_fee ASC');
-        const plans = plansRes.rows;
-
-        // Fetch variations for these plans
-        if (plans.length > 0) {
-            const planIds = plans.map(p => p.id);
-            const variationsRes = await executor.query(
-                'SELECT * FROM plan_variations WHERE plan_id = ANY($1) AND is_active = true ORDER BY duration_months ASC',
-                [planIds]
-            );
-            const variations = variationsRes.rows;
-
-            // Attach variations to plans
-            plans.forEach(plan => {
-                plan.variations = variations.filter(v => v.plan_id === plan.id);
-            });
-        }
-
-        return plans;
-    }
-
     async getSubscriptionByTenantId(tenantId, client = null) {
         const executor = client || db;
-        const result = await executor.query(`
-            SELECT s.*, p.name as plan_name, p.features, p.max_employees
-            FROM subscriptions s
-            JOIN plans p ON s.plan_id = p.id
-            WHERE s.tenant_id = $1 AND s.status != 'EXPIRED'
-            ORDER BY s.created_at DESC
-            LIMIT 1
-        `, [tenantId]);
-        return result.rows[0];
+        const res = await executor.query(
+            `SELECT s.*, p.name as plan_name, p.features, p.max_employees
+             FROM subscriptions s
+             JOIN plans p ON s.plan_id = p.id
+             WHERE s.tenant_id = $1 AND s.status != 'CANCELLED' 
+             ORDER BY s.created_at DESC LIMIT 1`,
+            [tenantId]
+        );
+        return res.rows[0];
     }
 
     async createSubscription(data, client = null) {
         const executor = client || db;
-        const { tenant_id, plan_id, billing_cycle, is_trial, status, trial_ends_at, end_date, amount_paid, coupon_code } = data;
-
-        const result = await executor.query(`
-            INSERT INTO subscriptions 
-            (tenant_id, plan_id, billing_cycle, is_trial, status, trial_ends_at, end_date, amount_paid, last_payment_date, coupon_code)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::numeric, CASE WHEN $8::numeric > 0 THEN CURRENT_DATE ELSE NULL END, $9)
-            RETURNING *
-        `, [tenant_id, plan_id, billing_cycle, is_trial, status, trial_ends_at, end_date, amount_paid || 0, coupon_code || null]);
-
-        return result.rows[0];
+        const { tenant_id, plan_id, status, current_period_end, amount, billing_cycle, quantity, coupon_code } = data;
+        const res = await executor.query(
+            `INSERT INTO subscriptions (tenant_id, plan_id, status, current_period_end, amount, billing_cycle, quantity, coupon_code, is_trial)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+             RETURNING id, status`,
+            [tenant_id, plan_id, status, current_period_end, amount, billing_cycle, quantity, coupon_code]
+        );
+        return res.rows[0];
     }
 
-    async createTrial(tenantId, client = null, planId = null, billingCycle = 'MONTHLY') {
+    async createPendingSubscription(tenantId, client, planId, billingCycle, couponCode = null) {
         const executor = client || db;
+        const res = await executor.query(
+            `INSERT INTO subscriptions (tenant_id, plan_id, status, billing_cycle, coupon_code, is_trial)
+             VALUES ($1, $2, 'PENDING_PAYMENT', $3, $4, false)
+             RETURNING id`,
+            [tenantId, planId, billingCycle, couponCode]
+        );
+        return res.rows[0];
+    }
 
-        let targetPlanId = planId;
-        if (!targetPlanId) {
-            const standardPlan = await executor.query("SELECT id FROM plans WHERE name = 'STANDARD' LIMIT 1");
-            if (standardPlan.rowCount > 0) {
-                targetPlanId = standardPlan.rows[0].id;
+    async createTrial(tenantId, client, planId, billingCycle) {
+        const executor = client || db;
+        
+        // If planId is missing, resolve it to 'STANDARD' to satisfy NOT NULL constraint
+        let finalPlanId = planId;
+        if (!finalPlanId) {
+            const planRes = await executor.query("SELECT id FROM plans WHERE name = 'STANDARD' LIMIT 1");
+            if (planRes.rowCount > 0) {
+                finalPlanId = planRes.rows[0].id;
             }
         }
 
-        if (!targetPlanId) throw new Error('Default plan (STANDARD) not found for trial creation.');
+        const res = await executor.query(
+            `INSERT INTO subscriptions (tenant_id, plan_id, status, current_period_end, billing_cycle, is_trial)
+             VALUES ($1, $2, 'TRIAL', NOW() + INTERVAL '14 days', $3, true)
+             RETURNING id`,
+            [tenantId, finalPlanId, billingCycle]
+        );
 
-        const trialDays = 14;
-        const trialEndsAt = new Date();
-        trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
-
-        const subscription = await this.createSubscription({
-            tenant_id: tenantId,
-            plan_id: targetPlanId,
-            billing_cycle: billingCycle,
-            is_trial: true,
-            status: 'TRIAL',
-            trial_ends_at: trialEndsAt,
-            amount_paid: 0,
-            coupon_code: null
-        }, executor);
-
-        // Sync to tenants table
-        const planTierRes = await executor.query('SELECT tier FROM plans WHERE id = $1', [targetPlanId]);
-        const tier = planTierRes.rows[0]?.tier || 1;
-
-        await executor.query(`
-            UPDATE tenants
-            SET plan_type = $1,
-                plan_expiry_date = $2,
-                updated_at = NOW()
-            WHERE id = $3
-        `, [tier, trialEndsAt, tenantId]);
-
-        return subscription;
+        // Update tenant trial state
+        await executor.query(
+            `UPDATE tenants SET is_active = true, updated_at = NOW() WHERE id = $1`,
+            [tenantId]
+        );
+        return res.rows[0];
     }
 
-    /**
-     * Create a pending subscription for users who selected a paid plan.
-     * This is NOT a trial - it awaits payment confirmation.
-     */
-    async createPendingSubscription(tenantId, client = null, planId, billingCycle = 'MONTHLY', couponCode = null) {
+    async calculatePrice(tenantId, planId, billingCycle, quantity = 1, isNewSubscription = false, couponCode = null, client = null) {
         const executor = client || db;
+        
+        console.log(`[DEBUG_PRICE] Calculating for Tenant: ${tenantId}, Plan: ${planId}, Cycle: ${billingCycle}, Input Quantity: ${quantity}`);
 
-        if (!planId) throw new Error('Plan ID is required for paid subscription.');
-
-        // Calculate end date based on billing cycle
-        const durationMonths = billingCycle === 'YEARLY' ? 12 :
-            billingCycle === 'HALF_YEARLY' ? 6 :
-                billingCycle === 'QUARTERLY' ? 3 : 1;
-
-        const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + durationMonths);
-
-        const subscription = await this.createSubscription({
-            tenant_id: tenantId,
-            plan_id: planId,
-            billing_cycle: billingCycle,
-            is_trial: false,
-            status: 'PENDING_PAYMENT',
-            trial_ends_at: null,
-            end_date: endDate,
-            amount_paid: 0,
-            coupon_code: couponCode
-        }, executor);
-
-        // Sync to tenants table
-        const planTierRes = await executor.query('SELECT tier FROM plans WHERE id = $1', [planId]);
-        const tier = planTierRes.rows[0]?.tier || 1;
-
-        await executor.query(`
-            UPDATE tenants
-            SET plan_type = $1,
-                plan_expiry_date = $2,
-                updated_at = NOW()
-            WHERE id = $3
-        `, [tier, endDate, tenantId]);
-
-        return subscription;
-    }
-
-    /**
-     * Cancel subscription at period end.
-     */
-    async cancelSubscription(tenantId, client = null) {
-        const executor = client || db;
-        const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
-
-        if (!subscription) {
-            throw new Error('No active subscription found to cancel.');
-        }
-
-        const result = await executor.query(`
-            UPDATE subscriptions
-            SET status = 'CANCELLED',
-                cancel_at_period_end = TRUE,
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-        `, [subscription.id]);
-
-        return result.rows[0];
-    }
-
-    /**
-     * Suspend tenant manually (Super Admin)
-     */
-    async suspendSubscription(tenantId, client = null) {
-        const executor = client || db;
-        const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
-
-        if (!subscription) {
-            throw new Error('No subscription found to suspend.');
-        }
-
-        const result = await executor.query(`
-            UPDATE subscriptions
-            SET status = 'SUSPENDED',
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-        `, [subscription.id]);
-
-        return result.rows[0];
-    }
-
-    async reactivateStatus(tenantId, client = null) {
-        const executor = client || db;
-        const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
-
-        if (!subscription) throw new Error('No subscription found.');
-
-        const result = await executor.query(`
-            UPDATE subscriptions
-            SET status = 'ACTIVE',
-                cancel_at_period_end = FALSE,
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-        `, [subscription.id]);
-
-        return result.rows[0];
-    }
-
-    /**
-     * Admin upgrade/change subscription plan manually without payment
-     */
-    async upgradeSubscription(tenantId, planId, billingCycle, client = null) {
-        const executor = client || db;
-
-        // 1. Verify plan exists
         const planRes = await executor.query('SELECT * FROM plans WHERE id = $1', [planId]);
         if (planRes.rowCount === 0) throw new Error('Selected plan not found.');
         const plan = planRes.rows[0];
 
-        // 2. Fetch active/current subscription
-        const subscription = await this.getSubscriptionByTenantId(tenantId, executor);
-        if (!subscription) {
-            throw new Error('No active subscription found to upgrade.');
+        let durationMonths = 1;
+        switch (billingCycle) {
+            case 'QUARTERLY': durationMonths = 3; break;
+            case 'HALF_YEARLY': durationMonths = 6; break;
+            case 'YEARLY': durationMonths = 12; break;
+            default: durationMonths = 1; break;
         }
 
-        const durationMonths = billingCycle === 'YEARLY' ? 12 :
-            billingCycle === 'HALF_YEARLY' ? 6 :
-                billingCycle === 'QUARTERLY' ? 3 : 1;
-        const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + durationMonths);
-
-        // 3. Update subscription linearly
-        const result = await executor.query(`
-            UPDATE subscriptions
-            SET plan_id = $1,
-                billing_cycle = $2,
-                end_date = $3,
-                updated_at = NOW()
-            WHERE id = $4
-            RETURNING *
-        `, [planId, billingCycle, endDate, subscription.id]);
-
-        // 4. Sync tenant table
-        const tier = plan.tier || 1;
-        await executor.query(`
-            UPDATE tenants
-            SET plan_type = $1,
-                plan_expiry_date = $2,
-                updated_at = NOW()
-            WHERE id = $3
-        `, [tier, endDate, tenantId]);
-
-        return result.rows[0];
-    }
-
-    async calculatePrice(tenantId, planId, billingCycle, quantity = 1, isNewSubscription = false, couponCode = null) {
-        const planRes = await db.query('SELECT * FROM plans WHERE id = $1', [planId]);
-        const plan = planRes.rows[0];
-        if (!plan) throw new Error('Plan not found.');
-
-        const variationRes = await db.query(
-            'SELECT * FROM plan_variations WHERE plan_id = $1 AND frequency = $2',
+        const priceRes = await executor.query(
+            `SELECT unit_amount, interval FROM plan_prices 
+             WHERE plan_id = $1 AND (interval = $2 OR interval = 'MONTHLY') AND is_active = true 
+             ORDER BY interval = $2 DESC, created_at DESC LIMIT 1`,
             [planId, billingCycle]
         );
-        const variation = variationRes.rows[0];
-        if (!variation) throw new Error(`Pricing not found for ${billingCycle} cycle.`);
 
-        const unitPrice = parseFloat(variation.unit_price);
-        const durationMonths = variation.duration_months;
-        const gstPercent = parseFloat(variation.gst_percentage || 18);
+        let unitPrice = 0;
+        if (priceRes.rowCount > 0) {
+            unitPrice = parseFloat(priceRes.rows[0].unit_amount);
+            // If the price returned is monthly but we need quarterly/yearly, multiply it
+            if (priceRes.rows[0].interval === 'MONTHLY' && billingCycle !== 'MONTHLY') {
+                unitPrice *= durationMonths;
+            }
+        } else {
+            unitPrice = parseFloat(plan.current_price || plan.price || 0) * durationMonths;
+        }
 
         // Subscriptions are per-user based on the provided quantity or current employee count
-        let currentCount = quantity;
-        if (!currentCount || currentCount === 1) {
-            const countRes = await db.query('SELECT COUNT(*) FROM employees WHERE tenant_id = $1 AND is_deleted = false', [tenantId]);
+        let currentCount = parseInt(quantity, 10);
+        if (!currentCount || currentCount <= 1) {
+            const countRes = await executor.query('SELECT COUNT(*) FROM employees WHERE tenant_id = $1 AND is_deleted = false', [tenantId]);
             currentCount = Math.max(1, parseInt(countRes.rows[0].count, 10));
         }
 
-        const baseSubscriptionAmount = unitPrice * currentCount * durationMonths;
+        const subtotal = Math.ceil(unitPrice * currentCount);
 
         let setupFee = 0;
-        if (isNewSubscription && plan.setup_fee) {
-            setupFee = parseFloat(plan.setup_fee);
+        const paymentCheck = await executor.query("SELECT id FROM subscription_invoices WHERE tenant_id = $1 AND status = 'PAID' LIMIT 1", [tenantId]);
+        const hasNeverPaid = paymentCheck.rowCount === 0;
+
+        if (isNewSubscription || hasNeverPaid) {
+            setupFee = parseFloat(plan.setup_fee || 0);
+            console.log(`[DEBUG_PRICE] Applying Setup Fee: ${setupFee}`);
         }
 
-        let taxableAmount = baseSubscriptionAmount + setupFee;
+        const baseTaxableAmount = subtotal + setupFee;
         let discountAmount = 0;
-
-        // Apply Coupon
         if (couponCode) {
             try {
-                const couponService = require('./coupon.service');
-                const coupon = await couponService.validateCoupon(couponCode);
-                // Calculate against base amount or total? Usually base.
-                discountAmount = couponService.calculateDiscount(coupon, baseSubscriptionAmount);
-                // Reducing base amount effectively
-                // Or we can reduce total taxable amount?
-                // Let's reduce taxableAmount for simplicity so GST is on discounted price
-                taxableAmount = Math.max(0, taxableAmount - discountAmount);
+                // Synchronized with coupon.service.js schema: expires_at (not expiry_date)
+                const couponRes = await executor.query(
+                    "SELECT * FROM coupons WHERE code = $1 AND is_active = true AND (expires_at > NOW() OR expires_at IS NULL)", 
+                    [couponCode.toUpperCase()]
+                );
+
+                if (couponRes.rowCount > 0) {
+                    const coupon = couponRes.rows[0];
+                    // Apply discount to the WHOLE taxable total (Subtotal + Setup Fee) to match Frontend
+                    if (coupon.discount_type === 'PERCENT') {
+                        discountAmount = (baseTaxableAmount * parseFloat(coupon.discount_value)) / 100;
+                    } else if (coupon.discount_type === 'FIXED') {
+                        discountAmount = parseFloat(coupon.discount_value);
+                    } else {
+                        const type = coupon.discount_type || coupon.type;
+                        const val = coupon.discount_value || coupon.value || 0;
+                        if (type === 'PERCENTAGE' || type === 'PERCENT') {
+                            discountAmount = (baseTaxableAmount * parseFloat(val)) / 100;
+                        } else {
+                            discountAmount = parseFloat(val);
+                        }
+                    }
+                    console.log(`[DEBUG_PRICE] Coupon applied: ${couponCode}, Discount: ${discountAmount}`);
+                } else {
+                    console.warn(`[DEBUG_PRICE] Coupon ${couponCode} not found or inactive/expired`);
+                }
             } catch (e) {
-                console.warn('Coupon validation failed during calc:', e.message);
+                console.warn('Coupon application failed:', e.message);
             }
         }
 
-        const gstAmount = (taxableAmount * gstPercent) / 100;
-        const totalAmount = taxableAmount + gstAmount;
+        const gstPercent = 18;
+        const totalTaxable = Math.max(0, baseTaxableAmount - discountAmount);
+        const gstAmount = Math.ceil(totalTaxable * (gstPercent / 100));
+        const totalAmount = Math.ceil(totalTaxable + gstAmount);
+
+        console.log(`[DEBUG_PRICE] FINAL CALC: (${unitPrice} * ${currentCount}) + ${setupFee} - ${discountAmount} + TAX = ${totalAmount}`);
 
         return {
             unit_price: unitPrice,
             quantity: currentCount,
             duration_months: durationMonths,
-            base_subscription_amount: baseSubscriptionAmount,
+            base_subscription_amount: subtotal,
             setup_fee: setupFee,
             discount_amount: discountAmount,
             gst_percentage: gstPercent,
@@ -318,29 +179,28 @@ class SubscriptionService {
         };
     }
 
-    async initiateSubscription(tenantId, planId, billingCycle, quantity = null) {
-        const existingSub = await this.getSubscriptionByTenantId(tenantId);
+    async initiateSubscription(tenantId, planId, billingCycle, quantity = null, couponCode = null, client = null) {
+        const executor = client || db;
+        const existingSub = await this.getSubscriptionByTenantId(tenantId, executor);
         const isNewSubscription = !existingSub || existingSub.is_trial;
 
-        // Use stored coupon code if available
-        const couponCode = existingSub?.coupon_code || null;
+        // Ensure couponCode is respected from arguments if provided, otherwise fallback to existing sub
+        const activeCoupon = couponCode || existingSub?.coupon_code || null;
+        const pricing = await this.calculatePrice(tenantId, planId, billingCycle, quantity, isNewSubscription, activeCoupon, executor);
 
-        const pricing = await this.calculatePrice(tenantId, planId, billingCycle, quantity, isNewSubscription, couponCode);
-
-        // 1. Ensure a subscription record exists (even if pending)
         let subscription = existingSub;
         if (!subscription) {
             subscription = await this.createSubscription({
                 tenant_id: tenantId,
                 plan_id: planId,
                 billing_cycle: billingCycle,
-                is_trial: false,
-                status: 'PAST_DUE', // Pending payment
-                coupon_code: couponCode
-            });
+                status: 'PAST_DUE',
+                quantity: pricing.quantity,
+                amount: pricing.total_amount,
+                coupon_code: activeCoupon
+            }, executor);
         }
 
-        // 2. Create Invoice
         const durationMonths = pricing.duration_months;
         const startDate = new Date();
         const endDate = new Date();
@@ -354,16 +214,35 @@ class SubscriptionService {
             billing_period_start: startDate,
             billing_period_end: endDate,
             due_date: startDate
-        });
+        }, executor);
 
-        // 3. Get Payment Link
-        const paymentData = await invoiceService.generatePaymentLink(invoice.id);
+        // If amount is 0 (due to 100% coupon or trial upgrade), don't call Cashfree
+        if (pricing.total_amount <= 0) {
+            console.log(`[DEBUG_PRICE] Amount is 0 for Invoice ${invoice.id}. Bypassing Cashfree.`);
+            await invoiceService.updateInvoiceStatus(invoice.id, 'PAID', `FREE-${invoice.id}`, 'N/A', executor);
+            
+            if (activeCoupon) {
+                const couponService = require('./coupon.service');
+                const coupon = await couponService.getCouponByCode(activeCoupon, executor);
+                if (coupon) await couponService.incrementUsage(coupon.id, executor);
+            }
 
-        // Increment coupon usage if used
-        if (couponCode) {
+            return {
+                invoice_id: invoice.id,
+                payment_session_id: null,
+                order_id: `FREE-${invoice.id}`,
+                amount: 0,
+                pricing_details: pricing,
+                skip_checkout: true
+            };
+        }
+
+        const paymentData = await invoiceService.generatePaymentLink(invoice.id, executor);
+
+        if (activeCoupon) {
             const couponService = require('./coupon.service');
-            const coupon = await couponService.getCouponByCode(couponCode);
-            if (coupon) await couponService.incrementUsage(coupon.id);
+            const coupon = await couponService.getCouponByCode(activeCoupon, executor);
+            if (coupon) await couponService.incrementUsage(coupon.id, executor);
         }
 
         return {
@@ -377,61 +256,148 @@ class SubscriptionService {
 
     async verifyPayment(tenantId, orderId) {
         try {
-            const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
-            if (!invoice) throw new Error('Invoice not found for this order.');
+            console.log(`[DEBUG_VERIFY] Starting verification for Order: ${orderId}, Tenant: ${tenantId}`);
+            const result = await invoiceService.verifyCashfreePayment(orderId);
+            
+            console.log(`[DEBUG_VERIFY] Cashfree Response:`, JSON.stringify(result, null, 2));
 
-            const response = await cashfree.PGOrderFetchPayments("2023-08-01", orderId);
-            const payments = response.data;
-            const successfulPayment = payments.find(p => p.payment_status === 'SUCCESS');
+            const isSuccessStatus = ['PAID', 'SUCCESS', 'ACTIVE', 'COMPLETED'].includes(String(result.status || '').toUpperCase());
 
-            if (!successfulPayment) throw new Error('No successful payment found.');
+            if (result.success && isSuccessStatus) {
+                const resolvedTenantId = tenantId || result.data?.customer_details?.customer_id;
+                
+                if (!resolvedTenantId) {
+                    throw new Error('Tenant identification failed during verification');
+                }
 
-            // Update Invoice
-            await invoiceService.updateInvoiceStatus(invoice.id, 'PAID');
+                const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
+                if (!invoice) throw new Error('Invoice not found for this order.');
 
-            // Update Subscription
-            const subscription = await this.getSubscriptionByTenantId(tenantId);
-            const durationMonths = 1; // Needs to be fetched from variation used in invoice
-            // Actually, we should store duration in invoice.
+                // Use direct axios for payments fetch to be consistent with invoiceService which works
+                const axios = require('axios');
+                const isProd = process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION';
+                const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
 
-            await db.query(`
-                UPDATE subscriptions
-                SET plan_id = $1,
-                    status = 'ACTIVE',
-                    is_trial = false,
-                    last_payment_date = CURRENT_DATE,
-                    end_date = $2,
-                    amount_paid = amount_paid + $3,
-                    updated_at = NOW()
-                WHERE id = $4
-            `, [invoice.plan_id, invoice.billing_period_end, invoice.amount, subscription.id]);
+                const response = await axios.get(`${baseUrl}/orders/${orderId}/payments`, {
+                    headers: {
+                        'x-client-id': process.env.CASHFREE_APP_ID,
+                        'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+                        'x-api-version': '2023-08-01'
+                    }
+                });
+                
+                const payments = response.data;
+                const successfulPayment = payments.find(p => p.payment_status === 'SUCCESS');
 
-            // Sync to tenants table for fast lookup in middleware/frontend
-            const planTierRes = await db.query('SELECT tier FROM plans WHERE id = $1', [invoice.plan_id]);
-            const tier = planTierRes.rows[0]?.tier || 1;
+                if (!successfulPayment) throw new Error('No successful payment found.');
 
-            await db.query(`
-                UPDATE tenants
-                SET plan_type = $1,
-                    plan_expiry_date = $2,
-                    updated_at = NOW()
-                WHERE id = $3
-            `, [tier, invoice.billing_period_end, tenantId]);
+                const client = await db.connect();
+                try {
+                    await client.query('BEGIN');
 
-            // Create record in subscription_payments
-            await db.query(`
-                INSERT INTO subscription_payments (invoice_id, tenant_id, amount, status, payment_method, transaction_id, paid_at)
-                VALUES ($1, $2, $3, 'SUCCESS', $4, $5, NOW())
-            `, [invoice.id, tenantId, successfulPayment.payment_amount, successfulPayment.payment_group, successfulPayment.cf_payment_id]);
+                    // 1. Update Invoice
+                    console.log(`[DEBUG_VERIFY] Updating Invoice ${invoice.id} to PAID`);
+                    await invoiceService.updateInvoiceStatus(invoice.id, 'PAID', orderId, null, client);
 
-            return { success: true };
+                    // 2. Update Subscription
+                    const subscription = await this.getSubscriptionByTenantId(resolvedTenantId, client);
+                    if (subscription) {
+                        console.log(`[DEBUG_VERIFY] Updating Subscription ${subscription.id} to ACTIVE`);
+                        await client.query(`
+                            UPDATE subscriptions
+                            SET status = 'ACTIVE',
+                                is_trial = false,
+                                last_payment_date = NOW(),
+                                current_period_start = NOW(),
+                                current_period_end = $1,
+                                amount_paid = amount_paid + $2,
+                                updated_at = NOW()
+                            WHERE id = $3
+                        `, [invoice.billing_period_end, invoice.amount, subscription.id]);
+                    }
+
+                    // 3. Activate Tenant
+                    const planRes = await client.query('SELECT tier FROM plans WHERE id = $1', [invoice.plan_id]);
+                    const plan = planRes.rows[0];
+                    const tier = plan?.tier || 1;
+
+                    console.log(`[DEBUG_VERIFY] Activating Tenant ${resolvedTenantId} with Plan Tier ${tier}`);
+                    await client.query(`
+                        UPDATE tenants
+                        SET plan_type = $1,
+                            plan_expiry_date = $2,
+                            is_active = true,
+                            registration_status = 'COMPLETED',
+                            updated_at = NOW()
+                        WHERE id = $3
+                    `, [tier, invoice.billing_period_end, resolvedTenantId]);
+
+                    // 4. Handle User Activation & Welcome Email
+                    // Find the ADMIN user. If they were inactive (first time registration), we send welcome email.
+                    const userRes = await client.query(`
+                        SELECT id, email, is_active, tenant_id FROM users 
+                        WHERE tenant_id = $1 AND role = 'ADMIN' LIMIT 1
+                    `, [resolvedTenantId]);
+                    
+                    if (userRes.rowCount > 0) {
+                        const adminUser = userRes.rows[0];
+                        const wasInactive = !adminUser.is_active;
+
+                        // ONLY generate and set password if the user was inactive (new registration)
+                        // This prevents race conditions where double verification (webhook + redirect) 
+                        // overwrites the password sent in the email.
+                        if (wasInactive) {
+                            const tempPassword = crypto.randomBytes(6).toString("hex");
+                            const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+                            console.log(`[DEBUG_VERIFY] Initial activation for User ${adminUser.id} (${adminUser.email}). Setting temp password.`);
+                            await client.query(`
+                                UPDATE users
+                                SET is_active = true,
+                                    password_hash = $1,
+                                    must_change_password = true,
+                                    updated_at = NOW()
+                                WHERE id = $2
+                            `, [passwordHash, adminUser.id]);
+
+                            // Find tenant name for email context
+                            const tRes = await client.query('SELECT name FROM tenants WHERE id = $1', [resolvedTenantId]);
+                            const tenantName = tRes.rows[0]?.name || 'Your Organization';
+
+                            console.log(`[DEBUG_VERIFY] Triggering Welcome Email to ${adminUser.email}`);
+                            try {
+                                await mailer.sendWelcomeEmail(adminUser.email, tenantName, tempPassword);
+                            } catch (emailErr) {
+                                console.error('[DEBUG_VERIFY] Email dispatch failed:', emailErr.message);
+                            }
+                        } else {
+                            console.log(`[DEBUG_VERIFY] User ${adminUser.id} already active. Skipping password reset.`);
+                        }
+                    }
+
+                    // 5. Create record in subscription_payments
+                    await client.query(`
+                        INSERT INTO subscription_payments (invoice_id, tenant_id, amount, status, payment_method, transaction_id, paid_at)
+                        VALUES ($1, $2, $3, 'SUCCESS', 'CASHFREE', $4, NOW())
+                    `, [invoice.id, resolvedTenantId, invoice.amount, orderId]);
+
+                    await client.query('COMMIT');
+                    return { success: true };
+                } catch (txError) {
+                    await client.query('ROLLBACK');
+                    throw txError;
+                } finally {
+                    client.release();
+                }
+            } else {
+                return { success: false, status: result.status };
+            }
         } catch (error) {
             console.error('Payment Verification Error:', error.message);
             throw error;
         }
     }
 
-    // Keep compatibility for now or refactor
     async getUsage(tenantId) {
         const sub = await this.getSubscriptionByTenantId(tenantId);
         const countRes = await db.query('SELECT COUNT(*) FROM employees WHERE tenant_id = $1 AND is_deleted = false', [tenantId]);
@@ -449,7 +415,7 @@ class SubscriptionService {
     async checkEmployeeLimit(tenantId) {
         const usage = await this.getUsage(tenantId);
         if (usage.max_employees === 0) return false;
-        if (usage.max_employees === null) return true; // Unlimited
+        if (usage.max_employees === null) return true; 
         return usage.current_employees < usage.max_employees;
     }
 
@@ -467,4 +433,3 @@ class SubscriptionService {
 }
 
 module.exports = new SubscriptionService();
-

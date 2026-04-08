@@ -1,7 +1,13 @@
 const { Cashfree, CFEnvironment } = require('cashfree-pg');
 
-Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-Cashfree.XEnvironment = CFEnvironment[process.env.CASHFREE_ENVIRONMENT || 'SANDBOX'];
+const env = process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION' 
+    ? CFEnvironment.PRODUCTION 
+    : CFEnvironment.SANDBOX;
 
-module.exports = Cashfree;
+const cashfree = new Cashfree();
+cashfree.XClientId = process.env.CASHFREE_APP_ID;
+cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+cashfree.XEnvironment = env;
+cashfree.XApiVersion = "2023-08-01";
+
+module.exports = cashfree;

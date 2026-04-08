@@ -153,17 +153,23 @@ export const EmployeeDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'personal'],
     queryFn: () => dashboardService.getPersonalDashboard(),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   const { data: peopleEventsData } = useQuery({
     queryKey: ['peopleEvents', 'personal'],
     queryFn: () => eventsService.getPeopleEvents('personal'),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   const { data: geoSettings } = useQuery({
     queryKey: ['geo-fencing-settings'],
     queryFn: () => geoFencingService.getSettings(),
+    enabled: hasPermission('attendance', 'clock_in_out') || hasPermission('attendance', 'view_my'),
+    staleTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   // Mutations

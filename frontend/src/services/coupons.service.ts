@@ -9,6 +9,7 @@ export interface Coupon {
     expires_at: string | null;
     times_redeemed: number;
     is_active: boolean;
+    status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED' | 'LIMIT EXCEEDED';
     created_at: string;
 }
 

@@ -45,45 +45,82 @@ export const DailyAttendanceContent: React.FC = () => {
     const canViewAll = hasPermission('attendance', 'view_all') || canManage;
     const isAnyAdmin = canViewTeam || canViewAll;
 
+    const hasEmployeeProfile = !!user?.employee_id;
+    const canClock = hasPermission('attendance', 'clock_in_out') || hasPermission('attendance', 'view_my');
+    const shouldFetchPersonal = hasEmployeeProfile && canClock;
+
     const { data: todayAttendance } = useQuery({
         queryKey: ['attendance', 'today'],
         queryFn: () => attendanceService.getTodayAttendance(),
+        enabled: shouldFetchPersonal,
+        staleTime: 1000 * 60 * 5,
     });
 
     // Employee: Fetches their own history
     const { data: myAttendance = [], isLoading: isLoadingMyAttendance } = useQuery({
         queryKey: ['attendance', 'my'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
-        enabled: true // Always fetch for personal view unless specifically denied
+        enabled: shouldFetchPersonal,
+        staleTime: 1000 * 60 * 5,
     });
 
     // Employee: Fetches their own pending checkouts
     const { data: myPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'my-pending'],
         queryFn: () => attendanceService.getMyPendingCheckouts(),
-        enabled: true
+        enabled: shouldFetchPersonal,
+        staleTime: 1000 * 60 * 10,
     });
 
     // HR/Manager: Fetches Today's Attendance Log (Team/All)
     const { data: todayTeamAttendance = [], isLoading: isLoadingTeamAttendance } = useQuery({
         queryKey: ['attendance', 'today-team-log'],
-        queryFn: () => attendanceService.getAttendanceRecords({
-            from_date: getCurrentDate(user?.timezone),
-            to_date: getCurrentDate(user?.timezone)
-        }),
-        enabled: isAnyAdmin
+        queryFn: async () => {
+            try {
+                return await attendanceService.getAttendanceRecords({
+                    from_date: getCurrentDate(user?.timezone),
+                    to_date: getCurrentDate(user?.timezone)
+                });
+            } catch (error) {
+                console.error("Failed to fetch team attendance:", error);
+                return [];
+            }
+        },
+        enabled: isAnyAdmin,
+        staleTime: 1000 * 60 * 2, // 2 minutes for real-time log
     });
 
     // HR/Manager: Fetches Pending Checkouts (Team/All - API handles filtering based on role)
     const { data: teamPendingCheckouts = [] } = useQuery({
         queryKey: ['attendance', 'team-pending'],
-        queryFn: () => attendanceService.getPendingCheckouts({}),
-        enabled: isAnyAdmin
+        queryFn: async () => {
+            try {
+                return await attendanceService.getPendingCheckouts({});
+            } catch (error) {
+                console.error("Failed to fetch pending checkouts:", error);
+                return [];
+            }
+        },
+        enabled: isAnyAdmin,
+        staleTime: 1000 * 60 * 5,
     });
 
     const { data: geoSettings } = useQuery({
         queryKey: ['geo-fencing-settings'],
-        queryFn: () => geoFencingService.getSettings(),
+        queryFn: async () => {
+            try {
+                return await geoFencingService.getSettings();
+            } catch (error) {
+                return {
+                    is_enabled: false,
+                    allow_clock_without_location: true,
+                    location_timeout_seconds: 30,
+                    require_high_accuracy: false
+                } as any;
+            }
+        },
+        enabled: shouldFetchPersonal,
+        staleTime: 1000 * 60 * 10,
     });
 
     // Timer effect

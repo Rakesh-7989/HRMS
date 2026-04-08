@@ -11,9 +11,10 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 5173,
+    host: true, // Listen on all interfaces (0.0.0.0)
     hmr: {
       protocol: 'ws',
-      host: 'localhost',
+      // host: 'localhost', // REMOVED: This was causing ERR_CONNECTION_REFUSED on LAN
       port: 5173,
     },
     watch: {

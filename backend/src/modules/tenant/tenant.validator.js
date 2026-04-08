@@ -37,7 +37,7 @@ exports.tenantRegisterSchema = z.object({
     settings: z.object({}).optional(),
     plan_id: z.string().uuid("Invalid plan ID").optional(),
     billing_cycle: z.enum(['MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY']).optional(),
-    employee_count: z.number().int().positive().optional(),
+    employee_count: z.number().int().positive("Employee count must be a positive integer"),
     coupon_code: z.string().max(50).optional()
   })
 });

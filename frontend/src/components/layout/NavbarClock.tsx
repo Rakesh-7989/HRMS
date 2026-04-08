@@ -11,9 +11,11 @@ import { formatDuration } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const NavbarClock: React.FC = () => {
     const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const { alert: showAlert, confirm } = useConfirm();
     const { t } = useTranslation();
@@ -22,23 +24,43 @@ export const NavbarClock: React.FC = () => {
     const [breakTimer, setBreakTimer] = useState<number>(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
 
+    const isEmployee = user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN';
+    const hasEmployeeProfile = !!user?.employee_id;
+    const canClock = hasPermission('attendance', 'clock_in_out') || hasPermission('attendance', 'view_my');
+    const shouldFetch = isEmployee && hasEmployeeProfile && canClock;
+
     const { data: todayAttendance, isLoading: isLoadingAttendance, isError } = useQuery({
         queryKey: ['attendance', 'today'],
         queryFn: async () => {
             try {
                 return await attendanceService.getTodayAttendance();
             } catch (error) {
-                console.error("Failed to fetch attendance", error);
+                console.error("Failed to fetch today's attendance:", error);
                 return null;
             }
         },
-        staleTime: 1000 * 60, // 1 minute stale time
+        enabled: shouldFetch,
+        staleTime: 1000 * 60 * 5, // 5 minutes
         retry: 1,
     });
 
     const { data: geoSettings } = useQuery({
         queryKey: ['geo-fencing-settings'],
-        queryFn: () => geoFencingService.getSettings(),
+        queryFn: async () => {
+            try {
+                return await geoFencingService.getSettings();
+            } catch (error) {
+                console.error("Failed to fetch geo-fencing settings:", error);
+                return {
+                    is_enabled: false,
+                    allow_clock_without_location: true,
+                    location_timeout_seconds: 30,
+                    require_high_accuracy: false
+                } as any; // Secure default
+            }
+        },
+        enabled: shouldFetch,
+        staleTime: 1000 * 60 * 10, // 10 minutes
         retry: false,
     });
 

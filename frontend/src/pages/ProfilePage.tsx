@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { Label } from '@/components/ui/Label';
 
 import { usersService } from '@/services/users.service';
@@ -44,13 +45,13 @@ const profileValidationSchema = Yup.object({
     .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
     .required('Last name is required'),
   phone: Yup.string()
-    .matches(/^[0-9+\-()\s\.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number cannot exceed 20 digits'),
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long'),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+]*$/, 'Emergency phone number can only contain numbers')
-    .min(10, 'Emergency phone number must be at least 10 digits')
-    .max(20, 'Emergency phone number cannot exceed 20 digits'),
+    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .min(5, 'Too short')
+    .max(25, 'Too long'),
   email: Yup.string().email('Invalid email'),
   bank_name: Yup.string()
     .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters'),
@@ -716,6 +717,16 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           onInput={handleInput}
           rows={3}
           className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        />
+      ) : id === 'phone' || id === 'emergency_phone' ? (
+        <PhoneInput
+          name={id}
+          value={formik.values[id]}
+          onChange={(val) => formik.setFieldValue(id, val)}
+          onBlur={formik.handleBlur}
+          error={Boolean(isError)}
+          placeholder={`e.g. 9876543210`}
+          className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl shadow-sm"
         />
       ) : (
         <Input

@@ -100,7 +100,7 @@ router.get(
 // Get all attendance records
 router.get(
   "/records",
-  requirePermission("attendance", ["view_all", "manage"]),
+  requirePermission("attendance", ["view_all", "view_team", "manage"]),
   validate(validator.attendanceRecordsQuerySchema),
   controller.getAttendanceRecords
 );
@@ -132,7 +132,7 @@ router.get(
 // Get all pending checkouts
 router.get(
   "/pending",
-  requirePermission("attendance", ["view_all", "manage"]),
+  requirePermission("attendance", ["view_all", "view_team", "manage"]),
   validate(validator.pendingCheckoutsQuerySchema),
   controller.getPendingCheckouts
 );

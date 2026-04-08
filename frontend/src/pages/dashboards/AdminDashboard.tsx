@@ -16,6 +16,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 // Modern color palette
 const COLORS = {
@@ -188,18 +189,22 @@ const DepartmentRow = ({ name, count, percentage, index }: { name: string; count
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const { t } = useTranslation();
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'organization'],
     queryFn: () => dashboardService.getOrganizationDashboard(),
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: false,
   });
 
   const { data: peopleEventsData } = useQuery({
     queryKey: ['peopleEvents', 'organization'],
     queryFn: () => eventsService.getPeopleEvents('organization'),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
+    enabled: hasPermission('employees', 'view') || hasPermission('attendance', 'approve'),
+    retry: false,
   });
 
   const metrics = data?.orgMetrics || {

@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { resolveImageUrl } from '@/utils/image';
 import { cn } from '@/utils/cn';
+import { obfuscateId } from '@/utils/obfuscation';
 import {
   Plus,
   UserCheck,
@@ -163,7 +164,8 @@ export const EmployeesPage: React.FC = () => {
 
   const handleRowClick = (emp: User) => {
     if (canUpdate || user?.role === 'ADMIN' || user?.role === 'HR') {
-      navigate(`/dashboard/employees/${emp.id}`);
+      const secureId = obfuscateId(emp.employee_id || emp.id);
+      navigate(`/dashboard/employees/${secureId}`);
     } else {
       setSelectedViewEmployee(emp);
     }
@@ -452,7 +454,10 @@ export const EmployeesPage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => navigate(`/dashboard/employees/${emp.id}/edit`)}
+                                onClick={() => {
+                                  const secureId = obfuscateId(emp.employee_id || emp.id);
+                                  navigate(`/dashboard/employees/${secureId}/edit`);
+                                }}
                                 title="Edit"
                               >
                                 <Edit size={16} />

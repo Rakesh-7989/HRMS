@@ -69,8 +69,8 @@ export const subscriptionService = {
         return response.data.data;
     },
 
-    createOrder: async (planId: string, billingCycle: string) => {
-        const response = await api.post('/subscriptions/create-order', { planId, billingCycle });
+    createOrder: async (planId: string, billingCycle: string, quantity?: number) => {
+        const response = await api.post('/subscriptions/create-order', { plan_id: planId, billing_cycle: billingCycle, quantity });
         return response.data.data;
     },
 

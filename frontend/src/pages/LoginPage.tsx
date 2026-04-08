@@ -65,6 +65,18 @@ export const LoginPage: React.FC = () => {
           setPreAuthToken(res.preAuthToken);
         }
       } catch (err: any) {
+        // Check for payment pending response
+        const responseData = err.response?.data;
+        if (responseData?.paymentPending) {
+          // Redirect to complete payment page
+          const params = new URLSearchParams({
+            tenant_id: responseData.tenant_id,
+            email: responseData.email
+          });
+          window.location.href = `/complete-payment?${params.toString()}`;
+          return;
+        }
+
         let errorMessage =
           err.response?.data?.message ||
           err.message ||
@@ -74,6 +86,8 @@ export const LoginPage: React.FC = () => {
           errorMessage = t('auth.invalidCredentials');
         } else if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive')) {
           errorMessage = t('auth.accountDeactivated');
+        } else if (errorMessage === 'Payment Pending') {
+          errorMessage = 'Your registration payment is pending. Please complete the payment to access the application.';
         }
 
         setError(errorMessage);

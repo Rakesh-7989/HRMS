@@ -226,18 +226,24 @@ export const HRDashboard: React.FC = () => {
   const { data: baseData, isLoading: isBaseLoading } = useQuery({
     queryKey: ['dashboard', 'hr', 'base'],
     queryFn: () => dashboardService.getHRDashboard(),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   // Main dashboard data for Status Chart (Filtered)
   const { data: statusData, isLoading: isStatusLoading } = useQuery({
     queryKey: ['dashboard', 'hr', 'status', statusDateRange.start, statusDateRange.end],
     queryFn: () => dashboardService.getHRDashboard({ startDate: statusDateRange.start, endDate: statusDateRange.end }),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   // Utilization specific data (Filtered)
   const { data: utilizationData, isLoading: isUtilizationLoading } = useQuery({
     queryKey: ['dashboard', 'hr', 'utilization', utilizationDateRange.start, utilizationDateRange.end],
     queryFn: () => dashboardService.getHRDashboard({ startDate: utilizationDateRange.start, endDate: utilizationDateRange.end }),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
 

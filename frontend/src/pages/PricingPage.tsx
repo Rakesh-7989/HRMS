@@ -385,6 +385,7 @@ export const PricingPage: React.FC = () => {
 
   const displayPlans = React.useMemo(() => {
     if (!Array.isArray(plans)) return [];
+    console.log('--- ALL PLANS FROM BACKEND ---', plans.map(p => ({ name: p.name, setup_fee: p.setup_fee })));
 
     const targetPlans = plans.filter(p => ['STANDARD', 'PREMIUM', 'ELITE'].includes(p.name));
 
@@ -429,9 +430,9 @@ export const PricingPage: React.FC = () => {
         basePriceForCycle = Number(plan.price) * durationMonths;
       }
 
-      // Fix 4c: Standard plan setup fee (Default to 5000 if not in database)
+      // Fix: Use database setup fee. For Custom plan (not usually visible but good for safety), default to 10000.
       let setupFee = Number(plan.setup_fee);
-      if (plan.name === 'STANDARD' && setupFee === 0) setupFee = 5000;
+      if (plan.name === 'CUSTOM' && setupFee === 0) setupFee = 10000;
 
       // Calculate Totals
       let totalBeforeTax = basePriceForCycle * employeeCount;
@@ -498,20 +499,22 @@ export const PricingPage: React.FC = () => {
     }
 
     try {
-      // Use new Create Subscription Flow
-      const result = await subscriptionService.createSubscription({
-        planId: plan.id,
-        priceId: plan.priceId,
-        quantity: employeeCount,
-        couponCode: undefined
-      });
+      const result = await subscriptionService.createOrder(plan.id, billingCycle, employeeCount);
+      
+      if (result.payment_session_id) {
+          // Initialize Cashfree
+          const cashfree = (window as any).Cashfree({
+              mode: "sandbox" // Change to "production" for live
+          });
 
-      if (result.authLink) {
-        // Redirect to Cashfree Mandate Auth
-        window.location.href = result.authLink;
+          await cashfree.checkout({
+              paymentSessionId: result.payment_session_id,
+              redirectTarget: "_self"
+          });
+          
+          toast.success('Redirecting to checkout...');
       } else {
         toast.success('Subscription initiated!');
-        // navigate('/dashboard/billing');
       }
     } catch (error: any) {
       setErrorConfig({ isOpen: true, title: 'Action Failed', message: error.message || 'Error initiating payment' });

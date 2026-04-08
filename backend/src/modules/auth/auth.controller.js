@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const pool = require("../../config/db");
 const env = require("../../config/env");
 const mailer = require("../../config/mailer");
+const subscriptionService = require("../subscriptions/subscriptions.service");
 const logAudit = require("../../utils/auditLogger");
 const { generateSecret, generateURI, verifySync } = require("otplib");
 const QRCode = require("qrcode");
@@ -27,28 +28,67 @@ exports.login = async (req, res) => {
           u.two_factor_enabled,
           u.last_login_at,
           e.id AS employee_id,
-          t.is_active AS tenant_is_active,
-          t.plan_type
-       FROM users u
-       LEFT JOIN employees e ON e.user_id = u.id
-       LEFT JOIN tenants t ON t.id = u.tenant_id
-       WHERE LOWER(u.email) = LOWER($1)`,
-      [email.toLowerCase()]
-    );
+           t.is_active AS tenant_is_active,
+           t.plan_type,
+           t.plan_expiry_date
+        FROM users u
+        LEFT JOIN employees e ON e.user_id = u.id
+        LEFT JOIN tenants t ON t.id = u.tenant_id
+        WHERE LOWER(u.email) = LOWER($1)`,
+       [email.toLowerCase()]
+     );
+ 
+     if (userRes.rowCount === 0) {
+       return res.status(401).json({ message: "Invalid credentials" });
+     }
+ 
+     const user = userRes.rows[0];
+ 
+     // Validate tenant status first (unless super admin)
+     if (user.role !== 'SUPER_ADMIN') {
+       if (user.tenant_id) {
+         // 1. Check if plan is expired
+         const now = new Date();
+         if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
+            return res.status(403).json({ 
+              message: "Subscription Expired", 
+              planExpired: true,
+              tenant_id: user.tenant_id,
+              email: user.email,
+              detail: "Your organization subscription has expired. Please renew your plan to continue." 
+            });
+         }
 
-    if (userRes.rowCount === 0) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const user = userRes.rows[0];
-
-    // Check if tenant is active (unless super admin)
-    if (user.role !== 'SUPER_ADMIN' && user.tenant_id && user.tenant_is_active === false) {
-      return res.status(403).json({ message: "Your organization account has been deactivated. Please contact support." });
-    }
+         // 2. Check if organization is explicitly inactive
+         if (user.tenant_is_active === false) {
+            // Check if there's a pending payment subscription
+            try {
+              const sub = await subscriptionService.getSubscriptionByTenantId(user.tenant_id);
+              if (sub && (sub.status === 'PENDING_PAYMENT' || sub.status === 'PAST_DUE' || sub.status === 'UNPAID')) {
+                return res.status(403).json({ 
+                  message: "Payment Required", 
+                  paymentPending: true,
+                  tenant_id: user.tenant_id,
+                  email: user.email,
+                  detail: "Your organization subscription setup is incomplete. Please complete the payment."
+                });
+              }
+            } catch (subErr) {
+              logger.error("Error checking subscription during login", { err: subErr });
+            }
+            return res.status(403).json({ 
+              message: "Organization Inactive", 
+              detail: "Your organization account is currently inactive. Please contact support." 
+            });
+         }
+       }
+     }
 
     if (!user.is_active) {
-      return res.status(403).json({ message: "Account is inactive" });
+      return res.status(403).json({ 
+        message: "Account Inactive",
+        detail: "Your personal user account has been deactivated. Please contact your HR administrator."
+      });
     }
 
     // Validate password
@@ -146,10 +186,11 @@ exports.refreshToken = async (req, res) => {
         id: user.id,
         tenantId: user.tenant_id,
         role: user.role,
-        employeeId: user.employee_id
+        employeeId: user.employee_id,
+        sessionId: session.id // Include session ID for verification
       },
       env.JWT_ACCESS_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
+      { expiresIn: env.JWT_EXPIRES_IN || "15m" }
     );
 
     const newRefreshToken = crypto.randomBytes(48).toString("hex");

@@ -5,11 +5,10 @@ const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
 const { tenantRegisterSchema } = require("./tenant.validator");
 
-// OTP verification routes (no auth required)
+// Standard Registration & OTP flow
+router.get("/check-availability", controller.checkAvailability);
 router.post("/send-otp", controller.sendOtp);
 router.post("/verify-otp", controller.verifyOtp);
-
-// Registration (requires verified email)
 router.post("/register", validate(tenantRegisterSchema), controller.registerTenant);
 
 // Employee ID Settings (requires authentication)

@@ -2,6 +2,8 @@ const subscriptionService = require('./subscriptions.service');
 const invoiceService = require('./invoice.service');
 const mailer = require('../../config/mailer');
 const db = require('../../middleware/db');
+const logger = require('../../config/logger');
+const { Cashfree } = require('cashfree-pg');
 
 class SubscriptionController {
     async getPlans(req, res) {
@@ -155,12 +157,12 @@ class SubscriptionController {
 
     async verifyPayment(req, res) {
         try {
-            const tenantId = req.user.tenantId;
+            const tenantId = req.user?.tenantId; // Might be null for registration completion
             const { order_id } = req.body;
             const result = await subscriptionService.verifyPayment(tenantId, order_id);
             res.status(200).json({
                 success: true,
-                message: 'Payment verified and subscription updated.',
+                message: 'Payment verified and subscription activated. Check your email for login credentials.',
                 data: result
             });
         } catch (error) {
@@ -391,16 +393,84 @@ class SubscriptionController {
         }
     }
 
+    /**
+     * Public endpoint: Initiate payment for a pending-payment tenant.
+     * Used when a tenant with incomplete payment tries to login or retry.
+     */
+    async initiatePaymentForTenant(req, res) {
+        try {
+            const { tenant_id, email } = req.body;
+
+            if (!tenant_id || !email) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'tenant_id and email are required'
+                });
+            }
+
+            // Verify that this email belongs to this tenant (security check)
+            const tenantRes = await db.query(
+                'SELECT id, email, is_active, employee_count FROM tenants WHERE id = $1 AND LOWER(email) = LOWER($2)',
+                [tenant_id, email]
+            );
+
+            if (tenantRes.rowCount === 0) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Invalid tenant or email combination'
+                });
+            }
+
+            const tenant = tenantRes.rows[0];
+
+            // Verify the subscription is actually pending payment
+            const subscription = await subscriptionService.getSubscriptionByTenantId(tenant_id);
+            if (!subscription) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No subscription found for this tenant. Please register first.'
+                });
+            }
+
+            if (subscription.status !== 'PENDING_PAYMENT' && subscription.status !== 'PAST_DUE' && subscription.status !== 'TRIAL') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This account already has an active or completed billing status.'
+                });
+            }
+
+            // Initiate a new payment session with the correct employee count
+            const result = await subscriptionService.initiateSubscription(
+                tenant_id,
+                subscription.plan_id,
+                subscription.billing_cycle || 'MONTHLY',
+                tenant.employee_count || 1
+            );
+
+            res.status(200).json({
+                success: true,
+                data: result
+            });
+        } catch (error) {
+            console.error('Initiate payment for tenant error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error creating payment session',
+                error: error.message
+            });
+        }
+    }
+
     async handleWebhook(req, res) {
         try {
-            const { Cashfree } = require('cashfree-pg');
+            const cashfree = require('../../config/cashfree');
             const signature = req.headers["x-webhook-signature"];
             const timestamp = req.headers["x-webhook-timestamp"];
             // Cashfree signature verification needs original raw body for reliability
             const rawBody = JSON.stringify(req.body);
 
             try {
-                Cashfree.PGWebhookVerifySignature(signature, rawBody, timestamp);
+                cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
             } catch (err) {
                 console.error('Cashfree Webhook Signature Verification Failed:', err.message);
                 return res.status(400).json({ success: false, message: 'Invalid signature' });

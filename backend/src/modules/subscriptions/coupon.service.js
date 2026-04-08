@@ -36,7 +36,20 @@ class CouponService {
      */
     async getCoupons() {
         const result = await db.query('SELECT * FROM coupons ORDER BY created_at DESC');
-        return result.rows;
+        const now = new Date();
+        
+        return result.rows.map(coupon => {
+            let status = 'ACTIVE';
+            if (!coupon.is_active) {
+                status = 'INACTIVE';
+            } else if (coupon.expires_at && new Date(coupon.expires_at) < now) {
+                status = 'EXPIRED';
+            } else if (coupon.max_redemptions !== null && coupon.times_redeemed >= coupon.max_redemptions) {
+                status = 'LIMIT EXCEEDED';
+            }
+            
+            return { ...coupon, status };
+        });
     }
 
     /**
@@ -44,7 +57,20 @@ class CouponService {
      */
     async getCouponByCode(code) {
         const result = await db.query('SELECT * FROM coupons WHERE code = $1', [code.toUpperCase()]);
-        return result.rows[0];
+        const coupon = result.rows[0];
+        if (!coupon) return null;
+
+        const now = new Date();
+        let status = 'ACTIVE';
+        if (!coupon.is_active) {
+            status = 'INACTIVE';
+        } else if (coupon.expires_at && new Date(coupon.expires_at) < now) {
+            status = 'EXPIRED';
+        } else if (coupon.max_redemptions !== null && coupon.times_redeemed >= coupon.max_redemptions) {
+            status = 'LIMIT EXCEEDED';
+        }
+
+        return { ...coupon, status };
     }
 
     /**
@@ -55,15 +81,10 @@ class CouponService {
         const coupon = await this.getCouponByCode(code);
 
         if (!coupon) throw new Error('Invalid coupon code');
-        if (!coupon.is_active) throw new Error('Coupon is inactive');
-
-        if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-            throw new Error('Coupon has expired');
-        }
-
-        if (coupon.max_redemptions !== null && coupon.times_redeemed >= coupon.max_redemptions) {
-            throw new Error('Coupon usage limit exceeded');
-        }
+        
+        if (coupon.status === 'INACTIVE') throw new Error('Coupon is inactive');
+        if (coupon.status === 'EXPIRED') throw new Error('Coupon has expired');
+        if (coupon.status === 'LIMIT EXCEEDED') throw new Error('Coupon usage limit exceeded');
 
         return coupon;
     }

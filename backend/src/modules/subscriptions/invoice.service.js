@@ -1,3 +1,4 @@
+
 const db = require('../../middleware/db');
 const cashfree = require('../../config/cashfree');
 const crypto = require('crypto');
@@ -19,18 +20,21 @@ class InvoiceService {
         return result.rows[0];
     }
 
-    async getInvoiceById(id) {
-        const result = await db.query('SELECT * FROM subscription_invoices WHERE id = $1', [id]);
+    async getInvoiceById(id, client = null) {
+        const executor = client || db;
+        const result = await executor.query('SELECT * FROM subscription_invoices WHERE id = $1', [id]);
         return result.rows[0];
     }
 
-    async getInvoiceByCashfreeId(cashfreeOrderId) {
-        const result = await db.query('SELECT * FROM subscription_invoices WHERE cashfree_order_id = $1', [cashfreeOrderId]);
+    async getInvoiceByCashfreeId(cashfreeOrderId, client = null) {
+        const executor = client || db;
+        const result = await executor.query('SELECT * FROM subscription_invoices WHERE cashfree_order_id = $1', [cashfreeOrderId]);
         return result.rows[0];
     }
 
-    async updateInvoiceStatus(id, status, cashfreeOrderId = null, paymentLink = null) {
-        const result = await db.query(`
+    async updateInvoiceStatus(id, status, cashfreeOrderId = null, paymentLink = null, client = null) {
+        const executor = client || db;
+        const result = await executor.query(`
             UPDATE subscription_invoices 
             SET status = $1, 
                 cashfree_order_id = COALESCE($2, cashfree_order_id),
@@ -42,22 +46,23 @@ class InvoiceService {
         return result.rows[0];
     }
 
-    async generatePaymentLink(invoiceId) {
-        const invoice = await this.getInvoiceById(invoiceId);
+    async generatePaymentLink(invoiceId, client = null) {
+        const executor = client || db;
+        const invoice = await this.getInvoiceById(invoiceId, executor);
         if (!invoice) throw new Error('Invoice not found');
 
-        // Fetch User for customer info
-        const userRes = await db.query('SELECT email, first_name, last_name, phone FROM users WHERE tenant_id = $1 AND role = \'ADMIN\' LIMIT 1', [invoice.tenant_id]);
-        const adminUser = userRes.rows[0];
+        // Fetch Tenant for customer info (since users only have emails initially)
+        const tenantRes = await executor.query('SELECT name, email, phone FROM tenants WHERE id = $1', [invoice.tenant_id]);
+        const tenant = tenantRes.rows[0];
 
         const request = {
             order_amount: parseFloat(invoice.amount),
             order_currency: 'INR',
             customer_details: {
                 customer_id: invoice.tenant_id,
-                customer_email: adminUser?.email || 'customer@example.com',
-                customer_phone: adminUser?.phone || '9999999999',
-                customer_name: `${adminUser?.first_name || ''} ${adminUser?.last_name || ''}`.trim() || 'HR Admin'
+                customer_email: tenant?.email || 'customer@example.com',
+                customer_phone: tenant?.phone || '9999999999',
+                customer_name: tenant?.name || 'HR Admin'
             },
             order_meta: {
                 return_url: `${process.env.FRONTEND_URL}/payment-success?order_id={order_id}`,
@@ -67,10 +72,22 @@ class InvoiceService {
         };
 
         try {
-            const response = await cashfree.PGCreateOrder("2023-08-01", request);
+            const axios = require('axios');
+            const isProd = process.env.CASHFREE_ENVIRONMENT === 'production';
+            const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+
+            const response = await axios.post(`${baseUrl}/orders`, request, {
+                headers: {
+                    'x-client-id': process.env.CASHFREE_APP_ID,
+                    'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+                    'x-api-version': '2023-08-01',
+                    'Content-Type': 'application/json'
+                }
+            });
+
             const order = response.data;
 
-            await this.updateInvoiceStatus(invoiceId, 'PENDING', order.order_id, order.payment_session_id); // we store payment_session_id as payment_link for now or use the actual link if provided
+            await this.updateInvoiceStatus(invoiceId, 'PENDING', order.order_id, order.payment_session_id, executor);
 
             return {
                 payment_session_id: order.payment_session_id,
@@ -78,7 +95,36 @@ class InvoiceService {
             };
         } catch (error) {
             console.error('Cashfree Invoice Link Error:', error.response?.data || error.message);
-            throw new Error('Error creating Cashfree payment link');
+            throw new Error('Error creating Cashfree payment link: ' + (error.response?.data?.message || error.message));
+        }
+    }
+
+    async verifyCashfreePayment(orderId) {
+        try {
+            const axios = require('axios');
+            const isProd = process.env.CASHFREE_ENVIRONMENT === 'production';
+            const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+
+            const response = await axios.get(`${baseUrl}/orders/${orderId}`, {
+                headers: {
+                    'x-client-id': process.env.CASHFREE_APP_ID,
+                    'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+                    'x-api-version': '2023-08-01'
+                }
+            });
+
+            const order = response.data;
+            return {
+                success: true,
+                status: order.order_status, // "PAID", "ACTIVE", etc.
+                data: order
+            };
+        } catch (error) {
+            console.error('Cashfree Verification Error:', error.response?.data || error.message);
+            return {
+                success: false,
+                message: 'Failed to verify payment with provider'
+            };
         }
     }
 }

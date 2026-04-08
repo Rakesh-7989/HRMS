@@ -205,6 +205,93 @@ exports.sendWelcomeEmail = async (to, name, tempPassword) => {
 };
 
 /**
+ * Send payment success email
+ */
+exports.sendPaymentSuccessEmail = async (to, tenantName, amount) => {
+  return exports.sendMail({
+    to,
+    subject: 'Payment Successful — WellZo HR',
+    html: emailWrapper(`
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td align="center">
+                  <div style="width:64px;height:64px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:50%;display:inline-block;line-height:64px;margin-bottom:16px;">
+                    ${icon('checkCircle', 32)}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <h1 style="margin:0 0 8px;font-size:26px;color:#1a1a2e;font-weight:700;text-align:center;">Payment Successful!</h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#666;line-height:1.6;text-align:center;">
+              Thank you, <strong>${tenantName}</strong>! Your payment of <strong>₹${amount}</strong> has been received and your subscription is now active.
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;margin-bottom:24px;">
+              <tr>
+                <td style="padding:24px;">
+                  <p style="margin:0 0 4px;font-size:13px;color:#16a34a;font-weight:600;">✓ Subscription activated</p>
+                  <p style="margin:0 0 4px;font-size:13px;color:#16a34a;font-weight:600;">✓ Login credentials sent</p>
+                  <p style="margin:0;font-size:13px;color:#16a34a;font-weight:600;">✓ Ready to get started</p>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+              <tr>
+                <td style="border-radius:10px;background-color:#42275a;background:linear-gradient(135deg,#42275a 0%,#734b6d 100%);">
+                  <a href="${env.FRONTEND_URL}/login" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Sign In Now →</a>
+                </td>
+              </tr>
+            </table>
+        `, `Your WellZo HR payment was successful!`)
+  });
+};
+
+/**
+ * Send payment failure email
+ */
+exports.sendPaymentFailureEmail = async (to, tenantName, amount, reason) => {
+  return exports.sendMail({
+    to,
+    subject: 'Payment Failed — WellZo HR',
+    html: emailWrapper(`
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td align="center">
+                  <div style="width:64px;height:64px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-radius:50%;display:inline-block;line-height:64px;margin-bottom:16px;">
+                    ${icon('alertTriangle', 32, '#ef4444')}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <h1 style="margin:0 0 8px;font-size:26px;color:#1a1a2e;font-weight:700;text-align:center;">Payment Failed</h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#666;line-height:1.6;text-align:center;">
+              Hello <strong>${tenantName}</strong>, we were unable to process your payment of <strong>₹${amount}</strong> for your subscription.
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff1f2;border-radius:12px;border:1px solid #fecaca;margin-bottom:24px;">
+              <tr>
+                <td style="padding:24px;">
+                  <p style="margin:0 0 8px;font-size:14px;color:#991b1b;font-weight:700;">Issue: ${reason || 'Transaction could not be completed'}</p>
+                  <p style="margin:0;font-size:13px;color:#991b1b;font-weight:500;">Don't worry, your organization setup is saved. You can retry the payment by logging in with your email.</p>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+              <tr>
+                <td style="border-radius:10px;background-color:#42275a;">
+                  <a href="${env.FRONTEND_URL}/login" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.5px;">Retry Payment →</a>
+                </td>
+              </tr>
+            </table>
+        `, `Your WellZo HR payment failed.`)
+  });
+};
+
+/**
  * Send email verification OTP
  */
 exports.sendVerificationOTP = async (to, code) => {

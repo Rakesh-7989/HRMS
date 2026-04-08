@@ -16,6 +16,7 @@ const ChangePasswordPage = React.lazy(() => import('@/pages/ChangePasswordPage')
 const PricingPage = React.lazy(() => import('@/pages/PricingPage').then(m => ({ default: m.PricingPage })));
 const PaymentSuccessPage = React.lazy(() => import('@/pages/PaymentSuccessPage').then(m => ({ default: m.PaymentSuccessPage })));
 const PaymentFailurePage = React.lazy(() => import('@/pages/PaymentFailurePage').then(m => ({ default: m.PaymentFailurePage })));
+const CompletePaymentPage = React.lazy(() => import('@/pages/CompletePaymentPage').then(m => ({ default: m.CompletePaymentPage })));
 const BillingPortalPage = React.lazy(() => import('@/pages/BillingPortalPage').then(m => ({ default: m.BillingPortalPage })));
 
 // Dashboards
@@ -244,6 +245,7 @@ const router = createBrowserRouter(
       <Route path="/pricing" element={<Suspense fallback={<AuthSkeleton />}><PricingPage /></Suspense>} />
       <Route path="/payment-success" element={<Suspense fallback={<AuthSkeleton />}><PaymentSuccessPage /></Suspense>} />
       <Route path="/payment-failure" element={<Suspense fallback={<AuthSkeleton />}><PaymentFailurePage /></Suspense>} />
+      <Route path="/complete-payment" element={<Suspense fallback={<AuthSkeleton />}><CompletePaymentPage /></Suspense>} />
       <Route path="/billing" element={<Suspense fallback={<AuthSkeleton />}><BillingPortalPage /></Suspense>} />
 
       {/* Super Admin Protected Routes */}

@@ -708,7 +708,8 @@ exports.getUserById = async (db, id, tenantId, requester, options = {}) => {
      LEFT JOIN employees m ON m.id = e.reports_to
      LEFT JOIN shifts sh ON sh.id = e.shift_id
      LEFT JOIN employee_salary_details esd ON esd.employee_id = e.id AND esd.is_current = true
-     WHERE u.id=$1 AND u.tenant_id=$2
+     WHERE (u.id::text=$1 OR e.employee_id=$1) AND u.tenant_id=$2
+     LIMIT 1
      `,
     [id, tenantId]
   );
@@ -839,15 +840,28 @@ exports.updateEmployee = async (db, id, updates, actor) => {
     const params = [];
     let i = 1;
 
+    // Resolve the internal UUID if an Employee ID was provided
+    const userRes = await query(
+      `SELECT u.id as user_id, e.id as employee_uuid 
+       FROM users u 
+       LEFT JOIN employees e ON e.user_id = u.id 
+       WHERE (u.id::text = $1 OR e.employee_id = $1) AND u.tenant_id = $2`,
+      [id, tenantId]
+    );
+
+    if (userRes.rowCount === 0) {
+      throw new Error("User not found or access denied");
+    }
+
+    const resolvedUserId = userRes.rows[0].user_id;
+    const resolvedEmpUuid = userRes.rows[0].employee_uuid;
+
     // Check for duplicate sensitive fields (exclude current user from check)
-    await checkEncryptedDuplicates(client, tenantId, updates, id);
+    await checkEncryptedDuplicates(client, tenantId, updates, resolvedUserId);
 
     // CIRCULAR REPORTING CHECK
-    if (updates.reports_to) {
-      const empRes = await query("SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2", [id, tenantId]);
-      if (empRes.rowCount > 0) {
-        await checkCircularReporting(client, empRes.rows[0].id, updates.reports_to, tenantId);
-      }
+    if (updates.reports_to && resolvedEmpUuid) {
+      await checkCircularReporting(client, resolvedEmpUuid, updates.reports_to, tenantId);
     }
 
     // Encrypt sensitive fields before building update query
@@ -873,11 +887,11 @@ exports.updateEmployee = async (db, id, updates, actor) => {
 
     if (fields.length === 0) {
       // Check if we just want to fetch the record (no updates provided)
-      const fetchRes = await query(`SELECT * FROM employees WHERE user_id=$1 AND tenant_id=$2`, [id, tenantId]);
+      const fetchRes = await query(`SELECT * FROM employees WHERE user_id=$1 AND tenant_id=$2`, [resolvedUserId, tenantId]);
       return fetchRes.rows[0];
     }
 
-    params.push(id);
+    params.push(resolvedUserId);
     params.push(tenantId);
 
     const sql = `

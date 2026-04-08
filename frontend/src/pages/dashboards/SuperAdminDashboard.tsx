@@ -187,7 +187,8 @@ export const SuperAdminDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'system'],
     queryFn: () => dashboardService.getSystemDashboard(),
-    refetchInterval: 5000, // Refresh every 5s for live resources
+    refetchInterval: 30000, // Refresh every 30s for live resources (more stable for LAN)
+    retry: false,
   });
 
   const metrics = (data as any)?.metrics || {};
