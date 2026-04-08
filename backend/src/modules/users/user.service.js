@@ -193,13 +193,33 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
       throw new Error("Employee limit reached for your current subscription plan. Please upgrade to add more employees.");
     }
 
-    // Check for globally unique email (across all tenants)
+    // Check for duplicate email (globally)
     const duplicate = await client.query(
-      `SELECT id FROM users WHERE LOWER(email)=LOWER($1) AND is_deleted = false`,
+      `SELECT id, tenant_id, is_active FROM users WHERE LOWER(email)=LOWER($1) AND is_deleted = false`,
       [data.email]
     );
+
+    let existingUserId = null;
     if (duplicate.rowCount) {
-      throw new Error("This email already exists in our system. Please use a different email address.");
+      const existingUser = duplicate.rows[0];
+      
+      // If the user belongs to the SAME tenant, check if they already have an employee record
+      if (existingUser.tenant_id === actor.tenantId) {
+        const empCheck = await client.query(
+          `SELECT id FROM employees WHERE user_id = $1 AND tenant_id = $2`,
+          [existingUser.id, actor.tenantId]
+        );
+        
+        if (empCheck.rowCount > 0) {
+          throw new Error("An employee with this email already exists in your organization.");
+        } else {
+          // No employee record for this existing user - we can proceed by linking them
+          console.log(`[DEBUG_USER] Linking existing user ${existingUser.id} to new employee record`);
+          existingUserId = existingUser.id;
+        }
+      } else {
+        throw new Error("This email is already registered with another organization. Please use a unique email.");
+      }
     }
     // Determine employee ID
     let generatedEmployeeId;
@@ -239,18 +259,29 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
       }
     }
 
-    const tempPassword = crypto.randomBytes(6).toString("hex");
-    const hash = await bcrypt.hash(tempPassword, 10);
+    let userRes;
+    let tempPassword = null;
+    if (existingUserId) {
+        // Update existing user role if it changed, and use their ID
+        const updateRes = await client.query(
+            `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, role`,
+            [data.role, existingUserId]
+        );
+        userRes = updateRes;
+    } else {
+        tempPassword = crypto.randomBytes(6).toString("hex");
+        const hash = await bcrypt.hash(tempPassword, 10);
 
-    const userRes = await client.query(
-      `
-      INSERT INTO users 
-        (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
-      VALUES ($1,$2,$3,$4,true,true,$5)
-      RETURNING id, email, role
-      `,
-      [actor.tenantId, data.email, hash, data.role, actor.id]
-    );
+        userRes = await client.query(
+            `
+            INSERT INTO users 
+                (tenant_id, email, password_hash, role, is_active, must_change_password, created_by)
+            VALUES ($1, $2, $3, $4, true, true, $5)
+            RETURNING id, email, role
+            `,
+            [actor.tenantId, data.email, hash, data.role, actor.id]
+        );
+    }
 
     // Check for duplicate sensitive fields (phone, aadhar, PAN, account, etc.)
     await checkEncryptedDuplicates(client, actor.tenantId, data);
@@ -372,12 +403,14 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
 
     await client.query("COMMIT");
 
-    // Send welcome email
-    mailer.sendWelcomeEmail(
-      userRes.rows[0].email,
-      data.first_name,
-      tempPassword
-    ).catch(err => logger.error("Email sending error:", err));
+    // Send welcome email only for new users
+    if (tempPassword) {
+      mailer.sendWelcomeEmail(
+        userRes.rows[0].email,
+        data.first_name,
+        tempPassword
+      ).catch(err => logger.error("Email sending error:", err));
+    }
 
     // Welcome Notification
     try {
@@ -397,7 +430,7 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
       user: userRes.rows[0],
       employee: empRes.rows[0],
       temporaryPassword: tempPassword,
-      _note: "Temporary password has been sent to user email"
+      _note: tempPassword ? "Temporary password has been sent to user email" : "Existing user linked to new employee record"
     };
 
   } catch (err) {

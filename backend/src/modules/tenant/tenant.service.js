@@ -225,6 +225,14 @@ exports.registerTenant = async (data, req = null) => {
         );
         const user = userInsert.rows[0];
 
+        // 5b. CREATE INITIAL EMPLOYEE RECORD FOR ADMIN
+        // This ensures the Admin has a profile from the start.
+        await client.query(
+            `INSERT INTO employees (tenant_id, user_id, first_name, email, created_by)
+             VALUES ($1, $2, $3, $4, $2)`,
+            [tenant.id, user.id, data.name || 'Admin', cleanEmail]
+        );
+
         // 6. INITIALIZE SUBSCRIPTION
         const couponToApply = data.coupon || data.coupon_code || null;
         if (isPaidPlan) {
@@ -286,6 +294,25 @@ exports.setEmployeeIdPrefix = async (tenantId, prefix) => {
     [JSON.stringify(prefix), tenantId]
   );
   return { prefix };
+};
+
+exports.generateNextEmployeeId = async (tenantId, client = null) => {
+  const executor = client || pool;
+  
+  // 1. Get prefix from settings
+  const res = await executor.query("SELECT settings FROM tenants WHERE id = $1", [tenantId]);
+  const settings = res.rows[0]?.settings || {};
+  const prefix = settings.employee_id_prefix || '';
+
+  // 2. Count current employees to get the next number
+  // A more robust way would be to get the MAX(employee_id) but counting works for simple cases
+  const countRes = await executor.query("SELECT COUNT(*) FROM employees WHERE tenant_id = $1", [tenantId]);
+  const nextNum = parseInt(countRes.rows[0].count, 10) + 1;
+  
+  // 3. Format: PREFIX-000X
+  const paddedNum = String(nextNum).padStart(4, '0');
+  
+  return prefix ? `${prefix}-${paddedNum}` : paddedNum;
 };
 
 exports.toggleEmployeeIdMode = async (tenantId, usePrefix) => {
