@@ -70,7 +70,12 @@ export const RegisterPage: React.FC = () => {
             email: Yup.string().email('Invalid email address').required('Email is required'),
             name: Yup.string().min(2, 'Too short').max(255, 'Too long').required('Name is required'),
             domain: Yup.string()
-                .matches(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*$/, 'Invalid format (e.g. my-org or example.com)')
+                .matches(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*$/, 'Invalid format (e.g. example.com)')
+                .test('domain-suffix', 'Domain must end with .com, .org, or .in', (val) => {
+                    if (!val) return true;
+                    const allowed = ['.com', '.org', '.in'];
+                    return allowed.some(suffix => val.toLowerCase().endsWith(suffix));
+                })
                 .max(255, 'Domain is too long')
                 .required('Organization domain is required'),
             address: Yup.string().required('Address is required'),

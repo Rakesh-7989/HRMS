@@ -18,6 +18,11 @@ exports.tenantRegisterSchema = z.object({
       .string()
       .min(1, "Domain cannot be empty")
       .max(255, "Domain must not exceed 255 characters")
+      .refine((val) => {
+        if (!val) return true;
+        const allowed = ['.com', '.org', '.in'];
+        return allowed.some(suffix => val.toLowerCase().endsWith(suffix));
+      }, { message: "Domain must end with .com, .org, or .in" })
       .optional()
       .or(z.literal("").transform(() => undefined)),
     address: z.string().max(500, "Address must not exceed 500 characters").optional(),

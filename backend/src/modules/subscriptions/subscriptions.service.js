@@ -275,14 +275,15 @@ class SubscriptionService {
             const isSuccessStatus = ['PAID', 'SUCCESS', 'ACTIVE', 'COMPLETED'].includes(String(result.status || '').toUpperCase());
 
             if (result.success && isSuccessStatus) {
-                const resolvedTenantId = tenantId || result.data?.customer_details?.customer_id;
+                // Find invoice first to help resolve tenant
+                const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
+                if (!invoice) throw new Error('Invoice not found for this order.');
+
+                const resolvedTenantId = tenantId || result.data?.customer_details?.customer_id || invoice.tenant_id;
                 
                 if (!resolvedTenantId) {
                     throw new Error('Tenant identification failed during verification');
                 }
-
-                const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
-                if (!invoice) throw new Error('Invoice not found for this order.');
 
                 // Only call Cashfree /payments if it's NOT a free order
                 if (!successfulPayment) {
