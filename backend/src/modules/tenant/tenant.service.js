@@ -228,9 +228,9 @@ exports.registerTenant = async (data, req = null) => {
         // 5b. CREATE INITIAL EMPLOYEE RECORD FOR ADMIN
         // This ensures the Admin has a profile from the start.
         await client.query(
-            `INSERT INTO employees (tenant_id, user_id, first_name, email, created_by)
-             VALUES ($1, $2, $3, $4, $2)`,
-            [tenant.id, user.id, data.name || 'Admin', cleanEmail]
+            `INSERT INTO employees (tenant_id, user_id, first_name, created_by)
+             VALUES ($1, $2, $3, $2)`,
+            [tenant.id, user.id, data.name || 'Admin']
         );
 
         // 6. INITIALIZE SUBSCRIPTION
