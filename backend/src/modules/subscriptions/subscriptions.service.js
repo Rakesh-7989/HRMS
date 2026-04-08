@@ -257,9 +257,20 @@ class SubscriptionService {
     async verifyPayment(tenantId, orderId) {
         try {
             console.log(`[DEBUG_VERIFY] Starting verification for Order: ${orderId}, Tenant: ${tenantId}`);
-            const result = await invoiceService.verifyCashfreePayment(orderId);
             
-            console.log(`[DEBUG_VERIFY] Cashfree Response:`, JSON.stringify(result, null, 2));
+            let result;
+            let successfulPayment = null;
+
+            if (orderId && orderId.startsWith('FREE-')) {
+                console.log(`[DEBUG_VERIFY] Virtual verification for FREE order: ${orderId}`);
+                result = { success: true, status: 'PAID', data: { is_free: true } };
+                // Mock a successful payment object
+                successfulPayment = { payment_status: 'SUCCESS', payment_amount: 0, payment_group: 'FREE', cf_payment_id: orderId };
+            } else {
+                result = await invoiceService.verifyCashfreePayment(orderId);
+            }
+            
+            console.log(`[DEBUG_VERIFY] Verification Response:`, JSON.stringify(result, null, 2));
 
             const isSuccessStatus = ['PAID', 'SUCCESS', 'ACTIVE', 'COMPLETED'].includes(String(result.status || '').toUpperCase());
 
@@ -273,21 +284,23 @@ class SubscriptionService {
                 const invoice = await invoiceService.getInvoiceByCashfreeId(orderId);
                 if (!invoice) throw new Error('Invoice not found for this order.');
 
-                // Use direct axios for payments fetch to be consistent with invoiceService which works
-                const axios = require('axios');
-                const isProd = process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION';
-                const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+                // Only call Cashfree /payments if it's NOT a free order
+                if (!successfulPayment) {
+                    const axios = require('axios');
+                    const isProd = process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION';
+                    const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
 
-                const response = await axios.get(`${baseUrl}/orders/${orderId}/payments`, {
-                    headers: {
-                        'x-client-id': process.env.CASHFREE_APP_ID,
-                        'x-client-secret': process.env.CASHFREE_SECRET_KEY,
-                        'x-api-version': '2023-08-01'
-                    }
-                });
-                
-                const payments = response.data;
-                const successfulPayment = payments.find(p => p.payment_status === 'SUCCESS');
+                    const response = await axios.get(`${baseUrl}/orders/${orderId}/payments`, {
+                        headers: {
+                            'x-client-id': process.env.CASHFREE_APP_ID,
+                            'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+                            'x-api-version': '2023-08-01'
+                        }
+                    });
+                    
+                    const payments = response.data;
+                    successfulPayment = payments.find(p => p.payment_status === 'SUCCESS');
+                }
 
                 if (!successfulPayment) throw new Error('No successful payment found.');
 
