@@ -174,6 +174,10 @@ async function performDeployment() {
     await sendEmailNotification('FAILED', summary + `❌ ERROR: ${err.message}`);
   } finally {
     isDeploying = false;
+    // Update hash after successful deployment to match what we just pulled
+    try {
+      lastSeenHash = (await run('git rev-parse HEAD')).trim();
+    } catch (e) {}
   }
 }
 
@@ -181,14 +185,26 @@ async function checkForChanges() {
   if (isDeploying) return;
   try {
     await run('git fetch origin');
-    const status = await run(`git status -uno`);
-    if (status.includes('is behind') || status.includes('have diverged')) {
+    
+    // Get the latest hash on the remote branch
+    const currentRemoteHash = (await run(`git rev-parse origin/${CONFIG.branch}`)).trim();
+    
+    // If we haven't seen a hash yet, initialize it
+    if (!lastSeenHash) {
+      const localHash = (await run('git rev-parse HEAD')).trim();
+      lastSeenHash = localHash;
+    }
+
+    // Only act if the remote hash is different from what we last saw
+    if (currentRemoteHash !== lastSeenHash) {
       if (debounceTimer) {
-        log('Resetting timer.');
+        log(`New push detected (${currentRemoteHash.substring(0,7)}). Resetting 5-minute timer.`);
         clearTimeout(debounceTimer);
       } else {
-        log('Remote push detected. Waiting 5 minutes deployment.');
+        log(`Push detected (${currentRemoteHash.substring(0,7)}). Deployment scheduled in 5 minutes.`);
       }
+      
+      lastSeenHash = currentRemoteHash;
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
         performDeployment();
