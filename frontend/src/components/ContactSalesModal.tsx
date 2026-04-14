@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
+import api from '@/services/api';
 
 interface ContactSalesModalProps {
     isOpen: boolean;
@@ -23,26 +24,24 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
             const formData = new FormData(e.currentTarget);
             const data = Object.fromEntries(formData.entries());
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/common/contact-sales`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to send inquiry');
+            // Simple client side validation
+            if (!data.fullName || !data.workEmail || !data.message) {
+                toast.error('Please fill in all required fields');
+                setIsSubmitting(false);
+                return;
             }
 
+            await api.post('/common/contact-sales', data);
+
             setIsSuccess(true);
+            toast.success('Inquiry sent successfully!');
             setTimeout(() => {
                 onClose();
                 setIsSuccess(false);
             }, 2000);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Submission error:', error);
-            toast.error('Failed to send inquiry. Please try again.');
+            toast.error(error.message || 'Failed to send inquiry. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

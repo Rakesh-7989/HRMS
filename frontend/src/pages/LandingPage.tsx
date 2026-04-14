@@ -19,6 +19,7 @@ import { plansService } from '@/services/plans.service';
 import { cn } from '@/utils/cn';
 import rolesVisual from '@/assets/hrms_roles.png';
 import { useTranslation } from 'react-i18next';
+import { ContactSalesModal } from '@/components/ContactSalesModal';
 
 const FloatingBackground = () => {
   return (
@@ -676,6 +677,7 @@ export const LandingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [highlightedFeature, setHighlightedFeature] = React.useState<string | null>(null);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -770,6 +772,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div ref={containerRef} className="h-screen bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300 scroll-smooth selection:bg-primary selection:text-white">
+      <ContactSalesModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
       <FloatingBackground />
 
       {/* Spotlight Effect */}
@@ -1395,7 +1398,13 @@ export const LandingPage: React.FC = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => navigate('/pricing')}
+                      onClick={() => {
+                        if (plan.name === 'ELITE') {
+                          setIsContactModalOpen(true);
+                        } else {
+                          navigate('/pricing');
+                        }
+                      }}
                       className={cn(
                         "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
                         "bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
@@ -1589,7 +1598,7 @@ export const LandingPage: React.FC = () => {
               <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-8 text-gray-900 dark:text-white/90">Get in Touch</h4>
               <ul className="space-y-8">
                 <li>
-                  <a href="mailto:support@WellZo.com" className="flex items-center gap-4 group">
+                  <a href="mailto:info@WellZo.com" className="flex items-center gap-4 group">
                     <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
                       <Mail size={20} />
                     </div>
@@ -1598,6 +1607,12 @@ export const LandingPage: React.FC = () => {
                       <p className="text-base text-gray-900 dark:text-white/90 font-semibold group-hover:text-primary transition-colors">info@WellZo.com</p>
                     </div>
                   </a>
+                  <button 
+                    onClick={() => setIsContactModalOpen(true)}
+                    className="mt-4 flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all duration-300"
+                  >
+                    Send Message
+                  </button>
                 </li>
                 <li>
                   <div className="flex items-center gap-4 group">
