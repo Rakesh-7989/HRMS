@@ -19,7 +19,12 @@ jobs:
           script: |
             # Stop script execution on error
             set -e
-            trap 'cd /var/www/hrms/HRMS && node scripts/notify.js FAILED "Deployment failed during execution of SSH commands. Check server logs." && exit 1' ERR
+            
+            # Create log directory and enable logging
+            mkdir -p /var/www/hrms/HRMS/logs
+            exec > >(tee -a /var/www/hrms/HRMS/logs/deploy.log) 2>&1
+            
+            trap 'cd /var/www/hrms/HRMS && node scripts/notify.js FAILED "Deployment failed. Check logs at /var/www/hrms/HRMS/logs/deploy.log" && exit 1' ERR
 
             echo "Starting deployment..."
 
