@@ -1,0 +1,64 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - prod  # Trigger deployment on push to the 'prod' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            # Stop script execution on error
+            set -e
+            trap 'cd /var/www/hrms/HRMS && node scripts/notify.js FAILED "Deployment failed during execution of SSH commands. Check server logs." && exit 1' ERR
+
+            echo "Starting deployment..."
+
+            # 1. Navigate to Project Directory
+            cd /var/www/hrms/HRMS/
+
+            # 2. Update Codebase
+            echo "Pulling latest changes..."
+            # Stash any local changes on the server to avoid conflicts
+            git stash
+            git pull origin prod
+            # Restore local changes (Note: This might fail if there are conflicts)
+            git stash pop || echo "Stash pop failed or nothing to pop, continuing..."
+
+            # 3. Frontend Build & Deploy
+            echo "Building Frontend..."
+            cd frontend
+            # Install dependencies if package.json has changed
+            npm install --production=false
+            # Build the project
+            npm run build
+            
+            echo "Deploying Frontend to /var/www/html..."
+            # Note: The SSH user must have passwordless sudo permissions for these commands
+            sudo rm -rf /var/www/html/*
+            sudo cp -r dist/* /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html
+
+            # 4. Backend Update & Restart
+            echo "Updating Backend..."
+            cd ../backend
+            # Install dependencies
+            npm install --production
+            
+            echo "Restarting Backend Service..."
+            pm2 restart hrms-backend
+
+            # 5. Send Notification
+            cd ..
+            node scripts/notify.js SUCCESS "Deployment completed successfully via GitHub Actions."
+
+            echo "Deployment completed successfully!"
