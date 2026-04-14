@@ -112,7 +112,7 @@ const StatCard = ({
     whileHover={{ y: -5, scale: 1.02 }}
     className="relative group h-full"
   >
-    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-lg dark:shadow-none transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10">
       {/* Subtle Decorative Pattern */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -155,7 +155,7 @@ const SystemStatusCard = ({
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300"
+    className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-lg dark:shadow-none hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300"
   >
     <div className="flex items-center justify-between mb-4">
       <div
@@ -315,7 +315,7 @@ export const SuperAdminDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl dark:shadow-none"
         >
           {/* Subtle Patterns */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -412,7 +412,7 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg dark:shadow-none"
           >
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -499,7 +499,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                 <span className="text-xs font-black text-emerald-600">{payload.find((p: any) => p.dataKey === 'Employees')?.value || 0}</span>
                               </div>
                             </div>
-                            <div className="mt-3 pt-2 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                            <div className="mt-3 pt-2 border-t border-gray-50 dark:border-white/10 flex items-center justify-between">
                               <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">Total Scale</span>
                               <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
                                 {Number(payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0) +
@@ -549,7 +549,7 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.55 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
           >
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Tenant Status</h4>
             <div className="h-64">
@@ -584,7 +584,7 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg dark:shadow-none"
           >
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">System Resources History</h4>
             <div className="h-64">
@@ -716,7 +716,7 @@ export const SuperAdminDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1 }}
-          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-xl dark:shadow-none"
         >
           {/* Subtle Accent Pattern */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
