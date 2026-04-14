@@ -43,7 +43,7 @@ jobs:
             echo "Building Frontend..."
             cd frontend
             # Install dependencies if package.json has changed
-            npm install --production=false
+            npm install
             # Build the project
             npm run build
             
@@ -56,14 +56,13 @@ jobs:
             # 4. Backend Update & Restart
             echo "Updating Backend..."
             cd ../backend
-            # Install dependencies
-            npm install --production
+            npm install
             
             echo "Restarting Backend Service..."
             pm2 restart hrms-backend
 
             # 5. Send Notification
             cd ..
-            node scripts/notify.js SUCCESS "Deployment completed successfully via GitHub Actions."
+            node scripts/notify.js SUCCESS "Deployment finished. Backend restarted."
 
             echo "Deployment completed successfully!"
