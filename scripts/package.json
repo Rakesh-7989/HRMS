@@ -1,0 +1,10 @@
+{
+  "name": "hrms-deployer",
+  "version": "1.0.0",
+  "description": "Deployment pipeline with logging and emails",
+  "main": "auto-deploy.js",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.13"
+  }
+}
