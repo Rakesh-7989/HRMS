@@ -63,6 +63,7 @@ exports.linkArrearsToPayrun = async (tenantId, payrollRunId, employeeId, client 
         [payrollRunId, tenantId, employeeId]
     );
 };
+exports.markArrearsAsPaid = exports.linkArrearsToPayrun;
 
 /**
  * Finalize arrears for a payroll run (mark as PAID)

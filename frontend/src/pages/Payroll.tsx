@@ -18,8 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { PermissionAction } from '@/services/permissions.service';
 
 const PAYROLL_TABS: { id: string; labelKey: string; action: PermissionAction }[] = [
-  { id: 'dashboard', labelKey: 'payroll.overview', action: 'view' },
-  { id: 'summary', labelKey: 'payroll.summary', action: 'view' },
+  { id: 'dashboard', labelKey: 'payroll.overview', action: 'manage' },
+  { id: 'summary', labelKey: 'payroll.summary', action: 'manage' },
   { id: 'payslips', labelKey: 'payroll.payslips', action: 'view' },
   { id: 'tax', labelKey: 'payroll.taxAndCompliance', action: 'view' },
   { id: 'salary_details', labelKey: 'payroll.salaryStructure', action: 'manage' },

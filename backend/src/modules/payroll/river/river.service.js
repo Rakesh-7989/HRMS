@@ -71,8 +71,8 @@ const getDashboardStats = async (tenantId, month, year) => {
         [tenantId]
     );
 
-    // 3. Payroll Cost Summary (from last released run)
-    const costRes = await db.query(
+    // 3. Payroll Cost Summary (from last released run or active assignments projection)
+    let costRes = await db.query(
         `SELECT COALESCE(SUM(pri.gross_salary), 0) as total_gross,
                 COALESCE(SUM(pri.net_salary), 0) as total_net,
                 COALESCE(SUM(pri.total_deductions), 0) as total_deductions,
@@ -83,6 +83,47 @@ const getDashboardStats = async (tenantId, month, year) => {
          WHERE pr.tenant_id = $1 AND pr.period_month = $2 AND pr.period_year = $3`,
         [tenantId, month, year]
     );
+
+    if (parseInt(costRes.rows[0].processed_count) === 0) {
+        // Fallback 1: Query latest available computed run
+        const latestRunRes = await db.query(
+            `SELECT id FROM payroll_runs WHERE tenant_id = $1 AND total_employees > 0 ORDER BY period_year DESC, period_month DESC LIMIT 1`,
+            [tenantId]
+        );
+        if (latestRunRes.rows.length > 0) {
+            costRes = await db.query(
+                `SELECT COALESCE(SUM(pri.gross_salary), 0) as total_gross,
+                        COALESCE(SUM(pri.net_salary), 0) as total_net,
+                        COALESCE(SUM(pri.total_deductions), 0) as total_deductions,
+                        COALESCE(SUM(pri.tds), 0) as total_tds,
+                        COUNT(pri.id) as processed_count
+                 FROM payroll_run_items pri
+                 WHERE pri.payroll_run_id = $1`,
+                [latestRunRes.rows[0].id]
+            );
+        } else {
+            // Fallback 2: Dynamic predictive projection mapping directly from active employee CTC assignments
+            const estimateRes = await db.query(
+                `SELECT COALESCE(SUM(annual_ctc / 12), 0) as estimated_gross,
+                        COUNT(*) as active_count
+                 FROM employee_salary_assignments
+                 WHERE tenant_id = $1 AND is_current = TRUE`,
+                [tenantId]
+            );
+            const estGross = parseFloat(estimateRes.rows[0].estimated_gross);
+            if (estGross > 0) {
+                costRes = {
+                    rows: [{
+                        total_gross: estGross,
+                        total_net: estGross * 0.9, // Projected net payout (~90% of gross)
+                        total_deductions: estGross * 0.1, // Projected standard deductions (~10% of gross)
+                        total_tds: estGross * 0.05, // Projected estimated average TDS withholding
+                        processed_count: estimateRes.rows[0].active_count
+                    }]
+                };
+            }
+        }
+    }
     const costSummary = costRes.rows[0];
 
     // 4. 6-Month Payroll Trend
@@ -401,11 +442,23 @@ const getReviewData = async (tenantId, runId) => {
         [tenantId, runId]
     );
     const prevRun = prevRunRes.rows[0] || { total_gross: 0, total_employees: 0, total_net: 0 };
-    const curGross = parseFloat(run.total_gross || 0);
+    let curGross = parseFloat(run.total_gross || 0);
+    let curNet = parseFloat(run.total_net || 0);
+    let curHeadcount = parseInt(run.total_employees || 0);
+
+    // If current run is in REVIEW stage, estimate totals dynamically from active employee CTC assignments
+    if (curGross === 0 && ['PENDING', 'DRAFT'].includes(run.status)) {
+        const estRes = await db.query(
+            `SELECT COALESCE(SUM(annual_ctc / 12), 0) as est_gross, COUNT(*) as cnt FROM employee_salary_assignments WHERE tenant_id = $1 AND is_current = TRUE`,
+            [tenantId]
+        );
+        curGross = parseFloat(estRes.rows[0].est_gross);
+        curNet = curGross * 0.9;
+        curHeadcount = parseInt(estRes.rows[0].cnt);
+    }
+
     const prevGross = parseFloat(prevRun.total_gross || 0);
-    const curNet = parseFloat(run.total_net || 0);
     const prevNet = parseFloat(prevRun.total_net || 0);
-    const curHeadcount = parseInt(run.total_employees || 0);
     const prevHeadcount = parseInt(prevRun.total_employees || 0);
 
     const variance = {
@@ -475,22 +528,38 @@ const initiatePayroll = async (tenantId, runId, userId) => {
                 // Use default pool for reads or client? Client is better for consistency if we modified valid components earlier in transaction
                 // specific components are usually static here.
                 const compRes = await client.query(
-                    `SELECT name, component_type, amount FROM payroll_run_item_components WHERE payroll_run_item_id = $1`,
+                    `SELECT name, code, component_type, amount FROM payroll_run_item_components WHERE payroll_run_item_id = $1`,
                     [item.id]
                 );
                 for (const comp of compRes.rows) {
                     const compName = (comp.name || '').toUpperCase();
+                    const compCode = (comp.code || '').toUpperCase();
                     const amt = parseFloat(comp.amount || 0);
-                    if (compName === 'BASIC') basicPay += amt;
-                    else if (compName.includes('HRA')) hra += amt;
-                    else if ((compName.includes('PF') || compName.includes('PROVIDENT')) && !compName.includes('EMPLOYER')) pfEmp += amt;
-                    else if ((compName.includes('PF') || compName.includes('PROVIDENT')) && compName.includes('EMPLOYER')) pfEr += amt;
-                    else if ((compName.includes('ESI') || compName.includes('INSURANCE')) && !compName.includes('EMPLOYER')) esiEmp += amt;
-                    else if ((compName.includes('ESI') || compName.includes('INSURANCE')) && compName.includes('EMPLOYER')) esiEr += amt;
-                    else if (compName.includes('PT') || compName.includes('PROFESSIONAL')) pt += amt;
-                    else if (compName.includes('TDS') || compName.includes('INCOME TAX') || compName.includes('TAX')) tds += amt;
-                    else if (comp.component_type === 'EARNING') otherAllow += amt;
+                    
+                    if (compCode === 'BASIC' || compName === 'BASIC' || compName === 'BASIC PAY') {
+                        basicPay += amt;
+                    } else if (compCode === 'HRA' || compName.includes('HRA') || compName.includes('HOUSE RENT ALLOWANCE')) {
+                        hra += amt;
+                    } else if ((compName.includes('PF') || compName.includes('PROVIDENT')) && !compName.includes('EMPLOYER')) {
+                        pfEmp += amt;
+                    } else if ((compName.includes('PF') || compName.includes('PROVIDENT')) && compName.includes('EMPLOYER')) {
+                        pfEr += amt;
+                    } else if ((compName.includes('ESI') || compName.includes('INSURANCE')) && !compName.includes('EMPLOYER')) {
+                        esiEmp += amt;
+                    } else if ((compName.includes('ESI') || compName.includes('INSURANCE')) && compName.includes('EMPLOYER')) {
+                        esiEr += amt;
+                    } else if (compName.includes('PT') || compName.includes('PROFESSIONAL')) {
+                        pt += amt;
+                    } else if (compName.includes('TDS') || compName.includes('INCOME TAX') || compName.includes('TAX')) {
+                        tds += amt;
+                    } else if (comp.component_type === 'EARNING') {
+                        otherAllow += amt;
+                    }
                 }
+                
+                // Robust Fallback to primary run items register values if dynamic components loop returned zero
+                if (basicPay === 0 && parseFloat(item.basic) > 0) basicPay = parseFloat(item.basic);
+                if (hra === 0 && parseFloat(item.hra) > 0) hra = parseFloat(item.hra);
             } catch (e) { /* components table may not exist yet */ }
 
             await client.query(

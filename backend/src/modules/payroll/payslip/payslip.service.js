@@ -5,6 +5,7 @@ const fs = require("fs");
 const converter = require("number-to-words");
 const mailer = require("../../../config/mailer");
 const inboxService = require("../../inbox/inbox.service");
+const { decrypt } = require("../../../utils/encryption");
 
 // ===================================================================
 // PAYSLIP GENERATION
@@ -46,6 +47,13 @@ const getPayslipData = async (tenantId, payrollRunId, employeeId) => {
     );
     data.components = components.rows;
 
+    // Decrypt sensitive fields to display original plaintext values on the PDF
+    if (data.tax_id) data.tax_id = decrypt(data.tax_id);
+    if (data.bank_account_number) data.bank_account_number = decrypt(data.bank_account_number);
+    if (data.pf_account) data.pf_account = decrypt(data.pf_account);
+    if (data.uan) data.uan = decrypt(data.uan);
+    if (data.esi_number) data.esi_number = decrypt(data.esi_number);
+
     return data;
 };
 
@@ -85,6 +93,13 @@ const getPayslipById = async (tenantId, payslipId) => {
     );
     data.components = components.rows;
 
+    // Decrypt sensitive fields to display original plaintext values on the PDF
+    if (data.tax_id) data.tax_id = decrypt(data.tax_id);
+    if (data.bank_account_number) data.bank_account_number = decrypt(data.bank_account_number);
+    if (data.pf_account) data.pf_account = decrypt(data.pf_account);
+    if (data.uan) data.uan = decrypt(data.uan);
+    if (data.esi_number) data.esi_number = decrypt(data.esi_number);
+
     return data;
 };
 
@@ -98,7 +113,7 @@ const getEmployeePayslips = async (tenantId, employeeId) => {
      JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
      JOIN employees e ON e.id = pri.employee_id
      JOIN users u ON u.id = e.user_id
-     WHERE pri.tenant_id = $1 AND pri.employee_id = $2 AND pr.status IN ('APPROVED', 'PAID') AND pr.status != 'VOIDED'
+     WHERE pri.tenant_id = $1 AND pri.employee_id = $2 AND pr.status IN ('APPROVED', 'RELEASED', 'PAID') AND pr.status != 'VOIDED'
      ORDER BY pr.period_year DESC, pr.period_month DESC`,
         [tenantId, employeeId]
     );
@@ -317,7 +332,7 @@ const generatePDFFromData = async (data) => {
         let currentY = boxTop + 20;
         drawInfoRow('Associate Id', data.emp_code, 'Location', data.city || 'N/A', currentY); currentY += infoRowHeight;
         drawInfoRow('Designation', data.designation_name, 'PAN', data.tax_id || '-', currentY); currentY += infoRowHeight;
-        drawInfoRow('Gender', data.gender || 'N/A', 'Bank A/C', maskAccountNumber(data.bank_account_number), currentY); currentY += infoRowHeight;
+        drawInfoRow('Gender', data.gender || 'N/A', 'Bank A/C', data.bank_account_number || '-', currentY); currentY += infoRowHeight;
         drawInfoRow('Date Of Joining', data.join_date ? new Date(data.join_date).toLocaleDateString('en-IN') : 'N/A', 'ESI Number', data.esi_number || '-', currentY); currentY += infoRowHeight;
         drawInfoRow('PF A/C', data.pf_account || '-', 'Status', 'Salary Credited', currentY); currentY += infoRowHeight;
         drawInfoRow('UAN', data.uan || '-', 'Calendar Days', calendarDays.toString(), currentY); currentY += infoRowHeight;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { Dialog, DialogFooter } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '@/services/payroll.service';
@@ -129,6 +129,16 @@ export const SalaryStructuresContent: React.FC = () => {
     const deleteComponentMut = useMutation({
         mutationFn: (id: string) => payrollService.deleteSalaryComponentV2(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['salary-components'] })
+    });
+
+    const seedDefaultsMut = useMutation({
+        mutationFn: () => payrollService.seedSalaryDefaults(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['salary-structures'] });
+            queryClient.invalidateQueries({ queryKey: ['salary-components'] });
+            alert('Default salary components and structure initialized successfully!');
+        },
+        onError: (err: any) => alert('Failed to seed defaults: ' + (err.response?.data?.message || err.message))
     });
 
 
@@ -478,15 +488,27 @@ export const SalaryStructuresContent: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         {activeTab === 'structures' && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs font-bold uppercase tracking-tight border-primary/30 text-primary hover:bg-primary/5 dark:border-primary/50 dark:hover:bg-primary/10"
-                                onClick={() => setTemplateDialogOpen(true)}
-                            >
-                                <Sparkles className="mr-2" size={14} />
-                                From Template
-                            </Button>
+                            <>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={seedDefaultsMut.isPending}
+                                    className="text-xs font-bold uppercase tracking-tight border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-500/50 dark:text-purple-300 dark:hover:bg-purple-500/10"
+                                    onClick={() => seedDefaultsMut.mutate()}
+                                >
+                                    {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
+                                    Seed Defaults
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs font-bold uppercase tracking-tight border-primary/30 text-primary hover:bg-primary/5 dark:border-primary/50 dark:hover:bg-primary/10"
+                                    onClick={() => setTemplateDialogOpen(true)}
+                                >
+                                    <Sparkles className="mr-2" size={14} />
+                                    From Template
+                                </Button>
+                            </>
                         )}
                         <Button
                             size="sm"
@@ -557,7 +579,16 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <AlertCircle size={24} className="text-gray-300" />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">System Empty</h4>
-                            <p className="text-xs text-gray-500 mt-2 max-w-[240px] mx-auto leading-relaxed">No salary structures detected in calculations. Use "Seed Defaults" to initialize standard Indian components.</p>
+                            <p className="text-xs text-gray-500 mt-2 mb-6 max-w-[280px] mx-auto leading-relaxed">No salary structures detected in calculations. Use "Seed Defaults" to initialize standard Indian components.</p>
+                            <Button
+                                size="sm"
+                                disabled={seedDefaultsMut.isPending}
+                                onClick={() => seedDefaultsMut.mutate()}
+                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider"
+                            >
+                                {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
+                                Seed Default Structure
+                            </Button>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">

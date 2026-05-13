@@ -326,7 +326,7 @@ export const PayslipsContent: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
                                 <TableRow>
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Date</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Month</TableHead>
                                     {activeSubSection === 'staff' && <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Employee</TableHead>}
                                     <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Gross Pay</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Deductions</TableHead>
@@ -353,7 +353,11 @@ export const PayslipsContent: React.FC = () => {
                                 ) : (
                                     displayPayslips.map((p: any) => (
                                         <TableRow key={p.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 border-gray-50 dark:border-gray-800 transition-colors">
-                                            <TableCell className="px-6 py-4 font-bold text-gray-700 dark:text-gray-300 text-xs">{p.date}</TableCell>
+                                            <TableCell className="px-6 py-4 font-bold text-gray-700 dark:text-gray-300 text-xs">
+                                                {p.period_month && p.period_year
+                                                    ? new Date(p.period_year, p.period_month - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+                                                    : p.date || '—'}
+                                            </TableCell>
                                             {activeSubSection === 'staff' && <TableCell className="px-6 py-4 font-bold text-sm">{p.employee_name}</TableCell>}
                                             <TableCell className="px-6 py-4 font-bold text-xs">{formatINR(p.gross)}</TableCell>
                                             <TableCell className="px-6 py-4 font-bold text-xs text-red-500">{formatINR(p.deductions)}</TableCell>

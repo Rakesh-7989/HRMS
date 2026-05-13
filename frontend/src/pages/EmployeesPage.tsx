@@ -136,8 +136,6 @@ export const EmployeesPage: React.FC = () => {
 
   // Implement client-side filtering and pagination since backend ignores some params
   const filteredEmployees = employees.filter((emp) => {
-    // Hide self
-    if (emp.id === user?.id) return false;
 
     // Role filter
     if (roleFilter && emp.role !== roleFilter) return false;

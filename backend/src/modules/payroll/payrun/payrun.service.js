@@ -150,8 +150,8 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
         throw new Error('Payrun not found');
     }
 
-    if (!['DRAFT', 'PENDING_APPROVAL', 'CALCULATED', 'APPROVED', 'RELEASED'].includes(payrun.status)) {
-        throw new Error(`Can only calculate DRAFT, PENDING_APPROVAL, CALCULATED, APPROVED or RELEASED payruns (Current: ${payrun.status})`);
+    if (!['DRAFT', 'PENDING', 'PENDING_APPROVAL', 'CALCULATED', 'APPROVED', 'RELEASED'].includes(payrun.status)) {
+        throw new Error(`Can only calculate DRAFT, PENDING, PENDING_APPROVAL, CALCULATED, APPROVED or RELEASED payruns (Current: ${payrun.status})`);
     }
 
     // 1. Auto-Repair block: Ensure all active employees with CTC have a salary assignment if a default structure exists.
@@ -215,7 +215,7 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
             [payrunId]
         );
 
-        const periodEndStr = payrun.period_end.toISOString().split('T')[0];
+        const periodEndStr = payrun.period_end instanceof Date ? payrun.period_end.toISOString().split('T')[0] : String(payrun.period_end).split('T')[0];
 
         // Get all employees with salary assignments who joined before/during this period
         const employees = await client.query(
@@ -274,8 +274,8 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
         let totalNet = 0;
         let totalEmployees = 0;
 
-        const periodStart = payrun.period_start.toISOString().split('T')[0];
-        const periodEnd = payrun.period_end.toISOString().split('T')[0];
+        const periodStart = payrun.period_start instanceof Date ? payrun.period_start.toISOString().split('T')[0] : String(payrun.period_start).split('T')[0];
+        const periodEnd = payrun.period_end instanceof Date ? payrun.period_end.toISOString().split('T')[0] : String(payrun.period_end).split('T')[0];
 
         for (const emp of employees.rows) {
             const result = await calculateEmployeePayrollWithClient(
@@ -525,6 +525,24 @@ const calculateEmployeePayrollWithClient = async (client, tenantId, emp, payrun,
             type: c.component_type
         });
     });
+
+    // If component values are empty (e.g. structure assigned by default template/CTC migration without granular row values), 
+    // dynamically generate compliance-standard structural breakdown directly from the assigned Monthly CTC
+    if (compDetails.length === 0 && monthlyCtc > 0) {
+        const autoBasic = Math.round(monthlyCtc * 0.5);
+        const autoHra = Math.round(autoBasic * 0.4);
+        const autoSpecial = Math.round(monthlyCtc - autoBasic - autoHra);
+
+        compMap['BASIC'] = autoBasic;
+        compMap['HRA'] = autoHra;
+        compMap['SPECIAL_ALLOWANCE'] = autoSpecial;
+
+        compDetails.push(
+            { component_id: null, name: 'Basic Pay', code: 'BASIC', amount: autoBasic, type: 'EARNING' },
+            { component_id: null, name: 'House Rent Allowance', code: 'HRA', amount: autoHra, type: 'EARNING' },
+            { component_id: null, name: 'Special Allowance', code: 'SPECIAL_ALLOWANCE', amount: autoSpecial, type: 'EARNING' }
+        );
+    }
 
     // Add Arrears as a virtual component for payslip breakdown
     if (arrearsTotal > 0) {
