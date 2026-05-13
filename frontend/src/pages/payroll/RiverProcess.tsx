@@ -102,7 +102,8 @@ export const RiverProcess = () => {
             if (stage === 'RELEASE') endpoint = `/payroll/river/release/${runId}/summary`;
             if (stage === 'INITIATE') endpoint = `/payroll/river/review/${runId}`;
 
-            const res = await api.get(endpoint);
+            // Append unique timestamp to fully bypass browser/service-worker caching
+            const res = await api.get(`${endpoint}?_t=${Date.now()}`);
             setData(res.data);
 
             // Auto-set stage from run status if returned (only on first load)
@@ -780,6 +781,12 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
 // =============================================================================
 const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
     const [released, setReleased] = useState(data?.run?.status === 'RELEASED');
+
+    useEffect(() => {
+        if (data?.run?.status === 'RELEASED') {
+            setReleased(true);
+        }
+    }, [data?.run?.status]);
 
     const handleDownload = async (type: string) => {
         try {

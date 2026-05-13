@@ -444,6 +444,116 @@ class SubscriptionService {
         `, [tenantId]);
         return result.rows;
     }
+
+    async cancelSubscription(tenantId) {
+        const sub = await this.getSubscriptionByTenantId(tenantId);
+        if (!sub) {
+            throw new Error('No active subscription found to cancel.');
+        }
+
+        const res = await db.query(
+            `UPDATE subscriptions 
+             SET status = 'CANCELLED', updated_at = NOW() 
+             WHERE id = $1 RETURNING *`,
+            [sub.id]
+        );
+
+        await db.query(
+            `UPDATE tenants 
+             SET is_active = false, updated_at = NOW() 
+             WHERE id = $1`,
+            [tenantId]
+        );
+
+        return res.rows[0];
+    }
+
+    async extendSubscription(tenantId, days) {
+        const sub = await this.getSubscriptionByTenantId(tenantId);
+        if (!sub) {
+            throw new Error('No active subscription found to extend.');
+        }
+
+        const res = await db.query(
+            `UPDATE subscriptions 
+             SET current_period_end = current_period_end + ($2 || ' days')::interval,
+                 end_date = COALESCE(end_date, current_period_end) + ($2 || ' days')::interval,
+                 updated_at = NOW() 
+             WHERE id = $1 RETURNING *`,
+            [sub.id, parseInt(days, 10)]
+        );
+
+        await db.query(
+            `UPDATE tenants 
+             SET plan_expiry_date = COALESCE(plan_expiry_date, NOW()) + ($2 || ' days')::interval,
+                 is_active = true,
+                 updated_at = NOW() 
+             WHERE id = $1`,
+            [tenantId, parseInt(days, 10)]
+        );
+
+        return res.rows[0];
+    }
+
+    async suspendSubscription(tenantId) {
+        const sub = await this.getSubscriptionByTenantId(tenantId);
+        if (!sub) {
+            throw new Error('No active subscription found to suspend.');
+        }
+
+        const res = await db.query(
+            `UPDATE subscriptions 
+             SET status = 'SUSPENDED', updated_at = NOW() 
+             WHERE id = $1 RETURNING *`,
+            [sub.id]
+        );
+
+        await db.query(
+            `UPDATE tenants 
+             SET is_active = false, updated_at = NOW() 
+             WHERE id = $1`,
+            [tenantId]
+        );
+
+        return res.rows[0];
+    }
+
+    async upgradeSubscription(tenantId, planId, billingCycle) {
+        const sub = await this.getSubscriptionByTenantId(tenantId);
+        
+        let subId;
+        if (sub) {
+            const res = await db.query(
+                `UPDATE subscriptions 
+                 SET plan_id = $2, billing_cycle = $3, status = 'ACTIVE', updated_at = NOW() 
+                 WHERE id = $1 RETURNING *`,
+                [sub.id, planId, billingCycle]
+            );
+            subId = sub.id;
+        } else {
+            const newSub = await this.createSubscription({
+                tenant_id: tenantId,
+                plan_id: planId,
+                billing_cycle: billingCycle,
+                status: 'ACTIVE',
+                amount: 0
+            });
+            subId = newSub.id;
+        }
+
+        const planRes = await db.query('SELECT tier FROM plans WHERE id = $1', [planId]);
+        const tier = planRes.rows[0]?.tier || 1;
+
+        await db.query(
+            `UPDATE tenants 
+             SET plan_type = $1, is_active = true, updated_at = NOW() 
+             WHERE id = $2`,
+            [tier, tenantId]
+        );
+
+        const updatedRes = await db.query('SELECT * FROM subscriptions WHERE id = $1', [subId]);
+        return updatedRes.rows[0];
+    }
 }
 
 module.exports = new SubscriptionService();

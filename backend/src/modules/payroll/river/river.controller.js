@@ -101,6 +101,9 @@ router.post('/release/:runId', verifyJwt, async (req, res) => {
 // Release Summary
 router.get('/release/:runId/summary', verifyJwt, async (req, res) => {
     try {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         const result = await riverService.getReleaseSummary(req.user.tenantId, req.params.runId);
         res.json(result);
     } catch (err) {
@@ -111,6 +114,9 @@ router.get('/release/:runId/summary', verifyJwt, async (req, res) => {
 // Bank File Data
 router.get('/release/:runId/bank-file', verifyJwt, async (req, res) => {
     try {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         const result = await riverService.getBankFileData(req.user.tenantId, req.params.runId);
         res.json(result);
     } catch (err) {
@@ -121,6 +127,9 @@ router.get('/release/:runId/bank-file', verifyJwt, async (req, res) => {
 // Salary Register
 router.get('/release/:runId/salary-register', verifyJwt, async (req, res) => {
     try {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         const result = await riverService.getSalaryRegister(req.user.tenantId, req.params.runId);
         res.json(result);
     } catch (err) {

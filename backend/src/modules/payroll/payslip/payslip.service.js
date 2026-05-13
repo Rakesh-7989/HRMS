@@ -20,7 +20,7 @@ const getPayslipData = async (tenantId, payrollRunId, employeeId) => {
         e.bank_name, e.account_number as bank_account_number, e.ifsc_code as bank_ifsc, e.tax_id,
         e.uan, e.pf_account, e.esi_number,
         esa.annual_ctc as ctc,
-        d.name as department_name, des.name as designation_name,
+        d.name as department_name, d.name as department, des.name as designation_name, des.name as designation,
         t.name as company_name, t.address as company_address, t.settings as company_settings
      FROM payroll_run_items pri
      JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
@@ -66,7 +66,7 @@ const getPayslipById = async (tenantId, payslipId) => {
         e.bank_name, e.account_number as bank_account_number, e.ifsc_code as bank_ifsc, e.tax_id,
         e.uan, e.pf_account, e.esi_number,
         esa.annual_ctc as ctc,
-        d.name as department_name, des.name as designation_name,
+        d.name as department_name, d.name as department, des.name as designation_name, des.name as designation,
         t.name as company_name, t.address as company_address, t.settings as company_settings
      FROM payroll_run_items pri
      JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
@@ -108,11 +108,12 @@ const getEmployeePayslips = async (tenantId, employeeId) => {
         `SELECT 
         pri.id, pri.payroll_run_id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
         pr.period_month, pr.period_year, TO_CHAR(pr.pay_date, 'YYYY-MM-DD') as date, pr.status as payrun_status, pr.run_number,
-        u.email as employee_email
+        u.email as employee_email, d.name as department
      FROM payroll_run_items pri
      JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
      JOIN employees e ON e.id = pri.employee_id
      JOIN users u ON u.id = e.user_id
+     LEFT JOIN departments d ON d.id = e.department_id
      WHERE pri.tenant_id = $1 AND pri.employee_id = $2 AND pr.status IN ('APPROVED', 'RELEASED', 'PAID') AND pr.status != 'VOIDED'
      ORDER BY pr.period_year DESC, pr.period_month DESC`,
         [tenantId, employeeId]
@@ -127,11 +128,12 @@ const listAllPayslips = async (tenantId, filters = {}) => {
             pri.id, pri.payroll_run_id, pri.net_salary as net, pri.gross_salary as gross, pri.total_deductions as deductions,
             pr.period_month, pr.period_year, TO_CHAR(pr.pay_date, 'YYYY-MM-DD') as date, pr.status as payrun_status, pr.run_number,
             e.first_name || ' ' || e.last_name as employee_name, e.employee_id as emp_code,
-            u.email as employee_email
+            u.email as employee_email, d.name as department
          FROM payroll_run_items pri
          JOIN payroll_runs pr ON pr.id = pri.payroll_run_id
          JOIN employees e ON e.id = pri.employee_id
          JOIN users u ON u.id = e.user_id
+         LEFT JOIN departments d ON d.id = e.department_id
          WHERE pri.tenant_id = $1 AND pr.status != 'VOIDED'
     `;
 
@@ -289,7 +291,7 @@ const generatePDFFromData = async (data) => {
         const infoY = headerY + 15;
         const boxTop = infoY + 20;
         const infoRowHeight = 15;
-        const infoRows = 7;
+        const infoRows = 8;
         const boxHeight = 25 + (infoRows * infoRowHeight); // Extra room for name and padding
 
         // Header Background
@@ -300,8 +302,9 @@ const generatePDFFromData = async (data) => {
         doc.rect(40, boxTop, 515, boxHeight).stroke(borderColor);
 
         // Name Row
+        const prefix = data.gender === 'FEMALE' ? 'Ms.' : 'Mr.';
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-        doc.text(`Mr. ${data.first_name} ${data.last_name}`, 45, boxTop + 5);
+        doc.text(`${prefix} ${data.first_name} ${data.last_name}`, 45, boxTop + 5);
 
         // Vertical dividers for the grid
         const midX = 40 + (515 / 2);
@@ -331,12 +334,13 @@ const generatePDFFromData = async (data) => {
 
         let currentY = boxTop + 20;
         drawInfoRow('Associate Id', data.emp_code, 'Location', data.city || 'N/A', currentY); currentY += infoRowHeight;
-        drawInfoRow('Designation', data.designation_name, 'PAN', data.tax_id || '-', currentY); currentY += infoRowHeight;
-        drawInfoRow('Gender', data.gender || 'N/A', 'Bank A/C', data.bank_account_number || '-', currentY); currentY += infoRowHeight;
-        drawInfoRow('Date Of Joining', data.join_date ? new Date(data.join_date).toLocaleDateString('en-IN') : 'N/A', 'ESI Number', data.esi_number || '-', currentY); currentY += infoRowHeight;
-        drawInfoRow('PF A/C', data.pf_account || '-', 'Status', 'Salary Credited', currentY); currentY += infoRowHeight;
-        drawInfoRow('UAN', data.uan || '-', 'Calendar Days', calendarDays.toString(), currentY); currentY += infoRowHeight;
-        drawInfoRow('Paid Days', paidDays.toString(), 'LOP Days', data.lop_days || '0', currentY);
+        drawInfoRow('Department', data.department_name || data.department || 'N/A', 'PAN', data.tax_id || '-', currentY); currentY += infoRowHeight;
+        drawInfoRow('Designation', data.designation_name || 'N/A', 'Bank A/C', data.bank_account_number || '-', currentY); currentY += infoRowHeight;
+        drawInfoRow('Gender', data.gender || 'N/A', 'ESI Number', data.esi_number || '-', currentY); currentY += infoRowHeight;
+        drawInfoRow('Date Of Joining', data.join_date ? new Date(data.join_date).toLocaleDateString('en-IN') : 'N/A', 'PF A/C', data.pf_account || '-', currentY); currentY += infoRowHeight;
+        drawInfoRow('UAN', data.uan || '-', 'Status', 'Salary Credited', currentY); currentY += infoRowHeight;
+        drawInfoRow('Paid Days', paidDays.toString(), 'Calendar Days', calendarDays.toString(), currentY); currentY += infoRowHeight;
+        drawInfoRow('LOP Days', data.lop_days || '0', 'Payment Mode', 'Bank Transfer', currentY);
 
         doc.moveDown(2);
 
