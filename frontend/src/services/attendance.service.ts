@@ -125,6 +125,8 @@ export interface AttendanceReports {
     date: string;
     check_in_time: string;
     check_out_time: string;
+    check_in_device?: string;
+    check_out_device?: string;
     is_late: boolean;
     status: string;
     work_hours: number;

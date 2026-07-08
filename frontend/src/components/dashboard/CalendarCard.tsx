@@ -11,6 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type Props = {
   events?: PeopleEventsResponse;
+  announcements?: any;
+  past7Days?: Array<{ day: string; date: string; status: string; }>;
   className?: string;
   compact?: boolean;
 };

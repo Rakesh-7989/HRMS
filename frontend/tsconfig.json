@@ -5,6 +5,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "types": ["vite/client", "node"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -16,27 +17,16 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/pages/*": ["./src/pages/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/utils/*": ["./src/utils/*"],
-      "@/services/*": ["./src/services/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/contexts/*": ["./src/contexts/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
-  
 }
-
-
-

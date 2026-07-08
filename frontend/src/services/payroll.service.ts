@@ -694,7 +694,7 @@ export const payrollService = {
     } catch { return []; }
   },
 
-  createDeductionType: async (payload: { name: string; code: string; category: string; calculationType: string; isRecurring: boolean }) => {
+  createDeductionType: async (payload: { name: string; code: string; category: string; calculation_type?: string; is_statutory?: boolean; is_taxable?: boolean; is_recurring?: boolean }) => {
     const response = await api.post<ApiResponse<any>>('/payroll/statutory/deduction-types', payload);
     return response.data.data!;
   },
@@ -719,6 +719,49 @@ export const payrollService = {
 
   // Expose api for components that need direct access
   _api: api,
+
+  // ==========================================================================
+  // Salary Templates (aliases for component compatibility)
+  // ==========================================================================
+  getSalaryTemplates: async () => {
+    const response = await api.get<ApiResponse<Array<any>>>('/payroll/salary/templates');
+    return response.data.data || [];
+  },
+
+  createSalaryTemplate: async (payload: any) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/salary/templates', payload);
+    return response.data.data!;
+  },
+
+  updateSalaryTemplate: async (id: string, payload: any) => {
+    const response = await api.put<ApiResponse<any>>(`/payroll/salary/templates/${id}`, payload);
+    return response.data.data!;
+  },
+
+  deleteSalaryTemplate: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/salary/templates/${id}`);
+    return response.data.data;
+  },
+
+  getPTSlabs: async () => {
+    const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/pt-slabs');
+    return response.data.data || [];
+  },
+
+  createPTSlab: async (payload: any) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/pt-slabs', payload);
+    return response.data.data!;
+  },
+
+  deletePTSlab: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/pt-slabs/${id}`);
+    return response.data.data;
+  },
+
+  getCostCenters: async () => {
+    const response = await api.get<ApiResponse<Array<any>>>('/payroll/cost-centers');
+    return response.data.data || [];
+  },
 };
 
 export interface FnFSettlement {
@@ -735,3 +778,40 @@ export interface FnFSettlement {
 }
 
 export default payrollService;
+
+export interface StatutoryConfig {
+  id?: string;
+  tenant_id?: string;
+  pf_enabled?: boolean;
+  esi_enabled?: boolean;
+  pt_enabled?: boolean;
+  tax_enabled?: boolean;
+  pf_employee_rate?: number;
+  pf_employer_rate?: number;
+  esi_employee_rate?: number;
+  esi_employer_rate?: number;
+  pf_wage_limit?: number;
+  esi_wage_limit?: number;
+  professional_tax?: number;
+  employer_pf?: number;
+  employer_esi?: number;
+}
+
+export interface PTSlab {
+  id: string;
+  state: string;
+  min_salary?: number;
+  max_salary?: number;
+  monthly_tax: number;
+}
+
+export interface DeductionType {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  calculation_type: string;
+  is_recurring?: boolean;
+  is_statutory?: boolean;
+  is_taxable?: boolean;
+}

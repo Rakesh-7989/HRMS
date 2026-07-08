@@ -7,14 +7,12 @@ export const MOCK_ASSETS: Asset[] = [
         name: 'Dell Laptop XPS 13',
         barcode: '123456789012',
         category: 'Laptop',
-        status: 'Assigned',
+        status: 'ASSIGNED',
         assigned_to: 'sample-user-1',
         assigned_employee: {
-            id: 'sample-user-1',
             first_name: 'John',
             last_name: 'Doe'
         },
-        location: 'Floor 1, Room 101',
         purchase_date: '2023-01-15',
         purchase_price: 1200,
         warranty_expiry: '2026-01-15',
@@ -35,8 +33,7 @@ export const MOCK_ASSETS: Asset[] = [
         name: 'HP Monitor 27"',
         barcode: '123456789013',
         category: 'Monitor',
-        status: 'Available',
-        location: 'IT Storage',
+        status: 'AVAILABLE',
         purchase_date: '2023-02-20',
         purchase_price: 300,
         warranty_expiry: '2026-02-20',
@@ -50,8 +47,7 @@ export const MOCK_ASSETS: Asset[] = [
         name: 'iPhone 13 Pro',
         barcode: '123456789014',
         category: 'Mobile',
-        status: 'Available',
-        location: 'Mobile',
+        status: 'AVAILABLE',
         purchase_date: '2023-03-10',
         purchase_price: 999,
         warranty_expiry: '2025-03-10',
@@ -72,14 +68,12 @@ export const MOCK_ASSETS: Asset[] = [
         name: 'MacBook Pro 16"',
         barcode: '123456789015',
         category: 'Laptop',
-        status: 'Requested',
-        assigned_to: 'sample-user-3', // Requested
+        status: 'REQUESTED',
+        assigned_to: 'sample-user-3',
         assigned_employee: {
-            id: 'sample-user-3',
             first_name: 'Bob',
             last_name: 'Johnson'
         },
-        location: 'Pending Assignment',
         purchase_date: '2023-04-01',
         purchase_price: 2400,
         configuration: {
