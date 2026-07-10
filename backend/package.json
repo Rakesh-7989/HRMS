@@ -52,7 +52,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@otplib/plugin-base32-scure": "^13.3.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
     "otplib": "^13.3.0",

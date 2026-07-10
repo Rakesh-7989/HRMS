@@ -8,7 +8,18 @@ const env = require("../../config/env");
 const mailer = require("../../config/mailer");
 const subscriptionService = require("../subscriptions/subscriptions.service");
 const logAudit = require("../../utils/auditLogger");
-const { generateSecret, generateURI, verifySync } = require("otplib");
+let generateSecret, generateURI, verifySync;
+try {
+  const otplib = require("otplib");
+  generateSecret = otplib.generateSecret;
+  generateURI = otplib.generateURI;
+  verifySync = otplib.verifySync;
+} catch (err) {
+  console.error("otplib not available, TOTP disabled:", err.message);
+  generateSecret = () => crypto.randomBytes(20).toString("hex").toUpperCase();
+  generateURI = () => "";
+  verifySync = () => false;
+}
 const QRCode = require("qrcode");
 
 exports.login = async (req, res) => {
