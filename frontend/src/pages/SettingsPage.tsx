@@ -31,7 +31,7 @@ import { SuccessModal } from '@/components/ui/SuccessModal';
 
 import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
-import defaultLogo from '../../Assests/logo.png';
+import defaultLogo from '../../Assests/logo.svg';
 import { useTimezones, getTimezoneLabel } from '@/utils/timezone';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 

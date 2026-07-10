@@ -6,7 +6,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { resolveImageUrl } from '@/utils/image';
-import logo from '../../../Assests/logo.png';
+import logo from '../../../Assests/logo.svg';
 import {
   CreditCard,
   Shield,
