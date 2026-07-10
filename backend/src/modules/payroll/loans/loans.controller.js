@@ -1,5 +1,6 @@
 const loanService = require("./loans.service.js");
 const { createLoanSchema, approveLoanSchema, createLoanTypeSchema } = require("./loans.validator.js");
+const logAudit = require("../../utils/auditLogger");
 
 const createLoan = async (req, res) => {
   // Employees use the detailed flow (validated schema). Those with management permissions may create loans via simplified payload.
@@ -69,6 +70,14 @@ const approveLoan = async (req, res) => {
     req.user.id,
     payload.remarks
   );
+
+  try {
+    await logAudit(req, 'employee_loans', req.params.loanId,
+      loan.status === 'APPROVED' ? 'APPROVE_LOAN' : 'REJECT_LOAN',
+      { status: 'PENDING' },
+      { status: loan.status, approved_by: req.user.id, principal_amount: loan.principal_amount, remarks: payload.remarks }
+    );
+  } catch (e) { console.error('Audit failed', e); }
 
   res.json({
     status: "success",

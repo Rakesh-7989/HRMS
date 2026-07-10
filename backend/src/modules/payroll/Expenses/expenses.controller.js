@@ -1,4 +1,5 @@
 const service = require("./expenses.service");
+const logAudit = require("../../utils/auditLogger");
 
 /* Categories */
 const createCategory = async (req, res) => {
@@ -34,6 +35,15 @@ const approveExpense = async (req, res) => {
     req.body.status,
     req.user.id
   );
+
+  try {
+    await logAudit(req, 'employee_expenses', req.params.expenseId,
+      data.status === 'APPROVED' ? 'APPROVE_EXPENSE' : 'REJECT_EXPENSE',
+      { status: 'PENDING' },
+      { status: data.status, approved_by: req.user.id, amount: data.amount }
+    );
+  } catch (e) { console.error('Audit failed', e); }
+
   res.json({ status: "success", data });
 };
 

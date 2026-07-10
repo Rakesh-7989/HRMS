@@ -222,31 +222,29 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
     );
 };
 
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Button } from '@/components/ui/Button';
 
 const DeleteMessageModal = ({ isOpen, onClose, onDelete, isMe }: { isOpen: boolean; onClose: () => void; onDelete: (mode: 'me' | 'everyone') => void; isMe: boolean }) => {
+    if (!isOpen) return null;
     return (
-        <ConfirmDialog
-            open={isOpen}
-            onOpenChange={(open) => !open && onClose()}
-            onBack={onClose}
-            onConfirm={() => { onDelete('everyone'); onClose(); }}
-            title="Delete this message?"
-            description="This action will remove the message for participants"
-            confirmLabel="Delete for everyone"
-            variant="danger"
-            showCancel={true}
-            cancelLabel="Cancel"
-        >
-            <div className="flex flex-col gap-2 w-full mt-2">
-                <button
-                    onClick={() => { onDelete('me'); onClose(); }}
-                    className="w-full py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30"
-                >
-                    Delete for me
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete this message?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">This action will remove the message for participants</p>
+                <div className="flex flex-col gap-2 w-full mb-4">
+                    <button
+                        onClick={() => { onDelete('me'); onClose(); }}
+                        className="w-full py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30"
+                    >
+                        Delete for me
+                    </button>
+                </div>
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-2.5 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+                    <button onClick={() => { onDelete('everyone'); onClose(); }} className="flex-1 py-2.5 px-4 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">Delete for everyone</button>
+                </div>
             </div>
-        </ConfirmDialog>
+        </div>
     );
 }
 

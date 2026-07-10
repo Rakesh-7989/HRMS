@@ -212,17 +212,21 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
         const ctc = assignment ? parseFloat(assignment.ctc || 0) : 0;
         const perDaySalary = ctc / 12 / 30;
 
-        // Fetch the BASIC component amount for gratuity calculation
+        // Fetch the BASIC + DA component amounts for gratuity calculation
         let monthlyBasic = 0;
+        let monthlyDA = 0;
         if (assignment) {
             const basicRes = await db.query(
-                `SELECT escv.monthly_amount 
-             FROM employee_salary_component_values escv
-             JOIN salary_components sc ON sc.id = escv.component_id
-             WHERE escv.assignment_id = $1 AND sc.code = 'BASIC'`,
+                `SELECT escv.monthly_amount, sc.code
+                 FROM employee_salary_component_values escv
+                 JOIN salary_components sc ON sc.id = escv.component_id
+                 WHERE escv.assignment_id = $1 AND sc.code IN ('BASIC', 'DA')`,
                 [assignment.assignment_id]
             );
-            monthlyBasic = parseFloat(basicRes.rows[0]?.monthly_amount || 0);
+            basicRes.rows.forEach(row => {
+                if (row.code === 'BASIC') monthlyBasic = parseFloat(row.monthly_amount || 0);
+                if (row.code === 'DA') monthlyDA = parseFloat(row.monthly_amount || 0);
+            });
         }
 
         // Get pending loans
@@ -262,6 +266,7 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
         // =====================================================
         // DYNAMIC GRATUITY CALCULATION (Payment of Gratuity Act, 1972)
         // Formula: (15 × last drawn salary × years of service) / 26
+        // Last drawn salary = Basic + DA (Dearness Allowance)
         // Eligible only after 5 years of continuous service
         // =====================================================
         let gratuity = 0;
@@ -273,8 +278,8 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
             if (yearsOfService >= 5) {
                 // Round to nearest integer per Act rules (0.5+ rounds up)
                 const completedYears = Math.round(yearsOfService);
-                // Use Basic + DA as the base (DA often = 0 in CTC structures)
-                gratuity = Math.round((15 * monthlyBasic * completedYears) / 26);
+                const lastDrawnSalary = monthlyBasic + monthlyDA;
+                gratuity = Math.round((15 * lastDrawnSalary * completedYears) / 26);
             }
         }
 

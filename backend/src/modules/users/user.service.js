@@ -349,6 +349,11 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
     );
 
 
+    // Check for circular reporting
+    if (data.reports_to) {
+      await checkCircularReporting(client, empRes.rows[0].id, data.reports_to, actor.tenantId);
+    }
+
     // Create initial salary details if CTC is provided
     if (data.ctc) {
       // 1. Maintain legacy bank info support
@@ -1005,6 +1010,21 @@ exports.updateEmployee = async (db, id, updates, actor) => {
 
     // Role Change Logic
     if (updates.role) {
+      // Admin lockout safeguard: prevent demoting the last admin
+      const currentRoleRes = await query(
+        'SELECT role FROM users WHERE id = $1 AND tenant_id = $2',
+        [resolvedUserId, tenantId]
+      );
+      if (currentRoleRes.rowCount > 0 && currentRoleRes.rows[0].role === 'ADMIN' && updates.role !== 'ADMIN') {
+        const adminCount = await query(
+          'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_active = true AND is_deleted = false AND id != $3',
+          [tenantId, 'ADMIN', resolvedUserId]
+        );
+        if (parseInt(adminCount.rows[0].count, 10) === 0) {
+          throw new Error("Cannot remove the last admin. Promote another user to ADMIN first.");
+        }
+      }
+
       // [ADMIN LIMIT CHECK FOR ROLE CHANGE]
       if (updates.role === 'ADMIN') {
         const adminCountRes = await client.query(
@@ -1215,6 +1235,24 @@ exports.updateUserStatus = async (db, id, isActive, actor) => {
   }
 
   const query = getQuery(db);
+
+  // Admin lockout safeguard: prevent deactivating the last admin
+  if (!isActive) {
+    const userRes = await query(
+      'SELECT role FROM users WHERE id = $1 AND tenant_id = $2',
+      [id, actor.tenantId]
+    );
+    if (userRes.rowCount > 0 && userRes.rows[0].role === 'ADMIN') {
+      const adminCount = await query(
+        'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_active = true AND is_deleted = false AND id != $3',
+        [actor.tenantId, 'ADMIN', id]
+      );
+      if (parseInt(adminCount.rows[0].count, 10) === 0) {
+        throw new Error("Cannot remove the last admin. Promote another user to ADMIN first.");
+      }
+    }
+  }
+
   const res = await query(
     `UPDATE users SET is_active=$1, updated_at=now() WHERE id=$2 AND tenant_id=$3 RETURNING *`,
     [isActive, id, actor.tenantId]
@@ -1273,6 +1311,24 @@ exports.updateUser = async (db, id, updates, actor) => {
 exports.changeRole = async (db, id, newRole, actor) => {
   const query = getQuery(db);
   const tenantId = actor.tenantId;
+
+  // Admin lockout safeguard: prevent demoting the last admin
+  const currentUser = await query(
+    'SELECT role FROM users WHERE id = $1 AND tenant_id = $2',
+    [id, tenantId]
+  );
+  if (currentUser.rowCount === 0) {
+    throw new Error('User not found');
+  }
+  if (currentUser.rows[0].role === 'ADMIN' && newRole !== 'ADMIN') {
+    const adminCount = await query(
+      'SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role = $2 AND is_active = true AND is_deleted = false AND id != $3',
+      [tenantId, 'ADMIN', id]
+    );
+    if (parseInt(adminCount.rows[0].count, 10) === 0) {
+      throw new Error("Cannot remove the last admin. Promote another user to ADMIN first.");
+    }
+  }
 
   // [ADMIN LIMIT CHECK]
   if (newRole === 'ADMIN') {

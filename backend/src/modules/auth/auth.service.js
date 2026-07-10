@@ -49,9 +49,9 @@ exports.generateTokens = async (user, rememberMe = false) => {
 };
 
 
-exports.verifyRefreshToken = async (refreshToken) => {
+exports.verifyRefreshToken = async (refreshToken, ip, userAgent) => {
   const res = await pool.query(
-    `SELECT id, user_id, expires_at, is_revoked
+    `SELECT id, user_id, expires_at, is_revoked, ip_address, user_agent
      FROM user_sessions
      WHERE refresh_token = $1`,
     [refreshToken]
@@ -63,6 +63,14 @@ exports.verifyRefreshToken = async (refreshToken) => {
 
   if (row.is_revoked) return null;
   if (new Date(row.expires_at) < new Date()) return null;
+
+  if (row.ip_address && row.ip_address !== ip) {
+    throw new Error("Session fingerprint mismatch. Please login again.");
+  }
+
+  if (row.user_agent && row.user_agent !== userAgent) {
+    throw new Error("Session fingerprint mismatch. Please login again.");
+  }
 
   return row;
 };

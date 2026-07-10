@@ -73,6 +73,25 @@ const createExpense = async (tenantId, employeeId, userId, payload) => {
     throw new Error("Expense date cannot be in the future");
   }
 
+  // SECURITY FIX: Check for duplicate expense
+  const dupCheck = await db.query(
+    `
+    SELECT id FROM employee_expenses
+    WHERE tenant_id = $1
+      AND employee_id = $2
+      AND amount = $3
+      AND expense_date = $4
+      AND category_id = $5
+      AND is_deleted = false
+    LIMIT 1;
+    `,
+    [tenantId, employeeId, numericAmount, expenseDate, categoryId]
+  );
+
+  if (dupCheck.rowCount > 0) {
+    throw new Error("A duplicate expense already exists for this date and amount.");
+  }
+
   const created = (
     await db.query(
       `
@@ -149,7 +168,31 @@ const approveExpense = async (tenantId, expenseId, status, approverId) => {
     throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
   }
 
-  // SECURITY FIX: Only allow approving PENDING expenses
+  // SECURITY FIX: Fetch expense to verify it exists, is not deleted, and prevent self-approval
+  const expense = await db.query(
+    `
+    SELECT ee.employee_id, ee.created_by, e.user_id AS employee_user_id
+    FROM employee_expenses ee
+    LEFT JOIN employees e ON e.id = ee.employee_id
+    WHERE ee.tenant_id = $1
+      AND ee.id = $2
+      AND ee.is_deleted = false
+    `,
+    [tenantId, expenseId]
+  );
+
+  if (expense.rowCount === 0) {
+    throw new Error("Expense not found or already processed");
+  }
+
+  const expRow = expense.rows[0];
+
+  // SECURITY FIX: Prevent self-approval
+  if (expRow.created_by === approverId || expRow.employee_user_id === approverId) {
+    throw new Error("Cannot approve your own expense request.");
+  }
+
+  // SECURITY FIX: Only allow approving PENDING and non-deleted expenses
   const result = await db.query(
     `
     UPDATE employee_expenses
@@ -160,6 +203,7 @@ const approveExpense = async (tenantId, expenseId, status, approverId) => {
     WHERE tenant_id = $3 
       AND id = $4
       AND status = 'PENDING'
+      AND is_deleted = false
     RETURNING *;
     `,
     [status, approverId, tenantId, expenseId]

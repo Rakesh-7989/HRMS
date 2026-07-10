@@ -109,7 +109,20 @@ exports.updateEmployee = async (req, res) => {
 
 exports.changeRole = async (req, res) => {
   try {
+    const oldUserRows = await req.db.query(
+      'SELECT role FROM users WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.user.tenantId]
+    );
+    const oldRole = oldUserRows.rows[0]?.role;
+
     const result = await userService.changeRole(req.db, req.params.id, req.body.role, req.user);
+
+    try {
+      await logAudit(req, 'users', req.params.id, 'UPDATE_ROLE',
+        { role: oldRole }, { role: result.role }
+      );
+    } catch (e) { console.error('Audit failed', e); }
+
     res.json({ status: "success", result });
   } catch (err) {
     res.status(400).json({
@@ -165,7 +178,20 @@ exports.assignDesignation = async (req, res) => {
 
 exports.deactivateUser = async (req, res) => {
   try {
+    const oldUserRows = await req.db.query(
+      'SELECT is_active FROM users WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.user.tenantId]
+    );
+    const wasActive = oldUserRows.rows[0]?.is_active;
+
     const result = await userService.deactivateUser(req.db, req.params.id, req.user);
+
+    try {
+      await logAudit(req, 'users', req.params.id, 'DEACTIVATE_USER',
+        { is_active: wasActive }, { is_active: false }
+      );
+    } catch (e) { console.error('Audit failed', e); }
+
     res.json({ status: "success", result });
   } catch (err) {
     res.status(400).json({
@@ -207,7 +233,20 @@ exports.updateUserStatus = async (req, res) => {
 
 exports.softDeleteUser = async (req, res) => {
   try {
+    const oldUserRows = await req.db.query(
+      'SELECT is_active, is_deleted FROM users WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.user.tenantId]
+    );
+    const oldData = oldUserRows.rows[0] || {};
+
     const result = await userService.softDeleteUser(req.db, req.params.id, req.user);
+
+    try {
+      await logAudit(req, 'users', req.params.id, 'DELETE_USER',
+        oldData, { is_active: false, is_deleted: true }
+      );
+    } catch (e) { console.error('Audit failed', e); }
+
     res.json({ status: "success", message: result.message });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });
@@ -216,7 +255,21 @@ exports.softDeleteUser = async (req, res) => {
 
 exports.terminateEmployee = async (req, res) => {
   try {
+    const oldUserRows = await req.db.query(
+      'SELECT is_active, is_deleted FROM users WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.user.tenantId]
+    );
+    const oldData = oldUserRows.rows[0] || {};
+
     const result = await userService.terminateEmployee(req.db, req.params.id, req.body, req.user);
+
+    try {
+      await logAudit(req, 'users', req.params.id, 'TERMINATE_EMPLOYEE',
+        oldData,
+        { is_active: false, is_deleted: true, termination_reason: req.body.termination_reason }
+      );
+    } catch (e) { console.error('Audit failed', e); }
+
     res.json({ status: "success", message: result.message });
   } catch (err) {
     res.status(400).json({ status: "error", message: err.message });

@@ -455,6 +455,9 @@ const deleteLoanType = async (tenantId, id) => {
 
 /* Apply EMI payment - updates outstanding and closes loan if paid off */
 const applyEmiPayment = async (tenantId, loanId, amount) => {
+  if (isNaN(amount) || Number(amount) <= 0) {
+    throw new Error("Payment amount must be a positive number");
+  }
   return (
     await db.query(
       `

@@ -21,6 +21,11 @@ exports.checkDomainAvailability = async (subdomain) => {
     
     const cleanSubdomain = subdomain.trim().toLowerCase();
     
+    const RESERVED_SUBDOMAINS = ['api', 'admin', 'www', 'mail', 'ftp', 'support', 'app', 'dev', 'test', 'demo', 'blog', 'help', 'status', 'webmail', 'superadmin', 'hrms', 'portal', 'login', 'auth', 'billing', 'payments', 'docs', 'ws', 'chat', 'video', 'meet'];
+    if (RESERVED_SUBDOMAINS.includes(cleanSubdomain)) {
+        return { available: false, message: "This workspace name is not available" };
+    }
+
     // Check in tenants table
     const result = await pool.query(
         "SELECT id FROM tenants WHERE LOWER(domain) = $1 LIMIT 1",
@@ -264,6 +269,8 @@ exports.registerTenant = async (data, req = null) => {
             } catch (mailErr) {
                 logger.error("Failed to send welcome email for trial", { err: mailErr.message });
             }
+            // TODO: Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
+            // an admin can manually trigger a resend from the tenant management UI.
         }
 
         return { 

@@ -160,7 +160,7 @@ exports.refreshToken = async (req, res) => {
   try {
     const { refresh_token } = req.body;
 
-    const session = await authService.verifyRefreshToken(refresh_token);
+    const session = await authService.verifyRefreshToken(refresh_token, req.ip, req.headers["user-agent"]);
     if (!session) {
       return res.status(401).json({ message: "Invalid or expired refresh token" });
     }
@@ -298,6 +298,9 @@ exports.forgotPassword = async (req, res) => {
 
   try {
     const token = crypto.randomBytes(32).toString("hex");
+
+    // Invalidate all previous password reset tokens for this email
+    await pool.query(`DELETE FROM password_resets WHERE email = $1`, [email.toLowerCase()]);
 
     await pool.query(
       `INSERT INTO password_resets (email, token, expires_at)

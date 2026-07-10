@@ -92,134 +92,128 @@ exports.clockIn = async (db, employeeId, actor, meta) => {
   }
   // =======================
 
-  // 2) Check if already clocked in
-  const existing = await query(
-    `
-    SELECT id, check_in_time
-    FROM attendance
-    WHERE employee_id = $1
-      AND tenant_id = $2
-      AND date = $3
-    `,
-    [employeeId, actor.tenantId, today]
-  );
+  // 2) Use transaction with FOR UPDATE to prevent race condition
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-  if (existing.rowCount > 0) {
-    throw new Error(`Already clocked in at ${existing.rows[0].check_in_time}`);
-  }
+    const existing = await client.query(
+      `SELECT id, check_in_time
+       FROM attendance
+       WHERE employee_id = $1
+         AND tenant_id = $2
+         AND date = $3
+       FOR UPDATE`,
+      [employeeId, actor.tenantId, today]
+    );
 
-  // == SHIFT & LATE TRACKING LOGIC ==
-  const empShiftRes = await query(
-    `SELECT s.* 
-     FROM employees e
-     JOIN shifts s ON e.shift_id = s.id
-     WHERE e.id = $1 AND e.tenant_id = $2`,
-    [employeeId, actor.tenantId]
-  );
+    if (existing.rowCount > 0) {
+      await client.query('ROLLBACK');
+      client.release();
+      throw new Error(`Already clocked in at ${existing.rows[0].check_in_time}`);
+    }
 
-  let shiftId = null;
-  let lateBy = null; // String format (e.g. "15m")
-  let lateByMinutes = 0;
-  let isLate = false;
+    // == SHIFT & LATE TRACKING LOGIC ==
+    const empShiftRes = await client.query(
+      `SELECT s.*
+       FROM employees e
+       JOIN shifts s ON e.shift_id = s.id
+       WHERE e.id = $1 AND e.tenant_id = $2`,
+      [employeeId, actor.tenantId]
+    );
 
-  if (empShiftRes.rowCount > 0) {
-    const shift = empShiftRes.rows[0];
-    shiftId = shift.id;
+    let shiftId = null;
+    let lateBy = null;
+    let lateByMinutes = 0;
+    let isLate = false;
 
-    // Calculate Late By and Validate Early Clock-in
-    // Calculate Late By and Validate Early/Late Clock-in
-    if (shift.start_time) {
-      const todayStr = todayDate(tz); // Use local date, not UTC
-      const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
-      const actualIn = new Date(`${todayStr}T${now}`);
+    if (empShiftRes.rowCount > 0) {
+      const shift = empShiftRes.rows[0];
+      shiftId = shift.id;
 
-      // EARLY CLOCK-IN VALIDATION
-      // Allow 15 minutes buffer before shift starts
-      const EARLY_BUFFER_MINUTES = 30;
-      const earlyLimit = new Date(shiftStart.getTime() - EARLY_BUFFER_MINUTES * 60000);
+      if (shift.start_time) {
+        const todayStr = todayDate(tz);
+        const shiftStart = new Date(`${todayStr}T${shift.start_time}`);
+        const actualIn = new Date(`${todayStr}T${now}`);
 
-      if (actualIn < earlyLimit) {
-        // PER USER REQUEST: Allow early clock-in but flag it/don't block.
-        // We can set a flag or just log it. Currently, we just allow it to proceed.
-        logger.info(`Early clock-in allowed for employee ${employeeId}. Shift starts at ${shift.start_time}, actual in at ${now}.`);
-      }
+        const EARLY_BUFFER_MINUTES = 30;
+        const earlyLimit = new Date(shiftStart.getTime() - EARLY_BUFFER_MINUTES * 60000);
 
-      // LATE CLOCK-IN VALIDATION (After Shift End)
-      if (shift.end_time) {
-        const shiftEnd = new Date(`${todayStr}T${shift.end_time}`);
-        // Handle overnight shifts if needed (start > end implies overnight)
-        if (shiftEnd < shiftStart) {
-          shiftEnd.setDate(shiftEnd.getDate() + 1);
+        if (actualIn < earlyLimit) {
+          logger.info(`Early clock-in allowed for employee ${employeeId}. Shift starts at ${shift.start_time}, actual in at ${now}.`);
         }
 
-        // If current time is past shift end (plus maybe a small buffer? Stick to strict for now per user request)
-        if (actualIn > shiftEnd) {
-          const displayEndTime = shift.end_time.substring(0, 5);
-          throw new Error(`Shift ended at ${displayEndTime}. Clock-in is not allowed after shift hours.`);
-        }
-      }
+        if (shift.end_time) {
+          const shiftEnd = new Date(`${todayStr}T${shift.end_time}`);
+          if (shiftEnd < shiftStart) {
+            shiftEnd.setDate(shiftEnd.getDate() + 1);
+          }
 
-      // Grace period default 0 if null
-      const graceLimit = new Date(shiftStart.getTime() + (shift.grace_period_minutes || 0) * 60000);
-
-      if (actualIn > graceLimit) {
-        const diffMs = actualIn - shiftStart;
-        const diffMins = Math.floor(diffMs / 60000);
-
-        lateByMinutes = diffMins;
-        isLate = true;
-
-        const hrs = Math.floor(diffMins / 60);
-        const mins = diffMins % 60;
-
-        if (hrs > 0) {
-          lateBy = `${hrs}h ${mins}m`;
-        } else {
-          lateBy = `${mins}m`;
+          if (actualIn > shiftEnd) {
+            const displayEndTime = shift.end_time.substring(0, 5);
+            throw new Error(`Shift ended at ${displayEndTime}. Clock-in is not allowed after shift hours.`);
+          }
         }
 
-        // Persist structured late data
-        lateByMinutes = diffMins;
-        isLate = true;
+        const graceLimit = new Date(shiftStart.getTime() + (shift.grace_period_minutes || 0) * 60000);
+
+        if (actualIn > graceLimit) {
+          const diffMs = actualIn - shiftStart;
+          const diffMins = Math.floor(diffMs / 60000);
+
+          lateByMinutes = diffMins;
+          isLate = true;
+
+          const hrs = Math.floor(diffMins / 60);
+          const mins = diffMins % 60;
+
+          if (hrs > 0) {
+            lateBy = `${hrs}h ${mins}m`;
+          } else {
+            lateBy = `${mins}m`;
+          }
+
+          lateByMinutes = diffMins;
+          isLate = true;
+        }
       }
     }
+
+    let status = "PRESENT";
+    if (approvedLeave && !isWFH && approvedLeave.is_half_day) {
+      status = "HALF_DAY";
+    }
+
+    const result = await client.query(
+      `INSERT INTO attendance
+        (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode, shift_id, late_by, is_late, late_by_minutes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       RETURNING *`,
+      [
+        actor.tenantId,
+        employeeId,
+        today,
+        now,
+        meta.ip || "Unknown",
+        meta.device || "Browser",
+        status,
+        actor.id,
+        isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE',
+        shiftId,
+        lateBy,
+        isLate,
+        lateByMinutes
+      ]
+    );
+
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
-  // ================================
-
-  // Determine status (WFH -> PRESENT, Leave Half Day -> HALF_DAY, else PRESENT)
-  let status = "PRESENT";
-  if (approvedLeave && !isWFH && approvedLeave.is_half_day) {
-    status = "HALF_DAY";
-  }
-
-  // 3) Insert attendance
-  // Assuming table has: late_by (varchar), late_by_minutes (int), is_late (bool) based on conversation
-  // If late_by_minutes doesn't exist in migration for you, user said "I have this in table".
-  const result = await query(
-    `
-    INSERT INTO attendance
-      (tenant_id, employee_id, date, check_in_time, check_in_ip, check_in_device, status, created_by, work_mode, shift_id, late_by, is_late, late_by_minutes)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    RETURNING *
-    `,
-    [
-      actor.tenantId,
-      employeeId,
-      today,
-      now,
-      meta.ip || "Unknown",
-      meta.device || "Browser",
-      status,
-      actor.id,
-      isWFH || hasWFHApproval ? 'REMOTE' : 'OFFICE',
-      shiftId,
-      lateBy,
-      isLate,
-      lateByMinutes
-    ]
-  );
-
-  return result.rows[0];
 };
 
 /**
@@ -767,17 +761,63 @@ exports.getAttendanceRecords = async (db, actor, filters) => {
 exports.approveAttendance = async (db, attendanceId, tenantId, approverId, reason) => {
   const query = getQuery(db);
 
+  // Auth: fetch attendance record with employee info
+  const attRes = await query(
+    `SELECT a.*, e.reports_to
+     FROM attendance a
+     JOIN employees e ON e.id = a.employee_id
+     WHERE a.id = $1 AND a.tenant_id = $2`,
+    [attendanceId, tenantId]
+  );
+
+  if (attRes.rowCount === 0) {
+    throw new Error("Attendance record not found");
+  }
+
+  const record = attRes.rows[0];
+
+  if (record.is_deleted) {
+    throw new Error("Attendance record has been deleted");
+  }
+
+  // Get approver's role and employee id
+  const approverRes = await query(
+    `SELECT u.role, e.id as employee_id FROM users u
+     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = $2
+     WHERE u.id = $1`,
+    [approverId, tenantId]
+  );
+
+  if (approverRes.rowCount === 0) {
+    throw new Error("Unauthorized to approve attendance");
+  }
+
+  const approver = approverRes.rows[0];
+  const isHRorAdmin = ['ADMIN', 'HR'].includes(approver.role);
+
+  if (!isHRorAdmin) {
+    if (!approver.employee_id) {
+      throw new Error("Unauthorized to approve attendance");
+    }
+
+    if (record.employee_id === approver.employee_id) {
+      throw new Error("Cannot approve your own attendance.");
+    }
+
+    if (record.reports_to !== approver.employee_id) {
+      throw new Error("Unauthorized to approve attendance");
+    }
+  }
+
   const result = await query(
-    `
-    UPDATE attendance
-    SET status = 'APPROVED',
-    approved_by = $1,
-    approval_reason = $2,
-    updated_at = now()
-    WHERE id = $3
-      AND tenant_id = $4
-  RETURNING *
-    `,
+    `UPDATE attendance
+     SET status = 'APPROVED',
+     approved_by = $1,
+     approval_reason = $2,
+     updated_at = now()
+     WHERE id = $3
+       AND tenant_id = $4
+   RETURNING *`,
     [approverId, reason || null, attendanceId, tenantId]
   );
 
@@ -794,17 +834,63 @@ exports.approveAttendance = async (db, attendanceId, tenantId, approverId, reaso
 exports.rejectAttendance = async (db, attendanceId, tenantId, rejecterId, reason) => {
   const query = getQuery(db);
 
+  // Auth: fetch attendance record with employee info
+  const attRes = await query(
+    `SELECT a.*, e.reports_to
+     FROM attendance a
+     JOIN employees e ON e.id = a.employee_id
+     WHERE a.id = $1 AND a.tenant_id = $2`,
+    [attendanceId, tenantId]
+  );
+
+  if (attRes.rowCount === 0) {
+    throw new Error("Attendance record not found");
+  }
+
+  const record = attRes.rows[0];
+
+  if (record.is_deleted) {
+    throw new Error("Attendance record has been deleted");
+  }
+
+  // Get rejecter's role and employee id
+  const rejecterRes = await query(
+    `SELECT u.role, e.id as employee_id FROM users u
+     LEFT JOIN employees e ON e.user_id = u.id AND e.tenant_id = $2
+     WHERE u.id = $1`,
+    [rejecterId, tenantId]
+  );
+
+  if (rejecterRes.rowCount === 0) {
+    throw new Error("Unauthorized to reject attendance");
+  }
+
+  const rejecter = rejecterRes.rows[0];
+  const isHRorAdmin = ['ADMIN', 'HR'].includes(rejecter.role);
+
+  if (!isHRorAdmin) {
+    if (!rejecter.employee_id) {
+      throw new Error("Unauthorized to reject attendance");
+    }
+
+    if (record.employee_id === rejecter.employee_id) {
+      throw new Error("Cannot reject your own attendance.");
+    }
+
+    if (record.reports_to !== rejecter.employee_id) {
+      throw new Error("Unauthorized to reject attendance");
+    }
+  }
+
   const result = await query(
-    `
-    UPDATE attendance
-    SET status = 'REJECTED',
-    rejection_reason = $1,
-    approved_by = $2,
-    updated_at = now()
-    WHERE id = $3
-      AND tenant_id = $4
-  RETURNING *
-    `,
+    `UPDATE attendance
+     SET status = 'REJECTED',
+     rejection_reason = $1,
+     approved_by = $2,
+     updated_at = now()
+     WHERE id = $3
+       AND tenant_id = $4
+   RETURNING *`,
     [reason || null, rejecterId, attendanceId, tenantId]
   );
 
@@ -990,8 +1076,12 @@ exports.confirmCheckout = async (db, attendanceId, tenantId, employeeId, finalSt
   const record = existing.rows[0];
 
   // Only employee or HR/ADMIN can confirm
-  if (record.employee_id !== employeeId && !["ADMIN", "HR"].includes(employeeId)) {
-    throw new Error("Unauthorized: Can only confirm your own checkout");
+  if (record.employee_id !== employeeId) {
+    const actorRes = await query('SELECT u.role FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = $1', [employeeId]);
+    const actorRole = actorRes.rows[0]?.role;
+    if (!['ADMIN', 'HR'].includes(actorRole)) {
+      throw new Error("Unauthorized to confirm checkout for this employee");
+    }
   }
 
   if (record.status !== "PENDING_CHECKOUT") {

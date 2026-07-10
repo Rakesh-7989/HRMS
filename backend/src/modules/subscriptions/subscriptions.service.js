@@ -384,6 +384,8 @@ class SubscriptionService {
                             } catch (emailErr) {
                                 console.error('[DEBUG_VERIFY] Email dispatch failed:', emailErr.message);
                             }
+                            // TODO: Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
+                            // an admin can manually trigger a resend from the tenant management UI.
                         } else {
                             console.log(`[DEBUG_VERIFY] User ${adminUser.id} already active. Skipping password reset.`);
                         }
@@ -521,6 +523,17 @@ class SubscriptionService {
     async upgradeSubscription(tenantId, planId, billingCycle) {
         const sub = await this.getSubscriptionByTenantId(tenantId);
         
+        // Check if downgrading to a plan with lower max_employees than current active count
+        const targetPlanRes = await db.query('SELECT max_employees FROM plans WHERE id = $1', [planId]);
+        const targetPlan = targetPlanRes.rows[0];
+        if (targetPlan && targetPlan.max_employees !== null) {
+            const countRes = await db.query('SELECT COUNT(*) FROM employees WHERE tenant_id = $1 AND is_deleted = false', [tenantId]);
+            const activeCount = parseInt(countRes.rows[0].count, 10);
+            if (activeCount > targetPlan.max_employees) {
+                throw new Error(`Cannot downgrade plan. Your tenant has ${activeCount} active employees, but the target plan only allows ${targetPlan.max_employees} employees. Please reduce employee count first.`);
+            }
+        }
+
         let subId;
         if (sub) {
             const res = await db.query(

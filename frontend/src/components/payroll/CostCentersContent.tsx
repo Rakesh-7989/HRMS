@@ -42,10 +42,11 @@ export const CostCentersContent: React.FC = () => {
         queryFn: () => payrollService.getCostCentreAllocations(),
     });
 
-    const { data: employees = [] } = useQuery({
+    const { data: employeesResult } = useQuery({
         queryKey: ['users', 'list'],
         queryFn: () => usersService.getUsers(),
     });
+    const employees = Array.isArray(employeesResult) ? employeesResult : (employeesResult?.data || []);
 
     const upsertMutation = useMutation({
         mutationFn: (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) =>

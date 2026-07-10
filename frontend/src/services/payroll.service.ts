@@ -453,6 +453,25 @@ export const payrollService = {
     }
   },
 
+  getCostCentreAllocations: async (params?: { costCentreId?: string; employeeId?: string }) => {
+    try {
+      const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/cost-centre-allocations', { params });
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  upsertCostCentreAllocation: async (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/statutory/cost-centre-allocations', payload);
+    return response.data.data!;
+  },
+
+  deleteCostCentreAllocation: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/cost-centre-allocations/${id}`);
+    return response.data.data;
+  },
+
   // Merchants, vendors and third-party payouts
   listMerchants: async () => {
     try {
@@ -629,6 +648,26 @@ export const payrollService = {
   // ============================================================================
   // MISSING METHODS (Added for build fix)
   // ============================================================================
+
+  listReimbursements: async (scope: 'my' | 'all' = 'my') => {
+    try {
+      const endpoint = scope === 'all' ? '/payroll/settlement/reimbursements' : '/payroll/settlement/reimbursements/my';
+      const response = await api.get<ApiResponse<Array<any>>>(endpoint);
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  createReimbursement: async (payload: { category: string; amount: number; claimDate: string; description?: string; receiptUrl?: string }) => {
+    const response = await api.post<ApiResponse<any>>('/payroll/settlement/reimbursements', payload);
+    return response.data.data!;
+  },
+
+  approveReimbursement: async (id: string, payload: { status: 'APPROVED' | 'REJECTED'; includeInPayroll?: boolean }) => {
+    const response = await api.patch<ApiResponse<any>>(`/payroll/settlement/reimbursements/${id}/approve`, payload);
+    return response.data.data!;
+  },
 
   getSalaryTemplates: async () => {
     // Mock data for now to satisfy build and types validation
