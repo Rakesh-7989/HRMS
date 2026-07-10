@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
+import { SkeletonChart } from '@/components/ui/Skeleton';
 
 export const ReportsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
@@ -205,9 +206,7 @@ export const ReportsPage: React.FC = () => {
                   Role Distribution
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <PieChart
                     data={orgData?.roleDistribution.map((r) => ({ name: r.role, value: r.count })) || []}
@@ -221,9 +220,7 @@ export const ReportsPage: React.FC = () => {
                   Department Headcount
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <BarChart
                     data={orgData?.departmentAnalytics.slice(0, 10) || []}
@@ -244,9 +241,7 @@ export const ReportsPage: React.FC = () => {
                   Attendance Trend Analysis ({getDateRangeLabel()})
                 </h3>
                 {isLoading ? (
-                  <div className="h-[350px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <AreaChart
                     data={orgData?.attendanceMetrics.map((d) => ({
@@ -268,9 +263,7 @@ export const ReportsPage: React.FC = () => {
                   Leave Type Distribution
                 </h3>
                 {isLoading ? (
-                  <div className="h-[350px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <PieChart
                     data={orgData?.leaveStatistics?.map((stat, index) => ({
@@ -292,9 +285,7 @@ export const ReportsPage: React.FC = () => {
                   Department Performance
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <BarChart
                     data={orgData?.departmentAnalytics?.slice(0, 8).map((dept, index) => ({
@@ -315,9 +306,7 @@ export const ReportsPage: React.FC = () => {
                   Monthly Trends
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <LineChart
                     data={orgData?.attendanceMetrics?.slice(-14).map((d) => ({
@@ -344,9 +333,7 @@ export const ReportsPage: React.FC = () => {
                 Attendance Overview ({getDateRangeLabel()})
               </h3>
               {isLoading ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
+                <SkeletonChart />
               ) : (
                 <AreaChart
                   data={orgData?.attendanceMetrics.map((d) => ({
@@ -408,9 +395,7 @@ export const ReportsPage: React.FC = () => {
                   Leave Type Distribution
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <PieChart
                     data={hrData?.leaveTypeDistribution.map((lt) => ({
@@ -427,9 +412,7 @@ export const ReportsPage: React.FC = () => {
                   Leave Requests Status
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <BarChart
                     data={[
@@ -498,9 +481,7 @@ export const ReportsPage: React.FC = () => {
                   Employee Status Distribution
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <PieChart
                     data={[
@@ -523,9 +504,7 @@ export const ReportsPage: React.FC = () => {
                   Top Departments by Headcount
                 </h3>
                 {isLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
+                  <SkeletonChart />
                 ) : (
                   <BarChart
                     data={orgData?.topDepartments || []}

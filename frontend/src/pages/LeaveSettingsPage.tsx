@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { leaveService, LeaveType, LeavePolicy, CreateLeaveTypeData, CreatePolicyData, UpdatePolicyData, CreateHolidayData } from '@/services/leave.service';
 import { cn } from '@/utils/cn';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle, Power } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -440,8 +441,15 @@ export const LeaveSettingsPage: React.FC = () => {
                         </div>
 
                         {typesLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="space-y-3 py-6">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="flex gap-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                                        <Skeleton variant="text" width="20%" />
+                                        <Skeleton variant="text" width="15%" />
+                                        <Skeleton variant="text" width="15%" />
+                                        <Skeleton variant="text" width="15%" />
+                                    </div>
+                                ))}
                             </div>
                         ) : leaveTypes.length === 0 ? (
                             <div className="text-center py-12">
@@ -567,8 +575,15 @@ export const LeaveSettingsPage: React.FC = () => {
                         )}
 
                         {policiesLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="space-y-3 py-6">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="flex gap-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                                        <Skeleton variant="text" width="25%" />
+                                        <Skeleton variant="text" width="15%" />
+                                        <Skeleton variant="text" width="15%" />
+                                        <Skeleton variant="text" width="15%" />
+                                    </div>
+                                ))}
                             </div>
                         ) : policies.length === 0 ? (
                             <div className="text-center py-12">
@@ -692,8 +707,16 @@ export const LeaveSettingsPage: React.FC = () => {
                         </div>
 
                         {holidaysLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="space-y-3 py-6">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-4 p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                                        <Skeleton variant="rectangular" width={56} height={56} className="rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton variant="text" width="40%" />
+                                            <Skeleton variant="text" width="60%" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : holidays.length === 0 ? (
                             <div className="text-center py-12">

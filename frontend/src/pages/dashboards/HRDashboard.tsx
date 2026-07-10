@@ -15,6 +15,7 @@ import CalendarCard from '@/components/dashboard/CalendarCard';
 import { eventsService } from '@/services/events.service';
 import { leaveService } from '@/services/leave.service';
 import { cn } from '@/utils/cn';
+import { SkeletonChart } from '@/components/ui/Skeleton';
 
 export const HRDashboard: React.FC = () => {
   const { data, isLoading } = useQuery({
@@ -167,9 +168,7 @@ export const HRDashboard: React.FC = () => {
             <Card>
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Leave Type Distribution</h3>
               {isLoading ? (
-                <div className="h-[420px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
+                <SkeletonChart />
               ) : leaveTypeDist.length > 0 ? (
                 <PieChart
                   data={leaveTypeDist.map((lt) => ({ name: lt.leave_type, value: lt.count }))}
@@ -191,9 +190,7 @@ export const HRDashboard: React.FC = () => {
             <Card>
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Leave Requests Overview</h3>
               {isLoading ? (
-                <div className="h-[420px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
+                <SkeletonChart />
               ) : (
                 <BarChart
                   data={[

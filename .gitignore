@@ -9,3 +9,7 @@ build/
 *.pdf
 .DS_Store
 Thumbs.db
+
+# Vercel build artifacts.vercel/
+frontend/.vercel/
+backend/.vercel/

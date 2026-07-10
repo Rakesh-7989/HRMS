@@ -9,6 +9,8 @@ import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
+import { Skeleton, SkeletonTable } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Plus,
   UserCheck,
@@ -254,15 +256,15 @@ export const EmployeesPage: React.FC = () => {
         {/* Employees Table */}
         <Card className="p-0">
           {isLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+            <div className="p-4">
+              <SkeletonTable rows={5} columns={8} />
             </div>
           ) : displayEmployees.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <UserX className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-lg font-medium">No employees found</p>
-              <p className="text-sm">Try adjusting your search or filters</p>
-            </div>
+            <EmptyState
+              icon={<UserX size={32} />}
+              title="No employees found"
+              description="Try adjusting your search or filters"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

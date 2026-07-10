@@ -4,7 +4,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { subscriptionService, Plan } from '@/services/subscription.service';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
+import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -84,8 +85,13 @@ export const SubscriptionPage: React.FC = () => {
     if (loadingSub || loadingUsage || loadingPlans) {
         return (
             <DashboardLayout title="Subscription">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <Loader2 className="animate-spin text-primary" size={32} />
+                <div className="space-y-4 p-6">
+                    <Skeleton variant="rectangular" width="100%" height={200} />
+                    <div className="grid lg:grid-cols-3 gap-4">
+                        <SkeletonCard />
+                        <SkeletonCard />
+                        <SkeletonCard />
+                    </div>
                 </div>
             </DashboardLayout>
         );

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
-import logo from '../../../Assests/logo.png';
+import logo from '../../../Assests/logo.svg';
 import {
   LayoutDashboard,
   Users,
@@ -91,7 +91,7 @@ export const Sidebar: React.FC = () => {
              bg-primary-gradient
              shadow-sm p-2"
         >
-          <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+          <img src={logo} alt="WellZo HRMS" className="w-full h-full object-contain" />
         </div>
 
         {/* Navigation */}

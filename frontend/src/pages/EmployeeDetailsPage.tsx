@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 type TabType = 'personal' | 'employment' | 'financial' | 'documents';
 
@@ -156,8 +157,9 @@ export const EmployeeDetailsPage: React.FC = () => {
     if (isLoading) {
         return (
             <DashboardLayout title="Employee Details">
-                <div className="h-64 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <div className="space-y-4 p-6">
+                    <Skeleton variant="rectangular" width="100%" height={120} />
+                    <Skeleton variant="rectangular" width="100%" height={200} />
                 </div>
             </DashboardLayout>
         );

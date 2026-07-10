@@ -12,6 +12,7 @@ import { Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
 import { superAdminService } from '@/services/superAdmin.service';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
@@ -175,7 +176,7 @@ export const OrganisationPage: React.FC = () => {
                       {tenantsLoading ? (
                         <div className="h-40 flex items-center justify-center">Loading...</div>
                       ) : tenantFiltered.length === 0 ? (
-                        <div className="text-center text-muted">No tenants found</div>
+                        <EmptyState title="No tenants found" compact />
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -285,7 +286,7 @@ export const OrganisationPage: React.FC = () => {
                       {employeesLoading ? (
                         <div className="h-40 flex items-center justify-center">Loading...</div>
                       ) : filteredEmployees.length === 0 ? (
-                        <div className="text-center text-muted">No employees found</div>
+                        <EmptyState title="No employees found" compact />
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {filteredEmployees.map((emp) => (

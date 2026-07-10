@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
 import { usersService } from '@/services/users.service';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export const EditEmployeePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -21,8 +22,9 @@ export const EditEmployeePage: React.FC = () => {
     if (isLoading) {
         return (
             <DashboardLayout title="Edit Employee">
-                <div className="h-64 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <div className="space-y-4 p-6">
+                    <Skeleton variant="rectangular" width="100%" height={48} />
+                    <Skeleton variant="rectangular" width="100%" height={400} />
                 </div>
             </DashboardLayout>
         );

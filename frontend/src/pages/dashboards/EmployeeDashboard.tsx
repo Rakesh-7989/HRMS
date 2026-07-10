@@ -15,6 +15,7 @@ import CalendarCard from '@/components/dashboard/CalendarCard';
 import { eventsService } from '@/services/events.service';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
+import { SkeletonChart } from '@/components/ui/Skeleton';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -222,9 +223,7 @@ export const EmployeeDashboard: React.FC = () => {
 
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Monthly Attendance</h3>
               {isLoading ? (
-                <div className="h-[250px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
+                <SkeletonChart />
               ) : monthlyAttendance && monthlyAttendance.length > 0 ? (
                 <AreaChart
                   data={monthlyAttendance

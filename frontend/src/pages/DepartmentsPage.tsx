@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const DepartmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -122,30 +124,37 @@ export const DepartmentsPage: React.FC = () => {
 
         {/* Content Grid */}
         {isLoading ? (
-          <div className="h-64 flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div>
-            <p className="text-muted text-sm">Loading departments...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="p-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-800 rounded-xl space-y-4">
+                <div className="flex justify-between items-start mb-2">
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <div className="flex gap-1">
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton variant="circular" width={24} height={24} />
+                  </div>
+                </div>
+                <Skeleton variant="text" width="60%" />
+                <Skeleton variant="text" width="80%" />
+                <Skeleton variant="text" width="40%" />
+              </div>
+            ))}
           </div>
         ) : filteredDepartments.length === 0 ? (
-          <Card className="py-16 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
-              <Building2 className="text-gray-400" size={32} />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
-              {searchTerm ? 'No matching departments' : 'No departments yet'}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
-              {searchTerm
-                ? `We couldn't find any department matching "${searchTerm}".`
-                : "Create your first department to structure your organization."}
-            </p>
-            {!searchTerm && canManage && (
+          <EmptyState
+            icon={<Building2 size={32} />}
+            title={searchTerm ? 'No matching departments' : 'No departments yet'}
+            description={searchTerm
+              ? `We couldn't find any department matching "${searchTerm}".`
+              : "Create your first department to structure your organization."}
+            action={!searchTerm && canManage ? (
               <Button variant="outline" onClick={() => setCreateBit(true)}>
                 <Plus className="mr-2" size={16} />
                 Create Department
               </Button>
-            )}
-          </Card>
+            ) : undefined}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredDepartments.map((d) => (

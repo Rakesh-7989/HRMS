@@ -10,6 +10,7 @@ import { LineChart } from '@/components/charts/LineChart';
 import { Building2, Activity, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { SkeletonChart } from '@/components/ui/Skeleton';
 
 export const SuperAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -105,9 +106,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <Card>
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Tenant Growth (30 Days)</h3>
             {isLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-              </div>
+              <SkeletonChart />
             ) : (
               <LineChart
                 data={data?.tenantGrowth?.map((tg) => ({
@@ -130,9 +129,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <Card>
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">User Growth (30 Days)</h3>
             {isLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-              </div>
+              <SkeletonChart />
             ) : (
               <LineChart
                 data={data?.userGrowth?.map((ug) => ({

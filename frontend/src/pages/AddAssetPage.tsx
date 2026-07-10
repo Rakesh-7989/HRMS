@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from 'react-hot-toast';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
 
@@ -216,7 +217,7 @@ export const AddAssetPage: React.FC = () => {
       <DashboardLayout title="Loading...">
         <Card>
           <div className="flex justify-center p-8">
-            <Loader2 className="animate-spin" size={24} />
+            <Skeleton variant="circular" width={24} height={24} />
           </div>
         </Card>
       </DashboardLayout>
@@ -380,7 +381,7 @@ export const AddAssetPage: React.FC = () => {
               <div className="col-span-1 md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-6 mt-2">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   Technical Configuration
-                  {isLoadingConfig && <Loader2 className="animate-spin text-primary" size={16} />}
+                  {isLoadingConfig && <Skeleton variant="circular" width={16} height={16} />}
                 </h3>
 
                 {['Laptop', 'Desktop', 'Mobile'].includes(formData.category) ? (

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" fill="none">
+  <defs>
+    <linearGradient id="wg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="10" width="40" height="40" rx="12" fill="url(#wg2)"/>
+  <text x="24" y="35" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="700" fill="white" text-anchor="middle">WZ</text>
+  <text x="52" y="32" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="800" fill="#111827" letter-spacing="1">WellZo</text>
+  <text x="52" y="48" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="2.5">HRMS</text>
+</svg>

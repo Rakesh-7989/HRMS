@@ -17,12 +17,12 @@ import {
   Download,
   Printer,
   X,
-  Loader2,
   AlertCircle,
   ClipboardList,
   Clock,
   FileText,
 } from 'lucide-react';
+import { Skeleton, SkeletonTable } from '@/components/ui/Skeleton';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -371,11 +371,8 @@ export const AssetsPage: React.FC = () => {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center">
-                      <div className="flex items-center justify-center gap-2 text-gray-500">
-                        <Loader2 className="animate-spin" size={20} />
-                        Loading assets...
-                      </div>
+                    <td colSpan={9} className="px-4 py-8">
+                      <SkeletonTable rows={5} columns={9} />
                     </td>
                   </tr>
                 ) : isError ? (

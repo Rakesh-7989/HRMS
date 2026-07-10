@@ -7,6 +7,7 @@ import { assetsService } from '@/services/assets.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
     CheckCircle,
     XCircle,
@@ -97,10 +98,10 @@ export const AssetRequestsPage: React.FC = () => {
                     {isLoading ? (
                         <div className="p-8 text-center">Loading requests...</div>
                     ) : !requests || requests.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <ClipboardList size={48} className="mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-                            <p className="dark:text-gray-200">No asset requests found.</p>
-                        </div>
+                        <EmptyState
+                            icon={<ClipboardList size={32} />}
+                            title="No asset requests found."
+                        />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

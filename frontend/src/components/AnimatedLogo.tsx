@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
-import darkLogo from '../../Assests/login_logo.png';
-import lightLogo from '../../Assests/light-logo.png';
+import darkLogo from '../../Assests/login_logo.svg';
+import lightLogo from '../../Assests/light-logo.svg';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface AnimatedLogoProps {
@@ -30,7 +30,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, size = 'm
       >
         <img
           src={logo}
-          alt="Logo"
+          alt="WellZo HRMS"
           className="h-full w-auto object-contain block"
           loading="eager"
         />

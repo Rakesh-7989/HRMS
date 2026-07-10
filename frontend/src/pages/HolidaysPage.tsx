@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import { Calendar, Gift, PartyPopper, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 import { format, isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const HolidaysPage: React.FC = () => {
     const { user } = useAuth();
@@ -122,8 +124,19 @@ export const HolidaysPage: React.FC = () => {
 
                 {isLoading ? (
                     <Card>
-                        <div className="flex items-center justify-center py-16">
-                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+                        <div className="space-y-4 p-6">
+                            <Skeleton variant="rectangular" width="100%" height={80} />
+                            <div className="grid gap-3">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-4 p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                                        <Skeleton variant="rectangular" width={64} height={64} className="rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton variant="text" width="40%" />
+                                            <Skeleton variant="text" width="60%" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </Card>
                 ) : (
@@ -141,10 +154,11 @@ export const HolidaysPage: React.FC = () => {
                             </div>
 
                             {upcomingHolidays.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Calendar className="mx-auto h-10 w-10 mb-2 opacity-50" />
-                                    <p>No upcoming public holidays for {selectedYear}</p>
-                                </div>
+                                <EmptyState
+                                    icon={<Calendar size={24} />}
+                                    title={`No upcoming public holidays for ${selectedYear}`}
+                                    compact
+                                />
                             ) : (
                                 <div className="grid gap-3">
                                     {upcomingHolidays.map((holiday) => {

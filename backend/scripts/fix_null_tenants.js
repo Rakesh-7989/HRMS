@@ -1,7 +1,7 @@
 const pool = require('../src/config/db');
 require('dotenv').config();
 
-const TARGET_TENANT_ID = '2a729560-f92d-48fe-8ad0-aa67c3083b15'; // Tenant1 WellZo
+const TARGET_TENANT_ID = '2a729560-f92d-48fe-8ad0-aa67c3083b15'; // WellZo Tenant
 
 async function fixTenants() {
     const client = await pool.connect();

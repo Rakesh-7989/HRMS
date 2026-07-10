@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { superAdminService, Tenant } from '@/services/superAdmin.service';
 import { format } from 'date-fns';
 import { Eye, BadgeCheck, Ban } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const TenantsPage: React.FC = () => {
  
@@ -81,7 +82,7 @@ export const TenantsPage: React.FC = () => {
               ))}
             </div>
           ) : tenants.length === 0 ? (
-            <div className="py-12 text-center text-muted">No tenants available.</div>
+            <EmptyState title="No tenants available" />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

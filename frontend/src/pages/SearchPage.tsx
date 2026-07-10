@@ -17,6 +17,7 @@ import {
     LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 
 export const SearchPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -225,9 +226,9 @@ export const SearchPage: React.FC = () => {
                 {/* Results */}
                 {isLoading && debouncedQuery.length >= 2 && (
                     <Card className="p-12">
-                        <div className="flex flex-col items-center justify-center text-gray-500">
-                            <Loader2 size={40} className="animate-spin mb-4 text-primary" />
-                            <p>Searching...</p>
+                        <div className="space-y-4">
+                            <SkeletonCard />
+                            <SkeletonCard />
                         </div>
                     </Card>
                 )}
