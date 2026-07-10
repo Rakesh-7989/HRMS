@@ -1,129 +1,74 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, CheckCircle } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import {
-    Table,
-    TableHeader,
-    TableBody,
-    TableRow,
-    TableHead,
-    TableCell,
-} from '@/components/ui/Table';
-import { StatusBadge } from '@/components/projects/StatusBadge';
-import { TimesheetEntryForm } from '@/components/projects/TimesheetEntryForm';
+import { Clock, CheckCircle, History } from 'lucide-react';
 import { TimesheetApprovals } from '@/components/projects/TimesheetApprovals';
-import { timesheetService } from '@/services/timesheet.service';
+import { TimesheetDashboard } from '@/components/timesheets/TimesheetDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
-
+import { useTranslation } from 'react-i18next';
 export const TimesheetContent: React.FC = () => {
     const { user } = useAuth();
-    const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { t } = useTranslation();
+    const canManage = ['ADMIN', 'MANAGER', 'HR'].includes(user?.role || '');
 
-    const [activeTab, setActiveTab] = useState<'my' | 'approvals'>('my');
-
-    // Fetch My Timesheets
-    const { data: timesheets = [], isLoading } = useQuery({
-        queryKey: ['timesheets', 'my'],
-        queryFn: () => timesheetService.getMyTimesheets(),
-    });
-
+    const [activeTab, setActiveTab] = useState<'my' | 'approvals'>(canManage ? 'approvals' : 'my');
     return (
-        <div className="space-y-6">
-            {/* Tabs */}
-            {canManage && (
-                <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-4">
-                    <button
-                        onClick={() => setActiveTab('my')}
-                        className={cn(
-                            "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
-                            activeTab === 'my'
-                                ? "bg-primary/10 text-primary"
-                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        )}
-                    >
-                        <Clock size={16} />
-                        My Timesheets
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('approvals')}
-                        className={cn(
-                            "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
-                            activeTab === 'approvals'
-                                ? "bg-primary/10 text-primary"
-                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        )}
-                    >
-                        <CheckCircle size={16} />
-                        Approvals
-                    </button>
+        <div className="space-y-8 animate-fadeIn">
+            {/* Header section with Tabs */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shadow-sm">
+                            <Clock size={22} className="stroke-[2.5px]" />
+                        </div>
+                        <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                            {t('timesheets.timePortal')}
+                        </h1>
+                    </div>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">{t('timesheets.subTitle')}</p>
                 </div>
-            )}
+
+                {canManage && (
+                    <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-950/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <button
+                            onClick={() => setActiveTab('my')}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                activeTab === 'my'
+                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                            )}
+                        >
+                            <History size={14} />
+                            {t('timesheets.myLog')}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('approvals')}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                activeTab === 'approvals'
+                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                            )}
+                        >
+                            <CheckCircle size={14} />
+                            {t('timesheets.auditQueue')}
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {activeTab === 'my' ? (
-                <>
-                    {/* Entry Form */}
-                    <div className="mb-8">
-                        <TimesheetEntryForm />
+                <div className="grid grid-cols-1 gap-12">
+                    {/* Dashboard Section */}
+                    <div className="w-full">
+                        <TimesheetDashboard />
                     </div>
 
-                    {/* History Table */}
-                    <Card className="p-0 overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                <Clock size={18} />
-                                Recent Entries
-                            </h3>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Project</TableHead>
-                                    <TableHead>Task</TableHead>
-                                    <TableHead>Hours</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8" >
-                                            Loading timesheets...
-                                        </TableCell>
-                                    </TableRow>
-                                ) : timesheets.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8" >
-                                            No timesheet entries found.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    timesheets.map((entry) => (
-                                        <TableRow key={entry.id}>
-                                            <TableCell>
-                                                <span className="flex items-center gap-2">
-                                                    <CalendarIcon size={14} className="text-gray-400" />
-                                                    {format(new Date(entry.work_date), 'MMM dd, yyyy')}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>{entry.project?.name || '-'}</TableCell>
-                                            <TableCell>{entry.task?.title || '-'}</TableCell>
-                                            <TableCell>{entry.hours} hrs</TableCell>
-                                            <TableCell>
-                                                <StatusBadge type="timesheet" status={entry.status} />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </Card>
-                </>
+                </div>
             ) : (
-                <TimesheetApprovals />
+                <div className="animate-fadeIn">
+                    <TimesheetApprovals />
+                </div>
             )}
         </div>
     );

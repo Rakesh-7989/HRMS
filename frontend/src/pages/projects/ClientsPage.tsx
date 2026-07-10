@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Building2, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,11 +26,12 @@ import {
 import { StatusBadge } from '@/components/projects/StatusBadge';
 
 import { projectsService } from '@/services/projects.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Client, ClientStatus } from '@/types/project.types';
+import { useTranslation } from 'react-i18next';
 
 export const ClientsPage: React.FC = () => {
-    const { user } = useAuth();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +55,8 @@ export const ClientsPage: React.FC = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('projects', 'manage');
 
     // Fetch Clients
     const { data: clients = [], isLoading } = useQuery({
@@ -81,9 +84,9 @@ export const ClientsPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create client');
+            toast.error(error.response?.data?.message || 'Failed to create client');
         },
     });
 
@@ -97,9 +100,9 @@ export const ClientsPage: React.FC = () => {
             setEditingClient(null);
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update client');
+            toast.error(error.response?.data?.message || 'Failed to update client');
         },
     });
 
@@ -110,8 +113,8 @@ export const ClientsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setClientToDelete(null);
         },
-        onError: () => {
-            alert('Failed to delete client. It may have linked projects.');
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to delete client. It may have linked projects.');
             setClientToDelete(null);
         },
     });
@@ -206,8 +209,8 @@ export const ClientsPage: React.FC = () => {
         <DashboardLayout
             title="Clients"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects', href: '/projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects'), href: '/projects' },
                 { label: 'Clients' },
             ]}
         >
@@ -360,7 +363,7 @@ export const ClientsPage: React.FC = () => {
                                 </div>
                             </DialogContent>
                             <DialogFooter>
-                                <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+                                <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('common.close')}</Button>
                                 {canManage && (
                                     <Button onClick={handleSwitchToEdit}><Edit size={16} className="mr-2" /> Edit Client</Button>
                                 )}

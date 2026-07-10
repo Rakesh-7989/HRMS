@@ -4,11 +4,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { subscriptionService, Plan } from '@/services/subscription.service';
-import { Check, AlertCircle } from 'lucide-react';
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 declare global {
     interface Window {
@@ -17,6 +17,7 @@ declare global {
 }
 
 export const SubscriptionPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('MONTHLY');
 
@@ -59,10 +60,10 @@ export const SubscriptionPage: React.FC = () => {
                             billing_cycle: billingCycle,
                         });
 
-                        toast.success('Subscription upgraded successfully!');
+                        showToast.success('Subscription upgraded successfully!');
                         queryClient.invalidateQueries({ queryKey: ['subscription'] });
                     } catch (error: any) {
-                        toast.error(error.message || 'Payment verification failed');
+                        showToast.error(error.message || 'Payment verification failed');
                     }
                 },
                 prefill: {
@@ -78,20 +79,15 @@ export const SubscriptionPage: React.FC = () => {
             const rzp = new window.Razorpay(options);
             rzp.open();
         } catch (error: any) {
-            toast(error.message || 'Error creating payment order', { icon: '⚠️' });
+            showToast.error(error.message || 'Error creating payment order');
         }
     };
 
     if (loadingSub || loadingUsage || loadingPlans) {
         return (
-            <DashboardLayout title="Subscription">
-                <div className="space-y-4 p-6">
-                    <Skeleton variant="rectangular" width="100%" height={200} />
-                    <div className="grid lg:grid-cols-3 gap-4">
-                        <SkeletonCard />
-                        <SkeletonCard />
-                        <SkeletonCard />
-                    </div>
+            <DashboardLayout title={t('billing.subscription')}>
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
             </DashboardLayout>
         );
@@ -100,7 +96,7 @@ export const SubscriptionPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Subscription Management"
-            breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/organization' }, { label: 'Subscription' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: 'Subscription' }]}
         >
             <div className="space-y-8">
                 {/* Current Plan & Usage */}
@@ -211,7 +207,7 @@ export const SubscriptionPage: React.FC = () => {
                             <div className="mb-6">
                                 <h4 className="text-lg font-bold">{p.name}</h4>
                                 <div className="flex items-baseline gap-1 my-4">
-                                    <span className="text-3xl font-black">₹{billingCycle === 'YEARLY' ? p.price * 12 : p.price}</span>
+                                    <span className="text-3xl font-black">₹{(() => { const price = p.prices?.find(pr => pr.interval === billingCycle)?.unit_amount || 0; return price; })()}</span>
                                     <span className="text-muted text-sm">/{billingCycle.toLowerCase()}</span>
                                 </div>
                                 <p className="text-sm text-muted line-clamp-2">{p.description}</p>

@@ -1,4 +1,4 @@
-import type { Asset, AssetHistory } from '@/types';
+import type { Asset } from '@/types';
 
 export const MOCK_ASSETS: Asset[] = [
     {
@@ -13,6 +13,7 @@ export const MOCK_ASSETS: Asset[] = [
             first_name: 'John',
             last_name: 'Doe'
         },
+        location: 'Floor 1, Room 101',
         purchase_date: '2023-01-15',
         purchase_price: 1200,
         warranty_expiry: '2026-01-15',
@@ -34,6 +35,7 @@ export const MOCK_ASSETS: Asset[] = [
         barcode: '123456789013',
         category: 'Monitor',
         status: 'AVAILABLE',
+        location: 'IT Storage',
         purchase_date: '2023-02-20',
         purchase_price: 300,
         warranty_expiry: '2026-02-20',
@@ -48,6 +50,7 @@ export const MOCK_ASSETS: Asset[] = [
         barcode: '123456789014',
         category: 'Mobile',
         status: 'AVAILABLE',
+        location: 'Mobile',
         purchase_date: '2023-03-10',
         purchase_price: 999,
         warranty_expiry: '2025-03-10',
@@ -69,11 +72,12 @@ export const MOCK_ASSETS: Asset[] = [
         barcode: '123456789015',
         category: 'Laptop',
         status: 'REQUESTED',
-        assigned_to: 'sample-user-3',
+        assigned_to: 'sample-user-3', // Requested
         assigned_employee: {
             first_name: 'Bob',
             last_name: 'Johnson'
         },
+        location: 'Pending Assignment',
         purchase_date: '2023-04-01',
         purchase_price: 2400,
         configuration: {

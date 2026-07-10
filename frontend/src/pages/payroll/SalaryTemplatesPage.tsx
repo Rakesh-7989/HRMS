@@ -11,8 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const SalaryTemplatesPage: React.FC = () => {
+  const { t } = useTranslation();
+
     const queryClient = useQueryClient();
 
     const { data: templates = [], isLoading } = useQuery<SalaryTemplate[]>({
@@ -97,7 +100,7 @@ const SalaryTemplatesPage: React.FC = () => {
     };
 
     return (
-        <DashboardLayout title="Salary Templates" breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Templates' }]}>
+        <DashboardLayout title="Salary Templates" breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Templates' }]}>
             <Sidebar />
 
             <div className="flex justify-end mb-4">
@@ -116,7 +119,7 @@ const SalaryTemplatesPage: React.FC = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow> :
+                        {isLoading ? <TableRow><TableCell colSpan={5}>{t('common.loading')}</TableCell></TableRow> :
                             templates.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center p-4">No templates found</TableCell></TableRow> :
                                 templates.map(t => (
                                     <TableRow key={t.id}>

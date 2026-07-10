@@ -6,6 +6,7 @@ import type {
   HRDashboard,
   ManagerDashboard,
   EmployeeDashboard,
+  SystemReports,
 } from '@/types/dashboard';
 
 export const dashboardService = {
@@ -14,13 +15,18 @@ export const dashboardService = {
     return response.data.data!;
   },
 
-  getOrganizationDashboard: async (): Promise<OrganizationDashboard> => {
-    const response = await api.get<ApiResponse<OrganizationDashboard>>('/dashboards/organization');
+  getSystemReports: async (): Promise<SystemReports> => {
+    const response = await api.get<ApiResponse<SystemReports>>('/dashboards/system/reports');
     return response.data.data!;
   },
 
-  getHRDashboard: async (): Promise<HRDashboard> => {
-    const response = await api.get<ApiResponse<HRDashboard>>('/dashboards/hr');
+  getOrganizationDashboard: async (params?: { startDate?: string; endDate?: string }): Promise<OrganizationDashboard> => {
+    const response = await api.get<ApiResponse<OrganizationDashboard>>('/dashboards/organization', { params });
+    return response.data.data!;
+  },
+
+  getHRDashboard: async (params?: { startDate?: string; endDate?: string }): Promise<HRDashboard> => {
+    const response = await api.get<ApiResponse<HRDashboard>>('/dashboards/hr', { params });
     return response.data.data!;
   },
 

@@ -55,12 +55,8 @@ const swaggerSpec = {
     },
     servers: [
         {
-            url: 'http://localhost:5000/api',
-            description: 'Local development server'
-        },
-        {
-            url: 'https://api.hrms.example.com',
-            description: 'Production server'
+            url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api`,
+            description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local development server'
         }
     ],
     components: {

@@ -8,15 +8,18 @@ import type { User, LoginCredentials } from '@/types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<any>;
   logout: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthenticated: boolean;
+  hasActivePlan: boolean;
+  atLeastPlan: (minPlan: number) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(authService.getCurrentUser());
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -48,6 +51,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               designation_id: profile.designation_id || storedUser.designation_id,
               email: profile.email || storedUser.email,
               is_active: profile.is_active ?? storedUser.is_active,
+              subscription_status: profile.subscription_status,
+              subscription_plan_name: profile.subscription_plan_name,
+              plan_type: profile.plan_type || storedUser.plan_type || 1,
+              two_factor_enabled: profile.two_factor_enabled ?? storedUser.two_factor_enabled,
+              profile_photo_url: profile.profile_photo_url,
+              tenant_settings: profile.tenant_settings,
+              timezone: profile.timezone || storedUser.timezone || profile.tenant_settings?.timezone,
+              shift_week_offs: profile.shift_week_offs || storedUser.shift_week_offs,
             } as User;
             localStorage.setItem('user', JSON.stringify(merged));
             setUser(merged);
@@ -80,9 +91,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
+
+    // Check if 2FA is required
+    if ((response as any).status === '2FA_REQUIRED') {
+      return response; // Return the response so LoginPage can handle the next step
+    }
+
     // Tokens and user are already stored by authService.login()
-    // Set minimal user immediately
-    setUser(response.user);
+
+    // Check if user must change password first - DON'T set user yet
+    if (response.mustChangePassword) {
+      navigate('/change-password');
+      return response;
+    }
+
+    const loginUser = {
+      ...response.user,
+      plan_type: response.planType || response.user.plan_type || 1
+    };
+    setUser(loginUser);
 
     // Try to fetch full profile and merge into user object
     try {
@@ -97,6 +124,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           designation_id: profile.designation_id || response.user.designation_id,
           email: profile.email || response.user.email,
           is_active: profile.is_active ?? response.user.is_active,
+          subscription_status: profile.subscription_status,
+          subscription_plan_name: profile.subscription_plan_name,
+          plan_type: profile.plan_type || response.user.plan_type || 1,
+          two_factor_enabled: profile.two_factor_enabled ?? response.user.two_factor_enabled,
+          profile_photo_url: profile.profile_photo_url,
+          tenant_settings: profile.tenant_settings,
+          timezone: profile.timezone || response.user.timezone || profile.tenant_settings?.timezone,
+          shift_week_offs: profile.shift_week_offs || response.user.shift_week_offs,
         } as User;
         localStorage.setItem('user', JSON.stringify(merged));
         setUser(merged);
@@ -108,6 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Navigate to appropriate dashboard based on role
     const dashboard = ROLE_DASHBOARDS[response.user.role] || '/dashboard/personal';
     navigate(dashboard);
+    return response;
   };
 
   const logout = async () => {
@@ -123,7 +159,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,
         login,
         logout,
+        setUser,
         isAuthenticated: !!user,
+        hasActivePlan: user?.role === 'SUPER_ADMIN' || user?.subscription_status === 'ACTIVE' || user?.subscription_status === 'TRIAL' || user?.subscription_status === 'CANCEL_AT_PERIOD_END',
+        atLeastPlan: (minPlan: number) => (user?.role === 'SUPER_ADMIN') || (user?.plan_type || 1) >= minPlan,
       }}
     >
       {children}

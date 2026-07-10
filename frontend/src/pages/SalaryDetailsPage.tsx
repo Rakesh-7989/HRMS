@@ -9,8 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { useTranslation } from 'react-i18next';
+
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 const SalaryDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { hasPermission } = usePermissions();
+  const canManageSalary = hasPermission('payroll', 'manage_salary');
   const queryClient = useQueryClient();
   const { data: components = [] } = useQuery<any[]>({ queryKey: ['payroll', 'salary-components'], queryFn: () => payrollService.listSalaryComponents() });
   const { data: structure = {} } = useQuery<any>({ queryKey: ['payroll', 'salary-structure'], queryFn: () => payrollService.getSalaryStructure() });
@@ -39,14 +45,18 @@ const SalaryDetailsPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Salary Details">
+    <DashboardLayout title={t('payroll.salaryDetails')}>
       <Sidebar />
 
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
-          <Button onClick={() => setAddOpen(true)}>Add Component</Button>
-          <Button onClick={handleSaveStructure} variant="outline">Save Structure</Button>
-          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-components'] })}>Refresh</Button>
+          {canManageSalary && (
+            <>
+              <Button onClick={() => setAddOpen(true)}>Add Component</Button>
+              <Button onClick={handleSaveStructure} variant="outline">Save Structure</Button>
+            </>
+          )}
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-components'] })}>{t('common.refresh')}</Button>
         </div>
       </div>
 
@@ -100,7 +110,7 @@ const SalaryDetailsPage: React.FC = () => {
           </div>
           <DialogFooter>
             <Button onClick={() => createComponentMut.mutate({ name, amount: Number(amount || 0) }, { onSuccess: () => setAddOpen(false) })}>Create</Button>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

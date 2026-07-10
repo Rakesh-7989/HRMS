@@ -4,8 +4,11 @@ const router = express.Router();
 const verifyJwt = require('../../middleware/verifyJwt');
 const requireRole = require('../../middleware/requireRole');
 
+const riverController = require('./river/river.controller'); // Import RiVeR Controller
+
 // Import sub-module routers
 const salaryRouter = require('./salary/salary.router');
+const salaryStructureRouter = require('./salary/salaryStructure.router');
 const payrunRouter = require('./payrun/payrun.router');
 const statutoryRouter = require('./statutory/statutory.router');
 const settlementRouter = require('./settlement/settlement.router');
@@ -14,16 +17,22 @@ const payslipRouter = require('./payslip/payslip.router');
 const expensesRouter = require('./Expenses/expenses.router');
 const loansRouter = require('./loans/loans.router');
 const merchantsRouter = require('./Merchants/Merchants.router');
+const taxRouter = require('./tax/tax.router');
+const arrearsRouter = require('./arrears/arrears.router');
 
 // Import services for summary data
 const payrunService = require('./payrun/payrun.service');
 const salaryService = require('./salary/salary.service');
 const statutoryService = require('./statutory/statutory.service');
 
+const requirePermission = require('../../middleware/requirePermission');
+
 // ===================================================================
 // MOUNT SUB-MODULE ROUTERS
 // ===================================================================
+router.use('/river', riverController); // Mount RiVeR routes
 router.use('/salary', salaryRouter);
+router.use('/salary-structures', salaryStructureRouter); // New Keka-style salary structures
 router.use('/payrun', payrunRouter);
 router.use('/statutory', statutoryRouter);
 router.use('/settlement', settlementRouter);
@@ -32,11 +41,13 @@ router.use('/payslips', payslipRouter);
 router.use('/expenses', expensesRouter);
 router.use('/loans', loansRouter);
 router.use('/merchants', merchantsRouter);
+router.use('/tax', taxRouter);
+router.use('/arrears', arrearsRouter);
 
 // ===================================================================
 // PAYROLL SUMMARY (Dashboard Data)
 // ===================================================================
-router.get('/summary', verifyJwt, requireRole(['ADMIN', 'HR']), async (req, res) => {
+router.get('/summary', verifyJwt, requirePermission('payroll', 'view_dashboard'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
 
@@ -65,9 +76,9 @@ router.get('/summary', verifyJwt, requireRole(['ADMIN', 'HR']), async (req, res)
     );
     const pendingPayslips = parseInt(payslipsRes.rows[0].count || 0);
 
-    // Get pending reimbursements
+    // Get pending reimbursement claims
     const reimbRes = await require('../../config/db').query(
-      `SELECT COALESCE(SUM(amount), 0) as total FROM reimbursements 
+      `SELECT COALESCE(SUM(amount), 0) as total FROM reimbursement_claims
        WHERE tenant_id = $1 AND status = 'PENDING'`,
       [tenantId]
     );
@@ -122,7 +133,7 @@ router.get('/cost-centers', verifyJwt, async (req, res) => {
   }
 });
 
-router.post('/cost-centers', verifyJwt, requireRole(['ADMIN']), async (req, res) => {
+router.post('/cost-centers', verifyJwt, requirePermission('payroll', 'manage_statutory'), async (req, res) => {
   try {
     const data = await statutoryService.createCostCentre(req.user.tenantId, req.user.id, req.body);
     res.status(201).json({ status: 'success', data });

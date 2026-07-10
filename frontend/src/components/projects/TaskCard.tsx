@@ -19,10 +19,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
     // Check if user has permission to move this task
     const canMove = React.useMemo(() => {
         if (!user) return false;
-        // Admins, HR, Managers can move everything
-        if (['ADMIN', 'HR', 'MANAGER'].includes(user.role)) return true;
-        // Employees can only move their own tasks
-        if (user.role === 'EMPLOYEE') {
+        // Admins and Managers can move everything
+        if (['ADMIN', 'MANAGER'].includes(user.role)) return true;
+        // HR and Employees can only move tasks assigned to them
+        if (['HR', 'EMPLOYEE'].includes(user.role)) {
             const userEmployeeId = user.employee_id;
 
             // Allow if user is one of the assignees
@@ -89,7 +89,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                 <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
                     {task.title}
                 </h4>
-            </div>
+            </div> 
+
 
             {task.description && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">

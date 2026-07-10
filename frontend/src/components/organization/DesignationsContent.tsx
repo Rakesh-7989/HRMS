@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/Button';
 import { designationService, Designation } from '@/services/designation.service';
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const DesignationsContent: React.FC = () => {
     const { user } = useAuth();
     const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
     const [createBit, setCreateBit] = useState(false); // Controls create dialog
     const [editItem, setEditItem] = useState<Designation | null>(null); // Controls edit dialog
 
@@ -39,9 +41,12 @@ export const DesignationsContent: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast('Designation deleted', { icon: '✅' });
+            showToast.success('Designation deleted');
         },
-        onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to delete';
+            showToast.error(message);
+        },
     });
 
     const toggleStatusMutation = useMutation({
@@ -49,16 +54,27 @@ export const DesignationsContent: React.FC = () => {
             designationService.updateDesignation(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+            showToast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`);
         },
-        onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const message = err.response?.data?.message || err.message || 'Failed to update status';
+            showToast.error(message);
+        },
     });
 
     // --------------------------------------------------------------------------
     // Handlers
     // --------------------------------------------------------------------------
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this designation? \nThis action cannot be undone if employees are assigned to it.')) {
+    const handleDelete = async (id: string) => {
+        const desig = designations.find(d => d.id === id);
+        const result = await confirm({
+            title: 'Delete Designation',
+            message: `Are you sure you want to delete "${desig?.name || 'this designation'}"? This action cannot be undone and may affect assigned employees.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteMutation.mutate(id);
         }
     };
@@ -146,7 +162,7 @@ export const DesignationsContent: React.FC = () => {
                                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleEdit(d)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit3 size={15} />

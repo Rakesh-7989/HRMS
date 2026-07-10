@@ -6,12 +6,17 @@ import { Button } from '@/components/ui/Button';
 import { designationService, Designation } from '@/services/designation.service';
 import { CreateDesignationForm } from '@/components/forms/CreateDesignationForm';
 import { Plus, Edit3, Trash2, Briefcase, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const DesignationsPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
+    const { confirm } = useConfirm();
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('designations', 'manage');
     const [createBit, setCreateBit] = useState(false); // Controls create dialog
     const [editItem, setEditItem] = useState<Designation | null>(null); // Controls edit dialog
 
@@ -39,9 +44,13 @@ export const DesignationsPage: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast('Designation deleted', { icon: '✅' });
+            showToast.success('Designation deleted successfully');
         },
-        onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+        onError: (err: any) => {
+            const backendMessage = err.response?.data?.message;
+            const axiosMessage = err.message;
+            showToast.error(backendMessage || `Error: ${axiosMessage}`);
+        },
     });
 
     const toggleStatusMutation = useMutation({
@@ -49,16 +58,25 @@ export const DesignationsPage: React.FC = () => {
             designationService.updateDesignation(item.id, { is_active: !item.is_active }),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            toast(`Designation ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+            showToast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
         },
-        onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+        onError: (err: any) => {
+            showToast.error(err.response?.data?.message || err.message || 'Failed to update designation status');
+        },
     });
 
     // --------------------------------------------------------------------------
     // Handlers
     // --------------------------------------------------------------------------
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this designation? \nThis action cannot be undone if employees are assigned to it.')) {
+    const handleDelete = async (id: string) => {
+        const result = await confirm({
+            title: 'Delete Designation',
+            message: 'Are you sure you want to delete this designation? \nThis action cannot be undone if employees are assigned to it.',
+            type: 'destructive',
+            confirmText: 'Delete Designation',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteMutation.mutate(id);
         }
     };
@@ -70,9 +88,9 @@ export const DesignationsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Designations"
+            title={t('organisation.designations')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
                 { label: 'Designations' },
             ]}
         >
@@ -99,10 +117,12 @@ export const DesignationsPage: React.FC = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         </div>
 
-                        <Button onClick={() => setCreateBit(true)}>
-                            <Plus className="mr-2" size={18} />
-                            Add Designation
-                        </Button>
+                        {canManage && (
+                            <Button onClick={() => setCreateBit(true)}>
+                                <Plus className="mr-2" size={18} />
+                                Add New Designation
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -120,37 +140,30 @@ export const DesignationsPage: React.FC = () => {
 
                 {/* Content Grid */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="p-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-800 rounded-xl space-y-4">
-                                <div className="flex justify-between items-start mb-2">
-                                    <Skeleton variant="circular" width={40} height={40} />
-                                    <div className="flex gap-1">
-                                        <Skeleton variant="circular" width={24} height={24} />
-                                        <Skeleton variant="circular" width={24} height={24} />
-                                        <Skeleton variant="circular" width={24} height={24} />
-                                    </div>
-                                </div>
-                                <Skeleton variant="text" width="60%" />
-                                <Skeleton variant="text" width="80%" />
-                                <Skeleton variant="text" width="40%" />
-                            </div>
-                        ))}
+                    <div className="h-64 flex flex-col items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div>
+                        <p className="text-muted text-sm">Loading designations...</p>
                     </div>
                 ) : filteredDesignations.length === 0 ? (
-                    <EmptyState
-                        icon={<Briefcase size={32} />}
-                        title={searchTerm ? 'No matching designations' : 'No designations yet'}
-                        description={searchTerm
-                            ? `We couldn't find any designation matching "${searchTerm}".`
-                            : "Create your first designation to structure your organization."}
-                        action={!searchTerm ? (
+                    <Card className="py-16 flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
+                            <Briefcase className="text-gray-400" size={32} />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                            {searchTerm ? 'No matching designations' : 'No designations yet'}
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+                            {searchTerm
+                                ? `We couldn't find any designation matching "${searchTerm}".`
+                                : "Create your first designation to structure your organization."}
+                        </p>
+                        {!searchTerm && canManage && (
                             <Button variant="outline" onClick={() => setCreateBit(true)}>
                                 <Plus className="mr-2" size={16} />
                                 Create Designation
                             </Button>
-                        ) : undefined}
-                    />
+                        )}
+                    </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredDesignations.map((d) => (
@@ -161,27 +174,29 @@ export const DesignationsPage: React.FC = () => {
                                             <Briefcase size={20} />
                                         </div>
                                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleEdit(d)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit3 size={15} />
-                                            </button>
-                                            <button
-                                                onClick={() => toggleStatusMutation.mutate(d)}
-                                                className={`p-1.5 rounded-md transition-colors ${d.is_active ? 'text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
-                                                title={d.is_active ? "Deactivate" : "Activate"}
-                                            >
-                                                {d.is_active ? <X size={15} /> : <Check size={15} />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(d.id)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={15} />
-                                            </button>
+                                            {canManage && (<>
+                                                <button
+                                                    onClick={() => handleEdit(d)}
+                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit3 size={15} />
+                                                </button>
+                                                <button
+                                                    onClick={() => toggleStatusMutation.mutate(d)}
+                                                    className={`p-1.5 rounded-md transition-colors ${d.is_active ? 'text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+                                                    title={d.is_active ? "Deactivate" : "Activate"}
+                                                >
+                                                    {d.is_active ? <X size={15} /> : <Check size={15} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(d.id)}
+                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={15} />
+                                                </button>
+                                            </>)}
                                         </div>
                                     </div>
 

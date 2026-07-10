@@ -14,6 +14,9 @@ import type {
     EmployeeUtilization,
     KanbanColumn,
     KanbanColumnInput,
+    TaskComment,
+    CreateCommentData,
+    MentionableUser,
 } from '@/types/project.types';
 
 /**
@@ -312,4 +315,61 @@ export const projectsService = {
         );
         return response.data.data!;
     },
+
+    // ========== TASK COMMENT ENDPOINTS ==========
+
+    /**
+     * Create a comment on a task
+     * POST /api/projects/tasks/:task_id/comments
+     */
+    createComment: async (taskId: string, data: CreateCommentData): Promise<TaskComment> => {
+        const response = await api.post<{ status: string; data: TaskComment }>(
+            `/projects/tasks/${taskId}/comments`,
+            data
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * List comments for a task
+     * GET /api/projects/tasks/:task_id/comments
+     */
+    listComments: async (taskId: string): Promise<TaskComment[]> => {
+        const response = await api.get<{ status: string; data: TaskComment[] }>(
+            `/projects/tasks/${taskId}/comments`
+        );
+        return response.data.data || [];
+    },
+
+    /**
+     * Update a comment
+     * PUT /api/projects/tasks/comments/:comment_id
+     */
+    updateComment: async (commentId: string, data: CreateCommentData): Promise<TaskComment> => {
+        const response = await api.put<{ status: string; data: TaskComment }>(
+            `/projects/tasks/comments/${commentId}`,
+            data
+        );
+        return response.data.data!;
+    },
+
+    /**
+     * Delete a comment
+     * DELETE /api/projects/tasks/comments/:comment_id
+     */
+    deleteComment: async (commentId: string): Promise<void> => {
+        await api.delete(`/projects/tasks/comments/${commentId}`);
+    },
+
+    /**
+     * Get mentionable users for a project
+     * GET /api/projects/projects/:project_id/mentionable-users
+     */
+    getMentionableUsers: async (projectId: string): Promise<MentionableUser[]> => {
+        const response = await api.get<{ status: string; data: MentionableUser[] }>(
+            `/projects/projects/${projectId}/mentionable-users`
+        );
+        return response.data.data || [];
+    },
 };
+

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Cake, Gift, UserPlus } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { cn } from '@/utils/cn';
+import './dashboard.css';
 
 type Person = { id: string | number; name: string; date: string; note?: string };
 
@@ -19,200 +21,218 @@ const PeopleEventsCard: React.FC<Props> = ({
   isLoading = false,
   className = '',
 }) => {
-  const tabs = [
-    { key: 'birthdays', label: 'Birthdays', count: birthdays.length, icon: <Cake size={16} className="text-pink-500" /> },
-    { key: 'anniversaries', label: 'Work Anniversaries', count: anniversaries.length, icon: <Gift size={16} className="text-amber-500" /> },
-    { key: 'joinees', label: 'New joiners', count: newJoiners.length, icon: <UserPlus size={16} className="text-accent-blue" /> },
-  ];
+  const parseDate = (dateStr: string): Date | null => {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return null;
+  };
 
-  const [active, setActive] = useState<string>('birthdays');
+  const processList = (list: Person[], count: number) => {
+    return list.map(n => ({ ...n, parsedDate: parseDate(n.date) }))
+      .sort((a, b) => {
+        if (!a.parsedDate || !b.parsedDate) return 0;
+        return b.parsedDate.getTime() - a.parsedDate.getTime();
+      })
+      .slice(0, count);
+  };
 
-  const renderList = (items: Person[], section: 'birthdays' | 'anniversaries' | 'joinees' = 'anniversaries') => {
-    if (!items || items.length === 0) {
-      const getIcon = () => {
-        if (section === 'birthdays') {
-          return <Cake size={40} className="opacity-70 text-pink-500" />;
-        } else if (section === 'anniversaries') {
-          return <Gift size={40} className="opacity-70 text-amber-500" />;
-        } else {
-          return <UserPlus size={40} className="opacity-70 text-accent-blue" />;
-        }
-      };
+  const processedBirthdays = processList(birthdays, 4);
+  const processedAnniversaries = processList(anniversaries, 4);
+  const processedJoiners = processList(newJoiners, 4);
 
-      return (
-        <div className="py-6 text-center text-muted">
-          <div className="min-h w-35 h-0 rounded-lg bg-white/5 flex items-center justify-center mb-3">
-            {getIcon()}
-          </div>
-          <p className="font-medium">No {active === 'birthdays' ? 'birthdays' : active === 'anniversaries' ? 'work anniversaries' : 'new joiners'} today.</p>
+  const Section = ({ title, icon: Icon, accentColor, items, emptyText }: any) => (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className={cn(
+        "dashboard-card flex-1 p-0 overflow-hidden flex flex-col h-full",
+        "bg-white/90 dark:bg-gray-900/90",
+        "border border-gray-100 dark:border-gray-800/80"
+      )}
+    >
+      {/* Header */}
+      <div className={cn(
+        "px-4 py-3.5 flex items-center justify-between border-b border-gray-100 dark:border-gray-800/50",
+        accentColor.headerBg
+      )}>
+        <div className="flex items-center gap-2.5">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center",
+              accentColor.iconBg
+            )}
+          >
+            <Icon size={16} className={accentColor.text} />
+          </motion.div>
+          <span className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">
+            {title}
+          </span>
         </div>
-      );
-    }
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className={cn(
+            "text-[10px] font-bold px-2 py-0.5 rounded-full",
+            "bg-white/80 dark:bg-gray-900/50 backdrop-blur-sm",
+            "border",
+            accentColor.badgeBorder,
+            accentColor.text
+          )}
+        >
+          {items.length}
+        </motion.span>
+      </div>
 
+      {/* Content */}
+      <div className="p-3 flex-1 flex flex-col min-h-[160px] dashboard-scrollable">
+        {items.length > 0 ? (
+          <motion.div
+            className="space-y-1.5"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+            }}
+          >
+            {items.map((person: any) => (
+              <motion.div
+                key={person.id}
+                variants={{
+                  hidden: { opacity: 0, x: -10 },
+                  visible: { opacity: 1, x: 0 }
+                }}
+                whileHover={{ x: 4, scale: 1.01 }}
+                className={cn(
+                  "flex items-center gap-3 p-2.5 rounded-xl",
+                  "hover:bg-gray-50 dark:hover:bg-gray-800/50",
+                  "border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50",
+                  "transition-all duration-200 group cursor-default"
+                )}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center",
+                    "text-xs font-bold shadow-sm",
+                    accentColor.avatarBg,
+                    accentColor.text
+                  )}
+                >
+                  {person.name?.charAt(0)?.toUpperCase()}
+                </motion.div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                    {person.name}
+                  </p>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium mt-0.5">
+                    {person.date}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center py-6">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className={cn(
+                "w-14 h-14 rounded-xl flex items-center justify-center mb-3",
+                "opacity-60",
+                accentColor.emptyBg
+              )}
+            >
+              <Icon size={24} className={cn(accentColor.text, "opacity-60")} />
+            </motion.div>
+            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+              {emptyText}
+            </span>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  if (isLoading) {
     return (
-      <div className="space-y-2">
-        {items.map((it) => (
-          <div key={it.id} className="flex items-center justify-between p-2 rounded bg-white/5 text-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
-                {it.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .slice(0, 1)
-                  .join('')}
-              </div>
-              <div>
-                <p className="font-medium">{it.name}</p>
-                <p className="text-xs text-muted">{it.date}</p>
-              </div>
+      <div className={cn(className, "grid grid-cols-1 md:grid-cols-3 gap-4 h-full")}>
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="dashboard-card p-4 flex flex-col h-full min-h-[200px]"
+          >
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="w-8 h-8 rounded-lg dashboard-skeleton" />
+              <div className="h-4 w-20 dashboard-skeleton rounded" />
             </div>
-            {it.note && <span className="text-xs text-muted">{it.note}</span>}
+            <div className="flex-1 space-y-3">
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl dashboard-skeleton" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 dashboard-skeleton rounded w-3/4" />
+                    <div className="h-2.5 dashboard-skeleton rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
     );
-  };
-
-  const today = new Date();
-  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const parseMonthDay = (dateStr: string): { month: number; day: number } | null => {
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) return { month: d.getMonth(), day: d.getDate() };
-    const m = dateStr.match(/([A-Za-z]+)\s+(\d{1,2})/);
-    if (m) {
-      const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-      const mi = months.indexOf(m[1].toLowerCase().slice(0,3));
-      if (mi >= 0) return { month: mi, day: parseInt(m[2], 10) };
-    }
-    const iso = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (iso) return { month: parseInt(iso[2], 10) - 1, day: parseInt(iso[3], 10) };
-    return null;
-  };
-
-  const birthdaysToday = birthdays.filter((b) => {
-    const md = parseMonthDay(b.date);
-    return md && md.month === today.getMonth() && md.day === today.getDate();
-  });
-
-  type BirthdayEntry = { b: Person; date: Date };
-  const isEntry = (x: BirthdayEntry | null): x is BirthdayEntry => x !== null;
-
-  const upcomingBirthdays = birthdays
-    .filter((b) => {
-      const md = parseMonthDay(b.date);
-      return !(md && md.month === today.getMonth() && md.day === today.getDate());
-    })
-    .map((b): BirthdayEntry | null => {
-      const md = parseMonthDay(b.date);
-      if (!md) return null;
-      const year =
-        md.month > today.getMonth() || (md.month === today.getMonth() && md.day > today.getDate())
-          ? today.getFullYear()
-          : today.getFullYear() + 1;
-      return { b, date: new Date(year, md.month, md.day) };
-    })
-    .filter(isEntry)
-    .sort((a, c) => a.date.getTime() - c.date.getTime())
-    .map((x) => x.b);
-
-  // ----- New joiners: robust date comparisons -----
-  const parseJoinDate = (dateStr: string): Date | null => {
-    // Try ISO / timestamp first
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-    // Fallback to month/day formats like 'Jan 13'
-    const md = parseMonthDay(dateStr);
-    if (md) return new Date(today.getFullYear(), md.month, md.day);
-
-    return null;
-  };
-
-  // Joiners who joined exactly today
-  const joinersToday = newJoiners.filter((n) => {
-    const d = parseJoinDate(n.date);
-    return d !== null && d.getTime() === todayMid.getTime();
-  });
-
-  // Joiners within the last 7 days (excluding today), sorted by most recent first
-  const recentJoiners = newJoiners
-    .map((n) => {
-      const d = parseJoinDate(n.date);
-      return { n, d } as { n: Person; d: Date | null };
-    })
-    .filter((x) => x.d !== null)
-    .filter((x) => {
-      const diffDays = Math.floor((todayMid.getTime() - (x.d as Date).getTime()) / (1000 * 60 * 60 * 24));
-      return diffDays > 0 && diffDays < 7;
-    })
-    .sort((a, b) => (b.d as Date).getTime() - (a.d as Date).getTime())
-    .map((x) => x.n);
+  }
 
   return (
-    <Card className={className}>
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setActive(t.key)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-t-md text-sm border-b-2 ${
-                  active === t.key ? 'border-primary text-primary' : 'border-transparent text-muted'
-                }`}
-              >
-                {t.icon}
-                <span className="font-semibold">{t.count} {t.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="text-xs text-muted">Today</div>
-        </div>
-
-        <div className="h-px bg-white/5 mb-3" />
-
-        <div className="flex-1 overflow-auto">
-          {isLoading ? (
-            <div className="py-6 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-            </div>
-          ) : (
-            <>
-              {active === 'birthdays' && (
-                <>
-                  <p className="text-sm font-semibold mb-2">Birthdays today</p>
-                  {renderList(birthdaysToday, 'birthdays')}
-
-                  <p className="text-sm font-semibold mt-4 mb-2">Upcoming Birthdays</p>
-                  {renderList(upcomingBirthdays, 'birthdays')}
-                </>
-              )}
-
-              {active === 'anniversaries' && (
-                <>
-                  <p className="text-sm font-semibold mb-2">Anniversaries today</p>
-                  {renderList(anniversaries.filter((a) => a.date === new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' })), 'anniversaries')}
-
-                  <p className="text-sm font-semibold mt-4 mb-2">Upcoming Anniversaries</p>
-                  {renderList(anniversaries, 'anniversaries')}
-                </>
-              )}
-
-              {active === 'joinees' && (
-                <>
-                  <p className="text-sm font-semibold mb-2">New Joiners today</p>
-                  {renderList(joinersToday, 'joinees')}
-
-                  <p className="text-sm font-semibold mt-4 mb-2">Recent Joiners</p>
-                  {renderList(recentJoiners, 'joinees')}
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
+    <div className={cn(className, "grid grid-cols-1 md:grid-cols-3 gap-4 h-full")}>
+      <Section
+        title="Birthdays"
+        icon={Cake}
+        accentColor={{
+          headerBg: 'bg-gradient-to-r from-pink-50/80 to-transparent dark:from-pink-500/5',
+          text: 'text-pink-500 dark:text-pink-400',
+          iconBg: 'bg-pink-100 dark:bg-pink-500/20',
+          avatarBg: 'bg-gradient-to-br from-pink-100 to-pink-50 dark:from-pink-500/20 dark:to-pink-500/10',
+          badgeBorder: 'border-pink-200 dark:border-pink-500/30',
+          emptyBg: 'bg-pink-50 dark:bg-pink-500/10',
+        }}
+        items={processedBirthdays}
+        emptyText="No Birthdays"
+      />
+      <Section
+        title="Anniversaries"
+        icon={Gift}
+        accentColor={{
+          headerBg: 'bg-gradient-to-r from-amber-50/80 to-transparent dark:from-amber-500/5',
+          text: 'text-fuchsia-500 dark:text-fuchsia-400',
+          iconBg: 'bg-fuchsia-100 dark:bg-fuchsia-500/20',
+          avatarBg: 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-violet-500/10',
+          badgeBorder: 'border-fuchsia-200 dark:border-fuchsia-500/30',
+          emptyBg: 'bg-fuchsia-50 dark:bg-fuchsia-500/10',
+        }}
+        items={processedAnniversaries}
+        emptyText="No Anniversaries"
+      />
+      <Section
+        title="New Joiners"
+        icon={UserPlus}
+        accentColor={{
+          headerBg: 'bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-500/5',
+          text: 'text-violet-500 dark:text-violet-400',
+          iconBg: 'bg-violet-100 dark:bg-violet-500/20',
+          avatarBg: 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/10',
+          badgeBorder: 'border-violet-200 dark:border-violet-500/30',
+          emptyBg: 'bg-violet-50 dark:bg-violet-500/10',
+        }}
+        items={processedJoiners}
+        emptyText="No New Joiners"
+      />
+    </div>
   );
 };
 

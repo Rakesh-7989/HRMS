@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -9,7 +9,9 @@ import { usersService, TerminateEmployeeData } from '@/services/users.service';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { leaveService } from '@/services/leave.service';
+import { getShifts } from '@/services/shift.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import {
     User as UserIcon,
@@ -29,14 +31,20 @@ import {
     FileText,
     Clock,
     Users,
+    Eye,
+    EyeOff,
+    Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { Skeleton } from '@/components/ui/Skeleton';
+
+import { SalaryAssignmentSection } from '@/components/payroll/SalaryAssignmentSection';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'personal' | 'employment' | 'financial' | 'documents';
 
 export const EmployeeDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
@@ -49,7 +57,44 @@ export const EmployeeDetailsPage: React.FC = () => {
         termination_reason: '',
     });
 
-    const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
+    const { hasPermission } = usePermissions();
+    const canUpdate = hasPermission('employees', 'update');
+    const canTerminate = hasPermission('employees', 'terminate');
+    const canManageStatus = hasPermission('employees', 'manage_status');
+    const canManage = canUpdate; // Keep canManage for legacy components or general update access
+
+    // Sensitive field reveal state
+    const [revealedFields, setRevealedFields] = useState<Record<string, string>>({});
+    const [revealingField, setRevealingField] = useState<string | null>(null);
+
+    const handleRevealField = useCallback(async (fieldName: string) => {
+        if (revealedFields[fieldName]) {
+            // Toggle off
+            setRevealedFields(prev => {
+                const next = { ...prev };
+                delete next[fieldName];
+                return next;
+            });
+            return;
+        }
+        try {
+            setRevealingField(fieldName);
+            const result = await usersService.revealSensitiveField(id!, fieldName);
+            setRevealedFields(prev => ({ ...prev, [fieldName]: result.value }));
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                setRevealedFields(prev => {
+                    const next = { ...prev };
+                    delete next[fieldName];
+                    return next;
+                });
+            }, 10000);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to reveal field');
+        } finally {
+            setRevealingField(null);
+        }
+    }, [id, revealedFields]);
 
     // Queries
     const { data: employee, isLoading, error } = useQuery({
@@ -66,6 +111,11 @@ export const EmployeeDetailsPage: React.FC = () => {
     const { data: designations = [] } = useQuery({
         queryKey: ['designations'],
         queryFn: () => designationService.getDesignations(),
+    });
+
+    const { data: shifts = [] } = useQuery({
+        queryKey: ['shifts'],
+        queryFn: () => getShifts(),
     });
 
     const { data: leaveBalances = [] } = useQuery({
@@ -109,30 +159,12 @@ export const EmployeeDetailsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             setTerminateDialogOpen(false);
             toast.success(result.message);
-            navigate('/employees');
+            navigate('/dashboard/employees');
         },
         onError: (err: Error) => toast.error(err.message),
     });
 
-    const rehireMutation = useMutation({
-        mutationFn: () => usersService.rehireEmployee(id!),
-        onSuccess: (result) => {
-            // Update cache to reflect rehired user immediately
-            queryClient.setQueryData(['employee', id], (old: any) => {
-                if (!old) return old;
-                return {
-                    ...old,
-                    is_active: true,
-                    is_terminated: false,
-                    termination_date: null,
-                    termination_reason: null,
-                };
-            });
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-            toast.success(result.message);
-        },
-        onError: (err: Error) => toast.error(err.message),
-    });
+
 
     // Find department and designation names
     const getDepartmentName = (deptId?: string) => {
@@ -147,6 +179,14 @@ export const EmployeeDetailsPage: React.FC = () => {
         return desig?.name || 'Unknown';
     };
 
+    const getShiftName = (shiftId?: string, legacyShift?: string) => {
+        if (shiftId) {
+            const shift = shifts.find((s: any) => s.id === shiftId);
+            if (shift) return `${shift.name} (${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)})`;
+        }
+        return legacyShift || 'Regular';
+    };
+
     const tabs = [
         { id: 'personal', label: 'Personal', icon: UserIcon },
         { id: 'employment', label: 'Employment', icon: Briefcase },
@@ -156,10 +196,9 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <DashboardLayout title="Employee Details">
-                <div className="space-y-4 p-6">
-                    <Skeleton variant="rectangular" width="100%" height={120} />
-                    <Skeleton variant="rectangular" width="100%" height={200} />
+            <DashboardLayout title={t('employees.employeeDetails')}>
+                <div className="h-64 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                 </div>
             </DashboardLayout>
         );
@@ -167,7 +206,7 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     if (error || !employee) {
         return (
-            <DashboardLayout title="Employee Details">
+            <DashboardLayout title={t('employees.employeeDetails')}>
                 <Card>
                     <div className="text-center py-12">
                         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
@@ -177,7 +216,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                             The employee you're looking for doesn't exist or has been removed.
                         </p>
-                        <Button onClick={() => navigate('/employees')}>
+                        <Button onClick={() => navigate('/dashboard/employees')}>
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Employees
                         </Button>
@@ -191,10 +230,10 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Employee Details"
+            title={t('employees.employeeDetails')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Employees', href: '/employees' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.employees'), href: '/dashboard/employees' },
                 { label: `${employee.first_name} ${employee.last_name}` },
             ]}
         >
@@ -218,7 +257,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                     <span className={cn(
                                         'px-3 py-1 rounded-full text-xs font-medium',
                                         employee.role === 'ADMIN' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                                        employee.role === 'HR' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                        employee.role === 'HR' && 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
                                         employee.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
                                         employee.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
                                     )}>
@@ -243,53 +282,50 @@ export const EmployeeDetailsPage: React.FC = () => {
 
                         {canManage && (
                             <div className="flex items-center gap-2 flex-wrap">
-                                <Button variant="outline" onClick={() => navigate(`/employees/${id}/edit`)}>
+                                <Button variant="outline" onClick={() => navigate(`/dashboard/employees/${id}/edit`)} disabled={!canUpdate}>
                                     <Edit size={16} className="mr-2" />
                                     Edit
                                 </Button>
 
                                 {employee.is_terminated ? (
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => rehireMutation.mutate()}
-                                        isLoading={rehireMutation.isPending}
-                                    >
-                                        <UserCheck size={16} className="mr-2" />
-                                        Rehire
-                                    </Button>
+                                    null // Rehire removed as per user request
                                 ) : (
                                     <>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => toggleStatusMutation.mutate({
-                                                userId: employee.id,
-                                                isActive: !employee.is_active
-                                            })}
-                                            isLoading={toggleStatusMutation.isPending}
-                                            disabled={toggleStatusMutation.isPending || currentUser?.id === employee.id}
-                                            title={
-                                                currentUser?.id === employee.id
-                                                    ? "You cannot deactivate your own account"
-                                                    : employee.is_active ? 'Deactivate' : 'Activate'
-                                            }
-                                            className={cn(
-                                                currentUser?.id === employee.id ? 'opacity-50 cursor-not-allowed' : '',
-                                                employee.is_active ? 'text-red-600 border-red-300 hover:bg-red-50' : 'text-green-600 border-green-300 hover:bg-green-50'
-                                            )}
-                                        >
-                                            {employee.is_active ? <UserX size={16} className="mr-2" /> : <UserCheck size={16} className="mr-2" />}
-                                            {employee.is_active ? 'Deactivate' : 'Activate'}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            onClick={() => setTerminateDialogOpen(true)}
-                                            disabled={currentUser?.id === employee.id}
-                                            title={currentUser?.id === employee.id ? "You cannot terminate your own account" : "Terminate Employee"}
-                                        >
-                                            <UserX size={16} className="mr-2" />
-                                            Terminate
-                                        </Button>
+                                        {canManageStatus && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => toggleStatusMutation.mutate({
+                                                    userId: employee.id,
+                                                    isActive: !employee.is_active
+                                                })}
+                                                isLoading={toggleStatusMutation.isPending}
+                                                disabled={toggleStatusMutation.isPending || currentUser?.id === employee.id}
+                                                title={
+                                                    currentUser?.id === employee.id
+                                                        ? "You cannot deactivate your own account"
+                                                        : employee.is_active ? 'Deactivate' : 'Activate'
+                                                }
+                                                className={cn(
+                                                    currentUser?.id === employee.id ? 'opacity-50 cursor-not-allowed' : '',
+                                                    employee.is_active ? 'text-red-600 border-red-300 hover:bg-red-50' : 'text-green-600 border-green-300 hover:bg-green-50'
+                                                )}
+                                            >
+                                                {employee.is_active ? <UserX size={16} className="mr-2" /> : <UserCheck size={16} className="mr-2" />}
+                                                {employee.is_active ? 'Deactivate' : 'Activate'}
+                                            </Button>
+                                        )}
+                                        {canTerminate && (
+                                            <Button
+                                                variant="outline"
+                                                className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={() => setTerminateDialogOpen(true)}
+                                                disabled={currentUser?.id === employee.id}
+                                                title={currentUser?.id === employee.id ? "You cannot terminate your own account" : "Terminate Employee"}
+                                            >
+                                                <UserX size={16} className="mr-2" />
+                                                Terminate
+                                            </Button>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -325,7 +361,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                                 <InfoRow icon={Mail} label="Email" value={employee.email} />
-                                <InfoRow icon={Phone} label="Phone" value={employee.phone || 'Not provided'} />
+                                <SensitiveInfoRow
+                                    icon={Phone}
+                                    label="Phone"
+                                    maskedValue={employee.phone || 'Not provided'}
+                                    fieldName="phone"
+                                    revealedFields={revealedFields}
+                                    revealingField={revealingField}
+                                    onReveal={handleRevealField}
+                                    hasValue={!!employee.phone}
+                                />
                                 <InfoRow icon={MapPin} label="Address" value={employee.address || 'Not provided'} />
                             </div>
                         </Card>
@@ -348,7 +393,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                             </h3>
                             <div className="grid md:grid-cols-3 gap-4">
                                 <InfoRow icon={UserIcon} label="Name" value={employee.emergency_name || 'Not provided'} />
-                                <InfoRow icon={Phone} label="Phone" value={employee.emergency_phone || 'Not provided'} />
+                                <SensitiveInfoRow
+                                    icon={Phone}
+                                    label="Phone"
+                                    maskedValue={employee.emergency_phone || 'Not provided'}
+                                    fieldName="emergency_phone"
+                                    revealedFields={revealedFields}
+                                    revealingField={revealingField}
+                                    onReveal={handleRevealField}
+                                    hasValue={!!employee.emergency_phone}
+                                />
                                 <InfoRow icon={Users} label="Relationship" value={employee.emergency_relation || 'Not provided'} />
                             </div>
                         </Card>
@@ -376,7 +430,8 @@ export const EmployeeDetailsPage: React.FC = () => {
                             <div className="space-y-4">
                                 <InfoRow icon={Calendar} label="Join Date" value={employee.join_date ? format(new Date(employee.join_date), 'MMM dd, yyyy') : 'Not provided'} />
                                 <InfoRow icon={Briefcase} label="Employment Type" value={employee.employment_type || 'Full-time'} />
-                                <InfoRow icon={Clock} label="Shift" value={employee.shift || 'Regular'} />
+                                <InfoRow icon={Clock} label="Shift" value={getShiftName(employee.shift_id, employee.shift)} />
+                                <InfoRow icon={MapPin} label="Job Location" value={employee.job_location || 'Not provided'} />
                             </div>
                         </Card>
 
@@ -406,27 +461,42 @@ export const EmployeeDetailsPage: React.FC = () => {
                 )}
 
                 {activeTab === 'financial' && (
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <Card>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Bank Details
-                            </h3>
-                            <div className="space-y-4">
-                                <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
-                                <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
-                                <InfoRow icon={Wallet} label="Account Number" value={employee.account_number ? `****${employee.account_number.slice(-4)}` : 'Not provided'} />
-                                <InfoRow icon={Wallet} label="IFSC Code" value={employee.ifsc_code || 'Not provided'} />
-                            </div>
-                        </Card>
+                    <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <Card>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                    Bank Details
+                                </h3>
+                                <div className="space-y-4">
+                                    <InfoRow icon={Building2} label="Bank Name" value={employee.bank_name || 'Not provided'} />
+                                    <InfoRow icon={Building2} label="Branch Name" value={employee.branch_name || 'Not provided'} />
+                                    <InfoRow icon={UserIcon} label="Account Name" value={employee.account_name || 'Not provided'} />
+                                    <SensitiveInfoRow icon={Wallet} label="Account Number" maskedValue={employee.account_number || 'Not provided'} fieldName="account_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.account_number} />
+                                    <SensitiveInfoRow icon={Wallet} label="IFSC Code" maskedValue={employee.ifsc_code || 'Not provided'} fieldName="ifsc_code" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.ifsc_code} />
+                                </div>
+                            </Card>
+                            <Card>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                    Payroll & Tax Information
+                                </h3>
+                                <div className="space-y-4">
+                                    <SensitiveInfoRow icon={FileText} label="Tax ID (PAN)" maskedValue={employee.tax_id || 'Not provided'} fieldName="tax_id" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.tax_id} />
+                                    <SensitiveInfoRow icon={FileText} label="Aadhaar Number" maskedValue={employee.aadhar_number || 'Not provided'} fieldName="aadhar_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.aadhar_number} />
+                                    <InfoRow icon={Wallet} label="Annual Salary (CTC)" value={
+                                        employee.annual_salary
+                                            ? `₹${Number(employee.annual_salary).toLocaleString('en-IN')}`
+                                            : (employee.ctc ? `₹${Number(employee.ctc).toLocaleString('en-IN')}` : 'Not provided')
+                                    } />
+                                    <SensitiveInfoRow icon={FileText} label="UAN" maskedValue={employee.uan || 'Not provided'} fieldName="uan" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.uan} />
+                                    <SensitiveInfoRow icon={Wallet} label="PF A/C Number" maskedValue={employee.pf_account || 'Not provided'} fieldName="pf_account" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.pf_account} />
+                                    <SensitiveInfoRow icon={FileText} label="ESI Number" maskedValue={employee.esi_number || 'Not provided'} fieldName="esi_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.esi_number} />
+                                </div>
+                            </Card>
+                        </div>
 
-                        <Card>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Tax Information
-                            </h3>
-                            <div className="space-y-4">
-                                <InfoRow icon={FileText} label="Tax ID" value={employee.tax_id || 'Not provided'} />
-                            </div>
-                        </Card>
+                        {canManage && employee.employee_uuid && (
+                            <SalaryAssignmentSection employeeId={employee.employee_uuid} />
+                        )}
                     </div>
                 )}
 
@@ -436,7 +506,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Documents
                             </h3>
-                            <Button onClick={() => navigate(`/employees/${id}/documents`)}>
+                            <Button onClick={() => navigate(`/dashboard/employees/${id}/documents`)}>
                                 <FileText size={16} className="mr-2" />
                                 View All Documents
                             </Button>
@@ -524,5 +594,60 @@ const InfoRow: React.FC<{
         </div>
     </div>
 );
+
+// Sensitive info row with eye-icon reveal toggle
+const SensitiveInfoRow: React.FC<{
+    icon: React.ElementType;
+    label: string;
+    maskedValue: string;
+    fieldName: string;
+    revealedFields: Record<string, string>;
+    revealingField: string | null;
+    onReveal: (field: string) => void;
+    hasValue: boolean;
+}> = ({ icon: Icon, label, maskedValue, fieldName, revealedFields, revealingField, onReveal, hasValue }) => {
+    const isRevealed = !!revealedFields[fieldName];
+    const isLoading = revealingField === fieldName;
+    const displayValue = isRevealed ? revealedFields[fieldName] : maskedValue;
+
+    return (
+        <div className="flex items-start gap-3">
+            <Icon size={18} className="text-gray-400 mt-0.5" />
+            <div className="flex-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+                <div className="flex items-center gap-2">
+                    <p className={cn(
+                        "text-gray-900 dark:text-white font-mono",
+                        isRevealed && "text-primary font-semibold"
+                    )}>
+                        {displayValue}
+                    </p>
+                    {hasValue && (
+                        <button
+                            onClick={() => onReveal(fieldName)}
+                            disabled={isLoading}
+                            className={cn(
+                                "p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700",
+                                isRevealed ? "text-primary" : "text-gray-400 hover:text-gray-600"
+                            )}
+                            title={isRevealed ? 'Hide' : 'Reveal (audit-logged)'}
+                        >
+                            {isLoading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : isRevealed ? (
+                                <EyeOff size={14} />
+                            ) : (
+                                <Eye size={14} />
+                            )}
+                        </button>
+                    )}
+                </div>
+                {isRevealed && (
+                    <p className="text-[10px] text-amber-500 mt-0.5">Auto-hides in 10s</p>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default EmployeeDetailsPage;

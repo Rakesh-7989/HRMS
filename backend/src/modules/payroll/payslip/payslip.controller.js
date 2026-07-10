@@ -6,6 +6,12 @@ const getMyPayslips = async (req, res) => {
     res.json({ status: "success", data });
 };
 
+const getAllPayslips = async (req, res) => {
+    const { from_date, to_date } = req.query;
+    const data = await payslipService.listAllPayslips(req.user.tenantId, { from_date, to_date });
+    res.json({ status: "success", data });
+};
+
 const getPayslipData = async (req, res) => {
     const { employeeId } = req.params;
 
@@ -27,21 +33,34 @@ const getPayslipData = async (req, res) => {
 
 const downloadPayslip = async (req, res) => {
     try {
-        const { employeeId } = req.params;
+        const { id } = req.params; // Expects payslip ID (payroll_run_item.id)
 
-        // IDOR Protection: Employees can only download their own payslips
-        if (req.user.employeeId !== employeeId && !['HR', 'ADMIN'].includes(req.user.role)) {
+        // 1. Fetch payslip data first to check ownership
+        const data = await payslipService.getPayslipById(req.user.tenantId, id);
+
+        if (!data) {
+            return res.status(404).json({ status: "error", message: "Payslip not found" });
+        }
+
+        // 2. IDOR Protection: Employees can only download their own payslips
+        if (req.user.employeeId !== data.employee_id && !['HR', 'ADMIN'].includes(req.user.role)) {
             return res.status(403).json({ status: "error", message: "Access denied" });
         }
 
-        const pdf = await payslipService.generatePayslipPDF(
+        // 3. Generate PDF
+        // We can reuse the data we just fetched instead of fetching again
+        // However, generatePayslipPDFById also fetches. To avoid duplicate fetch, we should expose generatePDFFromData
+        // But since I didn't export generatePDFFromData, I will use generatePayslipPDFById which is safe (just one extra query)
+        // Or better: update service export to include generatePDFFromData?
+        // Let's use generatePayslipPDFById for simplicity now as the overhead is minimal for a PDF download action.
+
+        const pdf = await payslipService.generatePayslipPDFById(
             req.user.tenantId,
-            req.params.payrollRunId,
-            employeeId
+            id
         );
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=payslip_${req.params.payrollRunId}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename=payslip_${data.period_month}_${data.period_year}.pdf`);
         res.send(pdf);
     } catch (err) {
         console.error('Payslip generation error:', err);
@@ -83,6 +102,20 @@ const verifyTaxDeclaration = async (req, res) => {
     res.json({ status: "success", data, message: "Declaration verified" });
 };
 
+const emailPayslip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { to } = req.body;
+        const tenantId = req.user.tenantId;
+
+        const result = await payslipService.emailPayslip(tenantId, id, to);
+        res.json(result);
+    } catch (err) {
+        console.error('Email payslip error:', err);
+        res.status(500).json({ status: "error", message: err.message });
+    }
+};
+
 // Helper
 const getCurrentFinancialYear = () => {
     const now = new Date();
@@ -95,9 +128,11 @@ const getCurrentFinancialYear = () => {
 };
 
 module.exports = {
+    getAllPayslips,
     getMyPayslips,
     getPayslipData,
     downloadPayslip,
+    emailPayslip,
     getMyTaxDeclaration,
     saveTaxDeclaration,
     submitTaxDeclaration,

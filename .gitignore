@@ -9,7 +9,12 @@ build/
 *.pdf
 .DS_Store
 Thumbs.db
+.setup.js
+.constants.ts
 
-# Vercel build artifacts.vercel/
-frontend/.vercel/
-backend/.vercel/
+# Debug & Logs
+backend/scripts/debug_*.js
+backend/scripts/test_*.js
+backend/scripts/run_*.js
+backend/wfh_debug.log
+backend/audit_results.json

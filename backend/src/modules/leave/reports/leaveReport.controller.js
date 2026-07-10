@@ -2,7 +2,7 @@ const leaveReportService = require("./leaveReport.service");
 
 exports.getLeaveTrendReport = async (req, res, next) => {
     try {
-        const result = await leaveReportService.getLeaveTrendReport(null, req.user.tenantId, req.query);
+        const result = await leaveReportService.getLeaveTrendReport(null, req.user.tenantId, req.query, req.user);
         res.json(result);
     } catch (err) {
         next(err);
@@ -11,7 +11,7 @@ exports.getLeaveTrendReport = async (req, res, next) => {
 
 exports.getAbsenteeismReport = async (req, res, next) => {
     try {
-        const result = await leaveReportService.getAbsenteeismReport(null, req.user.tenantId, req.query);
+        const result = await leaveReportService.getAbsenteeismReport(null, req.user.tenantId, req.query, req.user);
         res.json(result);
     } catch (err) {
         next(err);
@@ -20,7 +20,7 @@ exports.getAbsenteeismReport = async (req, res, next) => {
 
 exports.getDepartmentWiseReport = async (req, res, next) => {
     try {
-        const result = await leaveReportService.getDepartmentWiseReport(null, req.user.tenantId, req.query);
+        const result = await leaveReportService.getDepartmentWiseReport(null, req.user.tenantId, req.query, req.user);
         res.json(result);
     } catch (err) {
         next(err);

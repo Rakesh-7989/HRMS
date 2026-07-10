@@ -5,7 +5,7 @@ export type ClientStatus = 'ACTIVE' | 'INACTIVE';
 export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'ARCHIVED';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-export type TimesheetStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
 // Client Interface
 export interface Client {
@@ -38,6 +38,8 @@ export interface CreateClientData {
     notes?: string;
 }
 
+export type BillingType = 'HOURLY' | 'FIXED' | 'NON_BILLABLE';
+
 // Project Interface
 export interface Project {
     id: string;
@@ -46,8 +48,10 @@ export interface Project {
     start_date: string;
     end_date: string;
     status: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
+    is_billable?: boolean;
     client?: Client;
     created_at?: string;
     updated_at?: string;
@@ -59,6 +63,7 @@ export interface CreateProjectData {
     start_date: string;
     end_date: string;
     status: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
 }
@@ -69,6 +74,7 @@ export interface UpdateProjectData {
     start_date?: string;
     end_date?: string;
     status?: ProjectStatus;
+    billing_type?: BillingType;
     description?: string;
     budget?: number;
 }
@@ -168,21 +174,42 @@ export interface CreateTaskData {
 export interface Timesheet {
     id: string;
     employee_id: string;
-    project_id: string;
-    task_id: string;
+    project_id?: string;
+    task_id?: string;
     work_date: string;
     hours: number;
+    notes?: string;
     status: TimesheetStatus;
-    employee?: {
-        id: string;
+    timesheet_id?: string;
+    entry_id?: string;
+    project_name?: string;
+    week_start_date?: string;
+    week_end_date?: string;
+    total_hours?: number;
+    submitted_at?: string;
+    approved_at?: string;
+    rejection_reason?: string;
+    approver?: {
         first_name: string;
         last_name: string;
-        email?: string;
     };
+    employee?: Employee;
     project?: Project;
     task?: Task;
+    is_billable?: boolean;
     created_at?: string;
     updated_at?: string;
+    entries?: {
+        id: string;
+        work_date: string;
+        hours: number;
+        notes?: string;
+        project_name?: string;
+        task_title?: string;
+        project_id?: string;
+        task_id?: string;
+        is_billable?: boolean;
+    }[];
 }
 
 export interface CreateTimesheetData {
@@ -203,7 +230,14 @@ export interface ProjectReport {
     project_id: string;
     total_hours: number;
     total_timesheets: number;
-    employees: any[]; // TODO: Define employee structure
+    employees: Employee[];
+    financials?: {
+        total_billable_value: number;
+        invoiced_amount: number;
+        wip_writeoff: number;
+        budget: number;
+        billing_type: BillingType;
+    };
 }
 
 export interface ClientReport {
@@ -223,5 +257,106 @@ export interface EmployeeUtilization {
     total_hours_logged: number;
     utilization_percent: number;
     projects_assigned: number;
+}
+
+// Task Comment Interface
+export interface TaskComment {
+    id: string;
+    task_id: string;
+    user_id: string;
+    content: string;
+    mentions: string[];
+    created_at: string;
+    updated_at: string;
+    user: {
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+    };
+}
+
+export interface CreateCommentData {
+    content: string;
+    mentions?: string[];
+}
+
+export interface MentionableUser {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    display_name: string;
+}
+
+// Employee Interface
+export interface Employee {
+    id: string;
+    tenant_id?: string;
+    user_id?: string;
+    employee_id?: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    department?: string;
+    designation?: string;
+    joining_date?: string;
+    status: 'ACTIVE' | 'TERMINATED' | 'ON_LEAVE' | 'OFFBOARDED';
+    role?: string;
+    shift_week_offs?: string[];
+    profile_photo_url?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+// Dashboard Interfaces
+export interface TimesheetDashboardStats {
+    total_time: {
+        hours: number;
+        minutes: number;
+        trend: number;
+    };
+    billable_hours: {
+        hours: number;
+        minutes: number;
+        label: string;
+        trend: number;
+    };
+    productivity_score: {
+        value: number;
+        trend: number;
+    };
+}
+
+export interface TimesheetDashboardCharts {
+    billable_vs_non_billable: {
+        date: string;
+        billable: number;
+        nonBillable: number;
+    }[];
+    time_logged: {
+        date: string;
+        time: number;
+    }[];
+}
+
+export interface TimesheetDashboardBreakdown {
+    plans: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+    task_types: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+    projects: {
+        name: string;
+        color: string;
+        time: string;
+    }[];
+    time_logged?: { date: string; time: number }[];
+    billable_vs_non_billable?: { date: string; billable: number; nonBillable: number }[];
 }
 

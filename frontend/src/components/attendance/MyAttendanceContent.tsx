@@ -4,8 +4,11 @@ import { Card } from '@/components/ui/Card';
 import { attendanceService } from '@/services/attendance.service';
 import { format } from 'date-fns';
 import { Calendar, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatTime12Hour, calculateWorkDuration } from '@/utils/timeFormat';
 
 export const MyAttendanceContent: React.FC = () => {
+    const { user } = useAuth();
     const { data: attendanceHistory = [], isLoading } = useQuery({
         queryKey: ['attendance', 'history'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
@@ -47,27 +50,30 @@ export const MyAttendanceContent: React.FC = () => {
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${record.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                record.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                    record.status === 'HALF_DAY' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                        record.status === 'APPROVED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                            record.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                record.status === 'HALF_DAY' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                    record.status === 'APPROVED' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' :
+                                                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                             }`}>
                                             {record.status === 'APPROVED' ? 'REGULARIZED' : record.status}
-                                            {record.is_late && <span className="ml-1 text-red-600 font-bold">• LATE</span>}
+                                            {record.is_late && (
+                                                <span className="ml-1 text-red-600 font-bold">
+                                                    • LATE {record.late_by ? `(${record.late_by})` : ''}
+                                                </span>
+                                            )}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center font-mono text-gray-600 dark:text-gray-300">
-                                        {record.check_in_time || '--:--'}
+                                        {formatTime12Hour(record.check_in_time, user?.timezone)}
                                     </td>
                                     <td className="px-4 py-3 text-center font-mono text-gray-600 dark:text-gray-300">
-                                        {record.check_out_time || '--:--'}
+                                        {formatTime12Hour(record.check_out_time, user?.timezone)}
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         {record.check_in_time && record.check_out_time && (
                                             <div className="text-xs text-muted flex items-center justify-end gap-1">
                                                 <Clock size={12} />
-                                                {/* Calculate duration roughly if needed, or rely on backend */}
-                                                <span>Work Logged</span>
+                                                <span>{calculateWorkDuration(record.check_in_time, record.check_out_time)}</span>
                                             </div>
                                         )}
                                     </td>

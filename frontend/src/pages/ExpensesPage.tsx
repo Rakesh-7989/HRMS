@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import payrollService from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
@@ -10,11 +10,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ExpensesPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+
+  const canCreate = hasPermission('expenses', 'create');
+  const canApprove = hasPermission('expenses', 'approve');
+  const canManageCategories = hasPermission('expenses', 'manage_categories');
+  const canTogglePayroll = hasPermission('expenses', 'toggle_payroll');
+  const canUpdate = hasPermission('payroll', 'manage'); // Falling back to payroll:manage for edit/delete if specific not found
+  const canDelete = hasPermission('payroll', 'manage');
 
   const { data: expenses = [], refetch } = useQuery<any[]>({ queryKey: ['payroll', 'expenses'], queryFn: () => payrollService.listExpenses(), enabled: !!user });
   const { data: categories = [] } = useQuery<any[]>({ queryKey: ['payroll', 'expense-categories'], queryFn: () => payrollService.listExpenseCategories(), enabled: !!user });
@@ -104,14 +116,21 @@ const ExpensesPage: React.FC = () => {
   const openReject = (e: any) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
   const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id, payload: { status: 'REJECTED' } }); };
   return (
-    <DashboardLayout title="Expenses">
-      <Sidebar />
+    <DashboardLayout title={t('expenses.title')}>
+      {/* Sidebar removed - already in DashboardLayout */}
 
       <div className="flex items-center justify-between mb-4">
-        <div className="space-x-2">
-          <Button onClick={() => setAddOpen(true)}>Add Expense</Button>
-          <Button onClick={() => setCatOpen(true)}>Add Category</Button>
-          <Button variant="outline" onClick={() => refetch()}>Refresh</Button>
+        <div className="flex items-center gap-2">
+          {canCreate && (
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
+          )}
+          {canManageCategories && (
+            <Button variant="outline" onClick={() => setCatOpen(true)}>Add Category</Button>
+          )}
+          <Button variant="ghost" onClick={() => refetch()}>{t('common.refresh')}</Button>
         </div>
       </div>
 
@@ -141,7 +160,7 @@ const ExpensesPage: React.FC = () => {
               expenses.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell>{e.category}</TableCell>
-                  <TableCell>{e.amount}</TableCell>
+                  <TableCell>₹{Number(e.amount).toLocaleString('en-IN')}</TableCell>
                   <TableCell>{e.expense_date}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -152,25 +171,25 @@ const ExpensesPage: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {(['HR', 'ADMIN'].includes(user?.role || '') ? (
+                    {canTogglePayroll ? (
                       <input type="checkbox" checked={!!e.payroll_included} onChange={(ev) => togglePayrollMut.mutate({ expenseId: e.id, payrollIncluded: !!ev.target.checked })} />
                     ) : (
                       <span>{String(e.payroll_included ?? false)}</span>
-                    ))}
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {(['MANAGER', 'HR', 'ADMIN'].includes(user?.role || '')) && (
+                      {canApprove && (
                         <>
                           <Button size="sm" variant="ghost" onClick={() => handleApprove(e)} disabled={((e.status || '').toUpperCase() === 'APPROVED') || approveExpenseMut.isPending}>Approve</Button>
                           <Button size="sm" variant="outline" onClick={() => openReject(e)} disabled={((e.status || '').toUpperCase() === 'REJECTED') || approveExpenseMut.isPending}>Reject</Button>
                         </>
                       )}
 
-                      {(['HR', 'ADMIN'].includes(user?.role || '')) && (
+                      {(canUpdate || canDelete) && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => openEdit(e)}>Edit</Button>
-                          <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>Delete</Button>
+                          {canUpdate && <Button size="sm" variant="ghost" onClick={() => openEdit(e)}>Edit</Button>}
+                          {canDelete && <Button size="sm" variant="destructive" onClick={() => openDelete(e)}>{t('common.delete')}</Button>}
                         </>
                       )}
                     </div>
@@ -209,7 +228,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button onClick={handleCreateExpense} isLoading={createExpenseMut.isPending}>Create</Button>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -241,8 +260,8 @@ const ExpensesPage: React.FC = () => {
           </div>
 
           <DialogFooter>
-            <Button onClick={handleSaveEdit} isLoading={updateExpenseMut.isPending}>Save</Button>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} isLoading={updateExpenseMut.isPending}>{t('common.save')}</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -258,7 +277,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button variant="destructive" isLoading={approveExpenseMut.isPending} onClick={confirmReject}>Reject</Button>
-            <Button variant="ghost" onClick={() => setApproveDialogOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setApproveDialogOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -273,8 +292,8 @@ const ExpensesPage: React.FC = () => {
           <div>Are you sure you want to delete the expense for <strong>{selectedExpense?.category}</strong> of amount <strong>{selectedExpense?.amount}</strong> ? This is a soft delete.</div>
 
           <DialogFooter>
-            <Button variant="destructive" isLoading={deleteExpenseMut.isPending} onClick={confirmDelete}>Delete</Button>
-            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" isLoading={deleteExpenseMut.isPending} onClick={confirmDelete}>{t('common.delete')}</Button>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -298,7 +317,7 @@ const ExpensesPage: React.FC = () => {
 
           <DialogFooter>
             <Button onClick={handleCreateCategory} isLoading={createCategoryMut.isPending}>Create</Button>
-            <Button variant="ghost" onClick={() => setCatOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setCatOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

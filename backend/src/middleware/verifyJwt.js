@@ -4,15 +4,7 @@ const env = require("../config/env");
 const { UnauthorizedError } = require("../utils/customErrors");
 
 module.exports = async function verifyJwt(req, res, next) {
-  // Allow unauthenticated read-only access to public payroll placeholder endpoints
-  // but ONLY when the client does not send an Authorization header.
-  // This avoids skipping authentication when a token is present (which caused 403s
-  // because subsequent requireRole middleware expects req.user to be set).
-  const originalPath = req.originalUrl || req.url || '';
   const header = req.headers.authorization;
-  if (req.method === 'GET' && /^\/api\/payroll(\/|$)/.test(originalPath) && !header) {
-    return next();
-  }
 
   if (!header || !header.startsWith("Bearer ")) {
     return next(new UnauthorizedError("Missing or invalid Authorization header"));
@@ -28,6 +20,12 @@ module.exports = async function verifyJwt(req, res, next) {
   }
 
   try {
+    // Set minimal RLS variables for the initial user lookup
+    const store = require("../utils/asyncContext").getStore();
+    if (store && decoded.tenantId) {
+      store.set("tenantId", decoded.tenantId);
+    }
+
     // Fetch full user details INCLUDING employee id (join employees table)
     const userRes = await pool.query(
       `
@@ -38,9 +36,12 @@ module.exports = async function verifyJwt(req, res, next) {
           u.must_change_password,
           u.is_active,
           u.portal_access_until,
-          e.id AS employee_id
+          e.id AS employee_id,
+          e.employee_id AS emp_code,
+          t.plan_type
       FROM users u
       LEFT JOIN employees e ON u.id = e.user_id
+      LEFT JOIN tenants t ON u.tenant_id = t.id
       WHERE u.id = $1
       `,
       [decoded.id]
@@ -68,16 +69,24 @@ module.exports = async function verifyJwt(req, res, next) {
       }
     }
 
-    // Check if there's an active session for this user
-    // This prevents using access tokens after logout
+    // SECURITY FIX: Enforce session validation
+    // All valid tokens MUST have a sessionId. Legacy tokens are rejected.
+    if (!decoded.sessionId) {
+      return next(new UnauthorizedError("Invalid token format - please login again"));
+    }
+
+    // Validate the specific session
     const sessionRes = await pool.query(
       `SELECT id, is_revoked FROM user_sessions 
-       WHERE user_id = $1 AND is_revoked = false
-       ORDER BY created_at DESC LIMIT 1`,
-      [decoded.id]
+       WHERE id = $1 AND user_id = $2`,
+      [decoded.sessionId, decoded.id]
     );
 
     if (sessionRes.rowCount === 0) {
+      return next(new UnauthorizedError("Session not found - please login again"));
+    }
+
+    if (sessionRes.rows[0].is_revoked) {
       return next(new UnauthorizedError("Session has been revoked - please login again"));
     }
 
@@ -87,13 +96,33 @@ module.exports = async function verifyJwt(req, res, next) {
       tenantId: user.tenant_id,
       employeeId: user.employee_id || null,
       role: user.role,
-      mustChangePassword: user.must_change_password
+      empCode: user.emp_code || null,
+      mustChangePassword: user.must_change_password,
+      planType: user.plan_type || 1, // Default and attach plan_type
+      permissions: []
     };
+
+    // Load effective permissions for this user
+    try {
+      const permService = require("../modules/permissions/permissions.service");
+      const perms = await permService.getUserEffectivePermissions(
+        user.tenant_id,
+        user.id,
+        user.role
+      );
+      req.user.permissions = perms || [];
+    } catch (permErr) {
+      // Gracefully handle case where permissions tables don't exist yet
+      // (migration hasn't been run), fall back to empty permissions
+      if (permErr.code !== '42P01') { // 42P01 = undefined_table
+        console.warn("Failed to load user permissions:", permErr.message);
+      }
+      req.user.permissions = [];
+    }
 
     // Set PostgreSQL RLS session variables
     // We update the async context store so that the db middleware (src/middleware/db.js)
     // can automatically set these variables on the connection when queries are executed.
-    const store = require("../utils/asyncContext").getStore();
     if (store) {
       store.set("tenantId", user.tenant_id);
       store.set("role", user.role);

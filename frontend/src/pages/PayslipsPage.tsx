@@ -10,8 +10,10 @@ import { Download, Filter, FileText, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
+import { useTranslation } from 'react-i18next';
 
 export const PayslipsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
   const [customFromDate, setCustomFromDate] = useState('');
   const [customToDate, setCustomToDate] = useState('');
@@ -204,7 +206,7 @@ export const PayslipsPage: React.FC = () => {
   return (
     <DashboardLayout
       title="Payslips & Payroll Reports"
-      breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/personal' }, { label: 'Payslips' }]}
+      breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/personal' }, { label: 'Payslips' }]}
     >
       <div className="space-y-6">
         {/* Top controls */}
@@ -302,7 +304,7 @@ export const PayslipsPage: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {payslipsLoading ? (
-                  <TableRow><td className="p-4 text-center" colSpan={6}>Loading...</td></TableRow>
+                  <TableRow><td className="p-4 text-center" colSpan={6}>{t('common.loading')}</td></TableRow>
                 ) : displayPayslips.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={6}>No payslips for selected period</td></TableRow>
                 ) : (
@@ -345,7 +347,7 @@ export const PayslipsPage: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {schedulesLoading ? (
-                  <TableRow><td className="p-4 text-center" colSpan={6}>Loading...</td></TableRow>
+                  <TableRow><td className="p-4 text-center" colSpan={6}>{t('common.loading')}</td></TableRow>
                 ) : displaySchedules.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={6}>No schedules configured</td></TableRow>
                 ) : (
@@ -393,8 +395,8 @@ export const PayslipsPage: React.FC = () => {
                 </div>
 
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setScheduleDialogOpen(false)}>Cancel</Button>
-                  <Button variant="primary" onClick={handleSaveSchedule} isLoading={updateScheduleMut.isPending}>Save</Button>
+                  <Button variant="outline" onClick={() => setScheduleDialogOpen(false)}>{t('common.cancel')}</Button>
+                  <Button variant="primary" onClick={handleSaveSchedule} isLoading={updateScheduleMut.isPending}>{t('common.save')}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -416,7 +418,7 @@ export const PayslipsPage: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {deductionsLoading ? (
-                  <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
+                  <TableRow><td className="p-4 text-center" colSpan={4}>{t('common.loading')}</td></TableRow>
                 ) : displayDeductions.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No deductions</td></TableRow>
                 ) : (
@@ -448,7 +450,7 @@ export const PayslipsPage: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {incomeTaxLoading ? (
-                  <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
+                  <TableRow><td className="p-4 text-center" colSpan={4}>{t('common.loading')}</td></TableRow>
                 ) : displayIncomeTax.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No income tax records</td></TableRow>
                 ) : (
@@ -480,7 +482,7 @@ export const PayslipsPage: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {revisionsLoading ? (
-                  <TableRow><td className="p-4 text-center" colSpan={4}>Loading...</td></TableRow>
+                  <TableRow><td className="p-4 text-center" colSpan={4}>{t('common.loading')}</td></TableRow>
                 ) : revisions.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No salary revisions</td></TableRow>
                 ) : (
@@ -531,7 +533,7 @@ export const PayslipsPage: React.FC = () => {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setGenDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setGenDialogOpen(false)}>{t('common.cancel')}</Button>
               <Button variant="primary" onClick={() => generatePayslipsMut.mutate({ month: genMonth, year: genYear })} isLoading={generatePayslipsMut.isPending}>Generate</Button>
             </DialogFooter>
           </DialogContent>
@@ -545,7 +547,7 @@ export const PayslipsPage: React.FC = () => {
             </DialogHeader>
 
             {payslipHistoryLoading ? (
-              <div className="p-4">Loading...</div>
+              <div className="p-4">{t('common.loading')}</div>
             ) : !payslipHistory || payslipHistory.length === 0 ? (
               <div className="p-4">No payslip history for this employee.</div>
             ) : (
@@ -568,7 +570,7 @@ export const PayslipsPage: React.FC = () => {
                       <TableCell>{formatINR(h.net)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>Download</Button>
+                          <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>{t('common.download')}</Button>
                           <Button size="sm" variant="outline" onClick={() => emailPayslip(h)}>Email</Button>
                         </div>
                       </TableCell>
@@ -579,7 +581,7 @@ export const PayslipsPage: React.FC = () => {
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>{t('common.close')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -631,7 +633,7 @@ export const PayslipsPage: React.FC = () => {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setAddDeductionOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setAddDeductionOpen(false)}>{t('common.cancel')}</Button>
               <Button variant="primary" onClick={handleAddDeduction} isLoading={createDeductionMut.isPending}>Add Deduction</Button>
             </DialogFooter>
           </DialogContent>

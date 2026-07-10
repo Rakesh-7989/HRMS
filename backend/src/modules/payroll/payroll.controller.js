@@ -1,4 +1,10 @@
 const payrollService = require('./payroll.service');
+const {
+  createSalaryComponentSchema,
+  createExpenseSchema,
+  createLoanSchema,
+  createTransactionSchema
+} = require('./payroll.validator');
 
 exports.getSummary = async (req, res) => {
   try {
@@ -25,8 +31,19 @@ exports.listSalaryComponents = async (req, res) => {
 exports.createSalaryComponent = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const payload = req.body;
+    // Validate request body
+    const validation = createSalaryComponentSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validation.error.errors
+      });
+    }
+
+    const payload = validation.data;
     payload.created_by = req.user?.id || null;
+
     const row = await payrollService.createSalaryComponent(null, tenantId, payload);
     return res.status(201).json({ success: true, data: row });
   } catch (err) {
@@ -49,8 +66,19 @@ exports.listExpenses = async (req, res) => {
 exports.createExpense = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const payload = req.body;
+    // Validate request body
+    const validation = createExpenseSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validation.error.errors
+      });
+    }
+
+    const payload = validation.data;
     payload.created_by = req.user?.id || null;
+
     const row = await payrollService.createExpense(null, tenantId, payload);
     return res.status(201).json({ success: true, data: row });
   } catch (err) {
@@ -73,8 +101,19 @@ exports.listLoans = async (req, res) => {
 exports.createLoan = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const payload = req.body;
+    // Validate request body
+    const validation = createLoanSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validation.error.errors
+      });
+    }
+
+    const payload = validation.data;
     payload.created_by = req.user?.id || null;
+
     const row = await payrollService.createLoan(null, tenantId, payload);
     return res.status(201).json({ success: true, data: row });
   } catch (err) {
@@ -97,8 +136,19 @@ exports.listTransactions = async (req, res) => {
 exports.createTransaction = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const payload = req.body;
+    // Validate request body
+    const validation = createTransactionSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validation.error.errors
+      });
+    }
+
+    const payload = validation.data;
     payload.created_by = req.user?.id || null;
+
     const row = await payrollService.createTransaction(null, tenantId, payload);
     return res.status(201).json({ success: true, data: row });
   } catch (err) {

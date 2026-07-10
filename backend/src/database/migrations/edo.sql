@@ -1,0 +1,2 @@
+ALTER TABLE attendance
+ADD COLUMN IF NOT EXISTS eod_report TEXT;

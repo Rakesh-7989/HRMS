@@ -4,8 +4,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ForgotPasswordPage: React.FC = () => {
+  const { t: _t } = useTranslation();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -64,9 +66,12 @@ export const ForgotPasswordPage: React.FC = () => {
               <ArrowLeft size={14} />
               Back to login
             </a>
-            <a href="/register" className="text-primary hover:underline">
-              Register
-            </a>
+            <p className="text-gray-600 dark:text-muted">
+              Don't have an account?{' '}
+              <a href="/pricing" className="text-primary hover:underline">
+                Register now
+              </a>
+            </p>
           </div>
         </Card>
       </div>

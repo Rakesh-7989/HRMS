@@ -1,44 +1,60 @@
 const pool = require('../../config/db');
+const timeService = require("../../utils/timeService");
 
 const getQuery = (db) => (db && typeof db.query === 'function' ? db.query : pool.query.bind(pool));
 
 exports.getSummary = async (db, tenantId) => {
   const query = getQuery(db);
 
-  const totalEmployeesRes = await query(`SELECT COUNT(*) FROM employees WHERE tenant_id = $1`, [tenantId]);
-  const totalEmployees = Number(totalEmployeesRes.rows[0].count || 0);
+  // Consolidated query using CTEs for atomic snapshot and better performance
+  const summaryQuery = `
+    WITH 
+      emp_count AS (
+        SELECT COUNT(*) as count FROM employees WHERE tenant_id = $1
+      ),
+      payroll_total AS (
+        SELECT COALESCE(total_net, 0) as total
+        FROM payroll_runs
+        WHERE tenant_id = $1 AND status IN ('APPROVED', 'PAID')
+        ORDER BY period_year DESC, period_month DESC
+        LIMIT 1
+      ),
+      pending_payslips AS (
+        SELECT COUNT(*) as count 
+        FROM payroll_payslips 
+        WHERE tenant_id = $1 AND status = 'PENDING'
+      ),
+      reimbursements AS (
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM payroll_expenses 
+        WHERE tenant_id = $1
+      ),
+      loan_summary AS (
+        SELECT 
+          COALESCE(SUM(amount), 0) as total_loans,
+          COALESCE(SUM(outstanding), 0) as active_loans
+        FROM payroll_loans 
+        WHERE tenant_id = $1
+      )
+    SELECT 
+      (SELECT count FROM emp_count) as total_employees,
+      (SELECT total FROM payroll_total) as monthly_payroll,
+      (SELECT count FROM pending_payslips) as pending_payslips,
+      (SELECT total FROM reimbursements) as reimbursements,
+      (SELECT total_loans FROM loan_summary) as loans,
+      (SELECT active_loans FROM loan_summary) as active_loans
+  `;
 
-  const monthlyPayrollRes = await query(
-    `SELECT COALESCE(SUM(amount),0) AS total FROM payroll_salary_components WHERE tenant_id = $1`,
-    [tenantId]
-  );
-  const monthlyPayroll = Number(monthlyPayrollRes.rows[0].total || 0);
-
-  const pendingPayslipsRes = await query(
-    `SELECT COUNT(*) FROM payroll_payslips WHERE tenant_id = $1 AND status = 'PENDING'`,
-    [tenantId]
-  );
-  const pendingPayslips = Number(pendingPayslipsRes.rows[0].count || 0);
-
-  const reimbursementsRes = await query(
-    `SELECT COALESCE(SUM(amount),0) AS total FROM payroll_expenses WHERE tenant_id = $1`,
-    [tenantId]
-  );
-  const reimbursements = Number(reimbursementsRes.rows[0].total || 0);
-
-  const loansRes = await query(`SELECT COALESCE(SUM(amount),0) AS total FROM payroll_loans WHERE tenant_id = $1`, [tenantId]);
-  const loans = Number(loansRes.rows[0].total || 0);
-
-  const activeLoansRes = await query(`SELECT COALESCE(SUM(outstanding),0) AS total FROM payroll_loans WHERE tenant_id = $1`, [tenantId]);
-  const active_loans = Number(activeLoansRes.rows[0].total || 0);
+  const res = await query(summaryQuery, [tenantId]);
+  const row = res.rows[0];
 
   return {
-    total_employees: totalEmployees,
-    monthly_payroll: monthlyPayroll,
-    pending_payslips: pendingPayslips,
-    reimbursements: reimbursements,
-    loans,
-    active_loans,
+    total_employees: Number(row.total_employees || 0),
+    monthly_payroll: Number(row.monthly_payroll || 0),
+    pending_payslips: Number(row.pending_payslips || 0),
+    reimbursements: Number(row.reimbursements || 0),
+    loans: Number(row.loans || 0),
+    active_loans: Number(row.active_loans || 0),
   };
 };
 
@@ -65,9 +81,11 @@ exports.listExpenses = async (db, tenantId) => {
 
 exports.createExpense = async (db, tenantId, payload) => {
   const query = getQuery(db);
+  const tz = await timeService.getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
   const res = await query(
     `INSERT INTO payroll_expenses (tenant_id, category, amount, expense_date, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id, category, amount, expense_date, created_at`,
-    [tenantId, payload.category, payload.amount, payload.expense_date || new Date(), payload.created_by || null]
+    [tenantId, payload.category, payload.amount, payload.expense_date || today, payload.created_by || null]
   );
   return res.rows[0];
 };
@@ -95,6 +113,8 @@ exports.listTransactions = async (db, tenantId) => {
 
 exports.createTransaction = async (db, tenantId, payload) => {
   const query = getQuery(db);
-  const res = await query(`INSERT INTO payroll_transactions (tenant_id, employee_id, type, amount, tx_date, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, employee_id, type, amount, tx_date, created_at`, [tenantId, payload.employee_id || null, payload.type, payload.amount, payload.tx_date || new Date(), payload.created_by || null]);
+  const tz = await timeService.getEffectiveTz(query, tenantId);
+  const today = timeService.todayDate(tz);
+  const res = await query(`INSERT INTO payroll_transactions (tenant_id, employee_id, type, amount, tx_date, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, employee_id, type, amount, tx_date, created_at`, [tenantId, payload.employee_id || null, payload.type, payload.amount, payload.tx_date || today, payload.created_by || null]);
   return res.rows[0];
 };

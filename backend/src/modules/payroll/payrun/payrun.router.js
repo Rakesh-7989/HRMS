@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./payrun.controller");
@@ -34,6 +33,8 @@ const rejectPayrunSchema = z.object({
     })
 });
 
+const requirePermission = require("../../../middleware/requirePermission");
+
 router.use(verifyJwt);
 
 // =====================
@@ -41,14 +42,14 @@ router.use(verifyJwt);
 // =====================
 router.post(
     "/schedules",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_schedules"),
     validate(createScheduleSchema),
     controller.createSchedule
 );
 
 router.get(
     "/schedules",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "manage_schedules"),
     controller.getSchedules
 );
 
@@ -57,41 +58,41 @@ router.get(
 // =====================
 router.post(
     "/",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "create_payrun"),
     validate(createPayrunSchema),
     controller.createPayrun
 );
 
 router.get(
     "/",
-    requireRole(["ADMIN", "HR", "MANAGER"]),
+    requirePermission("payroll", "view_payruns"),
     controller.getPayruns
 );
 
 router.get(
     "/:id",
-    requireRole(["ADMIN", "HR", "MANAGER"]),
+    requirePermission("payroll", "view_payruns"),
     controller.getPayrunById
 );
 
 // Calculate payrun
 router.post(
     "/:id/calculate",
-    requireRole(["ADMIN", "HR"]),
+    requirePermission("payroll", "calculate_payrun"),
     controller.calculatePayrun
 );
 
 // Approve payrun
 router.patch(
     "/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "approve_payrun"),
     controller.approvePayrun
 );
 
 // Reject payrun
 router.patch(
     "/:id/reject",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "approve_payrun"),
     validate(rejectPayrunSchema),
     controller.rejectPayrun
 );
@@ -99,21 +100,35 @@ router.patch(
 // Revoke payrun
 router.patch(
     "/:id/revoke",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_payruns"),
     controller.revokePayrun
 );
 
-// Delete payrun (only DRAFT)
+// Delete payrun (DRAFT, CALCULATED, PENDING_APPROVAL)
 router.delete(
     "/:id",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_payruns"),
     controller.deletePayrun
+);
+
+// Void payrun (APPROVED/PAID — keeps data for audit)
+router.patch(
+    "/:id/void",
+    requirePermission("payroll", "manage_payruns"),
+    controller.voidPayrun
+);
+
+// Delete a single payslip item from a payrun
+router.delete(
+    "/:id/items/:itemId",
+    requirePermission("payroll", "manage_payruns"),
+    controller.deletePayslipItem
 );
 
 // Lock payrun
 router.patch(
     "/:id/lock",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_payruns"),
     controller.lockPayrun
 );
 

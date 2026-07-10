@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { showToast } from '@/utils/toast';
 import {
     Plus,
     Search,
@@ -41,11 +42,13 @@ import { KanbanSetupCard } from '@/components/projects/KanbanSetupCard';
 import { projectsService } from '@/services/projects.service';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
-import { SAMPLE_PROJECT, SAMPLE_TASKS } from '@/data/mockProjectData';
+import { useTranslation } from 'react-i18next';
 
 export const TasksPage: React.FC = () => {
+  const { t } = useTranslation();
     const { id: projectId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -83,7 +86,11 @@ export const TasksPage: React.FC = () => {
         estimated_hours: '',
     });
 
-    const canManage = ['ADMIN', 'HR', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManageProject = hasPermission('projects', 'manage');
+    const canViewKanban = hasPermission('projects', 'view_kanban') || canManageProject;
+    const canManageKanban = hasPermission('projects', 'manage_kanban') || canManageProject;
+    const canManage = canManageProject; // Maintain for general task management if needed
 
     // Queries
     const { data: serverProject, isLoading: projectLoading } = useQuery({
@@ -93,7 +100,7 @@ export const TasksPage: React.FC = () => {
         retry: false, // Don't retry if mock data is needed
     });
 
-    const project = !serverProject && projectId === SAMPLE_PROJECT.id ? SAMPLE_PROJECT : serverProject;
+    const project = serverProject;
 
     const { data: serverTasks = [], isLoading: tasksLoading } = useQuery({
         queryKey: ['tasks', projectId],
@@ -102,8 +109,7 @@ export const TasksPage: React.FC = () => {
         retry: false,
     });
 
-    // Use Sample tasks if project is sample project, OR if server returns nothing (and we want to demo)
-    const tasks: Task[] = (serverTasks.length === 0 && projectId === SAMPLE_PROJECT.id) ? SAMPLE_TASKS : serverTasks;
+    const tasks: Task[] = serverTasks;
 
 
     const { data: projectMembers = [] } = useQuery({
@@ -116,12 +122,11 @@ export const TasksPage: React.FC = () => {
     const { data: kanbanStatus, isLoading: kanbanLoading } = useQuery({
         queryKey: ['kanban-exists', projectId],
         queryFn: () => projectsService.checkKanbanExists(projectId!),
-        enabled: !!projectId && projectId !== SAMPLE_PROJECT.id, // Skip for sample project
+        enabled: !!projectId,
         retry: false,
     });
 
-    // For sample project, assume Kanban exists
-    const kanbanExists = projectId === SAMPLE_PROJECT.id ? true : kanbanStatus?.exists ?? false;
+    const kanbanExists = kanbanStatus?.exists ?? false;
 
     // Get Kanban columns for status dropdown
     const kanbanColumns = kanbanStatus?.columns ?? [];
@@ -196,9 +201,9 @@ export const TasksPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create task');
+            showToast.error(error.response?.data?.message || 'Failed to create task');
         },
     });
 
@@ -207,7 +212,11 @@ export const TasksPage: React.FC = () => {
             projectsService.updateTaskStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+            showToast.success('Status updated');
         },
+        onError: (error: any) => {
+            showToast.error(error.response?.data?.message || 'Failed to update status');
+        }
     });
 
     const updateTaskMutation = useMutation({
@@ -218,10 +227,11 @@ export const TasksPage: React.FC = () => {
             setEditingTask(null);
             setIsEditModalOpen(false);
             setIsSubmitting(false);
+            showToast.success('Task updated');
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update task');
+            showToast.error(error.response?.data?.message || 'Failed to update task');
         },
     });
 
@@ -230,9 +240,10 @@ export const TasksPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
             setTaskToDelete(null);
+            showToast.success('Task deleted');
         },
-        onError: () => {
-            alert('Failed to delete task.');
+        onError: (error: any) => {
+            showToast.error(error.response?.data?.message || 'Failed to delete task');
             setTaskToDelete(null);
         },
     });
@@ -293,12 +304,30 @@ export const TasksPage: React.FC = () => {
         });
     };
 
-    // Permission check for task edit/delete
+    // Permission check for task edit/delete - Hybrid approach:
+    // 1. Task creator can always edit their own task
+    // 2. Higher roles can edit tasks created by lower roles
+    // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+    const ROLE_HIERARCHY: Record<string, number> = {
+        'ADMIN': 4,
+        'MANAGER': 3,
+        'HR': 2,
+        'EMPLOYEE': 1,
+    };
+
     const canEditTask = (task: Task) => {
         if (!user) return false;
-        if (['ADMIN', 'HR', 'MANAGER'].includes(user.role)) return true;
-        // Task creator can edit
-        return task.created_by === user.id;
+
+        // 1. Task creator can always edit their own task
+        if (task.created_by === user.id) return true;
+
+        // 2. Get role levels for comparison
+        const userRoleLevel = ROLE_HIERARCHY[user.role] || 0;
+        const creatorRoleLevel = ROLE_HIERARCHY[(task as any).creator_role] || 0;
+
+        // Higher roles can edit tasks created by lower or equal roles
+        // ADMIN can edit all, MANAGER can edit MANAGER/HR/EMPLOYEE tasks, etc.
+        return userRoleLevel > creatorRoleLevel;
     };
 
     // Handlers
@@ -345,13 +374,13 @@ export const TasksPage: React.FC = () => {
     }
 
     // Show loading while checking Kanban status
-    if (kanbanLoading && projectId !== SAMPLE_PROJECT.id) {
+    if (kanbanLoading) {
         return (
             <DashboardLayout
                 title={project?.name || 'Tasks'}
                 breadcrumbs={[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: 'Projects', href: '/projects' },
+                    { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                    { label: t('common.breadcrumbs.projects'), href: '/projects' },
                     { label: project?.name || 'Project Details' },
                 ]}
             >
@@ -363,13 +392,13 @@ export const TasksPage: React.FC = () => {
     }
 
     // Show Kanban setup card if board doesn't exist
-    if (!kanbanExists && projectId !== SAMPLE_PROJECT.id) {
+    if (!kanbanExists) {
         return (
             <DashboardLayout
                 title={project?.name || 'Tasks'}
                 breadcrumbs={[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: 'Projects', href: '/projects' },
+                    { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                    { label: t('common.breadcrumbs.projects'), href: '/projects' },
                     { label: project?.name || 'Project Details' },
                 ]}
             >
@@ -385,13 +414,14 @@ export const TasksPage: React.FC = () => {
 
     const filteredTasks = getFilteredTasks(false); // For List View, respect status filter
     const boardTasks = getFilteredTasks(true); // For Board View, ignore status filter (show all columns)
+    const isProjectLocked = ['COMPLETED', 'ARCHIVED'].includes(project?.status || '');
 
     return (
         <DashboardLayout
             title={project?.name || 'Tasks'}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects', href: '/projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects'), href: '/projects' },
                 { label: project?.name || 'Project Details' },
             ]}
         >
@@ -417,18 +447,20 @@ export const TasksPage: React.FC = () => {
                                 <List size={14} />
                                 List
                             </button>
-                            <button
-                                onClick={() => setActiveTab('board')}
-                                className={cn(
-                                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
-                                    activeTab === 'board'
-                                        ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
-                                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                                )}
-                            >
-                                <Columns3 size={14} />
-                                Board
-                            </button>
+                            {canViewKanban && (
+                                <button
+                                    onClick={() => setActiveTab('board')}
+                                    className={cn(
+                                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
+                                        activeTab === 'board'
+                                            ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+                                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                    )}
+                                >
+                                    <Columns3 size={14} />
+                                    Board
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -494,13 +526,13 @@ export const TasksPage: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                        {activeTab === 'board' && canManage && (
+                        {activeTab === 'board' && canManageKanban && (
                             <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)} title="Board Settings">
                                 <Settings size={16} />
                             </Button>
                         )}
                         {canManage && (
-                            <Button size="sm" onClick={() => setIsModalOpen(true)}>
+                            <Button size="sm" onClick={() => setIsModalOpen(true)} disabled={isProjectLocked} title={isProjectLocked ? `Cannot add tasks to a ${project?.status?.toLowerCase()} project` : undefined}>
                                 <Plus size={16} className="mr-1" />
                                 Add
                             </Button>
@@ -509,6 +541,13 @@ export const TasksPage: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-hidden min-h-0 min-w-0">
+                    {/* Status Lockout Banner */}
+                    {isProjectLocked && (
+                        <div className="mb-3 px-4 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
+                            <span>⚠️</span>
+                            This project is <strong>{project?.status?.toLowerCase()}</strong>. Adding or editing tasks is disabled.
+                        </div>
+                    )}
                     {activeTab === 'list' ? (
                         <Card className="h-full overflow-hidden border-0 shadow-none bg-transparent">
                             <div className="overflow-auto h-full scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
@@ -620,7 +659,7 @@ export const TasksPage: React.FC = () => {
                                                                 }
                                                                 return true;
                                                             })()}
-                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             {enabledColumns.length === 0 ? (
@@ -644,7 +683,7 @@ export const TasksPage: React.FC = () => {
                                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                                 <button
                                                                     onClick={() => handleOpenEditModal(task)}
-                                                                    className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                                                                    className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
                                                                     title="Edit Task"
                                                                 >
                                                                     <Edit size={16} />
@@ -888,23 +927,27 @@ export const TasksPage: React.FC = () => {
                                     <div className="space-y-2">
                                         <Label htmlFor="edit_assignees">Assignees (Optional)</Label>
                                         <div className="border border-gray-300 dark:border-gray-700 rounded-md p-2 max-h-24 overflow-y-auto bg-white dark:bg-gray-900">
-                                            {projectMembers?.map((member) => (
-                                                <label key={member.employee_id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editFormData.assignee_ids.includes(member.employee_id)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setEditFormData({ ...editFormData, assignee_ids: [...editFormData.assignee_ids, member.employee_id] });
-                                                            } else {
-                                                                setEditFormData({ ...editFormData, assignee_ids: editFormData.assignee_ids.filter(id => id !== member.employee_id) });
-                                                            }
-                                                        }}
-                                                        className="rounded border-gray-300"
-                                                    />
-                                                    {member.employee.first_name} {member.employee.last_name}
-                                                </label>
-                                            ))}
+                                            {projectMembers.length === 0 ? (
+                                                <p className="text-sm text-gray-400">No members found - Add members to project first</p>
+                                            ) : (
+                                                projectMembers.map((member) => (
+                                                    <label key={member.employee_id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editFormData.assignee_ids.includes(member.employee_id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setEditFormData({ ...editFormData, assignee_ids: [...editFormData.assignee_ids, member.employee_id] });
+                                                                } else {
+                                                                    setEditFormData({ ...editFormData, assignee_ids: editFormData.assignee_ids.filter(id => id !== member.employee_id) });
+                                                                }
+                                                            }}
+                                                            className="rounded border-gray-300"
+                                                        />
+                                                        {member.employee.first_name} {member.employee.last_name}
+                                                    </label>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
                                 </div>

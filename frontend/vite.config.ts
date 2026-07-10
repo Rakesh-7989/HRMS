@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,17 +11,44 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true, // Listen on all interfaces (0.0.0.0)
     hmr: {
+      protocol: 'ws',
+      // host: 'localhost', // REMOVED: This was causing ERR_CONNECTION_REFUSED on LAN
       port: 5173,
-      host: 'localhost',
+    },
+    watch: {
+      usePolling: true,
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
-        ws: true,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
       },
     },
   },
-});
-
+  preview: {
+    port: 4173,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: mode === 'production' ? false : true,
+    minify: 'esbuild',
+    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          query: ['@tanstack/react-query'],
+          ui: ['framer-motion', 'lucide-react', 'recharts'],
+          utils: ['axios', 'date-fns', 'i18next', 'react-i18next'],
+        },
+      },
+    },
+  },
+}));

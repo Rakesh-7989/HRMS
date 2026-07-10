@@ -1,0 +1,410 @@
+[
+  {
+    "module": "assets",
+    "action": "assign"
+  },
+  {
+    "module": "assets",
+    "action": "create"
+  },
+  {
+    "module": "assets",
+    "action": "delete"
+  },
+  {
+    "module": "assets",
+    "action": "export"
+  },
+  {
+    "module": "assets",
+    "action": "manage"
+  },
+  {
+    "module": "assets",
+    "action": "manage_requests"
+  },
+  {
+    "module": "assets",
+    "action": "request"
+  },
+  {
+    "module": "assets",
+    "action": "update"
+  },
+  {
+    "module": "assets",
+    "action": "view"
+  },
+  {
+    "module": "assets",
+    "action": "view_barcode"
+  },
+  {
+    "module": "assets",
+    "action": "view_dashboard"
+  },
+  {
+    "module": "assets",
+    "action": "view_tracking"
+  },
+  {
+    "module": "attendance",
+    "action": "approve"
+  },
+  {
+    "module": "attendance",
+    "action": "clock_in_out"
+  },
+  {
+    "module": "attendance",
+    "action": "manage"
+  },
+  {
+    "module": "attendance",
+    "action": "manage_geofence"
+  },
+  {
+    "module": "attendance",
+    "action": "manage_settings"
+  },
+  {
+    "module": "attendance",
+    "action": "regularize"
+  },
+  {
+    "module": "attendance",
+    "action": "view"
+  },
+  {
+    "module": "attendance",
+    "action": "view_all"
+  },
+  {
+    "module": "attendance",
+    "action": "view_analytics"
+  },
+  {
+    "module": "attendance",
+    "action": "view_geofence_violations"
+  },
+  {
+    "module": "attendance",
+    "action": "view_my"
+  },
+  {
+    "module": "attendance",
+    "action": "view_team"
+  },
+  {
+    "module": "audit_logs",
+    "action": "view"
+  },
+  {
+    "module": "calendar",
+    "action": "manage"
+  },
+  {
+    "module": "calendar",
+    "action": "manage_announcements"
+  },
+  {
+    "module": "calendar",
+    "action": "manage_holidays"
+  },
+  {
+    "module": "calendar",
+    "action": "view"
+  },
+  {
+    "module": "chat",
+    "action": "create"
+  },
+  {
+    "module": "chat",
+    "action": "create_group"
+  },
+  {
+    "module": "chat",
+    "action": "delete_messages"
+  },
+  {
+    "module": "chat",
+    "action": "edit_messages"
+  },
+  {
+    "module": "chat",
+    "action": "manage"
+  },
+  {
+    "module": "chat",
+    "action": "manage_group"
+  },
+  {
+    "module": "chat",
+    "action": "send"
+  },
+  {
+    "module": "chat",
+    "action": "video_call"
+  },
+  {
+    "module": "chat",
+    "action": "view"
+  },
+  {
+    "module": "chat",
+    "action": "voice_call"
+  },
+  {
+    "module": "departments",
+    "action": "manage"
+  },
+  {
+    "module": "departments",
+    "action": "view"
+  },
+  {
+    "module": "designations",
+    "action": "manage"
+  },
+  {
+    "module": "designations",
+    "action": "view"
+  },
+  {
+    "module": "employees",
+    "action": "assign_department"
+  },
+  {
+    "module": "employees",
+    "action": "assign_designation"
+  },
+  {
+    "module": "employees",
+    "action": "change_manager"
+  },
+  {
+    "module": "employees",
+    "action": "change_role"
+  },
+  {
+    "module": "employees",
+    "action": "create"
+  },
+  {
+    "module": "employees",
+    "action": "delete"
+  },
+  {
+    "module": "employees",
+    "action": "import"
+  },
+  {
+    "module": "employees",
+    "action": "manage_status"
+  },
+  {
+    "module": "employees",
+    "action": "terminate"
+  },
+  {
+    "module": "employees",
+    "action": "update"
+  },
+  {
+    "module": "employees",
+    "action": "view"
+  },
+  {
+    "module": "events",
+    "action": "view"
+  },
+  {
+    "module": "leave",
+    "action": "approve"
+  },
+  {
+    "module": "leave",
+    "action": "create"
+  },
+  {
+    "module": "leave",
+    "action": "manage_policies"
+  },
+  {
+    "module": "leave",
+    "action": "manage_settings"
+  },
+  {
+    "module": "leave",
+    "action": "manage_types"
+  },
+  {
+    "module": "leave",
+    "action": "view"
+  },
+  {
+    "module": "leave",
+    "action": "view_balances"
+  },
+  {
+    "module": "organisation",
+    "action": "view"
+  },
+  {
+    "module": "payroll",
+    "action": "approve_payrun"
+  },
+  {
+    "module": "payroll",
+    "action": "calculate_payrun"
+  },
+  {
+    "module": "payroll",
+    "action": "create_payrun"
+  },
+  {
+    "module": "payroll",
+    "action": "manage"
+  },
+  {
+    "module": "payroll",
+    "action": "manage_loans"
+  },
+  {
+    "module": "payroll",
+    "action": "manage_payruns"
+  },
+  {
+    "module": "payroll",
+    "action": "manage_salary"
+  },
+  {
+    "module": "payroll",
+    "action": "manage_schedules"
+  },
+  {
+    "module": "payroll",
+    "action": "manage_statutory"
+  },
+  {
+    "module": "payroll",
+    "action": "run"
+  },
+  {
+    "module": "payroll",
+    "action": "view"
+  },
+  {
+    "module": "payroll",
+    "action": "view_dashboard"
+  },
+  {
+    "module": "payroll",
+    "action": "view_payruns"
+  },
+  {
+    "module": "payroll",
+    "action": "view_payslips"
+  },
+  {
+    "module": "projects",
+    "action": "approve_timesheets"
+  },
+  {
+    "module": "projects",
+    "action": "create"
+  },
+  {
+    "module": "projects",
+    "action": "delete"
+  },
+  {
+    "module": "projects",
+    "action": "manage"
+  },
+  {
+    "module": "projects",
+    "action": "manage_kanban"
+  },
+  {
+    "module": "projects",
+    "action": "manage_members"
+  },
+  {
+    "module": "projects",
+    "action": "manage_tasks"
+  },
+  {
+    "module": "projects",
+    "action": "manage_timesheets"
+  },
+  {
+    "module": "projects",
+    "action": "update"
+  },
+  {
+    "module": "projects",
+    "action": "view"
+  },
+  {
+    "module": "projects",
+    "action": "view_kanban"
+  },
+  {
+    "module": "projects",
+    "action": "view_reports"
+  },
+  {
+    "module": "reports",
+    "action": "view"
+  },
+  {
+    "module": "roles",
+    "action": "manage"
+  },
+  {
+    "module": "shifts",
+    "action": "assign"
+  },
+  {
+    "module": "shifts",
+    "action": "manage"
+  },
+  {
+    "module": "shifts",
+    "action": "view"
+  },
+  {
+    "module": "tasks",
+    "action": "create"
+  },
+  {
+    "module": "tasks",
+    "action": "manage_activities"
+  },
+  {
+    "module": "tasks",
+    "action": "manage_status"
+  },
+  {
+    "module": "tasks",
+    "action": "view"
+  },
+  {
+    "module": "wfh",
+    "action": "approve"
+  },
+  {
+    "module": "wfh",
+    "action": "create"
+  },
+  {
+    "module": "wfh",
+    "action": "view"
+  },
+  {
+    "module": "wfh",
+    "action": "view_team_stats"
+  }
+]

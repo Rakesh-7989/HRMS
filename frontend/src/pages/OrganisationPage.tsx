@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -8,7 +9,7 @@ import { departmentService } from '@/services/department.service';
 import { usersService } from '@/services/users.service';
 
 import type { Tenant } from '@/services/superAdmin.service';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
 import { superAdminService } from '@/services/superAdmin.service';
@@ -16,74 +17,63 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { DepartmentsContent } from '@/components/organization/DepartmentsContent';
 import { DesignationsContent } from '@/components/organization/DesignationsContent';
 import { OrgTreeContent } from '@/components/organization/OrgTreeContent';
-
+import { UnifiedShiftsContent as ShiftsPage } from '@/components/organization/UnifiedShiftsContent';
+import { useTranslation } from 'react-i18next';
 
 
 export const OrganisationPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations'>('directory');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as any) || 'directory';
+  const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>(initialTab);
+
+  // Sync tab state with URL
+  const handleTabChange = (newTab: typeof tab) => {
+    setTab(newTab);
+    setSearchParams({ tab: newTab });
+  };
 
   // If user is SUPER_ADMIN, ensure tree tab is not active
   useEffect(() => {
-    if (user?.role === 'SUPER_ADMIN' && tab === 'tree') setTab('directory');
-    if (user?.role === 'EMPLOYEE' && tab === 'directory') setTab('tree');
+    if (user?.role === 'SUPER_ADMIN' && tab === 'tree') handleTabChange('directory');
+    if (user?.role === 'EMPLOYEE' && tab === 'directory') handleTabChange('tree');
   }, [user?.role, tab]);
-  const [selectedDept, setSelectedDept] = useState<string>('all');
 
+  // Sync state if URL changes externally
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== tab) {
+      setTab(urlTab as any);
+    }
+  }, [searchParams]);
+  const [selectedDept, setSelectedDept] = useState<string>('all');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 16;
+
+  // sync tab state with URL
+  useEffect(() => {
+    setPage(0);
+  }, [selectedDept]);
 
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: departmentService.getDepartments });
-
-  // Ensure these commonly used departments are available in the dropdown even if backend doesn't return them
-
   type Dept = { id?: string; name?: string };
   const displayDepartments = useMemo(() => departments, [departments]);
 
-
-
-  // Fetch all employees once (used for both counts and filtered views)
-  const { data: allEmployees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ['allEmployees'],
-    queryFn: () => usersService.getUsers({ limit: 1000 }),
-    // Enable for MANAGER too
+  // Fetch paginated employees
+  const { data: usersResponse, isLoading: employeesLoading } = useQuery({
+    queryKey: ['allEmployees', page, selectedDept],
+    queryFn: () => usersService.getUsers({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      department_id: selectedDept !== 'all' ? selectedDept : undefined
+    }),
     enabled: ['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '')
   });
 
-  // Client-side filtering: apply selected department or fallback on department name
-  const filteredEmployees = useMemo(() => {
-    if (selectedDept === 'all') return allEmployees;
-
-    // First try to match by department_id exactly
-    const byId = allEmployees.filter((emp: any) => emp.department_id === selectedDept);
-    if (byId.length > 0) return byId;
-
-    // Fallback to match by department name (handles placeholder departments or inconsistent ids)
-    const selectedLower = String(selectedDept).toLowerCase();
-    return allEmployees.filter((emp: any) => {
-      const dep = departments.find((d: Dept) => d.id === emp.department_id);
-      const empDeptName = (dep && dep.name) ? dep.name.toLowerCase() : '';
-      if (empDeptName && empDeptName.includes(selectedLower)) return true;
-      // Also try matching the department_id string itself (in case selectedDept is a name)
-      if (String(emp.department_id || '').toLowerCase().includes(selectedLower)) return true;
-      return false;
-    });
-  }, [allEmployees, selectedDept, departments]);
-
-  const deptCounts = useMemo(() => {
-    type Emp = { department_id?: string };
-    const m = new Map<string, number>();
-    allEmployees.forEach((emp: Emp) => {
-      const id = emp.department_id || 'none';
-      m.set(id, (m.get(id) || 0) + 1);
-    });
-    // also compute by department name (for placeholders mapped by name)
-    const nameMap = new Map<string, number>();
-    allEmployees.forEach((emp: Emp) => {
-      const dep = departments.find((d: Dept) => d.id === emp.department_id);
-      const name = (dep && dep.name) ? dep.name.toLowerCase() : 'none';
-      nameMap.set(name, (nameMap.get(name) || 0) + 1);
-    });
-    return { byId: m, byName: nameMap };
-  }, [allEmployees, departments]);
+  const filteredEmployees = usersResponse?.data || [];
+  const totalEmployees = usersResponse?.pagination?.total || filteredEmployees.length;
+  const displayEmployees = filteredEmployees.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // SUPER_ADMIN tenant directory state & queries
   const [searchTenants, setSearchTenants] = useState('');
@@ -99,7 +89,7 @@ export const OrganisationPage: React.FC = () => {
   // Activate/deactivate actions removed from UI; mutations can be reintroduced if needed.
 
   const tenantFiltered = useMemo(
-    () => tenants.filter((t) => (t.name + (t.email || '') + (t.domain || '') + (t.city || '') + (t.country || '')).toLowerCase().includes(searchTenants.toLowerCase())),
+    () => tenants.filter((tenant) => (tenant.name + (tenant.email || '') + (tenant.domain || '') + (tenant.city || '') + (tenant.country || '')).toLowerCase().includes(searchTenants.toLowerCase())),
     [searchTenants, tenants]
   );
 
@@ -117,28 +107,33 @@ export const OrganisationPage: React.FC = () => {
 
 
   return (
-    <DashboardLayout title="Organisation" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/organization' }, { label: 'Organisation' }]}>
+    <DashboardLayout title={t('organisation.title')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: t('common.breadcrumbs.organisation') }]}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
         {/* <div className="bg-white/5 p-3 rounded-md shadow-sm"></div> */}
 
         <Card className="flex-1 flex flex-col p-6 min-h-0 shadow-md border dark:border-gray-800">
           {/* Subtabs */}
-          <div className="mb-4 border-b border-light-border shrink-0">
-            <div className="flex items-center gap-6">
+          <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
+            <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => setTab('directory')} className={`py-2 px-3 text-sm ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
-                  {user?.role === 'SUPER_ADMIN' ? 'Tenant Directory' : user?.role === 'MANAGER' ? 'My Team' : 'Employee Directory'}
+                <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                  {user?.role === 'SUPER_ADMIN' ? t('organisation.tenantDirectory') : user?.role === 'MANAGER' ? t('organisation.myTeam') : t('organisation.employeeDirectory')}
                 </button>
               )}
+
+
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => setTab('tree')} className={`py-2 px-3 text-sm ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Organization Tree</button>
+                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => setTab('departments')} className={`py-2 px-3 text-sm ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Departments</button>
-                      <button onClick={() => setTab('designations')} className={`py-2 px-3 text-sm ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>Designations</button>
+                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.departments')}</button>
+                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.designations')}</button>
                     </>
+                  )}
+                  {['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '') && (
+                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</button>
                   )}
                 </>
               )}
@@ -146,17 +141,17 @@ export const OrganisationPage: React.FC = () => {
           </div>
 
           <div className="flex-1 min-h-0 relative overflow-hidden">
-            {tab === 'departments' && <DepartmentsContent />}
-            {tab === 'designations' && <DesignationsContent />}
-
+            {tab === 'departments' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DepartmentsContent /></div>}
+            {tab === 'designations' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DesignationsContent /></div>}
+            {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
             {tab === 'tree' && <OrgTreeContent />}
 
             {tab === 'directory' && (
               <div className="h-full overflow-y-auto pr-2">
                 {user?.role === 'SUPER_ADMIN' ? (
                   <>
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex-1 max-w-md">
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="w-full md:flex-1 md:max-w-md">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" size={18} />
                           <input
@@ -168,36 +163,34 @@ export const OrganisationPage: React.FC = () => {
                           />
                         </div>
                       </div>
-
-
                     </div>
 
                     <div>
                       {tenantsLoading ? (
-                        <div className="h-40 flex items-center justify-center">Loading...</div>
+                        <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : tenantFiltered.length === 0 ? (
                         <EmptyState title="No tenants found" compact />
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {tenantFiltered.map((t) => (
-                              <div key={t.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
+                            {tenantFiltered.map((tenant) => (
+                              <div key={tenant.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
                                 <div className="flex items-center justify-between">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white">{t.name}</div>
-                                  <div className={`text-xs font-medium ${t.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {t.is_active ? 'Active' : 'Inactive'}
+                                  <div className="font-semibold text-sm text-gray-900 dark:text-white">{tenant.name}</div>
+                                  <div className={`text-xs font-medium ${tenant.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    {tenant.is_active ? 'Active' : 'Inactive'}
                                   </div>
                                 </div>
 
-                                <div className="text-xs text-muted mt-2">{t.email}</div>
-                                {t.domain && <div className="text-xs text-muted">{t.domain}</div>}
-                                {(t.city || t.country) && (
-                                  <div className="text-xs text-muted mt-2">{[t.city, t.state, t.country].filter(Boolean).join(', ')}</div>
+                                <div className="text-xs text-muted mt-2">{tenant.email}</div>
+                                {tenant.domain && <div className="text-xs text-muted">{tenant.domain}</div>}
+                                {(tenant.city || tenant.country) && (
+                                  <div className="text-xs text-muted mt-2">{[tenant.city, tenant.state, tenant.country].filter(Boolean).join(', ')}</div>
                                 )}
-                                <div className="text-xs text-muted mt-2">Created: {format(new Date(t.created_at), 'MMM dd, yyyy')}</div>
+                                <div className="text-xs text-muted mt-2">Created: {format(new Date(tenant.created_at), 'MMM dd, yyyy')}</div>
 
                                 <div className="mt-4 flex items-center gap-2">
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(t)} className="text-primary hover:bg-primary/5 dark:hover:bg-primary/20">
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(tenant)} className="text-primary hover:bg-primary/5 dark:hover:bg-primary/20">
                                     <Eye size={14} />
                                     View
                                   </Button>
@@ -209,53 +202,55 @@ export const OrganisationPage: React.FC = () => {
                           </div>
 
                           {selectedTenant && (
-                            <div className="mt-6">
-                              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
-                                <div className="flex items-center justify-between mb-3">
+                            <div className="mt-6 md:mt-8">
+                              <div className="p-4 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-lg">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
                                   <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
                                     <p className="text-sm text-muted">{selectedTenant.email}</p>
                                   </div>
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)}>Close</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)} className="self-end md:self-auto">{t('common.close')}</Button>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Status</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Status</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{selectedTenant.is_active ? 'Active' : 'Inactive'}</p>
                                   </div>
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Created</p>
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Created</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{format(new Date(selectedTenant.created_at), 'MMM dd, yyyy')}</p>
                                   </div>
-                                  <div className="p-3 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs text-muted">Employees</p>
+                                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Employees</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{tenantEmployeeCountQuery.isLoading ? '...' : tenantEmployeeCountQuery.data ?? 0}</p>
                                   </div>
                                 </div>
 
                                 <div>
-                                  <h4 className="text-md font-semibold mb-2 text-gray-900 dark:text-white">Users</h4>
+                                  <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">Users</h4>
                                   {selectedUsersQuery.isLoading ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                       {[1, 2, 3].map((i) => (
-                                        <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+                                        <div key={i} className="h-14 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
                                       ))}
                                     </div>
                                   ) : selectedUsersQuery.data && selectedUsersQuery.data.length > 0 ? (
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                       {selectedUsersQuery.data.map((user) => (
-                                        <div key={user.id} className="flex items-center justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                                          <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
+                                        <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                          <div className="mb-2 sm:mb-0">
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{user.email}</p>
                                             <p className="text-xs text-muted">{user.role} • Joined {format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
                                           </div>
-                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center ${user.is_active ? 'bg-primary text-white' : 'bg-primary/10 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>{user.is_active ? 'Active' : 'Inactive'}</span>
+                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center w-fit ${user.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                            {user.is_active ? 'Active' : 'Inactive'}
+                                          </span>
                                         </div>
                                       ))}
                                     </div>
                                   ) : (
-                                    <p className="text-muted text-sm">No users found for this tenant.</p>
+                                    <p className="text-muted text-sm italic py-2">No users found for this tenant.</p>
                                   )}
                                 </div>
                               </div>
@@ -267,38 +262,64 @@ export const OrganisationPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <label className="text-sm text-muted">Department</label>
-                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
-                          <option value="all">Select Department</option>
-                          {displayDepartments.map((d: Dept) => {
-                            const count = deptCounts.byId.get(d.id || '') || deptCounts.byName.get((d.name || '').toLowerCase()) || 0;
-                            return (
-                              <option key={d.id} value={d.id}>{d.name} ({count})</option>
-                            );
-                          })}
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+                        <label className="text-sm text-muted">{t('organisation.filterByDept')}</label>
+                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
+                          <option value="all">{t('organisation.allDepartments')}</option>
+                          {displayDepartments.map((d: Dept) => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
                         </select>
                       </div>
                     </div>
 
                     <div>
                       {employeesLoading ? (
-                        <div className="h-40 flex items-center justify-center">Loading...</div>
+                        <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : filteredEmployees.length === 0 ? (
                         <EmptyState title="No employees found" compact />
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {filteredEmployees.map((emp) => (
-                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-md shadow p-4 flex items-center gap-3 border border-transparent dark:border-gray-700 hover:shadow-md transition-shadow">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-sm">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
-                              <div>
-                                <div className="font-medium text-gray-900 dark:text-white">{emp.first_name} {emp.last_name}</div>
-                                <div className="text-xs text-muted">{emp.role}</div>
-                                <div className="text-xs text-muted">{emp.email}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {displayEmployees.map((emp: any) => (
+                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
+                              <div className="min-w-0">
+                                <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name} {emp.last_name}</div>
+                                <div className="text-xs text-muted truncate">{emp.role}</div>
+                                <div className="text-xs text-muted truncate">{emp.email}</div>
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                      {/* Pagination Controls */}
+                      {!employeesLoading && filteredEmployees.length > 0 && totalEmployees > PAGE_SIZE && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 mt-6 bg-white dark:bg-gray-800 rounded-md">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalEmployees)} of {totalEmployees} employees
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage((p) => Math.max(0, p - 1))}
+                              disabled={page === 0}
+                            >
+                              <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Page {page + 1}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage((p) => p + 1)}
+                              disabled={(page + 1) * PAGE_SIZE >= totalEmployees}
+                            >
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

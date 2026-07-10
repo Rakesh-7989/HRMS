@@ -160,8 +160,8 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                             className="group p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                                    <Settings2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center">
+                                    <Settings2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                                 </div>
                                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                                     Customize
@@ -171,7 +171,7 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                                 Create your own workflow with custom columns tailored to your project needs
                             </p>
                             <div className="mt-4">
-                                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-400">
+                                <span className="px-2 py-1 bg-violet-100 dark:bg-violet-900/30 rounded text-xs text-violet-600 dark:text-violet-400">
                                     + Add custom columns
                                 </span>
                             </div>

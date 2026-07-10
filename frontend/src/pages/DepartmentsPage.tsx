@@ -4,17 +4,19 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { departmentService, Department } from '@/services/department.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { CreateDepartmentForm } from '@/components/forms/CreateDepartmentForm';
 import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const DepartmentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+  const { confirm } = useConfirm();
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('departments', 'manage');
   const [createBit, setCreateBit] = useState(false); // Controls create dialog
   const [editItem, setEditItem] = useState<Department | null>(null); // Controls edit dialog
 
@@ -42,9 +44,13 @@ export const DepartmentsPage: React.FC = () => {
     mutationFn: (id: string) => departmentService.deleteDepartment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast('Department deleted', { icon: '✅' });
+      showToast.success('Department deleted successfully');
     },
-    onError: (err: any) => toast(err.message || 'Failed to delete', { icon: '⚠️' }),
+    onError: (err: any) => {
+      const backendMessage = err.response?.data?.message;
+      const axiosMessage = err.message;
+      showToast.error(backendMessage || `Error: ${axiosMessage}`);
+    },
   });
 
   const toggleStatusMutation = useMutation({
@@ -52,16 +58,25 @@ export const DepartmentsPage: React.FC = () => {
       departmentService.updateDepartment(item.id, { is_active: !item.is_active }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast(`Department ${!variables.is_active ? 'activated' : 'deactivated'}`, { icon: '✅' });
+      showToast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
     },
-    onError: (err: any) => toast(err.message || 'Failed to update status', { icon: '⚠️' }),
+    onError: (err: any) => {
+      showToast.error(err.response?.data?.message || err.message || 'Failed to update department status');
+    },
   });
 
   // --------------------------------------------------------------------------
   // Handlers
   // --------------------------------------------------------------------------
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this department? \nThis action cannot be undone if employees are assigned to it.')) {
+  const handleDelete = async (id: string) => {
+    const result = await confirm({
+      title: 'Delete Department',
+      message: 'Are you sure you want to delete this department? This action cannot be undone if employees are assigned to it.',
+      type: 'destructive',
+      confirmText: 'Delete Department',
+      cancelText: 'Cancel'
+    });
+    if (result) {
       deleteMutation.mutate(id);
     }
   };
@@ -72,9 +87,9 @@ export const DepartmentsPage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Departments"
+      title={t('organisation.departments')}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
         { label: 'Departments' },
       ]}
     >
@@ -104,7 +119,7 @@ export const DepartmentsPage: React.FC = () => {
             {canManage && (
               <Button onClick={() => setCreateBit(true)}>
                 <Plus className="mr-2" size={18} />
-                Add Department
+                Add New Department
               </Button>
             )}
           </div>
@@ -124,37 +139,30 @@ export const DepartmentsPage: React.FC = () => {
 
         {/* Content Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="p-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-800 rounded-xl space-y-4">
-                <div className="flex justify-between items-start mb-2">
-                  <Skeleton variant="circular" width={40} height={40} />
-                  <div className="flex gap-1">
-                    <Skeleton variant="circular" width={24} height={24} />
-                    <Skeleton variant="circular" width={24} height={24} />
-                    <Skeleton variant="circular" width={24} height={24} />
-                  </div>
-                </div>
-                <Skeleton variant="text" width="60%" />
-                <Skeleton variant="text" width="80%" />
-                <Skeleton variant="text" width="40%" />
-              </div>
-            ))}
+          <div className="h-64 flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div>
+            <p className="text-muted text-sm">Loading departments...</p>
           </div>
         ) : filteredDepartments.length === 0 ? (
-          <EmptyState
-            icon={<Building2 size={32} />}
-            title={searchTerm ? 'No matching departments' : 'No departments yet'}
-            description={searchTerm
-              ? `We couldn't find any department matching "${searchTerm}".`
-              : "Create your first department to structure your organization."}
-            action={!searchTerm && canManage ? (
+          <Card className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
+              <Building2 className="text-gray-400" size={32} />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+              {searchTerm ? 'No matching departments' : 'No departments yet'}
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+              {searchTerm
+                ? `We couldn't find any department matching "${searchTerm}".`
+                : "Create your first department to structure your organization."}
+            </p>
+            {!searchTerm && canManage && (
               <Button variant="outline" onClick={() => setCreateBit(true)}>
                 <Plus className="mr-2" size={16} />
                 Create Department
               </Button>
-            ) : undefined}
-          />
+            )}
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredDepartments.map((d) => (
@@ -169,7 +177,7 @@ export const DepartmentsPage: React.FC = () => {
                         <>
                           <button
                             onClick={() => handleEdit(d)}
-                            className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
                             title="Edit"
                           >
                             <Edit3 size={15} />

@@ -11,10 +11,10 @@ import { leaveService, LeaveBalance, BalanceAdjustmentData } from '@/services/le
 import { usersService } from '@/services/users.service';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 export const LeaveBalancesPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
 
     // Search State
@@ -41,11 +41,12 @@ export const LeaveBalancesPage: React.FC = () => {
     }, [searchQuery]);
 
     // Queries
-    const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+    const { data: searchResponse, isLoading: searchLoading } = useQuery({
         queryKey: ['users', 'search', debouncedSearch],
         queryFn: () => usersService.getUsers({ search: debouncedSearch, limit: 10 }),
         enabled: debouncedSearch.length > 2,
     });
+    const searchResults = searchResponse?.data || [];
 
     const { data: balances = [], isLoading: balancesLoading, refetch: refetchBalances } = useQuery({
         queryKey: ['leave-balances', selectedEmployee?.id],
@@ -58,6 +59,7 @@ export const LeaveBalancesPage: React.FC = () => {
         mutationFn: (data: BalanceAdjustmentData) => leaveService.adjustBalance(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances', selectedEmployee?.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             handleCloseDialog();
             setErrorMessage(null);
         },
@@ -113,10 +115,10 @@ export const LeaveBalancesPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Leave Balances"
+            title={t('leave.tabs.balances')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Leave', href: '/leave' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.leave'), href: '/leave' },
                 { label: 'Balances' },
             ]}
         >
@@ -186,24 +188,17 @@ export const LeaveBalancesPage: React.FC = () => {
                         </div>
 
                         {balancesLoading ? (
-                            <div className="space-y-3">
-                                {Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="flex gap-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                                        <Skeleton variant="text" width="25%" />
-                                        <Skeleton variant="text" width="15%" />
-                                        <Skeleton variant="text" width="15%" />
-                                        <Skeleton variant="text" width="15%" />
-                                        <Skeleton variant="text" width="15%" />
-                                        <Skeleton variant="text" width="15%" />
-                                    </div>
-                                ))}
+                            <div className="flex items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
                             </div>
                         ) : balances.length === 0 ? (
-                            <EmptyState
-                                icon={<AlertCircle size={32} />}
-                                title="No balances found"
-                                description="This employee has no leave balances initialized."
-                            />
+                            <div className="text-center py-12">
+                                <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No balances found</h3>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    This employee has no leave balances initialized.
+                                </p>
+                            </div>
                         ) : (
                             <Table>
                                 <TableHeader>

@@ -12,9 +12,12 @@ interface DialogProps {
   title?: string;
   description?: string;
   className?: string;
+  footer?: React.ReactNode;
+  onBack?: () => void;
 }
 
 import { createPortal } from 'react-dom';
+import { ArrowLeft } from 'lucide-react';
 
 export const Dialog: React.FC<DialogProps> = ({
   open,
@@ -23,6 +26,8 @@ export const Dialog: React.FC<DialogProps> = ({
   title,
   description,
   className,
+  footer,
+  onBack
 }) => {
   // Use a portal to render the dialog at the document body level
   // This ensures it sits on top of everything regardless of stacking contexts
@@ -46,38 +51,57 @@ export const Dialog: React.FC<DialogProps> = ({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col',
+                'relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden',
                 className
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Sticky Header */}
-              {(title || description) && (
-                <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-800 rounded-t-xl">
-                  <div className="flex items-start justify-between">
-                    <div>
+              <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-800 rounded-t-xl overflow-hidden">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    {onBack && (
+                      <button
+                        onClick={onBack}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
+                        title="Back"
+                      >
+                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                      </button>
+                    )}
+                    <div className="overflow-hidden">
                       {title && (
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
                           {title}
                         </h2>
                       )}
                       {description && (
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 truncate">
                           {description}
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={() => onOpenChange(false)}
-                      className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-                    >
-                      <X size={20} />
-                    </button>
                   </div>
+                  <button
+                    onClick={() => onOpenChange(false)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
+                    title="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+              {/* Content Wrapper */}
+              <div className={cn('flex-1 overflow-y-auto w-full px-6 py-4', !className && 'px-6 py-4')}>
+                {children}
+              </div>
+
+              {/* Footer */}
+              {footer && (
+                <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 px-6 py-4 z-10">
+                  {footer}
                 </div>
               )}
-              {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
             </motion.div>
           </div>
         </>

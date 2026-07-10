@@ -26,8 +26,8 @@ export const Card: React.FC<CardProps> = ({ children, className, hover = false }
       <motion.div
         whileHover={{ y: -6, scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        transition={{ 
-          duration: 0.3, 
+        transition={{
+          duration: 0.3,
           ease: [0.16, 1, 0.3, 1],
         }}
       >

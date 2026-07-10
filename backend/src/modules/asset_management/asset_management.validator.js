@@ -43,7 +43,7 @@ exports.createAssetSchema = z.object({
       .refine(val => !isNaN(Date.parse(val)), "Invalid date format")
       .optional(),
     status: z
-      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED"])
+      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED", "DOA", "LOST", "WRITTEN_OFF", "DISPOSED", "REQUESTED"])
       .default("AVAILABLE")
       .optional(),
     notes: z
@@ -81,6 +81,23 @@ exports.createAssetSchema = z.object({
     model_number: z
       .string()
       .max(100, "Model number must not exceed 100 characters")
+      .optional(),
+    useful_life_years: z
+      .number()
+      .int()
+      .positive("Useful life must be positive")
+      .optional(),
+    depreciation_method: z
+      .enum(["STRAIGHT_LINE", "WDV"])
+      .default("STRAIGHT_LINE")
+      .optional(),
+    location: z
+      .string()
+      .max(255, "Location must not exceed 255 characters")
+      .optional(),
+    condition: z
+      .enum(["NEW", "GOOD", "FAIR", "POOR", "DAMAGED"])
+      .default("NEW")
       .optional()
   })
 });
@@ -134,7 +151,7 @@ exports.updateAssetSchema = z.object({
       .refine(val => !isNaN(Date.parse(val)), "Invalid date format")
       .optional(),
     status: z
-      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED"])
+      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED", "DOA", "LOST", "WRITTEN_OFF", "DISPOSED", "REQUESTED"])
       .optional(),
     notes: z
       .string()
@@ -171,6 +188,25 @@ exports.updateAssetSchema = z.object({
     model_number: z
       .string()
       .max(100, "Model number must not exceed 100 characters")
+      .optional(),
+    useful_life_years: z
+      .number()
+      .int()
+      .positive("Useful life must be positive")
+      .optional(),
+    depreciation_method: z
+      .enum(["STRAIGHT_LINE", "WDV"])
+      .optional(),
+    location: z
+      .string()
+      .max(255, "Location must not exceed 255 characters")
+      .optional(),
+    condition: z
+      .enum(["NEW", "GOOD", "FAIR", "POOR", "DAMAGED"])
+      .optional(),
+    book_value: z
+      .number()
+      .min(0, "Book value cannot be negative")
       .optional()
   })
 });
@@ -218,6 +254,9 @@ exports.assignAssetSchema = z.object({
     notes: z
       .string()
       .max(500, "Notes must not exceed 500 characters")
+      .optional(),
+    accessories: z
+      .array(z.string().min(1).max(100))
       .optional()
   })
 });
@@ -236,12 +275,21 @@ exports.returnAssetSchema = z.object({
       .refine(val => !isNaN(Date.parse(val)), "Invalid date format")
       .optional(),
     condition: z
-      .enum(["GOOD", "DAMAGED", "LOST", "WORN"])
+      .enum(["GOOD", "DAMAGED", "LOST", "WORN", "DOA"])
       .default("GOOD")
       .optional(),
     notes: z
       .string()
       .max(500, "Notes must not exceed 500 characters")
+      .optional(),
+    checklist: z
+      .array(
+        z.object({
+          item_name: z.string().min(1).max(100),
+          is_returned: z.boolean().default(false),
+          notes: z.string().max(500).optional()
+        })
+      )
       .optional()
   })
 });
@@ -263,7 +311,7 @@ exports.getTrackingSchema = z.object({
 exports.listAssetsSchema = z.object({
   query: z.object({
     status: z
-      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED"])
+      .enum(["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED", "DOA", "LOST", "WRITTEN_OFF", "DISPOSED", "REQUESTED"])
       .optional(),
     category: z.string().optional(),
     assigned_to: z.string().uuid("Invalid employee ID").optional(),
@@ -317,6 +365,86 @@ exports.handleAssetRequestSchema = z.object({
     admin_notes: z
       .string()
       .max(500, "Admin notes must not exceed 500 characters")
+      .optional()
+  })
+});
+
+/**
+ * UPDATE ASSET REQUEST VALIDATION
+ */
+exports.updateAssetRequestSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid request ID")
+  }),
+  body: z.object({
+    asset_name: z
+      .string()
+      .min(2, "Asset name must be at least 2 characters")
+      .max(255, "Asset name must not exceed 255 characters")
+      .optional(),
+    category: z
+      .string()
+      .min(2, "Category must be at least 2 characters")
+      .max(100, "Category must not exceed 100 characters")
+      .optional(),
+    priority: z
+      .enum(["Low", "Medium", "High"])
+      .optional(),
+    reason: z
+      .string()
+      .min(5, "Reason must be at least 5 characters")
+      .max(1000, "Reason must not exceed 1000 characters")
+      .optional()
+  })
+});
+
+/**
+ * DELETE ASSET REQUEST VALIDATION
+ */
+exports.deleteAssetRequestSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid request ID")
+  })
+});
+
+/**
+ * GET ASSET ACCESSORIES VALIDATION
+ */
+exports.getAccessoriesSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset ID")
+  })
+});
+
+/**
+ * SWAP ASSET VALIDATION
+ * Atomically return old asset and assign new one
+ */
+exports.swapAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid old asset ID")
+  }),
+  body: z.object({
+    new_asset_id: z.string().uuid("Invalid new asset ID"),
+    return_condition: z
+      .enum(["GOOD", "DAMAGED", "LOST", "WORN", "DOA"])
+      .default("GOOD")
+      .optional(),
+    return_notes: z
+      .string()
+      .max(500, "Notes must not exceed 500 characters")
+      .optional(),
+    checklist: z
+      .array(
+        z.object({
+          item_name: z.string().min(1).max(100),
+          is_returned: z.boolean().default(false),
+          notes: z.string().max(500).optional()
+        })
+      )
+      .optional(),
+    new_accessories: z
+      .array(z.string().min(1).max(100))
       .optional()
   })
 });

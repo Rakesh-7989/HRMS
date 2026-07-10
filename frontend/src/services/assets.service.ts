@@ -6,6 +6,24 @@ export const generateBarcode = (): string => {
   return Math.random().toString().slice(2, 14);
 };
 
+// Helper to extract user-friendly error messages from backend responses
+const extractErrorMessage = (error: any): string => {
+  // Check for validation errors with details (Zod errors)
+  if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+    const issues = error.response.data.details;
+    // Return the first validation error message
+    if (issues.length > 0 && issues[0].message) {
+      return issues[0].message;
+    }
+  }
+
+  // Fallback to standard error messages
+  return error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    'An error occurred';
+};
+
 // Fetch configuration for asset types (returns default configurations)
 export const fetchAssetConfiguration = async (category: AssetCategory): Promise<Partial<Asset['configuration']>> => {
   const configs: Record<AssetCategory, Partial<Asset['configuration']>> = {
@@ -120,14 +138,32 @@ export const assetsService = {
   },
 
   // Assign asset
-  assignAsset: async (id: string, employeeId: string): Promise<Asset> => {
-    const response = await api.post(`/assets/${id}/assign`, { employee_id: employeeId });
+  assignAsset: async (id: string, employeeId: string, accessories?: string[]): Promise<Asset> => {
+    const response = await api.post(`/assets/${id}/assign`, { employee_id: employeeId, accessories });
     return response.data?.data;
   },
 
   // Unassign asset (return)
-  unassignAsset: async (id: string, data?: { return_date?: string; condition?: string; notes?: string }): Promise<Asset> => {
+  unassignAsset: async (id: string, data?: { return_date?: string; condition?: string; notes?: string; checklist?: Array<{ item_name: string; is_returned: boolean; notes?: string }> }): Promise<Asset> => {
     const response = await api.post(`/assets/${id}/return`, data || {});
+    return response.data?.data;
+  },
+
+  // Get active accessories for an asset (from DB)
+  getAssetAccessories: async (id: string): Promise<Array<{ id: string; item_name: string; is_active: boolean; created_at: string }>> => {
+    const response = await api.get(`/assets/${id}/accessories`);
+    return response.data?.data || [];
+  },
+
+  // Swap asset — atomic return old + assign new
+  swapAsset: async (oldAssetId: string, data: {
+    new_asset_id: string;
+    return_condition?: string;
+    return_notes?: string;
+    checklist?: Array<{ item_name: string; is_returned: boolean; notes?: string }>;
+    new_accessories?: string[];
+  }): Promise<Asset> => {
+    const response = await api.post(`/assets/${oldAssetId}/swap`, data);
     return response.data?.data;
   },
 
@@ -136,6 +172,16 @@ export const assetsService = {
     try {
       const response = await api.get(`/assets/${id}/barcode`);
       return response.data?.data?.barcode || response.data?.data?.image || null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Get QR code for asset
+  getQRCode: async (id: string): Promise<string | null> => {
+    try {
+      const response = await api.get(`/assets/${id}/qrcode`);
+      return response.data?.data?.qrcode || null;
     } catch {
       return null;
     }
@@ -155,8 +201,13 @@ export const assetsService = {
 
   // Submit asset request
   submitRequest: async (data: { asset_name: string; category: string; priority: string; reason: string }): Promise<unknown> => {
-    const response = await api.post('/assets/requests/create', data);
-    return response.data;
+    try {
+      const response = await api.post('/assets/requests/create', data);
+      return response.data;
+    } catch (error: any) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
   },
 
   // List asset requests
@@ -169,5 +220,76 @@ export const assetsService = {
   handleRequest: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; admin_notes?: string }): Promise<unknown> => {
     const response = await api.post(`/assets/requests/${id}/handle`, data);
     return response.data;
+  },
+
+  // Update request (Pending only)
+  updateRequest: async (id: string, data: { asset_name?: string; category?: string; priority?: string; reason?: string }): Promise<unknown> => {
+    try {
+      const response = await api.put(`/assets/requests/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
+  },
+
+  // Cancel request (Delete - Pending only)
+  cancelRequest: async (id: string): Promise<unknown> => {
+    const response = await api.delete(`/assets/requests/${id}`);
+    return response.data;
+  },
+
+  // Get asset dashboard stats
+  getDashboard: async (): Promise<{
+    summary: {
+      total_assets: number;
+      assigned_count: number;
+      available_count: number;
+      under_repair_count: number;
+      retired_count: number;
+      total_purchase_value: number;
+      total_book_value: number;
+    };
+    by_status: Array<{ status: string; count: number }>;
+    by_category: Array<{ category: string; count: number }>;
+    warranty_expiring_soon: number;
+    recent_activity: Array<{
+      event_type: string;
+      description: string;
+      created_at: string;
+      asset_name: string;
+      asset_code: string;
+    }>;
+  }> => {
+    const response = await api.get('/assets/dashboard');
+    return response.data?.data;
+  },
+
+  // Export assets as CSV download
+  exportCSV: async (): Promise<void> => {
+    const response = await api.get('/assets/export/csv', { responseType: 'blob' });
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'assets_export.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  // Get warranty alerts
+  getWarrantyAlerts: async (days: number = 30): Promise<Array<{
+    id: string;
+    asset_code: string;
+    name: string;
+    category: string;
+    warranty_expiry: string;
+    status: string;
+    assigned_to_name: string | null;
+  }>> => {
+    const response = await api.get(`/assets/warranty-alerts?days=${days}`);
+    return response.data?.data || [];
   },
 };

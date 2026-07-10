@@ -1,12 +1,19 @@
 const pool = require("../../../config/db");
+const timeService = require("../../../utils/timeService");
+const logger = require("../../../config/logger"); // Issue 26
 
-const getQuery = (db) =>
-    db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
+const getQuery = (db) => {
+    if (db && typeof db.query === "function") {
+        return (text, params) => db.query(text, params);
+    }
+    return pool.query.bind(pool);
+};
 
 /* ========================== GET EMPLOYEE BALANCES ========================== */
 exports.getEmployeeBalances = async (db, employeeId, tenantId, year = null) => {
     const query = getQuery(db);
-    const targetYear = year || new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const res = await query(
         `SELECT lb.*, lt.name AS leave_type_name, lt.code AS leave_type_code
@@ -21,15 +28,18 @@ exports.getEmployeeBalances = async (db, employeeId, tenantId, year = null) => {
 };
 
 /* ========================== GET SPECIFIC BALANCE ========================== */
-exports.getBalance = async (db, employeeId, leaveTypeId, tenantId, year = null) => {
+exports.getBalance = async (db, employeeId, leaveTypeId, tenantId, year = null, lock = false) => {
     const query = getQuery(db);
-    const targetYear = year || new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
+
+    const lockClause = lock ? ' FOR UPDATE' : '';
 
     const res = await query(
         `SELECT lb.*, lt.name AS leave_type_name, lt.code AS leave_type_code
          FROM leave_balances lb
          JOIN leave_types lt ON lt.id = lb.leave_type_id
-         WHERE lb.tenant_id = $1 AND lb.employee_id = $2 AND lb.leave_type_id = $3 AND lb.year = $4`,
+         WHERE lb.tenant_id = $1 AND lb.employee_id = $2 AND lb.leave_type_id = $3 AND lb.year = $4${lockClause}`,
         [tenantId, employeeId, leaveTypeId, targetYear]
     );
 
@@ -39,8 +49,9 @@ exports.getBalance = async (db, employeeId, leaveTypeId, tenantId, year = null) 
 /* ========================== INITIALIZE BALANCES ========================== */
 exports.initializeBalances = async (db, employeeId, tenantId, joinDate = null) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
-    const today = new Date().toISOString().split('T')[0];
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const today = timeService.todayDate(tz);
+    const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const leaveTypes = await query(
         `SELECT id FROM leave_types WHERE tenant_id = $1 AND is_active = true`,
@@ -70,13 +81,15 @@ exports.initializeBalances = async (db, employeeId, tenantId, joinDate = null) =
 /* ========================== DEDUCT BALANCE ========================== */
 exports.deductBalance = async (db, employeeId, leaveTypeId, days, tenantId, reason, actorId) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
-    let balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear);
+    let balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear, true);
 
     if (!balance) {
+        // Issue 9: Initialize and then RE-FETCH with local lock to prevent race conditions
         await exports.initializeBalances(db, employeeId, tenantId);
-        balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear);
+        balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear, true);
     }
 
     if (!balance) {
@@ -112,9 +125,10 @@ exports.deductBalance = async (db, employeeId, leaveTypeId, days, tenantId, reas
 /* ========================== RESTORE BALANCE ========================== */
 exports.restoreBalance = async (db, employeeId, leaveTypeId, days, tenantId, reason, actorId) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, tenantId, employeeId);
+    const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
-    const balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear);
+    const balance = await exports.getBalance(db, employeeId, leaveTypeId, tenantId, currentYear, true);
 
     if (!balance) {
         throw new Error("Leave balance not found");
@@ -147,15 +161,17 @@ exports.restoreBalance = async (db, employeeId, leaveTypeId, days, tenantId, rea
 };
 
 /* ========================== MANUAL ADJUSTMENT ========================== */
+// Issue 9: Use lock=true to prevent race conditions on concurrent adjustments
 exports.adjustBalance = async (db, employeeId, leaveTypeId, adjustment, reason, actor) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId, employeeId);
+    const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
-    let balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear);
+    let balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear, true);
 
     if (!balance) {
         await exports.initializeBalances(db, employeeId, actor.tenantId);
-        balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear);
+        balance = await exports.getBalance(db, employeeId, leaveTypeId, actor.tenantId, currentYear, true);
     }
 
     if (!balance) {
@@ -197,7 +213,8 @@ exports.adjustBalance = async (db, employeeId, leaveTypeId, adjustment, reason, 
 /* ========================== RESET ACCRUAL ========================== */
 exports.resetAccrual = async (db, employeeId, newStartDate, actor) => {
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId, employeeId);
+    const currentYear = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
 
     const balances = await query(
         `SELECT lb.id, lb.leave_type_id, lb.current_balance, lt.name AS leave_type_name
@@ -289,10 +306,15 @@ exports.getAdjustmentHistory = async (db, employeeId, tenantId, filters = {}) =>
 };
 
 /* ========================== BULK ALLOCATE ========================== */
-exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor) => {
+// Issue 19: Add role authorization check
+exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor, year = null) => {
+    if (!['ADMIN', 'HR'].includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin or HR can perform bulk allocations");
+    }
     const query = getQuery(db);
-    const currentYear = new Date().getFullYear();
-    const today = new Date().toISOString().split('T')[0];
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
+    const today = timeService.todayDate(tz);
 
     // If no specific employees, get all active employees
     let targetEmployees;
@@ -317,18 +339,18 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
 
     for (const emp of targetEmployees.rows) {
         try {
-            // Get or create balance
-            let balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, currentYear);
+            // Get or create balance for the specified year
+            let balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, targetYear);
 
             if (!balance) {
-                // Create balance record
+                // Create balance record for the specified year
                 await query(
                     `INSERT INTO leave_balances 
                         (tenant_id, employee_id, leave_type_id, year, opening_balance, accrual_start_date)
                      VALUES ($1, $2, $3, $4, 0, $5)`,
-                    [actor.tenantId, emp.employee_id, leaveTypeId, currentYear, today]
+                    [actor.tenantId, emp.employee_id, leaveTypeId, targetYear, today]
                 );
-                balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, currentYear);
+                balance = await exports.getBalance(db, emp.employee_id, leaveTypeId, actor.tenantId, targetYear);
             }
 
             if (balance) {
@@ -353,7 +375,7 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
                      VALUES ($1, $2, $3, 'GRANT', $4, $5, $6, $7, $8)`,
                     [
                         actor.tenantId, balance.id, emp.employee_id,
-                        days, reason || 'Bulk Allocation',
+                        days, reason || `Bulk Allocation for ${targetYear}`,
                         previousBalance, updated.rows[0].current_balance, actor.id
                     ]
                 );
@@ -368,5 +390,187 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor)
         }
     }
 
-    return { success: true, processed, failed };
+    return { success: true, processed, failed, year: targetYear };
+};
+
+/* ========================== RESET BALANCES ========================== */
+/**
+ * Reset leave balances for employees
+ * @param {Object} db - Database connection
+ * @param {Object} options - Reset options
+ * @param {string} options.employee_id - Optional: specific employee to reset (null for all)
+ * @param {string} options.leave_type_id - Optional: specific leave type (null for all)
+ * @param {number} options.year - Year to reset (defaults to current year)
+ * @param {boolean} options.reset_to_zero - If true, set balance to 0. If false, reset used/pending only
+ * @param {Object} actor - User performing the action
+ */
+exports.resetBalances = async (db, options, actor) => {
+    const query = getQuery(db);
+    const { employee_id, leave_type_id, year, reset_to_zero = true, reason } = options;
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId, employee_id);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
+
+    let conditions = [`lb.tenant_id = $1`, `lb.year = $2`];
+    let params = [actor.tenantId, targetYear];
+    let paramIndex = 3;
+
+    if (employee_id) {
+        conditions.push(`lb.employee_id = $${paramIndex}`);
+        params.push(employee_id);
+        paramIndex++;
+    }
+
+    if (leave_type_id) {
+        conditions.push(`lb.leave_type_id = $${paramIndex}`);
+        params.push(leave_type_id);
+        paramIndex++;
+    }
+
+    // Get all balances to reset
+    const balancesRes = await query(
+        `SELECT lb.*, lt.name as leave_type_name, e.first_name, e.last_name
+         FROM leave_balances lb
+         JOIN leave_types lt ON lt.id = lb.leave_type_id
+         JOIN employees e ON e.id = lb.employee_id
+         WHERE ${conditions.join(' AND ')}`,
+        params
+    );
+
+    if (balancesRes.rowCount === 0) {
+        return { success: true, message: 'No balances found to reset', processed: 0 };
+    }
+
+    let processed = 0;
+    let failed = 0;
+
+    for (const balance of balancesRes.rows) {
+        try {
+            const previousBalance = parseFloat(balance.current_balance);
+
+            if (reset_to_zero) {
+                // Reset everything to zero
+                await query(
+                    `UPDATE leave_balances 
+                     SET opening_balance = 0, 
+                         accrued = 0, 
+                         adjustments = 0, 
+                         used = 0, 
+                         pending = 0,
+                         carry_forward = 0,
+                         updated_at = now()
+                     WHERE id = $1`,
+                    [balance.id]
+                );
+            } else {
+                // Only reset used and pending (keep accrued/opening)
+                await query(
+                    `UPDATE leave_balances 
+                     SET used = 0, 
+                         pending = 0,
+                         updated_at = now()
+                     WHERE id = $1`,
+                    [balance.id]
+                );
+            }
+
+            const updated = await query(
+                `SELECT current_balance FROM leave_balances WHERE id = $1`,
+                [balance.id]
+            );
+
+            // Log the reset
+            await query(
+                `INSERT INTO leave_balance_adjustments 
+                    (tenant_id, balance_id, employee_id, adjustment_type, amount, reason, 
+                     previous_balance, new_balance, created_by)
+                 VALUES ($1, $2, $3, 'RESET', $4, $5, $6, $7, $8)`,
+                [
+                    actor.tenantId, balance.id, balance.employee_id,
+                    -previousBalance, reason || `Leave balance reset for ${targetYear}`,
+                    previousBalance, updated.rows[0].current_balance, actor.id
+                ]
+            );
+
+            processed++;
+        } catch (err) {
+            console.error(`Failed to reset balance ${balance.id}:`, err);
+            failed++;
+        }
+    }
+
+    return {
+        success: true,
+        processed,
+        failed,
+        year: targetYear,
+        message: `Reset ${processed} balance(s) for year ${targetYear}`
+    };
+};
+
+/* ========================== BULK RESET BALANCES ========================== */
+// Issue 19: Add role authorization check
+exports.bulkResetBalances = async (db, leave_type_id, employee_ids, reset_to_zero, reason, actor, year) => {
+    if (!['ADMIN', 'HR'].includes(actor.role)) {
+        throw new Error("Unauthorized: Only Admin or HR can perform bulk resets");
+    }
+    const query = getQuery(db);
+    const tz = await timeService.getEffectiveTz(query, actor.tenantId);
+    const targetYear = year || parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(new Date()));
+
+    let processed = 0;
+    let failed = 0;
+
+    const employeesToReset = employee_ids && employee_ids.length > 0
+        ? employee_ids
+        : (await query(
+            `SELECT DISTINCT employee_id FROM leave_balances WHERE tenant_id = $1 AND year = $2`,
+            [actor.tenantId, targetYear]
+        )).rows.map(r => r.employee_id);
+
+    for (const empId of employeesToReset) {
+        try {
+            const result = await exports.resetBalances(db, {
+                employee_id: empId,
+                leave_type_id,
+                year: targetYear,
+                reset_to_zero,
+                reason
+            }, actor);
+
+            processed += result.processed;
+            failed += result.failed;
+        } catch (err) {
+            logger.error(`Failed to reset for employee ${empId}:`, err);
+            failed++;
+        }
+    }
+
+    return { success: true, processed, failed, year: targetYear };
+};
+
+/* ========================== PENDING BALANCE HELPERS ========================== */
+// Issue 14: Track pending balance when leaves are applied/approved/rejected/cancelled
+// Note: These use new Date().getFullYear() instead of timeService because they're
+// called inside transactions with PoolClients where bound query methods fail.
+
+exports.incrementPending = async (db, employeeId, leaveTypeId, days, tenantId) => {
+    const query = getQuery(db);
+    const currentYear = new Date().getFullYear();
+
+    await query(
+        `UPDATE leave_balances SET pending = pending + $1, updated_at = now()
+         WHERE tenant_id = $2 AND employee_id = $3 AND leave_type_id = $4 AND year = $5`,
+        [days, tenantId, employeeId, leaveTypeId, currentYear]
+    );
+};
+
+exports.decrementPending = async (db, employeeId, leaveTypeId, days, tenantId) => {
+    const query = getQuery(db);
+    const currentYear = new Date().getFullYear();
+
+    await query(
+        `UPDATE leave_balances SET pending = GREATEST(0, pending - $1), updated_at = now()
+         WHERE tenant_id = $2 AND employee_id = $3 AND leave_type_id = $4 AND year = $5`,
+        [days, tenantId, employeeId, leaveTypeId, currentYear]
+    );
 };

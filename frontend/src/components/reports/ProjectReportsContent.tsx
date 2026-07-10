@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { Label } from '@/components/ui/Label';
 import { projectsService } from '@/services/projects.service';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/Table';
 import { Users, Briefcase, Calendar, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { toast } from 'react-hot-toast';
 
 type ReportType = 'project' | 'client' | 'utilization';
 
@@ -57,8 +58,93 @@ export const ProjectReportsContent: React.FC = () => {
         enabled: activeTab === 'utilization',
     });
 
+    // Helper function to download CSV
+    const downloadCSV = (data: string[][], filename: string) => {
+        const csvContent = data.map(row =>
+            row.map(cell => {
+                const escaped = String(cell ?? '').replace(/"/g, '""');
+                return escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')
+                    ? `"${escaped}"`
+                    : escaped;
+            }).join(',')
+        ).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const handleExport = () => {
-        alert("Export functionality to be implemented.");
+        const today = new Date().toISOString().split('T')[0];
+        const dateRange = startDate && endDate ? `${startDate}_to_${endDate}` : today;
+
+        try {
+            if (activeTab === 'project' && projectReport) {
+                const projectName = projects.find(p => p.id === selectedProject)?.name || 'Project';
+                const rows: string[][] = [
+                    ['Project Report'],
+                    ['Project', projectName],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Summary'],
+                    ['Total Hours', String(Number(projectReport.total_hours || 0).toFixed(2))],
+                    ['Total Timesheets', String(projectReport.total_timesheets || 0)],
+                ];
+                downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
+                toast.success('Project report exported successfully!');
+
+            } else if (activeTab === 'client' && clientReport) {
+                const clientName = clients.find(c => c.id === selectedClient)?.name || 'Client';
+                const rows: string[][] = [
+                    ['Client Report'],
+                    ['Client', clientName],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Summary'],
+                    ['Total Projects', String(clientReport.total_projects || 0)],
+                    ['Total Hours', String(Number(clientReport.total_hours || 0).toFixed(2))],
+                    ['Total Timesheets', String(clientReport.total_timesheets || 0)],
+                    [],
+                    ['Active Projects'],
+                    ...(clientReport.projects || []).map((p: string) => [p]),
+                ];
+                downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
+                toast.success('Client report exported successfully!');
+
+            } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
+                const rows: string[][] = [
+                    ['Employee Utilization Report'],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Employee Name', 'Email', 'Assigned Projects', 'Logged Hours', 'Utilization %'],
+                    ...utilizationReport.map((emp: any) => [
+                        `${emp.first_name || ''} ${emp.last_name || ''}`.trim(),
+                        emp.email || '',
+                        String(emp.projects_assigned || 0),
+                        String(Number(emp.total_hours_logged || 0).toFixed(2)),
+                        `${emp.utilization_percent || 0}%`,
+                    ]),
+                ];
+                downloadCSV(rows, `utilization_report_${dateRange}.csv`);
+                toast.success('Utilization report exported successfully!');
+
+            } else {
+                toast.error('No data available to export. Please select filters and load report first.');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            toast.error('Failed to export report. Please try again.');
+        }
     };
 
     return (
@@ -119,13 +205,17 @@ export const ProjectReportsContent: React.FC = () => {
                             </select>
                         </div>
                     )}
-                    <div>
-                        <Label>Start Date</Label>
-                        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                    </div>
-                    <div>
-                        <Label>End Date</Label>
-                        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    <div className="md:col-span-2">
+                        <Label>Date Range</Label>
+                        <div className="mt-1">
+                            <DateRangePicker
+                                startDate={startDate}
+                                endDate={endDate}
+                                onStartDateChange={setStartDate}
+                                onEndDateChange={setEndDate}
+                                placeholder="Select report duration"
+                            />
+                        </div>
                     </div>
                 </div>
             </Card>
@@ -138,8 +228,8 @@ export const ProjectReportsContent: React.FC = () => {
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <Card className="p-6 flex items-center gap-4">
-                                    <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                        <Calendar className="h-6 w-6 text-blue-600" />
+                                    <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                        <Calendar className="h-6 w-6 text-violet-600" />
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Total Hours</p>
@@ -176,8 +266,8 @@ export const ProjectReportsContent: React.FC = () => {
                                     </div>
                                 </Card>
                                 <Card className="p-6 flex items-center gap-4">
-                                    <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                        <Calendar className="h-6 w-6 text-blue-600" />
+                                    <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                        <Calendar className="h-6 w-6 text-violet-600" />
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Total Hours</p>

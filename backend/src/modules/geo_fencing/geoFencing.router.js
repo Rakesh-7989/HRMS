@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
+const requirePermission = require("../../middleware/requirePermission");
 const validate = require("../../middleware/validate");
 
 const controller = require("./geoFencing.controller");
@@ -12,75 +12,72 @@ const validator = require("./geoFencing.validator");
 router.use(verifyJwt);
 
 // ==========================================================================
-// SETTINGS (Admin/HR only)
+// SETTINGS
 // ==========================================================================
 
 router.get(
     "/settings",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN", "EMPLOYEE", "MANAGER"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getSettings
 );
 
 router.put(
     "/settings",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     validate(validator.updateSettingsSchema),
     controller.updateSettings
 );
 
-// ==========================================================================
-// LOCATIONS (Admin/HR only for management)
-// ==========================================================================
-
 router.get(
     "/locations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getLocations
 );
 
 router.get(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.getLocation
 );
 
 router.post(
     "/locations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     validate(validator.createLocationSchema),
     controller.createLocation
 );
 
 router.put(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     validate(validator.updateLocationSchema),
     controller.updateLocation
 );
 
 router.delete(
     "/locations/:id",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["manage_geofence", "manage"]),
     controller.deleteLocation
 );
 
 // ==========================================================================
-// VALIDATION (All authenticated users - for clock-in/out)
+// VALIDATION (Clock-in/out - no specific permission needed beyond auth, but 'view' covers it)
 // ==========================================================================
 
 router.post(
     "/validate",
+    requirePermission("attendance", "clock_in_out"),
     validate(validator.validateLocationSchema),
     controller.validateLocation
 );
 
 // ==========================================================================
-// VIOLATIONS (Admin/HR only)
+// VIOLATIONS
 // ==========================================================================
 
 router.get(
     "/violations",
-    requireRole(["ADMIN", "HR", "SUPER_ADMIN"]),
+    requirePermission("attendance", ["view_geofence_violations", "manage"]),
     controller.getViolations
 );
 

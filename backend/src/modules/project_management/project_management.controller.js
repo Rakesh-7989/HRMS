@@ -1,6 +1,7 @@
 const service = require("./project_management.service");
 const { success } = require("../../utils/successResponse");
 const logger = require("../../config/logger");
+const logAudit = require("../../utils/auditLogger");
 
 /**
  * ============================================================================
@@ -183,9 +184,10 @@ exports.listProjects = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
-      // Pass user info for role-based filtering
-      userRole: role,
+      // Pass user info for permission-based filtering
+      userPermissions: req.user.permissions,
       userEmployeeId: employeeId,
+      userId: req.user.id,
     });
 
     return res.status(200).json({
@@ -342,10 +344,10 @@ exports.removeProjectMember = async (req, res, next) => {
  */
 exports.checkKanbanExists = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const result = await service.checkKanbanExists(tenantId, project_id);
+    const result = await service.checkKanbanExists(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -399,10 +401,10 @@ exports.createKanbanBoard = async (req, res, next) => {
  */
 exports.getKanbanBoard = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
-    const board = await service.getKanbanBoard(tenantId, project_id);
+    const board = await service.getKanbanBoard(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -481,7 +483,7 @@ exports.createTask = async (req, res, next) => {
  */
 exports.listTasks = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId, role, employeeId } = req.user;
     const { project_id, assigned_to, column_key, priority, search, skip, limit } = req.query;
 
     const result = await service.listTasks(tenantId, {
@@ -492,6 +494,8 @@ exports.listTasks = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
+      userPermissions: req.user.permissions,
+      userEmployeeId: employeeId,
     });
 
     return res.status(200).json({
@@ -512,7 +516,7 @@ exports.listTasks = async (req, res, next) => {
  */
 exports.updateTask = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role } = req.user;
+    const { tenantId, id: userId, role, employeeId } = req.user;
     const { id } = req.params;
     const { title, description, assigned_to, priority, due_date, estimated_hours } = req.body;
 
@@ -523,7 +527,7 @@ exports.updateTask = async (req, res, next) => {
       priority,
       due_date,
       estimated_hours,
-    }, { role });
+    }, { permissions: req.user.permissions, employeeId });
 
     return res.status(200).json({
       status: 'success',
@@ -546,7 +550,7 @@ exports.updateTaskColumn = async (req, res, next) => {
     const { id } = req.params;
     const { column_key, order_index } = req.body;
 
-    const task = await service.updateTaskColumn(tenantId, userId, id, column_key, order_index, { role, employeeId });
+    const task = await service.updateTaskColumn(tenantId, userId, id, column_key, order_index, { permissions: req.user.permissions, employeeId });
 
     return res.status(200).json({
       status: 'success',
@@ -568,7 +572,7 @@ exports.deleteTask = async (req, res, next) => {
     const { tenantId, id: userId, role } = req.user;
     const { id } = req.params;
 
-    const result = await service.deleteTask(tenantId, id, { role, userId });
+    const result = await service.deleteTask(tenantId, id, { permissions: req.user.permissions, userId });
 
     return res.status(200).json({
       status: 'success',
@@ -652,13 +656,14 @@ exports.getMyTimesheetEntries = async (req, res, next) => {
 exports.createTimesheet = async (req, res, next) => {
   try {
     const { tenantId, id: userId, employeeId } = req.user;
-    const { project_id, week_start_date, week_end_date, entries } = req.body;
+    const { project_id, week_start_date, week_end_date, entries, status } = req.body;
 
     const timesheet = await service.createTimesheet(tenantId, userId, employeeId, {
       project_id,
       week_start_date,
       week_end_date,
       entries,
+      status,
     });
 
     return res.status(201).json({
@@ -727,6 +732,37 @@ exports.getPendingApprovals = async (req, res, next) => {
 };
 
 /**
+ * GET /api/project-management/timesheets
+ * List all timesheets (for managers/admins)
+ * Requires: ADMIN, HR, MANAGER
+ */
+exports.listTimesheets = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { employee_id, project_id, status, week_start_date, skip, limit } = req.query;
+
+    const result = await service.listTimesheets(tenantId, userId, {
+      employee_id,
+      project_id,
+      status,
+      week_start_date,
+      skip: skip ? parseInt(skip) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Timesheets retrieved successfully",
+      data: result.timesheets,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
  * POST /api/project-management/timesheets/:id/submit
  * Submit a timesheet
  * Requires: EMPLOYEE
@@ -738,10 +774,41 @@ exports.submitTimesheet = async (req, res, next) => {
 
     const timesheet = await service.submitTimesheet(tenantId, userId, id);
 
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'SUBMIT', null, { status: 'SUBMITTED' });
+
     return res.status(200).json({
       status: 'success',
       message: "Timesheet submitted successfully",
       data: timesheet
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/project-management/timesheets/bulk-approve
+ * Bulk approve timesheets
+ * Requires: ADMIN, HR, MANAGER
+ */
+exports.bulkApproveTimesheets = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { timesheetIds } = req.body;
+
+    const result = await service.bulkApproveTimesheets(tenantId, userId, timesheetIds);
+
+    // Filter successful IDs to log
+    const successfulIds = result.results;
+    for (const id of successfulIds) {
+      await logAudit(req, 'timesheets', id, 'APPROVE (BULK)', { status: 'SUBMITTED' }, { status: 'APPROVED' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: `${successfulIds.length} timesheets approved successfully`,
+      data: result
     });
   } catch (error) {
     next(error);
@@ -759,6 +826,9 @@ exports.approveTimesheet = async (req, res, next) => {
     const { id } = req.params;
 
     const timesheet = await service.approveTimesheet(tenantId, userId, id);
+
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'APPROVE', { status: 'SUBMITTED' }, { status: 'APPROVED' });
 
     return res.status(200).json({
       status: 'success',
@@ -782,6 +852,9 @@ exports.rejectTimesheet = async (req, res, next) => {
     const { rejection_reason } = req.body;
 
     const timesheet = await service.rejectTimesheet(tenantId, userId, id, rejection_reason);
+
+    // Track in audit log
+    await logAudit(req, 'timesheets', id, 'REJECT', { status: 'SUBMITTED' }, { status: 'REJECTED', reason: rejection_reason });
 
     return res.status(200).json({
       status: 'success',
@@ -878,3 +951,149 @@ exports.getUtilizationReport = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * ============================================================================
+ * TASK COMMENT CONTROLLERS
+ * ============================================================================
+ */
+
+/**
+ * POST /api/project-management/tasks/:task_id/comments
+ * Create a comment on a task
+ * Requires: Any authenticated user
+ */
+exports.createComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId } = req.user;
+    const { task_id } = req.params;
+    const { content, mentions } = req.body;
+
+    const comment = await service.createComment(tenantId, userId, task_id, {
+      content,
+      mentions: mentions || [],
+    });
+
+    return res.status(201).json({
+      status: 'success',
+      message: "Comment added successfully",
+      data: comment
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/project-management/tasks/:task_id/comments
+ * List comments for a task
+ * Requires: Any authenticated user
+ */
+exports.listComments = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const { task_id } = req.params;
+
+    const comments = await service.listComments(tenantId, task_id);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comments retrieved successfully",
+      data: comments
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/project-management/tasks/comments/:comment_id
+ * Update a comment
+ * Requires: Comment creator or ADMIN
+ */
+exports.updateComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, role } = req.user;
+    const { comment_id } = req.params;
+    const { content, mentions } = req.body;
+
+    const comment = await service.updateComment(tenantId, userId, comment_id, {
+      content,
+      mentions,
+    }, { role });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comment updated successfully",
+      data: comment
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/project-management/tasks/comments/:comment_id
+ * Delete a comment
+ * Requires: Comment creator or ADMIN
+ */
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, role } = req.user;
+    const { comment_id } = req.params;
+
+    const result = await service.deleteComment(tenantId, userId, comment_id, { role });
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Comment deleted successfully",
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/project-management/projects/:project_id/mentionable-users
+ * Get users that can be @mentioned in a project
+ * Requires: Any authenticated user
+ */
+exports.getMentionableUsers = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
+    const { project_id } = req.params;
+
+    const users = await service.getMentionableUsers(tenantId, project_id);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Mentionable users retrieved successfully",
+      data: users
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/project-management/dashboard/stats
+ * Get dashboard aggregated stats
+ * Requires: ADMIN, HR, EMPLOYEE
+ */
+exports.getDashboardStats = async (req, res, next) => {
+  try {
+    const { tenantId, id: userId, employeeId, role } = req.user;
+
+    const stats = await service.getDashboardStats(tenantId, userId, employeeId, role);
+
+    return res.status(200).json({
+      status: 'success',
+      message: "Dashboard stats retrieved successfully",
+      data: stats
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

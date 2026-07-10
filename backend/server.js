@@ -1,12 +1,16 @@
-
+const http = require('http');
 const app = require('./app');
 const env = require('./src/config/env');
 const logger = require('./src/config/logger');
-// const swaggerLoader = require("./src/docs");
+const { initSocket } = require('./src/config/socket');
 
-// swaggerLoader(app);
+const server = http.createServer(app);
 
-app.listen(env.PORT, () => {
-  logger.info(`HRMS SaaS API listening on port ${env.PORT}`);
+// Initialize Socket.io
+initSocket(server);
+
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(env.PORT, HOST, () => {
+  logger.info(`HRMS SaaS API listening on ${HOST}:${env.PORT} (HTTP + WebSocket)`);
 });
 

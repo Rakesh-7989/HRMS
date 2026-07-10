@@ -5,11 +5,12 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { ArrowLeft, Save, Loader2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AssetFormData {
   asset_code: string; // Changed from asset_id
@@ -36,7 +37,8 @@ interface AssetFormData {
 }
 
 export const AddAssetPage: React.FC = () => {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { user: _user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
@@ -134,12 +136,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.createAsset(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast('Asset created successfully', { icon: '✅' });
+      toast.success('Asset created successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast(err.message, { icon: '⚠️' });
+      toast.error(err.message);
     },
   });
 
@@ -148,12 +150,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.updateAsset(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast('Asset updated successfully', { icon: '✅' });
+      toast.success('Asset updated successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast(err.message, { icon: '⚠️' });
+      toast.error(err.message);
     },
   });
 
@@ -164,8 +166,34 @@ export const AddAssetPage: React.FC = () => {
     // Basic client-side validation to surface missing required fields
     if (!formData.asset_code || !formData.asset_code.trim() || !formData.name || !formData.name.trim()) {
       setError('Please provide both Asset Code and Asset Name.');
-      toast('Please provide both Asset Code and Asset Name.', { icon: '⚠️' });
+      toast.error('Please provide both Asset Code and Asset Name.');
       return;
+    }
+
+    // Date Validations
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (formData.purchase_date) {
+      const purchaseDate = new Date(formData.purchase_date);
+      purchaseDate.setHours(0, 0, 0, 0);
+
+      if (purchaseDate > today) {
+        setError('Purchase date cannot be in the future.');
+        toast.error('Purchase date cannot be in the future.');
+        return;
+      }
+
+      if (formData.warranty_expiry) {
+        const expiryDate = new Date(formData.warranty_expiry);
+        expiryDate.setHours(0, 0, 0, 0);
+
+        if (expiryDate < purchaseDate) {
+          setError('Warranty expiry date cannot be before purchase date.');
+          toast.error('Warranty expiry date cannot be before purchase date.');
+          return;
+        }
+      }
     }
 
     const submitData = {
@@ -200,13 +228,31 @@ export const AddAssetPage: React.FC = () => {
     }));
   };
 
-  const canManage = user?.role === 'ADMIN';
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('assets', 'create');
+  const canUpdate = hasPermission('assets', 'update');
+  const canManage = isEdit ? canUpdate : canCreate;
 
   if (!canManage) {
     return (
       <DashboardLayout title="Access Denied">
         <Card>
-          <p className="text-center text-gray-500">You don't have permission to manage assets.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <X className="text-red-600 dark:text-red-400" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+              You don't have permission to {isEdit ? 'edit' : 'create'} assets. Please contact your administrator if you believe this is an error.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/assets')}
+              className="mt-6"
+            >
+              Back to Assets
+            </Button>
+          </div>
         </Card>
       </DashboardLayout>
     );
@@ -217,7 +263,7 @@ export const AddAssetPage: React.FC = () => {
       <DashboardLayout title="Loading...">
         <Card>
           <div className="flex justify-center p-8">
-            <Skeleton variant="circular" width={24} height={24} />
+            <Loader2 className="animate-spin" size={24} />
           </div>
         </Card>
       </DashboardLayout>
@@ -228,8 +274,8 @@ export const AddAssetPage: React.FC = () => {
     <DashboardLayout
       title={isEdit ? 'Edit Asset' : 'Add New Asset'}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard/organization' },
-        { label: 'Assets', href: '/assets' },
+        { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+        { label: t('common.breadcrumbs.assets'), href: '/assets' },
         { label: isEdit ? 'Edit' : 'Add' },
       ]}
     >
@@ -305,7 +351,6 @@ export const AddAssetPage: React.FC = () => {
                 >
                   <option value="">Select Status</option>
                   <option value="AVAILABLE">AVAILABLE</option>
-                  <option value="ASSIGNED">ASSIGNED</option>
                   <option value="REQUESTED">REQUESTED</option>
                   <option value="UNDER_REPAIR">UNDER_REPAIR</option>
                   <option value="RETIRED">RETIRED</option>
@@ -335,7 +380,8 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.purchase_date}
                   onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
 
@@ -373,7 +419,8 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.warranty_expiry}
                   onChange={(e) => handleInputChange('warranty_expiry', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  min={formData.purchase_date}
                 />
               </div>
 
@@ -381,7 +428,7 @@ export const AddAssetPage: React.FC = () => {
               <div className="col-span-1 md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-6 mt-2">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   Technical Configuration
-                  {isLoadingConfig && <Skeleton variant="circular" width={16} height={16} />}
+                  {isLoadingConfig && <Loader2 className="animate-spin text-primary" size={16} />}
                 </h3>
 
                 {['Laptop', 'Desktop', 'Mobile'].includes(formData.category) ? (

@@ -10,16 +10,22 @@ const logger = require('./src/config/logger');
 const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 const requestLogger = require('./src/middleware/requestLogger');
 
-const app = express();
 
+const app = express();
+app.set('trust proxy', 1); 
 // Security + parsers
 app.use(helmet());
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({ origin: true, credentials: true })); // origin: true dynamically echoes the requesting origin to satisfy cross-origin credentials
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Log each request
 app.use(requestLogger);
+
+// Apply Rate Limiting
+
 
 // Initialize DB session context for RLS
 app.use(dbSessionContext);

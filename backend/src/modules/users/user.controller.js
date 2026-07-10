@@ -1,5 +1,23 @@
 const userService = require("./user.service");
 const logAudit = require('../../utils/auditLogger');
+const fs = require('fs');
+const path = require('path');
+
+/* REAL-TIME UNIQUENESS CHECK */
+exports.checkFieldUniqueness = async (req, res) => {
+  try {
+    const { field, value, excludeUserId } = req.query;
+    if (!field || !value) {
+      return res.status(400).json({ status: "error", message: "field and value are required" });
+    }
+    const result = await userService.checkFieldUniqueness(
+      req.db, field, value, req.user.tenantId, excludeUserId || null
+    );
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
 
 exports.createUser = async (req, res) => {
   try {
@@ -46,7 +64,8 @@ exports.getUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
-    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId);
+    const unmask = req.query.unmask === 'true';
+    const user = await userService.getUserById(req.db, req.params.id, req.user.tenantId, req.user, { unmask });
     if (!user) return res.status(404).json({ status: "error", message: "User not found" });
 
     res.json({ status: "success", user });
@@ -76,7 +95,7 @@ exports.updateUser = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
   try {
-    const updated = await userService.updateEmployee(req.db, req.params.id, req.body, req.user.tenantId);
+    const updated = await userService.updateEmployee(req.db, req.params.id, req.body, req.user);
     res.json({ status: "success", updated });
   } catch (err) {
     res.status(400).json({
@@ -256,3 +275,184 @@ exports.getOrgTree = async (req, res) => {
   }
 };
 
+exports.uploadProfilePhoto = async (req, res) => {
+  try {
+    console.log("[uploadProfilePhoto] Start. User:", req.user.id, "Tenant:", req.user.tenantId);
+
+    if (!req.file) {
+      console.error("[uploadProfilePhoto] No file received");
+      throw new Error("Please upload a file");
+    }
+
+    // Log critical details about where multer put the file
+    console.log("[uploadProfilePhoto LOG] CWD:", process.cwd());
+    if (req.file) {
+      console.log("[uploadProfilePhoto LOG] req.file path (multer):", req.file.path);
+      console.log("[uploadProfilePhoto LOG] req.file dest:", req.file.destination);
+      console.log("[uploadProfilePhoto LOG] req.file filename:", req.file.filename);
+    }
+
+    // Prepare filename and destination
+    const ext = path.extname(req.file.originalname) || '.jpg';
+    const idToUse = (req.user.empCode || req.user.id || 'unknown').toString();
+    const safeId = idToUse.replace(/[^a-zA-Z0-9-]/g, '_');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `${safeId}_${dateStr}${ext}`;
+
+    const targetDir = path.join(process.cwd(), 'uploads', 'profiles');
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const finalPath = path.join(targetDir, filename);
+
+    if (req.file.buffer) {
+      // If using memoryStorage, write buffer to final destination
+      fs.writeFileSync(finalPath, req.file.buffer);
+      console.log(`[uploadProfilePhoto LOG] Buffer written to: ${finalPath}`);
+    } else if (req.file.path) {
+      // If using diskStorage, move/rename the file
+      try {
+        fs.renameSync(req.file.path, finalPath);
+        console.log(`[uploadProfilePhoto LOG] File moved manually to: ${finalPath}`);
+      } catch (mvErr) {
+        // Fallback copy+unlink if across devices
+        if (mvErr.code === 'EXDEV') {
+          fs.copyFileSync(req.file.path, finalPath);
+          fs.unlinkSync(req.file.path);
+        } else {
+          throw mvErr;
+        }
+      }
+    } else {
+      throw new Error("File data missing in request");
+    }
+
+    // Relative path for DB/URL
+    const dbPath = `uploads/profiles/${filename}`;
+    console.log("[uploadProfilePhoto] File received (relative):", dbPath);
+
+    // Update DB
+    const result = await userService.updateProfilePhoto(req.db, req.user.id, dbPath, req.user);
+
+    if (!result) {
+      console.error("[uploadProfilePhoto] DB Update returned no result! Checking user match...");
+    } else {
+      console.log("[uploadProfilePhoto] DB Update success. New URL:", result.profile_photo_url);
+    }
+
+    // Audit
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: filePath }); } catch (e) { }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    console.error("[uploadProfilePhoto] Error:", err.message);
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.removeProfilePhoto = async (req, res) => {
+  try {
+    const result = await userService.removeProfilePhoto(req.db, req.user.id, req.user);
+
+    // Audit
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'REMOVE_PHOTO', null, {}); } catch (e) { }
+
+    res.json({ status: "success", message: "Profile photo removed", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};
+
+exports.bulkImportEmployees = async (req, res) => {
+  try {
+    if (!req.file) {
+      throw new Error("Please upload an Excel file (.xlsx or .xls)");
+    }
+
+    const columnMapping = JSON.parse(req.body.mapping || '{}');
+
+    const result = await userService.bulkImportEmployees(
+      req.db,
+      req.file.buffer,
+      columnMapping,
+      req.user
+    );
+
+    // Audit Log
+    try {
+      await logAudit(req, 'users', null, 'BULK_IMPORT', null, {
+        total: result.total,
+        success: result.success,
+        failed: result.failed
+      });
+    } catch (e) {
+      console.error('Audit failed', e);
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: `Bulk import completed: ${result.success} succeeded, ${result.failed} failed.`,
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "error",
+      message: err.message
+    });
+  }
+};
+
+// REVEAL SENSITIVE FIELD (for viewing another user's data — audit-logged)
+exports.revealSensitiveField = async (req, res) => {
+  try {
+    const { field } = req.query;
+    if (!field) {
+      return res.status(400).json({ status: "error", message: "Query param 'field' is required" });
+    }
+
+    const result = await userService.revealSensitiveField(req.db, req.params.id, field, req.user);
+
+    // Audit log the sensitive data access
+    try {
+      await logAudit(req, 'employees', req.params.id, 'SENSITIVE_DATA_VIEW', null, {
+        field,
+        viewer_role: req.user.role,
+        viewer_id: req.user.id
+      });
+    } catch (e) {
+      console.error('Audit failed for sensitive reveal', e);
+    }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    const statusCode = err.message.includes('permission') ? 403 : 400;
+    res.status(statusCode).json({ status: "error", message: err.message });
+  }
+};
+
+// REVEAL OWN SENSITIVE FIELD (self-service — audit-logged)
+exports.revealOwnSensitiveField = async (req, res) => {
+  try {
+    const { field } = req.query;
+    if (!field) {
+      return res.status(400).json({ status: "error", message: "Query param 'field' is required" });
+    }
+
+    const result = await userService.revealSensitiveField(req.db, req.user.id, field, req.user);
+
+    // Audit log
+    try {
+      await logAudit(req, 'employees', req.user.id, 'SENSITIVE_DATA_VIEW', null, {
+        field,
+        viewer_role: req.user.role,
+        self_view: true
+      });
+    } catch (e) {
+      console.error('Audit failed for sensitive reveal', e);
+    }
+
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+};

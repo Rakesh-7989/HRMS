@@ -8,6 +8,7 @@ const {
 const crypto = require("crypto");
 const logger = require("../../config/logger");
 const moment = require("moment");
+const inboxService = require("../inbox/inbox.service");
 
 /**
  * ============================================================================
@@ -195,12 +196,12 @@ exports.createProject = async (tenantId, userId, data) => {
   const projectId = crypto.randomUUID();
   const result = await pool.query(
     `INSERT INTO projects (
-      id, tenant_id, client_id, name, description, status, start_date, end_date, budget, created_by, updated_by, created_at, updated_at
+      id, tenant_id, client_id, name, description, status, start_date, end_date, budget, billing_type, created_by, updated_by, created_at, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
     )
     RETURNING *`,
-    [projectId, tenantId, client_id, name, description || null, status || "PLANNING", start_date || null, end_date || null, budget || null, userId, userId]
+    [projectId, tenantId, client_id, name, description || null, status || "PLANNING", start_date || null, end_date || null, budget || null, data.billing_type || 'HOURLY', userId, userId]
   );
 
   const project = result.rows[0];
@@ -217,28 +218,41 @@ exports.createProject = async (tenantId, userId, data) => {
  * Others: sees only projects they are members of
  */
 exports.listProjects = async (tenantId, filters = {}) => {
-  const { client_id, status, search, skip = 0, limit = 20, userRole, userEmployeeId } = filters;
+  const { client_id, status, search, skip = 0, limit = 20, userPermissions, userEmployeeId, userId } = filters;
 
-  // For non-ADMIN users, filter to only show projects they are members of
-  const isAdmin = userRole === 'ADMIN';
+  const canViewAll = userPermissions.includes('projects:view_all') || userPermissions.includes('projects:manage');
+  const isManager = userPermissions.includes('projects:manage');
 
   let query = `SELECT DISTINCT p.*, c.name as client_name FROM projects p
                LEFT JOIN clients c ON p.client_id = c.id`;
 
-  // Join with project_members for non-admin filtering
-  if (!isAdmin) {
-    query += ` INNER JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2`;
+  // Filter for non-privileged users
+  if (!canViewAll) {
+    if (isManager) {
+      // Managers see projects they created OR projects they are members of
+      query += ` LEFT JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
+                 WHERE p.tenant_id = $1 AND (p.created_by = $3 OR pm.id IS NOT NULL)`;
+    } else {
+      // Employees only see projects they are members of
+      query += ` INNER JOIN project_members pm ON p.id = pm.project_id AND pm.employee_id = $2
+                 WHERE p.tenant_id = $1`;
+    }
+  } else {
+    // Admin/HR see all
+    query += ` WHERE p.tenant_id = $1`;
   }
-
-  query += ` WHERE p.tenant_id = $1`;
 
   const params = [tenantId];
   let paramCount = 1;
 
-  // Add employee filter for non-admin
-  if (!isAdmin) {
+  if (!canViewAll) {
     params.push(userEmployeeId);
     paramCount++;
+
+    if (isManager) {
+      params.push(userId);
+      paramCount++;
+    }
   }
 
   if (client_id) {
@@ -290,8 +304,11 @@ exports.listProjects = async (tenantId, filters = {}) => {
 
 /**
  * GET PROJECT BY ID
+ * @param {string} tenantId
+ * @param {string} projectId
+ * @param {Object} userContext - Optional. { role, employeeId, userId }. If provided, validates access.
  */
-exports.getProjectById = async (tenantId, projectId) => {
+exports.getProjectById = async (tenantId, projectId, userContext = null) => {
   const result = await pool.query(
     `SELECT p.*, c.name as client_name FROM projects p
      LEFT JOIN clients c ON p.client_id = c.id
@@ -304,11 +321,37 @@ exports.getProjectById = async (tenantId, projectId) => {
   }
 
   const project = result.rows[0];
+
+  // SECURITY FIX: Validate user access if userContext is provided
+  if (userContext) {
+    const { permissions, employeeId, userId } = userContext;
+    const canViewAll = permissions.includes('projects:view_all') || permissions.includes('projects:manage');
+
+    if (!canViewAll) {
+      // Managers can view projects they created OR are members of
+      // Employees can only view projects they are members of
+      const isCreator = project.created_by === userId;
+      const isMember = employeeId ? await this.isProjectMember(tenantId, projectId, employeeId) : false;
+
+      if (permissions.includes('projects:manage')) {
+        if (!isCreator && !isMember) {
+          throw new ForbiddenError("You do not have access to this project");
+        }
+      } else {
+        // EMPLOYEE, HR
+        if (!isMember) {
+          throw new ForbiddenError("You do not have access to this project");
+        }
+      }
+    }
+  }
+
   return {
     ...project,
     client: project.client_name ? { id: project.client_id, name: project.client_name } : null
   };
 };
+
 
 /**
  * UPDATE PROJECT
@@ -328,9 +371,9 @@ exports.updateProject = async (tenantId, userId, projectId, data) => {
   await pool.query(
     `UPDATE projects SET
       name = $1, description = $2, status = $3, start_date = $4, end_date = $5,
-      budget = $6, updated_by = $7, updated_at = NOW()
-    WHERE id = $8 AND tenant_id = $9`,
-    [name, description || null, status, start_date || null, end_date || null, budget || null, userId, projectId, tenantId]
+      budget = $6, billing_type = $7, updated_by = $8, updated_at = NOW()
+    WHERE id = $9 AND tenant_id = $10`,
+    [name, description || null, status, start_date || null, end_date || null, budget || null, data.billing_type || existingProject.billing_type, userId, projectId, tenantId]
   );
 
   return await this.getProjectById(tenantId, projectId);
@@ -422,7 +465,25 @@ exports.addProjectMember = async (tenantId, userId, projectId, employeeId, role 
     [memberId]
   );
 
-  return memberWithDetails.rows[0];
+  const member = memberWithDetails.rows[0];
+
+  // Notify employee: added to project
+  try {
+    const projRes = await pool.query(`SELECT name FROM projects WHERE id = $1`, [projectId]);
+    const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [employeeId]);
+    if (empUserRes.rows[0] && projRes.rows[0]) {
+      await inboxService.createNotification(pool, {
+        tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+        title: 'Added to Project',
+        message: `You've been added to project '${projRes.rows[0].name}'.`,
+        type: 'info', link: '/projects'
+      });
+    }
+  } catch (notifErr) {
+    console.error('Project member add notification error:', notifErr.message);
+  }
+
+  return member;
 };
 
 /**
@@ -526,9 +587,9 @@ exports.getEnabledColumn = async (tenantId, projectId, columnKey) => {
 /**
  * CHECK IF KANBAN BOARD EXISTS FOR PROJECT
  */
-exports.checkKanbanExists = async (tenantId, projectId) => {
-  // Verify project exists
-  await this.getProjectById(tenantId, projectId);
+exports.checkKanbanExists = async (tenantId, projectId, userContext = null) => {
+  // Verify project exists and user has access
+  await this.getProjectById(tenantId, projectId, userContext);
 
   const columnsResult = await pool.query(
     `SELECT id, column_key, column_label, order_index, is_enabled FROM project_kanban_columns
@@ -638,9 +699,9 @@ exports.createKanbanBoard = async (tenantId, userId, projectId, options = {}) =>
 /**
  * GET KANBAN BOARD FOR PROJECT
  */
-exports.getKanbanBoard = async (tenantId, projectId) => {
-  // Verify project exists
-  await this.getProjectById(tenantId, projectId);
+exports.getKanbanBoard = async (tenantId, projectId, userContext = null) => {
+  // Verify project exists and user has access
+  await this.getProjectById(tenantId, projectId, userContext);
 
   const columnsResult = await pool.query(
     `SELECT id, column_key, column_label, order_index, is_enabled FROM project_kanban_columns
@@ -772,7 +833,12 @@ exports.createTask = async (tenantId, userId, data) => {
   const { project_id, title, description, assigned_to, priority, column_key, due_date, estimated_hours } = data;
 
   // Verify project exists
-  await this.getProjectById(tenantId, project_id);
+  const project = await this.getProjectById(tenantId, project_id);
+
+  // Status Lockout: prevent changes to Completed/Archived projects
+  if (['COMPLETED', 'ARCHIVED'].includes(project.status)) {
+    throw new BadRequestError(`Cannot add tasks to a ${project.status.toLowerCase()} project`);
+  }
 
   // Verify column exists and is enabled
   const columnResult = await pool.query(
@@ -816,7 +882,26 @@ exports.createTask = async (tenantId, userId, data) => {
     );
   }
 
-  return await this.getTaskById(tenantId, taskId);
+  const createdTask = await this.getTaskById(tenantId, taskId);
+
+  // Notify assignees: new task assigned
+  try {
+    for (const empId of assignees) {
+      const empUserRes = await pool.query(`SELECT user_id FROM employees WHERE id = $1`, [empId]);
+      if (empUserRes.rows[0] && empUserRes.rows[0].user_id !== userId) {
+        await inboxService.createNotification(pool, {
+          tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+          title: 'New Task Assigned',
+          message: `You've been assigned task '${title}' in project '${project.name}'.`,
+          type: 'info', link: '/projects'
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.error('Task assign notification error:', notifErr.message);
+  }
+
+  return createdTask;
 };
 
 /**
@@ -824,17 +909,34 @@ exports.createTask = async (tenantId, userId, data) => {
  * Returns tasks with assignees array from task_assignees table
  */
 exports.listTasks = async (tenantId, filters = {}) => {
-  const { project_id, assigned_to, column_key, priority, search, skip = 0, limit = 20 } = filters;
+  const { project_id, assigned_to, column_key, priority, search, skip = 0, limit = 20, userRole, userEmployeeId } = filters;
+
+  const canViewAll = ['ADMIN', 'HR'].includes(userRole);
 
   let query = `SELECT t.*, p.name as project_name,
-               e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email
+               e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email,
+               u_creator.role as creator_role
                FROM tasks t
                LEFT JOIN projects p ON t.project_id = p.id
                LEFT JOIN employees e_by ON t.assigned_by = e_by.id
                LEFT JOIN users u_by ON e_by.user_id = u_by.id
+               LEFT JOIN users u_creator ON t.created_by = u_creator.id
                WHERE t.tenant_id = $1`;
   const params = [tenantId];
   let paramCount = 1;
+
+  // Enforce isolation for non-privileged users
+  if (!canViewAll && userEmployeeId) {
+    // Check if user is assigned to the task OR Created the task
+    // We need to subquery for created_by check since userEmployeeId is employee ID, created_by is user ID
+    // Assuming we can get user_id from employee table subquery
+    paramCount++;
+    query += ` AND (
+        EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.employee_id = $${paramCount})
+        OR t.created_by = (SELECT user_id FROM employees WHERE id = $${paramCount})
+     )`;
+    params.push(userEmployeeId);
+  }
 
   if (project_id) {
     paramCount++;
@@ -942,11 +1044,13 @@ exports.listTasks = async (tenantId, filters = {}) => {
 exports.getTaskById = async (tenantId, taskId) => {
   const result = await pool.query(
     `SELECT t.*, p.name as project_name,
-            e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email
+            e_by.id as assigned_by_id, e_by.first_name as assigned_by_first_name, e_by.last_name as assigned_by_last_name, u_by.email as assigned_by_email,
+            u_creator.role as creator_role
      FROM tasks t
      LEFT JOIN projects p ON t.project_id = p.id
      LEFT JOIN employees e_by ON t.assigned_by = e_by.id
      LEFT JOIN users u_by ON e_by.user_id = u_by.id
+     LEFT JOIN users u_creator ON t.created_by = u_creator.id
      WHERE t.id = $1 AND t.tenant_id = $2`,
     [taskId, tenantId]
   );
@@ -998,11 +1102,25 @@ exports.updateTask = async (tenantId, userId, taskId, data, options = {}) => {
   const { role } = options;
   const existingTask = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check: Employees can only edit tasks they created
-  if (role === 'EMPLOYEE') {
-    if (existingTask.created_by !== userId) {
-      throw new ForbiddenError("You can only edit tasks you created.");
-    }
+  // Permission Check - Hybrid approach:
+  // 1. Task creator can always edit their own task
+  // 2. Higher roles can edit tasks created by lower roles
+  // 3. Assigned employees can update their task status
+  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
+
+  const isCreator = existingTask.created_by === userId;
+  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
+  const creatorRoleLevel = ROLE_HIERARCHY[existingTask.creator_role] || 0;
+
+  // Check if employee is assigned to this task
+  const { employeeId } = options;
+  const isAssignedEmployee = role === 'EMPLOYEE' && employeeId &&
+    (existingTask.assignees?.some(a => a.id === employeeId) || existingTask.assigned_to === employeeId);
+
+  // Allow if: creator OR higher role than creator OR assigned employee
+  if (!isCreator && userRoleLevel <= creatorRoleLevel && !isAssignedEmployee) {
+    throw new ForbiddenError("You don't have permission to edit this task.");
   }
 
   const {
@@ -1105,11 +1223,19 @@ exports.deleteTask = async (tenantId, taskId, options = {}) => {
   const { role, userId } = options;
   const task = await this.getTaskById(tenantId, taskId);
 
-  // Permission Check: Employees can only delete tasks they created
-  if (role === 'EMPLOYEE') {
-    if (task.created_by !== userId) {
-      throw new ForbiddenError("You can only delete tasks you created.");
-    }
+  // Permission Check - Hybrid approach:
+  // 1. Task creator can always delete their own task
+  // 2. Higher roles can delete tasks created by lower roles
+  // Role hierarchy: ADMIN > MANAGER > HR > EMPLOYEE
+  const ROLE_HIERARCHY = { 'ADMIN': 4, 'MANAGER': 3, 'HR': 2, 'EMPLOYEE': 1 };
+
+  const isCreator = task.created_by === userId;
+  const userRoleLevel = ROLE_HIERARCHY[role] || 0;
+  const creatorRoleLevel = ROLE_HIERARCHY[task.creator_role] || 0;
+
+  // Allow if: creator OR higher role than creator
+  if (!isCreator && userRoleLevel <= creatorRoleLevel) {
+    throw new ForbiddenError("You don't have permission to delete this task.");
   }
 
   // Delete any timesheet entries referencing this task
@@ -1141,7 +1267,7 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
 
   // 1. Verify project member
   if (project_id) {
-    const isMember = await this.isProjectMember(tenantId, project_id, employeeId);
+    const isMember = await exports.isProjectMember(tenantId, project_id, employeeId);
     if (!isMember) {
       throw new BadRequestError("Employee must be a project member to log timesheets");
     }
@@ -1152,15 +1278,20 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
   const weekStart = dateObj.clone().startOf('isoWeek').format('YYYY-MM-DD');
   const weekEnd = dateObj.clone().endOf('isoWeek').format('YYYY-MM-DD');
 
-  // 3. Find or Create Timesheet for this Week AND Project
+  // 3. Find or Create Timesheet for this Week AND Project (Optional Project Header)
   let timesheetId;
   let query = `SELECT id, status FROM timesheets WHERE tenant_id = $1 AND employee_id = $2 AND week_start_date = $3`;
   const params = [tenantId, employeeId, weekStart];
 
-  if (project_id) {
+  // NOTE: If we use per-project timesheets, we check project_id. 
+  // For now, we allow mixed entries, so we don't strict filter by project_id on header unless specific use case.
+  // But legacy logic did:
+  if (data.timesheet_project_id) { // If explicitly asking for a project-specific sheet
     query += ` AND project_id = $4`;
-    params.push(project_id);
+    params.push(data.timesheet_project_id);
   } else {
+    // Allow any sheet for this week? 
+    // Safe default: Look for a general sheet (project_id IS NULL)
     query += ` AND project_id IS NULL`;
   }
 
@@ -1177,40 +1308,37 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
     await pool.query(
       `INSERT INTO timesheets (id, tenant_id, employee_id, project_id, week_start_date, week_end_date, total_hours, status, created_by, updated_by, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, 0, 'DRAFT', $7, $8, NOW(), NOW())`,
-      [timesheetId, tenantId, employeeId, project_id || null, weekStart, weekEnd, userId, userId]
+      [timesheetId, tenantId, employeeId, data.timesheet_project_id || null, weekStart, weekEnd, userId, userId]
     );
   }
 
   // 4. Upsert Entry
-  // Check if entry exists for this task on this date in this timesheet
-  // Actually, users might add multiple entries for same task? "Add or update".
-  // Let's assume one entry per task per day for simplicity, or just Insert always?
-  // Frontend sends "TimesheetEntryForm", usually implies "Add".
-  // But if I want to update, I need entry ID. The form doesn't send entry ID.
-  // So likely it's "Log Time" -> Insert new entry.
-  // BUT what if they log 4 hours, then want to change to 5?
-  // Without entry ID, we can't update specific row.
-  // However, "Add or update" usually implies looking up by composite key.
-  // Composite key candidates: (timesheet_id, task_id, work_date).
-  // Let's go with: Check if entry exists for (timesheet_id, task_id, work_date).
-  // If yes, update it (or add to it? usually update).
+  // Check if entry exists for this project/task on this date
+  let entryQuery = `SELECT id FROM timesheet_entries WHERE tenant_id = $1 AND timesheet_id = $2 AND work_date = $3`;
+  const entryParams = [tenantId, timesheetId, work_date];
+  let pCount = 3;
 
-  const existingEntry = await pool.query(
-    `SELECT id FROM timesheet_entries WHERE tenant_id = $1 AND timesheet_id = $2 AND task_id = $3 AND work_date = $4`,
-    [tenantId, timesheetId, task_id, work_date]
-  );
+  if (task_id) {
+    pCount++;
+    entryQuery += ` AND task_id = $${pCount}`;
+    entryParams.push(task_id);
+  } else if (project_id) {
+    // If no task, check by project!
+    pCount++;
+    entryQuery += ` AND project_id = $${pCount} AND task_id IS NULL`;
+    entryParams.push(project_id);
+  }
+
+  const existingEntry = await pool.query(entryQuery, entryParams);
 
   if (existingEntry.rowCount > 0) {
-    // User requested strict conflict for duplicates.
-    // "i am able to create mutiple timesheet for same it should throw conflict dont allow"
-    // Assuming they mean duplicate ENTRY for same task/day.
-    throw new ConflictError("Time entry already exists for this task on this date. Please update the existing entry.");
+    throw new ConflictError("Time entry already exists for this task/project on this date. Please update the existing entry.");
   } else {
-    // Insert new entry
+    // Insert new entry with project_id
     await pool.query(
-      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, work_date, hours, notes, created_by, updated_by, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`,
-      [crypto.randomUUID(), tenantId, timesheetId, task_id, work_date, hours, notes || null, userId, userId]
+      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, project_id, work_date, hours, notes, created_by, updated_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+      [crypto.randomUUID(), tenantId, timesheetId, task_id || null, project_id || null, work_date, hours, notes || null, userId, userId]
     );
   }
 
@@ -1226,25 +1354,23 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
     [totalHours, timesheetId]
   );
 
-  // Return the full entry with details
-  // We need to fetch it to return clean object
-  // But returning the timesheet object might be better?
-  // Frontend expects the entry.
-  // Let's return the entry with project/task details.
-
   const result = await pool.query(
     `SELECT te.*, t.title as task_title, p.name as project_name, ts.status
      FROM timesheet_entries te
-     JOIN tasks t ON te.task_id = t.id
      JOIN timesheets ts ON te.timesheet_id = ts.id
-     LEFT JOIN projects p ON ts.project_id = p.id OR t.project_id = p.id
-     WHERE te.timesheet_id = $1 AND te.task_id = $2 AND te.work_date = $3`,
-    [timesheetId, task_id, work_date]
+     LEFT JOIN tasks t ON te.task_id = t.id
+     LEFT JOIN projects p ON te.project_id = p.id OR t.project_id = p.id OR ts.project_id = p.id
+     WHERE te.timesheet_id = $1 AND te.work_date = $2 AND (
+        (te.task_id = $3) OR (te.task_id IS NULL AND $3 IS NULL AND te.project_id = $4)
+     )`,
+    [timesheetId, work_date, task_id || null, project_id || null]
   );
+  // Fallback if strict selection misses (simplify return)
+  if (result.rowCount === 0) return { id: "new", hours, work_date };
 
   return {
     ...result.rows[0],
-    task: { id: task_id, title: result.rows[0].task_title },
+    task: task_id ? { id: task_id, title: result.rows[0].task_title } : null,
     project: result.rows[0].project_name ? { id: project_id, name: result.rows[0].project_name } : null
   };
 };
@@ -1255,12 +1381,22 @@ exports.addTimesheetEntry = async (tenantId, userId, employeeId, data) => {
 exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
   const { project_id, week_start_date, start_date, end_date, limit = 20, offset = 0 } = filters;
 
+  // Updated query to prefer entry project_id, then task project_id, then header project_id
   let query = `SELECT te.*, ts.status, ts.week_start_date, ts.week_end_date,
-               t.title as task_title, p.name as project_name, p.id as project_id
+               ts.approved_at, ts.rejection_reason,
+               approver_e.first_name as approver_first_name, approver_e.last_name as approver_last_name,
+               t.title as task_title, 
+               COALESCE(p_entry.name, p_task.name, p_header.name) as project_name,
+               COALESCE(p_entry.id, p_task.id, p_header.id) as real_project_id,
+               te.is_billable
                FROM timesheet_entries te
                JOIN timesheets ts ON te.timesheet_id = ts.id
-               JOIN tasks t ON te.task_id = t.id
-               LEFT JOIN projects p ON t.project_id = p.id
+               LEFT JOIN tasks t ON te.task_id = t.id
+               LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+               LEFT JOIN projects p_task ON t.project_id = p_task.id
+               LEFT JOIN projects p_header ON ts.project_id = p_header.id
+               LEFT JOIN users approver_u ON ts.approved_by = approver_u.id
+               LEFT JOIN employees approver_e ON approver_u.id = approver_e.user_id
                WHERE ts.tenant_id = $1 AND ts.employee_id = $2`;
 
   const params = [tenantId, employeeId];
@@ -1268,7 +1404,7 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
 
   if (project_id) {
     paramCount++;
-    query += ` AND p.id = $${paramCount}`;
+    query += ` AND (p_entry.id = $${paramCount} OR p_task.id = $${paramCount} OR p_header.id = $${paramCount})`;
     params.push(project_id);
   }
 
@@ -1291,25 +1427,18 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
   }
 
   // Count
-  const countQuery = `SELECT COUNT(*) as count FROM (${query}) as sub`; // Wrapped count for safer query
-  // Actually easier to just regex replace SELECT for count or run separate if needed.
-  // For simplicity, let's run full count query constructing slightly differently or just re-using where.
-  // Let's just use the query without limit/offset for count.
-  const countResult = await pool.query(`SELECT COUNT(*) as count FROM timesheet_entries te
+  const countQuery = `SELECT COUNT(*) as count FROM timesheet_entries te
                JOIN timesheets ts ON te.timesheet_id = ts.id
-               JOIN tasks t ON te.task_id = t.id
-               LEFT JOIN projects p ON t.project_id = p.id
+               LEFT JOIN tasks t ON te.task_id = t.id
+               LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+               LEFT JOIN projects p_task ON t.project_id = p_task.id
+               LEFT JOIN projects p_header ON ts.project_id = p_header.id
                WHERE ts.tenant_id = $1 AND ts.employee_id = $2
-               ${project_id ? `AND p.id = '${project_id}'` : ''}
-               ${week_start_date ? `AND ts.week_start_date = '${week_start_date}'` : ''}
-               ${start_date ? `AND te.work_date >= '${start_date}'` : ''}
-               ${end_date ? `AND te.work_date <= '${end_date}'` : ''}`, // Parametrized is better but complex to reconstructing params array.
-    // Let's assume secure params for main query, and just use the same params for count with modified query string.
-    [tenantId, employeeId] // This is unsafe if I don't match params.
-    // Let's skip count for now or do it properly.
-  );
-  // Re-doing filtering for count properly implies carrying params.
-  // Filter construction reuse:
+               ${project_id ? ` AND (p_entry.id = '${project_id}' OR p_task.id = '${project_id}' OR p_header.id = '${project_id}')` : ''}
+               ${week_start_date ? ` AND ts.week_start_date = '${week_start_date}'` : ''}
+               ${start_date ? ` AND te.work_date >= '${start_date}'` : ''}
+               ${end_date ? ` AND te.work_date <= '${end_date}'` : ''}`;
+  const countResult = await pool.query(countQuery, [tenantId, employeeId]);
 
   // Sorting
   query += ` ORDER BY te.work_date DESC, te.created_at DESC`;
@@ -1320,6 +1449,9 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
 
   const result = await pool.query(query, params);
 
+  // Need total count (simplified)
+  const total = parseInt(countResult?.rows?.[0]?.count || 0);
+
   return {
     entries: result.rows.map(row => ({
       id: row.id,
@@ -1328,11 +1460,23 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
       hours: row.hours,
       notes: row.notes,
       status: row.status,
-      project: row.project_name ? { id: row.project_id, name: row.project_name } : null,
-      task: { id: row.task_id, title: row.task_title }
+      week_start_date: row.week_start_date,
+      week_end_date: row.week_end_date,
+      project_id: row.real_project_id || row.project_id || null,
+      task_id: row.task_id || null,
+      project_name: row.project_name,
+      approved_at: row.approved_at,
+      rejection_reason: row.rejection_reason,
+      approver: row.approver_first_name ? {
+        first_name: row.approver_first_name,
+        last_name: row.approver_last_name
+      } : null,
+      project: row.project_name ? { id: row.real_project_id, name: row.project_name } : null,
+      task: row.task_id ? { id: row.task_id, title: row.task_title } : null,
+      is_billable: row.is_billable !== false
     })),
     pagination: {
-      total: parseInt(countResult?.rows?.[0]?.count || 0), // Rough estimate if query above failed or just return 0
+      total,
       limit,
       offset
     }
@@ -1341,59 +1485,95 @@ exports.getMyTimesheetEntries = async (tenantId, employeeId, filters = {}) => {
 
 /**
  * CREATE TIMESHEET WITH ENTRIES
+ * - Reuses existing sheet for the same week (deletes old entries first)
+ * - Sets status to SUBMITTED so it enters the approval queue
  */
 exports.createTimesheet = async (tenantId, userId, employeeId, data) => {
-  const { project_id, week_start_date, week_end_date, entries } = data;
+  const { project_id, week_start_date, week_end_date, entries, status } = data;
 
-  // Verify employee is a project member (if project_id is provided)
-  if (project_id) {
-    const isMember = await this.isProjectMember(tenantId, project_id, employeeId);
-    if (!isMember) {
-      throw new BadRequestError("Employee must be a project member to log timesheets");
+  // Validate Project Members for billable entries
+  for (const entry of entries) {
+    if (entry.project_id) {
+      const isMember = await exports.isProjectMember(tenantId, entry.project_id, employeeId);
+      if (!isMember) {
+        throw new BadRequestError("Employee must be a project member to log billable time");
+      }
     }
   }
 
-  // Validate daily hours don't exceed 24
+  // Validate daily hours
   const hoursByDate = {};
   for (const entry of entries) {
     const dateKey = entry.work_date;
     hoursByDate[dateKey] = (hoursByDate[dateKey] || 0) + entry.hours;
-    if (hoursByDate[dateKey] > 24) {
-      throw new BadRequestError(`Total hours for ${dateKey} cannot exceed 24 hours`);
-    }
+    if (hoursByDate[dateKey] > 24) throw new BadRequestError(`Exceeds 24h on ${dateKey}`);
   }
 
-  // Check if timesheet already exists for this week
+  // Check if a sheet already exists for this week
   const existingSheet = await pool.query(
-    `SELECT id FROM timesheets WHERE tenant_id = $1 AND employee_id = $2 AND week_start_date = $3`,
-    [tenantId, employeeId, week_start_date]
+    `SELECT id, status FROM timesheets WHERE tenant_id = $1 AND employee_id = $2 AND week_start_date = $3 AND (project_id IS NULL OR project_id = $4)`,
+    [tenantId, employeeId, week_start_date, project_id || null]
   );
+
+  let timesheetId;
   if (existingSheet.rowCount > 0) {
-    throw new ConflictError(`Timesheet already exists for week starting ${week_start_date}`);
-  }
+    const sheet = existingSheet.rows[0];
+    // Only allow re-submission for DRAFT or REJECTED sheets
+    if (sheet.status === 'APPROVED') {
+      throw new BadRequestError('This week\'s timesheet is already approved and cannot be modified');
+    }
+    // Allow editing SUBMITTED sheets (implicit recall or correction)
 
-  const timesheetId = crypto.randomUUID();
-  const totalHours = entries.reduce((sum, e) => sum + e.hours, 0);
 
-  const result = await pool.query(
-    `INSERT INTO timesheets (id, tenant_id, employee_id, project_id, week_start_date, week_end_date, total_hours, status, created_by, updated_by, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-    RETURNING *`,
-    [timesheetId, tenantId, employeeId, project_id || null, week_start_date, week_end_date, totalHours, "DRAFT", userId, userId]
-  );
-
-  const timesheet = result.rows[0];
-
-  // Insert timesheet entries
-  for (const entry of entries) {
+    timesheetId = sheet.id;
+    // Delete old entries before inserting fresh ones (prevents duplicates)
     await pool.query(
-      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, work_date, hours, notes, created_by, updated_by, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`,
-      [crypto.randomUUID(), tenantId, timesheetId, entry.task_id || null, entry.work_date, entry.hours, entry.notes || null, userId, userId]
+      `DELETE FROM timesheet_entries WHERE timesheet_id = $1 AND tenant_id = $2`,
+      [timesheetId, tenantId]
+    );
+  } else {
+    timesheetId = crypto.randomUUID();
+    await pool.query(
+      `INSERT INTO timesheets (id, tenant_id, employee_id, project_id, week_start_date, week_end_date, total_hours, status, created_by, updated_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 0, 'DRAFT', $7, $8, NOW(), NOW())`,
+      [timesheetId, tenantId, employeeId, project_id || null, week_start_date, week_end_date, userId, userId]
     );
   }
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  // Insert fresh entries
+  for (const entry of entries) {
+    // Resolve is_billable: entry-level override > project default > true
+    let entryBillable = true;
+    if (typeof entry.is_billable === 'boolean') {
+      entryBillable = entry.is_billable;
+    } else if (entry.project_id) {
+      const projResult = await pool.query('SELECT is_billable FROM projects WHERE id = $1 AND tenant_id = $2', [entry.project_id, tenantId]);
+      if (projResult.rows[0]) entryBillable = projResult.rows[0].is_billable !== false;
+    }
+
+    await pool.query(
+      `INSERT INTO timesheet_entries (id, tenant_id, timesheet_id, task_id, project_id, work_date, hours, notes, is_billable, created_by, updated_by, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+      [crypto.randomUUID(), tenantId, timesheetId, entry.task_id || null, entry.project_id || null, entry.work_date, entry.hours, entry.notes || null, entryBillable, userId, userId]
+    );
+  }
+
+  // Update total hours and set status
+  // Default to SUBMITTED if no status provided (legacy behavior), but strictly use passed status if valid.
+  const finalStatus = status || 'SUBMITTED';
+
+  await pool.query(
+    `UPDATE timesheets SET 
+      total_hours = (SELECT COALESCE(SUM(hours), 0) FROM timesheet_entries WHERE timesheet_id = $1), 
+      status = $2, 
+      submitted_at = ${finalStatus === 'SUBMITTED' ? 'NOW()' : 'submitted_at'}, 
+      updated_by = $3, 
+      updated_at = NOW() 
+    WHERE id = $1`,
+    [timesheetId, finalStatus, userId]
+  );
+
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
@@ -1491,39 +1671,243 @@ exports.getMyTimesheets = async (tenantId, employeeId, filters = {}) => {
 };
 
 /**
- * LIST PENDING APPROVALS (for managers)
+ * LIST ALL TIMESHEETS (for managers/admins)
+ * Supports extensive filtering
  */
-exports.getPendingApprovals = async (tenantId, managerId, filters = {}) => {
-  const { skip = 0, limit = 20 } = filters;
+exports.listTimesheets = async (tenantId, userId, filters = {}) => {
+  const {
+    employee_id,
+    project_id,
+    status,
+    week_start_date,
+    skip = 0,
+    limit = 20
+  } = filters;
 
-  // Get all employees that report to this manager (simplified)
-  let query = `SELECT t.*, p.name as project_name, e.first_name, e.last_name, u.email FROM timesheets t
-               LEFT JOIN projects p ON t.project_id = p.id
-               LEFT JOIN employees e ON t.employee_id = e.id
+  // Get the user's role and employee ID for permission check
+  const userResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (userResult.rows.length === 0) {
+    throw new BadRequestError("User not found");
+  }
+
+  const { role, employee_id: managerEmployeeId } = userResult.rows[0];
+
+  let query = `SELECT ts.*, 
+                      e.first_name, e.last_name, u.email, u.role as employee_role,
+                      p.name as project_name
+               FROM timesheets ts
+               LEFT JOIN employees e ON ts.employee_id = e.id
                LEFT JOIN users u ON e.user_id = u.id
-               WHERE t.tenant_id = $1 AND t.status = 'SUBMITTED'`;
+               LEFT JOIN projects p ON ts.project_id = p.id
+               WHERE ts.tenant_id = $1`;
   const params = [tenantId];
+  let paramCount = 1;
 
-  const countQuery = query;
-  const countResult = await pool.query(countQuery, params);
-  const total = countResult.rowCount;
+  // Role-based Access Control
+  if (role === 'MANAGER' && managerEmployeeId) {
+    paramCount++;
+    query += ` AND (e.reports_to = $${paramCount} OR ts.employee_id = $${paramCount})`;
+    params.push(managerEmployeeId);
+    // Managers can only see drafts of their own timesheets, not their reports'
+    query += ` AND (ts.status != 'DRAFT' OR ts.employee_id = $${paramCount})`;
+  } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
+    // Other roles can only see their own
+    paramCount++;
+    query += ` AND ts.employee_id = $${paramCount}`;
+    params.push(managerEmployeeId);
+  }
 
-  query += ` ORDER BY t.submitted_at ASC LIMIT $2 OFFSET $3`;
+  // Optional Filters
+  if (employee_id) {
+    paramCount++;
+    query += ` AND ts.employee_id = $${paramCount}`;
+    params.push(employee_id);
+  }
+
+  if (project_id) {
+    paramCount++;
+    query += ` AND ts.project_id = $${paramCount}`;
+    params.push(project_id);
+  }
+
+  if (status) {
+    paramCount++;
+    query += ` AND ts.status = $${paramCount}`;
+    params.push(status);
+  }
+
+  if (week_start_date) {
+    paramCount++;
+    query += ` AND ts.week_start_date = $${paramCount}`;
+    params.push(week_start_date);
+  }
+
+  // Count for pagination
+  const countResult = await pool.query(
+    query.replace(/SELECT ts\\.\\*.*?FROM/s, 'SELECT COUNT(*) as count FROM'),
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count || 0);
+
+  // Sorting and Pagination
+  query += ` ORDER BY ts.week_start_date DESC, ts.submitted_at DESC NULLS LAST LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
   params.push(limit, skip);
 
-  const result = await pool.query(query, params);
+  const tsResult = await pool.query(query, params);
+
+  // Fetch entries for each timesheet (to match the structure expected by the frontend)
+  const timesheets = [];
+  for (const ts of tsResult.rows) {
+    const entriesResult = await pool.query(
+      `SELECT te.*, 
+              COALESCE(p_entry.name, p_task.name) as project_name,
+              tk.title as task_title
+       FROM timesheet_entries te
+       LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+       LEFT JOIN tasks tk ON te.task_id = tk.id
+       LEFT JOIN projects p_task ON tk.project_id = p_task.id
+       WHERE te.timesheet_id = $1 AND te.tenant_id = $2
+       ORDER BY te.work_date ASC`,
+      [ts.id, tenantId]
+    );
+
+    timesheets.push({
+      ...ts,
+      employee: {
+        id: ts.employee_id,
+        first_name: ts.first_name,
+        last_name: ts.last_name,
+        email: ts.email,
+        role: ts.employee_role
+      },
+      entries: entriesResult.rows.map(e => ({
+        ...e,
+        project_name: e.project_name,
+        task_title: e.task_title
+      }))
+    });
+  }
 
   return {
-    timesheets: result.rows.map(row => ({
-      ...row,
-      project: row.project_name ? { id: row.project_id, name: row.project_name } : null,
-      employee: row.first_name ? {
-        id: row.employee_id,
-        first_name: row.first_name,
-        last_name: row.last_name,
-        email: row.email
-      } : null
-    })),
+    timesheets,
+    pagination: {
+      total,
+      skip,
+      limit,
+      hasMore: skip + limit < total,
+    },
+  };
+};
+
+
+/**
+ * LIST PENDING APPROVALS (for managers)
+ * Returns week-level timesheets with nested entries for week-wise approval view
+ */
+exports.getPendingApprovals = async (tenantId, userId, filters = {}) => {
+  const { skip = 0, limit = 20 } = filters;
+
+  // Get the user's role and employee ID
+  const userResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (userResult.rows.length === 0) {
+    throw new BadRequestError("User not found");
+  }
+
+  const { role, employee_id: managerEmployeeId } = userResult.rows[0];
+
+  // First get the submitted timesheets (week-level)
+  let tsQuery = `SELECT ts.*, 
+                        e.first_name, e.last_name, u.email, u.role as employee_role, sh.week_offs as shift_week_offs,
+                        p.name as project_name
+                 FROM timesheets ts
+                 LEFT JOIN employees e ON ts.employee_id = e.id
+                 LEFT JOIN users u ON e.user_id = u.id
+                 LEFT JOIN shifts sh ON sh.id = e.shift_id
+                 LEFT JOIN projects p ON ts.project_id = p.id
+                 WHERE ts.tenant_id = $1 AND ts.status = 'SUBMITTED'`;
+  const params = [tenantId];
+
+  // If user is a MANAGER, only show timesheets for their direct reports
+  if (role === 'MANAGER' && managerEmployeeId) {
+    tsQuery += ` AND e.reports_to = $2`;
+    params.push(managerEmployeeId);
+  } else if (role !== 'ADMIN' && role !== 'HR' && role !== 'SUPER_ADMIN') {
+    tsQuery += ` AND 1=0`;
+  }
+
+  // Count for pagination
+  const countResult = await pool.query(
+    tsQuery.replace(/SELECT ts\.\*.*?FROM/s, 'SELECT COUNT(*) as count FROM'),
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count || 0);
+
+  tsQuery += ` ORDER BY ts.submitted_at DESC, ts.week_start_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  params.push(limit, skip);
+
+  const tsResult = await pool.query(tsQuery, params);
+
+  // For each timesheet, fetch its entries
+  const timesheets = [];
+  for (const ts of tsResult.rows) {
+    const entriesResult = await pool.query(
+      `SELECT te.*, 
+              COALESCE(p_entry.name, p_task.name) as project_name,
+              tk.title as task_title
+       FROM timesheet_entries te
+       LEFT JOIN projects p_entry ON te.project_id = p_entry.id
+       LEFT JOIN tasks tk ON te.task_id = tk.id
+       LEFT JOIN projects p_task ON tk.project_id = p_task.id
+       WHERE te.timesheet_id = $1 AND te.tenant_id = $2
+       ORDER BY te.work_date ASC`,
+      [ts.id, tenantId]
+    );
+
+    timesheets.push({
+      id: ts.id,
+      week_start_date: ts.week_start_date,
+      week_end_date: ts.week_end_date,
+      total_hours: ts.total_hours,
+      status: ts.status,
+      submitted_at: ts.submitted_at,
+      project_name: ts.project_name,
+      employee: {
+        id: ts.employee_id,
+        first_name: ts.first_name,
+        last_name: ts.last_name,
+        email: ts.email,
+        role: ts.employee_role,
+        shift_week_offs: ts.shift_week_offs
+      },
+      entries: entriesResult.rows.map(e => ({
+        id: e.id,
+        work_date: e.work_date,
+        hours: e.hours,
+        notes: e.notes,
+        project_id: e.project_id,
+        task_id: e.task_id,
+        project_name: e.project_name,
+        task_title: e.task_title
+      }))
+    });
+  }
+
+  return {
+    timesheets,
     pagination: {
       total,
       skip,
@@ -1537,7 +1921,7 @@ exports.getPendingApprovals = async (tenantId, managerId, filters = {}) => {
  * SUBMIT TIMESHEET
  */
 exports.submitTimesheet = async (tenantId, userId, timesheetId) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "DRAFT") {
     throw new BadRequestError("Only draft timesheets can be submitted");
@@ -1549,27 +1933,115 @@ exports.submitTimesheet = async (tenantId, userId, timesheetId) => {
     ["SUBMITTED", userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
+};
+
+/**
+ * BULK APPROVE TIMESHEETS
+ */
+exports.bulkApproveTimesheets = async (tenantId, userId, timesheetIds) => {
+  if (!Array.isArray(timesheetIds) || timesheetIds.length === 0) {
+    throw new BadRequestError("No timesheets selected");
+  }
+
+  // Get approver's details (role and employee ID)
+  const approverResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  if (approverResult.rows.length === 0) {
+    throw new BadRequestError("Approver not found");
+  }
+
+  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+
+  const results = [];
+  const errors = [];
+
+  for (const timesheetId of timesheetIds) {
+    try {
+      const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
+
+      if (timesheet.status !== "SUBMITTED") {
+        errors.push({ id: timesheetId, error: "Only submitted timesheets can be approved" });
+        continue;
+      }
+
+      // Prevent self-approval
+      if (approverEmployeeId && timesheet.employee_id === approverEmployeeId) {
+        errors.push({ id: timesheetId, error: "You cannot approve your own timesheet" });
+        continue;
+      }
+
+      // If approver is a MANAGER, ensure they are the reporting manager
+      if (approverRole === 'MANAGER') {
+        const employeeResult = await pool.query(
+          `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+          [timesheet.employee_id, tenantId]
+        );
+        if (employeeResult.rows[0]?.reports_to !== approverEmployeeId) {
+          errors.push({ id: timesheetId, error: "Unauthorized for this employee" });
+          continue;
+        }
+      }
+
+      await pool.query(
+        `UPDATE timesheets SET status = $1, approved_by = $2, approved_at = NOW(), updated_by = $3, updated_at = NOW()
+        WHERE id = $4 AND tenant_id = $5`,
+        ["APPROVED", userId, userId, timesheetId, tenantId]
+      );
+      results.push(timesheetId);
+    } catch (error) {
+      errors.push({ id: timesheetId, error: error.message });
+    }
+  }
+
+  return { results, errors };
 };
 
 /**
  * APPROVE TIMESHEET
  */
 exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "SUBMITTED") {
     throw new BadRequestError("Only submitted timesheets can be approved");
   }
 
-  // Get approver's employee ID checks
-  const approverResult = await pool.query(`SELECT id FROM employees WHERE user_id = $1`, [userId]);
-  const approverId = approverResult.rows[0]?.id;
+  // Get approver's details (role and employee ID)
+  const approverResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
 
-  // Prevent self-approval (Managers/HR/Admin approving their own timesheet)
-  // Note: Admins technically might be allowed everything, but strict requirement says "dont allow self approval option"
-  if (approverId && timesheet.employee_id === approverId) {
+  if (approverResult.rows.length === 0) {
+    throw new BadRequestError("Approver not found");
+  }
+
+  const { role: approverRole, employee_id: approverEmployeeId } = approverResult.rows[0];
+
+  // Prevent self-approval
+  if (approverEmployeeId && timesheet.employee_id === approverEmployeeId) {
     throw new BadRequestError("You cannot approve your own timesheet");
+  }
+
+  // If approver is a MANAGER, ensure they are the reporting manager
+  if (approverRole === 'MANAGER') {
+    const employeeResult = await pool.query(
+      `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+      [timesheet.employee_id, tenantId]
+    );
+    if (employeeResult.rows[0]?.reports_to !== approverEmployeeId) {
+      throw new ForbiddenError("You can only approve timesheets of employees who report to you");
+    }
   }
 
   await pool.query(
@@ -1578,17 +2050,39 @@ exports.approveTimesheet = async (tenantId, userId, timesheetId) => {
     ["APPROVED", userId, userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
  * REJECT TIMESHEET
  */
 exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason) => {
-  const timesheet = await this.getTimesheetById(tenantId, timesheetId);
+  const timesheet = await exports.getTimesheetById(tenantId, timesheetId);
 
   if (timesheet.status !== "SUBMITTED") {
     throw new BadRequestError("Only submitted timesheets can be rejected");
+  }
+
+  // Get processor's details
+  const processorResult = await pool.query(
+    `SELECT u.role, e.id as employee_id 
+     FROM users u 
+     LEFT JOIN employees e ON u.id = e.user_id 
+     WHERE u.id = $1 AND u.tenant_id = $2`,
+    [userId, tenantId]
+  );
+
+  const { role: processorRole, employee_id: processorEmployeeId } = processorResult.rows[0];
+
+  // If processor is a MANAGER, ensure they are the reporting manager
+  if (processorRole === 'MANAGER') {
+    const employeeResult = await pool.query(
+      `SELECT reports_to FROM employees WHERE id = $1 AND tenant_id = $2`,
+      [timesheet.employee_id, tenantId]
+    );
+    if (employeeResult.rows[0]?.reports_to !== processorEmployeeId) {
+      throw new ForbiddenError("You can only reject timesheets of employees who report to you");
+    }
   }
 
   await pool.query(
@@ -1597,7 +2091,7 @@ exports.rejectTimesheet = async (tenantId, userId, timesheetId, rejectionReason)
     ["REJECTED", rejectionReason, userId, timesheetId, tenantId]
   );
 
-  return await this.getTimesheetById(tenantId, timesheetId);
+  return await exports.getTimesheetById(tenantId, timesheetId);
 };
 
 /**
@@ -1615,14 +2109,17 @@ exports.getProjectReport = async (tenantId, projectId, filters = {}) => {
   await this.getProjectById(tenantId, projectId);
 
   let query = `SELECT
-    p.id, p.name as project_name,
+    p.id, p.name as project_name, p.budget, p.billing_type,
     COUNT(DISTINCT ts.id) as total_timesheets,
     SUM(te.hours) as total_hours,
+    SUM(CASE WHEN te.is_billable THEN te.hours ELSE 0 END) as billable_hours,
+    SUM(CASE WHEN NOT te.is_billable THEN te.hours ELSE 0 END) as non_billable_hours,
+    SUM(CASE WHEN te.is_billable THEN te.hours * COALESCE(e.hourly_rate, 0) ELSE 0 END) as total_billable_value,
     ARRAY_AGG(DISTINCT e.first_name || ' ' || e.last_name) as employees,
     AVG(ts.total_hours) as avg_hours_per_timesheet
   FROM projects p
-  LEFT JOIN timesheets ts ON p.id = ts.project_id AND ts.tenant_id = $1 AND ts.status IN ('APPROVED', 'SUBMITTED')
-  LEFT JOIN timesheet_entries te ON ts.id = te.timesheet_id
+  LEFT JOIN timesheet_entries te ON p.id = te.project_id
+  LEFT JOIN timesheets ts ON te.timesheet_id = ts.id AND ts.tenant_id = $1 AND ts.status IN ('APPROVED', 'SUBMITTED')
   LEFT JOIN employees e ON ts.employee_id = e.id
   WHERE p.id = $2 AND p.tenant_id = $1`;
   const params = [tenantId, projectId];
@@ -1640,15 +2137,50 @@ exports.getProjectReport = async (tenantId, projectId, filters = {}) => {
     params.push(end_date);
   }
 
-  query += ` GROUP BY p.id, p.name`;
+  query += ` GROUP BY p.id, p.name, p.budget, p.billing_type`;
 
   const result = await pool.query(query, params);
+  const data = result.rows[0];
 
-  return result.rows[0] || {
-    project_id: projectId,
-    total_hours: 0,
-    total_timesheets: 0,
-    employees: [],
+  if (!data) {
+    return {
+      project_id: projectId,
+      total_hours: 0,
+      total_timesheets: 0,
+      employees: [],
+      financials: {
+        total_billable_value: 0,
+        invoiced_amount: 0,
+        wip_writeoff: 0,
+        budget: 0,
+        billing_type: 'HOURLY'
+      }
+    };
+  }
+
+  // Calculate WIP Cap Logic
+  const billableValue = parseFloat(data.total_billable_value || 0);
+  const budget = parseFloat(data.budget || 0);
+  let invoicedAmount = billableValue;
+  let wipWriteoff = 0;
+
+  if (data.billing_type === 'FIXED' && budget > 0) {
+    invoicedAmount = Math.min(billableValue, budget);
+    wipWriteoff = Math.max(0, billableValue - budget);
+  } else if (data.billing_type === 'NON_BILLABLE') {
+    invoicedAmount = 0;
+    wipWriteoff = billableValue; // Technically all work is "written off" or internal cost
+  }
+
+  return {
+    ...data,
+    financials: {
+      total_billable_value: billableValue,
+      invoiced_amount: invoicedAmount,
+      wip_writeoff: wipWriteoff,
+      budget: budget,
+      billing_type: data.billing_type
+    }
   };
 };
 
@@ -1754,5 +2286,301 @@ exports.getUtilizationReport = async (tenantId, filters = {}) => {
       limit,
       hasMore: skip + limit < total,
     },
+  };
+};
+
+/**
+ * ============================================================================
+ * TASK COMMENTS SERVICES
+ * ============================================================================
+ */
+
+/**
+ * CREATE COMMENT
+ * Anyone can comment on any task
+ */
+exports.createComment = async (tenantId, userId, taskId, data) => {
+  const { content, mentions = [] } = data;
+
+  // Verify task exists
+  await this.getTaskById(tenantId, taskId);
+
+  const commentId = crypto.randomUUID();
+  await pool.query(
+    `INSERT INTO task_comments (id, tenant_id, task_id, user_id, content, mentions, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+    [commentId, tenantId, taskId, userId, content, mentions]
+  );
+
+  return await this.getCommentById(tenantId, commentId);
+};
+
+/**
+ * GET COMMENT BY ID
+ */
+exports.getCommentById = async (tenantId, commentId) => {
+  const result = await pool.query(
+    `SELECT c.*, 
+            u.email as user_email,
+            COALESCE(e.first_name, u.email) as user_first_name,
+            COALESCE(e.last_name, '') as user_last_name
+     FROM task_comments c
+     JOIN users u ON c.user_id = u.id
+     LEFT JOIN employees e ON u.id = e.user_id AND e.tenant_id = c.tenant_id
+     WHERE c.id = $1 AND c.tenant_id = $2`,
+    [commentId, tenantId]
+  );
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError("Comment not found");
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    task_id: row.task_id,
+    user_id: row.user_id,
+    content: row.content,
+    mentions: row.mentions || [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user: {
+      id: row.user_id,
+      email: row.user_email,
+      first_name: row.user_first_name,
+      last_name: row.user_last_name
+    }
+  };
+};
+
+/**
+ * LIST COMMENTS FOR A TASK
+ */
+exports.listComments = async (tenantId, taskId) => {
+  // Verify task exists
+  await this.getTaskById(tenantId, taskId);
+
+  const result = await pool.query(
+    `SELECT c.*, 
+            u.email as user_email,
+            COALESCE(e.first_name, u.email) as user_first_name,
+            COALESCE(e.last_name, '') as user_last_name
+     FROM task_comments c
+     JOIN users u ON c.user_id = u.id
+     LEFT JOIN employees e ON u.id = e.user_id AND e.tenant_id = c.tenant_id
+     WHERE c.task_id = $1 AND c.tenant_id = $2
+     ORDER BY c.created_at ASC`,
+    [taskId, tenantId]
+  );
+
+  return result.rows.map(row => ({
+    id: row.id,
+    task_id: row.task_id,
+    user_id: row.user_id,
+    content: row.content,
+    mentions: row.mentions || [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user: {
+      id: row.user_id,
+      email: row.user_email,
+      first_name: row.user_first_name,
+      last_name: row.user_last_name
+    }
+  }));
+};
+
+/**
+ * UPDATE COMMENT
+ * Only comment creator can update
+ */
+exports.updateComment = async (tenantId, userId, commentId, data, options = {}) => {
+  const { role } = options;
+  const existingComment = await this.getCommentById(tenantId, commentId);
+
+  // Only creator or ADMIN can update
+  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+    throw new ForbiddenError("You can only edit your own comments");
+  }
+
+  const { content, mentions = existingComment.mentions } = data;
+
+  await pool.query(
+    `UPDATE task_comments SET content = $1, mentions = $2, updated_at = NOW()
+     WHERE id = $3 AND tenant_id = $4`,
+    [content, mentions, commentId, tenantId]
+  );
+
+  return await this.getCommentById(tenantId, commentId);
+};
+
+/**
+ * DELETE COMMENT
+ * Creator or ADMIN can delete
+ */
+exports.deleteComment = async (tenantId, userId, commentId, options = {}) => {
+  const { role } = options;
+  const existingComment = await this.getCommentById(tenantId, commentId);
+
+  // Only creator or ADMIN can delete
+  if (existingComment.user_id !== userId && role !== 'ADMIN') {
+    throw new ForbiddenError("You can only delete your own comments");
+  }
+
+  await pool.query(
+    `DELETE FROM task_comments WHERE id = $1 AND tenant_id = $2`,
+    [commentId, tenantId]
+  );
+
+  return { success: true, message: "Comment deleted successfully" };
+};
+
+/**
+ * GET MENTIONABLE USERS FOR A PROJECT
+ * Returns project members that can be @mentioned
+ */
+exports.getMentionableUsers = async (tenantId, projectId) => {
+  const result = await pool.query(
+    `SELECT DISTINCT u.id, u.email, e.first_name, e.last_name
+     FROM project_members pm
+     JOIN employees e ON pm.employee_id = e.id
+     JOIN users u ON e.user_id = u.id
+     WHERE pm.tenant_id = $1 AND pm.project_id = $2
+     ORDER BY e.first_name, e.last_name`,
+    [tenantId, projectId]
+  );
+
+  return result.rows.map(row => ({
+    id: row.id,
+    email: row.email,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    display_name: `${row.first_name} ${row.last_name}`.trim() || row.email
+  }));
+};
+
+/**
+ * GET DASHBOARD STATS
+ * Aggregates data server-side for performance and consistency.
+ * Productivity Score Logic: Billable Utilization Rate (Billable Hours / Total Hours * 100)
+ */
+exports.getDashboardStats = async (tenantId, userId, employeeId, role) => {
+  // Determine date range (Last 30 days)
+  const endDate = moment();
+  const startDate = moment().subtract(30, 'days');
+
+  // Base query conditions
+  let query = `
+    SELECT 
+      te.*,
+      p.name as project_name,
+      t.title as task_title
+    FROM timesheet_entries te
+    LEFT JOIN projects p ON te.project_id = p.id
+    LEFT JOIN tasks t ON te.task_id = t.id
+    WHERE te.tenant_id = $1
+      AND te.work_date >= $2
+      AND te.work_date <= $3
+  `;
+  const params = [tenantId, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')];
+
+  // For "My Dashboard" context (Timesheets page), filter by employee_id unless specifically requesting org-wide
+  // Since frontend uses "getMyTimesheetEntries", we assume this is "My Dashboard"
+  query += ` AND te.employee_id = $4`;
+  params.push(employeeId);
+
+  const result = await pool.query(query, params);
+  const entries = result.rows;
+
+  // --- Stats Calculation ---
+  const totalHours = entries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+  // Respect is_billable flag from DB
+  const billableHours = entries.reduce((acc, curr) => acc + (curr.is_billable !== false ? (Number(curr.hours) || 0) : 0), 0);
+
+  const totalWholeHours = Math.floor(totalHours);
+  const totalMinutes = Math.round((totalHours - totalWholeHours) * 60);
+
+  const billableWholeHours = Math.floor(billableHours);
+  const billableMinutes = Math.round((billableHours - billableWholeHours) * 60);
+
+  // --- Charts Calculation (Last 7 Days) ---
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    last7Days.push(moment().subtract(i, 'days').format('YYYY-MM-DD'));
+  }
+
+  const timeLogged = last7Days.map(date => {
+    // Match date string from DB (YYYY-MM-DD)
+    const daysEntries = entries.filter(e => moment(e.work_date).format('YYYY-MM-DD') === date);
+    const hours = daysEntries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    const dateObj = moment(date);
+    return {
+      date: `${dateObj.date()} ${dateObj.format('MMM')}`,
+      time: hours
+    };
+  });
+
+  const billableVsNonBillable = last7Days.map(date => {
+    const daysEntries = entries.filter(e => moment(e.work_date).format('YYYY-MM-DD') === date);
+    const billable = daysEntries.filter(e => e.is_billable !== false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    const nonBillable = daysEntries.filter(e => e.is_billable === false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+    return {
+      date: moment(date).date().toString(),
+      billable,
+      nonBillable
+    };
+  });
+
+  // --- Breakdown Calculation ---
+  const projectMap = {};
+  const taskMap = {};
+
+  entries.forEach(e => {
+    const pName = e.project_name || 'Unassigned';
+    projectMap[pName] = (projectMap[pName] || 0) + (Number(e.hours) || 0);
+
+    const tName = e.task_title || (e.project_name ? `${e.project_name} Task` : 'Unknown Task');
+    taskMap[tName] = (taskMap[tName] || 0) + (Number(e.hours) || 0);
+  });
+
+  const projects = Object.keys(projectMap).map((name, i) => ({
+    name,
+    time: `${Math.round(projectMap[name] * 10) / 10}h`,
+    color: ['bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-blue-500'][i % 4]
+  }));
+
+  const task_types = Object.keys(taskMap).slice(0, 5).map((name, i) => ({
+    name,
+    time: `${Math.round(taskMap[name] * 10) / 10}h`,
+    color: ['bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-blue-500'][i % 4]
+  }));
+
+  return {
+    stats: {
+      total_time: {
+        hours: totalWholeHours,
+        minutes: totalMinutes,
+        trend: 0
+      },
+      billable_hours: {
+        hours: billableWholeHours,
+        minutes: billableMinutes,
+        trend: 0,
+        label: `${billableWholeHours}h${billableMinutes.toString().padStart(2, '0')}`
+      },
+      productivity_score: {
+        value: totalHours > 0 ? Math.round((billableHours / totalHours) * 100) : 0,
+        trend: 0
+      }
+    },
+    charts: {
+      time_logged: timeLogged,
+      billable_vs_non_billable: billableVsNonBillable
+    },
+    breakdown: {
+      task_types,
+      projects,
+      plans: projects // Match frontend expectation
+    }
   };
 };

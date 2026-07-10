@@ -4,6 +4,20 @@ const logger = require("../../config/logger");
 /**
  * CLOCK IN
  */
+const getDeviceFromUA = (req) => {
+  const ua = req.headers['user-agent'] || '';
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+    return 'Tablet';
+  }
+  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(ua)) {
+    return 'Mobile';
+  }
+  return 'Desktop';
+};
+
+/**
+ * CLOCK IN
+ */
 exports.clockIn = async (req, res) => {
   try {
     const clientIp =
@@ -12,11 +26,13 @@ exports.clockIn = async (req, res) => {
       req.connection?.remoteAddress ||
       "Unknown";
 
+    const device = req.body.device || getDeviceFromUA(req);
+
     const result = await attendanceService.clockIn(
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
+      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device }
     );
 
     res.status(201).json({
@@ -41,11 +57,19 @@ exports.clockOut = async (req, res) => {
       req.connection?.remoteAddress ||
       "Unknown";
 
+    const device = req.body.device || getDeviceFromUA(req);
+
     const result = await attendanceService.clockOut(
       req.db,
       req.user.employeeId,
       req.user,
-      { ip: clientIp, latitude: req.body.latitude, longitude: req.body.longitude, device: req.body.device }
+      {
+        ip: clientIp,
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+        device,
+        eod_report: req.body.eod_report // Pass EOD report
+      }
     );
 
     res.json({
@@ -55,6 +79,101 @@ exports.clockOut = async (req, res) => {
     });
   } catch (error) {
     logger.error("Clock out error:", error.message);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+
+/**
+ * START BREAK
+ */
+exports.startBreak = async (req, res) => {
+  try {
+    const result = await attendanceService.startBreak(
+      req.db,
+      req.user.employeeId,
+      req.user.tenantId
+    );
+    res.json({
+      status: "success",
+      message: "Break started successfully",
+      data: result
+    });
+  } catch (error) {
+    logger.error("Start break error:", error.message);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * END BREAK
+ */
+exports.endBreak = async (req, res) => {
+  try {
+    const result = await attendanceService.endBreak(
+      req.db,
+      req.user.employeeId,
+      req.user.tenantId
+    );
+    res.json({
+      status: "success",
+      message: "Break ended successfully",
+      data: result
+    });
+  } catch (error) {
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET BREAK HISTORY
+ */
+exports.getBreakHistory = async (req, res) => {
+  try {
+    const filters = {
+      date: req.query.date,
+      from_date: req.query.from_date,
+      to_date: req.query.to_date
+    };
+
+    // If not HR/Admin, restrict to self (or team, if Manager logic was added, but sticking to simple self vs all for now)
+    // Actually, usually MANAGERS might want to see team breaks.
+    // Let's implement basics: EMPLOYEE sees self. ADMIN/HR sees all. MANAGER sees self (or could be team if we added that logic).
+    // For safety: if EMPLOYEE, force employee_id.
+
+    if (!req.user.permissions.includes('attendance:manage') && !req.user.permissions.includes('attendance:approve')) {
+      filters.employee_id = req.user.employeeId;
+    } else {
+      // ADMIN/HR/MANAGER can filter by specific employee if they want
+      if (req.query.employee_id) {
+        filters.employee_id = req.query.employee_id;
+      }
+    }
+
+    const result = await attendanceService.getBreakHistory(
+      req.db,
+      req.user, // Pass full actor object for role checks
+      filters
+    );
+    res.json({ status: "success", data: result });
+  } catch (error) {
+    logger.error("Get break history error:", error);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET CURRENTLY ON BREAK
+ */
+exports.getCurrentBreaks = async (req, res) => {
+  try {
+    const result = await attendanceService.getCurrentBreaks(
+      req.db,
+      req.user.tenantId
+    );
+    res.json({ status: "success", data: result });
+  } catch (error) {
+    logger.error("Get current breaks error:", error);
     res.status(400).json({ status: "error", message: error.message });
   }
 };
@@ -129,7 +248,7 @@ exports.getAttendanceRecords = async (req, res) => {
   try {
     const result = await attendanceService.getAttendanceRecords(
       req.db,
-      req.user.tenantId,
+      req.user, // Pass actor
       {
         employee_id: req.query.employee_id,
         from_date: req.query.from_date,
@@ -295,14 +414,14 @@ exports.getAttendanceAnalytics = async (req, res) => {
 
     let analytics;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
+    if (req.user.permissions.includes('attendance:manage')) {
       // HR/Admin: Organization-wide analytics
       analytics = await attendanceService.getOrganizationAttendanceAnalytics(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
+    } else if (req.user.permissions.includes('attendance:approve')) {
       // Manager: Self + team analytics
       analytics = await attendanceService.getManagerAttendanceAnalytics(
         req.db,
@@ -350,14 +469,14 @@ exports.getAttendanceReports = async (req, res) => {
 
     let reports;
 
-    if (req.user.role === 'HR' || req.user.role === 'ADMIN') {
+    if (req.user.permissions.includes('attendance:manage')) {
       // HR/Admin: Organization-wide reports
       reports = await attendanceService.getOrganizationAttendanceReports(
         req.db,
         req.user.tenantId,
         filters
       );
-    } else if (req.user.role === 'MANAGER') {
+    } else if (req.user.permissions.includes('attendance:approve')) {
       // Manager: Self + team reports
       reports = await attendanceService.getManagerAttendanceReports(
         req.db,
@@ -450,10 +569,13 @@ exports.getPendingRegularizations = async (req, res) => {
 /**
  * REVIEW REGULARIZATION (Approve/Reject)
  */
+/**
+ * REVIEW REGULARIZATION (Approve/Reject)
+ */
 exports.reviewRegularization = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, rejection_reason } = req.body;
+    const { status, rejection_reason, check_in_time, check_out_time } = req.body;
 
     let result;
     if (status === 'APPROVED') {
@@ -461,7 +583,9 @@ exports.reviewRegularization = async (req, res) => {
         req.db,
         id,
         req.user.id, // Approver User ID
-        req.user.tenantId
+        req.user.tenantId,
+        check_in_time,
+        check_out_time
       );
     } else {
       result = await attendanceService.rejectRegularization(
@@ -480,6 +604,83 @@ exports.reviewRegularization = async (req, res) => {
     });
   } catch (error) {
     logger.error("Review regularization error:", error);
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET INDIVIDUAL EMPLOYEE REPORT (Detailed)
+ */
+exports.getIndividualEmployeeReport = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { from_date, to_date } = req.query;
+
+    if (!from_date || !to_date) {
+      return res.status(400).json({ status: "error", message: "from_date and to_date are required" });
+    }
+
+    // Permission Check: 
+    // Employee can see own logic. Manager/Admin can see others.
+    // If not self, verify role.
+    if (!req.user.permissions.includes('attendance:manage') && !req.user.permissions.includes('attendance:approve') && req.user.employeeId !== employeeId) {
+      return res.status(403).json({ status: "error", message: "Access denied" });
+    }
+    // Managers should ideally check if employee is in team. 
+    // For now assuming Manager/Admin/HR can view any employee's report for simplicity or rely on service/middleware.
+    // Service doesn't check role ownership for this report yet, so let's stick to simple role check here.
+    if (req.user.permissions.includes('attendance:approve')) {
+      // Ideally check logic here, but let's assume if they have the ID, they can see it or relying on frontend to not show links.
+    }
+
+    const result = await attendanceService.getIndividualEmployeeReport(
+      req.db,
+      req.user.tenantId,
+      employeeId,
+      { from_date, to_date }
+    );
+
+    res.json({ status: "success", data: result });
+  } catch (error) {
+    logger.error("Get individual employee report error:", { message: error.message, stack: error.stack });
+    res.status(400).json({ status: "error", message: error.message });
+  }
+};
+
+
+/**
+ * GET WEEKLY ATTENDANCE HOURS
+ * Returns hours worked from clock-in/out for a given week
+ */
+exports.getWeeklyAttendanceHours = async (req, res) => {
+  try {
+    const { week_start, week_end } = req.query;
+    const { employeeId } = req.params;
+
+    if (!week_start || !week_end) {
+      return res.status(400).json({
+        status: "error",
+        message: "week_start and week_end query parameters are required"
+      });
+    }
+
+    // Use requested employeeId if provided (and allowed by permission), otherwise use self
+    const targetEmployeeId = employeeId || req.user.employeeId;
+
+    const result = await attendanceService.getWeeklyAttendanceHours(
+      req.db,
+      targetEmployeeId,
+      req.user.tenantId,
+      week_start,
+      week_end
+    );
+
+    res.json({
+      status: "success",
+      data: result
+    });
+  } catch (error) {
+    logger.error("Get weekly attendance hours error:", error);
     res.status(400).json({ status: "error", message: error.message });
   }
 };

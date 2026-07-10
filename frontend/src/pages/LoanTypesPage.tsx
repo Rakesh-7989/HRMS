@@ -10,11 +10,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import payrollService from '@/services/payroll.service';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { useTranslation } from 'react-i18next';
 
 export const LoanTypesPage: React.FC = () => {
-  const { user } = useAuth();
-  const role = user?.role || 'EMPLOYEE';
-  const canManage = ['HR', 'ADMIN'].includes(role);
+  const { t } = useTranslation();
+  const { user: _user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('payroll', 'manage');
 
   const queryClient = useQueryClient();
   const { data: loanTypes = [], isLoading } = useQuery({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });
@@ -80,7 +83,7 @@ export const LoanTypesPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: 'Payroll', href: '/Payroll' }, { label: 'Loan Types' }]}>
+    <DashboardLayout title="Loan Types" breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Loan Types' }]}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-x-2">
           {canManage ? (
@@ -111,7 +114,7 @@ export const LoanTypesPage: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell>Loading...</TableCell>
+                <TableCell>{t('common.loading')}</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
                 <TableCell>-</TableCell>
@@ -131,7 +134,7 @@ export const LoanTypesPage: React.FC = () => {
                   <TableCell>{lt.name}</TableCell>
                   <TableCell>{lt.interest_rate ?? lt.interestRate ?? '—'}</TableCell>
                   <TableCell>{(lt.interest_type || lt.interestType || '—').toString()}</TableCell>
-                  <TableCell>{lt.max_amount ?? lt.maxAmount ?? '—'}</TableCell>
+                  <TableCell>{(lt.max_amount ?? lt.maxAmount) ? `₹${Number(lt.max_amount ?? lt.maxAmount).toLocaleString('en-IN')}` : '—'}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(lt)}>
                       <Edit size={16} />
@@ -176,7 +179,7 @@ export const LoanTypesPage: React.FC = () => {
 
           <DialogFooter>
             <Button isLoading={createMut.isPending} onClick={handleCreate}>Create</Button>
-            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -209,8 +212,8 @@ export const LoanTypesPage: React.FC = () => {
           </div>
 
           <DialogFooter>
-            <Button isLoading={updateMut.isPending} onClick={handleUpdate}>Save</Button>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button isLoading={updateMut.isPending} onClick={handleUpdate}>{t('common.save')}</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>{t('common.cancel')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

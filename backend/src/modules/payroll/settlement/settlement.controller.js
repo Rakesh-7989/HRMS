@@ -62,18 +62,28 @@ const submitFnFForApproval = async (req, res) => {
 };
 
 const approveFnFSettlement = async (req, res) => {
-    const data = await settlementService.approveFnFSettlement(
-        req.user.tenantId,
-        req.params.id,
-        req.user.id,
-        req.body.status
-    );
-    res.json({ status: "success", data });
+    try {
+        const data = await settlementService.approveFnFSettlement(
+            req.user.tenantId,
+            req.params.id,
+            req.user.id,
+            req.body.status
+        );
+        res.json({ status: "success", data });
+    } catch (error) {
+        console.error("Approve GnF Settlement Error:", error);
+        res.status(500).json({ status: "error", message: error.message });
+    }
 };
 
 const markFnFPaid = async (req, res) => {
-    const data = await settlementService.markFnFPaid(req.user.tenantId, req.params.id, req.user.id);
-    res.json({ status: "success", data, message: "Settlement marked as paid" });
+    try {
+        const data = await settlementService.markFnFPaid(req.user.tenantId, req.params.id, req.user.id);
+        res.json({ status: "success", data, message: "Settlement marked as paid" });
+    } catch (error) {
+        console.error("Mark FnF Paid Error:", error);
+        res.status(500).json({ status: "error", message: error.message });
+    }
 };
 
 module.exports = {

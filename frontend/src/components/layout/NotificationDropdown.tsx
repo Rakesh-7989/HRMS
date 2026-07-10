@@ -1,10 +1,12 @@
 import { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService, Notification } from '@/services/notifications.service';
 import { Bell, CheckCheck, X, Info, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 interface NotificationDropdownProps {
     isOpen: boolean;
@@ -15,6 +17,7 @@ interface NotificationDropdownProps {
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, onToggle }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     // Fetch notifications
     const { data: notificationsData } = useQuery({
@@ -65,7 +68,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             case 'error':
                 return <AlertCircle className="text-red-500" size={18} />;
             default:
-                return <Info className="text-blue-500" size={18} />;
+                return <Info className="text-violet-500" size={18} />;
         }
     };
 
@@ -74,7 +77,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             markAsReadMutation.mutate(notification.id);
         }
         if (notification.link) {
-            window.location.href = notification.link;
+            navigate(notification.link);
+            onClose();
         }
     };
 
@@ -105,7 +109,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-96 max-h-[500px] bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
+                        className="fixed left-4 right-4 top-[70px] w-auto mt-0 max-h-[80vh] bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 sm:absolute sm:right-0 sm:left-auto sm:top-full sm:mt-2 sm:w-96 sm:max-h-[500px]"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
@@ -153,7 +157,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                                         className={cn(
                                             'px-4 py-3 border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors',
                                             !notification.read
-                                                ? 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                                ? 'bg-violet-50/50 dark:bg-violet-900/10 hover:bg-violet-50 dark:hover:bg-violet-900/20'
                                                 : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                                         )}
                                     >
@@ -167,7 +171,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                                                         {notification.title}
                                                     </p>
                                                     {!notification.read && (
-                                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
+                                                        <div className="w-2 h-2 bg-violet-500 rounded-full flex-shrink-0 mt-1.5" />
                                                     )}
                                                 </div>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
@@ -186,12 +190,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         {/* Footer */}
                         {notifications.length > 0 && (
                             <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                                <a
-                                    href="/notifications"
+                                <Link
+                                    to="/notifications"
+                                    onClick={onClose}
                                     className="text-xs text-primary hover:underline font-medium block text-center"
                                 >
                                     View all notifications
-                                </a>
+                                </Link>
                             </div>
                         )}
                     </motion.div>

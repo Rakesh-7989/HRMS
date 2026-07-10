@@ -53,7 +53,26 @@ exports.createTask = async (db, data, actor) => {
         ]
     );
 
-    return res.rows[0];
+    const task = res.rows[0];
+
+    // Create a notification for the task owner
+    try {
+        const userRes = await query(`SELECT user_id FROM employees WHERE id = $1`, [data.employee_id]);
+        if (userRes.rowCount > 0) {
+            await exports.createNotification(db, {
+                tenant_id: actor.tenantId,
+                user_id: userRes.rows[0].user_id,
+                title: `New Task: ${data.title}`,
+                message: `You have been assigned a new task in the ${data.category} category.`,
+                type: 'info',
+                link: '/inbox'
+            });
+        }
+    } catch (err) {
+        console.error('Error creating task notification:', err);
+    }
+
+    return task;
 };
 
 /* -------------------------- UPDATE TASK STATUS -------------------------- */
@@ -106,4 +125,91 @@ exports.addActivity = async (db, taskId, message, actor) => {
     );
 
     return res.rows[0];
+};
+
+/* -------------------------- NOTIFICATIONS -------------------------- */
+
+exports.getNotifications = async (db, opts, actor) => {
+    const query = getQuery(db);
+    const limit = parseInt(opts.limit) || 20;
+    const offset = parseInt(opts.offset) || 0;
+
+    const res = await query(
+        `SELECT * FROM notifications 
+         WHERE tenant_id = $1 AND user_id = $2 
+         ORDER BY created_at DESC 
+         LIMIT $3 OFFSET $4`,
+        [actor.tenantId, actor.id, limit, offset]
+    );
+
+    const countRes = await query(
+        `SELECT COUNT(*) as total, 
+                COUNT(*) FILTER (WHERE read = false) as unread
+         FROM notifications 
+         WHERE tenant_id = $1 AND user_id = $2`,
+        [actor.tenantId, actor.id]
+    );
+
+    return {
+        notifications: res.rows,
+        total_count: parseInt(countRes.rows[0].total),
+        unread_count: parseInt(countRes.rows[0].unread)
+    };
+};
+
+exports.getUnreadCount = async (db, actor) => {
+    const query = getQuery(db);
+    const res = await query(
+        `SELECT COUNT(*) as count FROM notifications 
+         WHERE tenant_id = $1 AND user_id = $2 AND read = false`,
+        [actor.tenantId, actor.id]
+    );
+    return parseInt(res.rows[0].count);
+};
+
+exports.createNotification = async (db, data) => {
+    const query = getQuery(db);
+    const res = await query(
+        `INSERT INTO notifications 
+            (tenant_id, user_id, title, message, type, link, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [
+            data.tenant_id,
+            data.user_id,
+            data.title,
+            data.message,
+            data.type || 'info',
+            data.link || null,
+            data.metadata || {}
+        ]
+    );
+    return res.rows[0];
+};
+
+exports.markAsRead = async (db, id, actor) => {
+    const query = getQuery(db);
+    await query(
+        `UPDATE notifications SET read = true, updated_at = now() 
+         WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+        [id, actor.tenantId, actor.id]
+    );
+};
+
+exports.markAllAsRead = async (db, actor) => {
+    const query = getQuery(db);
+    await query(
+        `UPDATE notifications SET read = true, updated_at = now() 
+         WHERE tenant_id = $1 AND user_id = $2 AND read = false`,
+        [actor.tenantId, actor.id]
+    );
+};
+
+exports.deleteNotification = async (db, id, actor) => {
+    const query = getQuery(db);
+    await query(
+        `DELETE FROM notifications 
+         WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+        [id, actor.tenantId, actor.id]
+    );
 };

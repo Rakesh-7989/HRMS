@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { format, subDays } from 'date-fns';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { BarChart } from '@/components/charts/BarChart';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { PieChart } from '@/components/charts/PieChart';
-import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Table } from '@/components/ui/Table';
@@ -30,13 +30,16 @@ import {
 import { adminService } from '@/services/admin.service';
 
 export const AttendanceReportsContent: React.FC = () => {
-    const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
     const [reportType, setReportType] = useState<'summary' | 'detailed' | 'trends' | 'compliance'>('summary');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedView, setSelectedView] = useState<'analytics' | 'reports'>('analytics');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('attendance', 'manage');
+    const canViewAll = hasPermission('attendance', 'view_all') || canManage;
+    const canViewTeam = hasPermission('attendance', 'view_team') || canManage;
 
     // Calculate date range based on selection
     const dateRange = useMemo(() => {
@@ -101,9 +104,9 @@ export const AttendanceReportsContent: React.FC = () => {
         return checkOut < target;
     };
 
-    // Role-based access control
-    const canViewOrgAnalytics = user?.role === 'ADMIN' || user?.role === 'HR';
-    const canViewTeamAnalytics = user?.role === 'MANAGER';
+    // Role-based access control replaced with permissions
+    const canViewOrgAnalytics = canViewAll;
+    const canViewTeamAnalytics = canViewTeam;
 
     // Prepare chart data based on user role
     const chartData = useMemo(() => {
@@ -117,7 +120,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Total Employees',
                         value: analytics.overallSummary.total_employees || 0,
                         icon: Users,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     },
                     {
                         title: 'Present Days',
@@ -159,7 +162,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Team Members',
                         value: analytics.teamSummary.total_team_members || 0,
                         icon: Users,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     },
                     {
                         title: 'Present Days',
@@ -219,7 +222,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Attendance Rate',
                         value: `${analytics.personalSummary.attendance_rate || 0}%`,
                         icon: TrendingUp,
-                        color: 'text-blue-500'
+                        color: 'text-violet-500'
                     }
                 ],
                 monthlyTrends: analytics.monthlyBreakdown?.map(month => ({
@@ -343,26 +346,17 @@ export const AttendanceReportsContent: React.FC = () => {
                         </div>
 
                         {selectedPeriod === 'custom' && (
-                            <>
-                                <div>
-                                    <Label htmlFor="from-date">From Date</Label>
-                                    <Input
-                                        id="from-date"
-                                        type="date"
-                                        value={customFromDate}
-                                        onChange={(e) => setCustomFromDate(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="to-date">To Date</Label>
-                                    <Input
-                                        id="to-date"
-                                        type="date"
-                                        value={customToDate}
-                                        onChange={(e) => setCustomToDate(e.target.value)}
-                                    />
-                                </div>
-                            </>
+                            <div className="md:col-span-2">
+                                <Label className="block text-sm font-medium mb-2">Custom Date Range</Label>
+                                <DateRangePicker
+                                    startDate={customFromDate}
+                                    endDate={customToDate}
+                                    onStartDateChange={setCustomFromDate}
+                                    onEndDateChange={setCustomToDate}
+                                    placeholder="Select range"
+                                    className="w-full"
+                                />
+                            </div>
                         )}
 
                         {selectedView === 'reports' && (

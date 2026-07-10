@@ -16,6 +16,21 @@ export interface Attendance {
   rejected_by?: string;
   rejection_reason?: string;
   created_at?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  active_break?: {
+    id: string;
+    start_time: string;
+  };
+  work_mode?: 'OFFICE' | 'REMOTE' | 'HYBRID';
+  late_by?: string;
+  shift_name?: string;
+  shift_start?: string;
+  shift_end?: string;
+  total_break_seconds?: number;
+  effective_work_hours?: string;
+  overtime_hours?: string;
 }
 
 export interface AttendanceSummaryRow {
@@ -128,8 +143,11 @@ export interface AttendanceReports {
     check_in_device?: string;
     check_out_device?: string;
     is_late: boolean;
+    late_by?: string;
     status: string;
     work_hours: number;
+    effective_work_hours?: number | string;
+    overtime_hours?: number | string;
   }>;
   summary: {
     total_employees?: number;
@@ -152,7 +170,7 @@ export const attendanceService = {
     return response.data.data!;
   },
 
-  clockOut: async (coords?: { latitude: number; longitude: number; device?: string }): Promise<Attendance> => {
+  clockOut: async (coords?: { latitude: number; longitude: number; device?: string; eodReport?: string }): Promise<Attendance> => {
     const response = await api.post<{ status: string; data: Attendance }>('/attendance/clock-out', coords || {});
     return response.data.data!;
   },
@@ -260,6 +278,24 @@ export const attendanceService = {
     return response.data.data!;
   },
 
+  startBreak: async (): Promise<any> => {
+    const response = await api.post('/attendance/break/start');
+    return response.data;
+  },
+
+  endBreak: async (): Promise<any> => {
+    const response = await api.post('/attendance/break/end');
+    return response.data;
+  },
+
+  getIndividualEmployeeReport: async (
+    employeeId: string,
+    params: { from_date: string; to_date: string }
+  ): Promise<any> => {
+    const response = await api.get<{ status: string; data: any }>(`/attendance/report/individual/${employeeId}`, { params });
+    return response.data.data;
+  },
+
   // ============================================================================
   // REGULARIZATION
   // ============================================================================
@@ -284,11 +320,67 @@ export const attendanceService = {
     return response.data.data || [];
   },
 
-  reviewRegularization: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; rejection_reason?: string }): Promise<RegularizationRequest> => {
+  reviewRegularization: async (id: string, data: { status: 'APPROVED' | 'REJECTED'; rejection_reason?: string; check_in_time?: string; check_out_time?: string }): Promise<RegularizationRequest> => {
     const response = await api.put<{ status: string; data: RegularizationRequest }>(`/attendance/regularize/${id}/review`, data);
     return response.data.data!;
   },
+
+  // ============================================================================
+  // BREAK HISTORY & CURRENT STATUS
+  // ============================================================================
+
+  getBreakHistory: async (params?: {
+    employee_id?: string;
+    date?: string;
+    from_date?: string;
+    to_date?: string;
+  }): Promise<BreakRecord[]> => {
+    const response = await api.get<{ status: string; data: BreakRecord[] }>('/attendance/break/history', { params });
+    return response.data.data || [];
+  },
+
+  getCurrentBreaks: async (): Promise<CurrentBreakStatus[]> => {
+    const response = await api.get<{ status: string; data: CurrentBreakStatus[] }>('/attendance/break/current');
+    return response.data.data || [];
+  },
+
+  // ============================================================================
+  // TIMESHEET INTEGRATION
+  // ============================================================================
+
+  getWeeklyAttendanceHours: async (params: {
+    week_start: string;
+    week_end: string;
+    employee_id?: string;
+  }): Promise<WeeklyAttendanceHours> => {
+    const route = params.employee_id ? `/attendance/weekly-hours/${params.employee_id}` : '/attendance/my-weekly-hours';
+    const response = await api.get<{ status: string; data: WeeklyAttendanceHours }>(route, { params: { week_start: params.week_start, week_end: params.week_end } });
+    return response.data.data!;
+  },
 };
+
+export interface BreakRecord {
+  id: string;
+  attendance_id: string;
+  start_time: string;
+  end_time?: string;
+  duration_minutes?: number;
+  date: string; // aggregated from attendance
+  employee_id: string; // aggregated
+  first_name?: string; // aggregated
+  last_name?: string; // aggregated
+}
+
+export interface CurrentBreakStatus {
+  employee_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  start_time: string;
+  date: string;
+  department_name?: string;
+  designation_name?: string;
+}
 
 export interface RegularizationRequest {
   id: string;
@@ -305,5 +397,19 @@ export interface RegularizationRequest {
   department_name?: string;
   designation_name?: string;
   created_at: string;
+}
+
+export interface DailyAttendanceData {
+  hours: number;
+  status: 'PRESENT' | 'LEAVE' | 'ABSENT';
+  leave_type: string | null;
+}
+
+export interface WeeklyAttendanceHours {
+  employee_id: string;
+  week_start: string;
+  week_end: string;
+  daily_data: Record<string, DailyAttendanceData>;
+  total_hours: number;
 }
 

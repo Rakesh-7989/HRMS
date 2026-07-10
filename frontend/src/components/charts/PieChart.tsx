@@ -7,6 +7,8 @@ interface PieChartProps {
   colors?: string[];
   height?: number;
   animated?: boolean;
+  innerRadius?: number | string;
+  outerRadius?: number | string;
 }
 
 const DEFAULT_COLORS = ['#6B46C1', '#2563EB', '#059669', '#4F46E5', '#14B8A6', '#7C3AED', '#F59E0B', '#EF4444'];
@@ -16,6 +18,8 @@ export const PieChart: React.FC<PieChartProps> = ({
   colors = DEFAULT_COLORS,
   height = 300,
   animated = true,
+  innerRadius,
+  outerRadius,
 }) => {
 
 
@@ -37,7 +41,8 @@ export const PieChart: React.FC<PieChartProps> = ({
               if (percent < 0.05) return ''; // Hide labels for very small slices
               return `${name}: ${(percent * 100).toFixed(0)}%`;
             }}
-            outerRadius={height / 4}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius || height / 4}
             fill="#8884d8"
             dataKey="value"
             animationDuration={animated ? 1000 : 0}
@@ -45,8 +50,8 @@ export const PieChart: React.FC<PieChartProps> = ({
             animationEasing="ease-out"
           >
             {data.map((_, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={colors[index % colors.length]}
                 style={{
                   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
@@ -63,17 +68,17 @@ export const PieChart: React.FC<PieChartProps> = ({
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
               padding: '12px',
             }}
-            labelStyle={{ 
+            labelStyle={{
               color: 'var(--foreground)',
               fontWeight: 600,
               marginBottom: '8px',
             }}
-            itemStyle={{ 
+            itemStyle={{
               color: 'var(--foreground)',
               padding: '4px 0',
             }}
           />
-          <Legend 
+          <Legend
             wrapperStyle={{ paddingTop: '20px' }}
             iconType="circle"
           />

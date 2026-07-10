@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/Label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Trash2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const StatutoryPage: React.FC = () => {
+  const { t } = useTranslation();
+
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'config' | 'pt' | 'deductions' | 'cc'>('config');
@@ -87,7 +90,7 @@ const StatutoryPage: React.FC = () => {
     });
 
     const createDedMut = useMutation({
-        mutationFn: (payload: Parameters<typeof payrollService.createDeductionType>[0]) => payrollService.createDeductionType(payload),
+        mutationFn: (payload: Partial<DeductionType>) => payrollService.createDeductionType(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['statutory', 'deduction-types'] });
             setDedOpen(false);
@@ -132,7 +135,7 @@ const StatutoryPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Statutory & Compliance"
-            breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Statutory' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Statutory' }]}
             actions={
                 <Button variant="outline" onClick={() => navigate('/payroll')}>
                     Back
@@ -264,7 +267,7 @@ const StatutoryPage: React.FC = () => {
                         <Table>
                             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Allocated</TableHead><TableHead>Spent</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {costCenters.length === 0 ? <TableRow><TableCell className="text-center">No cost centers</TableCell><TableCell>{''}</TableCell><TableCell>{''}</TableCell></TableRow> :
+                                {costCenters.length === 0 ? <TableRow><TableCell className="text-center">No cost centers</TableCell><TableCell>{null}</TableCell><TableCell>{null}</TableCell></TableRow> :
                                     costCenters.map(c => (
                                         <TableRow key={c.id}>
                                             <TableCell>{c.name}</TableCell>

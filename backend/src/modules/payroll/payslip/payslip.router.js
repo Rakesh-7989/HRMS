@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./payslip.controller");
@@ -39,28 +39,79 @@ const taxDeclarationSchema = z.object({
 router.use(verifyJwt);
 
 // =====================
+// GENERATE PAYSLIPS
+// =====================
+
+// Generate payslips for a month (creates and calculates a payrun)
+router.post(
+    "/generate",
+    requirePermission("payroll", "create_payrun"),
+    async (req, res) => {
+        try {
+            const tenantId = req.user.tenantId;
+            const userId = req.user.id;
+            const { month, year } = req.body;
+
+            if (!month || !year) {
+                return res.status(400).json({ status: 'error', message: 'Month and year are required' });
+            }
+
+            const payrunService = require('../payrun/payrun.service');
+
+            // Create the payrun
+            const payrun = await payrunService.createPayrun(tenantId, userId, {
+                periodMonth: month,
+                periodYear: year
+            });
+
+            // Calculate the payrun
+            const calculatedPayrun = await payrunService.calculatePayrun(tenantId, payrun.id, userId);
+
+            // Auto-approve the payrun so payslips are immediately available
+            const approvedPayrun = await payrunService.approvePayrun(tenantId, payrun.id, userId);
+
+            res.json({ status: 'success', data: approvedPayrun });
+        } catch (err) {
+            console.error('Payslip generation error:', err);
+            res.status(500).json({ status: 'error', message: err.message || 'Failed to generate payslips' });
+        }
+    }
+);
+
+// =====================
 // PAYSLIPS
 // =====================
 
 // Employee views their payslips
 router.get(
     "/my",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyPayslips
+);
+
+// Admin/HR views all payslips
+router.get(
+    "/",
+    requirePermission("payroll", "view_payslips"),
+    controller.getAllPayslips
 );
 
 // Get specific payslip data
 router.get(
     "/:payrollRunId/employee/:employeeId",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getPayslipData
 );
 
 // Download payslip PDF
 router.get(
-    "/:payrollRunId/employee/:employeeId/download",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+    "/:id/download",
     controller.downloadPayslip
+);
+
+// Email payslip as PDF
+router.post(
+    "/:id/email",
+    requirePermission("payroll", "manage_payruns"),
+    controller.emailPayslip
 );
 
 // =====================
@@ -70,14 +121,12 @@ router.get(
 // Employee views their tax declaration
 router.get(
     "/tax-declaration",
-    requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
     controller.getMyTaxDeclaration
 );
 
 // Employee saves tax declaration
 router.put(
     "/tax-declaration",
-    requireRole(["EMPLOYEE", "MANAGER"]),
     validate(taxDeclarationSchema),
     controller.saveTaxDeclaration
 );
@@ -85,14 +134,13 @@ router.put(
 // Submit for verification
 router.patch(
     "/tax-declaration/:id/submit",
-    requireRole(["EMPLOYEE", "MANAGER"]),
     controller.submitTaxDeclaration
 );
 
 // HR verifies declaration
 router.patch(
     "/tax-declaration/:id/verify",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_statutory"),
     controller.verifyTaxDeclaration
 );
 

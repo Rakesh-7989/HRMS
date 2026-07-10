@@ -10,38 +10,44 @@ const validator = require("./department.validator");
 
 router.use(verifyJwt);
 
-// ADMIN + HR
+const requirePermission = require("../../middleware/requirePermission");
+
+router.use(verifyJwt);
+
+// Create department
 router.post(
   "/",
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("departments", "manage"),
   validate(validator.createDepartmentSchema),
   controller.createDepartment
 );
 
+// View departments
 router.get(
   "/",
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("departments", "view"),
   validate(validator.getDepartmentSchema),
   controller.getDepartments
 );
 
 router.get(
   "/:id",
-  requireRole(["ADMIN", "HR", "MANAGER", "EMPLOYEE"]),
+  requirePermission("departments", "view"),
   controller.getDepartmentById
 );
 
+// Update department
 router.patch(
   "/:id",
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("departments", "manage"),
   validate(validator.updateDepartmentSchema),
   controller.updateDepartment
 );
 
-// ADMIN + HR (Updated to allow HR to delete)
+// Delete department
 router.delete(
   "/:id",
-  requireRole(["ADMIN", "HR"]),
+  requirePermission("departments", "manage"),
   validate(validator.deleteDepartmentSchema),
   controller.deleteDepartment
 );

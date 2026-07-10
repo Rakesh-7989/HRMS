@@ -23,9 +23,16 @@ export interface User {
   designation_id?: string;
   reports_to?: string;
   manager_id?: string;
+  manager_first_name?: string;
+  manager_last_name?: string;
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
+  shift_start_time?: string;
+  shift_end_time?: string;
+  shift_week_offs?: string[];
+  job_location?: string;
   address?: string;
   // Financial
   bank_name?: string;
@@ -33,6 +40,11 @@ export interface User {
   account_number?: string;
   ifsc_code?: string;
   tax_id?: string;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
+  aadhar_number?: string;
+  branch_name?: string;
   // Emergency Contact
   emergency_name?: string;
   emergency_phone?: string;
@@ -41,13 +53,25 @@ export interface User {
   termination_date?: string;
   termination_reason?: string;
   is_terminated?: boolean;
+  ctc?: number;
+  annual_salary?: number;
   // Metadata
   created_at?: string;
   updated_at?: string;
+  timezone?: string;
+  subscription_status?: string;
+  subscription_plan_name?: string;
+  plan_type?: number;
+  two_factor_enabled?: boolean;
+  profile_photo_url?: string;
   // Joined data
   department?: { id: string; name: string };
   designation?: { id: string; name: string };
   manager?: { id: string; first_name: string; last_name: string };
+  tenant_settings?: {
+    logo_url?: string;
+    [key: string]: any;
+  };
 }
 
 export interface CreateUserData {
@@ -70,12 +94,19 @@ export interface CreateUserData {
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
   bank_name?: string;
   account_name?: string;
   account_number?: string;
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
+  aadhar_number?: string;
+  ctc?: number;
+  timezone?: string;
 }
 
 export interface UpdateUserData {
@@ -101,12 +132,20 @@ export interface UpdateEmployeeData {
   join_date?: string;
   employment_type?: string;
   shift?: string;
+  shift_id?: string;
   bank_name?: string;
   account_name?: string;
   account_number?: string;
   ifsc_code?: string;
   tax_id?: string;
   address?: string;
+  uan?: string;
+  pf_account?: string;
+  esi_number?: string;
+  aadhar_number?: string;
+  ctc?: number;
+  profile_photo_url?: string;
+  timezone?: string;
 }
 
 export interface TerminateEmployeeData {
@@ -163,24 +202,33 @@ const extractData = <T>(response: any, key?: string): T => {
 // SERVICE
 // ============================================================================
 
+import { deobfuscateId } from '@/utils/obfuscation';
+
 export const usersService = {
   // ==========================================================================
   // LIST & GET USERS
   // ==========================================================================
 
-  getUsers: async (params?: EmployeeFilters): Promise<User[]> => {
+  getUsers: async (params?: EmployeeFilters): Promise<{ data: User[], pagination?: any }> => {
     try {
       const response = await api.get('/users', { params });
-      return extractData<User[]>(response, 'users') || [];
+      const resData = response.data;
+      if (resData && resData.data !== undefined && resData.pagination !== undefined) {
+        return { data: resData.data, pagination: resData.pagination };
+      }
+      const data = extractData<User[]>(response, 'users') || [];
+      return { data };
     } catch (error) {
       console.error('Error fetching users:', error);
-      return [];
+      return { data: [] };
     }
   },
 
-  getUserById: async (id: string): Promise<User | null> => {
+  getUserById: async (id: string, options?: { unmask?: boolean }): Promise<User | null> => {
     try {
-      const response = await api.get(`/users/${id}`);
+      const deid = deobfuscateId(id);
+      const params = options?.unmask ? '?unmask=true' : '';
+      const response = await api.get(`/users/${deid}${params}`);
       return extractData<User>(response, 'user');
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -207,7 +255,8 @@ export const usersService = {
 
   updateUser: async (id: string, data: UpdateUserData): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}`, data);
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}`, data);
       return extractData<User>(response, 'updated');
     } catch (error) {
       return handleApiError(error);
@@ -216,7 +265,8 @@ export const usersService = {
 
   updateEmployee: async (id: string, data: UpdateEmployeeData): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/employee`, data);
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/employee`, data);
       return extractData<User>(response, 'updated');
     } catch (error) {
       return handleApiError(error);
@@ -229,7 +279,8 @@ export const usersService = {
 
   changeRole: async (id: string, role: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/role`, { role });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/role`, { role });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -239,7 +290,8 @@ export const usersService = {
   // Backend expects 'manager_employee_id' not 'manager_id'
   changeManager: async (id: string, managerEmployeeId: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/manager`, { manager_employee_id: managerEmployeeId });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/manager`, { manager_employee_id: managerEmployeeId });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -248,7 +300,8 @@ export const usersService = {
 
   assignDepartment: async (id: string, departmentId: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/department`, { department_id: departmentId });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/department`, { department_id: departmentId });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -270,7 +323,8 @@ export const usersService = {
 
   updateStatus: async (id: string, isActive: boolean): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/status`, { is_active: isActive });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/status`, { is_active: isActive });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);
@@ -283,7 +337,8 @@ export const usersService = {
 
   terminateEmployee: async (id: string, data?: TerminateEmployeeData): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.post(`/users/${id}/terminate`, data || {});
+      const deid = deobfuscateId(id);
+      const response = await api.post(`/users/${deid}/terminate`, data || {});
       return { success: true, message: response.data.message || 'Employee terminated successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -292,7 +347,8 @@ export const usersService = {
 
   rehireEmployee: async (id: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.post(`/users/${id}/rehire`, {});
+      const deid = deobfuscateId(id);
+      const response = await api.post(`/users/${deid}/rehire`, {});
       return { success: true, message: response.data.message || 'Employee rehired successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -305,7 +361,8 @@ export const usersService = {
 
   softDeleteUser: async (id: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await api.delete(`/users/${id}`);
+      const deid = deobfuscateId(id);
+      const response = await api.delete(`/users/${deid}`);
       return { success: true, message: response.data.message || 'User deleted successfully' };
     } catch (error) {
       return handleApiError(error);
@@ -330,6 +387,42 @@ export const usersService = {
     try {
       const response = await api.put('/users/me/profile', data);
       return extractData<User>(response, 'updated');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  uploadProfilePhoto: async (file: File): Promise<User> => {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const response = await api.post('/users/me/profile-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return extractData<User>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  removeProfilePhoto: async (): Promise<User> => {
+    try {
+      const response = await api.delete('/users/me/profile-photo');
+      return extractData<User>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  bulkImport: async (file: File, mapping: Record<string, string>): Promise<any> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mapping', JSON.stringify(mapping));
+      const response = await api.post('/users/bulk-import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response.data;
     } catch (error) {
       return handleApiError(error);
     }
@@ -374,6 +467,46 @@ export const usersService = {
     } catch (error) {
       console.error('Error fetching org tree:', error);
       return null;
+    }
+  },
+
+  // ==========================================================================
+  // REAL-TIME UNIQUENESS CHECK
+  // ==========================================================================
+
+  checkFieldUniqueness: async (field: string, value: string, excludeUserId?: string): Promise<{ exists: boolean; label?: string }> => {
+    try {
+      const params: any = { field, value };
+      if (excludeUserId) params.excludeUserId = excludeUserId;
+      const response = await api.get('/users/check-unique', { params });
+      return response.data?.data || { exists: false };
+    } catch {
+      return { exists: false };
+    }
+  },
+
+  // ==========================================================================
+  // SENSITIVE DATA REVEAL (Audit-Logged)
+  // ==========================================================================
+
+  /** Reveal a sensitive field for another employee (HR/Admin) */
+  revealSensitiveField: async (userId: string, field: string): Promise<{ field: string; value: string }> => {
+    try {
+      const deid = deobfuscateId(userId);
+      const response = await api.get(`/users/${deid}/reveal`, { params: { field } });
+      return extractData<{ field: string; value: string }>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  /** Reveal own sensitive field (self-service) */
+  revealOwnSensitiveField: async (field: string): Promise<{ field: string; value: string }> => {
+    try {
+      const response = await api.get('/users/me/reveal', { params: { field } });
+      return extractData<{ field: string; value: string }>(response, 'data');
+    } catch (error) {
+      return handleApiError(error);
     }
   },
 };

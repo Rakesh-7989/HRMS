@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatDistanceToNow, format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -102,6 +103,8 @@ const sampleItems: Item[] = [
 ];
 
 const InboxPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const [items, setItems] = useState<Item[]>(sampleItems);
   const [selected, setSelected] = useState<Item | null>(items[0] || null);
   const [selectedListItem, setSelectedListItem] = useState<{ id: string; list: 'take' | 'new' | 'upcoming' | 'archive' } | null>(items[0] ? { id: items[0].id, list: 'take' } : null);
@@ -166,7 +169,7 @@ const InboxPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Inbox" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Inbox' }]}>
+    <DashboardLayout title={t('sidebar.inbox')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard' }, { label: 'Inbox' }]}>
       <div className="space-y-4">
         <div className="bg-white/5 p-3 rounded-md shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -261,7 +264,7 @@ const InboxPage: React.FC = () => {
                         <p className="text-xs text-muted truncate">{it.subtitle} · {it.category}</p>
 
                         <div className="mt-2 flex items-center gap-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-violet-100 text-violet-700' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
                           <span className="text-[11px] text-muted">{formatDistanceToNow(new Date(it.initiatedOn), { addSuffix: true })}</span>
                         </div>
                       </div>

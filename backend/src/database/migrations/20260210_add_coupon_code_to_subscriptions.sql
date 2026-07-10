@@ -1,0 +1,1 @@
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(50);

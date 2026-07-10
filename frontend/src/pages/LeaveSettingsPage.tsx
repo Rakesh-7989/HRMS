@@ -12,11 +12,15 @@ import { cn } from '@/utils/cn';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Plus, Pencil, Trash2, Check, X, Calendar, FileText, ClipboardList, RefreshCw, AlertCircle, Power } from 'lucide-react';
 import { format } from 'date-fns';
+import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'types' | 'policies' | 'holidays';
 
 export const LeaveSettingsPage: React.FC = () => {
+  const { t } = useTranslation();
     const queryClient = useQueryClient();
+    const { confirm, alert: showAlert } = useConfirm();
     const [activeTab, setActiveTab] = useState<TabType>('types');
 
     // Error state for displaying API errors
@@ -34,8 +38,6 @@ export const LeaveSettingsPage: React.FC = () => {
         requires_attachment: false,
         min_days_notice: 0,
         max_consecutive_days: 0,
-        default_accrual_rate: 0,
-        default_max_balance: 0,
     });
 
     // Leave Policies State
@@ -191,15 +193,25 @@ export const LeaveSettingsPage: React.FC = () => {
         mutationFn: () => leaveService.runAccrual(),
         onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
-            alert(`Accrual run successfully! Processed ${data.accruals_processed} records.`);
+            showAlert({
+                title: 'Accrual Processed',
+                message: `Accrual run successfully! Processed ${data.accruals_processed} records.`,
+                confirmText: 'Great'
+            });
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to run accrual');
         },
     });
 
-    const handleRunAccrual = () => {
-        if (window.confirm('Are you sure you want to run monthly allocation for all employees? This will add leave credits based on policies.')) {
+    const handleRunAccrual = async () => {
+        const result = await confirm({
+            title: 'Run Leave Accrual',
+            message: 'Are you sure you want to run monthly allocation for all employees? This will add leave credits based on policies.',
+            confirmText: 'Run Now',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             runAccrualMutation.mutate();
         }
     };
@@ -215,8 +227,6 @@ export const LeaveSettingsPage: React.FC = () => {
             requires_attachment: false,
             min_days_notice: 0,
             max_consecutive_days: 0,
-            default_accrual_rate: 0,
-            default_max_balance: 0,
         });
         setEditingType(null);
     };
@@ -331,20 +341,44 @@ export const LeaveSettingsPage: React.FC = () => {
         createHolidayMutation.mutate(holidayForm);
     };
 
-    const handleDeleteType = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave type? This action cannot be undone.')) {
+    const handleDeleteType = async (id: string) => {
+        const type = leaveTypes.find(t => t.id === id);
+        const result = await confirm({
+            title: 'Delete Leave Type',
+            message: `Are you sure you want to delete "${type?.name || 'this leave type'}"? This action cannot be undone and may affect existing leave records.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteTypeMutation.mutate(id);
         }
     };
 
-    const handleDeletePolicy = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this leave policy? This action cannot be undone.')) {
+    const handleDeletePolicy = async (id: string) => {
+        const policy = policies.find(p => p.id === id);
+        const result = await confirm({
+            title: 'Delete Policy',
+            message: `Are you sure you want to delete "${policy?.name || 'this policy'}"? This action cannot be undone.`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deletePolicyMutation.mutate(id);
         }
     };
 
-    const handleDeleteHoliday = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this holiday?')) {
+    const handleDeleteHoliday = async (id: string) => {
+        const holiday = holidays.find(h => h.id === id);
+        const result = await confirm({
+            title: 'Delete Holiday',
+            message: `Are you sure you want to delete "${holiday?.name || 'this holiday'}"?`,
+            type: 'destructive',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (result) {
             deleteHolidayMutation.mutate(id);
         }
     };
@@ -375,11 +409,11 @@ export const LeaveSettingsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Leave Settings"
+            title={t('leave.tabs.settings')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
-                { label: 'Leave', href: '/leave' },
-                { label: 'Settings' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.leave'), href: '/leave' },
+                { label: t('common.breadcrumbs.settings') },
             ]}
         >
             <div className="space-y-6">
@@ -424,9 +458,7 @@ export const LeaveSettingsPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Types</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Configure different types of leaves available in your organization
-                                </p>
+                                <p className="text-sm text-gray-500">Define leave categories (Annual, Sick, etc.)</p>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={() => refetchTypes()}>
@@ -435,7 +467,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                 </Button>
                                 <Button size="sm" onClick={() => handleOpenTypeDialog()}>
                                     <Plus size={16} className="mr-1" />
-                                    Add Leave Type
+                                    Add Type
                                 </Button>
                             </div>
                         </div>
@@ -467,9 +499,10 @@ export const LeaveSettingsPage: React.FC = () => {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Code</TableHead>
-                                        <TableHead>Monthly Quota</TableHead>
                                         <TableHead>Paid</TableHead>
-                                        <TableHead>Approval</TableHead>
+                                        <TableHead>Notice</TableHead>
+                                        <TableHead>Max Days</TableHead>
+                                        <TableHead>Attachment</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -484,13 +517,6 @@ export const LeaveSettingsPage: React.FC = () => {
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                {type.default_accrual_rate ? (
-                                                    <span className="text-sm font-medium">{type.default_accrual_rate} days</span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
                                                 {type.is_paid ? (
                                                     <Check size={16} className="text-green-500" />
                                                 ) : (
@@ -498,8 +524,22 @@ export const LeaveSettingsPage: React.FC = () => {
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                {type.requires_approval !== false ? (
-                                                    <Check size={16} className="text-green-500" />
+                                                {type.min_days_notice ? (
+                                                    <span className="text-sm">{type.min_days_notice}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {type.max_consecutive_days ? (
+                                                    <span className="text-sm">{type.max_consecutive_days}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {type.requires_attachment ? (
+                                                    <Check size={16} className="text-fuchsia-500" />
                                                 ) : (
                                                     <X size={16} className="text-gray-400" />
                                                 )}
@@ -546,14 +586,18 @@ export const LeaveSettingsPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Policies</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Define leave entitlements and rules for different employee groups
-                                </p>
+                                <p className="text-sm text-gray-500">Auto-accrual rules (monthly/yearly)</p>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={handleRunAccrual} disabled={runAccrualMutation.isPending}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleRunAccrual}
+                                    disabled={runAccrualMutation.isPending || policies.length === 0}
+                                    className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                                >
                                     <RefreshCw size={16} className={cn("mr-1", runAccrualMutation.isPending && "animate-spin")} />
-                                    Run Allocation
+                                    Run Accrual
                                 </Button>
                                 <Button variant="outline" size="sm" onClick={() => refetchPolicies()}>
                                     <RefreshCw size={16} className="mr-1" />
@@ -599,11 +643,12 @@ export const LeaveSettingsPage: React.FC = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Policy Name</TableHead>
+                                        <TableHead>Policy</TableHead>
                                         <TableHead>Leave Type</TableHead>
-                                        <TableHead>Accrual Rate</TableHead>
-                                        <TableHead>Accrual Type</TableHead>
-                                        <TableHead>Probation Eligible</TableHead>
+                                        <TableHead>Accrual</TableHead>
+                                        <TableHead>Max Balance</TableHead>
+                                        <TableHead>Min Tenure</TableHead>
+                                        <TableHead>Probation</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -612,10 +657,30 @@ export const LeaveSettingsPage: React.FC = () => {
                                     {policies.map((policy) => (
                                         <TableRow key={policy.id}>
                                             <TableCell className="font-medium">{policy.name}</TableCell>
-                                            <TableCell>{policy.leave_type?.name || policy.leave_type_id}</TableCell>
-                                            <TableCell>{policy.accrual_rate} days</TableCell>
                                             <TableCell>
-                                                <span className="capitalize">{policy.accrual_type.toLowerCase()}</span>
+                                                <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                                    {(policy as any).leave_type_name || policy.leave_type?.name || 'N/A'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="font-medium">{policy.accrual_rate}</span>
+                                                <span className="text-xs text-gray-500 ml-1">
+                                                    /{policy.accrual_type === 'MONTHLY' ? 'mo' : policy.accrual_type === 'YEARLY' ? 'yr' : 'fixed'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                {policy.max_balance ? (
+                                                    <span>{policy.max_balance}d</span>
+                                                ) : (
+                                                    <span className="text-gray-400">∞</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {policy.min_tenure_months ? (
+                                                    <span>{policy.min_tenure_months}mo</span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {policy.is_probation_eligible ? (
@@ -869,32 +934,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="type-default-accrual" className="block mb-1.5 text-blue-600 dark:text-blue-400">Default Monthly Quota</Label>
-                                    <Input
-                                        id="type-default-accrual"
-                                        type="number"
-                                        step="0.1"
-                                        value={typeForm.default_accrual_rate}
-                                        onChange={(e) => setTypeForm({ ...typeForm, default_accrual_rate: Number(e.target.value) })}
-                                        min={0}
-                                        placeholder="e.g. 1.5"
-                                    />
-                                    <p className="text-[10px] text-gray-500 mt-1">Auto-creates a monthly policy</p>
-                                </div>
-                                <div>
-                                    <Label htmlFor="type-default-balance" className="block mb-1.5 text-blue-600 dark:text-blue-400">Max Balance (Cap)</Label>
-                                    <Input
-                                        id="type-default-balance"
-                                        type="number"
-                                        value={typeForm.default_max_balance}
-                                        onChange={(e) => setTypeForm({ ...typeForm, default_max_balance: Number(e.target.value) })}
-                                        min={0}
-                                        placeholder="Optional"
-                                    />
-                                </div>
-                            </div>
+
                         </div>
                         <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
                             <Button type="button" variant="ghost" onClick={handleCloseTypeDialog}>

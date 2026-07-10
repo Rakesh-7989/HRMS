@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./consultant.controller");
@@ -50,36 +50,41 @@ router.use(verifyJwt);
 // =====================
 // CONSULTANTS
 // =====================
+
+// Create consultant
 router.post(
     "/",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_salary"),
     validate(createConsultantSchema),
     controller.createConsultant
 );
 
+// Get all consultants
 router.get(
     "/",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_dashboard"),
     controller.getConsultants
 );
 
-router.get(
-    "/summary",
-    requireRole(["HR", "ADMIN"]),
-    controller.getConsultantPayrollSummary
-);
-
+// Get consultant by ID
 router.get(
     "/:id",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "view_dashboard"),
     controller.getConsultantById
 );
 
+// Update consultant
 router.put(
     "/:id",
-    requireRole(["HR", "ADMIN"]),
-    validate(createConsultantSchema),
+    requirePermission("payroll", "manage_salary"),
     controller.updateConsultant
+);
+
+// Summary / Payroll Report
+router.get(
+    "/reports/summary",
+    requirePermission("payroll", "view_dashboard"),
+    controller.getConsultantPayrollSummary
 );
 
 // =====================
@@ -87,26 +92,26 @@ router.put(
 // =====================
 router.post(
     "/invoices",
-    requireRole(["HR", "ADMIN"]),
+    requirePermission("payroll", "manage_salary"),
     validate(createInvoiceSchema),
     controller.createInvoice
 );
 
 router.get(
-    "/invoices/all",
-    requireRole(["HR", "ADMIN"]),
+    "/invoices",
+    requirePermission("payroll", "view_dashboard"),
     controller.getInvoices
 );
 
 router.patch(
     "/invoices/:id/approve",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_salary"),
     controller.approveInvoice
 );
 
 router.patch(
     "/invoices/:id/pay",
-    requireRole(["ADMIN"]),
+    requirePermission("payroll", "manage_salary"),
     validate(markPaidSchema),
     controller.markInvoicePaid
 );

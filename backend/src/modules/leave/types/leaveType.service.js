@@ -1,5 +1,6 @@
 const pool = require("../../../config/db");
 const leavePolicyService = require("../policies/leavePolicy.service");
+const { BadRequestError } = require("../../../utils/customErrors");
 
 const getQuery = (db) =>
     db && typeof db.query === "function" ? db.query : pool.query.bind(pool);
@@ -14,7 +15,7 @@ exports.createLeaveType = async (db, data, actor) => {
         [actor.tenantId, data.code.toUpperCase()]
     );
     if (existing.rowCount > 0) {
-        throw new Error(`Leave type with code '${data.code}' already exists`);
+        throw new BadRequestError(`Leave type with code '${data.code}' already exists`);
     }
 
     const res = await query(
@@ -39,20 +40,26 @@ exports.createLeaveType = async (db, data, actor) => {
 
     const leaveType = res.rows[0];
 
-    // Auto-create default policy if accrual details provided
+    // Issue 24: Auto-create default policy with cleanup on failure
     if (data.default_accrual_rate > 0) {
-        await leavePolicyService.createPolicy(db, {
-            leave_type_id: leaveType.id,
-            name: `${data.name} Default Policy`,
-            description: `Auto-generated default policy for ${data.name}`,
-            accrual_type: 'MONTHLY',
-            accrual_rate: data.default_accrual_rate,
-            max_balance: data.default_max_balance || null,
-            year_start_month: 1,
-            priority: 100,
-            is_probation_eligible: false,
-            min_tenure_months: 0
-        }, actor);
+        try {
+            await leavePolicyService.createPolicy(db, {
+                leave_type_id: leaveType.id,
+                name: `${data.name} Default Policy`,
+                description: `Auto-generated default policy for ${data.name}`,
+                accrual_type: 'MONTHLY',
+                accrual_rate: data.default_accrual_rate,
+                max_balance: data.default_max_balance || null,
+                year_start_month: 1,
+                priority: 100,
+                is_probation_eligible: false,
+                min_tenure_months: 0
+            }, actor);
+        } catch (policyErr) {
+            // Clean up the leave type since policy creation failed
+            await query(`DELETE FROM leave_types WHERE id = $1 AND tenant_id = $2`, [leaveType.id, actor.tenantId]);
+            throw new BadRequestError(`Leave type created but default policy failed: ${policyErr.message}`);
+        }
     }
 
     return leaveType;
@@ -130,10 +137,10 @@ exports.updateLeaveType = async (db, id, updates, actor) => {
 exports.deleteLeaveType = async (db, id, actor) => {
     const query = getQuery(db);
 
-    // Check if leave type is in use
+    // Issue 5: Add tenant_id filter to prevent cross-tenant data leaks
     const inUse = await query(
-        `SELECT id FROM leave_applications WHERE leave_type_id = $1 LIMIT 1`,
-        [id]
+        `SELECT id FROM leave_applications WHERE leave_type_id = $1 AND tenant_id = $2 LIMIT 1`,
+        [id, actor.tenantId]
     );
 
     if (inUse.rowCount > 0) {

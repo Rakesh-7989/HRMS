@@ -9,8 +9,8 @@ export interface SystemDashboard {
     active_tenants_24h: number;
     active_users_24h: number;
   };
-  tenantGrowth: Array<{ date: string; new_tenants: number }>;
-  userGrowth: Array<{ date: string; new_users: number }>;
+  tenantGrowth: Array<{ date: string; count: number }>;
+  employeeGrowth: Array<{ date: string; count: number }>;
   topActiveTenants: Array<{
     id: string;
     name: string;
@@ -23,6 +23,12 @@ export interface SystemDashboard {
     active_users: number;
     pending_pwd_change: number;
     inactive_users: number;
+    resources?: {
+      cpu: number;
+      memory: number;
+      storage?: number;
+      network?: number;
+    };
   };
   generatedAt: string;
 }
@@ -34,7 +40,15 @@ export interface OrganizationDashboard {
     total_departments: number;
     total_designations: number;
     active_users: number;
+    active_employees: number;
     inactive_users: number;
+    inactive_employees: number;
+    employee_growth: number;
+    active_employee_growth: number;
+    department_growth: number;
+    designation_growth: number;
+    on_leave_today: number;
+    late_today: number;
   };
   roleDistribution: Array<{ role: string; count: number }>;
   departmentAnalytics: Array<{
@@ -101,6 +115,8 @@ export interface HRDashboard {
     unique_employees: number;
     late_count: number;
     late_percentage: number;
+    total_employees: number;
+    not_clocked_in: number;
   };
   employeesOnLeaveToday: Array<{
     id: string;
@@ -203,6 +219,16 @@ export interface EmployeeDashboard {
     rejected: number;
     upcoming_leaves: number;
   };
+  leaveBalance: number;
+  taskMetrics: Array<{ column_key: string; count: number }>;
+  recentTasks: Array<{
+    id: string;
+    title: string;
+    priority: string;
+    column_key: string;
+    due_date: string | null;
+    project_name: string | null;
+  }>;
   leaveHistory: Array<{
     id: string;
     leave_type: string;
@@ -232,6 +258,11 @@ export interface EmployeeDashboard {
     type: string;
     count: number;
   }>;
+  weeklyActivity: Array<{
+    date: string;
+    check_in_time: string;
+    check_out_time: string | null;
+  }>;
   upcomingLeaves: Array<{
     id: string;
     leave_type: string;
@@ -243,10 +274,29 @@ export interface EmployeeDashboard {
   generatedAt: string;
 }
 
+export interface SystemReports {
+  growthChurn: Array<{ month: string; new_tenants: number; churned_tenants: number }>;
+  planDistribution: Array<{ name: string; value: number }>;
+  mrrTrend: Array<{ date: string; revenue: number }>;
+  featureUsage: Array<{ feature: string; usage: number }>;
+  infraHealth: Array<{ time: string; requests: number; latency: number }>;
+  revenueByPlan: Array<{ name: string; revenue: number }>;
+  usageTrend: Array<{ date: string; active_users: number }>;
+  tenantHealth: Array<{ name: string; score: number }>;
+  stats: {
+    total_mrr: number;
+    total_tenants: number;
+    active_users: number;
+    avg_employees: number;
+  };
+  generatedAt: string;
+}
+
 export type DashboardResponse =
   | SystemDashboard
   | OrganizationDashboard
   | HRDashboard
   | ManagerDashboard
-  | EmployeeDashboard;
+  | EmployeeDashboard
+  | SystemReports;
 

@@ -1,35 +1,34 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import { AuthProvider } from '@/contexts/AuthContext';
-import App from './App';
+import router from './App';
 import './index.css';
+import './i18n/config';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 0,
     },
   },
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <App />
+        <RouterProvider router={router} />
+        {import.meta.env.DEV && (
+          <div className="print:hidden">
             <ReactQueryDevtools initialIsOpen={false} />
-          </AuthProvider>
-        </ThemeProvider>
+          </div>
+        )}
       </QueryClientProvider>
-    </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );
-

@@ -133,8 +133,9 @@ const calculateESI = (gross, config) => {
     const employerRate = config.esi_employer_rate || 3.25;
 
     // ESI is calculated on gross wages (all components)
-    const esiEmployee = Math.round((gross * employeeRate) / 100);
-    const esiEmployer = Math.round((gross * employerRate) / 100);
+    // Compliance Fix: ESI must be rounded UP to the next higher rupee
+    const esiEmployee = Math.ceil((gross * employeeRate) / 100);
+    const esiEmployer = Math.ceil((gross * employerRate) / 100);
 
     return {
         esiEmployee,
@@ -246,7 +247,8 @@ const calculatePT = (gross, state, gender = 'MALE', month = null, customSlabs = 
     }
 
     // Special case: Maharashtra charges ₹300 in February
-    if (state === 'Maharashtra' && month === 2 && tax === 200) {
+    // month is 1-indexed (1=Jan, 2=Feb)
+    if (state === 'Maharashtra' && parseInt(month) === 2 && tax === 200) {
         tax = 300;
     }
 
@@ -305,6 +307,177 @@ const calculateLWF = (config, month) => {
         lwfEmployee: config.lwf_employee_amount || 0,
         lwfEmployer: config.lwf_employer_amount || 0,
         lwfApplicable: true
+    };
+};
+
+// ===================================================================
+// TDS (TAX DEDUCTED AT SOURCE) CALCULATION - FY 2025-26
+// ===================================================================
+
+/**
+ * Calculate HRA Exemption (Section 10(13A))
+ * 
+ * @param {number} actualHRA - Annual HRA received
+ * @param {number} annualBasic - Annual Basic + DA
+ * @param {number} annualRentPaid - Total rent paid in the year
+ * @param {boolean} isMetro - Whether living in a metro city (Delhi, Mumbai, Kolkata, Chennai)
+ * @returns {number} Exempt HRA amount
+ */
+const calculateHRAExemption = (actualHRA, annualBasic, annualRentPaid, isMetro = false) => {
+    if (annualRentPaid <= 0) return 0;
+
+    const rentMinusTenPercent = Math.max(0, annualRentPaid - (annualBasic * 0.10));
+    const fiftyOrFortyPercent = isMetro ? (annualBasic * 0.50) : (annualBasic * 0.40);
+
+    return Math.min(actualHRA, rentMinusTenPercent, fiftyOrFortyPercent);
+};
+
+/**
+ * Calculate TDS based on Income Tax Slabs
+ * Supports New Regime (FY 2025-26) and Old Regime
+ * 
+ * @param {number} annualGrossIncome - Projected Annual Gross Salary
+ * @param {object} declarations - { regime: 'NEW'|'OLD', investments_80c: 0, rent_paid: 0, is_metro: false, actual_hra: 0, ... }
+ * @param {number} age - Employee age
+ */
+const calculateTDS = (annualGrossIncome, declarations = {}, age = 30) => {
+    const regime = declarations.regime || 'NEW'; // Default to New Regime
+    let taxableIncome = annualGrossIncome;
+    let taxAmount = 0;
+    let hraExemption = 0;
+
+    // 1. Standard Deduction
+    // FY 2025-26: New Regime Std Ded increased to 75,000
+    const stdDeduction = regime === 'NEW' ? 75000 : 50000;
+    taxableIncome = Math.max(0, taxableIncome - stdDeduction);
+
+    // 2. Exemptions / Deductions (Old Regime Only)
+    if (regime === 'OLD') {
+        const annualBasic = declarations.annual_basic || 0;
+        const actualHRA = declarations.actual_hra || 0;
+
+        hraExemption = calculateHRAExemption(
+            actualHRA,
+            annualBasic,
+            declarations.rent_paid || 0,
+            declarations.is_metro || false
+        );
+
+        const exempt80C = Math.min(declarations.investments_80c || 0, 150000);
+        const exempt80D = Math.min(declarations.investments_80d || 0, 25000);
+        const lta = declarations.lta || 0;
+        const otherAndProfTax = declarations.other_exemptions || 0;
+
+        const totalDeductions = exempt80C + exempt80D + hraExemption + lta + otherAndProfTax;
+        taxableIncome = Math.max(0, taxableIncome - totalDeductions);
+    }
+
+    // 3. Tax Calculation (Slabs)
+    if (regime === 'NEW') {
+        // FY 2025-26 (Assessment Year 2026-27)
+        // 0 - 4L: Nil
+        // 4L - 8L: 5%
+        // 8L - 12L: 10%
+        // 12L - 16L: 15%
+        // 16L - 20L: 20%
+        // 20L - 24L: 25%
+        // > 24L: 30%
+
+        let remainingIncome = taxableIncome;
+
+        // 0-4L
+        if (remainingIncome > 400000) {
+            // 4L-8L (Max 4L * 5% = 20k)
+            const slabIncome = Math.min(remainingIncome - 400000, 400000);
+            taxAmount += slabIncome * 0.05;
+        }
+
+        if (remainingIncome > 800000) {
+            // 8L-12L (Max 4L * 10% = 40k)
+            const slabIncome = Math.min(remainingIncome - 800000, 400000);
+            taxAmount += slabIncome * 0.10;
+        }
+
+        if (remainingIncome > 1200000) {
+            // 12L-16L (Max 4L * 15% = 60k)
+            const slabIncome = Math.min(remainingIncome - 1200000, 400000);
+            taxAmount += slabIncome * 0.15;
+        }
+
+        if (remainingIncome > 1600000) {
+            // 16L-20L (Max 4L * 20% = 80k)
+            const slabIncome = Math.min(remainingIncome - 1600000, 400000);
+            taxAmount += slabIncome * 0.20;
+        }
+
+        if (remainingIncome > 2000000) {
+            // 20L-24L (Max 4L * 25% = 100k)
+            const slabIncome = Math.min(remainingIncome - 2000000, 400000);
+            taxAmount += slabIncome * 0.25;
+        }
+
+        if (remainingIncome > 2400000) {
+            // > 24L (30%)
+            const slabIncome = remainingIncome - 2400000;
+            taxAmount += slabIncome * 0.30;
+        }
+
+        // Rebate u/s 87A: Tax is 0 if taxable income <= 12 Lakhs
+        // Note: The limit is on Taxable Income, not Gross.
+        if (taxableIncome <= 1200000) {
+            taxAmount = 0;
+        }
+
+    } else {
+        // OLD REGIME
+        let slab1 = 250000;
+        if (age >= 60) slab1 = 300000;
+        if (age >= 80) slab1 = 500000;
+
+        let remaining = taxableIncome;
+
+        if (remaining > slab1) {
+            // 2.5L - 5L: 5%
+            const limitSV = 500000 - slab1;
+            const taxable = Math.min(remaining - slab1, limitSV);
+            taxAmount += taxable * 0.05;
+        }
+
+        if (remaining > 500000) {
+            // 5L - 10L: 20%
+            const taxable = Math.min(remaining - 500000, 500000);
+            taxAmount += taxable * 0.20;
+        }
+
+        if (remaining > 1000000) {
+            // > 10L: 30%
+            taxAmount += (remaining - 1000000) * 0.30;
+        }
+
+        // Rebate u/s 87A (Old): Tax is 0 if taxable income <= 5 Lakhs
+        if (taxableIncome <= 500000) {
+            taxAmount = 0;
+        }
+    }
+
+    // 4. Surcharge
+    let surcharge = 0;
+    if (taxableIncome > 5000000 && taxableIncome <= 10000000) surcharge = taxAmount * 0.10;
+    else if (taxableIncome > 10000000 && taxableIncome <= 20000000) surcharge = taxAmount * 0.15;
+    else if (taxableIncome > 20000000) surcharge = taxAmount * 0.25;
+
+    // 5. Health & Education Cess (4%)
+    const cess = (taxAmount + surcharge) * 0.04;
+    const totalTaxInfo = taxAmount + surcharge + cess;
+
+    return {
+        annualGross: annualGrossIncome,
+        taxableIncome,
+        hraExemption,
+        yearlyTax: Math.round(totalTaxInfo),
+        monthlyTDS: Math.round(totalTaxInfo / 12),
+        regime,
+        breakdown: { stdDeduction, taxAmount, surcharge, cess }
     };
 };
 

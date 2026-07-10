@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../../middleware/verifyJwt");
-const requireRole = require("../../../middleware/requireRole");
+const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
 const requireExpenseApprover = require("../../../middleware/requireExpenseApprover");
 
@@ -21,18 +21,18 @@ router.use(verifyJwt);
    EXPENSE CATEGORIES
    ======================= */
 
-// Create category → HR, ADMIN only
+// Create category
 router.post(
   "/createcategories",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission("expenses", "manage_categories"),
   validate(createCategorySchema),
   controller.createCategory
 );
 
-// Get categories → EMPLOYEE, MANAGER, HR, ADMIN
+// Get categories
 router.get(
   "/getcategories",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requirePermission("expenses", "view"),
   controller.getCategories
 );
 
@@ -40,52 +40,49 @@ router.get(
    EXPENSES
    ======================= */
 
-// Create expense → EMPLOYEE, MANAGER
+// Create expense
 router.post(
   "/createexpense",
-  requireRole(["EMPLOYEE", "MANAGER"]),
+  requirePermission("expenses", "create"),
   validate(createExpenseSchema),
   controller.createExpense
 );
 
 // Get expenses
-// EMPLOYEE → own
-// MANAGER → team
-// HR, ADMIN → all
 router.get(
   "/getexpenses",
-  requireRole(["EMPLOYEE", "MANAGER", "HR", "ADMIN"]),
+  requirePermission("expenses", "view"),
   controller.getExpenses
 );
 
-// Update expense → HR, ADMIN
+// Update expense → HR, ADMIN (Can be granularized later if needed, but 'create' or a specialized 'manage' works)
 router.put(
   "/:updateId",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission("expenses", "manage_categories"),
   validate(createExpenseSchema),
   controller.updateExpense
 );
 
-// Delete expense (soft delete) → HR, ADMIN
+// Delete expense (soft delete)
 router.delete(
   "/:updateId",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission("expenses", "manage_categories"),
   controller.deleteExpense
 );
 
-// Approve / Reject expense → MANAGER, HR, ADMIN
+// Approve / Reject expense
 router.patch(
   "/:expenseId/approve",
-  requireRole(["MANAGER", "HR", "ADMIN"]),
+  requirePermission("expenses", "approve"),
   requireExpenseApprover,
   validate(approveExpenseSchema),
   controller.approveExpense
 );
 
-// Toggle payroll inclusion → HR, ADMIN
+// Toggle payroll inclusion
 router.patch(
   "/:expenseId/payroll",
-  requireRole(["HR", "ADMIN"]),
+  requirePermission("expenses", "toggle_payroll"),
   validate(payrollToggleSchema),
   controller.togglePayroll
 );

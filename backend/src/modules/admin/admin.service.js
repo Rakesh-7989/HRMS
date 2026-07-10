@@ -10,7 +10,7 @@ exports.getTenantProfile = async (db, tenantId) => {
   return (
     await query(
       `
-      SELECT name, domain, email, phone, city, state, country
+      SELECT name, domain, email, phone, address, city, state, country, settings
       FROM tenants
       WHERE id=$1
       `,
@@ -36,6 +36,11 @@ exports.updateTenantProfile = async (db, tenantId, data) => {
     params.push(data.phone);
     i++;
   }
+  if (data.address) {
+    updates.push(`address = $${i}`);
+    params.push(data.address);
+    i++;
+  }
   if (data.city) {
     updates.push(`city = $${i}`);
     params.push(data.city);
@@ -51,6 +56,14 @@ exports.updateTenantProfile = async (db, tenantId, data) => {
     params.push(data.country);
     i++;
   }
+  if (data.settings) {
+    // Get current settings first to merge
+    const current = (await query(`SELECT settings FROM tenants WHERE id=$1`, [tenantId])).rows[0];
+    const newSettings = { ...(current?.settings || {}), ...data.settings };
+    updates.push(`settings = $${i}`);
+    params.push(newSettings);
+    i++;
+  }
 
   if (updates.length === 0) return null;
 
@@ -60,11 +73,31 @@ exports.updateTenantProfile = async (db, tenantId, data) => {
       UPDATE tenants
       SET ${updates.join(", ")}, updated_at = NOW()
       WHERE id = $1
-      RETURNING name, domain, email, phone, city, state, country
+      RETURNING name, domain, email, phone, address, city, state, country, settings
       `,
       params
     )
   ).rows[0];
+};
+
+exports.updateTenantLogo = async (db, tenantId, logoUrl) => {
+  const query = queryDb(db);
+
+  // 1. Get current settings
+  const current = (await query(`SELECT settings FROM tenants WHERE id=$1`, [tenantId])).rows[0];
+  let settings = current?.settings || {};
+  const oldLogoUrl = settings.logo_url;
+
+  // 2. Update logo_url
+  settings.logo_url = logoUrl;
+
+  // 3. Save
+  await query(
+    `UPDATE tenants SET settings=$1, updated_at=NOW() WHERE id=$2`,
+    [settings, tenantId]
+  );
+
+  return { settings, oldLogoUrl };
 };
 
 // Audit logs (admin only) - for audit trail feature (future use)

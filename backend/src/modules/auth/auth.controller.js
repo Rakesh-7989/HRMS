@@ -6,13 +6,16 @@ const crypto = require("crypto");
 const pool = require("../../config/db");
 const env = require("../../config/env");
 const mailer = require("../../config/mailer");
+const subscriptionService = require("../subscriptions/subscriptions.service");
 const logAudit = require("../../utils/auditLogger");
+const { generateSecret, generateURI, verifySync } = require("otplib");
+const QRCode = require("qrcode");
 
 exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
 
   try {
-    // Get user + employee data
+    // Get user + employee + tenant data
     const userRes = await pool.query(
       `SELECT 
           u.id,
@@ -22,28 +25,101 @@ exports.login = async (req, res) => {
           u.role,
           u.is_active,
           u.must_change_password,
+          u.two_factor_enabled,
           u.last_login_at,
-          e.id AS employee_id
-       FROM users u
-       LEFT JOIN employees e ON e.user_id = u.id
-       WHERE u.email = $1`,
-      [email]
-    );
+          e.id AS employee_id,
+           t.is_active AS tenant_is_active,
+           t.plan_type,
+           t.plan_expiry_date
+        FROM users u
+        LEFT JOIN employees e ON e.user_id = u.id
+        LEFT JOIN tenants t ON t.id = u.tenant_id
+        WHERE LOWER(u.email) = LOWER($1)`,
+       [email.toLowerCase()]
+     );
+ 
+     if (userRes.rowCount === 0) {
+       return res.status(401).json({ message: "Invalid credentials" });
+     }
+ 
+     const user = userRes.rows[0];
+ 
+     // Validate tenant status first (unless super admin)
+     if (user.role !== 'SUPER_ADMIN') {
+       if (user.tenant_id) {
+         // 1. Check if plan is expired
+         const now = new Date();
+         if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
+            return res.status(403).json({ 
+              message: "Subscription Expired", 
+              planExpired: true,
+              tenant_id: user.tenant_id,
+              email: user.email,
+              detail: "Your organization subscription has expired. Please renew your plan to continue." 
+            });
+         }
 
-    if (userRes.rowCount === 0) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const user = userRes.rows[0];
+         // 2. Check if organization is explicitly inactive
+         if (user.tenant_is_active === false) {
+            // Check if there's a pending payment subscription
+            try {
+              const sub = await subscriptionService.getSubscriptionByTenantId(user.tenant_id);
+              if (sub && (sub.status === 'PENDING_PAYMENT' || sub.status === 'PAST_DUE' || sub.status === 'UNPAID')) {
+                return res.status(403).json({ 
+                  message: "Payment Required", 
+                  paymentPending: true,
+                  tenant_id: user.tenant_id,
+                  email: user.email,
+                  detail: "Your organization subscription setup is incomplete. Please complete the payment."
+                });
+              }
+            } catch (subErr) {
+              logger.error("Error checking subscription during login", { err: subErr });
+            }
+            return res.status(403).json({ 
+              message: "Organization Inactive", 
+              detail: "Your organization account is currently inactive. Please contact support." 
+            });
+         }
+       }
+     }
 
     if (!user.is_active) {
-      return res.status(403).json({ message: "Account is inactive" });
+      return res.status(403).json({ 
+        message: "Account Inactive",
+        detail: "Your personal user account has been deactivated. Please contact your HR administrator."
+      });
     }
 
     // Validate password
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if 2FA is enabled
+    if (user.two_factor_enabled) {
+      // Return a temporary token or just a signal that 2FA is required
+      // We don't want to give full tokens yet.
+      // We generate a short-lived "pre-auth" token
+      const preAuthToken = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          tenantId: user.tenant_id,
+          role: user.role,
+          employeeId: user.employee_id,
+          type: '2FA_PRE_AUTH'
+        },
+        env.JWT_ACCESS_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return res.json({
+        status: "2FA_REQUIRED",
+        preAuthToken,
+        message: "Please enter your 2FA code to continue"
+      });
     }
 
     // Update last login timestamp
@@ -69,6 +145,7 @@ exports.login = async (req, res) => {
       status: "success",
       role: user.role,
       tenantId: user.tenant_id,
+      planType: user.plan_type || 1,
       mustChangePassword: user.must_change_password,
       ...tokens
     });
@@ -109,10 +186,11 @@ exports.refreshToken = async (req, res) => {
         id: user.id,
         tenantId: user.tenant_id,
         role: user.role,
-        employeeId: user.employee_id
+        employeeId: user.employee_id,
+        sessionId: session.id // Include session ID for verification
       },
       env.JWT_ACCESS_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
+      { expiresIn: env.JWT_EXPIRES_IN || "15m" }
     );
 
     const newRefreshToken = crypto.randomBytes(48).toString("hex");
@@ -224,7 +302,7 @@ exports.forgotPassword = async (req, res) => {
     await pool.query(
       `INSERT INTO password_resets (email, token, expires_at)
        VALUES ($1, $2, now() + interval '15 minutes')`,
-      [email, token]
+      [email.toLowerCase(), token]
     );
 
     try {
@@ -279,15 +357,19 @@ exports.resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // 4. Update user's password
-    await pool.query(
+    const updateRes = await pool.query(
       `UPDATE users
        SET password_hash = $1,
            must_change_password = false,
            last_password_change = now(),
            updated_at = now()
-       WHERE email = $2`,
+       WHERE LOWER(email) = LOWER($2)`,
       [hashedPassword, email]
     );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ message: "User not found for password reset" });
+    }
 
     // 5. Delete reset token so it cannot be reused
     await pool.query(`DELETE FROM password_resets WHERE token = $1`, [token]);
@@ -310,11 +392,23 @@ exports.resetPassword = async (req, res) => {
 // ========================================================================
 exports.changePassword = async (req, res) => {
   const userId = req.user.id;
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
   try {
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password do not match" });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: "New password cannot be the same as current password" });
+    }
+
     const row = await pool.query(
-      `SELECT password_hash FROM users WHERE id = $1`,
+      `SELECT email, password_hash FROM users WHERE id = $1`,
       [userId]
     );
 
@@ -322,8 +416,10 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const user = row.rows[0];
+
     // Validate old password
-    const valid = await bcrypt.compare(currentPassword, row.rows[0].password_hash);
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!valid) {
       return res.status(400).json({ message: "Old password incorrect" });
@@ -341,6 +437,14 @@ exports.changePassword = async (req, res) => {
       [hash, userId]
     );
 
+    // Send notification email
+    try {
+      await mailer.sendPasswordChangedNotification(user.email);
+    } catch (mailErr) {
+      console.error("Failed to send password change notification:", mailErr);
+      // Don't fail the request if email fails, but log it
+    }
+
     return res.json({
       status: "success",
       message: "Password changed successfully"
@@ -349,5 +453,193 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     console.error("CHANGE PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to change password" });
+  }
+};
+
+
+// ========================================================================
+// TWO-FACTOR AUTHENTICATION (2FA)
+// ========================================================================
+
+exports.setup2FA = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const user = userRes.rows[0];
+    const secret = generateSecret();
+    const otpauth = generateURI({ secret, issuer: "HRMS GIGGLE", label: user.email });
+    const qrCodeDataURL = await QRCode.toDataURL(otpauth);
+
+    // Save secret temporarily (maybe don't enable yet)
+    await pool.query(
+      "UPDATE users SET two_factor_secret = $1 WHERE id = $2",
+      [secret, userId]
+    );
+
+    return res.json({
+      status: "success",
+      qrCodeDataURL,
+      secret
+    });
+  } catch (error) {
+    console.error("SETUP 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to setup 2FA" });
+  }
+};
+
+exports.enable2FA = async (req, res) => {
+  const userId = req.user.id;
+  const { token } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT two_factor_secret FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const secret = userRes.rows[0].two_factor_secret;
+    const isValid = verifySync({ token, secret });
+
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid 2FA token" });
+    }
+
+    // Generate recovery codes
+    const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(4).toString("hex"));
+
+    await pool.query(
+      "UPDATE users SET two_factor_enabled = true, two_factor_recovery_codes = $1 WHERE id = $2",
+      [JSON.stringify(recoveryCodes), userId]
+    );
+
+    return res.json({
+      status: "success",
+      message: "2FA enabled successfully",
+      recoveryCodes
+    });
+  } catch (error) {
+    console.error("ENABLE 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to enable 2FA" });
+  }
+};
+
+exports.disable2FA = async (req, res) => {
+  const userId = req.user.id;
+  const { password } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT password_hash FROM users WHERE id = $1", [userId]);
+    const user = userRes.rows[0];
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    await pool.query(
+      "UPDATE users SET two_factor_enabled = false, two_factor_secret = null, two_factor_recovery_codes = null WHERE id = $1",
+      [userId]
+    );
+
+    return res.json({
+      status: "success",
+      message: "2FA disabled successfully"
+    });
+  } catch (error) {
+    console.error("DISABLE 2FA ERROR:", error);
+    return res.status(500).json({ message: "Failed to disable 2FA" });
+  }
+};
+
+
+// ========================================================================
+// VERIFY PASSWORD
+// ========================================================================
+exports.verifyPassword = async (req, res) => {
+  const userId = req.user.id;
+  const { password } = req.body;
+
+  try {
+    const userRes = await pool.query("SELECT password_hash FROM users WHERE id = $1", [userId]);
+    if (userRes.rowCount === 0) return res.status(404).json({ message: "User not found" });
+
+    const user = userRes.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    return res.json({ status: "success", message: "Password verified" });
+  } catch (error) {
+    console.error("VERIFY PASSWORD ERROR:", error);
+    return res.status(500).json({ message: "Failed to verify password" });
+  }
+};
+
+exports.verify2FALogin = async (req, res) => {
+  const { token, preAuthToken, rememberMe } = req.body;
+
+  try {
+    const decoded = jwt.verify(preAuthToken, env.JWT_ACCESS_SECRET);
+    if (decoded.type !== '2FA_PRE_AUTH') {
+      return res.status(401).json({ message: "Invalid pre-auth token" });
+    }
+
+    const userId = decoded.id;
+    const userRes = await pool.query(
+      `SELECT u.*, e.id AS employee_id, t.plan_type FROM users u 
+       LEFT JOIN employees e ON e.user_id = u.id
+       LEFT JOIN tenants t ON t.id = u.tenant_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+    const user = userRes.rows[0];
+
+    const isValid = verifySync({ token, secret: user.two_factor_secret });
+
+    // Check recovery codes if token fails
+    let isRecovery = false;
+    if (!isValid && user.two_factor_recovery_codes) {
+      const idx = user.two_factor_recovery_codes.indexOf(token);
+      if (idx !== -1) {
+        isRecovery = true;
+        user.two_factor_recovery_codes.splice(idx, 1);
+        await pool.query(
+          "UPDATE users SET two_factor_recovery_codes = $1 WHERE id = $2",
+          [JSON.stringify(user.two_factor_recovery_codes), userId]
+        );
+      }
+    }
+
+    if (!isValid && !isRecovery) {
+      return res.status(400).json({ message: "Invalid 2FA token or recovery code" });
+    }
+
+    // Update last login timestamp
+    await pool.query(
+      `UPDATE users SET last_login_at = now(), updated_at = now()
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    // Generate tokens
+    user.ip = req.ip;
+    user.ua = req.headers["user-agent"];
+    const tokens = await authService.generateTokens(user, rememberMe);
+
+    return res.json({
+      status: "success",
+      role: user.role,
+      tenantId: user.tenant_id,
+      planType: user.plan_type || 1,
+      mustChangePassword: user.must_change_password,
+      ...tokens
+    });
+
+  } catch (error) {
+    console.error("VERIFY 2FA LOGIN ERROR:", error);
+    return res.status(500).json({ message: "2FA verification failed" });
   }
 };

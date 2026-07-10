@@ -12,8 +12,8 @@ async function runMigration() {
         console.log('Connecting to DB...');
         await client.connect();
 
-        console.log('Reading migration file...');
-        const migrationPath = path.join(__dirname, '../src/database/migrations/20260113_add_attendance_regularization.sql');
+        console.log('Reading migration file: 20260313_add_state_to_company_holidays.sql');
+        const migrationPath = path.join(__dirname, '../src/database/migrations/20260313_add_state_to_company_holidays.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

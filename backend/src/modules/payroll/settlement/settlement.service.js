@@ -1,4 +1,5 @@
 const db = require("../../../config/db");
+const inboxService = require("../../inbox/inbox.service");
 
 // ===================================================================
 // REIMBURSEMENTS
@@ -18,25 +19,49 @@ const createReimbursement = async (tenantId, employeeId, userId, payload) => {
     }
 
     const result = await db.query(
-        `INSERT INTO reimbursements (
-      tenant_id, employee_id, category, amount, claim_date, 
-      description, is_taxable, receipt_url, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO reimbursement_claims (
+      tenant_id, employee_id, reimbursement_type_id, amount, claim_date, 
+      description, receipt_url, created_by
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *`,
         [
-            tenantId, employeeId, category, amount, claimDate,
-            description || null, isTaxable || false, receiptUrl || null, userId
+            tenantId, employeeId, payload.reimbursementTypeId, amount, claimDate,
+            description || null, receiptUrl || null, userId
         ]
     );
 
-    return result.rows[0];
+    const created = result.rows[0];
+
+    // Notify admin/HR: new reimbursement submitted
+    try {
+        const empRes = await db.query(
+            `SELECT first_name, last_name FROM employees WHERE id = $1`, [employeeId]
+        );
+        const emp = empRes.rows[0];
+        const hrUsers = await db.query(
+            `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('HR','ADMIN') AND id != $2`, [tenantId, userId]
+        );
+        for (const hr of hrUsers.rows) {
+            await inboxService.createNotification(db, {
+                tenant_id: tenantId, user_id: hr.id,
+                title: 'New Reimbursement Claim',
+                message: `${emp?.first_name} ${emp?.last_name} submitted a reimbursement of ₹${amount}`,
+                type: 'info', link: '/payroll/settlement'
+            });
+        }
+    } catch (notifErr) {
+        console.error('Reimbursement create notification error:', notifErr.message);
+    }
+
+    return created;
 };
 
 const getReimbursements = async (tenantId, filters = {}) => {
     let query = `
-    SELECT r.*, e.first_name, e.last_name, e.employee_id as emp_code
-    FROM reimbursements r
+    SELECT r.*, e.first_name, e.last_name, e.employee_id as emp_code, rt.name as category_name
+    FROM reimbursement_claims r
     JOIN employees e ON e.id = r.employee_id
+    LEFT JOIN reimbursement_types rt ON rt.id = r.reimbursement_type_id
     WHERE r.tenant_id = $1
   `;
     const params = [tenantId];
@@ -65,9 +90,11 @@ const getReimbursements = async (tenantId, filters = {}) => {
 
 const getMyReimbursements = async (tenantId, employeeId) => {
     const result = await db.query(
-        `SELECT * FROM reimbursements 
-     WHERE tenant_id = $1 AND employee_id = $2 
-     ORDER BY created_at DESC`,
+        `SELECT r.*, rt.name as category_name 
+     FROM reimbursement_claims r
+     LEFT JOIN reimbursement_types rt ON rt.id = r.reimbursement_type_id
+     WHERE r.tenant_id = $1 AND r.employee_id = $2 
+     ORDER BY r.created_at DESC`,
         [tenantId, employeeId]
     );
     return result.rows;
@@ -79,25 +106,46 @@ const approveReimbursement = async (tenantId, reimbursementId, userId, status, i
     }
 
     const result = await db.query(
-        `UPDATE reimbursements 
-     SET status = $1, approved_by = $2, approved_at = now(), 
-         include_in_payroll = $3
-     WHERE tenant_id = $4 AND id = $5 AND status = 'PENDING'
+        `UPDATE reimbursement_claims 
+     SET status = $1, approved_by = $2, approved_at = now()
+     WHERE tenant_id = $3 AND id = $4 AND status = 'PENDING'
      RETURNING *`,
-        [status, userId, includeInPayroll, tenantId, reimbursementId]
+        [status, userId, tenantId, reimbursementId]
     );
 
     if (result.rowCount === 0) {
         throw new Error('Reimbursement not found or already processed');
     }
 
-    return result.rows[0];
+    const updated = result.rows[0];
+
+    // Notify employee: reimbursement approved/rejected
+    try {
+        const empUserRes = await db.query(
+            `SELECT user_id FROM employees WHERE id = $1`, [updated.employee_id]
+        );
+        if (empUserRes.rows[0]) {
+            const isApproved = status === 'APPROVED';
+            await inboxService.createNotification(db, {
+                tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                title: isApproved ? 'Reimbursement Approved ✅' : 'Reimbursement Rejected',
+                message: isApproved
+                    ? `Your reimbursement of ₹${updated.amount} has been approved.`
+                    : `Your reimbursement of ₹${updated.amount} was rejected.`,
+                type: isApproved ? 'success' : 'warning', link: '/payroll/settlement'
+            });
+        }
+    } catch (notifErr) {
+        console.error('Reimbursement approve notification error:', notifErr.message);
+    }
+
+    return updated;
 };
 
 const markReimbursementPaid = async (tenantId, reimbursementId, payrollRunId) => {
     const result = await db.query(
-        `UPDATE reimbursements 
-     SET status = 'PAID', payroll_run_id = $1
+        `UPDATE reimbursement_claims 
+     SET status = 'PAID', paid_in_payrun_id = $1
      WHERE tenant_id = $2 AND id = $3 AND status = 'APPROVED'
      RETURNING *`,
         [payrollRunId, tenantId, reimbursementId]
@@ -110,85 +158,201 @@ const markReimbursementPaid = async (tenantId, reimbursementId, payrollRunId) =>
 // ===================================================================
 
 const createFnFSettlement = async (tenantId, userId, payload) => {
-    const { employeeId, lastWorkingDay, resignationDate } = payload;
+    try {
+        const { employeeId, lastWorkingDay, resignationDate } = payload;
+        console.log(`[FnF] Initiating for Employee: ${employeeId}, LWD: ${lastWorkingDay}, Resignation: ${resignationDate}`);
 
-    // Check for existing F&F settlement
-    const existingFnF = await db.query(
-        `SELECT id, status FROM fnf_settlements 
+        // Helper: Robust Date Parser
+        const parseDate = (dateStr) => {
+            if (!dateStr) return null;
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) return d;
+            // Fallback for DD-MM-YYYY
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            return null;
+        };
+
+        const lwdDate = parseDate(lastWorkingDay);
+        if (!lwdDate || isNaN(lwdDate.getTime())) {
+            throw new Error(`Invalid Last Working Day format: ${lastWorkingDay}`);
+        }
+
+        // Check for existing F&F settlement
+        const existingFnF = await db.query(
+            `SELECT id, status FROM fnf_settlements 
          WHERE tenant_id = $1 AND employee_id = $2 AND status NOT IN ('CANCELLED')`,
-        [tenantId, employeeId]
-    );
+            [tenantId, employeeId]
+        );
 
-    if (existingFnF.rowCount > 0) {
-        throw new Error(`F&F settlement already exists for this employee (Status: ${existingFnF.rows[0].status})`);
-    }
+        if (existingFnF.rowCount > 0) {
+            throw new Error(`F&F settlement already exists for this employee (Status: ${existingFnF.rows[0].status})`);
+        }
 
-    // Get employee's current salary
-    const salaryRes = await db.query(
-        `SELECT * FROM employee_salary_details 
-     WHERE tenant_id = $1 AND employee_id = $2 AND is_current = TRUE`,
-        [tenantId, employeeId]
-    );
-    const salary = salaryRes.rows[0];
+        // Get employee details including join_date for gratuity
+        const empRes = await db.query(
+            `SELECT id, join_date, first_name, last_name FROM employees WHERE tenant_id = $1 AND id = $2`,
+            [tenantId, employeeId]
+        );
+        const employee = empRes.rows[0];
+        if (!employee) {
+            throw new Error('Employee not found');
+        }
 
-    // Get pending loans
-    const loansRes = await db.query(
-        `SELECT SUM(outstanding_amount) as total 
+        // Get employee's current salary assignment + component breakdown
+        const salaryRes = await db.query(
+            `SELECT esa.id as assignment_id, esa.annual_ctc as ctc
+     FROM employee_salary_assignments esa
+     WHERE esa.tenant_id = $1 AND esa.employee_id = $2 AND esa.is_current = TRUE`,
+            [tenantId, employeeId]
+        );
+        const assignment = salaryRes.rows[0];
+        const ctc = assignment ? parseFloat(assignment.ctc || 0) : 0;
+        const perDaySalary = ctc / 12 / 30;
+
+        // Fetch the BASIC component amount for gratuity calculation
+        let monthlyBasic = 0;
+        if (assignment) {
+            const basicRes = await db.query(
+                `SELECT escv.monthly_amount 
+             FROM employee_salary_component_values escv
+             JOIN salary_components sc ON sc.id = escv.component_id
+             WHERE escv.assignment_id = $1 AND sc.code = 'BASIC'`,
+                [assignment.assignment_id]
+            );
+            monthlyBasic = parseFloat(basicRes.rows[0]?.monthly_amount || 0);
+        }
+
+        // Get pending loans
+        const loansRes = await db.query(
+            `SELECT SUM(outstanding_amount) as total 
      FROM employee_loans 
      WHERE tenant_id = $1 AND employee_id = $2 AND status = 'ACTIVE'`,
-        [tenantId, employeeId]
-    );
-    const loanRecovery = parseFloat(loansRes.rows[0]?.total || 0);
+            [tenantId, employeeId]
+        );
+        const loanRecovery = parseFloat(loansRes.rows[0]?.total || 0);
 
-    // Get pending reimbursements
-    const reimbRes = await db.query(
-        `SELECT SUM(amount) as total 
-     FROM reimbursements 
-     WHERE tenant_id = $1 AND employee_id = $2 AND status = 'APPROVED' AND payroll_run_id IS NULL`,
-        [tenantId, employeeId]
-    );
-    const reimbursementsPending = parseFloat(reimbRes.rows[0]?.total || 0);
+        // Get pending reimbursement claims
+        const reimbRes = await db.query(
+            `SELECT SUM(amount) as total 
+     FROM reimbursement_claims 
+     WHERE tenant_id = $1 AND employee_id = $2 AND status = 'APPROVED' AND paid_in_payrun_id IS NULL`,
+            [tenantId, employeeId]
+        );
+        const reimbursementsPending = parseFloat(reimbRes.rows[0]?.total || 0);
 
-    // Get leave balance for encashment
-    const leaveRes = await db.query(
-        `SELECT SUM(lb.current_balance) as total_days
+        // Get leave balance for encashment
+        const leaveRes = await db.query(
+            `SELECT SUM(lb.current_balance) as total_days
      FROM leave_balances lb
      JOIN leave_types lt ON lt.id = lb.leave_type_id
      WHERE lb.tenant_id = $1 AND lb.employee_id = $2 AND lt.is_encashable = TRUE`,
-        [tenantId, employeeId]
-    );
-    const encashableDays = parseFloat(leaveRes.rows[0]?.total_days || 0);
-    const perDaySalary = salary ? parseFloat(salary.per_day_salary || 0) : 0;
-    const leaveEncashment = encashableDays * perDaySalary;
+            [tenantId, employeeId]
+        );
+        const encashableDays = parseFloat(leaveRes.rows[0]?.total_days || 0);
+        const leaveEncashment = encashableDays * perDaySalary;
 
-    // Calculate pending salary (simplified - days from last payroll to LWD)
-    const pendingSalary = salary ? parseFloat(salary.ctc) / 12 : 0; // Full month for now
+        // Calculate pending salary (Pro-rata based on LWD)
+        const daysInMonth = new Date(lwdDate.getFullYear(), lwdDate.getMonth() + 1, 0).getDate();
+        const workingDays = lwdDate.getDate(); // Assuming full attendance until LWD for now (Attendance integration is separate)
+        const pendingSalary = (ctc / 12) * (workingDays / daysInMonth);
 
-    // Calculate gratuity (5 years = 15 days salary per year)
-    // Simplified: (basic * 15/26) * years_of_service
-    const gratuity = 0; // TODO: Calculate based on join date
+        // =====================================================
+        // DYNAMIC GRATUITY CALCULATION (Payment of Gratuity Act, 1972)
+        // Formula: (15 × last drawn salary × years of service) / 26
+        // Eligible only after 5 years of continuous service
+        // =====================================================
+        let gratuity = 0;
+        if (employee.join_date) {
+            const joinDate = new Date(employee.join_date);
+            const serviceMs = lwdDate - joinDate;
+            const yearsOfService = serviceMs / (365.25 * 24 * 60 * 60 * 1000);
 
-    const grossPayable = pendingSalary + leaveEncashment + gratuity + reimbursementsPending;
-    const totalDeductions = loanRecovery;
-    const netPayable = grossPayable - totalDeductions;
+            if (yearsOfService >= 5) {
+                // Round to nearest integer per Act rules (0.5+ rounds up)
+                const completedYears = Math.round(yearsOfService);
+                // Use Basic + DA as the base (DA often = 0 in CTC structures)
+                gratuity = Math.round((15 * monthlyBasic * completedYears) / 26);
+            }
+        }
 
-    const result = await db.query(
-        `INSERT INTO fnf_settlements (
+        // Safety checks for NaN
+        const safeFloat = (val) => isNaN(parseFloat(val)) ? 0 : parseFloat(val);
+
+        const safePendingSalary = safeFloat(pendingSalary);
+        const safeLeaveEncashment = safeFloat(leaveEncashment);
+        const safeGratuity = safeFloat(gratuity);
+        const safeReimbursements = safeFloat(reimbursementsPending);
+        const safeLoanRecovery = safeFloat(loanRecovery);
+
+        const grossPayable = safePendingSalary + safeLeaveEncashment + safeGratuity + safeReimbursements;
+        const totalDeductions = safeLoanRecovery;
+        const netPayable = grossPayable - totalDeductions;
+
+        // Determine settlement type (PAYABLE_TO_EMPLOYEE or RECOVERABLE_FROM_EMPLOYEE)
+        const settlementType = netPayable >= 0 ? 'PAYABLE_TO_EMPLOYEE' : 'RECOVERABLE_FROM_EMPLOYEE';
+
+        // =====================================================
+        // ASSET RECOVERY HOLD CHECK
+        // If employee has unreturned assets, flag settlement
+        // =====================================================
+        let initialStatus = 'DRAFT';
+        let holdReason = null;
+
+        const pendingAssets = await db.query(
+            `SELECT COUNT(*) as count, STRING_AGG(name, ', ') as assets
+         FROM assets 
+         WHERE tenant_id = $1 AND assigned_to = $2 AND status = 'ASSIGNED'`,
+            [tenantId, employeeId]
+        );
+
+        if (parseInt(pendingAssets.rows[0]?.count || 0) > 0) {
+            initialStatus = 'HOLD_ASSET_PENDING';
+            holdReason = `Pending asset returns: ${pendingAssets.rows[0].assets}`;
+        }
+
+        const result = await db.query(
+            `INSERT INTO fnf_settlements (
       tenant_id, employee_id, last_working_day, resignation_date,
       pending_salary, leave_encashment, gratuity, reimbursements_pending,
       gross_payable, loan_recovery, total_deductions, net_payable,
-      status, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'DRAFT', $13)
+      settlement_type, hold_reason, status, created_by
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     RETURNING *`,
-        [
-            tenantId, employeeId, lastWorkingDay, resignationDate || null,
-            pendingSalary, leaveEncashment, gratuity, reimbursementsPending,
-            grossPayable, loanRecovery, totalDeductions, netPayable,
-            userId
-        ]
-    );
+            [
+                tenantId, employeeId, lwdDate.toISOString().split('T')[0], resignationDate || null,
+                safePendingSalary, safeLeaveEncashment, safeGratuity, safeReimbursements,
+                grossPayable, safeLoanRecovery, totalDeductions, netPayable,
+                settlementType, holdReason, initialStatus, userId
+            ]
+        );
 
-    return result.rows[0];
+        const fnfCreated = result.rows[0];
+
+        // Notify employee: FnF initiated
+        try {
+            const empUserRes = await db.query(
+                `SELECT user_id FROM employees WHERE id = $1`, [employeeId]
+            );
+            if (empUserRes.rows[0]) {
+                await inboxService.createNotification(db, {
+                    tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: 'Full & Final Settlement Initiated',
+                    message: `Your Full & Final settlement has been initiated. Last working day: ${lastWorkingDay}`,
+                    type: 'info', link: '/payroll/settlement'
+                });
+            }
+        } catch (notifErr) {
+            console.error('FnF create notification error:', notifErr.message);
+        }
+
+        return fnfCreated;
+    } catch (err) {
+        console.error('[FnF Create Error]', err);
+        throw err; // Re-throw to controller
+    }
 };
 
 const getFnFSettlements = async (tenantId, filters = {}) => {
@@ -260,7 +424,7 @@ const updateFnFSettlement = async (tenantId, settlementId, payload) => {
 
     const result = await db.query(
         `UPDATE fnf_settlements SET ${fields.join(', ')}
-     WHERE tenant_id = $${idx++} AND id = $${idx} AND status = 'DRAFT'
+     WHERE tenant_id = $${idx++} AND id = $${idx} AND (status = 'DRAFT' OR status = 'HOLD_ASSET_PENDING')
      RETURNING *`,
         values
     );
@@ -296,64 +460,152 @@ const updateFnFSettlement = async (tenantId, settlementId, payload) => {
 };
 
 const approveFnFSettlement = async (tenantId, settlementId, userId, status) => {
-    if (!['APPROVED', 'REJECTED'].includes(status)) {
-        throw new Error('Invalid status');
+    try {
+        console.log(`[FnF Approve] Attempting approval. ID: ${settlementId}, User: ${userId}, Status: ${status}`);
+
+        if (!['APPROVED', 'REJECTED'].includes(status)) {
+            throw new Error('Invalid status');
+        }
+
+        const newStatus = status === 'APPROVED' ? 'APPROVED' : 'DRAFT';
+
+        // Debug: Check existence first
+        const check = await db.query(
+            `SELECT id, status FROM fnf_settlements WHERE tenant_id = $1 AND id = $2`,
+            [tenantId, settlementId]
+        );
+
+        if (check.rowCount === 0) {
+            console.error(`[FnF Approve] Settlement ${settlementId} not found`);
+            throw new Error('Settlement not found');
+        }
+        console.log(`[FnF Approve] Current status: ${check.rows[0].status}`);
+
+        if (check.rows[0].status !== 'PENDING_APPROVAL') {
+            console.error(`[FnF Approve] Invalid state transition from ${check.rows[0].status}`);
+        }
+
+        const result = await db.query(
+            `UPDATE fnf_settlements 
+         SET status = $1, approved_by = $2, approved_at = now(), updated_at = now()
+         WHERE tenant_id = $3 AND id = $4 AND status = 'PENDING_APPROVAL'
+         RETURNING *`,
+            [newStatus, userId, tenantId, settlementId]
+        );
+
+        if (result.rowCount === 0) {
+            throw new Error('Settlement not found or not pending approval');
+        }
+
+        console.log(`[FnF Approve] Success. New status: ${result.rows[0].status}`);
+
+        const approved = result.rows[0];
+
+        // Notify employee: FnF approved/rejected
+        try {
+            const empUserRes = await db.query(
+                `SELECT user_id FROM employees WHERE id = $1`, [approved.employee_id]
+            );
+            if (empUserRes.rows[0]) {
+                const isApproved = status === 'APPROVED';
+                await inboxService.createNotification(db, {
+                    tenant_id: tenantId, user_id: empUserRes.rows[0].user_id,
+                    title: isApproved ? 'F&F Settlement Approved ✅' : 'F&F Settlement Returned',
+                    message: isApproved
+                        ? `Your Full & Final settlement has been approved. Net payable: ₹${approved.net_payable}`
+                        : 'Your Full & Final settlement was returned for revisions.',
+                    type: isApproved ? 'success' : 'warning', link: '/payroll/settlement'
+                });
+            }
+        } catch (notifErr) {
+            console.error('FnF approve notification error:', notifErr.message);
+        }
+
+        return approved;
+    } catch (err) {
+        console.error('[FnF Approve Error]', err);
+        throw err;
     }
-
-    const newStatus = status === 'APPROVED' ? 'APPROVED' : 'DRAFT';
-
-    const result = await db.query(
-        `UPDATE fnf_settlements 
-     SET status = $1, approved_by = $2, approved_at = now(), updated_at = now()
-     WHERE tenant_id = $3 AND id = $4 AND status = 'PENDING_APPROVAL'
-     RETURNING *`,
-        [newStatus, userId, tenantId, settlementId]
-    );
-
-    if (result.rowCount === 0) {
-        throw new Error('Settlement not found or not pending approval');
-    }
-
-    return result.rows[0];
 };
 
 const submitFnFForApproval = async (tenantId, settlementId) => {
+    // Re-check asset status before allowing submission
+    const fnf = await getFnFSettlementById(tenantId, settlementId);
+    if (!fnf) throw new Error('Settlement not found');
+
+    const pendingAssets = await db.query(
+        `SELECT COUNT(*) as count, STRING_AGG(name, ', ') as assets
+         FROM assets 
+         WHERE tenant_id = $1 AND assigned_to = $2 AND status = 'ASSIGNED'`,
+        [tenantId, fnf.employee_id]
+    );
+
+    if (parseInt(pendingAssets.rows[0]?.count || 0) > 0) {
+        // Update hold reason if still pending
+        await db.query(
+            `UPDATE fnf_settlements SET status = 'HOLD_ASSET_PENDING', hold_reason = $1 WHERE id = $2`,
+            [`Pending asset returns: ${pendingAssets.rows[0].assets}`, settlementId]
+        );
+        throw new Error(`Cannot submit: Assets still assigned (${pendingAssets.rows[0].assets})`);
+    }
+
     const result = await db.query(
         `UPDATE fnf_settlements 
      SET status = 'PENDING_APPROVAL', updated_at = now()
-     WHERE tenant_id = $1 AND id = $2 AND status = 'DRAFT'
+     WHERE tenant_id = $1 AND id = $2 AND (status = 'DRAFT' OR status = 'HOLD_ASSET_PENDING')
      RETURNING *`,
         [tenantId, settlementId]
     );
-
-    if (result.rowCount === 0) {
-        throw new Error('Settlement not found or not in draft');
-    }
 
     return result.rows[0];
 };
 
 const markFnFPaid = async (tenantId, settlementId, userId) => {
-    const result = await db.query(
-        `UPDATE fnf_settlements 
-     SET status = 'PAID', paid_at = now(), updated_at = now()
-     WHERE tenant_id = $1 AND id = $2 AND status = 'APPROVED'
-     RETURNING *`,
-        [tenantId, settlementId]
-    );
+    try {
+        console.log(`[FnF Pay] Start. ID: ${settlementId}, User: ${userId}`);
+        const result = await db.query(
+            `UPDATE fnf_settlements 
+         SET status = 'PAID', paid_at = now(), updated_at = now()
+         WHERE tenant_id = $1 AND id = $2 AND status = 'APPROVED'
+         RETURNING *`,
+            [tenantId, settlementId]
+        );
 
-    if (result.rowCount === 0) {
-        throw new Error('Settlement not found or not approved');
+        if (result.rowCount === 0) {
+            // Debug: Check why
+            const check = await db.query(`SELECT status FROM fnf_settlements WHERE id=$1`, [settlementId]);
+            if (check.rowCount > 0 && check.rows[0].status === 'PAID') {
+                console.log('[FnF Pay] Already paid');
+                return check.rows[0];
+            }
+            throw new Error('Settlement not found or not approved');
+        }
+
+        const fnf = result.rows[0];
+        const employeeId = fnf.employee_id;
+        console.log(`[FnF Pay] Closing records for Employee: ${employeeId}`);
+
+        // 1. Mark reimbursements as PAID
+        await db.query(`UPDATE reimbursement_claims SET status = 'PAID', paid_in_payrun_id = NULL, updated_at = now() WHERE tenant_id = $1 AND employee_id = $2 AND status = 'APPROVED'`, [tenantId, employeeId]);
+        console.log('[FnF Pay] Reimbursements paid');
+
+        // 2. Mark loans as SETTLED
+        await db.query(`UPDATE employee_loans SET status = 'SETTLED', updated_at = now() WHERE tenant_id = $1 AND employee_id = $2 AND status = 'ACTIVE'`, [tenantId, employeeId]);
+        console.log('[FnF Pay] Loans settled');
+
+        // 3. Mark assets as AVAILABLE
+        await db.query(`UPDATE assets SET status = 'AVAILABLE', assigned_to = NULL, updated_at = now() WHERE tenant_id = $1 AND assigned_to = $2`, [tenantId, employeeId]);
+        console.log('[FnF Pay] Assets released');
+
+        // 4. Terminate Employee
+        await db.query(`UPDATE employees SET status = 'TERMINATED', exit_date = $2, updated_at = now() WHERE id = $3`, [tenantId, fnf.last_working_day, employeeId]);
+        console.log('[FnF Pay] Employee terminated');
+
+        return result.rows[0];
+    } catch (err) {
+        console.error('[FnF Pay Error]', err);
+        throw err;
     }
-
-    // Update employee status to TERMINATED
-    const fnf = result.rows[0];
-    await db.query(
-        `UPDATE employees SET status = 'TERMINATED', updated_at = now() WHERE id = $1`,
-        [fnf.employee_id]
-    );
-
-    return result.rows[0];
 };
 
 module.exports = {

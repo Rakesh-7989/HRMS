@@ -20,7 +20,10 @@ export interface LeaveApplication {
   rejected_by?: string;
   approval_comment?: string;
   rejection_reason?: string;
-  created_at?: string;
+  created_at: string;
+  updated_at?: string;
+  days_count?: number;
+  attachment_url?: string;
   employee?: {
     first_name: string;
     last_name: string;
@@ -33,7 +36,12 @@ export interface LeaveSummary {
   pending: number;
   approved: number;
   rejected: number;
-  by_type?: Record<string, number>;
+  cancelled?: number;
+  by_type?: Array<{
+    leave_type_name: string;
+    requests: number;
+    total_days: number;
+  }>;
 }
 
 export interface ApplyLeaveData {
@@ -44,6 +52,7 @@ export interface ApplyLeaveData {
   is_half_day: boolean;
   half_day_session?: 'MORNING' | 'AFTERNOON' | null;
   reason: string;
+  attachment_url?: string;
 }
 
 // Leave Types
@@ -61,8 +70,6 @@ export interface LeaveType {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  default_accrual_rate?: number;
-  default_max_balance?: number;
 }
 
 export interface CreateLeaveTypeData {
@@ -74,8 +81,6 @@ export interface CreateLeaveTypeData {
   requires_attachment?: boolean;
   min_days_notice?: number;
   max_consecutive_days?: number;
-  default_accrual_rate?: number;
-  default_max_balance?: number;
 }
 
 export interface UpdateLeaveTypeData extends Partial<CreateLeaveTypeData> {
@@ -104,6 +109,8 @@ export interface LeavePolicy {
   year_start_month: number;
 
   priority: number;
+  carry_forward_enabled: boolean;
+  max_carry_forward: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -122,6 +129,8 @@ export interface CreatePolicyData {
   max_balance?: number | null;
   year_start_month?: number;
   priority?: number;
+  carry_forward_enabled?: boolean;
+  max_carry_forward?: number;
 }
 
 export interface UpdatePolicyData extends Partial<CreatePolicyData> {
@@ -256,6 +265,7 @@ export interface YearParams {
 export interface PaginationParams {
   limit?: number;
   offset?: number;
+  status?: string;
 }
 
 // Helper function to handle API errors
@@ -296,34 +306,48 @@ export const leaveService = {
     }
   },
 
-  // Backend route: GET /leave/my-leaves (not /leave/my)
-  getMyLeaves: async (params?: DateRangeParams & PaginationParams & { status?: string }): Promise<LeaveApplication[]> => {
+  uploadAttachment: async (file: File): Promise<{ url: string; filename: string }> => {
     try {
-      const response = await api.get('/leave/my-leaves', { params });
-      return extractData(response) || [];
-    } catch (error) {
-      console.error('Error fetching leaves:', error);
-      return [];
-    }
-  },
-
-  cancelMyLeave: async (id: string): Promise<LeaveApplication> => {
-    try {
-      const response = await api.post(`/leave/${id}/cancel`, {});
+      const formData = new FormData();
+      formData.append('attachment', file);
+      const response = await api.post('/leave/upload-attachment', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return extractData(response);
     } catch (error) {
       return handleApiError(error);
     }
   },
 
-  // Backend route: GET /leave/approvals (not /leave/approvals/pending)
+  // Issue 29: Throw errors so React Query error states work
+  getMyLeaves: async (params?: DateRangeParams & PaginationParams & { status?: string }): Promise<LeaveApplication[]> => {
+    try {
+      const response = await api.get('/leave/my-leaves', { params });
+      return extractData(response) || [];
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  // Issue 27: Accept reason parameter and pass it in the body
+  cancelMyLeave: async (id: string, reason?: string): Promise<LeaveApplication> => {
+    try {
+      const response = await api.post(`/leave/${id}/cancel`, { reason: reason || 'Cancelled by employee' });
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  // Issue 29: Throw errors
   getPendingApprovals: async (params?: DateRangeParams & PaginationParams): Promise<LeaveApplication[]> => {
     try {
       const response = await api.get('/leave/approvals', { params });
       return extractData(response) || [];
     } catch (error) {
-      console.error('Error fetching pending approvals:', error);
-      return [];
+      return handleApiError(error);
     }
   },
 
@@ -479,7 +503,7 @@ export const leaveService = {
         params: year ? { year } : undefined
       });
       const rawData = extractData(response) || [];
-      // Transform backend format to frontend format
+      // Issue 23: Fix entitled calculation — use raw backend fields
       return rawData.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -490,11 +514,11 @@ export const leaveService = {
           code: item.leave_type_code || '',
         },
         year: item.year,
-        entitled: parseFloat(item.current_balance || 0) + parseFloat(item.used || 0) + parseFloat(item.pending || 0),
+        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
         used: parseFloat(item.used || 0),
         pending: parseFloat(item.pending || 0),
         available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carried_forward || 0),
+        carried_forward: parseFloat(item.carry_forward || 0),
       }));
     } catch (error) {
       console.error('Error fetching balances:', error);
@@ -508,7 +532,7 @@ export const leaveService = {
         params: year ? { year } : undefined
       });
       const rawData = extractData(response) || [];
-      // Transform backend format to frontend format
+      // Issue 23: Fix entitled calculation
       return rawData.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -519,11 +543,11 @@ export const leaveService = {
           code: item.leave_type_code || '',
         },
         year: item.year,
-        entitled: parseFloat(item.current_balance || 0) + parseFloat(item.used || 0) + parseFloat(item.pending || 0),
+        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
         used: parseFloat(item.used || 0),
         pending: parseFloat(item.pending || 0),
         available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carried_forward || 0),
+        carried_forward: parseFloat(item.carry_forward || 0),
       }));
     } catch (error) {
       console.error('Error fetching employee balances:', error);
@@ -764,9 +788,80 @@ export const leaveService = {
     days: number;
     employee_ids?: string[];
     reason: string;
-  }): Promise<{ success: boolean; processed: number; failed: number }> => {
+    year?: number;
+  }): Promise<{ success: boolean; processed: number; failed: number; year?: number }> => {
     try {
       const response = await api.post('/leave/balances/bulk-allocate', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  bulkReset: async (data: {
+    leave_type_id?: string;
+    employee_ids?: string[];
+    reset_to_zero?: boolean;
+    reason?: string;
+    year?: number;
+  }): Promise<{ success: boolean; processed: number; failed: number; year?: number }> => {
+    try {
+      const response = await api.post('/leave/balances/bulk-reset', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+};
+
+/* ========================== DELEGATION API ========================== */
+
+export interface Delegation {
+  id: string;
+  delegator_id: string;
+  delegate_id: string;
+  start_date: string;
+  end_date: string;
+  reason?: string;
+  is_active: boolean;
+  created_at?: string;
+  delegator_name?: string;
+  delegate_name?: string;
+  delegator_email?: string;
+  delegate_email?: string;
+}
+
+export const delegationService = {
+  create: async (data: { delegate_id: string; start_date: string; end_date: string; reason?: string }): Promise<Delegation> => {
+    try {
+      const response = await api.post('/leave/delegations', data);
+      return extractData(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  getMyDelegations: async (): Promise<Delegation[]> => {
+    try {
+      const response = await api.get('/leave/delegations/my');
+      return extractData(response) || [];
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  getDelegationsToMe: async (): Promise<Delegation[]> => {
+    try {
+      const response = await api.get('/leave/delegations/to-me');
+      return extractData(response) || [];
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  revoke: async (id: string): Promise<{ success: boolean }> => {
+    try {
+      const response = await api.delete(`/leave/delegations/${id}`);
       return extractData(response);
     } catch (error) {
       return handleApiError(error);

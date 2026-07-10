@@ -16,10 +16,13 @@ import {
 } from '@/components/ui/Table';
 import { Users, Briefcase, Calendar, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 type ReportType = 'project' | 'client' | 'utilization';
 
 export const ProjectReportsPage: React.FC = () => {
+  const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<ReportType>('project');
     const [selectedProject, setSelectedProject] = useState<string>('');
     const [selectedClient, setSelectedClient] = useState<string>('');
@@ -58,15 +61,108 @@ export const ProjectReportsPage: React.FC = () => {
         enabled: activeTab === 'utilization',
     });
 
+    // Helper function to download CSV
+    const downloadCSV = (data: string[][], filename: string) => {
+        const csvContent = data.map(row =>
+            row.map(cell => {
+                const escaped = String(cell ?? '').replace(/"/g, '""');
+                return escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')
+                    ? `"${escaped}"`
+                    : escaped;
+            }).join(',')
+        ).join('\n');
+
+        // Add BOM for Excel compatibility
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+
+        // Append to body, click, then remove after delay
+        document.body.appendChild(link);
+        link.click();
+
+        // Delay cleanup to ensure download starts
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 100);
+    };
+
     const handleExport = () => {
-        alert("Export functionality to be implemented.");
+        const today = new Date().toISOString().split('T')[0];
+        const dateRange = startDate && endDate ? `${startDate}_to_${endDate}` : today;
+
+        try {
+            if (activeTab === 'project' && projectReport) {
+                const projectName = projects.find(p => p.id === selectedProject)?.name || 'Project';
+                const rows: string[][] = [
+                    ['Project Report'],
+                    ['Project', projectName],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Summary'],
+                    ['Total Hours', String(Number(projectReport.total_hours || 0).toFixed(2))],
+                    ['Total Timesheets', String(projectReport.total_timesheets || 0)],
+                ];
+                downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
+                toast.success('Project report exported successfully!');
+
+            } else if (activeTab === 'client' && clientReport) {
+                const clientName = clients.find(c => c.id === selectedClient)?.name || 'Client';
+                const rows: string[][] = [
+                    ['Client Report'],
+                    ['Client', clientName],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Summary'],
+                    ['Total Projects', String(clientReport.total_projects || 0)],
+                    ['Total Hours', String(Number(clientReport.total_hours || 0).toFixed(2))],
+                    ['Total Timesheets', String(clientReport.total_timesheets || 0)],
+                    [],
+                    ['Active Projects'],
+                    ...(clientReport.projects || []).map((p: string) => [p]),
+                ];
+                downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
+                toast.success('Client report exported successfully!');
+
+            } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
+                const rows: string[][] = [
+                    ['Employee Utilization Report'],
+                    ['Date Range', startDate && endDate ? `${startDate} to ${endDate}` : 'All time'],
+                    ['Generated On', new Date().toLocaleString()],
+                    [],
+                    ['Employee Name', 'Email', 'Assigned Projects', 'Logged Hours', 'Utilization %'],
+                    ...utilizationReport.map((emp: any) => [
+                        `${emp.first_name || ''} ${emp.last_name || ''}`.trim(),
+                        emp.email || '',
+                        String(emp.projects_assigned || 0),
+                        String(Number(emp.total_hours_logged || 0).toFixed(2)),
+                        `${emp.utilization_percent || 0}%`,
+                    ]),
+                ];
+                downloadCSV(rows, `utilization_report_${dateRange}.csv`);
+                toast.success('Utilization report exported successfully!');
+
+            } else {
+                toast.error('No data available to export. Please select filters and load report first.');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            toast.error('Failed to export report. Please try again.');
+        }
     };
 
     return (
         <DashboardLayout
             title="Project Reports"
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
                 { label: 'Project Reports' },
             ]}
         >
@@ -142,12 +238,12 @@ export const ProjectReportsPage: React.FC = () => {
                 <div className="space-y-6">
                     {/* PROJECT REPORT */}
                     {activeTab === 'project' && (
-                        loadingProjectReport ? <div>Loading...</div> : projectReport ? (
+                        loadingProjectReport ? <div>{t('common.loading')}</div> : projectReport ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-blue-600" />
+                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                            <Calendar className="h-6 w-6 text-violet-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>
@@ -171,7 +267,7 @@ export const ProjectReportsPage: React.FC = () => {
 
                     {/* CLIENT REPORT */}
                     {activeTab === 'client' && (
-                        loadingClientReport ? <div>Loading...</div> : clientReport ? (
+                        loadingClientReport ? <div>{t('common.loading')}</div> : clientReport ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
@@ -184,8 +280,8 @@ export const ProjectReportsPage: React.FC = () => {
                                         </div>
                                     </Card>
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-blue-600" />
+                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
+                                            <Calendar className="h-6 w-6 text-violet-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>
@@ -219,7 +315,7 @@ export const ProjectReportsPage: React.FC = () => {
 
                     {/* UTILIZATION REPORT */}
                     {activeTab === 'utilization' && (
-                        loadingUtilizationReport ? <div>Loading...</div> : utilizationReport ? (
+                        loadingUtilizationReport ? <div>{t('common.loading')}</div> : utilizationReport ? (
                             <Card className="overflow-hidden">
                                 <Table>
                                     <TableHeader>

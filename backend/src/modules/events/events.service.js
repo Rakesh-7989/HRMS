@@ -22,7 +22,9 @@ exports.getPeopleEvents = async (db, tenantId, scope = 'organization') => {
       TO_CHAR(e.date_of_birth, 'Mon DD') AS date,
       e.date_of_birth
     FROM employees e
+    JOIN users u ON e.user_id = u.id
     WHERE e.tenant_id = $1
+    AND u.is_deleted = false
     AND e.date_of_birth IS NOT NULL
     AND (
       (EXTRACT(MONTH FROM e.date_of_birth) = EXTRACT(MONTH FROM CURRENT_DATE)
@@ -48,7 +50,9 @@ exports.getPeopleEvents = async (db, tenantId, scope = 'organization') => {
       TO_CHAR(e.join_date, 'Mon DD') AS date,
       EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.join_date)) AS years
     FROM employees e
+    JOIN users u ON e.user_id = u.id
     WHERE e.tenant_id = $1
+    AND u.is_deleted = false
     AND e.join_date IS NOT NULL
     AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.join_date)) >= 1
     AND (
@@ -76,8 +80,10 @@ exports.getPeopleEvents = async (db, tenantId, scope = 'organization') => {
       d.name AS department
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
+    JOIN users u ON e.user_id = u.id
     WHERE e.tenant_id = $1
     AND e.status = 'ACTIVE'
+    AND u.is_deleted = false
     AND e.join_date >= CURRENT_DATE - INTERVAL '30 days'
     ORDER BY e.join_date DESC
     LIMIT 10

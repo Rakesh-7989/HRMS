@@ -17,9 +17,10 @@ import {
     LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 export const SearchPage: React.FC = () => {
+  const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const initialQuery = searchParams.get('q') || '';
@@ -52,15 +53,15 @@ export const SearchPage: React.FC = () => {
     const getIcon = (type: string) => {
         switch (type) {
             case 'employee':
-                return <User size={18} className="text-blue-500" />;
+                return <User size={18} className="text-violet-500" />;
             case 'asset':
                 return <Package size={18} className="text-green-500" />;
             case 'project':
                 return <Briefcase size={18} className="text-purple-500" />;
             case 'page':
-                return <LayoutDashboard size={18} className="text-indigo-500" />;
+                return <LayoutDashboard size={18} className="text-purple-500" />;
             case 'action':
-                return <Zap size={18} className="text-amber-500" />;
+                return <Zap size={18} className="text-fuchsia-500" />;
             default:
                 return <FileText size={18} className="text-gray-500" />;
         }
@@ -86,9 +87,9 @@ export const SearchPage: React.FC = () => {
     const getCategoryColor = (type: string) => {
         switch (type) {
             case 'page':
-                return 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800';
+                return 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
             case 'action':
-                return 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800';
+                return 'bg-fuchsia-50 dark:bg-fuchsia-900/20 border-fuchsia-200 dark:border-fuchsia-800';
             default:
                 return 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700';
         }
@@ -121,9 +122,9 @@ export const SearchPage: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "w-10 h-10 rounded-full flex items-center justify-center",
-                                        result.type === 'page' && "bg-indigo-100 dark:bg-indigo-800",
-                                        result.type === 'action' && "bg-amber-100 dark:bg-amber-800",
-                                        result.type === 'employee' && "bg-blue-100 dark:bg-blue-800",
+                                        result.type === 'page' && "bg-purple-100 dark:bg-purple-800",
+                                        result.type === 'action' && "bg-fuchsia-100 dark:bg-fuchsia-800",
+                                        result.type === 'employee' && "bg-violet-100 dark:bg-violet-800",
                                         result.type === 'asset' && "bg-green-100 dark:bg-green-800",
                                         result.type === 'project' && "bg-purple-100 dark:bg-purple-800"
                                     )}>
@@ -157,9 +158,9 @@ export const SearchPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Search"
+            title={t('common.search')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard/organization' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' },
                 { label: 'Search' },
             ]}
         >
@@ -226,9 +227,9 @@ export const SearchPage: React.FC = () => {
                 {/* Results */}
                 {isLoading && debouncedQuery.length >= 2 && (
                     <Card className="p-12">
-                        <div className="space-y-4">
-                            <SkeletonCard />
-                            <SkeletonCard />
+                        <div className="flex flex-col items-center justify-center text-gray-500">
+                            <Loader2 size={40} className="animate-spin mb-4 text-primary" />
+                            <p>Searching...</p>
                         </div>
                     </Card>
                 )}
@@ -273,9 +274,9 @@ export const SearchPage: React.FC = () => {
                                 Search across pages, modules, quick actions, employees, assets, and projects.
                             </p>
                             <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
-                                <span className="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded">Pages</span>
-                                <span className="px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded">Actions</span>
-                                <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">Employees</span>
+                                <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded">Pages</span>
+                                <span className="px-2 py-1 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded">Actions</span>
+                                <span className="px-2 py-1 bg-violet-50 dark:bg-violet-900/20 rounded">Employees</span>
                                 <span className="px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded">Assets</span>
                                 <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded">Projects</span>
                             </div>

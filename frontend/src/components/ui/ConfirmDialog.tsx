@@ -1,91 +1,177 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
-import { Button } from '@/components/ui/Button';
-import { AlertTriangle, Trash2, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle, HelpCircle, Info } from 'lucide-react';
+import { Button } from './Button';
+import { Input } from './Input';
 import { cn } from '@/utils/cn';
 
-interface ConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: 'danger' | 'warning' | 'info';
-  onConfirm: () => void;
-  isLoading?: boolean;
+export interface ConfirmDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (value?: string) => void;
+    title: string;
+    message: string;
+    type?: 'info' | 'confirm' | 'destructive' | 'prompt';
+    confirmText?: string;
+    cancelText?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onBack?: () => void;
 }
 
-const variantConfig = {
-  danger: {
-    icon: Trash2,
-    iconBg: 'bg-red-50 dark:bg-red-500/10',
-    iconColor: 'text-red-500',
-    buttonVariant: 'destructive' as const,
-  },
-  warning: {
-    icon: AlertTriangle,
-    iconBg: 'bg-amber-50 dark:bg-amber-500/10',
-    iconColor: 'text-amber-500',
-    buttonVariant: 'primary' as const,
-  },
-  info: {
-    icon: Info,
-    iconBg: 'bg-blue-50 dark:bg-blue-500/10',
-    iconColor: 'text-blue-500',
-    buttonVariant: 'primary' as const,
-  },
-};
+import { X, ArrowLeft } from 'lucide-react';
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
-  open,
-  onOpenChange,
-  title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  variant = 'danger',
-  onConfirm,
-  isLoading,
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    message,
+    type = 'confirm',
+    confirmText,
+    cancelText = 'Cancel',
+    defaultValue = '',
+    placeholder = '',
+    onBack,
 }) => {
-  const config = variantConfig[variant];
-  const Icon = config.icon;
+    const [inputValue, setInputValue] = useState(defaultValue);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-4">
-            <div className={cn('w-12 h-12 rounded-full flex items-center justify-center', config.iconBg)}>
-              <Icon size={24} className={config.iconColor} />
-            </div>
-            <div>
-              <DialogTitle className="text-lg">{title}</DialogTitle>
-            </div>
-          </div>
-        </DialogHeader>
-        <div className="px-6 pb-2">
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{message}</p>
-        </div>
-        <DialogFooter className="flex items-center justify-end gap-3 px-6 pb-6 pt-2">
-          <Button
-            variant="outline"
-            size="md"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={config.buttonVariant}
-            size="md"
-            onClick={onConfirm}
-            isLoading={isLoading}
-          >
-            {confirmLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+    useEffect(() => {
+        if (isOpen) {
+            setInputValue(defaultValue);
+        }
+    }, [isOpen, defaultValue]);
+
+    const handleConfirm = () => {
+        onConfirm(type === 'prompt' ? inputValue : undefined);
+        onClose();
+    };
+
+    const getIcon = () => {
+        switch (type) {
+            case 'destructive':
+                return <AlertCircle className="text-red-500" size={24} />;
+            case 'info':
+                return <Info className="text-violet-500" size={24} />;
+            case 'prompt':
+                return <HelpCircle className="text-primary" size={24} />;
+            default:
+                return <HelpCircle className="text-primary" size={24} />;
+        }
+    };
+
+    const getConfirmButtonVariant = () => {
+        if (type === 'destructive') return 'destructive';
+        return 'primary';
+    };
+
+    const defaultConfirmText = () => {
+        if (confirmText) return confirmText;
+        if (type === 'info') return 'OK';
+        return 'Confirm';
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999]"
+                    />
+                    {/* Dialog */}
+                    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header with Close and optional Back */}
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    {onBack && (
+                                        <button
+                                            onClick={onBack}
+                                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
+                                        >
+                                            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                                        </button>
+                                    )}
+                                    <span className="font-semibold text-gray-700 dark:text-gray-200">Confirmation</span>
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className={cn(
+                                        "p-3 rounded-xl shrink-0",
+                                        type === 'destructive' ? "bg-red-50 dark:bg-red-900/20" :
+                                            type === 'info' ? "bg-violet-50 dark:bg-violet-900/20" :
+                                                "bg-primary/10 dark:bg-primary/20"
+                                    )}>
+                                        {getIcon()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white leading-6">
+                                            {title}
+                                        </h3>
+                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                            {message}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {type === 'prompt' && (
+                                    <div className="mt-4">
+                                        <Input
+                                            autoFocus
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            placeholder={placeholder}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleConfirm();
+                                                if (e.key === 'Escape') onClose();
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="mt-8 flex items-center justify-end gap-3">
+                                    {type !== 'info' && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={onClose}
+                                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                        >
+                                            {cancelText}
+                                        </Button>
+                                    )}
+                                    <Button
+                                        variant={getConfirmButtonVariant()}
+                                        onClick={handleConfirm}
+                                        className="px-6"
+                                    >
+                                        {defaultConfirmText()}
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                </>
+            )}
+        </AnimatePresence>
+    );
 };

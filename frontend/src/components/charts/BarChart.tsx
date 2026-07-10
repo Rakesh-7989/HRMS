@@ -45,17 +45,17 @@ export const BarChart: React.FC<BarChartProps> = ({
       className="w-full"
     >
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsBarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <RechartsBarChart data={data} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
           <defs>
             <linearGradient id={`barGradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={chartColor} stopOpacity={0.9} />
               <stop offset="100%" stopColor={chartColor} stopOpacity={0.6} />
             </linearGradient>
           </defs>
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke="currentColor" 
-            className="stroke-gray-200 dark:stroke-gray-700 opacity-30" 
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="currentColor"
+            className="stroke-gray-200 dark:stroke-gray-700 opacity-30"
           />
           <XAxis
             dataKey={xKey}
@@ -63,8 +63,8 @@ export const BarChart: React.FC<BarChartProps> = ({
             tick={{ fill: 'currentColor', fontSize: 12 }}
             axisLine={{ stroke: 'currentColor', strokeWidth: 1 }}
           />
-          <YAxis 
-            className="text-xs fill-gray-500 dark:fill-gray-400" 
+          <YAxis
+            className="text-xs fill-gray-500 dark:fill-gray-400"
             tick={{ fill: 'currentColor', fontSize: 12 }}
             axisLine={{ stroke: 'currentColor', strokeWidth: 1 }}
           />
@@ -76,26 +76,26 @@ export const BarChart: React.FC<BarChartProps> = ({
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
               padding: '12px',
             }}
-            labelStyle={{ 
+            labelStyle={{
               color: 'var(--foreground)',
               fontWeight: 600,
               marginBottom: '8px',
             }}
-            itemStyle={{ 
+            itemStyle={{
               color: 'var(--foreground)',
               padding: '4px 0',
             }}
             cursor={{ fill: 'rgba(107, 70, 193, 0.1)' }}
           />
           {name && (
-            <Legend 
+            <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               iconType="circle"
             />
           )}
-          <Bar 
-            dataKey={dataKey} 
-            name={name || dataKey} 
+          <Bar
+            dataKey={dataKey}
+            name={name || dataKey}
             fill={`url(#barGradient-${dataKey})`}
             radius={[12, 12, 0, 0]}
             animationDuration={animated ? 1000 : 0}
@@ -103,8 +103,8 @@ export const BarChart: React.FC<BarChartProps> = ({
             animationEasing="ease-out"
           >
             {data.map((_, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={colors[index % colors.length]}
                 style={{
                   transition: 'opacity 0.3s ease',

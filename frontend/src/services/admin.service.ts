@@ -14,8 +14,13 @@ export interface TenantProfile {
     city: string;
     state: string;
     country: string;
+    address?: string;
+    zip_code?: string;
     settings?: {
         workingHours?: WorkingHours;
+        logo_url?: string;
+        primary_color?: string;
+        timezone?: string;
     };
 }
 
@@ -95,4 +100,54 @@ export const adminService = {
             throw err;
         }
     },
+
+    uploadTenantLogo: async (file: File): Promise<{ logo_url: string }> => {
+        const formData = new FormData();
+        formData.append('logo', file);
+        const response = await api.put<any>('/admin/tenant/logo', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        const logoData = response.data.data;
+
+        // Sync local storage fallback
+        const existingRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (existingRaw) {
+            try {
+                const existing = JSON.parse(existingRaw);
+                const updated = {
+                    ...existing,
+                    settings: {
+                        ...(existing.settings || {}),
+                        logo_url: logoData.logo_url
+                    }
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            } catch (e) { }
+        }
+
+        return logoData;
+    },
+
+    deleteTenantLogo: async (): Promise<void> => {
+        await api.delete('/admin/tenant/logo');
+
+        // Sync local storage fallback
+        const existingRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (existingRaw) {
+            try {
+                const existing = JSON.parse(existingRaw);
+                const updated = {
+                    ...existing,
+                    settings: {
+                        ...(existing.settings || {}),
+                        logo_url: null
+                    }
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            } catch (e) { }
+        }
+    }
 };

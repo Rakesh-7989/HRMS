@@ -18,6 +18,11 @@ exports.tenantRegisterSchema = z.object({
       .string()
       .min(1, "Domain cannot be empty")
       .max(255, "Domain must not exceed 255 characters")
+      .refine((val) => {
+        if (!val) return true;
+        const allowed = ['.com', '.org', '.in'];
+        return allowed.some(suffix => val.toLowerCase().endsWith(suffix));
+      }, { message: "Domain must end with .com, .org, or .in" })
       .optional()
       .or(z.literal("").transform(() => undefined)),
     address: z.string().max(500, "Address must not exceed 500 characters").optional(),
@@ -34,7 +39,11 @@ exports.tenantRegisterSchema = z.object({
     email: z.string()
       .email("Invalid email format")
       .max(255, "Email must not exceed 255 characters"),
-    settings: z.object({}).optional()
+    settings: z.object({}).optional(),
+    plan_id: z.string().uuid("Invalid plan ID").optional(),
+    billing_cycle: z.enum(['MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY']).optional(),
+    employee_count: z.number().int().positive("Employee count must be a positive integer"),
+    coupon_code: z.string().max(50).optional()
   })
 });
 

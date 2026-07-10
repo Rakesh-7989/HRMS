@@ -26,6 +26,27 @@ exports.getSuperAdminDashboard = async (req, res) => {
   }
 };
 
+/**
+ * Get system reports with deep SaaS analytics
+ */
+exports.getSuperAdminReports = async (req, res) => {
+  try {
+    const reports = await dashboardService.getSuperAdminReports(req.db);
+    res.json({
+      status: "success",
+      data: reports,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.error("Super admin reports error:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch system reports",
+      error: err.message
+    });
+  }
+};
+
 /* ==================== ADMIN DASHBOARD ==================== */
 
 /**
@@ -35,7 +56,8 @@ exports.getAdminDashboard = async (req, res) => {
   try {
     const dashboard = await dashboardService.getAdminDashboard(
       req.db,
-      req.user.tenantId
+      req.user.tenantId,
+      req.query // Pass query params (startDate, endDate)
     );
     res.json({
       status: "success",
@@ -62,7 +84,8 @@ exports.getHRDashboard = async (req, res) => {
   try {
     const dashboard = await dashboardService.getHRDashboard(
       req.db,
-      req.user.tenantId
+      req.user.tenantId,
+      req.query // Pass query params (startDate, endDate)
     );
     res.json({
       status: "success",

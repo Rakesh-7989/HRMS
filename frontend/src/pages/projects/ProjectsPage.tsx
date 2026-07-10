@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2 } from 'lucide-react';
+import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2, Clock } from 'lucide-react';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -25,19 +26,20 @@ import {
 import { StatusBadge } from '@/components/projects/StatusBadge';
 import { ProjectReports } from '@/components/projects/ProjectReports';
 import { ProjectMembersModal } from '@/components/projects/ProjectMembersModal';
+import { TimesheetContent } from '@/components/payroll/TimesheetContent';
 
 import { projectsService } from '@/services/projects.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';
-import { SAMPLE_PROJECT } from '@/data/mockProjectData';
+import { useTranslation } from 'react-i18next';
 
 export const ProjectsPage: React.FC = () => {
-    const { user } = useAuth();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const [activeTab, setActiveTab] = useState<'list' | 'reports'>('list');
+    const [activeTab, setActiveTab] = useState<'list' | 'reports' | 'timesheets'>('list');
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -70,19 +72,21 @@ export const ProjectsPage: React.FC = () => {
         start_date: '',
         end_date: '',
         status: 'PLANNING' as ProjectStatus,
+        billing_type: 'HOURLY' as 'HOURLY' | 'FIXED' | 'NON_BILLABLE',
         description: '',
         budget: '',
     });
 
-    const canManage = ['ADMIN', 'MANAGER'].includes(user?.role || '');
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('projects', 'manage');
+    const canViewReports = hasPermission('projects', 'view_reports') || canManage;
+    const canManageMembers = hasPermission('projects', 'manage_members') || canManage;
 
     // Fetch Projects
-    const { data: serverProjects = [], isLoading: projectsLoading } = useQuery({
+    const { data: projects = [], isLoading: projectsLoading } = useQuery({
         queryKey: ['projects'],
         queryFn: () => projectsService.getProjects(),
     });
-
-    const projects: Project[] = serverProjects.length === 0 && !projectsLoading ? [SAMPLE_PROJECT] : serverProjects;
 
     // Fetch Clients for Dropdown
     const { data: clients = [] } = useQuery({
@@ -95,11 +99,12 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.createProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project created successfully');
             handleCloseModal();
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to create project');
+            showToast.error(error.response?.data?.message || 'Failed to create project');
         },
     });
 
@@ -108,11 +113,12 @@ export const ProjectsPage: React.FC = () => {
             projectsService.updateProject(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project updated successfully');
             handleCloseModal();
         },
-        onError: () => {
+        onError: (error: any) => {
             setIsSubmitting(false);
-            alert('Failed to update project');
+            showToast.error(error.response?.data?.message || 'Failed to update project');
         },
     });
 
@@ -121,10 +127,11 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.deleteProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast.success('Project deleted successfully');
             setProjectToDelete(null);
         },
-        onError: () => {
-            alert('Failed to delete project. It may have linked tasks.');
+        onError: (error: any) => {
+            showToast.error(error.response?.data?.message || 'Failed to delete project. It may have linked tasks.');
             setProjectToDelete(null);
         },
     });
@@ -141,6 +148,7 @@ export const ProjectsPage: React.FC = () => {
             start_date: '',
             end_date: '',
             status: 'PLANNING',
+            billing_type: 'HOURLY',
             description: '',
             budget: '',
         });
@@ -155,6 +163,7 @@ export const ProjectsPage: React.FC = () => {
             start_date: project.start_date.split('T')[0], // Format for date input
             end_date: project.end_date.split('T')[0],
             status: project.status,
+            billing_type: project.billing_type || 'HOURLY',
             description: project.description || '',
             budget: project.budget?.toString() || '',
         });
@@ -168,6 +177,24 @@ export const ProjectsPage: React.FC = () => {
     };
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Date validation
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(formData.start_date);
+        const endDate = new Date(formData.end_date);
+
+        if (endDate < startDate) {
+            showToast.error('End date cannot be earlier than start date');
+            return;
+        }
+
+        // Prevent future start date for Active projects
+        if (formData.status === 'ACTIVE' && startDate > today) {
+            showToast.error('Cannot set status to ACTIVE if start date is in the future');
+            return;
+        }
+
         setIsSubmitting(true);
 
         const submissionData = {
@@ -191,10 +218,10 @@ export const ProjectsPage: React.FC = () => {
 
     return (
         <DashboardLayout
-            title="Projects"
+            title={t('projects.title')}
             breadcrumbs={[
-                { label: 'Dashboard', href: '/dashboard' },
-                { label: 'Projects' },
+                { label: t('common.breadcrumbs.dashboard'), href: '/dashboard' },
+                { label: t('common.breadcrumbs.projects') },
             ]}
         >
             <div className="space-y-6">
@@ -211,9 +238,9 @@ export const ProjectsPage: React.FC = () => {
                             )}
                         >
                             <List size={16} />
-                            List
+                            {t('projects.list')}
                         </button>
-                        {canManage && (
+                        {canViewReports && (
                             <button
                                 onClick={() => setActiveTab('reports')}
                                 className={cn(
@@ -224,9 +251,21 @@ export const ProjectsPage: React.FC = () => {
                                 )}
                             >
                                 <BarChart3 size={16} />
-                                Reports
+                                {t('projects.reports')}
                             </button>
                         )}
+                        <button
+                            onClick={() => setActiveTab('timesheets')}
+                            className={cn(
+                                "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
+                                activeTab === 'timesheets'
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            )}
+                        >
+                            <Clock size={16} />
+                            {t('projects.timesheets')}
+                        </button>
                     </div>
 
                     {activeTab === 'list' && (
@@ -234,11 +273,11 @@ export const ProjectsPage: React.FC = () => {
                             {canManage && (
                                 <>
                                     <Button variant="outline" onClick={() => navigate('/projects/clients')}>
-                                        Manage Clients
+                                        {t('projects.manageClients')}
                                     </Button>
                                     <Button onClick={handleOpenCreateModal}>
                                         <Plus size={18} />
-                                        Add Project
+                                        {t('projects.addProject')}
                                     </Button>
                                 </>
                             )}
@@ -253,7 +292,7 @@ export const ProjectsPage: React.FC = () => {
                             <div className="relative flex-1 max-w-xs w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <Input
-                                    placeholder="Search projects..."
+                                    placeholder={t('projects.searchProjects')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
@@ -265,7 +304,7 @@ export const ProjectsPage: React.FC = () => {
                                 onChange={(e) => setClientFilter(e.target.value)}
                                 className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
                             >
-                                <option value="All">All Clients</option>
+                                <option value="All">{t('projects.allClients')}</option>
                                 {clients.map(client => (
                                     <option key={client.id} value={client.id}>{client.name}</option>
                                 ))}
@@ -276,7 +315,7 @@ export const ProjectsPage: React.FC = () => {
                                 onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'All')}
                                 className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
                             >
-                                <option value="All">All Status</option>
+                                <option value="All">{t('projects.allStatus')}</option>
                                 <option value="PLANNING">Planning</option>
                                 <option value="ACTIVE">Active</option>
                                 <option value="ON_HOLD">On Hold</option>
@@ -290,11 +329,11 @@ export const ProjectsPage: React.FC = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Project Name</TableHead>
-                                        <TableHead>Client</TableHead>
-                                        <TableHead>Timeline</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        {canManage && <TableHead>Actions</TableHead>}
+                                        <TableHead>{t('projects.projectName')}</TableHead>
+                                        <TableHead>{t('projects.client')}</TableHead>
+                                        <TableHead>{t('projects.timeline')}</TableHead>
+                                        <TableHead>{t('projects.status')}</TableHead>
+                                        {canManage && <TableHead>{t('projects.actions')}</TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -319,7 +358,7 @@ export const ProjectsPage: React.FC = () => {
                                             >
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                        <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
                                                             <FolderKanban size={20} />
                                                         </div>
                                                         <div>
@@ -349,27 +388,33 @@ export const ProjectsPage: React.FC = () => {
                                                 {canManage && (
                                                     <TableCell>
                                                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                            <button
-                                                                onClick={() => handleOpenMembersModal(project)}
-                                                                className="p-2 text-gray-400 hover:text-purple-500 transition-colors"
-                                                                title="Manage Members"
-                                                            >
-                                                                <Users size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleOpenEditModal(project)}
-                                                                className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                                                                title="Edit Project"
-                                                            >
-                                                                <Edit size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setProjectToDelete(project)}
-                                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                                title="Delete Project"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
+                                                            {canManageMembers && (
+                                                                <button
+                                                                    onClick={() => handleOpenMembersModal(project)}
+                                                                    className="p-2 text-gray-400 hover:text-purple-500 transition-colors"
+                                                                    title="Manage Members"
+                                                                >
+                                                                    <Users size={16} />
+                                                                </button>
+                                                            )}
+                                                            {canManage && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleOpenEditModal(project)}
+                                                                        className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
+                                                                        title="Edit Project"
+                                                                    >
+                                                                        <Edit size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setProjectToDelete(project)}
+                                                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                                        title="Delete Project"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 )}
@@ -380,8 +425,10 @@ export const ProjectsPage: React.FC = () => {
                             </Table>
                         </Card>
                     </>
-                ) : (
+                ) : activeTab === 'reports' ? (
                     <ProjectReports />
+                ) : (
+                    <TimesheetContent />
                 )}
 
                 {/* Create/Edit Project Modal - only relevant for List view actions, but kept here in layout */}
@@ -425,6 +472,7 @@ export const ProjectsPage: React.FC = () => {
                                         id="start_date"
                                         type="date"
                                         value={formData.start_date}
+                                        max={formData.end_date}
                                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                                         required
                                     />
@@ -435,6 +483,7 @@ export const ProjectsPage: React.FC = () => {
                                         id="end_date"
                                         type="date"
                                         value={formData.end_date}
+                                        min={formData.start_date}
                                         onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                                         required
                                     />
@@ -454,6 +503,20 @@ export const ProjectsPage: React.FC = () => {
                                     <option value="ON_HOLD">On Hold</option>
                                     <option value="COMPLETED">Completed</option>
                                     <option value="ARCHIVED">Archived</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="billing_type">Billing Type</Label>
+                                <select
+                                    id="billing_type"
+                                    value={formData.billing_type}
+                                    onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as any })}
+                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                >
+                                    <option value="HOURLY">Hourly (Time & Materials)</option>
+                                    <option value="FIXED">Fixed Price (Capped by Budget)</option>
+                                    <option value="NON_BILLABLE">Non-Billable (Internal)</option>
                                 </select>
                             </div>
 
@@ -501,7 +564,7 @@ export const ProjectsPage: React.FC = () => {
                     project={selectedProjectForMembers}
                     isOpen={isMembersModalOpen}
                     onClose={handleCloseMembersModal}
-                    canManage={canManage}
+                    canManage={canManageMembers}
                 />
 
                 {/* Delete Confirmation Dialog */}

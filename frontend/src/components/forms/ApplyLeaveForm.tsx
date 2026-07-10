@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { leaveService, ApplyLeaveData, LeaveType } from '@/services/leave.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Upload, X, FileText } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ApplyLeaveFormProps {
   open: boolean;
@@ -14,8 +16,8 @@ interface ApplyLeaveFormProps {
 
 const validationSchema = Yup.object({
   leave_type_id: Yup.string().required('Leave type is required'),
-  start_date: Yup.string().required('Start date is required'),
-  end_date: Yup.string()
+  start_date: Yup.date().required('Start date is required'),
+  end_date: Yup.date()
     .required('End date is required')
     .test('is-after-start', 'End date must be on or after start date', function (value) {
       const { start_date } = this.parent;
@@ -37,6 +39,11 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Fetch leave types dynamically
   const { data: leaveTypes = [], isLoading: typesLoading } = useQuery<LeaveType[]>({
     queryKey: ['leave-types'],
@@ -51,6 +58,19 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
     enabled: open,
   });
 
+  // Upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => leaveService.uploadAttachment(file),
+    onSuccess: (data) => {
+      setUploadedUrl(data.url);
+      setUploadError(null);
+    },
+    onError: (error: Error) => {
+      setUploadError(error.message || 'Failed to upload file');
+      setUploadedUrl(null);
+    },
+  });
+
   const applyMutation = useMutation({
     mutationFn: (data: ApplyLeaveData) => leaveService.applyLeave(data),
     onSuccess: () => {
@@ -58,6 +78,8 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       formik.resetForm();
+      setSelectedFile(null);
+      setUploadedUrl(null);
       onOpenChange(false);
     },
   });
@@ -80,10 +102,14 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
         reason: values.reason,
         is_half_day: values.is_half_day,
         half_day_session: values.is_half_day ? (values.half_day_session as 'MORNING' | 'AFTERNOON') : null,
+        attachment_url: uploadedUrl || undefined,
       };
       applyMutation.mutate(payload);
     },
   });
+
+  // Get the selected leave type details
+  const selectedLeaveType = leaveTypes.find(t => t.id === formik.values.leave_type_id);
 
   // Get the selected leave type's balance
   const selectedTypeBalance = leaveBalances.find(
@@ -102,14 +128,37 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
   const requestedDays = calculateDays();
 
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setUploadError(null);
+      uploadMutation.mutate(file);
+    }
+  };
+
+  // Handle file removal
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setUploadedUrl(null);
+    setUploadError(null);
+  };
+
   const handleClose = () => {
     formik.resetForm();
     applyMutation.reset();
+    setSelectedFile(null);
+    setUploadedUrl(null);
+    setUploadError(null);
     onOpenChange(false);
   };
 
+  // Check if attachment is required but not uploaded
+  const isAttachmentMissing = selectedLeaveType?.requires_attachment && !uploadedUrl;
+
   return (
-    <Dialog open={open} onOpenChange={handleClose} title="Apply for Leave" className="max-w-md">
+    <Dialog open={open} onOpenChange={handleClose} title="Request Leave / Remote Work" className="max-w-md">
       <form onSubmit={formik.handleSubmit}>
         <div className="space-y-4">
           {/* Error Message */}
@@ -158,14 +207,14 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Balance Info */}
           {selectedTypeBalance && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-blue-700 dark:text-blue-400">Available Balance:</span>
-                <span className="font-semibold text-blue-900 dark:text-blue-300">
+                <span className="text-violet-700 dark:text-violet-400">Available Balance:</span>
+                <span className="font-semibold text-violet-900 dark:text-violet-300">
                   {selectedTypeBalance.available} days
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-500 mt-1">
+              <div className="flex items-center justify-between text-xs text-violet-600 dark:text-violet-500 mt-1">
                 <span>Entitled: {selectedTypeBalance.entitled}</span>
                 <span>Used: {selectedTypeBalance.used}</span>
                 <span>Pending: {selectedTypeBalance.pending}</span>
@@ -173,43 +222,24 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
             </div>
           )}
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Start Date *
-              </label>
-              <input
-                type="date"
-                name="start_date"
-                value={formik.values.start_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
-              />
-              {formik.touched.start_date && formik.errors.start_date && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.start_date}</p>
+          {/* Date Range - Single Calendar */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Leave Duration *
+            </label>
+            <DateRangePicker
+              startDate={formik.values.start_date}
+              endDate={formik.values.end_date}
+              onStartDateChange={(date) => formik.setFieldValue('start_date', date)}
+              onEndDateChange={(date) => formik.setFieldValue('end_date', date)}
+              minDate={format(new Date(), 'yyyy-MM-dd')}
+            />
+            {((formik.touched.start_date && formik.errors.start_date) ||
+              (formik.touched.end_date && formik.errors.end_date)) && (
+                <p className="mt-2 text-sm text-red-600">
+                  {formik.errors.start_date || formik.errors.end_date}
+                </p>
               )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                End Date *
-              </label>
-              <input
-                type="date"
-                name="end_date"
-                value={formik.values.end_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                min={formik.values.start_date || new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
-              />
-              {formik.touched.end_date && formik.errors.end_date && (
-                <p className="mt-1 text-sm text-red-600">{formik.errors.end_date}</p>
-              )}
-            </div>
           </div>
 
           {/* Days Summary */}
@@ -291,6 +321,68 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               <p className="mt-1 text-sm text-red-600">{formik.errors.reason}</p>
             )}
           </div>
+
+          {/* Attachment Upload - Show when leave type requires attachment */}
+          {selectedLeaveType?.requires_attachment && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Attachment *
+              </label>
+
+              {!selectedFile ? (
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="leave-attachment"
+                  />
+                  <label
+                    htmlFor="leave-attachment"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Upload size={20} className="text-gray-400" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Click to upload (PDF, DOC, JPG, PNG - max 5MB)
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="text-primary" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
+                      {selectedFile.name}
+                    </span>
+                    {uploadMutation.isPending && (
+                      <span className="text-xs text-violet-500">Uploading...</span>
+                    )}
+                    {uploadedUrl && (
+                      <span className="text-xs text-green-500">✓ Uploaded</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X size={16} className="text-gray-500" />
+                  </button>
+                </div>
+              )}
+
+              {uploadError && (
+                <p className="mt-1 text-sm text-red-600">{uploadError}</p>
+              )}
+
+              {!uploadedUrl && !uploadMutation.isPending && (
+                <p className="mt-1 text-xs text-fuchsia-600 dark:text-fuchsia-400">
+                  This leave type requires an attachment (e.g., medical certificate)
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -301,7 +393,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
           <Button
             type="submit"
             isLoading={applyMutation.isPending}
-            disabled={!formik.isValid || !formik.dirty || leaveTypes.length === 0}
+            disabled={!formik.isValid || !formik.dirty || leaveTypes.length === 0 || isAttachmentMissing || uploadMutation.isPending}
           >
             Apply for Leave
           </Button>

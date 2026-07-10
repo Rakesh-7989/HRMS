@@ -1,0 +1,11 @@
+Email,First Name,Last Name,Phone,Employee ID,Department,Designation,Join Date,Gender,Marital Status,Address,Annual CTC,Bank Name,Account Number,IFSC Code
+amit.sharma@example.com,Amit,Sharma,9876543210,EMP001,Engineering,Senior Software Engineer,2023-01-15,Male,Married,"Flat 402, Sunshine Apartments, Hitech City, Hyderabad",1500000,HDFC Bank,50100234567890,HDFC0001234
+sunita.reddy@example.com,Sunita,Reddy,9876543211,EMP002,HR,HR Manager,2022-06-20,Female,Married,"Plot 15, Madhapur, Hyderabad",1200000,ICICI Bank,001205006789,ICIC0000012
+rahul.verma@example.com,Rahul,Verma,9876543212,EMP003,Engineering,Frontend Developer,2023-03-10,Male,Single,"12-5-67, Kukatpally, Hyderabad",800000,Axis Bank,912010045678901,UTIB0000123
+priya.patel@example.com,Priya,Patel,9876543213,EMP004,Marketing,Digital Marketing Specialist,2023-05-01,Female,Single,"Apt 101, Green Meadows, Gachibowli, Hyderabad",950000,SBI,31234567890,SBIN0004567
+vijay.kumar@example.com,Vijay,Kumar,9876543214,EMP005,Operations,Operations Lead,2021-11-12,Male,Married,"Flat 204, Royal residency, Kondapur, Hyderabad",1100000,Kotak Bank,1234567890,KKBK0000123
+anita.desai@example.com,Anita,Desai,9876543215,EMP006,Finance,Finance Controller,2022-02-28,Female,Married,"15/A, Jubilee Hills, Hyderabad",1800000,Yes Bank,012345678901234,YESB0000001
+suresh.raina@example.com,Suresh,Raina,9876543216,EMP007,Sales,Sales Director,2020-09-15,Male,Married,"Panchavati Colony, Manikonda, Hyderabad",2500000,IndusInd Bank,100012345678,INDB0000123
+neha.gupta@example.com,Neha,Gupta,9876543217,EMP008,Engineering,QA Lead,2023-08-05,Female,Single,"Tower B, My Home Avatar, Puppalaguda, Hyderabad",1300000,Standard Chartered,23456789012,SCBL0036001
+vikram.singh@example.com,Vikram,Singh,9876543218,EMP009,Product,Product Manager,2022-10-10,Male,Married,"House No 45, Banjara Hills, Hyderabad",2000000,IDFC FIRST Bank,10012345678,IDFB0040101
+deepa.nair@example.com,Deepa,Nair,9876543219,EMP010,Customer Support,Support Lead,2023-11-20,Female,Single,"Flat 302, Lake View, Tellapur, Hyderabad",700000,Canara Bank,1234101234567,CNRB0001234

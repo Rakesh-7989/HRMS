@@ -3,21 +3,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
 import { Plus, CheckCircle, XCircle, Search, Filter, Calendar, User, TrendingUp } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
+import { LeaveApplication } from '@/services/leave.service';
 
 export const LeaveContent: React.FC = () => {
-    const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
+    const [showRejectDialog, setShowRejectDialog] = useState(false);
+    const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
-    const canApply = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER' || user?.role === 'HR';
-    const canApprove = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'MANAGER';
+    const canApply = hasPermission('leave', 'create');
+    const canApprove = hasPermission('leave', 'approve');
     const rangeTo = format(new Date(), 'yyyy-MM-dd');
     const rangeFrom = format(subDays(new Date(), 29), 'yyyy-MM-dd');
 
@@ -91,6 +96,9 @@ export const LeaveContent: React.FC = () => {
         mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveService.rejectLeave(id, reason),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leaves'] });
+            setShowRejectDialog(false);
+            setRejectionReason('');
+            setSelectedLeave(null);
         },
     });
 
@@ -214,7 +222,7 @@ export const LeaveContent: React.FC = () => {
                             {canApprove && `, ${filteredPendingApprovals.length} pending approvals`}
                         </span>
                         {searchTerm && (
-                            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                            <span className="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-1 rounded">
                                 Search: "{searchTerm}"
                             </span>
                         )}
@@ -298,16 +306,25 @@ export const LeaveContent: React.FC = () => {
                                                 {format(new Date(leave.end_date), 'MMM dd, yyyy')}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span
-                                                    className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                        : leave.status === 'REJECTED'
-                                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                        }`}
-                                                >
-                                                    {leave.status}
-                                                </span>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : leave.status === 'REJECTED'
+                                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                                : leave.status === 'CANCELLED'
+                                                                    ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                            }`}
+                                                    >
+                                                        {leave.status}
+                                                    </span>
+                                                    {leave.status === 'REJECTED' && leave.rejection_reason && (
+                                                        <span className="text-[10px] text-red-600 dark:text-red-400 leading-tight max-w-[150px]">
+                                                            Reason: {leave.rejection_reason}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 {leave.status === 'PENDING' && (
@@ -380,8 +397,8 @@ export const LeaveContent: React.FC = () => {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => {
-                                                            const reason = prompt('Rejection reason:');
-                                                            if (reason) rejectMutation.mutate({ id: leave.id, reason });
+                                                            setSelectedLeave(leave);
+                                                            setShowRejectDialog(true);
                                                         }}
                                                         isLoading={rejectMutation.isPending}
                                                     >
@@ -397,6 +414,67 @@ export const LeaveContent: React.FC = () => {
                     )}
                 </Card>
             )}
+
+            <Dialog
+                open={showRejectDialog}
+                onOpenChange={setShowRejectDialog}
+                title="Reject Leave Application"
+                className="max-w-md"
+            >
+                {selectedLeave && (
+                    <div className="flex flex-col">
+                        <DialogContent className="py-2 px-0">
+                            <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg p-3">
+                                <p className="text-xs text-red-800 dark:text-red-400">
+                                    You are about to reject the leave request for
+                                    <strong> {selectedLeave.employee?.first_name || (selectedLeave as any).first_name} {selectedLeave.employee?.last_name || (selectedLeave as any).last_name}</strong>
+                                </p>
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Rejection Reason *
+                                </label>
+                                <textarea
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    rows={3}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
+                                    placeholder="Please provide a reason for rejection (minimum 5 characters)..."
+                                />
+                                {rejectionReason.length > 0 && rejectionReason.length < 5 && (
+                                    <p className="mt-1 text-[11px] text-red-600 font-medium">
+                                        Reason must be at least 5 characters
+                                    </p>
+                                )}
+                            </div>
+                        </DialogContent>
+
+                        <DialogFooter className="px-0 pb-2 pt-4 border-t-0 flex justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowRejectDialog(false)}
+                                className="px-6 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    if (selectedLeave && rejectionReason.trim().length >= 5) {
+                                        rejectMutation.mutate({ id: selectedLeave.id, reason: rejectionReason });
+                                    }
+                                }}
+                                isLoading={rejectMutation.isPending}
+                                disabled={rejectionReason.trim().length < 5}
+                                className="px-6 bg-red-500 hover:bg-red-600 shadow-md"
+                            >
+                                Confirm Rejection
+                            </Button>
+                        </DialogFooter>
+                    </div>
+                )}
+            </Dialog>
         </div>
     );
 };

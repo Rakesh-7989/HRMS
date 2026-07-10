@@ -1,12 +1,19 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Sidebar } from './Sidebar';
+import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolveImageUrl } from '@/utils/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2 } from 'lucide-react';
+import { Search, User, Package, Briefcase, LayoutDashboard, Zap, Loader2, Menu, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchService, SearchResult } from '@/services/search.service';
 import { NotificationDropdown } from './NotificationDropdown';
+import { NavbarClock } from './NavbarClock';
+import { ProfileDropdown } from './ProfileDropdown';
+import { useChat } from '@/contexts/ChatContext';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface BreadcrumbItem {
   label: string;
@@ -26,9 +33,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   breadcrumbs,
   actions
 }) => {
-  const { user, logout } = useAuth();
+  const { user, hasActivePlan } = useAuth();
+  const { myStatus } = useChat();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  // Set initial direction based on language
+  useEffect(() => {
+    document.dir = i18n.language?.startsWith('ar') ? 'rtl' : 'ltr';
+  }, [i18n.language]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -36,11 +51,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const canAccessSettings =
-    user?.role === 'ADMIN' ||
-    user?.role === 'HR' ||
-    user?.role === 'SUPER_ADMIN';
+  // const canAccessSettings =
+  //   user?.role === 'ADMIN' ||
+  //   user?.role === 'HR' ||
+  //   user?.role === 'SUPER_ADMIN';
 
   // Debounce search
   useEffect(() => {
@@ -58,6 +75,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       }
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        if (!searchQuery) {
+          setIsSearchExpanded(false);
+        }
       }
     };
     document.addEventListener('mousedown', handler);
@@ -91,8 +111,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       );
     }
 
+    // Filter out results if no active plan
+    if (!hasActivePlan && user?.role !== 'SUPER_ADMIN') {
+      const restrictedPrefixes = ['/payroll', '/attendance', '/leave', '/assets', '/projects', '/wfh', '/chat'];
+      results = results.filter(r =>
+        !restrictedPrefixes.some(prefix => r.url.startsWith(prefix))
+      );
+    }
+
     return results.slice(0, 10);
-  }, [searchResults, user?.role]);
+  }, [searchResults, user?.role, hasActivePlan]);
 
   const handleResultClick = (result: SearchResult) => {
     navigate(result.url);
@@ -123,15 +151,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const getIcon = (type: string) => {
     switch (type) {
       case 'employee':
-        return <User size={14} className="text-blue-500" />;
+        return <User size={14} className="text-violet-500" />;
       case 'asset':
         return <Package size={14} className="text-green-500" />;
       case 'project':
         return <Briefcase size={14} className="text-purple-500" />;
       case 'page':
-        return <LayoutDashboard size={14} className="text-indigo-500" />;
+        return <LayoutDashboard size={14} className="text-purple-500" />;
       case 'action':
-        return <Zap size={14} className="text-amber-500" />;
+        return <Zap size={14} className="text-fuchsia-500" />;
       default:
         return <Search size={14} className="text-gray-500" />;
     }
@@ -142,49 +170,61 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="h-screen flex overflow-hidden bg-[var(--background)]">
       {/* Sidebar */}
-      <Sidebar />
+      <div className="print:hidden">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      </div>
 
       {/* Main wrapper */}
-      <div className="flex flex-col flex-1 ml-[90px] min-w-0">
+      <div className="flex flex-col flex-1 ml-0 md:ml-[90px] min-w-0 print:ml-0">
 
         {/* Header */}
         <header
-          className="sticky top-0 z-30 h-16 border-b px-6 flex items-center"
+          className="sticky top-0 z-30 min-h-16 border-b px-4 md:px-6 flex items-center py-2 transition-all print:hidden"
           style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
         >
-          <div className="flex items-center justify-between w-full">
+          <div className="flex items-center justify-between w-full gap-2">
 
             {/* LEFT: Title + Breadcrumbs */}
-            <div className="flex flex-col justify-center leading-tight">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {title || 'Dashboard'}
-              </h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                className="md:hidden text-gray-500 hover:text-primary transition-colors focus:outline-none shrink-0"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
+              <div className="flex flex-col justify-center min-w-0">
+                <h1 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white leading-snug truncate md:text-clip">
+                  {title === 'Dashboard' ? t('common.dashboard') : (title || t('common.dashboard'))}
+                </h1>
 
-              {breadcrumbs && breadcrumbs.length > 0 && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {breadcrumbs.map((crumb, idx) => (
-                    <React.Fragment key={crumb.label}>
-                      {idx > 0 && <span>/</span>}
-                      {crumb.href ? (
-                        <a
-                          href={crumb.href}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {crumb.label}
-                        </a>
-                      ) : (
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {crumb.label}
-                        </span>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
+                {breadcrumbs && breadcrumbs.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-full">
+                    {breadcrumbs.map((crumb, idx) => (
+                      <React.Fragment key={crumb.label}>
+                        {idx > 0 && <span>/</span>}
+                        {crumb.href ? (
+                          <a
+                            href={crumb.href}
+                            className="hover:text-primary transition-colors truncate"
+                          >
+                            {crumb.label}
+                          </a>
+                        ) : (
+                          <span className="text-gray-700 dark:text-gray-300 truncate">
+                            {crumb.label}
+                          </span>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* RIGHT: Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3">
+              <NavbarClock />
               {actions && (
                 <div className="flex items-center gap-2 mr-2">
                   {actions}
@@ -192,33 +232,59 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               )}
 
               {/* Search with Suggestions */}
-              <div className="relative hidden md:block" ref={searchRef}>
+              <div
+                className={cn(
+                  "relative hidden md:block transition-all duration-300 ease-in-out",
+                  isSearchExpanded ? "w-64" : "w-10"
+                )}
+                ref={searchRef}
+              >
                 <button
                   type="button"
                   onClick={() => {
-                    const q = searchQuery.trim();
-                    if (q) {
-                      navigate(`/search?q=${encodeURIComponent(q)}`);
-                      setShowSuggestions(false);
+                    if (!isSearchExpanded) {
+                      setIsSearchExpanded(true);
+                      setTimeout(() => inputRef.current?.focus(), 100);
+                    } else {
+                      const q = searchQuery.trim();
+                      if (q) {
+                        navigate(`/search?q=${encodeURIComponent(q)}`);
+                        setShowSuggestions(false);
+                      }
                     }
                   }}
                   aria-label="Search"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-10",
+                    isSearchExpanded ? "left-1 text-gray-500" : "left-1 text-gray-500"
+                  )}
                 >
                   <Search size={18} />
                 </button>
                 <input
+                  ref={inputRef}
                   type="text"
-                  placeholder="Search..."
+                  placeholder={t('common.search')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setShowSuggestions(true);
                     setSelectedIndex(-1);
                   }}
-                  onFocus={() => setShowSuggestions(true)}
+                  onFocus={() => {
+                    setIsSearchExpanded(true);
+                    setShowSuggestions(true);
+                  }}
+                  onBlur={() => {
+                    // Delay closing to allow clicking on suggestions
+                    // Handled by click outside listener
+                  }}
                   onKeyDown={handleKeyDown}
-                  className="pl-9 pr-4 py-2 w-64 text-sm rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className={cn(
+                    "pl-10 pr-4 py-2 h-10 text-sm rounded-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:bg-white dark:focus:bg-gray-900 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
+                    "transition-all duration-300 ease-in-out block",
+                    isSearchExpanded ? "w-full opacity-100" : "w-0 opacity-0 p-0 overflow-hidden"
+                  )}
                 />
 
                 {/* Suggestions Dropdown */}
@@ -230,7 +296,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {isSearching && (
                       <div className="px-4 py-3 flex items-center gap-2 text-gray-500">
                         <Loader2 size={16} className="animate-spin" />
-                        <span className="text-sm">Searching...</span>
+                        <span className="text-sm">{t('common.searching')}</span>
                       </div>
                     )}
 
@@ -268,7 +334,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                           }}
                           className="w-full text-center px-4 py-2.5 text-sm text-primary hover:bg-primary/10 border-t border-gray-100 dark:border-gray-800"
                         >
-                          View all results for "{searchQuery}"
+                          {t('common.viewAllResults', { query: searchQuery })}
                         </button>
                       </>
                     )}
@@ -282,6 +348,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 )}
               </div>
 
+              <LanguageSwitcher />
               <ThemeToggle />
 
               {/* Notifications */}
@@ -296,66 +363,74 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen((p) => !p)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:opacity-90 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative group"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white">
-                    {user?.first_name?.charAt(0) || 'U'}
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden shadow-sm border-2 border-transparent group-hover:border-primary/20 transition-all">
+                      {user?.profile_photo_url ? (
+                        <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        user?.first_name?.charAt(0) || 'U'
+                      )}
+                    </div>
+                    {/* Status Dot on Trigger */}
+                    <div
+                      title={myStatus === 'dnd' ? 'Do not disturb' : (myStatus ? myStatus.charAt(0).toUpperCase() + myStatus.slice(1) : 'Available')}
+                      className={cn(
+                        "absolute -bottom-0.5 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-900 shadow-sm cursor-help flex items-center justify-center",
+                        myStatus === 'available' ? "bg-green-500" :
+                          myStatus === 'dnd' ? "bg-red-500" :
+                            myStatus === 'busy' ? "bg-red-500" :
+                              myStatus === 'away' ? "bg-amber-500" : "bg-gray-400 dark:bg-gray-600"
+                      )}
+                    >
+                      {myStatus === 'offline' && <div className="h-1 w-1 rounded-full bg-white dark:bg-gray-900" />}
+                      {myStatus === 'dnd' && <div className="w-2 h-0.5 bg-white rounded-full" />}
+                    </div>
                   </div>
-                  <div className="hidden sm:block text-left leading-tight">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="hidden sm:block text-left leading-tight ml-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
                       {user?.first_name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {user?.role}
                     </p>
                   </div>
                 </button>
 
                 {profileOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-48 rounded-md shadow-card bg-white dark:bg-gray-900 border"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <button
-                      onClick={() => {
-                        setProfileOpen(false);
-                        navigate('/profile');
-                      }}
-                      className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                    >
-                      Profile
-                    </button>
-
-                    {canAccessSettings && (
-                      <button
-                        onClick={() => {
-                          setProfileOpen(false);
-                          navigate('/settings');
-                        }}
-                        className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                      >
-                        Settings
-                      </button>
-                    )}
-
-                    <button
-                      onClick={async () => {
-                        setProfileOpen(false);
-                        await logout();
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-800 dark:text-gray-200 hover:opacity-90"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                  <ProfileDropdown onClose={() => setProfileOpen(false)} />
                 )}
               </div>
             </div>
           </div>
         </header>
 
+        {/* Subscription Warning Banner */}
+        {/* Subscription Warning Banner */}
+        {!hasActivePlan && user?.role !== 'SUPER_ADMIN' && (
+          <div className="bg-fuchsia-500 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium animate-in slide-in-from-top duration-300 print:hidden">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              <span>
+                {user?.role === 'ADMIN'
+                  ? t('common.restoreAccess')
+                  : t('common.restrictedFeature')}
+              </span>
+            </div>
+            {user?.role === 'ADMIN' && (
+              <button
+                onClick={() => navigate('/pricing')}
+                className="bg-white text-fuchsia-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                {t('common.upgradePlan')}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="p-6 flex-1 overflow-auto overscroll-contain" style={{ backgroundColor: 'var(--background)' }}>
+        <main className="p-4 md:p-6 flex-1 overflow-auto overscroll-contain flex flex-col print:p-0 print:overflow-visible" style={{ backgroundColor: 'var(--background)' }}>
           {children}
         </main>
       </div>

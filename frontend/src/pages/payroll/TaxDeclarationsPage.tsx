@@ -7,11 +7,12 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const TaxDeclarationsPage: React.FC = () => {
-    const { user } = useAuth();
+  const { t } = useTranslation();
+
     const queryClient = useQueryClient();
     const currentYear = new Date().getFullYear();
     const currentFy = new Date().getMonth() > 2 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
@@ -72,7 +73,7 @@ const TaxDeclarationsPage: React.FC = () => {
     return (
         <DashboardLayout
             title="Tax Declarations"
-            breadcrumbs={[{ label: 'Payroll', href: '/payroll' }, { label: 'Tax Declarations' }]}
+            breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Tax Declarations' }]}
             actions={
                 <Button variant="outline" onClick={() => window.history.back()}>Back</Button>
             }
@@ -84,11 +85,11 @@ const TaxDeclarationsPage: React.FC = () => {
                         {/* Could add FY selector here if needed */}
                     </div>
 
-                    {isLoading ? <div>Loading...</div> : (
+                    {isLoading ? <div>{t('common.loading')}</div> : (
                         <div className="space-y-4">
                             {declaration && (
                                 <div className={`p-3 rounded mb-4 ${declaration.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-                                    declaration.status === 'SUBMITTED' ? 'bg-blue-100 text-blue-800' :
+                                    declaration.status === 'SUBMITTED' ? 'bg-violet-100 text-violet-800' :
                                         declaration.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100'
                                     }`}>
                                     Status: <strong>{declaration.status}</strong>
