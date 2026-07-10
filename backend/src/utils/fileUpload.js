@@ -8,11 +8,15 @@ const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 const DOCUMENTS_DIR = path.join(UPLOAD_DIR, 'documents');
 const PROFILE_PICS_DIR = path.join(UPLOAD_DIR, 'profile-pictures');
 
-[UPLOAD_DIR, DOCUMENTS_DIR, PROFILE_PICS_DIR].forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-});
+try {
+    [UPLOAD_DIR, DOCUMENTS_DIR, PROFILE_PICS_DIR].forEach(dir => {
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+    });
+} catch (err) {
+    console.warn('Could not create upload directories (read-only fs?):', err.message);
+}
 
 // File type configuration
 const FILE_TYPES = {
