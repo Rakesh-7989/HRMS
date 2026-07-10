@@ -4,20 +4,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
 import { 
-    Building, Mail, MapPin, ArrowLeft, Loader2, BadgeCheck, 
-    CreditCard, Users, Shield, CheckCircle2 
+    Building, Mail, ArrowLeft, Loader2, BadgeCheck, 
+    Shield, CheckCircle2 
 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '@/components/ui/Button';
 import { tenantRegistrationService } from '@/services/tenantRegistration.service';
-import { useTranslation } from 'react-i18next';
 import api from '@/services/api';
 
 const STORAGE_KEY = 'WellZo_registration_draft';
 
 export const RegisterPage: React.FC = () => {
-    const { t } = useTranslation();
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();

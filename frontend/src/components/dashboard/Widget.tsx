@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/utils/cn';
-import { GripVertical, RefreshCw, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { GripVertical, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface WidgetProps {

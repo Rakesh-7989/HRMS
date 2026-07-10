@@ -63,7 +63,7 @@ interface Conversation {
 
 import { Dialog } from '@/components/ui/Dialog';
 
-const ForwardModal = ({ isOpen, onClose, conversations, onForward, message }: { isOpen: boolean; onClose: () => void; conversations: Conversation[]; onForward: (conversationId: string) => void; message: Message | null }) => {
+const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: boolean; onClose: () => void; conversations: Conversation[]; onForward: (conversationId: string) => void }) => {
     const [search, setSearch] = useState('');
     const { t } = useTranslation();
 
@@ -224,7 +224,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
 
 import { Button } from '@/components/ui/Button';
 
-const DeleteMessageModal = ({ isOpen, onClose, onDelete, isMe }: { isOpen: boolean; onClose: () => void; onDelete: (mode: 'me' | 'everyone') => void; isMe: boolean }) => {
+const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; onClose: () => void; onDelete: (mode: 'me' | 'everyone') => void }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -2311,7 +2311,6 @@ export const ChatPage = () => {
                 isOpen={!!forwardingMessage}
                 onClose={() => setForwardingMessage(null)}
                 conversations={conversations || []}
-                message={forwardingMessage}
                 onForward={(targetId) => forwardingMessage && handleForward(forwardingMessage, targetId)}
             />
             {
@@ -2392,7 +2391,6 @@ export const ChatPage = () => {
             <DeleteMessageModal
                 isOpen={!!deletingMessage}
                 onClose={() => setDeletingMessage(null)}
-                isMe={deletingMessage?.sender_id === user?.id}
                 onDelete={(mode) => deletingMessage && handleDeleteMessage(deletingMessage.id, mode)}
             />
             <AddParticipantModal

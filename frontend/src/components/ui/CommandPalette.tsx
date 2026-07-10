@@ -33,7 +33,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
 
   const allItems = groups.flatMap(g => g.items);
   const filtered = allItems.filter(item =>

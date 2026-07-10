@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { plansService, Plan } from '@/services/plans.service';
-import { Edit2, Plus, Save, X, Check, Trash2 } from 'lucide-react';
+import { Edit2, Plus, Save, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useTranslation } from 'react-i18next';
