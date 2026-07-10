@@ -63,4 +63,14 @@ export const tenantRegistrationService = {
     });
     return response.data;
   },
+
+  /**
+   * Generate UPI QR code for an existing Cashfree order (public)
+   */
+  getUpiQr: async (orderId: string): Promise<{ success: boolean; data?: { upi_qr_code: string; order_id: string }; message?: string }> => {
+    const response = await axios.post(`${API_BASE_URL}/subscriptions/upi-qr`, {
+      order_id: orderId
+    });
+    return response.data;
+  },
 };

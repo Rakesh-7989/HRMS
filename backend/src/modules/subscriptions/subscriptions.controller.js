@@ -461,6 +461,43 @@ class SubscriptionController {
         }
     }
 
+    async getUpiQr(req, res) {
+        try {
+            const { order_id } = req.body;
+
+            if (!order_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'order_id is required'
+                });
+            }
+
+            const result = await invoiceService.generateUpiQr(order_id);
+
+            if (!result.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: result.message
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    upi_qr_code: result.upi_qr_code,
+                    order_id: result.order_id
+                }
+            });
+        } catch (error) {
+            console.error('Get UPI QR error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error generating UPI QR code',
+                error: error.message
+            });
+        }
+    }
+
     async handleWebhook(req, res) {
         try {
             const cashfree = require('../../config/cashfree');

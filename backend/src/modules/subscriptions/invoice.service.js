@@ -99,6 +99,43 @@ class InvoiceService {
         }
     }
 
+    async generateUpiQr(orderId) {
+        try {
+            const axios = require('axios');
+            const isProd = process.env.CASHFREE_ENVIRONMENT === 'production';
+            const baseUrl = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+
+            const response = await axios.post(`${baseUrl}/orders/${orderId}/pay`, {
+                payment_method: {
+                    upi: {
+                        channel: "upi_qr"
+                    }
+                }
+            }, {
+                headers: {
+                    'x-client-id': process.env.CASHFREE_APP_ID,
+                    'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+                    'x-api-version': '2023-08-01',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const payData = response.data;
+            return {
+                success: true,
+                upi_qr_code: payData.upi_qr_code,
+                order_id: orderId,
+                status: payData.order_status || 'PENDING'
+            };
+        } catch (error) {
+            console.error('Cashfree UPI QR Error:', error.response?.data || error.message);
+            return {
+                success: false,
+                message: 'Failed to generate UPI QR code: ' + (error.response?.data?.message || error.message)
+            };
+        }
+    }
+
     async verifyCashfreePayment(orderId) {
         try {
             const axios = require('axios');

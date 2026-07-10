@@ -20,6 +20,9 @@ router.post('/webhook', subscriptionController.handleWebhook);
 // Cashfree: Verify payment (Publicly accessible to verify registration completion)
 router.post('/verify-payment', subscriptionController.verifyPayment);
 
+// UPI QR: Generate QR code for an existing Cashfree order (public)
+router.post('/upi-qr', subscriptionController.getUpiQr);
+
 // Public: Initiate payment for pending-payment tenant (used during registration retry / login gate)
 router.post('/initiate-tenant-payment', subscriptionController.initiatePaymentForTenant);
 
