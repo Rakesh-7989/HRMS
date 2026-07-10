@@ -5,13 +5,16 @@ const { Client } = require("pg");
 
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
-const dbConfig = {
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "hrms_saas_db",
-    port: process.env.DB_PORT || 5432
-};
+const dbConfig = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    : {
+        host: process.env.DB_HOST || "localhost",
+        user: process.env.DB_USER || "postgres",
+        password: process.env.DB_PASSWORD || "postgres",
+        database: process.env.DB_NAME || "hrms_saas_db",
+        port: process.env.DB_PORT || 5432,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    };
 
 // Postgres "already exists" errors
 const ALREADY_EXISTS_ERRORS = new Set([
@@ -123,5 +126,9 @@ async function runMigrations() {
     }
 }
 
-runMigrations();
+if (require.main === module) {
+    runMigrations();
+}
+
+module.exports = runMigrations;
 
