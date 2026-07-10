@@ -1,6 +1,6 @@
 const loanService = require("./loans.service.js");
 const { createLoanSchema, approveLoanSchema, createLoanTypeSchema } = require("./loans.validator.js");
-const logAudit = require("../../utils/auditLogger");
+const logAudit = require("../../../utils/auditLogger");
 
 const createLoan = async (req, res) => {
   // Employees use the detailed flow (validated schema). Those with management permissions may create loans via simplified payload.

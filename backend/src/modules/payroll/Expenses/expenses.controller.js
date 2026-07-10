@@ -1,5 +1,5 @@
 const service = require("./expenses.service");
-const logAudit = require("../../utils/auditLogger");
+const logAudit = require("../../../utils/auditLogger");
 
 /* Categories */
 const createCategory = async (req, res) => {
