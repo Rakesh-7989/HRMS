@@ -1,17 +1,28 @@
-const app = require('../app');
-const env = require('../src/config/env');
-const logger = require('../src/config/logger');
-
-if (process.env.RUN_MIGRATIONS_ON_START === 'true') {
-  (async () => {
-    try {
-      logger.info('Running pending database migrations...');
-      await require('../src/database/runnall_migration')();
-      logger.info('Migrations completed.');
-    } catch (err) {
-      logger.error('Migration error:', err.message);
-    }
-  })();
+let app;
+try {
+  console.log('Loading app module...');
+  app = require('../app');
+  console.log('App module loaded successfully');
+} catch (err) {
+  console.error('Failed to load app:', err.message);
+  console.error(err.stack);
+  throw err;
 }
 
+if (process.env.RUN_MIGRATIONS_ON_START === 'true') {
+  console.log('RUN_MIGRATIONS_ON_START is true, running migrations...');
+  (async () => {
+    try {
+      console.log('Running pending database migrations...');
+      await require('../src/database/runnall_migration')();
+      console.log('Migrations completed.');
+    } catch (err) {
+      console.error('Migration error:', err.message);
+    }
+  })();
+} else {
+  console.log('RUN_MIGRATIONS_ON_START is not set, skipping migrations');
+}
+
+console.log('Exporting app...');
 module.exports = app;
