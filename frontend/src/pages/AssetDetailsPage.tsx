@@ -106,21 +106,21 @@ export const AssetDetailsPage: React.FC = () => {
       case 'AVAILABLE':
         return 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
       case 'ASSIGNED':
-        return 'text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
+        return 'text-brand-600 bg-brand-50 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20';
       case 'REQUESTED':
         return 'text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
       case 'UNDER_REPAIR':
         return 'text-orange-600 bg-orange-50 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20';
       case 'WRITTEN_OFF':
-        return 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20';
+        return 'text-brand-600 bg-brand-50 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20';
       case 'RETIRED':
       case 'DISPOSED':
-        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+        return 'text-slate-500 bg-neutral-50 border-neutral-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
       case 'DOA':
       case 'LOST':
-        return 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
+        return 'text-error-600 bg-error-50 border-error-100 dark:bg-error-500/10 dark:text-error-400 dark:border-error-500/20';
       default:
-        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+        return 'text-slate-500 bg-neutral-50 border-neutral-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
     }
   };
 
@@ -186,7 +186,7 @@ export const AssetDetailsPage: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/assets')}
-            className="flex items-center gap-2 rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold px-5 py-2.5"
+            className="flex items-center gap-2 rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold px-5 py-2.5"
           >
             <ArrowLeft size={18} />
             Back to Assets
@@ -194,7 +194,7 @@ export const AssetDetailsPage: React.FC = () => {
           {canManage && (
             <Button
               onClick={() => navigate(`/assets/${asset.id}/edit`)}
-              className="flex items-center gap-2 rounded-2xl bg-primary text-white font-bold px-6 py-2.5"
+              className="flex items-center gap-2 rounded-2xl bg-brand-500 text-white font-bold px-6 py-2.5"
             >
               <Edit size={18} />
               Edit Asset
@@ -429,7 +429,7 @@ export const AssetDetailsPage: React.FC = () => {
                   {asset.current_depreciated_value != null && (
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Depreciated Value</span>
-                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                      <span className="font-semibold text-brand-600 dark:text-brand-400">
                         ₹{asset.current_depreciated_value.toLocaleString()}
                       </span>
                     </div>
@@ -481,7 +481,7 @@ export const AssetDetailsPage: React.FC = () => {
                       onClick={handlePrintBarcode}
                       variant="outline"
                       size="sm"
-                      className="flex-1 flex items-center gap-2 rounded-xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                      className="flex-1 flex items-center gap-2 rounded-xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold"
                     >
                       <Printer size={16} />
                       Print
@@ -490,7 +490,7 @@ export const AssetDetailsPage: React.FC = () => {
                       onClick={handleDownloadBarcode}
                       variant="outline"
                       size="sm"
-                      className="flex-1 flex items-center gap-2 rounded-xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                      className="flex-1 flex items-center gap-2 rounded-xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold"
                     >
                       <Download size={16} />
                       Download

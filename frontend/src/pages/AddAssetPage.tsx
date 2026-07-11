@@ -292,7 +292,7 @@ export const AddAssetPage: React.FC = () => {
                   type="text"
                   value={formData.asset_code}
                   onChange={(e) => handleInputChange('asset_code', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   required
                 />
               </div>
@@ -305,7 +305,7 @@ export const AddAssetPage: React.FC = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   required
                 />
               </div>
@@ -317,7 +317,7 @@ export const AddAssetPage: React.FC = () => {
                   type="text"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   placeholder="Brief description of the asset"
                 />
               </div>
@@ -329,7 +329,7 @@ export const AddAssetPage: React.FC = () => {
                 <select
                   value={formData.category}
                   onChange={(e) => handleCategoryChange(e.target.value as AssetCategory)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="Laptop">Laptop</option>
                   <option value="Desktop">Desktop</option>
@@ -347,7 +347,7 @@ export const AddAssetPage: React.FC = () => {
                 <select
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value as AssetStatus)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">Select Status</option>
                   <option value="AVAILABLE">AVAILABLE</option>
@@ -366,7 +366,7 @@ export const AddAssetPage: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange('purchase_price', parseFloat(e.target.value) || 0)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   min="0"
                   step="0.01"
                 />
@@ -380,7 +380,7 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.purchase_date}
                   onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
                   max={new Date().toISOString().split('T')[0]}
                 />
               </div>
@@ -393,7 +393,7 @@ export const AddAssetPage: React.FC = () => {
                   type="text"
                   value={formData.manufacturer}
                   onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   placeholder="e.g., Dell, HP, Apple"
                 />
               </div>
@@ -406,7 +406,7 @@ export const AddAssetPage: React.FC = () => {
                   type="text"
                   value={formData.serial_number}
                   onChange={(e) => handleInputChange('serial_number', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   placeholder="Device serial number"
                 />
               </div>
@@ -419,7 +419,7 @@ export const AddAssetPage: React.FC = () => {
                   type="date"
                   value={formData.warranty_expiry}
                   onChange={(e) => handleInputChange('warranty_expiry', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white dark:[color-scheme:dark]"
                   min={formData.purchase_date}
                 />
               </div>
@@ -428,7 +428,7 @@ export const AddAssetPage: React.FC = () => {
               <div className="col-span-1 md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-6 mt-2">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   Technical Configuration
-                  {isLoadingConfig && <Loader2 className="animate-spin text-primary" size={16} />}
+                  {isLoadingConfig && <Loader2 className="animate-spin text-brand-500" size={16} />}
                 </h3>
 
                 {['Laptop', 'Desktop', 'Mobile'].includes(formData.category) ? (
@@ -441,7 +441,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.os || ''}
                         onChange={(e) => handleConfigChange('os', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., Windows 11"
                       />
                     </div>
@@ -454,7 +454,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.processor || ''}
                         onChange={(e) => handleConfigChange('processor', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., Intel i7"
                       />
                     </div>
@@ -467,7 +467,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.ram || ''}
                         onChange={(e) => handleConfigChange('ram', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., 16GB"
                       />
                     </div>
@@ -480,7 +480,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.storage || ''}
                         onChange={(e) => handleConfigChange('storage', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., 512GB SSD"
                       />
                     </div>
@@ -493,7 +493,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.graphics || ''}
                         onChange={(e) => handleConfigChange('graphics', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., NVIDIA RTX 3060"
                       />
                     </div>
@@ -506,7 +506,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.display || ''}
                         onChange={(e) => handleConfigChange('display', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., 15.6 inch 4K"
                       />
                     </div>
@@ -520,7 +520,7 @@ export const AddAssetPage: React.FC = () => {
                           type="text"
                           value={formData.configuration.battery || ''}
                           onChange={(e) => handleConfigChange('battery', e.target.value)}
-                          className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                           placeholder="e.g., 86Wh"
                         />
                       </div>
@@ -534,7 +534,7 @@ export const AddAssetPage: React.FC = () => {
                         type="text"
                         value={formData.configuration.model || ''}
                         onChange={(e) => handleConfigChange('model', e.target.value)}
-                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-white dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 shadow-elev-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         placeholder="e.g., Dell XPS 15"
                       />
                     </div>
@@ -555,7 +555,7 @@ export const AddAssetPage: React.FC = () => {
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   placeholder="Additional notes about the asset..."
                 />
               </div>

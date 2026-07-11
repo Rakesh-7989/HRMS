@@ -177,7 +177,7 @@ export const AssetRequestsPage: React.FC = () => {
             case 'Medium':
                 return <span className="text-orange-600 dark:text-orange-400 font-semibold">{priority}</span>;
             default:
-                return <span className="text-violet-600 dark:text-violet-400 font-semibold">{priority}</span>;
+                return <span className="text-brand-600 dark:text-brand-400 font-semibold">{priority}</span>;
         }
     };
 
@@ -261,7 +261,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                                         <Button
                                                                             size="sm"
                                                                             variant="outline"
-                                                                            className="text-violet-600 border-violet-200 hover:bg-violet-50"
+                                                                            className="text-brand-600 border-brand-200 hover:bg-brand-50"
                                                                             title="Edit Request"
                                                                             onClick={() => handleEdit(request)}
                                                                         >
@@ -347,7 +347,7 @@ export const AssetRequestsPage: React.FC = () => {
                             variant="outline"
                             onClick={() => { setShowModal(false); resetForm(); }}
                             disabled={isSubmitting}
-                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                            className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
                         >
                             Cancel
                         </Button>
@@ -356,7 +356,7 @@ export const AssetRequestsPage: React.FC = () => {
                             form="edit-request-form"
                             disabled={isSubmitting}
                             isLoading={isSubmitting}
-                            className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                            className="rounded-2xl bg-brand-500 text-white font-bold min-w-[140px]"
                         >
                             {isEditMode ? 'Update Request' : 'Submit Request'}
                         </Button>
@@ -373,7 +373,7 @@ export const AssetRequestsPage: React.FC = () => {
                             required
                             value={formData.asset_name}
                             onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
                         />
                     </div>
 
@@ -385,7 +385,7 @@ export const AssetRequestsPage: React.FC = () => {
                             required
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
                         >
                             <option value="Laptop">Laptop</option>
                             <option value="Desktop">Desktop</option>
@@ -404,7 +404,7 @@ export const AssetRequestsPage: React.FC = () => {
                             required
                             value={formData.priority}
                             onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
                         >
                             <option value="Low">Low</option>
                             <option value="Medium">Medium</option>
@@ -421,7 +421,7 @@ export const AssetRequestsPage: React.FC = () => {
                             value={formData.reason}
                             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                             rows={4}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none font-medium"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none font-medium"
                         />
                     </div>
                 </form>

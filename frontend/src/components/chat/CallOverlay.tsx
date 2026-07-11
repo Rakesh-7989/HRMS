@@ -47,7 +47,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
 
     return (
         <div className={cn(
-            "relative w-full h-full bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 transition-all duration-500 shadow-2xl group",
+            "relative w-full h-full bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 transition-all duration-500 shadow-elev-6 group",
             isTalking ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.3)]" : "border-white/5"
         )}>
             {/* Video Element */}
@@ -69,7 +69,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
                     theme === 'dark' ? "bg-gray-900/90" : "bg-gray-100/90"
                 )}>
                     <div className="relative">
-                        <div className={cn("w-24 h-24 rounded-full flex items-center justify-center text-3xl font-semibold shadow-xl overflow-hidden",
+                        <div className={cn("w-24 h-24 rounded-full flex items-center justify-center text-3xl font-semibold shadow-elev-5 overflow-hidden",
                             theme === 'dark'
                                 ? "bg-gradient-to-br from-gray-800 to-gray-900 text-gray-300 border border-white/10"
                                 : "bg-gradient-to-br from-white to-gray-100 text-gray-600 border border-gray-200"
@@ -103,8 +103,8 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
             )}
 
             {/* User Label */}
-            <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-2xl text-[12px] font-bold text-white/90 flex items-center gap-3 border border-white/10 shadow-lg group-hover:bottom-8 transition-all">
-                <div className={cn("w-2.5 h-2.5 rounded-full shadow-lg", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
+            <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-2xl text-[12px] font-bold text-white/90 flex items-center gap-3 border border-white/10 shadow-elev-4 group-hover:bottom-8 transition-all">
+                <div className={cn("w-2.5 h-2.5 rounded-full shadow-elev-4", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
                 <div className="flex flex-col">
                     <span className="leading-tight text-white">{name}</span>
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{participant?.designation || 'Participant'}</span>
@@ -194,24 +194,24 @@ export const CallOverlay: React.FC = () => {
             <div className="bg-gray-900/80 backdrop-blur-3xl rounded-[2.5rem] border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-2 flex items-center justify-between">
                 <div className="flex items-center gap-4 pl-4 pr-2 py-2">
                     <div className="relative">
-                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white/10 overflow-hidden">
+                        <div className="absolute inset-0 rounded-full bg-brand-500/20 animate-ping" />
+                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-500 to-brand-600 flex items-center justify-center text-white text-xl font-black shadow-elev-4 border border-white/10 overflow-hidden">
                             {incomingCall.callerName?.charAt(0) || '?'}
                         </div>
                     </div>
                     <div className="flex flex-col">
                         <span className="text-white font-black text-sm tracking-tight">{incomingCall.callerName || 'Incoming Call'}</span>
-                        <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest opacity-80">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <div className="flex items-center gap-2 text-brand-500 text-[10px] font-black uppercase tracking-widest opacity-80">
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
                             {incomingCall.type} call...
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 p-2">
-                    <button onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-rose-500/20" title="Decline">
+                    <button onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-error-500/10 text-error-500 hover:bg-error-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-error-500/20" title="Decline">
                         <PhoneOff size={20} />
                     </button>
-                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95">
+                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-elev-4 shadow-emerald-500/20 active:scale-95">
                         <Phone size={18} /> ACCEPT
                     </button>
                 </div>
@@ -223,7 +223,7 @@ export const CallOverlay: React.FC = () => {
         return (
             <>
                 {incomingBar}
-                <div className="fixed bottom-8 right-8 z-[110] w-80 h-48 bg-gray-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden border-2 border-primary/40 group animate-in slide-in-from-bottom-10 duration-500">
+                <div className="fixed bottom-8 right-8 z-[110] w-80 h-48 bg-gray-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden border-2 border-brand-500/40 group animate-in slide-in-from-bottom-10 duration-500">
                     <div className="absolute inset-0">
                         {remoteUserIds.length > 0 ? (
                             <RemoteVideo
@@ -236,7 +236,7 @@ export const CallOverlay: React.FC = () => {
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-900">
-                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-3xl font-black text-primary border-2 border-primary/40">
+                                <div className="w-20 h-20 rounded-full bg-brand-500/20 flex items-center justify-center text-3xl font-black text-brand-500 border-2 border-brand-500/40">
                                     {targetName.charAt(0).toUpperCase()}
                                 </div>
                             </div>
@@ -257,11 +257,11 @@ export const CallOverlay: React.FC = () => {
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className={cn(
                     "absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[150px] opacity-40",
-                    isDark ? "bg-primary/10" : "bg-primary/5"
+                    isDark ? "bg-brand-500/10" : "bg-brand-500/5"
                 )} />
                 <div className={cn(
                     "absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[150px] opacity-40",
-                    isDark ? "bg-indigo-500/10" : "bg-indigo-500/5"
+                    isDark ? "bg-brand-500/10" : "bg-brand-500/5"
                 )} />
             </div>
 
@@ -272,37 +272,37 @@ export const CallOverlay: React.FC = () => {
                     isDark ? "bg-black/80" : "bg-white/60"
                 )}>
                     <div className={cn(
-                        "border p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center relative overflow-hidden",
+                        "border p-10 rounded-[2.5rem] shadow-elev-6 max-w-sm w-full text-center relative overflow-hidden",
                         isDark ? "bg-gray-900 border-white/10" : "bg-white border-gray-200"
                     )}>
                         <div className={cn(
                             "absolute top-0 left-0 w-full h-full pointer-events-none",
-                            isDark ? "bg-gradient-to-b from-primary/5 to-transparent" : "bg-gradient-to-b from-blue-50 to-transparent"
+                            isDark ? "bg-gradient-to-b from-brand-500/5 to-transparent" : "bg-gradient-to-b from-blue-50 to-transparent"
                         )} />
 
                         <div className="relative mb-8">
                             <div className={cn(
-                                "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border shadow-2xl",
+                                "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border shadow-elev-6",
                                 isDark
                                     ? "bg-gradient-to-tr from-gray-800 to-gray-900 border-white/10"
                                     : "bg-gradient-to-tr from-white to-gray-50 border-gray-100"
                             )}>
-                                <span className="absolute inset-0 rounded-full border border-primary/30 animate-ping opacity-20" />
+                                <span className="absolute inset-0 rounded-full border border-brand-500/30 animate-ping opacity-20" />
                                 <span className={cn("text-3xl font-bold", isDark ? "text-white" : "text-gray-800")}>{incomingCall.callerName?.charAt(0)}</span>
                             </div>
                             <h2 className={cn("text-3xl font-bold mb-2 tracking-tight", isDark ? "text-white" : "text-gray-900")}>{incomingCall.callerName}</h2>
-                            <p className="text-xs font-bold text-primary uppercase tracking-widest opacity-80">{incomingCall.type} Call Request</p>
+                            <p className="text-xs font-bold text-brand-500 uppercase tracking-widest opacity-80">{incomingCall.type} Call Request</p>
                         </div>
 
                         <div className="flex items-center justify-center gap-8">
                             <button onClick={rejectCall} className="flex flex-col items-center gap-3 group">
-                                <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300 active:scale-95">
+                                <div className="w-16 h-16 rounded-full bg-error-500/10 text-error-500 flex items-center justify-center border border-error-500/20 group-hover:bg-error-500 group-hover:text-white transition-all duration-300 active:scale-95">
                                     <PhoneOff size={28} />
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-rose-500 transition-colors">Decline</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-error-500 transition-colors">Decline</span>
                             </button>
                             <button onClick={acceptCall} className="flex flex-col items-center gap-3 group">
-                                <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40 group-hover:scale-110 group-hover:bg-emerald-400 transition-all duration-300 animate-pulse active:scale-95">
+                                <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-elev-4 shadow-emerald-500/40 group-hover:scale-110 group-hover:bg-emerald-400 transition-all duration-300 animate-pulse active:scale-95">
                                     <Phone size={32} />
                                 </div>
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Accept</span>
@@ -319,13 +319,13 @@ export const CallOverlay: React.FC = () => {
                     <header className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-20 pointer-events-none">
                         <div className="pointer-events-auto flex items-center gap-6">
                             <div className={cn(
-                                "flex items-center gap-3 py-2.5 px-5 rounded-full shadow-lg backdrop-blur-xl border",
+                                "flex items-center gap-3 py-2.5 px-5 rounded-full shadow-elev-4 backdrop-blur-xl border",
                                 isDark
                                     ? "bg-black/40 border-white/10"
                                     : "bg-white/80 border-white/40 shadow-gray-200/50"
                             )}>
                                 <div className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-error-500 animate-pulse" />
                                     <span className={cn("text-sm font-bold tabular-nums tracking-wide", isDark ? "text-white" : "text-gray-900")}>{formatDuration(callDuration)}</span>
                                 </div>
                                 <div className={cn("w-px h-4", isDark ? "bg-white/10" : "bg-gray-300")} />
@@ -335,7 +335,7 @@ export const CallOverlay: React.FC = () => {
                             </div>
 
                             {heldCall && (
-                                <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-lg animate-pulse">
+                                <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-elev-4 animate-pulse">
                                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                                     {heldCall.name} On Hold
                                 </div>
@@ -346,7 +346,7 @@ export const CallOverlay: React.FC = () => {
                             <button
                                 onClick={() => setIsMinimized(true)}
                                 className={cn(
-                                    "group flex items-center gap-2 px-5 py-2.5 backdrop-blur-xl rounded-full transition-all shadow-lg active:scale-95 border",
+                                    "group flex items-center gap-2 px-5 py-2.5 backdrop-blur-xl rounded-full transition-all shadow-elev-4 active:scale-95 border",
                                     isDark
                                         ? "bg-black/40 hover:bg-white/10 border-white/10"
                                         : "bg-white/80 hover:bg-white border-white/40 shadow-gray-200/50"
@@ -365,11 +365,11 @@ export const CallOverlay: React.FC = () => {
                                 {/* Ambient Glow behind avatar */}
                                 <div className={cn(
                                     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-[80px] pointer-events-none transition-colors",
-                                    isDark ? "bg-primary/20" : "bg-primary/10"
+                                    isDark ? "bg-brand-500/20" : "bg-brand-500/10"
                                 )} />
 
                                 <div className={cn(
-                                    "w-40 h-40 rounded-[2.5rem] p-1 flex items-center justify-center shadow-2xl mb-8 relative group border",
+                                    "w-40 h-40 rounded-[2.5rem] p-1 flex items-center justify-center shadow-elev-6 mb-8 relative group border",
                                     isDark
                                         ? "bg-gradient-to-tr from-gray-800 to-gray-900 border-white/10"
                                         : "bg-gradient-to-tr from-white to-gray-50 border-white"
@@ -394,8 +394,8 @@ export const CallOverlay: React.FC = () => {
                                         )} />
                                     </div>
                                     {/* Ripple Rings */}
-                                    <div className="absolute inset-0 rounded-[2.5rem] border border-primary/30 animate-[ping_3s_ease-in-out_infinite]" />
-                                    <div className="absolute inset-0 rounded-[2.5rem] border border-primary/10 animate-[ping_3s_ease-in-out_infinite_1.5s]" />
+                                    <div className="absolute inset-0 rounded-[2.5rem] border border-brand-500/30 animate-[ping_3s_ease-in-out_infinite]" />
+                                    <div className="absolute inset-0 rounded-[2.5rem] border border-brand-500/10 animate-[ping_3s_ease-in-out_infinite_1.5s]" />
                                 </div>
 
                                 <h3 className={cn(
@@ -447,7 +447,7 @@ export const CallOverlay: React.FC = () => {
                                 onClick={toggleAudio}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
-                                    isMuted ? "bg-rose-500 text-white shadow-2xl shadow-rose-500/30" : "hover:bg-white/10 text-white"
+                                    isMuted ? "bg-error-500 text-white shadow-elev-6 shadow-error-500/30" : "hover:bg-white/10 text-white"
                                 )}
                                 title={isMuted ? "Unmute" : "Mute"}
                             >
@@ -457,7 +457,7 @@ export const CallOverlay: React.FC = () => {
                                 onClick={toggleVideo}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
-                                    isVideoOff ? "bg-rose-500 text-white shadow-2xl shadow-rose-500/30" : "text-primary hover:bg-white/10"
+                                    isVideoOff ? "bg-error-500 text-white shadow-elev-6 shadow-error-500/30" : "text-brand-500 hover:bg-white/10"
                                 )}
                                 title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
                             >
@@ -467,7 +467,7 @@ export const CallOverlay: React.FC = () => {
                                 onClick={toggleScreenShare}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
-                                    isScreenSharing ? "bg-emerald-500 text-white shadow-2xl shadow-emerald-500/30" : "text-indigo-400 hover:bg-white/10"
+                                    isScreenSharing ? "bg-emerald-500 text-white shadow-elev-6 shadow-emerald-500/30" : "text-brand-400 hover:bg-white/10"
                                 )}
                                 title="Share Screen"
                             >
@@ -493,7 +493,7 @@ export const CallOverlay: React.FC = () => {
                             {/* End Call (Distinct) */}
                             <button
                                 onClick={endCall}
-                                className="h-14 px-8 rounded-[2rem] flex items-center justify-center gap-2 bg-rose-600 text-white hover:bg-rose-700 transition-all duration-300 shadow-xl shadow-rose-600/30 ml-2 active:scale-95 group"
+                                className="h-14 px-8 rounded-[2rem] flex items-center justify-center gap-2 bg-error-500 text-white hover:bg-error-600 transition-all duration-300 shadow-elev-5 shadow-error-600/30 ml-2 active:scale-95 group"
                                 title="End Call"
                             >
                                 <PhoneOff size={24} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -505,11 +505,11 @@ export const CallOverlay: React.FC = () => {
                     {/* Local Video Picture-in-Picture */}
                     {localStream && (
                         <div className={cn(
-                            "absolute transition-all duration-1000 shadow-2xl z-30 group overflow-hidden bg-gray-950",
+                            "absolute transition-all duration-1000 shadow-elev-6 z-30 group overflow-hidden bg-gray-950",
                             isScreenSharing ? "top-12 right-12 w-96 aspect-video border-4 border-emerald-500 rounded-3xl" : "top-12 right-12 w-80 aspect-video border-2 border-white/10 rounded-[2.5rem]"
                         )}>
                             {isScreenSharing && (
-                                <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-xl shadow-emerald-500/20">
+                                <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-elev-5 shadow-emerald-500/20">
                                     <Monitor size={16} /> YOU ARE SHARING
                                 </div>
                             )}
@@ -565,11 +565,11 @@ export const CallOverlay: React.FC = () => {
                                 </div>
                                 <div className="p-12">
                                     <div className="relative mb-10">
-                                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-primary opacity-50" size={28} />
+                                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-500 opacity-50" size={28} />
                                         <input
                                             type="text"
                                             placeholder="SEARCH TEAM MEMBERS..."
-                                            className="w-full bg-[#151518] border border-white/5 rounded-[2rem] py-6 pl-16 pr-8 focus:ring-4 focus:ring-primary/20 outline-none transition-all font-black text-sm tracking-widest placeholder:text-gray-700"
+                                            className="w-full bg-[#151518] border border-white/5 rounded-[2rem] py-6 pl-16 pr-8 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all font-black text-sm tracking-widest placeholder:text-gray-700"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
@@ -578,7 +578,7 @@ export const CallOverlay: React.FC = () => {
                                         {filteredContacts.map(contact => (
                                             <div key={contact.id} className="flex items-center justify-between p-6 hover:bg-white/5 rounded-[2.5rem] transition-all group border border-transparent hover:border-white/5">
                                                 <div className="flex items-center gap-6">
-                                                    <div className="w-18 h-18 rounded-[1.5rem] bg-gradient-to-tr from-primary/20 to-indigo-500/20 flex items-center justify-center text-primary font-black text-3xl border border-primary/20 shadow-inner overflow-hidden">
+                                                    <div className="w-18 h-18 rounded-[1.5rem] bg-gradient-to-tr from-brand-500/20 to-brand-500/20 flex items-center justify-center text-brand-500 font-black text-3xl border border-brand-500/20 shadow-inner overflow-hidden">
                                                         {contact.profile_photo_url ? (
                                                             <img src={contact.profile_photo_url} alt="" className="w-full h-full object-cover" />
                                                         ) : (
@@ -599,7 +599,7 @@ export const CallOverlay: React.FC = () => {
                                                         addParticipantToCall(contact.id, `${contact.first_name} ${contact.last_name}`);
                                                         setShowAddModal(false);
                                                     }}
-                                                    className="p-5 bg-primary text-white hover:bg-primary/80 rounded-[1.8rem] transition-all shadow-2xl shadow-primary/30 active:scale-95 border-b-4 border-primary-dark"
+                                                    className="p-5 bg-brand-500 text-white hover:bg-brand-500/80 rounded-[1.8rem] transition-all shadow-elev-6 shadow-brand-500/30 active:scale-95 border-b-4 border-brand-500-dark"
                                                 >
                                                     <UserPlus size={30} />
                                                 </button>

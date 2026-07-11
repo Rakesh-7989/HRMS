@@ -60,7 +60,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
         >
             <div className="py-4">
                 <div className="mb-4">
-                    <p className="text-sm text-muted">Current Plan: <span className="font-semibold text-primary">{currentPlanName}</span></p>
+                    <p className="text-sm text-muted">Current Plan: <span className="font-semibold text-brand-500">{currentPlanName}</span></p>
                 </div>
 
                 <div className="space-y-3">
@@ -70,8 +70,8 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                                 key={plan.id}
                                 onClick={() => setSelectedPlanId(plan.id)}
                                 className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${selectedPlanId === plan.id
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-gray-200 dark:border-gray-800 hover:border-primary/50'
+                                    ? 'border-brand-500 bg-brand-500/5'
+                                    : 'border-gray-200 dark:border-gray-800 hover:border-brand-500/50'
                                     }`}
                             >
                                 <div>

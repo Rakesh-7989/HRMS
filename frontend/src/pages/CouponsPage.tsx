@@ -55,10 +55,10 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
             className="max-w-md"
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                    <Button type="button" variant="outline" onClick={onClose} className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5">
+                    <Button type="button" variant="outline" onClick={onClose} className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5">
                         {t('common.cancel')}
                     </Button>
-                    <Button type="submit" form="create-coupon-form" disabled={formik.isSubmitting} className="rounded-2xl bg-primary text-white font-bold min-w-[140px]">
+                    <Button type="submit" form="create-coupon-form" disabled={formik.isSubmitting} className="rounded-2xl bg-brand-500 text-white font-bold min-w-[140px]">
                         Create Coupon
                     </Button>
                 </div>
@@ -172,14 +172,14 @@ export const CouponsPage: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {coupons?.map((coupon: Coupon) => (
-                            <div key={coupon.id} className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                            <div key={coupon.id} className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-1 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <Tag className="w-24 h-24 transform rotate-12" />
                                 </div>
 
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1 rounded-lg font-mono font-bold text-lg tracking-wider border border-purple-100 dark:border-purple-800 border-dashed">
+                                        <div className="bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 px-3 py-1 rounded-lg font-mono font-bold text-lg tracking-wider border border-brand-100 dark:border-brand-800 border-dashed">
                                             {coupon.code}
                                         </div>
                                         <div className={`px-2 py-1 rounded-md text-xs font-bold ${

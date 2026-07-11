@@ -171,23 +171,23 @@ const InboxPage: React.FC = () => {
   return (
     <DashboardLayout title={t('sidebar.inbox')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard' }, { label: 'Inbox' }]}>
       <div className="space-y-4">
-        <div className="bg-white/5 p-3 rounded-md shadow-sm flex items-center justify-between">
+        <div className="bg-white/5 p-3 rounded-md shadow-elev-1 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setTab('take')}
-              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'take' ? 'border-b-2 border-primary-gradient text-primary' : 'text-muted'}`}
+              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'take' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               TAKE ACTION ({pendingCount})
             </button>
             <button
               onClick={() => setTab('notifications')}
-              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'notifications' ? 'border-b-2 border-primary-gradient text-primary' : 'text-muted'}`}
+              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'notifications' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               NOTIFICATIONS ({notificationsCount})
             </button>
             <button
               onClick={() => setTab('archive')}
-              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'archive' ? 'border-b-2 border-primary-gradient text-primary' : 'text-muted'}`}
+              className={`px-3 py-2 rounded-t-md text-sm ${tab === 'archive' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               ARCHIVE ({archiveCount})
             </button>
@@ -200,7 +200,7 @@ const InboxPage: React.FC = () => {
         <div className="grid grid-cols-12 gap-4 items-start h-full">
           {/* Left categories - sticky */}
           <aside className="col-span-2">
-            <Card className="p-0 sticky top-6 h-full overflow-auto bg-white/5 border border-light-border rounded-md shadow-sm">
+            <Card className="p-0 sticky top-6 h-full overflow-auto bg-white/5 border border-gray-200 rounded-md shadow-elev-1">
               <div className="p-3 border-b">
                 <p className="text-sm font-semibold">CATEGORIES</p>
               </div>
@@ -209,10 +209,10 @@ const InboxPage: React.FC = () => {
                   <button
                     key={c.name}
                     onClick={() => setFilter(c.name)}
-                    className={`w-full text-left px-3 py-2 rounded flex items-center justify-between hover:bg-white/10 transition border border-transparent ${filter === c.name ? 'bg-primary-10 border border-primary/20' : ''}`}
+                    className={`w-full text-left px-3 py-2 rounded flex items-center justify-between hover:bg-white/10 transition border border-transparent ${filter === c.name ? 'bg-brand-50/80 border border-brand-500/20' : ''}`}
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-primary-10 flex items-center justify-center text-primary text-xs font-semibold">{c.name.charAt(0)}</div>
+                      <div className="w-7 h-7 rounded-full bg-brand-50/80 flex items-center justify-center text-brand-500 text-xs font-semibold">{c.name.charAt(0)}</div>
                       <span className="text-sm">{c.name}</span>
                     </div>
                     <span className="text-sm text-muted">({c.count})</span>
@@ -232,7 +232,7 @@ const InboxPage: React.FC = () => {
           {/* Middle list */}
           <div className="col-span-4">
             <Card className="flex flex-col h-[500px]">
-              <div className="p-3 border-b border-light-border bg-white/5 sticky top-0 z-10">
+              <div className="p-3 border-b border-gray-200 bg-white/5 sticky top-0 z-10">
                 <Input
                   placeholder="Search by employee name, task name"
                   value={filter}
@@ -249,9 +249,9 @@ const InboxPage: React.FC = () => {
                     <div
                       key={it.id}
                       onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'take' }); }}
-                      className={`flex items-start gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-sm rounded-md cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'take' ? 'bg-white/10 border border-light-border' : 'border border-transparent'}`}
+                      className={`flex items-start gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-elev-1 rounded-md cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'take' ? 'bg-white/10 border border-gray-200' : 'border border-transparent'}`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">{it.title.split(' ').map((s) => s[0]).slice(0,2).join('')}</div>
+                      <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold text-sm">{it.title.split(' ').map((s) => s[0]).slice(0,2).join('')}</div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
@@ -264,7 +264,7 @@ const InboxPage: React.FC = () => {
                         <p className="text-xs text-muted truncate">{it.subtitle} · {it.category}</p>
 
                         <div className="mt-2 flex items-center gap-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-violet-100 text-violet-700' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${it.status === 'Not started' ? 'bg-yellow-100 text-yellow-700' : it.status === 'In progress' ? 'bg-brand-100 text-brand-600' : 'bg-green-100 text-green-700'}`}>{it.status}</span>
                           <span className="text-[11px] text-muted">{formatDistanceToNow(new Date(it.initiatedOn), { addSuffix: true })}</span>
                         </div>
                       </div>
@@ -284,8 +284,8 @@ const InboxPage: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           {newTasks.map((it) => (
-                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'new' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-sm cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'new' ? 'bg-white/10 border border-light-border' : ''}`}>
-                              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
+                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'new' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'new' ? 'bg-white/10 border border-gray-200' : ''}`}>
+                              <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
                               <div className="flex-1">
                                 <p className="font-medium">{it.title}</p>
                                 <p className="text-xs text-muted">{it.subtitle} · {it.category}</p>
@@ -304,8 +304,8 @@ const InboxPage: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           {upcomingTasks.map((it) => (
-                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'upcoming' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-sm cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'upcoming' ? 'bg-white/10 border border-light-border' : ''}`}>
-                              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
+                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'upcoming' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'upcoming' ? 'bg-white/10 border border-gray-200' : ''}`}>
+                              <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
                               <div className="flex-1">
                                 <p className="font-medium">{it.title}</p>
                                 <p className="text-xs text-muted">Due {it.dueDate ? format(new Date(it.dueDate), 'dd MMM yyyy') : ''} · {it.category}</p>
@@ -327,7 +327,7 @@ const InboxPage: React.FC = () => {
                     <div
                       key={it.id}
                       onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'archive' }); }}
-                      className={`flex items-center gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-sm cursor-pointer ${selectedListItem?.id === it.id && selectedListItem?.list === 'archive' ? 'bg-white/10 border border-light-border' : ''}`}
+                      className={`flex items-center gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-elev-1 cursor-pointer ${selectedListItem?.id === it.id && selectedListItem?.list === 'archive' ? 'bg-white/10 border border-gray-200' : ''}`}
                     >
                       <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map((s) => s[0]).slice(0,2).join('')}</div>
                       <div className="flex-1">
@@ -355,7 +355,7 @@ const InboxPage: React.FC = () => {
             <Card className="flex flex-col h-[500px]">
               {selected ? (
                 <div className="flex-1 flex flex-col overflow-auto">
-                  <div className="flex items-start justify-between p-4 border-b border-light-border bg-white/5">
+                  <div className="flex items-start justify-between p-4 border-b border-gray-200 bg-white/5">
                     <div className="flex-1">
                       <h3 className="text-xl font-semibold">{selected.title}</h3>
                       <p className="text-sm text-muted">Initiated on {format(new Date(selected.initiatedOn), 'dd MMM yyyy')}{selected.dueDate ? ` · Due ${format(new Date(selected.dueDate), 'dd MMM yyyy')}` : ''}</p>
@@ -388,7 +388,7 @@ const InboxPage: React.FC = () => {
                             {selected?.status === 'Completed' ? 'Unarchive' : 'Archive'}
                           </Button>
 
-                          <Button size="sm" className="bg-primary text-white hover:bg-primary/90" onClick={() => {
+                          <Button size="sm" className="bg-brand-500 text-white hover:bg-brand-500/90" onClick={() => {
                             // quick reply focus behavior
                             const el = document.getElementById('inbox-message-input') as HTMLInputElement | null;
                             if (el) el.focus();
@@ -422,10 +422,10 @@ const InboxPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="p-3 border-t border-light-border bg-white/5">
+                  <div className="p-3 border-t border-gray-200 bg-white/5">
                     <div className="flex items-center gap-2">
                       <Input id="inbox-message-input" className="w-full" placeholder="Type your message here" value={message} onChange={(e) => setMessage(e.target.value)} />
-                      <Button className="bg-primary text-white hover:bg-primary/90" onClick={() => {
+                      <Button className="bg-brand-500 text-white hover:bg-brand-500/90" onClick={() => {
                         if (!message) return;
                         setActivity((a) => [...a, message]);
                         setMessage('');

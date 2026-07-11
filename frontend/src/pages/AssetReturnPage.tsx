@@ -210,7 +210,7 @@ export const AssetReturnPage: React.FC = () => {
                                 required
                                 value={form.return_date}
                                 onChange={(e) => setForm({ ...form, return_date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:[color-scheme:dark]"
                             />
                         </div>
 
@@ -222,7 +222,7 @@ export const AssetReturnPage: React.FC = () => {
                             <select
                                 value={form.condition}
                                 onChange={(e) => setForm({ ...form, condition: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             >
                                 <option value="GOOD">Good</option>
                                 <option value="WORN">Worn / Minor Damage</option>
@@ -249,7 +249,7 @@ export const AssetReturnPage: React.FC = () => {
                                             type="checkbox"
                                             checked={item.is_returned}
                                             onChange={(e) => handleChecklistChange(index, 'is_returned', e.target.checked)}
-                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                         />
                                         <div className="flex-1">
                                             <span className={`text-sm ${item.is_returned ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -291,7 +291,7 @@ export const AssetReturnPage: React.FC = () => {
                                     type="button"
                                     onClick={handleAddItem}
                                     disabled={!newItemName.trim()}
-                                    className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-primary hover:text-primary-dark disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Plus size={14} />
                                     Add
@@ -317,7 +317,7 @@ export const AssetReturnPage: React.FC = () => {
                                 rows={3}
                                 value={form.notes}
                                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${needsNotes
+                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${needsNotes
                                     ? 'border-red-400 dark:border-red-500'
                                     : 'border-gray-300 dark:border-gray-600'
                                     }`}

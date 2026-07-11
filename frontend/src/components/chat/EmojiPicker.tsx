@@ -207,7 +207,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
         : EMOJI_CATEGORIES[activeCategory];
 
     return (
-        <div className={cn("absolute bottom-full mb-2 left-0 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200", className)}>
+        <div className={cn("absolute bottom-full mb-2 left-0 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-elev-6 border border-gray-200 dark:border-gray-700 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200", className)}>
             {/* Header */}
             <div className="p-3 border-b border-gray-100 dark:border-gray-700">
                 <div className="relative">
@@ -216,7 +216,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                         placeholder="Search emojis..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                     />
                 </div>
             </div>
@@ -231,7 +231,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                             className={cn(
                                 "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all",
                                 activeCategory === category
-                                    ? "bg-primary-gradient text-white shadow-md shadow-primary/20 scale-105"
+                                    ? "bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white shadow-elev-3 shadow-brand-500/20 scale-105"
                                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                             )}
                         >

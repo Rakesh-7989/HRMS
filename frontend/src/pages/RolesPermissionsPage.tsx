@@ -83,13 +83,13 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-    ADMIN: 'from-purple-500 to-indigo-600',
+    ADMIN: 'from-brand-500 to-brand-600',
     HR: 'from-emerald-500 to-teal-600',
     MANAGER: 'from-amber-500 to-orange-600',
     EMPLOYEE: 'from-blue-500 to-cyan-600',
 };
 
-const DEFAULT_GRADIENT = 'from-rose-500 to-pink-600';
+const DEFAULT_GRADIENT = 'from-error-500 to-pink-600';
 
 export const RolesPermissionsPage: React.FC = () => {
     const { refreshPermissions } = usePermissions();
@@ -337,7 +337,7 @@ export const RolesPermissionsPage: React.FC = () => {
     if (rolesLoading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
             </div>
         );
     }
@@ -352,7 +352,7 @@ export const RolesPermissionsPage: React.FC = () => {
                         <button
                             onClick={() => setShowUserOverrides(!showUserOverrides)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${showUserOverrides
-                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
                                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                         >
@@ -363,7 +363,7 @@ export const RolesPermissionsPage: React.FC = () => {
                             onClick={() => {
                                 setShowAddRole(true);
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-md transition-all bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-elev-3 transition-all bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700"
                         >
                             <Plus className="h-4 w-4" />
                             Add Role
@@ -373,8 +373,8 @@ export const RolesPermissionsPage: React.FC = () => {
 
                 {/* Admin Usage Indicator */}
                 <div className="mb-6 flex flex-wrap gap-4">
-                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${adminCount >= adminLimit ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}`}>
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-elev-1 flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${adminCount >= adminLimit ? 'bg-red-100 text-red-600' : 'bg-brand-100 text-brand-600'}`}>
                             <Users className="h-4 w-4" />
                         </div>
                         <div>
@@ -388,7 +388,7 @@ export const RolesPermissionsPage: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3">
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-elev-1 flex items-center gap-3">
                         <div className={`p-2 rounded-lg ${isStandard ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
                             <Shield className="h-4 w-4" />
                         </div>
@@ -407,8 +407,8 @@ export const RolesPermissionsPage: React.FC = () => {
                             key={r.role}
                             onClick={() => setActiveRole(r.role)}
                             className={`relative group px-5 py-3 rounded-xl transition-all duration-200 text-left min-w-[140px] cursor-pointer ${activeRole === r.role
-                                ? 'ring-2 ring-purple-500 shadow-lg scale-[1.02]'
-                                : 'hover:shadow-md hover:scale-[1.01]'
+                                ? 'ring-2 ring-purple-500 shadow-elev-4 scale-[1.02]'
+                                : 'hover:shadow-elev-3 hover:scale-[1.01]'
                                 }`}
                         >
                             <div
@@ -460,7 +460,7 @@ export const RolesPermissionsPage: React.FC = () => {
                         <Button
                             variant="outline"
                             onClick={() => setShowAddRole(false)}
-                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                            className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
                         >
                             Cancel
                         </Button>
@@ -468,7 +468,7 @@ export const RolesPermissionsPage: React.FC = () => {
                             onClick={handleCreateRole}
                             disabled={creating || !newRoleName.trim()}
                             isLoading={creating}
-                            className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                            className="rounded-2xl bg-brand-500 text-white font-bold min-w-[140px]"
                         >
                             Create Role
                         </Button>
@@ -518,7 +518,7 @@ export const RolesPermissionsPage: React.FC = () => {
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-md transition-all disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 shadow-elev-3 transition-all disabled:opacity-50"
                         >
                             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                             Save Changes
@@ -532,7 +532,7 @@ export const RolesPermissionsPage: React.FC = () => {
                 <div className={showUserOverrides ? 'lg:col-span-2' : ''}>
                     {loading ? (
                         <div className="flex items-center justify-center py-20">
-                            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
                         </div>
                     ) : activeRole ? (
                         <div className="space-y-3">
@@ -548,7 +548,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                 return (
                                     <div
                                         key={module}
-                                        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm"
+                                        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-elev-1"
                                     >
                                         {/* Module Header */}
                                         <div
@@ -578,14 +578,14 @@ export const RolesPermissionsPage: React.FC = () => {
                                                     toggleAllInModule(module, !allEnabled);
                                                 }}
                                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${allEnabled
-                                                    ? 'bg-purple-500'
+                                                    ? 'bg-brand-500'
                                                     : someEnabled
-                                                        ? 'bg-purple-300'
+                                                        ? 'bg-brand-300'
                                                         : 'bg-gray-300 dark:bg-gray-600'
                                                     }`}
                                             >
                                                 <span
-                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-elev-2 transition-transform ${allEnabled ? 'translate-x-6' : 'translate-x-1'
                                                         }`}
                                                 />
                                             </button>
@@ -607,11 +607,11 @@ export const RolesPermissionsPage: React.FC = () => {
                                                         </div>
                                                         <button
                                                             onClick={() => handleTogglePermission(perm.permission_id)}
-                                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${perm.enabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
+                                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${perm.enabled ? 'bg-brand-500' : 'bg-gray-300 dark:bg-gray-600'
                                                                 }`}
                                                         >
                                                             <span
-                                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${perm.enabled ? 'translate-x-6' : 'translate-x-1'
+                                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-elev-2 transition-transform ${perm.enabled ? 'translate-x-6' : 'translate-x-1'
                                                                     }`}
                                                             />
                                                         </button>
@@ -631,10 +631,10 @@ export const RolesPermissionsPage: React.FC = () => {
                 {/* User Overrides Panel */}
                 {showUserOverrides && (
                     <div className="lg:col-span-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm sticky top-6">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-elev-1 sticky top-6">
                             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <User className="h-4 w-4 text-purple-500" />
+                                    <User className="h-4 w-4 text-brand-500" />
                                     User Permission Overrides
                                 </h3>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -658,14 +658,14 @@ export const RolesPermissionsPage: React.FC = () => {
                                 </div>
 
                                 {userSearchResults.length > 0 && (
-                                    <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                    <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-elev-4 max-h-48 overflow-y-auto">
                                         {userSearchResults.map((usr: any) => (
                                             <button
                                                 key={usr.user_id || usr.id}
                                                 onClick={() => selectUserForOverride(usr)}
                                                 className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors"
                                             >
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-brand-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                                                     {(usr.first_name || 'U')[0]}
                                                 </div>
                                                 <div className="min-w-0">
@@ -680,9 +680,9 @@ export const RolesPermissionsPage: React.FC = () => {
 
                             {selectedUser && (
                                 <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 flex items-center justify-between">
+                                    <div className="px-4 py-3 bg-brand-50 dark:bg-brand-500/10 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-brand-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                                                 {(selectedUser.first_name || 'U')[0]}
                                             </div>
                                             <div>
@@ -700,7 +700,7 @@ export const RolesPermissionsPage: React.FC = () => {
 
                                     {userPermLoading ? (
                                         <div className="flex items-center justify-center py-8">
-                                            <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                                            <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
                                         </div>
                                     ) : (
                                         <div className="max-h-[50vh] overflow-y-auto">
@@ -731,12 +731,12 @@ export const RolesPermissionsPage: React.FC = () => {
                                                         <button
                                                             onClick={() => handleUserOverrideToggle(perm.permission_id, perm.user_override ?? null, perm.role_enabled)}
                                                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${perm.effective
-                                                                ? hasOverride ? 'bg-amber-500' : 'bg-purple-500'
+                                                                ? hasOverride ? 'bg-amber-500' : 'bg-brand-500'
                                                                 : hasOverride ? 'bg-red-400' : 'bg-gray-300 dark:bg-gray-600'
                                                                 }`}
                                                         >
                                                             <span
-                                                                className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform"
+                                                                className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-elev-2 transition-transform"
                                                                 style={{ transform: `translateX(${perm.effective ? '18px' : '2px'})` }}
                                                             />
                                                         </button>

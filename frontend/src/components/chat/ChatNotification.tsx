@@ -98,46 +98,46 @@ export const ChatNotification: React.FC = () => {
     // Theme-based styles
     const cardBg = isDark
         ? 'bg-gray-900/90 border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_40px_rgba(99,102,241,0.1)]'
-        : 'bg-white/95 border-primary/25 shadow-[0_12px_48px_rgba(66,39,90,0.18),0_4px_16px_rgba(0,0,0,0.1),0_0_0_1px_rgba(66,39,90,0.08)]';
+        : 'bg-white/95 border-brand-500/25 shadow-[0_12px_48px_rgba(66,39,90,0.18),0_4px_16px_rgba(0,0,0,0.1),0_0_0_1px_rgba(66,39,90,0.08)]';
 
     const cardHover = isDark
-        ? 'hover:border-primary/30'
-        : 'hover:border-primary/50 hover:shadow-[0_16px_56px_rgba(66,39,90,0.22),0_6px_20px_rgba(0,0,0,0.12)]';
+        ? 'hover:border-brand-500/30'
+        : 'hover:border-brand-500/50 hover:shadow-[0_16px_56px_rgba(66,39,90,0.22),0_6px_20px_rgba(0,0,0,0.12)]';
 
     const badgeBg = isDark
-        ? 'bg-primary/10 border-primary/20'
-        : 'bg-primary/10 border-primary/25';
+        ? 'bg-brand-500/10 border-brand-500/20'
+        : 'bg-brand-500/10 border-brand-500/25';
 
-    const badgeText = 'text-primary';
+    const badgeText = 'text-brand-500';
 
     const closeBtnClasses = isDark
         ? 'hover:bg-white/10 text-white/30 hover:text-white/70'
-        : 'hover:bg-primary/10 text-gray-500 hover:text-gray-800';
+        : 'hover:bg-brand-500/10 text-gray-500 hover:text-gray-800';
 
     const rowHover = isDark
         ? 'hover:bg-white/5'
-        : 'hover:bg-primary/5';
+        : 'hover:bg-brand-500/5';
 
     const avatarBg = isDark
-        ? 'from-primary/70 to-indigo-600/70 border-white/10'
-        : 'from-primary to-indigo-600 border-primary/20';
+        ? 'from-brand-500/70 to-brand-600/70 border-white/10'
+        : 'from-brand-500 to-brand-600 border-brand-500/20';
 
     const nameColor = isDark ? 'text-white' : 'text-gray-800';
     const previewColor = isDark ? 'text-white/40' : 'text-gray-600';
     const arrowColor = isDark ? 'text-white/15' : 'text-gray-400';
-    const footerBorder = isDark ? 'border-white/5' : 'border-primary/10';
+    const footerBorder = isDark ? 'border-white/5' : 'border-brand-500/10';
     const footerText = isDark ? 'text-white/20' : 'text-gray-500';
-    const countBadgeBg = isDark ? 'bg-primary/15' : 'bg-primary/15';
-    const progressTrack = isDark ? 'bg-white/5' : 'bg-primary/10';
+    const countBadgeBg = isDark ? 'bg-brand-500/15' : 'bg-brand-500/15';
+    const progressTrack = isDark ? 'bg-white/5' : 'bg-brand-500/10';
     const onlineDot = isDark ? 'border-gray-900' : 'border-white';
-    const typeIconColor = isDark ? 'text-primary/60' : 'text-primary';
+    const typeIconColor = isDark ? 'text-brand-500/60' : 'text-brand-500';
 
     return (
         <>
             <div className="fixed bottom-6 right-6 z-[250] max-w-sm pointer-events-auto animate-in slide-in-from-bottom-10 duration-500" style={{ width: 'calc(100% - 3rem)' }}>
                 <div className={`relative backdrop-blur-2xl rounded-2xl border overflow-hidden transition-all duration-300 ${cardBg} ${cardHover}`}>
                     {/* Gradient accent line at top */}
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-indigo-500 to-violet-500" />
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 via-brand-500 to-violet-500" />
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 pt-3.5 pb-0">
@@ -170,7 +170,7 @@ export const ChatNotification: React.FC = () => {
                             >
                                 {/* Avatar */}
                                 <div className="relative flex-shrink-0">
-                                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white text-[11px] font-black shadow-md overflow-hidden border ${avatarBg}`}>
+                                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white text-[11px] font-black shadow-elev-3 overflow-hidden border ${avatarBg}`}>
                                         {g.senderAvatar ? (
                                             <img src={resolveImageUrl(g.senderAvatar)} alt={g.senderName} className="w-full h-full object-cover" />
                                         ) : (
@@ -188,7 +188,7 @@ export const ChatNotification: React.FC = () => {
                                                     "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] cursor-help",
                                                     status === 'available' ? 'bg-emerald-500' :
                                                         status === 'away' ? 'bg-amber-500' :
-                                                            status === 'dnd' || status === 'busy' ? 'bg-rose-500' : 'bg-gray-400',
+                                                            status === 'dnd' || status === 'busy' ? 'bg-error-500' : 'bg-gray-400',
                                                     onlineDot
                                                 )}
                                             >
@@ -207,7 +207,7 @@ export const ChatNotification: React.FC = () => {
                                             {displayName(g)}
                                         </span>
                                         {g.count > 1 && (
-                                            <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-md text-primary text-[10px] font-bold ${countBadgeBg}`}>
+                                            <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-md text-brand-500 text-[10px] font-bold ${countBadgeBg}`}>
                                                 {g.count}
                                             </span>
                                         )}
@@ -237,7 +237,7 @@ export const ChatNotification: React.FC = () => {
                     {/* Auto-dismiss progress bar */}
                     <div className={`absolute bottom-0 left-0 right-0 h-[2px] ${progressTrack}`}>
                         <div
-                            className="h-full bg-gradient-to-r from-primary/60 to-indigo-500/60 rounded-full"
+                            className="h-full bg-gradient-to-r from-brand-500/60 to-brand-500/60 rounded-full"
                             key={latest.messageId}
                             style={{
                                 animation: 'shrinkWidth 5s linear forwards'

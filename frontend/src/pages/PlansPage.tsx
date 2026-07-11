@@ -149,7 +149,7 @@ export const PlansPage: React.FC = () => {
         return (
             <DashboardLayout title="Subscription Plans">
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                 </div>
             </DashboardLayout>
         );
@@ -187,7 +187,7 @@ export const PlansPage: React.FC = () => {
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="min-w-0 flex-1">
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">{plan.name}</h3>
-                                        <p className="text-2xl font-bold text-primary">₹{plan.price}<span className="text-sm text-muted font-normal">/mo (Base)</span></p>
+                                        <p className="text-2xl font-bold text-brand-500">₹{plan.price}<span className="text-sm text-muted font-normal">/mo (Base)</span></p>
                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button
@@ -254,13 +254,13 @@ export const PlansPage: React.FC = () => {
                     className="max-w-4xl"
                     footer={
                         <div className="flex justify-end gap-3 w-full">
-                            <Button variant="outline" onClick={() => { setEditingPlan(null); setIsCreating(false); }} className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold">
+                            <Button variant="outline" onClick={() => { setEditingPlan(null); setIsCreating(false); }} className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold">
                                 Cancel
                             </Button>
                             <Button
                                 onClick={isCreating ? handleCreate : handleSave}
                                 isLoading={isCreating ? createMutation.isPending : updateMutation.isPending}
-                                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2"
+                                className="rounded-2xl bg-brand-500 text-white font-bold flex items-center gap-2"
                             >
                                 <Save size={16} />
                                 {isCreating ? 'Create Plan' : 'Save Changes'}
@@ -274,7 +274,7 @@ export const PlansPage: React.FC = () => {
                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Plan Name</label>
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                     value={isCreating ? newPlan.name : editingPlan?.name}
                                     onChange={(e) => isCreating
                                         ? setNewPlan({ ...newPlan, name: e.target.value })
@@ -289,7 +289,7 @@ export const PlansPage: React.FC = () => {
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
                                     <input
                                         type="number"
-                                        className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                        className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                         value={isCreating ? newPlan.price : editingPlan?.price}
                                         onChange={(e) => isCreating
                                             ? setNewPlan({ ...newPlan, price: parseFloat(e.target.value) || 0 })
@@ -302,7 +302,7 @@ export const PlansPage: React.FC = () => {
                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Max Employees</label>
                                 <input
                                     type="number"
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                     placeholder="Leave empty for unlimited"
                                     value={isCreating ? (newPlan.max_employees || '') : (editingPlan?.max_employees || '')}
                                     onChange={(e) => {
@@ -314,7 +314,7 @@ export const PlansPage: React.FC = () => {
                             <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
                                 <input
                                     type="checkbox"
-                                    className="w-5 h-5 rounded-lg border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
+                                    className="w-5 h-5 rounded-lg border-gray-300 dark:border-gray-600 text-brand-500 focus:ring-brand-500/50 cursor-pointer"
                                     checked={isCreating ? newPlan.is_active : editingPlan?.is_active}
                                     onChange={(e) => isCreating
                                         ? setNewPlan({ ...newPlan, is_active: e.target.checked })
@@ -335,14 +335,14 @@ export const PlansPage: React.FC = () => {
 
                                     return (
                                         <div key={cat} className="space-y-3">
-                                            <p className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/5 dark:bg-primary/10 px-3 py-1 rounded-full inline-block">{label}</p>
+                                            <p className="text-[10px] font-black uppercase text-brand-500 tracking-widest bg-brand-500/5 dark:bg-brand-500/10 px-3 py-1 rounded-full inline-block">{label}</p>
                                             <div className="grid grid-cols-1 gap-2 pl-2">
                                                 {catFeatures && typeof catFeatures === 'object' ? (
                                                     Object.entries(catFeatures).map(([feat, isEnabled]) => (
                                                         <div key={feat} className="flex items-center gap-3 group">
                                                             <input
                                                                 type="checkbox"
-                                                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
+                                                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-500 focus:ring-brand-500/50 cursor-pointer"
                                                                 checked={isEnabled as boolean}
                                                                 onChange={(e) => {
                                                                     if (isCreating) {
@@ -359,7 +359,7 @@ export const PlansPage: React.FC = () => {
                                                                 }}
                                                                 id={`${cat}-${feat}`}
                                                             />
-                                                            <label htmlFor={`${cat}-${feat}`} className="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer group-hover:text-primary transition-colors">
+                                                            <label htmlFor={`${cat}-${feat}`} className="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer group-hover:text-brand-500 transition-colors">
                                                                 {feat.replace(/_/g, ' ')}
                                                             </label>
                                                         </div>

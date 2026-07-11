@@ -345,21 +345,21 @@ export const AssetsPage: React.FC = () => {
       case 'AVAILABLE':
         return 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
       case 'ASSIGNED':
-        return 'text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
+        return 'text-brand-600 bg-brand-50 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20';
       case 'REQUESTED':
         return 'text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
       case 'UNDER_REPAIR':
         return 'text-orange-600 bg-orange-50 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20';
       case 'WRITTEN_OFF':
-        return 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20';
+        return 'text-brand-600 bg-brand-50 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20';
       case 'RETIRED':
       case 'DISPOSED':
-        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+        return 'text-slate-500 bg-neutral-50 border-neutral-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
       case 'DOA':
       case 'LOST':
-        return 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
+        return 'text-error-600 bg-error-50 border-error-100 dark:bg-error-500/10 dark:text-error-400 dark:border-error-500/20';
       default:
-        return 'text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
+        return 'text-slate-500 bg-neutral-50 border-neutral-100 dark:text-slate-400 dark:bg-white/5 dark:border-white/10';
     }
   };
 
@@ -379,7 +379,7 @@ export const AssetsPage: React.FC = () => {
               { label: t('assets.totalAssets'), value: dashboard.summary.total_assets, sub: `₹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
               { label: t('assets.available'), value: dashboard.summary.available_count, icon: UserCheck, gradient: 'linear-gradient(135deg, #10b981, #059669)', status: 'text-emerald-500' },
               { label: t('assets.assigned'), value: dashboard.summary.assigned_count, icon: BarChart3, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', status: 'text-amber-500' },
-              { label: t('assets.underRepair'), value: dashboard.summary.under_repair_count, icon: Wrench, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', status: 'text-rose-500' }
+              { label: t('assets.underRepair'), value: dashboard.summary.under_repair_count, icon: Wrench, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', status: 'text-error-500' }
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
@@ -389,7 +389,7 @@ export const AssetsPage: React.FC = () => {
                 whileHover={{ y: -5, scale: 1.02 }}
                 className="relative group"
               >
-                <div className="relative overflow-hidden rounded-[1.5rem] p-5 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300">
+                <div className="relative overflow-hidden rounded-[1.5rem] p-5 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 hover:shadow-elev-4 transition-all duration-300">
                   {/* Subtle Pattern */}
                   <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
                     <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -399,13 +399,13 @@ export const AssetsPage: React.FC = () => {
 
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border border-white/10"
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-elev-4 border border-white/10"
                       style={{ background: stat.gradient }}
                     >
                       <stat.icon className="w-6 h-6 text-white" />
                     </div>
                     {idx === 3 && dashboard.warranty_expiring_soon > 0 && (
-                      <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100 dark:border-rose-500/20">
+                      <div className="bg-error-50 dark:bg-error-500/10 text-error-600 dark:text-error-400 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-error-100 dark:border-error-500/20">
                         {dashboard.warranty_expiring_soon} Warn
                       </div>
                     )}
@@ -417,7 +417,7 @@ export const AssetsPage: React.FC = () => {
                     </h3>
                     <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{stat.label}</p>
                     {stat.sub && (
-                      <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+                      <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
                         {stat.sub}
                       </p>
                     )}
@@ -435,7 +435,7 @@ export const AssetsPage: React.FC = () => {
             <div className="w-full sm:w-80">
               <div className="relative group">
                 <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-brand-500 transition-colors"
                   size={18}
                 />
                 <input
@@ -443,7 +443,7 @@ export const AssetsPage: React.FC = () => {
                   placeholder={t('assets.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-5 py-3 pl-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm transition-all focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 shadow-sm"
+                  className="w-full px-5 py-3 pl-12 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm transition-all focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-400 shadow-elev-1"
                 />
               </div>
             </div>
@@ -451,7 +451,7 @@ export const AssetsPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as AssetStatus | 'All')}
-                className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm cursor-pointer appearance-none"
+                className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-400 transition-all shadow-elev-1 cursor-pointer appearance-none"
               >
                 <option value="All">{t('assets.allStatus')}</option>
                 {['AVAILABLE', 'ASSIGNED', 'UNDER_REPAIR', 'RETIRED', 'DOA', 'LOST', 'WRITTEN_OFF', 'DISPOSED'].map(s => (
@@ -461,7 +461,7 @@ export const AssetsPage: React.FC = () => {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as AssetCategory | 'All')}
-                className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm cursor-pointer appearance-none"
+                className="w-full sm:w-44 px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-400 transition-all shadow-elev-1 cursor-pointer appearance-none"
               >
                 <option value="All">{t('assets.allCategories')}</option>
                 {Array.from(new Set(assets.map(a => a.category))).sort().map(cat => (
@@ -479,9 +479,9 @@ export const AssetsPage: React.FC = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleExportCSV}
                 disabled={exportingCSV}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-white/10 shadow-elev-1 transition-all whitespace-nowrap min-w-fit"
               >
-                <Download size={18} className="text-indigo-500" />
+                <Download size={18} className="text-brand-500" />
                 <span>{exportingCSV ? 'Exporting...' : t('assets.exportCSV')}</span>
               </motion.button>
             )}
@@ -495,7 +495,7 @@ export const AssetsPage: React.FC = () => {
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowRequestModal(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-white/10 shadow-elev-1 transition-all whitespace-nowrap min-w-fit"
                 >
                   <FileText size={18} className="text-amber-500" />
                   <span>{t('assets.request')}</span>
@@ -510,7 +510,7 @@ export const AssetsPage: React.FC = () => {
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowAssignModal(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap min-w-fit"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-white/5 border border-neutral-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-white/10 shadow-elev-1 transition-all whitespace-nowrap min-w-fit"
                 >
                   <UserPlus size={18} className="text-emerald-500" />
                   <span>{t('assets.assign')}</span>
@@ -524,7 +524,7 @@ export const AssetsPage: React.FC = () => {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate('/assets/requests')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl text-sm font-bold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 shadow-sm transition-all whitespace-nowrap min-w-fit"
+                className="flex items-center gap-2 px-5 py-2.5 bg-brand-500/10 dark:bg-brand-500/20 border border-brand-200 dark:border-brand-500/30 rounded-2xl text-sm font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/30 shadow-elev-1 transition-all whitespace-nowrap min-w-fit"
               >
                 <ClipboardList size={18} />
                 <span>{canManage || user?.role === 'HR' ? t('assets.requests') : t('assets.myRequests')}</span>
@@ -535,10 +535,10 @@ export const AssetsPage: React.FC = () => {
                   key="add"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  whileHover={{ y: -2, shadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4)' }}
+                   whileHover={{ y: -2, boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4)' }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/assets/new')}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-primary rounded-2xl text-sm font-bold text-white shadow-lg shadow-primary/20 whitespace-nowrap min-w-fit"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 rounded-2xl text-sm font-bold text-white shadow-elev-4 shadow-brand-500/20 whitespace-nowrap min-w-fit"
                 >
                   <Plus size={18} />
                   <span>Add Asset</span>
@@ -549,11 +549,11 @@ export const AssetsPage: React.FC = () => {
         </div>
 
         {/* Assets Table Container */}
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 rounded-[2rem] shadow-elev-2 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
+                <tr className="bg-neutral-50/50 dark:bg-white/5 border-b border-neutral-100 dark:border-white/5">
                   <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.asset')}</th>
                   {canViewBarcode && <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.barcode')}</th>}
                   <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.category')}</th>
@@ -633,7 +633,7 @@ export const AssetsPage: React.FC = () => {
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-md">
+                        <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-1 rounded-md">
                           {asset.category}
                         </span>
                       </td>
@@ -675,7 +675,7 @@ export const AssetsPage: React.FC = () => {
                           {canViewDetails && (
                             <button
                               onClick={() => navigate(`/assets/${asset.id}`)}
-                              className="text-primary hover:text-primary-dark"
+                              className="text-brand-500 hover:text-brand-600"
                               title="View Details"
                             >
                               <Eye size={16} />
@@ -687,7 +687,7 @@ export const AssetsPage: React.FC = () => {
                               {canUpdate && (
                                 <button
                                   onClick={() => navigate(`/assets/${asset.id}/edit`)}
-                                  className="text-violet-600 hover:text-violet-800"
+                                  className="text-brand-600 hover:text-brand-700"
                                   title="Edit Asset"
                                 >
                                   <Edit size={16} />
@@ -727,7 +727,7 @@ export const AssetsPage: React.FC = () => {
                             asset.status === 'AVAILABLE' && (
                               <button
                                 onClick={() => handleRequest(asset.id)}
-                                className="text-purple-600 hover:text-purple-800"
+                                className="text-brand-600 hover:text-brand-700"
                                 title="Request Asset"
                               >
                                 <UserCheck size={16} />
@@ -760,7 +760,7 @@ export const AssetsPage: React.FC = () => {
                 variant="outline"
                 onClick={() => setShowRequestModal(false)}
                 disabled={requestSubmitting}
-                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
               >
                 Cancel
               </Button>
@@ -769,7 +769,7 @@ export const AssetsPage: React.FC = () => {
                 form="request-asset-form"
                 disabled={requestSubmitting}
                 isLoading={requestSubmitting}
-                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+                className="rounded-2xl bg-brand-500 text-white font-bold flex items-center gap-2 min-w-[140px]"
               >
                 <PlusCircle size={18} />
                 Submit Request
@@ -789,7 +789,7 @@ export const AssetsPage: React.FC = () => {
               value={requestForm.assetName}
               onChange={(e) => setRequestForm({ ...requestForm, assetName: e.target.value })}
               placeholder="e.g., MacBook Pro 16-inch, Dell Monitor 27-inch"
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 font-medium"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 font-medium"
             />
           </div>
 
@@ -802,7 +802,7 @@ export const AssetsPage: React.FC = () => {
               required
               value={requestForm.category}
               onChange={(e) => setRequestForm({ ...requestForm, category: e.target.value as AssetCategory })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
             >
               <option value="Laptop">Laptop</option>
               <option value="Desktop">Desktop</option>
@@ -822,7 +822,7 @@ export const AssetsPage: React.FC = () => {
               required
               value={requestForm.priority}
               onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
             >
               <option value="Low">Low - Can wait</option>
               <option value="Medium">Medium - Needed soon</option>
@@ -841,7 +841,7 @@ export const AssetsPage: React.FC = () => {
               onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
               placeholder="Please provide a brief explanation of why you need this asset..."
               rows={4}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none font-medium"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none font-medium"
             />
           </div>
         </form>
@@ -862,7 +862,7 @@ export const AssetsPage: React.FC = () => {
                 variant="outline"
                 onClick={() => setShowAssignModal(false)}
                 disabled={assignSubmitting}
-                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
               >
                 Cancel
               </Button>
@@ -871,7 +871,7 @@ export const AssetsPage: React.FC = () => {
                 form="assign-asset-form"
                 disabled={assignSubmitting || availableAssets.length === 0}
                 isLoading={assignSubmitting}
-                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+                className="rounded-2xl bg-brand-500 text-white font-bold flex items-center gap-2 min-w-[140px]"
               >
                 <CheckCircle2 size={18} />
                 Assign Asset
@@ -889,7 +889,7 @@ export const AssetsPage: React.FC = () => {
               required
               value={assignForm.assetId}
               onChange={(e) => setAssignForm({ ...assignForm, assetId: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
             >
               <option value="">-- Select an available asset --</option>
               {availableAssets.map((asset) => (
@@ -899,7 +899,7 @@ export const AssetsPage: React.FC = () => {
               ))}
             </select>
             {availableAssets.length === 0 && (
-              <p className="mt-2 text-sm text-fuchsia-600 dark:text-fuchsia-400 font-medium">
+              <p className="mt-2 text-sm text-coral-600 dark:text-coral-400 font-medium">
                 No available assets to assign.
               </p>
             )}
@@ -914,7 +914,7 @@ export const AssetsPage: React.FC = () => {
               required
               value={assignForm.employeeId}
               onChange={(e) => setAssignForm({ ...assignForm, employeeId: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
             >
               <option value="">-- Select an employee --</option>
               {employees
@@ -940,7 +940,7 @@ export const AssetsPage: React.FC = () => {
               {assignAccessories.map((acc, idx) => (
                 <div key={idx} className="flex items-center gap-2 group">
                   <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
-                  <button type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
+                  <button type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
                 </div>
               ))}
               <div className="flex items-center gap-2">
@@ -955,7 +955,7 @@ export const AssetsPage: React.FC = () => {
                     }
                   }}
                   placeholder="e.g. Charger, Mouse..."
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                 />
                 <Button
                   type="button"
@@ -963,7 +963,7 @@ export const AssetsPage: React.FC = () => {
                   disabled={!newAccessoryName.trim()}
                   variant="outline"
                   size="sm"
-                  className="whitespace-nowrap px-4 rounded-xl border-primary text-primary font-bold hover:bg-primary/5"
+                  className="whitespace-nowrap px-4 rounded-xl border-brand-500 text-brand-500 font-bold hover:bg-brand-500/5"
                 >
                   + Add
                 </Button>
@@ -988,7 +988,7 @@ export const AssetsPage: React.FC = () => {
                 variant="outline"
                 onClick={() => setShowSwapModal(false)}
                 disabled={swapSubmitting}
-                className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
+                className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
               >
                 Cancel
               </Button>
@@ -997,7 +997,7 @@ export const AssetsPage: React.FC = () => {
                 form="swap-asset-form"
                 disabled={swapSubmitting || !swapNewAssetId}
                 isLoading={swapSubmitting}
-                className="rounded-2xl bg-primary text-white font-bold flex items-center gap-2 min-w-[140px]"
+                className="rounded-2xl bg-brand-500 text-white font-bold flex items-center gap-2 min-w-[140px]"
               >
                 <RefreshCw size={18} />
                 Swap Asset
@@ -1024,7 +1024,7 @@ export const AssetsPage: React.FC = () => {
               required
               value={swapNewAssetId}
               onChange={(e) => setSwapNewAssetId(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
             >
               <option value="">-- Select a replacement --</option>
               {availableAssets.map((asset) => (
@@ -1044,7 +1044,7 @@ export const AssetsPage: React.FC = () => {
               {swapAccessories.map((acc, idx) => (
                 <div key={idx} className="flex items-center gap-2 group">
                   <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
-                  <button type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
+                  <button type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
                 </div>
               ))}
               <div className="flex items-center gap-2">
@@ -1059,7 +1059,7 @@ export const AssetsPage: React.FC = () => {
                     }
                   }}
                   placeholder="e.g. Charger, Mouse..."
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-medium"
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                 />
                 <Button
                   type="button"
@@ -1067,7 +1067,7 @@ export const AssetsPage: React.FC = () => {
                   disabled={!swapNewAccessoryName.trim()}
                   variant="outline"
                   size="sm"
-                  className="whitespace-nowrap px-4 rounded-xl border-primary text-primary font-bold hover:bg-primary/5"
+                  className="whitespace-nowrap px-4 rounded-xl border-brand-500 text-brand-500 font-bold hover:bg-brand-500/5"
                 >
                   + Add
                 </Button>

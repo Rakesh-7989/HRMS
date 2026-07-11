@@ -85,7 +85,7 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
                     placeholder={t('chat.searchConversations')}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500/20"
                 />
             </div>
             <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
@@ -93,15 +93,15 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
                     <button
                         key={conv.id}
                         onClick={() => { onForward(conv.id); onClose(); }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-primary-10 dark:hover:bg-primary-20 rounded-xl transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-3 hover:bg-brand-50/80 dark:hover:bg-brand-100/80 rounded-xl transition-colors text-left"
                     >
-                        <div className="h-10 w-10 rounded-xl bg-primary-gradient flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-elev-3">
                             {(conv.name || 'G').slice(0, 1).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{conv.name || t('chat.groupChat')}</p>
                         </div>
-                        <ArrowRight size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                        <ArrowRight size={16} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
                     </button>
                 ))}
             </div>
@@ -154,7 +154,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                         type="submit"
                         form="create-group-form"
                         disabled={!groupName || selectedUsers.length === 0}
-                        className="px-5 py-2.5 text-sm font-medium bg-primary-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                        className="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                     >
                         Create
                     </button>
@@ -167,7 +167,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                         type="text"
                         value={groupName}
                         onChange={e => setGroupName(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-t-xl focus:border-primary transition-all text-sm outline-none"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-t-xl focus:border-brand-500 transition-all text-sm outline-none"
                         placeholder="Enter name of the group"
                         required
                     />
@@ -196,7 +196,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                                     className={cn(
                                         "p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200",
                                         selectedUsers.includes(user.id)
-                                            ? "bg-primary-gradient text-white shadow-md shadow-primary/20"
+                                            ? "bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white shadow-elev-3 shadow-brand-500/20"
                                             : "hover:bg-gray-100 dark:hover:bg-gray-700/50"
                                     )}
                                 >
@@ -214,7 +214,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                         )}
                     </div>
                     {selectedUsers.length > 0 && (
-                        <p className="text-xs text-primary mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
+                        <p className="text-xs text-brand-500 mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
                     )}
                 </div>
             </form>
@@ -228,7 +228,7 @@ const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; on
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-elev-5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete this message?</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">This action will remove the message for participants</p>
                 <div className="flex flex-col gap-2 w-full mb-4">
@@ -277,7 +277,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                     <button
                         onClick={() => { onAdd(selectedIds); onClose(); }}
                         disabled={selectedIds.length === 0}
-                        className="px-6 py-2.5 bg-primary-gradient text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                        className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                     >
                         Add {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
                     </button>
@@ -285,13 +285,13 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
             }
         >
             <div className="relative mb-4 group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors" size={18} />
                 <input
                     type="text"
                     placeholder="Search by name or email..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
                     autoFocus
                 />
             </div>
@@ -308,7 +308,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                         <button
                             key={contact.id}
                             onClick={() => toggleUser(contact.id)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group border ${isSelected ? 'bg-primary/5 border-primary/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent'}`}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group border ${isSelected ? 'bg-brand-500/5 border-brand-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent'}`}
                         >
                             <div className="relative">
                                 <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
@@ -318,10 +318,10 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                                         <span className="font-bold text-gray-500 dark:text-gray-400">{(contact.first_name?.[0] || contact.email[0]).toUpperCase()}</span>
                                     )}
                                 </div>
-                                {isSelected && <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-0.5 ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-200"><Check size={10} strokeWidth={4} /></div>}
+                                {isSelected && <div className="absolute -bottom-1 -right-1 bg-brand-500 text-white rounded-full p-0.5 ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-200"><Check size={10} strokeWidth={4} /></div>}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-gray-900 dark:text-gray-100'}`}>
+                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-brand-500' : 'text-gray-900 dark:text-gray-100'}`}>
                                     {contact.first_name} {contact.last_name}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">{contact.email}</p>
@@ -1006,8 +1006,8 @@ export const ChatPage = () => {
                             <div className="relative group/status">
                                 <div className="relative h-9 w-9 cursor-pointer">
                                     {/* Avatar Base */}
-                                    <div className="h-9 w-9 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700">
-                                        <span className="text-xs font-bold text-primary">{user?.first_name?.[0] || 'U'}</span>
+                                    <div className="h-9 w-9 rounded-full bg-brand-500/10 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                                        <span className="text-xs font-bold text-brand-500">{user?.first_name?.[0] || 'U'}</span>
                                     </div>
 
                                     {/* Status Dot Overlay - Teams Style */}
@@ -1015,8 +1015,8 @@ export const ChatPage = () => {
                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center cursor-help",
                                         myStatus === 'available' ? 'bg-emerald-500' :
                                             myStatus === 'away' ? 'bg-amber-500' :
-                                                myStatus === 'dnd' ? 'bg-rose-500' :
-                                                    myStatus === 'busy' ? 'bg-rose-500' : 'bg-gray-400'
+                                                myStatus === 'dnd' ? 'bg-error-500' :
+                                                    myStatus === 'busy' ? 'bg-error-500' : 'bg-gray-400'
                                     )} title={myStatus === 'busy' ? 'In a Meeting' : (myStatus === 'dnd' ? 'Do not disturb' : (myStatus ? myStatus.charAt(0).toUpperCase() + myStatus.slice(1) : 'Available'))}>
                                         {myStatus === 'available' && <Check size={8} strokeWidth={4} className="text-white" />}
                                         {myStatus === 'away' && <Clock size={8} strokeWidth={3} className="text-white" />}
@@ -1024,7 +1024,7 @@ export const ChatPage = () => {
                                         {myStatus === 'offline' && <div className="h-1.5 w-1.5 rounded-full border border-white dark:border-gray-900" />}
                                     </div>
                                 </div>
-                                <div className="absolute top-8 left-0 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-1 hidden group-hover/status:block z-50">
+                                <div className="absolute top-8 left-0 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-elev-5 border border-gray-200 dark:border-gray-700 p-1 hidden group-hover/status:block z-50">
                                     {(['available', 'away', 'dnd', 'busy', 'offline'] as const).map(s => (
                                         <button
                                             key={s}
@@ -1035,7 +1035,7 @@ export const ChatPage = () => {
                                                 "h-2 w-2 rounded-full",
                                                 s === 'available' ? 'bg-emerald-500' :
                                                     s === 'away' ? 'bg-amber-500' :
-                                                        s === 'dnd' || s === 'busy' ? 'bg-rose-500' : 'bg-gray-400'
+                                                        s === 'dnd' || s === 'busy' ? 'bg-error-500' : 'bg-gray-400'
                                             )} />
                                             {s === 'busy' ? 'In a Meeting' : s}
                                         </button>
@@ -1043,7 +1043,7 @@ export const ChatPage = () => {
                                 </div>
                             </div>
                             <div>
-                                <h2 className="text-xl font-black bg-gradient-to-r from-primary via-primary-light to-primary bg-clip-text text-transparent">Messages</h2>
+                                <h2 className="text-xl font-black bg-gradient-to-r from-brand-500 via-brand-500-light to-brand-500 bg-clip-text text-transparent">Messages</h2>
                                 <p className="text-[10px] text-gray-400 font-medium">Stay connected with your team</p>
                             </div>
                         </div>
@@ -1051,7 +1051,7 @@ export const ChatPage = () => {
                             {canCreateGroup && (
                                 <button
                                     onClick={() => setIsGroupModalOpen(true)}
-                                    className="p-2.5 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105"
+                                    className="p-2.5 hover:bg-brand-500/10 dark:hover:bg-brand-500/20 rounded-xl text-gray-500 hover:text-brand-500 transition-all duration-200 hover:scale-105"
                                     title="New Group"
                                 >
                                     <Users className="h-5 w-5" />
@@ -1060,7 +1060,7 @@ export const ChatPage = () => {
                             {canSend && (
                                 <button
                                     onClick={() => setIsSelectingContact(!isSelectingContact)}
-                                    className="p-2.5 bg-primary-gradient hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
+                                    className="p-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-elev-4 hover:shadow-brand-500/25"
                                     title="New Chat"
                                 >
                                     <Plus className="h-5 w-5" />
@@ -1074,15 +1074,15 @@ export const ChatPage = () => {
                             <>
                                 {/* Conversation Search Bar */}
                                 <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
-                                        <Search className="h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-brand-500">
+                                        <Search className="h-4 w-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
                                     </div>
                                     <input
                                         type="text"
                                         placeholder="Search messages..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-primary/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-primary/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-brand-500/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-brand-500/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                                     />
                                 </div>
 
@@ -1095,7 +1095,7 @@ export const ChatPage = () => {
                                             className={cn(
                                                 "flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 capitalize",
                                                 conversationFilter === filter
-                                                    ? "bg-white dark:bg-gray-900 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+                                                    ? "bg-white dark:bg-gray-900 text-brand-500 shadow-elev-1 ring-1 ring-black/5 dark:ring-white/10"
                                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
                                             )}
                                         >
@@ -1110,7 +1110,7 @@ export const ChatPage = () => {
                                 <div className="flex items-center gap-3 pt-1">
                                     <button
                                         onClick={() => { setIsSelectingContact(false); setContactSearchQuery(''); }}
-                                        className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 hover:text-primary transition-colors"
+                                        className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 hover:text-brand-500 transition-colors"
                                     >
                                         <ArrowRight className="h-5 w-5 rotate-180" />
                                     </button>
@@ -1118,15 +1118,15 @@ export const ChatPage = () => {
                                 </div>
 
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
-                                        <Search className="h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-brand-500">
+                                        <Search className="h-4 w-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
                                     </div>
                                     <input
                                         type="text"
                                         placeholder={t('chat.searchContacts')}
                                         value={contactSearchQuery}
                                         onChange={(e) => setContactSearchQuery(e.target.value)}
-                                        className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-primary/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-primary/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-brand-500/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-brand-500/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                                         autoFocus
                                     />
                                 </div>
@@ -1141,7 +1141,7 @@ export const ChatPage = () => {
                                     <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('chat.suggestedContacts')}</p>
                                     {isLoadingContacts ? (
                                         <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                                            <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                            <div className="w-8 h-8 border-2 border-brand-500/20 border-t-primary rounded-full animate-spin" />
                                             <p className="text-xs text-gray-400">{t('chat.loadingContacts')}</p>
                                         </div>
                                     ) : contacts?.length === 0 ? (
@@ -1159,10 +1159,10 @@ export const ChatPage = () => {
                                                 <button
                                                     key={contact.id}
                                                     onClick={() => handleStartDirectChat(contact.id)}
-                                                    className="w-full p-2.5 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-xl transition-all duration-200 text-left group hover:scale-[1.01] hover:shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
+                                                    className="w-full p-2.5 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-xl transition-all duration-200 text-left group hover:scale-[1.01] hover:shadow-elev-1 border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
                                                 >
                                                     <div className="relative">
-                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center text-primary font-bold shadow-sm group-hover:from-primary group-hover:to-primary-light group-hover:text-white transition-all duration-300">
+                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500/5 to-brand-500/10 flex items-center justify-center text-brand-500 font-bold shadow-elev-1 group-hover:from-brand-500 group-hover:to-brand-500-light group-hover:text-white transition-all duration-300">
                                                             {contact.profile_pic ? (
                                                                 <img src={resolveImageUrl(contact.profile_pic)} className="w-full h-full object-cover rounded-xl" />
                                                             ) : (
@@ -1173,11 +1173,11 @@ export const ChatPage = () => {
                                                             "absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center bg-gray-400",
                                                             contact.status === 'ONLINE' && "bg-emerald-500",
                                                             contact.status === 'AWAY' && "bg-amber-500",
-                                                            contact.status === 'DND' && "bg-rose-500"
+                                                            contact.status === 'DND' && "bg-error-500"
                                                         )} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate group-hover:text-primary transition-colors">
+                                                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate group-hover:text-brand-500 transition-colors">
                                                             {contact.first_name ? `${contact.first_name} ${contact.last_name || ''}` : contact.email}
                                                         </p>
                                                         <p className="text-xs text-gray-500 truncate flex items-center gap-1.5">
@@ -1197,7 +1197,7 @@ export const ChatPage = () => {
                                     <div className="p-4 text-center text-gray-500">{t('chat.loadingChats')}</div>
                                 ) : conversations?.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-64 text-center animate-in fade-in duration-500">
-                                        <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                        <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-elev-1">
                                             <MessageSquare size={32} className="text-gray-300 dark:text-gray-600" />
                                         </div>
                                         <h3 className="text-gray-900 dark:text-white font-semibold mb-1">{t('chat.noChatsYet')}</h3>
@@ -1206,7 +1206,7 @@ export const ChatPage = () => {
                                         </p>
                                         <button
                                             onClick={() => setIsSelectingContact(true)}
-                                            className="px-5 py-2.5 bg-primary-gradient text-white text-sm font-semibold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                                            className="px-5 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-elev-4 shadow-brand-500/20 hover:scale-105 active:scale-95 transition-all"
                                         >
                                             {t('chat.startNewChat')}
                                         </button>
@@ -1234,8 +1234,8 @@ export const ChatPage = () => {
                                         return (
                                             <div className="flex flex-col items-center justify-center py-12 px-6 animate-in fade-in duration-300">
                                                 <div className="relative mb-4">
-                                                    <div className="w-16 h-16 rounded-2xl bg-primary/5 dark:bg-primary/10 flex items-center justify-center">
-                                                        <Search className="h-7 w-7 text-primary/40" />
+                                                    <div className="w-16 h-16 rounded-2xl bg-brand-500/5 dark:bg-brand-500/10 flex items-center justify-center">
+                                                        <Search className="h-7 w-7 text-brand-500/40" />
                                                     </div>
                                                     <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-white dark:border-gray-900">
                                                         <X size={10} className="text-gray-400" />
@@ -1243,11 +1243,11 @@ export const ChatPage = () => {
                                                 </div>
                                                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{t('chat.noResultsFound')}</p>
                                                 <p className="text-xs text-gray-400 dark:text-gray-500 text-center mb-4 max-w-[200px]">
-                                                    {t('chat.noConversationsMatching')} "<span className="font-medium text-primary">{searchQuery}</span>"
+                                                    {t('chat.noConversationsMatching')} "<span className="font-medium text-brand-500">{searchQuery}</span>"
                                                 </p>
                                                 <button
                                                     onClick={() => { setIsSelectingContact(true); setSearchQuery(''); }}
-                                                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary-gradient rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-95"
+                                                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 rounded-xl hover:opacity-90 transition-all hover:shadow-elev-4 hover:shadow-brand-500/20 active:scale-95"
                                                 >
                                                     <Plus size={14} />
                                                     {t('chat.startNewChat')}
@@ -1266,16 +1266,16 @@ export const ChatPage = () => {
                                                 className={cn(
                                                     "w-full p-3.5 mx-2 my-1 flex items-center gap-4 rounded-2xl transition-all duration-300 text-left relative group border border-transparent",
                                                     isActive
-                                                        ? "bg-primary/5 dark:bg-primary/10 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border-primary/10 dark:border-primary/20"
+                                                        ? "bg-brand-500/5 dark:bg-brand-500/10 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border-brand-500/10 dark:border-brand-500/20"
                                                         : "hover:bg-gray-50 dark:hover:bg-gray-800/40 hover:scale-[1.01]"
                                                 )}
                                             >
-                                                {isActive && <div className="absolute left-0.5 top-3 bottom-3 w-1 bg-primary-gradient rounded-r-full" />}
+                                                {isActive && <div className="absolute left-0.5 top-3 bottom-3 w-1 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 rounded-r-full" />}
 
                                                 <div className="relative flex-shrink-0">
                                                     <div className={cn(
-                                                        "h-12 w-12 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm transition-transform group-hover:scale-105",
-                                                        isActive ? "bg-primary-gradient text-white" : "bg-gray-100 dark:bg-gray-800 text-primary dark:text-primary-light"
+                                                        "h-12 w-12 rounded-2xl flex items-center justify-center font-bold text-sm shadow-elev-1 transition-transform group-hover:scale-105",
+                                                        isActive ? "bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-brand-500 dark:text-brand-500-light"
                                                     )}>
                                                         {details.image ? (
                                                             <img src={details.image} className="w-full h-full object-cover rounded-2xl" />
@@ -1285,7 +1285,7 @@ export const ChatPage = () => {
                                                         "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center cursor-help",
                                                         details.status === 'available' || details.status === 'online' ? 'bg-emerald-500' :
                                                             details.status === 'away' ? 'bg-amber-500' :
-                                                                details.status === 'dnd' || details.status === 'busy' ? 'bg-rose-500' : 'bg-gray-400 dark:bg-gray-600'
+                                                                details.status === 'dnd' || details.status === 'busy' ? 'bg-error-500' : 'bg-gray-400 dark:bg-gray-600'
                                                     )}
                                                         onMouseEnter={(e) => {
                                                             e.stopPropagation();
@@ -1326,7 +1326,7 @@ export const ChatPage = () => {
                                                     <div className="flex justify-between items-baseline mb-1">
                                                         <span className={cn(
                                                             "font-semibold truncate",
-                                                            isActive ? "text-primary dark:text-primary-light" : "text-gray-900 dark:text-gray-100"
+                                                            isActive ? "text-brand-500 dark:text-brand-500-light" : "text-gray-900 dark:text-gray-100"
                                                         )}>
                                                             {details.name}
                                                         </span>
@@ -1350,7 +1350,7 @@ export const ChatPage = () => {
                                                             })()}
                                                         </p>
                                                         {conv.unread_count > 0 && (
-                                                            <span className="bg-primary-gradient text-white text-[10px] font-bold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center shadow-sm ml-2">
+                                                            <span className="bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-[10px] font-bold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center shadow-elev-1 ml-2">
                                                                 {conv.unread_count}
                                                             </span>
                                                         )}
@@ -1388,7 +1388,7 @@ export const ChatPage = () => {
                                             return (
                                                 <>
                                                     <div className="relative">
-                                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                                                        <div className="h-8 w-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-semibold text-sm">
                                                             {details.image ? (
                                                                 <img src={details.image} className="w-full h-full object-cover rounded-full" />
                                                             ) : details.initials}
@@ -1397,7 +1397,7 @@ export const ChatPage = () => {
                                                             "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-900 cursor-help",
                                                             details.status === 'available' || details.status === 'online' ? 'bg-emerald-500' :
                                                                 details.status === 'away' ? 'bg-amber-500' :
-                                                                    details.status === 'dnd' || details.status === 'busy' ? 'bg-rose-500' : 'bg-gray-400 dark:bg-gray-600'
+                                                                    details.status === 'dnd' || details.status === 'busy' ? 'bg-error-500' : 'bg-gray-400 dark:bg-gray-600'
                                                         )} title={details.status ? details.status.charAt(0).toUpperCase() + details.status.slice(1) : 'Offline'} />
                                                     </div>
                                                     <span className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate max-w-[150px]">
@@ -1415,13 +1415,13 @@ export const ChatPage = () => {
                                                 className={cn(
                                                     "relative px-3 py-1.5 text-[13px] font-medium transition-colors rounded-md",
                                                     chatViewTab === tab
-                                                        ? "text-primary bg-primary/5"
+                                                        ? "text-brand-500 bg-brand-500/5"
                                                         : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                                                 )}
                                             >
                                                 {tab === 'chat' ? 'Chat' : tab === 'files' ? 'Files' : 'Photos'}
                                                 {chatViewTab === tab && (
-                                                    <div className="absolute -bottom-2.5 left-0 right-0 h-[2px] bg-primary rounded-full" />
+                                                    <div className="absolute -bottom-2.5 left-0 right-0 h-[2px] bg-brand-500 rounded-full" />
                                                 )}
                                             </button>
                                         ))}
@@ -1453,7 +1453,7 @@ export const ChatPage = () => {
                                                     else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
                                                 }
                                             }}
-                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-purple-500" : "text-gray-400")}
+                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-brand-500" : "text-gray-400")}
                                             title={activeCall ? "Toggle Audio" : "Audio Call"}
                                         >
                                             {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
@@ -1470,7 +1470,7 @@ export const ChatPage = () => {
                                                     else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
                                                 }
                                             }}
-                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-primary" : "text-gray-400")}
+                                            className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-brand-500" : "text-gray-400")}
                                             title={activeCall ? "Toggle Video" : "Video Call"}
                                         >
                                             {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
@@ -1478,7 +1478,7 @@ export const ChatPage = () => {
                                     )}
                                     <button
                                         onClick={() => setShowMessageSearch(!showMessageSearch)}
-                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-primary")}
+                                        className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-brand-500")}
                                         title="Search in conversation"
                                     >
                                         <Search size={20} />
@@ -1487,7 +1487,7 @@ export const ChatPage = () => {
                                         <div className="relative">
                                             <button
                                                 onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
-                                                className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-primary bg-primary/10" : "text-gray-500")}
+                                                className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-brand-500 bg-brand-500/10" : "text-gray-500")}
                                                 title="More options"
                                             >
                                                 <MoreHorizontal size={20} />
@@ -1495,7 +1495,7 @@ export const ChatPage = () => {
                                             {showHeaderMoreMenu && (
                                                 <>
                                                     <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
-                                                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                                                         <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
                                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
                                                         </div>
@@ -1504,7 +1504,7 @@ export const ChatPage = () => {
                                                             View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
                                                         </button>
                                                         <button onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                                            <Pin size={16} className={cn("text-gray-400", showPins && "text-primary fill-primary")} />
+                                                            <Pin size={16} className={cn("text-gray-400", showPins && "text-brand-500 fill-primary")} />
                                                             {showPins ? 'Hide' : 'Show'} Pinned Messages
                                                         </button>
                                                         {canManageChat && (
@@ -1537,8 +1537,8 @@ export const ChatPage = () => {
                                     {/* Pinned Messages Display */}
                                     {
                                         showPins && messages?.some(m => m.is_pinned) && (
-                                            <div className="bg-primary/5 border-b border-primary/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
-                                                <div className="flex-shrink-0 flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider">
+                                            <div className="bg-brand-500/5 border-b border-brand-500/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
+                                                <div className="flex-shrink-0 flex items-center gap-1.5 text-brand-500 text-xs font-bold uppercase tracking-wider">
                                                     <Pin size={12} className="fill-primary" />
                                                     Pinned
                                                 </div>
@@ -1552,7 +1552,7 @@ export const ChatPage = () => {
                                                                 setHighlightedMessageId(msg.id);
                                                                 setTimeout(() => setHighlightedMessageId(null), 2000);
                                                             }}
-                                                            className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-primary/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-md transition-all group relative"
+                                                            className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-brand-500/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-elev-3 transition-all group relative"
                                                         >
                                                             <p className="text-xs truncate font-medium text-gray-700 dark:text-gray-200">{msg.content}</p>
                                                             <p className="text-[10px] text-gray-400 truncate">by {msg.sender_first_name}</p>
@@ -1568,7 +1568,7 @@ export const ChatPage = () => {
                                         chatViewTab === 'chat' && <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1 bg-white dark:bg-gray-900 relative">
                                             {(!messages || messages.length === 0) ? (
                                                 <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-500 opacity-60 select-none">
-                                                    <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                                                    <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-elev-1 border border-gray-100 dark:border-gray-700">
                                                         <MessageSquare size={40} className="text-gray-300 dark:text-gray-600" />
                                                     </div>
                                                     <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">No messages yet</h3>
@@ -1587,8 +1587,8 @@ export const ChatPage = () => {
                                                     try { callData = JSON.parse(msg.content); } catch (e) { }
                                                     return (
                                                         <div key={msg.id} className="flex justify-center my-6">
-                                                            <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-                                                                <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-rose-500" : "bg-emerald-500")}>
+                                                            <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-elev-1 animate-in fade-in zoom-in-95 duration-300">
+                                                                <div className={cn("p-1.5 rounded-full text-white", callData.status === 'missed' ? "bg-error-500" : "bg-emerald-500")}>
                                                                     {callData.callType === 'video' ? <Video size={12} /> : <Phone size={12} />}
                                                                 </div>
                                                                 <div className="flex flex-col">
@@ -1615,16 +1615,16 @@ export const ChatPage = () => {
                                                             "flex items-end gap-3 px-2 group transition-all duration-500",
                                                             isMe ? "flex-row-reverse" : "flex-row",
                                                             isSameSender ? "mt-1" : "mt-6",
-                                                            isHighlighted && "bg-primary/10 rounded-xl scale-[1.02] ring-2 ring-primary/30"
+                                                            isHighlighted && "bg-brand-500/10 rounded-xl scale-[1.02] ring-2 ring-brand-500/30"
                                                         )}
                                                     >
                                                         <div className="flex-shrink-0 w-8 h-8">
                                                             {showAvatar ? (
-                                                                <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden">
+                                                                <div className="h-8 w-8 rounded-full bg-brand-500/15 flex items-center justify-center overflow-hidden">
                                                                     {msg.sender_profile_pic ? (
                                                                         <img src={resolveImageUrl(msg.sender_profile_pic)} className="w-full h-full object-cover" />
                                                                     ) : (
-                                                                        <span className="text-[10px] font-bold text-primary">{msg.sender_first_name?.[0] || 'U'}</span>
+                                                                        <span className="text-[10px] font-bold text-brand-500">{msg.sender_first_name?.[0] || 'U'}</span>
                                                                     )}
                                                                 </div>
                                                             ) : <div className="w-8" />}
@@ -1660,7 +1660,7 @@ export const ChatPage = () => {
                                                             <div className={cn(
                                                                 "rounded-lg px-4 py-2.5 transition-all duration-200 relative",
                                                                 isMe
-                                                                    ? "bg-primary-gradient text-white"
+                                                                    ? "bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white"
                                                                     : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                                             )}>
                                                                 {isEditing ? (
@@ -1696,7 +1696,7 @@ export const ChatPage = () => {
                                                                                     );
                                                                                 }}
                                                                             >
-                                                                                <div className="relative rounded-xl overflow-hidden shadow-md border border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                                                                                <div className="relative rounded-xl overflow-hidden shadow-elev-3 border border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                                                                                     <img
                                                                                         src={resolveImageUrl(msg.file_url)}
                                                                                         alt={msg.content}
@@ -1736,7 +1736,7 @@ export const ChatPage = () => {
                                                                                                 : isPresentation
                                                                                                     ? { icon: FileText, color: 'text-orange-500', bg: isMe ? 'bg-orange-400/20' : 'bg-orange-50 dark:bg-orange-900/20', accent: 'bg-orange-500', label: 'Presentation' }
                                                                                                     : isVideo
-                                                                                                        ? { icon: Video, color: 'text-purple-500', bg: isMe ? 'bg-purple-400/20' : 'bg-purple-50 dark:bg-purple-900/20', accent: 'bg-purple-500', label: 'Video' }
+                                                                                                        ? { icon: Video, color: 'text-brand-500', bg: isMe ? 'bg-brand-400/20' : 'bg-brand-50 dark:bg-brand-500/10', accent: 'bg-brand-500', label: 'Video' }
                                                                                                         : isAudio
                                                                                                             ? { icon: Phone, color: 'text-pink-500', bg: isMe ? 'bg-pink-400/20' : 'bg-pink-50 dark:bg-pink-900/20', accent: 'bg-pink-500', label: 'Audio' }
                                                                                                             : { icon: File, color: 'text-gray-500', bg: isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-800', accent: 'bg-gray-500', label: 'File' };
@@ -1747,7 +1747,7 @@ export const ChatPage = () => {
                                                                                     <div
                                                                                         className={cn(
                                                                                             "flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group/file min-w-[220px] max-w-[300px]",
-                                                                                            isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-md border border-gray-100 dark:border-gray-700"
+                                                                                            isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-elev-3 border border-gray-100 dark:border-gray-700"
                                                                                         )}
                                                                                         onClick={(e) => {
                                                                                             e.preventDefault();
@@ -1760,7 +1760,7 @@ export const ChatPage = () => {
                                                                                     >
                                                                                         <div className={cn("relative p-3 rounded-xl flex-shrink-0 transition-transform group-hover/file:scale-110", fileConfig.bg)}>
                                                                                             <IconComponent size={24} className={isMe ? 'text-white' : fileConfig.color} />
-                                                                                            <span className={cn("absolute -bottom-1 -right-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md uppercase leading-none shadow-sm", fileConfig.accent)}>
+                                                                                            <span className={cn("absolute -bottom-1 -right-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md uppercase leading-none shadow-elev-1", fileConfig.accent)}>
                                                                                                 {ext || 'FILE'}
                                                                                             </span>
                                                                                         </div>
@@ -1789,15 +1789,15 @@ export const ChatPage = () => {
                                                                         )}
 
                                                                         {msg.is_pinned && (
-                                                                            <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-primary/20 shadow-md">
-                                                                                <Pin size={10} className="text-primary fill-primary" />
+                                                                            <div className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full border border-brand-500/20 shadow-elev-3">
+                                                                                <Pin size={10} className="text-brand-500 fill-primary" />
                                                                             </div>
                                                                         )}
 
                                                                         {/* Reactions UI - Overlapping */}
                                                                         {msg.reactions && msg.reactions.length > 0 && (
                                                                             <div className={cn(
-                                                                                "absolute -bottom-3 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-md border border-gray-100 dark:border-gray-700 z-10 animate-in zoom-in-50 duration-200",
+                                                                                "absolute -bottom-3 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full px-1.5 py-0.5 shadow-elev-3 border border-gray-100 dark:border-gray-700 z-10 animate-in zoom-in-50 duration-200",
                                                                                 "left-0 -translate-x-2"
                                                                             )}>
                                                                                 {(() => {
@@ -1812,7 +1812,7 @@ export const ChatPage = () => {
                                                                                             className={cn(
                                                                                                 "flex items-center gap-1 px-1 rounded-full transition-colors",
                                                                                                 msg.reactions?.some(r => String(r.user_id) === String(user?.id) && r.emoji === emoji)
-                                                                                                    ? "bg-primary/10 text-primary"
+                                                                                                    ? "bg-brand-500/10 text-brand-500"
                                                                                                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
                                                                                             )}
                                                                                         >
@@ -1845,7 +1845,7 @@ export const ChatPage = () => {
                                                                     isMe ? "right-2 -top-5" : "left-12 -top-5"
                                                                 )}>
                                                                     {/* Teams-style action bar */}
-                                                                    <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-lg shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
+                                                                    <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-elev-4 shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
                                                                         {/* Quick emoji reactions */}
                                                                         {['👍', '❤️', '😆', '😮'].map(emoji => (
                                                                             <button
@@ -1853,7 +1853,7 @@ export const ChatPage = () => {
                                                                                 onClick={() => handleToggleReaction(msg.id, emoji, msg.reactions)}
                                                                                 className={cn(
                                                                                     "w-8 h-8 flex items-center justify-center text-base hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150 hover:scale-110 first:rounded-l-lg",
-                                                                                    msg.reactions?.some(r => r.user_id === user?.id && r.emoji === emoji) && "bg-primary/10"
+                                                                                    msg.reactions?.some(r => r.user_id === user?.id && r.emoji === emoji) && "bg-brand-500/10"
                                                                                 )}
                                                                             >
                                                                                 {emoji}
@@ -1867,10 +1867,10 @@ export const ChatPage = () => {
                                                                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
                                                                                 title="More reactions"
                                                                             >
-                                                                                <Smile size={16} className={showReactionPicker === msg.id ? 'text-primary' : ''} />
+                                                                                <Smile size={16} className={showReactionPicker === msg.id ? 'text-brand-500' : ''} />
                                                                             </button>
                                                                             {showReactionPicker === msg.id && (
-                                                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
+                                                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-elev-5 border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
                                                                                     <div className="flex gap-1">
                                                                                         {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '💯', '🙏'].map(emoji => (
                                                                                             <button
@@ -1922,7 +1922,7 @@ export const ChatPage = () => {
                                                                                     {/* Invisible overlay to close menu on click outside */}
                                                                                     <div className="fixed inset-0 z-30" onClick={() => setShowMoreMenu(null)} />
                                                                                     <div className={cn(
-                                                                                        "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
+                                                                                        "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-elev-5 shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
                                                                                         isMe ? "right-0" : "left-0"
                                                                                     )}>
                                                                                         <button
@@ -1947,7 +1947,7 @@ export const ChatPage = () => {
                                                                                             onClick={() => { handleTogglePin(msg.id); setShowMoreMenu(null); }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
-                                                                                            <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-primary")} />
+                                                                                            <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-brand-500")} />
                                                                                             {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
                                                                                         </button>
 
@@ -2152,9 +2152,9 @@ export const ChatPage = () => {
                                                         {replyToMessage && (
                                                             <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-5 py-2 border-b border-gray-100 dark:border-gray-700">
                                                                 <div className="flex items-center gap-2 text-sm">
-                                                                    <div className="w-1 h-8 bg-primary rounded-full" />
+                                                                    <div className="w-1 h-8 bg-brand-500 rounded-full" />
                                                                     <div>
-                                                                        <span className="font-semibold text-primary text-xs">{replyToMessage.sender_first_name || 'User'}</span>
+                                                                        <span className="font-semibold text-brand-500 text-xs">{replyToMessage.sender_first_name || 'User'}</span>
                                                                         <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
                                                                     </div>
                                                                 </div>
@@ -2169,7 +2169,7 @@ export const ChatPage = () => {
                                                                 onChange={handleFileSelect}
                                                             />
 
-                                                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all bg-white dark:bg-gray-900">
+                                                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg focus-within:border-brand-500/50 focus-within:ring-1 focus-within:ring-brand-500/20 transition-all bg-white dark:bg-gray-900">
                                                                 <input
                                                                     type="text"
                                                                     value={messageInput}
@@ -2249,7 +2249,7 @@ export const ChatPage = () => {
                                                                     <button
                                                                         type="submit"
                                                                         disabled={!messageInput.trim()}
-                                                                        className="p-2 text-gray-400 hover:text-primary disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-primary/10"
+                                                                        className="p-2 text-gray-400 hover:text-brand-500 disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-brand-500/10"
                                                                         title="Send"
                                                                     >
                                                                         <Send size={20} />
@@ -2288,10 +2288,10 @@ export const ChatPage = () => {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
                             <div className="relative mb-6">
-                                <div className="h-24 w-24 bg-primary-10 dark:bg-primary-20 rounded-3xl flex items-center justify-center shadow-lg animate-pulse">
-                                    <Send size={40} className="text-primary" />
+                                <div className="h-24 w-24 bg-brand-50/80 dark:bg-brand-100/80 rounded-3xl flex items-center justify-center shadow-elev-4 animate-pulse">
+                                    <Send size={40} className="text-brand-500" />
                                 </div>
-                                <div className="absolute -top-2 -right-2 h-8 w-8 bg-primary-gradient rounded-xl flex items-center justify-center shadow-md">
+                                <div className="absolute -top-2 -right-2 h-8 w-8 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 rounded-xl flex items-center justify-center shadow-elev-3">
                                     <Plus size={16} className="text-white" />
                                 </div>
                             </div>
@@ -2299,7 +2299,7 @@ export const ChatPage = () => {
                             <p className="text-sm text-gray-400 text-center max-w-xs mb-6">Select a conversation from the sidebar or start a new chat with your team members</p>
                             <button
                                 onClick={() => setIsSelectingContact(true)}
-                                className="px-6 py-2.5 bg-primary-gradient text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:scale-105"
+                                className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl font-medium text-sm hover:shadow-elev-4 hover:shadow-brand-500/25 transition-all duration-300 hover:scale-105"
                             >
                                 New Conversation
                             </button>
@@ -2327,7 +2327,7 @@ export const ChatPage = () => {
                         <Button
                             variant="outline"
                             onClick={() => setIsViewingGroupProfile(false)}
-                            className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-white/5 w-full"
+                            className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5 w-full"
                         >
                             Dismiss
                         </Button>
@@ -2335,8 +2335,8 @@ export const ChatPage = () => {
                 }
             >
                 <div className="space-y-6">
-                    <div className="text-center bg-gradient-to-b from-primary/5 to-transparent p-6 rounded-3xl border border-primary/5">
-                        <div className="w-20 h-20 bg-primary-gradient rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary/20 mb-4">
+                    <div className="text-center bg-gradient-to-b from-brand-500/5 to-transparent p-6 rounded-3xl border border-brand-500/5">
+                        <div className="w-20 h-20 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-elev-4 shadow-brand-500/20 mb-4">
                             {getConversationDetails(activeConversation!).initials}
                         </div>
                         <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation!).name}</h2>
@@ -2349,7 +2349,7 @@ export const ChatPage = () => {
                             {activeConversation?.type === 'GROUP' && canManageGroup && (
                                 <button
                                     onClick={() => setIsAddingParticipant(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
                                 >
                                     <UserPlus size={12} strokeWidth={3} /> Add
                                 </button>
@@ -2359,7 +2359,7 @@ export const ChatPage = () => {
                             {activeConversation?.participants?.map((p: any) => (
                                 <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 group/participant">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-1 ring-primary/20">
+                                        <div className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500 text-xs font-bold ring-1 ring-brand-500/20">
                                             {p.first_name?.[0]}{p.last_name?.[0]}
                                         </div>
                                         <div>
@@ -2368,7 +2368,7 @@ export const ChatPage = () => {
                                         </div>
                                     </div>
                                     {p.id === user?.id ? (
-                                        <span className="text-[8px] font-black text-primary uppercase tracking-widest px-2 py-1 bg-primary/10 rounded-lg">You</span>
+                                        <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest px-2 py-1 bg-brand-500/10 rounded-lg">You</span>
                                     ) : (
                                         activeConversation?.type === 'GROUP' && canManageGroup && (
                                             <button
@@ -2497,7 +2497,7 @@ export const ChatPage = () => {
                             <img
                                 src={lightboxImage.url}
                                 alt={lightboxImage.name}
-                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-300 ease-out select-none"
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-elev-6 transition-transform duration-300 ease-out select-none"
                                 style={{
                                     transform: `scale(${lightboxZoom}) rotate(${lightboxRotation}deg)`,
                                     cursor: lightboxZoom > 1 ? 'grab' : 'default'

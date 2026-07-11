@@ -110,14 +110,14 @@ export const OrganisationPage: React.FC = () => {
     <DashboardLayout title={t('organisation.title')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: t('common.breadcrumbs.organisation') }]}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
-        {/* <div className="bg-white/5 p-3 rounded-md shadow-sm"></div> */}
+        {/* <div className="bg-white/5 p-3 rounded-md shadow-elev-1"></div> */}
 
-        <Card className="flex-1 flex flex-col p-6 min-h-0 shadow-md border dark:border-gray-800">
+        <Card className="flex-1 flex flex-col p-6 min-h-0 shadow-elev-3 border dark:border-gray-800">
           {/* Subtabs */}
-          <div className="mb-4 border-b border-light-border shrink-0 overflow-x-auto pb-1">
+          <div className="mb-4 border-b border-gray-200 shrink-0 overflow-x-auto pb-1">
             <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>
+                <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>
                   {user?.role === 'SUPER_ADMIN' ? t('organisation.tenantDirectory') : user?.role === 'MANAGER' ? t('organisation.myTeam') : t('organisation.employeeDirectory')}
                 </button>
               )}
@@ -125,15 +125,15 @@ export const OrganisationPage: React.FC = () => {
 
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</button>
+                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.departments')}</button>
-                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.designations')}</button>
+                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.departments')}</button>
+                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.designations')}</button>
                     </>
                   )}
                   {['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '') && (
-                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-primary-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</button>
+                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</button>
                   )}
                 </>
               )}
@@ -159,7 +159,7 @@ export const OrganisationPage: React.FC = () => {
                             placeholder="Search tenants..."
                             value={searchTenants}
                             onChange={(e) => setSearchTenants(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 rounded-md border bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                            className="w-full pl-10 pr-4 py-2 rounded-md border bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-sm"
                           />
                         </div>
                       </div>
@@ -190,7 +190,7 @@ export const OrganisationPage: React.FC = () => {
                                 <div className="text-xs text-muted mt-2">Created: {format(new Date(tenant.created_at), 'MMM dd, yyyy')}</div>
 
                                 <div className="mt-4 flex items-center gap-2">
-                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(tenant)} className="text-primary hover:bg-primary/5 dark:hover:bg-primary/20">
+                                  <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(tenant)} className="text-brand-500 hover:bg-brand-500/5 dark:hover:bg-brand-500/20">
                                     <Eye size={14} />
                                     View
                                   </Button>
@@ -203,7 +203,7 @@ export const OrganisationPage: React.FC = () => {
 
                           {selectedTenant && (
                             <div className="mt-6 md:mt-8">
-                              <div className="p-4 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-lg">
+                              <div className="p-4 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-elev-4">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
                                   <div>
                                     <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">{selectedTenant.name}</h3>
@@ -243,7 +243,7 @@ export const OrganisationPage: React.FC = () => {
                                             <p className="font-medium text-gray-900 dark:text-white text-sm">{user.email}</p>
                                             <p className="text-xs text-muted">{user.role} • Joined {format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
                                           </div>
-                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center w-fit ${user.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                          <span className={`text-xs px-2 py-1 rounded inline-flex items-center w-fit ${user.is_active ? 'bg-brand-500/10 text-brand-500 border border-brand-500/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
                                             {user.is_active ? 'Active' : 'Inactive'}
                                           </span>
                                         </div>
@@ -265,7 +265,7 @@ export const OrganisationPage: React.FC = () => {
                     <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
                         <label className="text-sm text-muted">{t('organisation.filterByDept')}</label>
-                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary">
+                        <select onChange={(e) => setSelectedDept(e.target.value)} value={selectedDept} className="w-full md:w-auto rounded border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-brand-500/50 focus:border-brand-500">
                           <option value="all">{t('organisation.allDepartments')}</option>
                           {displayDepartments.map((d: Dept) => (
                             <option key={d.id} value={d.id}>{d.name}</option>
@@ -282,8 +282,8 @@ export const OrganisationPage: React.FC = () => {
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {displayEmployees.map((emp: any) => (
-                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
+                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-elev-1 p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-elev-3 transition-shadow">
+                              <div className="w-10 h-10 rounded-full bg-brand-500/10 text-brand-500 font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
                               <div className="min-w-0">
                                 <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name} {emp.last_name}</div>
                                 <div className="text-xs text-muted truncate">{emp.role}</div>

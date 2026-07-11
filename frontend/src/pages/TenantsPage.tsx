@@ -259,15 +259,15 @@ export const TenantsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4">
             <p className="text-sm text-muted">Total Tenants</p>
-            <p className="text-2xl font-bold text-primary">{tenants.length}</p>
+            <p className="text-2xl font-bold text-brand-500">{tenants.length}</p>
           </Card>
           <Card className="p-4">
             <p className="text-sm text-muted">Active</p>
-            <p className="text-2xl font-bold text-primary">{activeCount}</p>
+            <p className="text-2xl font-bold text-brand-500">{activeCount}</p>
           </Card>
           <Card className="p-4">
             <p className="text-sm text-muted">Inactive</p>
-            <p className="text-2xl font-bold text-primary">{tenants.length - activeCount}</p>
+            <p className="text-2xl font-bold text-brand-500">{tenants.length - activeCount}</p>
           </Card>
         </div>
 
@@ -282,7 +282,7 @@ export const TenantsPage: React.FC = () => {
           {isLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-primary-light rounded animate-pulse" />
+                <div key={i} className="h-16 bg-brand-500-light rounded animate-pulse" />
               ))}
             </div>
           ) : tenants.length === 0 ? (
@@ -317,7 +317,7 @@ export const TenantsPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
                   {tenants.map((tenant) => (
-                    <tr key={tenant.id} className="hover:bg-primary/10 transition-colors relative group/row hover:z-20">
+                    <tr key={tenant.id} className="hover:bg-brand-500/10 transition-colors relative group/row hover:z-20">
                       <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{tenant.name}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">{tenant.email}</td>
                       <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -326,11 +326,11 @@ export const TenantsPage: React.FC = () => {
                       <td className="py-3 px-4 text-sm">
                         <div className="flex flex-col gap-1">
                           <span className={`px-2 py-1 rounded text-xs font-medium inline-block w-fit ${tenant.subscription_status === 'TRIAL'
-                            ? 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:text-fuchsia-400'
+                            ? 'bg-coral-100 text-coral-700 dark:bg-coral-500/20 dark:text-coral-400'
                             : tenant.subscription_status === 'PENDING_PAYMENT'
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                               : tenant.subscription_status === 'ACTIVE'
-                                ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400'
+                                ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400'
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
                             {tenant.subscription_status === 'PENDING_PAYMENT' ? 'Pending Payment' : tenant.subscription_status || 'N/A'}
@@ -341,8 +341,8 @@ export const TenantsPage: React.FC = () => {
                       <td className="py-3 px-4 text-sm">
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${tenant.is_active
-                            ? 'bg-primary text-white'
-                            : 'bg-primary-light text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-brand-500-light text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                             }`}
                         >
                           {tenant.is_active ? 'Active' : 'Inactive'}
@@ -357,7 +357,7 @@ export const TenantsPage: React.FC = () => {
                             size="sm"
                             variant="ghost"
                             onClick={() => setSelected(tenant)}
-                            className="text-primary h-8 w-8 p-0"
+                            className="text-brand-500 h-8 w-8 p-0"
                             title="View Details"
                           >
                             <Eye size={16} />
@@ -366,7 +366,7 @@ export const TenantsPage: React.FC = () => {
                           {tenant.plan_name === 'No Plan' ? (
                             <Button
                               size="sm"
-                              className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs"
+                              className="bg-brand-500 hover:bg-brand-600 text-white h-8 text-xs"
                               onClick={() => {
                                 setConfirmConfig({
                                   isOpen: true,
@@ -386,7 +386,7 @@ export const TenantsPage: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-fuchsia-500 text-fuchsia-600 hover:bg-fuchsia-50 hover:text-fuchsia-700 h-8 text-xs"
+                                className="border-coral-500 text-coral-600 hover:bg-coral-50 hover:text-coral-600 h-8 text-xs"
                                 onClick={() => {
                                   setConfirmConfig({
                                     isOpen: true,
@@ -415,7 +415,7 @@ export const TenantsPage: React.FC = () => {
                                 >
                                   <MoreVertical size={16} className="text-gray-500" />
                                 </button>
-                                <div className={`absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl transition-all z-[100] overflow-hidden ${openDropdownId === tenant.id ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
+                                <div className={`absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-5 transition-all z-[100] overflow-hidden ${openDropdownId === tenant.id ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
                                   <div className="flex flex-col py-1">
                                     <button
                                       onClick={() => {
@@ -542,7 +542,7 @@ export const TenantsPage: React.FC = () => {
                 {selectedUsersQuery.isLoading ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-12 bg-primary-light rounded animate-pulse" />
+                      <div key={i} className="h-12 bg-brand-500-light rounded animate-pulse" />
                     ))}
                   </div>
                 ) : selectedUsersQuery.data && (selectedUsersQuery.data as any[]).length > 0 ? (
@@ -550,8 +550,7 @@ export const TenantsPage: React.FC = () => {
                     {(selectedUsersQuery.data as any[]).map((user) => (
                       <div
                         key={user.id}
-                        className="flex items-center justify-between p-3 rounded-md"
-                        style={{ backgroundColor: 'var(--background)', border: `1px solid var(--border)` }}
+                        className="flex items-center justify-between p-3 rounded-md bg-background border-border"
                       >
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
@@ -559,7 +558,7 @@ export const TenantsPage: React.FC = () => {
                             {user.role} • Joined {format(new Date(user.created_at), 'MMM dd, yyyy')}
                           </p>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded inline-flex items-center ${user.is_active ? 'bg-primary text-white' : 'bg-gray-500 text-white'}`}>
+                        <span className={`text-xs px-2 py-1 rounded inline-flex items-center ${user.is_active ? 'bg-brand-500 text-white' : 'bg-neutral-500 text-white'}`}>
                           {user.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </div>

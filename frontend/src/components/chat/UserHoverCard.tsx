@@ -69,9 +69,9 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
             case 'online':
                 return { label: 'Available', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-600' };
             case 'busy':
-                return { label: 'Busy', icon: PhoneIncoming, color: 'text-rose-600', bg: 'bg-rose-600' };
+                return { label: 'Busy', icon: PhoneIncoming, color: 'text-error-600', bg: 'bg-error-500' };
             case 'dnd':
-                return { label: 'Do not disturb', icon: Minus, color: 'text-rose-600', bg: 'bg-rose-600' };
+                return { label: 'Do not disturb', icon: Minus, color: 'text-error-600', bg: 'bg-error-500' };
             case 'away':
                 return { label: 'Away', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500' };
             default:
@@ -86,7 +86,7 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
         <div
             ref={cardRef}
             className={cn(
-                "fixed z-[9999] w-[320px] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden font-sans text-sm animate-in fade-in zoom-in-95 duration-200",
+                "fixed z-[9999] w-[320px] bg-white dark:bg-gray-800 rounded-lg shadow-elev-6 border border-gray-200 dark:border-gray-700 overflow-hidden font-sans text-sm animate-in fade-in zoom-in-95 duration-200",
                 isVisible ? "opacity-100" : "opacity-0"
             )}
             style={style}
@@ -150,7 +150,7 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
 
             {/* Status Box */}
             <div className="px-5 py-3 space-y-2">
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 flex items-center gap-3 bg-white dark:bg-gray-900 shadow-sm">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 flex items-center gap-3 bg-white dark:bg-gray-900 shadow-elev-1">
                     <div className={cn("flex-shrink-0", statusConfig.color)}>
                         <StatusIcon size={18} />
                     </div>
@@ -179,14 +179,14 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
 
                     <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                         <Mail size={16} />
-                        <a href={`mailto:${user.email}`} className="text-primary hover:underline truncate text-xs">
+                        <a href={`mailto:${user.email}`} className="text-brand-500 hover:underline truncate text-xs">
                             {user.email || 'No email provided'}
                         </a>
                     </div>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <button className="text-primary text-xs font-medium hover:underline">Show more</button>
+                    <button className="text-brand-500 text-xs font-medium hover:underline">Show more</button>
                 </div>
 
                 {/* LinkedIn / External Links Placeholder */}

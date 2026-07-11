@@ -37,7 +37,7 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
             <div className="py-4">
                 {isLoading ? (
                     <div className="flex justify-center py-10">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                     </div>
                 ) : billingHistory.length === 0 ? (
                     <div className="text-center py-10 text-muted italic">
@@ -68,12 +68,12 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
                                                 <div className="flex items-center gap-1.5">
                                                     {invoice.status === 'PAID' ? <CheckCircle2 size={12} className="text-green-500" /> :
                                                         invoice.status === 'FAILED' ? <AlertCircle size={12} className="text-red-500" /> :
-                                                            <Clock size={12} className="text-fuchsia-500" />}
+                                                            <Clock size={12} className="text-coral-500" />}
                                                     <span className={cn(
                                                         "text-[9px] font-black uppercase tracking-tighter",
                                                         invoice.status === 'PAID' ? "text-green-500" :
                                                             invoice.status === 'FAILED' ? "text-red-500" :
-                                                                "text-fuchsia-500"
+                                                                "text-coral-500"
                                                     )}>
                                                         {invoice.status}
                                                     </span>

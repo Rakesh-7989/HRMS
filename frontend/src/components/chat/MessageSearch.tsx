@@ -105,7 +105,7 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         autoFocus
-                        className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+                        className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-all"
                         onKeyDown={(e) => {
                             if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); goToNext(); }
                             if (e.key === 'ArrowUp') { e.preventDefault(); goPrevious(); }
@@ -123,7 +123,7 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                     className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                         hasAttachmentFilter
-                            ? "bg-primary/10 border-primary/30 text-primary"
+                            ? "bg-brand-500/10 border-brand-500/30 text-brand-500"
                             : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                     )}
                 >
@@ -214,13 +214,13 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                                 className={cn(
                                     "w-full text-left px-3 py-3 rounded-lg mb-1 transition-colors group",
                                     currentIndex === index
-                                        ? "bg-primary/8 dark:bg-primary/15 border border-primary/20"
+                                        ? "bg-brand-500/8 dark:bg-brand-500/15 border border-brand-500/20"
                                         : "hover:bg-gray-50 dark:hover:bg-gray-800/50 border border-transparent"
                                 )}
                             >
                                 <div className="flex items-start gap-2.5">
                                     {/* Avatar */}
-                                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-[10px] flex-shrink-0 mt-0.5">
+                                    <div className="h-7 w-7 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-semibold text-[10px] flex-shrink-0 mt-0.5">
                                         {msg.sender_first_name?.[0]}{msg.sender_last_name?.[0]}
                                     </div>
                                     <div className="flex-1 min-w-0">
