@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -27,7 +28,7 @@ export const Widget: React.FC<WidgetProps> = ({
   children,
   isLoading,
   isEmpty,
-  emptyTitle = 'No data',
+  emptyTitle,
   emptyDescription,
   emptyAction,
   error,
@@ -37,6 +38,7 @@ export const Widget: React.FC<WidgetProps> = ({
   collapsible = false,
   defaultCollapsed = false,
 }) => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
 
   return (
@@ -92,7 +94,7 @@ export const Widget: React.FC<WidgetProps> = ({
           </div>
         ) : isEmpty ? (
           <EmptyState
-            title={emptyTitle}
+            title={emptyTitle || t('common.noData')}
             description={emptyDescription}
             action={emptyAction}
             compact

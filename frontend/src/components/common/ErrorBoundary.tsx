@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import i18n from '@/i18n/config';
 
 interface Props {
     children?: ReactNode;
@@ -47,9 +48,9 @@ export class ErrorBoundary extends Component<Props, State> {
                                 />
                             </svg>
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">{i18n.t('errorBoundary.title')}</h1>
                         <p className="text-gray-600 mb-6">
-                            We encountered an unexpected error. Please try reloading the page.
+                            {i18n.t('errorBoundary.description')}
                         </p>
                         {this.state.error && (
                             <div className="bg-gray-50 p-3 rounded text-left text-xs text-gray-500 mb-6 overflow-auto max-h-32 font-mono">
@@ -60,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
                             onClick={this.handleReload}
                             className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                            Reload Page
+                            {i18n.t('errorBoundary.reload')}
                         </button>
                     </div>
                 </div>

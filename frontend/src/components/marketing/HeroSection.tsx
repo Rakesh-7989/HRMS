@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Play, Shield, CheckCircle, IndianRupee, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AnimatedText } from '@/components/ui/AnimatedText';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { useNavigate } from 'react-router-dom';
 
 const staggerContainer = {
@@ -46,6 +47,7 @@ export const HeroSection: React.FC = () => {
               <button onClick={() => navigate('/features')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">Features</button>
               <button onClick={() => navigate('/pricing')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">Pricing</button>
               <button onClick={() => navigate('/about')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">About</button>
+              <LanguageSwitcher />
               <div className="h-6 w-px bg-white/10 mx-2" />
               <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate('/login')}>Sign In</Button>
               <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>Start Free Trial <ArrowRight size={16} /></Button>

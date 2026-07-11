@@ -169,7 +169,7 @@ export const OrganisationPage: React.FC = () => {
                       {tenantsLoading ? (
                         <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : tenantFiltered.length === 0 ? (
-                        <EmptyState title="No tenants found" compact />
+                        <EmptyState title={t('common.noTenants')} compact />
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -278,7 +278,7 @@ export const OrganisationPage: React.FC = () => {
                       {employeesLoading ? (
                         <div className="h-40 flex items-center justify-center">{t('common.loading')}</div>
                       ) : filteredEmployees.length === 0 ? (
-                        <EmptyState title="No employees found" compact />
+                        <EmptyState title={t('common.noEmployees')} compact />
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {displayEmployees.map((emp: any) => (
