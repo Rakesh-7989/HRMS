@@ -606,13 +606,13 @@ export const CreateEmployeeForm = ({
                 <div className="relative">
                   {/* Pulse ring for active step */}
                   {isActive && (
-                    <div className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse ring-4 ring-primary/10" />
+                    <div className="absolute -inset-1 rounded-full bg-brand-500/20 animate-pulse ring-4 ring-primary/10" />
                   )}
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${isActive
-                      ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 scale-110'
+                      ? 'bg-brand-500 border-brand-500 text-white shadow-elev-4 shadow-brand-500/30 scale-110'
                       : isCompleted
-                        ? 'bg-gradient-to-br from-indigo-500 to-violet-600 border-transparent text-white shadow-md'
+                        ? 'bg-gradient-to-br from-brand-500 to-brand-600 border-transparent text-white shadow-elev-3'
                         : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'
                       }`}
                     style={{
@@ -625,9 +625,9 @@ export const CreateEmployeeForm = ({
                 <div className="flex flex-col items-center mt-2">
                   <span
                     className={`text-xs font-bold whitespace-nowrap ${isActive
-                      ? 'text-primary'
+                      ? 'text-brand-500'
                       : isCompleted
-                        ? 'text-indigo-600 dark:text-indigo-400'
+                        ? 'text-brand-600 dark:text-brand-400'
                         : 'text-gray-400 dark:text-gray-500'
                       }`}
                     style={{
@@ -680,7 +680,7 @@ export const CreateEmployeeForm = ({
         }}
       >
         <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 mb-5 flex items-center gap-3">
-          <UserIcon className="w-4 h-4 text-primary" /> Basic Information
+          <UserIcon className="w-4 h-4 text-brand-500" /> Basic Information
         </h3>
 
 
@@ -699,7 +699,7 @@ export const CreateEmployeeForm = ({
                 formik.handleBlur(e);
                 checkUnique('email', e.target.value);
               }}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={(formik.touched.email && Boolean(formik.errors.email)) || Boolean(uniqueErrors.email)}
               placeholder="employee@company.com"
             />
@@ -720,7 +720,7 @@ export const CreateEmployeeForm = ({
               onBlur={formik.handleBlur}
               onInput={handleInput}
               placeholder="John"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={formik.touched.first_name && Boolean(formik.errors.first_name)}
             />
             <FormError message={formik.touched.first_name ? formik.errors.first_name : undefined} />
@@ -738,7 +738,7 @@ export const CreateEmployeeForm = ({
               onBlur={formik.handleBlur}
               onInput={handleInput}
               placeholder="Doe"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={formik.touched.last_name && Boolean(formik.errors.last_name)}
             />
             <FormError message={formik.touched.last_name ? formik.errors.last_name : undefined} />
@@ -760,7 +760,7 @@ export const CreateEmployeeForm = ({
               }}
               error={(formik.touched.phone && Boolean(formik.errors.phone)) || Boolean(uniqueErrors.phone)}
               placeholder="e.g. 9876543210"
-              className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl"
+              className="group focus-within:ring-2 focus-within:ring-brand-500/20 transition-all rounded-xl"
             />
             <FormError message={uniqueErrors.phone || (formik.touched.phone ? formik.errors.phone : undefined)} />
           </div>
@@ -831,7 +831,7 @@ export const CreateEmployeeForm = ({
               value={formik.values.nationality}
               onChange={formik.handleChange}
               placeholder="Indian"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
             />
           </div>
         </div>
@@ -846,7 +846,7 @@ export const CreateEmployeeForm = ({
             onChange={formik.handleChange}
             rows={1}
             placeholder="123 Main Street, City, State, PIN"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
           />
           <FormError message={formik.touched.address ? formik.errors.address : undefined} />
         </div>
@@ -864,7 +864,7 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-primary" /> Employment Details
+            <Briefcase className="w-4 h-4 text-brand-500" /> Employment Details
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -916,7 +916,7 @@ export const CreateEmployeeForm = ({
                     onChange={formik.handleChange}
                     placeholder="Employee ID"
                     disabled={!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '')}
-                    className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm ${!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1 ${!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                   {formik.touched.employee_id && formik.errors.employee_id && (
                     <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
@@ -941,13 +941,13 @@ export const CreateEmployeeForm = ({
                         aria-checked={idSettings?.usePrefix ?? true}
                         onClick={() => toggleModeMutation.mutate(!(idSettings?.usePrefix ?? true))}
                         disabled={toggleModeMutation.isPending}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0 ${(idSettings?.usePrefix ?? true)
-                          ? 'bg-primary'
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 flex-shrink-0 ${(idSettings?.usePrefix ?? true)
+                          ? 'bg-brand-500'
                           : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                       >
                         <span
-                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${(idSettings?.usePrefix ?? true) ? 'translate-x-[18px]' : 'translate-x-[3px]'
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-elev-1 transform transition-transform duration-200 ${(idSettings?.usePrefix ?? true) ? 'translate-x-[18px]' : 'translate-x-[3px]'
                             }`}
                         />
                       </button>
@@ -966,7 +966,7 @@ export const CreateEmployeeForm = ({
                             onChange={(e) => setPrefixInput(e.target.value.toUpperCase())}
                             placeholder="e.g. EMP"
                             maxLength={5}
-                            className="w-full px-4 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-sm"
+                            className="w-full px-4 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-elev-1"
                           />
                           <Button
                             type="button"
@@ -991,7 +991,7 @@ export const CreateEmployeeForm = ({
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                         placeholder={idSettings?.nextId || 'Auto-generated'}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
                       />
                     )
                   ) : (
@@ -1004,7 +1004,7 @@ export const CreateEmployeeForm = ({
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                         placeholder="Enter employee ID (e.g., EMP001)"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
                       />
                       {formik.touched.employee_id && formik.errors.employee_id && (
                         <p className="mt-1 text-sm text-red-600">{formik.errors.employee_id}</p>
@@ -1153,7 +1153,7 @@ export const CreateEmployeeForm = ({
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="e.g. New York, Remote"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.job_location && formik.errors.job_location && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.job_location}</p>
@@ -1190,7 +1190,7 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-primary" /> Financial Details
+            <Building2 className="w-4 h-4 text-brand-500" /> Financial Details
           </h3>
 
           {/* Row 1: Aadhaar Number | PAN */}
@@ -1211,7 +1211,7 @@ export const CreateEmployeeForm = ({
                 onInput={handleInput}
                 maxLength={12}
                 placeholder="123456789012"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.aadhar_number && formik.errors.aadhar_number) || uniqueErrors.aadhar_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.aadhar_number && formik.errors.aadhar_number) || uniqueErrors.aadhar_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.aadhar_number || (formik.touched.aadhar_number ? (formik.errors.aadhar_number as string) : undefined)} />
             </div>
@@ -1231,7 +1231,7 @@ export const CreateEmployeeForm = ({
                 onInput={handleInput}
                 maxLength={10}
                 placeholder="ABCDE1234F"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 uppercase shadow-sm ${((formik.touched.tax_id && formik.errors.tax_id) || uniqueErrors.tax_id) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 uppercase shadow-elev-1 ${((formik.touched.tax_id && formik.errors.tax_id) || uniqueErrors.tax_id) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.tax_id || (formik.touched.tax_id ? (formik.errors.tax_id as string) : undefined)} />
             </div>
@@ -1251,7 +1251,7 @@ export const CreateEmployeeForm = ({
                 onInput={handleInput}
                 maxLength={11}
                 placeholder="HDFC0001234"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm uppercase"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1 uppercase"
               />
               {formik.touched.ifsc_code && formik.errors.ifsc_code && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.ifsc_code}</p>
@@ -1267,7 +1267,7 @@ export const CreateEmployeeForm = ({
                 value={formik.values.bank_name}
                 onChange={formik.handleChange}
                 placeholder="e.g. State Bank of India"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.values.branch_name && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -1292,7 +1292,7 @@ export const CreateEmployeeForm = ({
                 value={formik.values.account_name}
                 onChange={formik.handleChange}
                 placeholder="e.g. John Doe"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.account_name && formik.errors.account_name && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.account_name}</p>
@@ -1313,7 +1313,7 @@ export const CreateEmployeeForm = ({
                 }}
                 onInput={handleInput}
                 placeholder="1234567890123456"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.account_number && formik.errors.account_number) || uniqueErrors.account_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.account_number && formik.errors.account_number) || uniqueErrors.account_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.account_number || (formik.touched.account_number ? (formik.errors.account_number as string) : undefined)} />
             </div>
@@ -1336,7 +1336,7 @@ export const CreateEmployeeForm = ({
                 }}
                 onInput={handleInput}
                 placeholder="12-digit UAN"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 shadow-sm ${((formik.touched.uan && formik.errors.uan) || uniqueErrors.uan) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.uan && formik.errors.uan) || uniqueErrors.uan) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.uan || (formik.touched.uan ? (formik.errors.uan as string) : undefined)} />
             </div>
@@ -1354,7 +1354,7 @@ export const CreateEmployeeForm = ({
                   checkUnique('pf_account', e.target.value);
                 }}
                 placeholder="MH/BOM/12345/000/1234567"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 uppercase shadow-sm ${((formik.touched.pf_account && formik.errors.pf_account) || uniqueErrors.pf_account) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary'}`}
+                className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 uppercase shadow-elev-1 ${((formik.touched.pf_account && formik.errors.pf_account) || uniqueErrors.pf_account) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.pf_account || (formik.touched.pf_account ? (formik.errors.pf_account as string) : undefined)} />
             </div>
@@ -1372,7 +1372,7 @@ export const CreateEmployeeForm = ({
                 value={formik.values.esi_number}
                 onChange={formik.handleChange}
                 placeholder="31-00-123456-000-0001"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
             </div>
           </div>
@@ -1407,7 +1407,7 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Phone className="w-4 h-4 text-primary" /> Emergency Contact
+            <Phone className="w-4 h-4 text-brand-500" /> Emergency Contact
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1423,7 +1423,7 @@ export const CreateEmployeeForm = ({
                 onBlur={formik.handleBlur}
                 onInput={handleInput}
                 placeholder="e.g. Jane Doe"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.emergency_name && formik.errors.emergency_name && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_name}</p>
@@ -1440,7 +1440,7 @@ export const CreateEmployeeForm = ({
                 onBlur={formik.handleBlur}
                 error={formik.touched.emergency_phone && Boolean(formik.errors.emergency_phone)}
                 placeholder="e.g. 9876543210"
-                className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl"
+                className="group focus-within:ring-2 focus-within:ring-brand-500/20 transition-all rounded-xl"
               />
               {formik.touched.emergency_phone && formik.errors.emergency_phone && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_phone}</p>
@@ -1533,7 +1533,7 @@ export const CreateEmployeeForm = ({
         <Button
           type="button"
           onClick={handleNext}
-          className="h-11 px-8 text-base bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5"
+          className="h-11 px-8 text-base bg-brand-500 hover:bg-brand-500/90 text-white shadow-elev-4 shadow-brand-500/25 transition-all hover:-translate-y-0.5"
         >
           Next <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
@@ -1543,7 +1543,7 @@ export const CreateEmployeeForm = ({
           onClick={() => formik.handleSubmit()}
           isLoading={isLoading}
           disabled={isLoading}
-          className="h-11 px-8 text-base bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/25 transition-all hover:-translate-y-0.5"
+          className="h-11 px-8 text-base bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-elev-4 shadow-green-500/25 transition-all hover:-translate-y-0.5"
         >
           {isEditMode ? 'Update Employee' : 'Create Employee'} <Check className="w-4 h-4 ml-2" />
         </Button>

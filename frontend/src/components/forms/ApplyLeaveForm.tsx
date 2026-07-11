@@ -190,7 +190,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                 value={formik.values.leave_type_id}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
               >
                 <option value="">Select a leave type</option>
                 {leaveTypes.filter(t => t.is_active).map((type) => (
@@ -207,14 +207,14 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Balance Info */}
           {selectedTypeBalance && (
-            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-3">
+            <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-800 rounded-lg p-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-violet-700 dark:text-violet-400">Available Balance:</span>
-                <span className="font-semibold text-violet-900 dark:text-violet-300">
+                <span className="text-brand-600 dark:text-brand-400">Available Balance:</span>
+                <span className="font-semibold text-brand-800 dark:text-brand-300">
                   {selectedTypeBalance.available} days
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-violet-600 dark:text-violet-500 mt-1">
+              <div className="flex items-center justify-between text-xs text-brand-600 dark:text-brand-500 mt-1">
                 <span>Entitled: {selectedTypeBalance.entitled}</span>
                 <span>Used: {selectedTypeBalance.used}</span>
                 <span>Pending: {selectedTypeBalance.pending}</span>
@@ -262,7 +262,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                   if (!e.target.checked) formik.setFieldValue('half_day_session', '');
                 }}
                 disabled={formik.values.start_date !== formik.values.end_date}
-                className="rounded border-gray-300 dark:border-gray-700 text-primary focus:ring-primary disabled:opacity-50"
+                className="rounded border-gray-300 dark:border-gray-700 text-brand-500 focus:ring-brand-500/50 disabled:opacity-50"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Half Day
@@ -281,7 +281,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                     value="MORNING"
                     checked={formik.values.half_day_session === 'MORNING'}
                     onChange={formik.handleChange}
-                    className="text-primary focus:ring-primary"
+                    className="text-brand-500 focus:ring-brand-500/50"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Morning (First Half)</span>
                 </label>
@@ -292,7 +292,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                     value="AFTERNOON"
                     checked={formik.values.half_day_session === 'AFTERNOON'}
                     onChange={formik.handleChange}
-                    className="text-primary focus:ring-primary"
+                    className="text-brand-500 focus:ring-brand-500/50"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Afternoon (Second Half)</span>
                 </label>
@@ -314,7 +314,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               rows={4}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
               placeholder="Please provide a reason for your leave request (minimum 5 characters)..."
             />
             {formik.touched.reason && formik.errors.reason && (
@@ -340,7 +340,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                   />
                   <label
                     htmlFor="leave-attachment"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-brand-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Upload size={20} className="text-gray-400" />
                     <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -351,12 +351,12 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               ) : (
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2">
-                    <FileText size={18} className="text-primary" />
+                    <FileText size={18} className="text-brand-500" />
                     <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
                       {selectedFile.name}
                     </span>
                     {uploadMutation.isPending && (
-                      <span className="text-xs text-violet-500">Uploading...</span>
+                      <span className="text-xs text-brand-500">Uploading...</span>
                     )}
                     {uploadedUrl && (
                       <span className="text-xs text-green-500">✓ Uploaded</span>
@@ -377,7 +377,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               )}
 
               {!uploadedUrl && !uploadMutation.isPending && (
-                <p className="mt-1 text-xs text-fuchsia-600 dark:text-fuchsia-400">
+                <p className="mt-1 text-xs text-coral-600 dark:text-coral-400">
                   This leave type requires an attachment (e.g., medical certificate)
                 </p>
               )}

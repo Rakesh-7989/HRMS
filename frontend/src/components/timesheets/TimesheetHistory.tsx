@@ -71,7 +71,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                 const endDate = parseISO(week.weekEnd);
 
                 return (
-                    <div key={week.weekStart} className="border border-gray-100 dark:border-dark-border rounded-xl overflow-hidden bg-white dark:bg-dark-card transition-colors">
+                    <div key={week.weekStart} className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-gray-900 transition-colors">
                         {/* Week Header */}
                         <div
                             className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
@@ -79,7 +79,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                         >
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600">
+                                    <div className="p-2 bg-brand-50 dark:bg-brand-500/10 rounded-lg text-brand-600">
                                         <Calendar size={16} />
                                     </div>
                                     <div className="flex flex-col">
@@ -103,7 +103,7 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                                 <div className={cn(
                                     "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border min-w-[100px] text-center",
                                     week.status === 'APPROVED' ? "bg-green-50 text-green-600 border-green-200" :
-                                        week.status === 'SUBMITTED' ? "bg-violet-50 text-violet-600 border-violet-200" :
+                                        week.status === 'SUBMITTED' ? "bg-brand-50 text-brand-600 border-brand-200" :
                                             week.status === 'REJECTED' ? "bg-red-50 text-red-600 border-red-200" :
                                                 "bg-gray-50 text-gray-500 border-gray-200"
                                 )}>

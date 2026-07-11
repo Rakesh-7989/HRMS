@@ -105,13 +105,13 @@ export const EmployeeDocumentsPage: React.FC = () => {
             ]}
         >
             <div className="space-y-6">
-                <div className="flex justify-between items-center bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                <div className="flex justify-between items-center bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-elev-1">
                     <div className="relative w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input
                             type="text"
                             placeholder="Find documents..."
-                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -123,7 +123,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
                     </Button>
                 </div>
 
-                <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-elev-1">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
@@ -143,7 +143,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
                                     <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                                <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
                                                     <FileText size={18} />
                                                 </div>
                                                 <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>

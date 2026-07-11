@@ -60,8 +60,8 @@ export const TimesheetDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-bg">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+            <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent"></div>
             </div>
         );
     }
@@ -71,7 +71,7 @@ export const TimesheetDashboard: React.FC = () => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="bg-gray-50/50 dark:bg-dark-bg min-h-full font-sans relative"
+            className="bg-gray-50/50 dark:bg-gray-950 min-h-full font-sans relative"
         >
             {/* Header Section */}
             <motion.div variants={itemVariants} className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
@@ -86,7 +86,7 @@ export const TimesheetDashboard: React.FC = () => {
                                 setSelectedDate(new Date());
                                 setShowEntryForm(true);
                             }}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm shadow-purple-200"
+                            className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-elev-1 shadow-brand-200"
                         >
                             <Plus size={16} />
                             {t('timesheets.logTime')}
@@ -102,7 +102,7 @@ export const TimesheetDashboard: React.FC = () => {
 
                 {/* History Section */}
                 <motion.div variants={itemVariants}>
-                    <div className="bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-elev-1 border border-gray-100 dark:border-white/10">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t('timesheets.history')}</h3>
                         <TimesheetHistory
                             onWeekSelect={(date) => {

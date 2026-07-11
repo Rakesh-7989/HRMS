@@ -63,7 +63,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
                 <DialogHeader>
                     <div className="flex items-center justify-between pr-8">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                            <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500">
                                 <ShieldCheck size={20} />
                             </div>
                             <DialogTitle>Active Sessions</DialogTitle>
@@ -108,14 +108,14 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
                                 <div
                                     key={session.id}
                                     className={`p-4 rounded-xl border transition-all ${index === 0
-                                        ? 'bg-primary/5 border-primary/20 ring-1 ring-primary/10'
+                                        ? 'bg-brand-500/5 border-brand-500/20 ring-1 ring-primary/10'
                                         : 'bg-white dark:bg-white/5 border-gray-100 dark:border-gray-800'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex gap-3">
                                             <div className={`p-2.5 rounded-lg ${index === 0
-                                                ? 'bg-primary text-white'
+                                                ? 'bg-brand-500 text-white'
                                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                                                 }`}>
                                                 {getDeviceIcon(session.user_agent || '')}

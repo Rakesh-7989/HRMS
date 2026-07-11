@@ -6,12 +6,12 @@ import { TimesheetDashboardCharts, TimesheetDashboardBreakdown, TimesheetDashboa
 // --- Components ---
 
 const BillableTimeChart: React.FC<{ data: TimesheetDashboardCharts['billable_vs_non_billable'] }> = ({ data }) => (
-    <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-elev-1 border border-gray-100 dark:border-white/10 h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
                 <h3 className="font-bold text-gray-800 dark:text-gray-200">Billable time</h3>
                 <div className="flex items-center gap-2 text-xs">
-                    <span className="flex items-center gap-1 text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Billable</span>
+                    <span className="flex items-center gap-1 text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-brand-500" />Billable</span>
                     <span className="flex items-center gap-1 text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-200" />Non-billable</span>
                 </div>
             </div>
@@ -64,12 +64,12 @@ const BillableHoursStats: React.FC<{ stats: TimesheetDashboardStats }> = ({ stat
     const percentage = totalMinutes > 0 ? Math.round((billableMinutes / totalMinutes) * 100) : 0;
 
     return (
-        <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border h-full flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-elev-1 border border-gray-100 dark:border-white/10 h-full flex items-center justify-between">
             <div className="flex flex-col justify-center gap-4">
                 <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">Billable hours, %</h3>
 
                 <div>
-                    <h4 className="text-2xl font-bold text-indigo-500">{stats.billable_hours.label}</h4>
+                    <h4 className="text-2xl font-bold text-brand-500">{stats.billable_hours.label}</h4>
                     <p className="text-xs font-medium text-gray-400 uppercase">Billable</p>
                 </div>
 

@@ -143,7 +143,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
             <div className="p-1">
                 {step === 1 && (
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-12 bg-gray-50 dark:bg-gray-800/30 transition-all hover:bg-gray-100 dark:hover:bg-gray-800/50">
-                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
+                        <div className="w-16 h-16 bg-brand-500/10 rounded-full flex items-center justify-center mb-4 text-brand-500">
                             <Upload className="w-8 h-8" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Upload Excel File</h3>
@@ -162,7 +162,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                         </Button>
                         <div className="mt-8 grid grid-cols-2 gap-4 w-full max-w-md">
                             <div
-                                className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-3 cursor-pointer hover:border-primary/50 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/80"
+                                className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1 flex items-center gap-3 cursor-pointer hover:border-brand-500/50 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/80"
                                 onClick={downloadTemplate}
                             >
                                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg flex items-center justify-center">
@@ -173,7 +173,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                     <div className="text-[10px] text-gray-500">Download Template</div>
                                 </div>
                             </div>
-                            <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-3">
+                            <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1 flex items-center gap-3">
                                 <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg flex items-center justify-center">
                                     <CheckCircle2 className="w-4 h-4" />
                                 </div>
@@ -203,12 +203,12 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                 <div className="space-y-4">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Required Fields</h4>
                                     {REQUIRED_FIELDS.map(field => (
-                                        <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                        <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1">
                                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
                                                 {field.label} *
                                             </label>
                                             <select
-                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                                                 value={Object.keys(mapping).find(h => mapping[h] === field.key) || ''}
                                                 onChange={(e) => {
                                                     const newMapping = { ...mapping };
@@ -230,12 +230,12 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                 <div className="space-y-4">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Optional Fields</h4>
                                     {OPTIONAL_FIELDS.map(field => (
-                                        <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                        <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1">
                                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
                                                 {field.label}
                                             </label>
                                             <select
-                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                                                 value={Object.keys(mapping).find(h => mapping[h] === field.key) || ''}
                                                 onChange={(e) => {
                                                     const newMapping = { ...mapping };

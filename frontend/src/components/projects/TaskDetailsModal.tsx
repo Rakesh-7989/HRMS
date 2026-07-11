@@ -34,7 +34,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 {/* Floating Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors shadow-sm"
+                    className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors shadow-elev-1"
                     aria-label="Close"
                 >
                     <X size={18} />
@@ -92,7 +92,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                                 {task.assignees && task.assignees.length > 0 ? (
                                     task.assignees.map(assignee => (
                                         <div key={assignee.id} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-2 py-1.5 rounded-md border border-gray-100 dark:border-gray-700">
-                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold">
+                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold">
                                                 {(assignee.first_name || '').charAt(0)}{(assignee.last_name || '').charAt(0)}
                                             </div>
                                             <div className="text-sm">
@@ -107,7 +107,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                                     ))
                                 ) : task.assignee ? (
                                     <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-2 py-1.5 rounded-md border border-gray-100 dark:border-gray-700">
-                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold">
+                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold">
                                             {(task.assignee.first_name || '').charAt(0)}{(task.assignee.last_name || '').charAt(0)}
                                         </div>
                                         <div className="text-sm">
@@ -148,7 +148,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                                     Assigned By
                                 </label>
                                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-2 py-1.5 rounded-md border border-gray-100 dark:border-gray-700 w-fit">
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-[10px] text-white font-bold">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-purple-700 flex items-center justify-center text-[10px] text-white font-bold">
                                         {(task.assigned_by.first_name || '').charAt(0)}{(task.assigned_by.last_name || '').charAt(0)}
                                     </div>
                                     <div className="text-sm">

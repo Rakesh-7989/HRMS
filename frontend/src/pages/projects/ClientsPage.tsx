@@ -274,7 +274,7 @@ export const ClientsPage: React.FC = () => {
                                     >
                                         <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
                                                     <Building2 size={20} />
                                                 </div>
                                                 <span className="font-medium">{client.name}</span>
@@ -463,7 +463,7 @@ export const ClientsPage: React.FC = () => {
                                             id="status"
                                             value={formData.status}
                                             onChange={(e) => setFormData({ ...formData, status: e.target.value as ClientStatus })}
-                                            className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                            className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                         >
                                             <option value="ACTIVE">Active</option>
                                             <option value="INACTIVE">Inactive</option>
@@ -477,7 +477,7 @@ export const ClientsPage: React.FC = () => {
                                             value={formData.notes}
                                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                             placeholder="Additional information about the client..."
-                                            className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm"
+                                            className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 shadow-elev-1"
                                         />
                                     </div>
                                 </div>

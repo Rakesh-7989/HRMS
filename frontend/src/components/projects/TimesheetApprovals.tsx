@@ -229,7 +229,7 @@ export const TimesheetApprovals: React.FC = () => {
                         className={cn(
                             "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                             activeTab === 'pending'
-                                ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
+                                ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1"
                                 : "text-gray-400 hover:text-gray-900"
                         )}
                     >
@@ -240,7 +240,7 @@ export const TimesheetApprovals: React.FC = () => {
                         className={cn(
                             "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                             activeTab === 'history'
-                                ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
+                                ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1"
                                 : "text-gray-400 hover:text-gray-900"
                         )}
                     >
@@ -253,7 +253,7 @@ export const TimesheetApprovals: React.FC = () => {
                         <select
                             value={employeeFilter}
                             onChange={(e) => setEmployeeFilter(e.target.value)}
-                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-w-[140px]"
+                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all min-w-[140px]"
                         >
                             <option value="">{t('timesheets.allEmployees')}</option>
                             {employees.map((emp: any) => (
@@ -265,7 +265,7 @@ export const TimesheetApprovals: React.FC = () => {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
                         >
                             <option value="">{t('timesheets.allStatuses')}</option>
                             <option value="APPROVED">Approved</option>
@@ -277,7 +277,7 @@ export const TimesheetApprovals: React.FC = () => {
                             type="date"
                             value={weekFilter}
                             onChange={(e) => setWeekFilter(e.target.value)}
-                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
                         />
                     </div>
                 )}
@@ -285,10 +285,10 @@ export const TimesheetApprovals: React.FC = () => {
 
             <div className="space-y-8">
                 {selectedIds.length > 0 && (
-                    <Card className="p-4 bg-primary/5 border-primary/20 shadow-lg animate-in slide-in-from-top-4">
+                    <Card className="p-4 bg-brand-500/5 border-brand-500/20 shadow-elev-4 animate-in slide-in-from-top-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black">
+                                <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center font-black">
                                     {selectedIds.length}
                                 </div>
                                 <div>
@@ -310,7 +310,7 @@ export const TimesheetApprovals: React.FC = () => {
                                 <Button
                                     onClick={handleBulkApprove}
                                     isLoading={bulkApproveMutation.isPending}
-                                    className="bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl px-6 h-10 shadow-xl"
+                                    className="bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl px-6 h-10 shadow-elev-5"
                                 >
                                     {bulkApproveMutation.isPending ? t('timesheets.processing') : t('timesheets.approveSelected')}
                                 </Button>
@@ -319,10 +319,10 @@ export const TimesheetApprovals: React.FC = () => {
                     </Card>
                 )}
 
-                <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
+                <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-800/50">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
                                 {activeTab === 'pending' ? <Check size={20} className="stroke-[3px]" /> : <HistoryIcon size={20} className="stroke-[3px]" />}
                             </div>
                             <div>
@@ -338,10 +338,10 @@ export const TimesheetApprovals: React.FC = () => {
                             {activeTab === 'pending' && timesheets.length > 0 && (
                                 <button
                                     onClick={toggleSelectAll}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-brand-500 transition-colors"
                                 >
                                     {selectedIds.length === timesheets.length && timesheets.length > 0 ? (
-                                        <CheckSquare size={14} className="text-primary" />
+                                        <CheckSquare size={14} className="text-brand-500" />
                                     ) : (
                                         <Square size={14} />
                                     )}
@@ -359,7 +359,7 @@ export const TimesheetApprovals: React.FC = () => {
 
                     {isLoading ? (
                         <div className="flex flex-col items-center gap-3 py-24">
-                            <Loader2 className="animate-spin text-primary" size={32} />
+                            <Loader2 className="animate-spin text-brand-500" size={32} />
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{t('timesheets.loadingData')}</p>
                         </div>
                     ) : timesheets.length === 0 ? (
@@ -376,7 +376,7 @@ export const TimesheetApprovals: React.FC = () => {
                                 <div key={group.employee?.id || groupIdx} className="mb-8 last:mb-0">
                                     {/* Employee Section Header */}
                                     <div className="flex items-center gap-4 px-6 py-4 bg-gray-50/50 dark:bg-gray-800/30 border-y border-gray-100 dark:border-gray-800">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black shadow-sm ring-1 ring-primary/20 shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-[10px] text-brand-500 font-black shadow-elev-1 ring-1 ring-brand-500/20 shrink-0">
                                             {(group.employee?.first_name || 'U').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0">
@@ -400,7 +400,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                     <div
                                                         className={cn(
                                                             "flex items-center gap-4 px-6 py-5 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer",
-                                                            isSelected && "bg-primary/5 hover:bg-primary/10"
+                                                            isSelected && "bg-brand-500/5 hover:bg-brand-500/10"
                                                         )}
                                                         onClick={(e) => {
                                                             if ((e.target as HTMLElement).closest('button')) return;
@@ -412,7 +412,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             onClick={() => toggleSelect(ts.id)}
                                                             className={cn(
                                                                 "transition-colors shrink-0",
-                                                                isSelected ? "text-primary" : "text-gray-300 group-hover:text-gray-400"
+                                                                isSelected ? "text-brand-500" : "text-gray-300 group-hover:text-gray-400"
                                                             )}
                                                         >
                                                             {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
@@ -423,7 +423,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             {/* Week range */}
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <Calendar size={12} className="text-primary/60" strokeWidth={3} />
+                                                                    <Calendar size={12} className="text-brand-500/60" strokeWidth={3} />
                                                                     <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t('timesheets.weekPeriod')}</span>
                                                                 </div>
                                                                 <span className="font-black text-gray-800 dark:text-gray-200 text-xs">
@@ -434,7 +434,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             {/* Hours + entries */}
                                                             <div className="text-right shrink-0 w-32 border-x border-gray-100 dark:border-gray-800/50 px-4">
                                                                 <div className="flex items-center justify-end gap-1.5">
-                                                                    <Clock size={14} className="text-primary/60" />
+                                                                    <Clock size={14} className="text-brand-500/60" />
                                                                     <span className="text-sm font-black text-gray-900 dark:text-white tabular-nums">{Number(ts.total_hours).toFixed(1)}</span>
                                                                     <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{t('timesheets.hrs')}</span>
                                                                 </div>
@@ -462,7 +462,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"
-                                                                            className="bg-slate-900 dark:bg-primary/20 dark:text-primary hover:bg-slate-800 dark:hover:bg-primary/30 text-white font-black text-[8px] uppercase tracking-[0.15em] rounded-lg shadow-sm h-8 px-2.5"
+                                                                            className="bg-slate-900 dark:bg-brand-500/20 dark:text-brand-500 hover:bg-slate-800 dark:hover:bg-brand-500/30 text-white font-black text-[8px] uppercase tracking-[0.15em] rounded-lg shadow-elev-1 h-8 px-2.5"
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 handleApprove(ts.id);

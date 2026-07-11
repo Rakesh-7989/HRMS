@@ -233,7 +233,7 @@ export const ProjectsPage: React.FC = () => {
                             className={cn(
                                 "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
                                 activeTab === 'list'
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-brand-500/10 text-brand-500"
                                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                             )}
                         >
@@ -246,7 +246,7 @@ export const ProjectsPage: React.FC = () => {
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
                                     activeTab === 'reports'
-                                        ? "bg-primary/10 text-primary"
+                                        ? "bg-brand-500/10 text-brand-500"
                                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                                 )}
                             >
@@ -259,7 +259,7 @@ export const ProjectsPage: React.FC = () => {
                             className={cn(
                                 "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
                                 activeTab === 'timesheets'
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-brand-500/10 text-brand-500"
                                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                             )}
                         >
@@ -302,7 +302,7 @@ export const ProjectsPage: React.FC = () => {
                             <select
                                 value={clientFilter}
                                 onChange={(e) => setClientFilter(e.target.value)}
-                                className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
+                                className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 w-full sm:w-auto"
                             >
                                 <option value="All">{t('projects.allClients')}</option>
                                 {clients.map(client => (
@@ -313,7 +313,7 @@ export const ProjectsPage: React.FC = () => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'All')}
-                                className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-full sm:w-auto"
+                                className="h-10 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 w-full sm:w-auto"
                             >
                                 <option value="All">{t('projects.allStatus')}</option>
                                 <option value="PLANNING">Planning</option>
@@ -358,7 +358,7 @@ export const ProjectsPage: React.FC = () => {
                                             >
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                                                        <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-500/10 flex items-center justify-center text-brand-600 dark:text-brand-400">
                                                             <FolderKanban size={20} />
                                                         </div>
                                                         <div>
@@ -391,7 +391,7 @@ export const ProjectsPage: React.FC = () => {
                                                             {canManageMembers && (
                                                                 <button
                                                                     onClick={() => handleOpenMembersModal(project)}
-                                                                    className="p-2 text-gray-400 hover:text-purple-500 transition-colors"
+                                                                    className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                     title="Manage Members"
                                                                 >
                                                                     <Users size={16} />
@@ -401,7 +401,7 @@ export const ProjectsPage: React.FC = () => {
                                                                 <>
                                                                     <button
                                                                         onClick={() => handleOpenEditModal(project)}
-                                                                        className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
+                                                                        className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                         title="Edit Project"
                                                                     >
                                                                         <Edit size={16} />
@@ -455,7 +455,7 @@ export const ProjectsPage: React.FC = () => {
                                     id="client"
                                     value={formData.client_id}
                                     onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     required
                                 >
                                     <option value="">Select a client</option>
@@ -496,7 +496,7 @@ export const ProjectsPage: React.FC = () => {
                                     id="status"
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                 >
                                     <option value="PLANNING">Planning</option>
                                     <option value="ACTIVE">Active</option>
@@ -512,7 +512,7 @@ export const ProjectsPage: React.FC = () => {
                                     id="billing_type"
                                     value={formData.billing_type}
                                     onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as any })}
-                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                 >
                                     <option value="HOURLY">Hourly (Time & Materials)</option>
                                     <option value="FIXED">Fixed Price (Capped by Budget)</option>
@@ -537,7 +537,7 @@ export const ProjectsPage: React.FC = () => {
                                     id="description"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     placeholder="Enter project details..."
                                 />
                             </div>

@@ -207,7 +207,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                                         </TableCell>
                                         <TableCell>
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${member.role === 'LEAD'
-                                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
                                                 : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                                 }`}>
                                                 {member.role}

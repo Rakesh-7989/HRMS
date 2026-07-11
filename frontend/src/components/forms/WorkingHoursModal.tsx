@@ -95,7 +95,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
             <DialogContent className="sm:max-w-[450px]">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary-gradient text-white">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white">
                             <Clock size={24} />
                         </div>
                         <DialogTitle>Configure Working Hours</DialogTitle>
@@ -111,7 +111,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                                 type="time"
                                 value={formik.values.startTime}
                                 onChange={formik.handleChange}
-                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 text-gray-900 dark:text-white"
+                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 text-gray-900 dark:text-white"
                                 disabled={initialDataLoading}
                             />
                         </div>
@@ -122,7 +122,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                                 type="time"
                                 value={formik.values.endTime}
                                 onChange={formik.handleChange}
-                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 text-gray-900 dark:text-white"
+                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 text-gray-900 dark:text-white"
                                 disabled={initialDataLoading}
                             />
                         </div>
@@ -139,8 +139,8 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                                     className={cn(
                                         "px-2 py-2 text-xs font-medium rounded-lg border transition-all",
                                         formik.values.workingDays.includes(day)
-                                            ? "bg-primary text-white border-primary shadow-sm"
-                                            : "bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-border hover:border-primary/50"
+                                            ? "bg-brand-500 text-white border-brand-500 shadow-elev-1"
+                                            : "bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-brand-500/50"
                                     )}
                                     disabled={initialDataLoading}
                                 >
@@ -153,7 +153,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                         )}
                     </div>
 
-                    <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 text-xs text-violet-700 dark:text-violet-400">
+                    <div className="p-3 rounded-lg bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-800 text-xs text-brand-600 dark:text-brand-400">
                         <p>Total hours will be calculated based on start and end times, excluding breaks if any are added later.</p>
                     </div>
 

@@ -65,7 +65,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500">
                             <Key size={20} />
                         </div>
                         <DialogTitle>Change Password</DialogTitle>
@@ -84,7 +84,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                 <input
                                     type={showCurrent ? 'text' : 'password'}
                                     {...formik.getFieldProps('currentPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-muted"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="Enter current password"
                                 />
                                 <button
@@ -107,7 +107,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                 <input
                                     type={showNew ? 'text' : 'password'}
                                     {...formik.getFieldProps('newPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-muted"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="At least 8 characters"
                                 />
                                 <button
@@ -153,7 +153,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                 <input
                                     type={showConfirm ? 'text' : 'password'}
                                     {...formik.getFieldProps('confirmPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-muted"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="Repeat new password"
                                 />
                                 <button

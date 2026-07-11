@@ -35,7 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
 import { permissionsService } from '@/services/permissions.service';
 import { Dialog } from '@/components/ui/Dialog';
-
+import { PageTransition } from '@/components/common/PageTransition';
 
 const PAGE_SIZE = 10;
 
@@ -215,6 +215,7 @@ export const EmployeesPage: React.FC = () => {
         { label: t('common.breadcrumbs.employees') },
       ]}
     >
+      <PageTransition>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -227,7 +228,7 @@ export const EmployeesPage: React.FC = () => {
                 placeholder={t('employees.searchEmployees')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm text-gray-900 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-sm text-gray-900 dark:text-white"
               />
             </div>
 
@@ -337,7 +338,7 @@ export const EmployeesPage: React.FC = () => {
         <Card className="p-0">
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
             </div>
           ) : displayEmployees.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -384,7 +385,7 @@ export const EmployeesPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white overflow-hidden',
-                            emp.is_active ? 'bg-gradient-to-br from-primary to-primary-dark' : 'bg-gray-400'
+                            emp.is_active ? 'bg-gradient-to-br from-brand-500 to-brand-500-dark' : 'bg-gray-400'
                           )}>
                             {emp.profile_photo_url ? (
                               <img src={resolveImageUrl(emp.profile_photo_url)} alt="" className="w-full h-full object-cover" />
@@ -411,8 +412,8 @@ export const EmployeesPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <span className={cn(
                           'px-2 py-0.5 rounded text-xs font-medium',
-                          emp.role === 'ADMIN' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                          emp.role === 'HR' && 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+                          emp.role === 'ADMIN' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
+                          emp.role === 'HR' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
                           emp.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
                           emp.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
                         )}>
@@ -567,7 +568,7 @@ export const EmployeesPage: React.FC = () => {
             <div className="relative mb-6 group ring-4 ring-primary/10 rounded-full">
               <div className={cn(
                 'w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-inner',
-                selectedViewEmployee.is_active ? 'bg-gradient-to-br from-primary to-primary-dark/80' : 'bg-gray-400'
+                selectedViewEmployee.is_active ? 'bg-gradient-to-br from-brand-500 to-brand-500-dark/80' : 'bg-gray-400'
               )}>
                 {selectedViewEmployee.profile_photo_url ? (
                   <img src={resolveImageUrl(selectedViewEmployee.profile_photo_url)} alt="" className="w-full h-full object-cover" />
@@ -587,7 +588,7 @@ export const EmployeesPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Contact</p>
-                <a href={`mailto:${selectedViewEmployee.email}`} className="text-primary hover:underline font-medium text-sm">
+                <a href={`mailto:${selectedViewEmployee.email}`} className="text-brand-500 hover:underline font-medium text-sm">
                   {selectedViewEmployee.email}
                 </a>
               </div>
@@ -609,6 +610,7 @@ export const EmployeesPage: React.FC = () => {
           </div>
         )}
       </Dialog>
+      </PageTransition>
     </DashboardLayout >
   );
 };

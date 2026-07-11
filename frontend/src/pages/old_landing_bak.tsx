@@ -85,12 +85,12 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div ref={containerRef} className="h-screen bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
+    <div ref={containerRef} className="h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
       {/* Background gradient overlay */}
       <div className="fixed inset-0 bg-gradient-radial opacity-30 dark:opacity-90 pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-light-border dark:border-dark-border bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-xl transition-colors duration-300">
+      <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-white/10 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur-xl transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <motion.div
@@ -149,7 +149,7 @@ export const LandingPage: React.FC = () => {
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: prefersReducedMotion ? 0 : 0.1, duration: 0.5 }}
-                className="inline-block px-3 py-1 rounded-full bg-primary-10 dark:bg-primary-20 border border-primary/30 dark:border-primary/40 text-xs text-primary dark:text-primary-400 uppercase tracking-widest hover:bg-primary-20 dark:hover:bg-primary-30 hover:border-primary/50 transition-all"
+                className="inline-block px-3 py-1 rounded-full bg-brand-50/80 dark:bg-brand-100/80 border border-brand-500/30 dark:border-brand-500/40 text-xs text-brand-500 dark:text-brand-400 uppercase tracking-widest hover:bg-brand-100/80 dark:hover:bg-brand-500/20 hover:border-brand-500/50 transition-all"
               >
                 HR MANAGEMENT -+ ATTENDANCE -+ PAYROLL
               </motion.span>
@@ -185,7 +185,7 @@ export const LandingPage: React.FC = () => {
                 whileHover={{ scale: 1.05, x: 4 }}
                 className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted"
               >
-                <CheckCircle className="text-primary" size={16} />
+                <CheckCircle className="text-brand-500" size={16} />
                 <span>No credit card required</span>
               </motion.div>
               <motion.div
@@ -213,10 +213,10 @@ export const LandingPage: React.FC = () => {
                 willChange: prefersReducedMotion ? 'auto' : 'transform'
               }}
             >
-              <Card className="border-primary-border shadow-premium p-5 relative overflow-hidden">
+              <Card className="border-brand-500 shadow-premium p-5 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-radial opacity-80 pointer-events-none" />
                 <motion.div
-                  className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"
+                  className="absolute top-0 right-0 w-32 h-32 bg-brand-500/20 rounded-full blur-3xl"
                   animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.3, 0.5, 0.3],
@@ -231,7 +231,7 @@ export const LandingPage: React.FC = () => {
                 <div className="relative space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted">Today&apos;s overview</span>
-                    <span className="px-3 py-1 rounded-full bg-black border border-primary text-xs text-muted">
+                    <span className="px-3 py-1 rounded-full bg-black border border-brand-500 text-xs text-muted">
                       Live HR Snapshot
                     </span>
                   </div>
@@ -253,10 +253,10 @@ export const LandingPage: React.FC = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <div className="flex-1 rounded-lg bg-primary-light border border-gray-300 dark:border-white/20 p-3">
+                    <div className="flex-1 rounded-lg bg-brand-400 border border-gray-300 dark:border-white/20 p-3">
                       <div className="flex justify-between mb-2">
                         <span className="text-xs text-gray-600 dark:text-muted">Attendance</span>
-                        <span className="text-xs text-primary">Live</span>
+                        <span className="text-xs text-brand-500">Live</span>
                       </div>
                       <div className="flex gap-2">
                         <div className="flex-1 h-1.5 rounded-full bg-green-400" />
@@ -310,9 +310,9 @@ export const LandingPage: React.FC = () => {
                   >
                     <Card hover className="h-full group">
                       <div>
-                        <Icon className="text-primary mb-4 group-hover:text-accent-blue transition-colors" size={32} />
+                        <Icon className="text-brand-500 mb-4 group-hover:text-accent-blue transition-colors" size={32} />
                       </div>
-                      <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{feature.title}</h3>
+                      <h3 className="text-xl font-semibold mb-2 group-hover:text-brand-500 transition-colors">{feature.title}</h3>
                       <p className="text-gray-600 dark:text-muted text-sm">{feature.description}</p>
                     </Card>
                   </motion.div>
@@ -349,7 +349,7 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   transition={{ duration: 0.5 }}
-                  className="rounded-full border-2 border-primary px-3 py-1 text-xs font-medium bg-primary-10 dark:bg-primary-20 text-primary shrink-0"
+                  className="rounded-full border-2 border-brand-500 px-3 py-1 text-xs font-medium bg-brand-50/80 dark:bg-brand-100/80 text-brand-500 shrink-0"
                 >
                   {item.step}
                 </motion.div>
@@ -536,7 +536,7 @@ export const LandingPage: React.FC = () => {
                   className={cn(
                     'h-full flex flex-col',
                     plan.popular &&
-                    'border-primary-border border-2 shadow-primary bg-gradient-to-b from-gold-light/30 to-transparent'
+                    'border-brand-500 border-2 shadow-brand-500 bg-gradient-to-b from-gold-light/30 to-transparent'
                   )}
                 >
                   <div className="mb-6">
@@ -572,7 +572,7 @@ export const LandingPage: React.FC = () => {
                       <li key={feature} className="flex items-start gap-3">
                         <CheckCircle
                           size={20}
-                          className={cn('mt-0.5 shrink-0', plan.popular ? 'text-primary' : 'text-green-400')}
+                          className={cn('mt-0.5 shrink-0', plan.popular ? 'text-brand-500' : 'text-green-400')}
                         />
                         <span className="text-sm">{feature}</span>
                       </li>
@@ -590,7 +590,7 @@ export const LandingPage: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: 'easeOut' }}
-          className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent-blue/10 to-accent-green/10 border border-primary-border p-8 md:p-12 backdrop-blur-sm"
+          className="rounded-2xl bg-gradient-to-br from-brand-500/10 via-accent-blue/10 to-accent-green/10 border border-brand-500 p-8 md:p-12 backdrop-blur-sm"
           style={{ willChange: prefersReducedMotion ? 'auto' : 'opacity, transform' }}
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">

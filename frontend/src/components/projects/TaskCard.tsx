@@ -65,7 +65,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                 ref={setNodeRef}
                 style={style}
                 className={cn(
-                    "bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-2 border-primary/20 opacity-50 h-[120px]",
+                    "bg-white dark:bg-gray-800 p-4 rounded-lg shadow-elev-1 border-2 border-brand-500/20 opacity-50 h-[120px]",
                     "cursor-grabbing relative z-50"
                 )}
             />
@@ -80,8 +80,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
             {...listeners}
             onClick={onClick}
             className={cn(
-                "bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700",
-                "hover:shadow-md transition-shadow group flex flex-col gap-2",
+                "bg-white dark:bg-gray-800 p-3 rounded-lg shadow-elev-1 border border-gray-200 dark:border-gray-700",
+                "hover:shadow-elev-3 transition-shadow group flex flex-col gap-2",
                 canMove ? "cursor-grab active:cursor-grabbing" : "cursor-default"
             )}
         >
@@ -106,7 +106,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                         {task.assignees.slice(0, 3).map((assignee, idx) => (
                             <div
                                 key={assignee.id}
-                                className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold border border-white dark:border-gray-800"
+                                className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold border border-white dark:border-gray-800"
                                 title={`${assignee.first_name} ${assignee.last_name}`}
                                 style={{ zIndex: 3 - idx }}
                             >
@@ -120,7 +120,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                         )}
                     </div>
                 ) : task.assignee ? (
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold" title={`${task.assignee.first_name} ${task.assignee.last_name}`}>
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold" title={`${task.assignee.first_name} ${task.assignee.last_name}`}>
                         {task.assignee.first_name.charAt(0)}{task.assignee.last_name?.charAt(0)}
                     </div>
                 ) : (

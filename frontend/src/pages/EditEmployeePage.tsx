@@ -24,7 +24,7 @@ export const EditEmployeePage: React.FC = () => {
         return (
             <DashboardLayout title={t('employees.editEmployee')}>
                 <div className="h-64 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                 </div>
             </DashboardLayout>
         );

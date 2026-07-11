@@ -170,7 +170,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
             // Odd indices are the captured groups (names after @)
             if (i % 2 === 1) {
                 return (
-                    <span key={i} className="text-violet-400 dark:text-violet-300 font-medium">
+                    <span key={i} className="text-brand-400 dark:text-brand-300 font-medium">
                         @{part}
                     </span>
                 );
@@ -221,7 +221,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                             {/* Comment Header */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-[10px] text-white font-bold">
+                                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-brand-600 flex items-center justify-center text-[10px] text-white font-bold">
                                         {(comment.user.first_name || '').charAt(0)}{(comment.user.last_name || '').charAt(0)}
                                     </div>
                                     <div>
@@ -251,7 +251,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                         </button>
 
                                         {activeDropdownId === comment.id && (
-                                            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 min-w-[120px]">
+                                            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-elev-4 z-50 min-w-[120px]">
                                                 <button
                                                     onClick={() => {
                                                         setEditingId(comment.id);
@@ -288,7 +288,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                         ref={editTextareaRef}
                                         value={editContent}
                                         onChange={(e) => handleInputChange(e, true)}
-                                        className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md resize-none bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-violet-500"
+                                        className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md resize-none bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-brand-500"
                                         rows={2}
                                     />
                                     <div className="flex gap-2">
@@ -326,20 +326,20 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                         value={newComment}
                         onChange={(e) => handleInputChange(e)}
                         placeholder="Write a comment... Use @ to mention someone"
-                        className="w-full p-3 pr-12 text-sm border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500/20 focus:border-violet-500"
+                        className="w-full p-3 pr-12 text-sm border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500/20 focus:border-brand-500"
                         rows={2}
                     />
                     <button
                         type="submit"
                         disabled={!newComment.trim() || createMutation.isPending}
-                        className="absolute right-2 bottom-2 p-2 text-violet-500 dark:text-violet-400 hover:bg-violet-500/10 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="absolute right-2 bottom-2 p-2 text-brand-500 dark:text-brand-400 hover:bg-brand-500/10 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <Send className="h-4 w-4" />
                     </button>
 
                     {/* Mentions Dropdown */}
                     {showMentions && filteredUsers.length > 0 && (
-                        <div className="absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[100] max-h-[180px] overflow-y-auto">
+                        <div className="absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-5 z-[100] max-h-[180px] overflow-y-auto">
                             <div className="p-1">
                                 {filteredUsers.map((mentionUser) => (
                                     <button
@@ -351,7 +351,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                         }}
                                         className="flex items-center gap-3 w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-left transition-colors"
                                     >
-                                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+                                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-brand-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
                                             {(mentionUser.first_name || '').charAt(0)}{(mentionUser.last_name || '').charAt(0)}
                                         </div>
                                         <div className="min-w-0">

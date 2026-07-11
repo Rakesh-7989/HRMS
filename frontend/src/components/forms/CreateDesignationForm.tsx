@@ -111,7 +111,7 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
             value={formik.values.description}
             onChange={formik.handleChange}
             rows={3}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
             placeholder="Optional description..."
           />
         </div>

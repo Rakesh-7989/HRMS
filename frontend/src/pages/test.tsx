@@ -55,7 +55,7 @@ const FeatureVisual: React.FC<{ feature: any; colorConfig: any }> = ({ feature, 
               initial={{ strokeDashoffset: 283 }}
               whileInView={{ strokeDashoffset: 70 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className={cn(colorConfig.text, "drop-shadow-sm")}
+              className={cn(colorConfig.text, "drop-shadow-md")}
               style={{ strokeLinecap: 'round' }}
             />
           </svg>
@@ -233,13 +233,13 @@ const testimonials = [
   {
     name: 'Business Administrator',
     role: 'Small Manufacturing Firm',
-    avatarColor: 'bg-violet-500',
+    avatarColor: 'bg-brand-500',
     quote: 'The system has helped us centralize our employee records and process monthly payroll without manual errors.',
   },
   {
     name: 'HR Operations Lead',
     role: 'Growing Infrastructure Company',
-    avatarColor: 'bg-purple-500',
+    avatarColor: 'bg-brand-500',
     quote: 'The employee portal makes it very easy for our staff to download their payslips and apply for leave independently.',
   },
 ];
@@ -257,7 +257,7 @@ const roles = [
     icon: Shield,
     description: 'Full control over organizational settings, tenant configuration, and administrative oversight.',
     features: ['Tenant Management', 'Role Definitions', 'System Settings'],
-    color: 'from-purple-500/20 to-purple-500/10'
+    color: 'from-brand-500/20 to-purple-500/10'
   },
   {
     title: 'Manager',
@@ -271,7 +271,7 @@ const roles = [
     icon: UserCheck,
     description: 'Self-service portal for personal record management, leave requests, and payslip access.',
     features: ['Profile Management', 'Leave Requests', 'Payslip Downloads'],
-    color: 'from-purple-500/20 to-teal-500/10'
+    color: 'from-brand-500/20 to-teal-500/10'
   }
 ];
 
@@ -420,7 +420,7 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div ref={containerRef} className="h-screen bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
+    <div ref={containerRef} className="h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white relative overflow-y-auto overflow-x-hidden transition-colors duration-300">
 
       {/* Background gradient overlay & Grid Pattern */}
       <div className="fixed inset-0 bg-gray-50/50 dark:bg-black/90 pointer-events-none z-0" />
@@ -440,10 +440,10 @@ export const LandingPage: React.FC = () => {
               </motion.div>
 
               <div className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" className="hover:bg-primary/10" onClick={scrollToFeatures}>
+                <Button variant="ghost" className="hover:bg-brand-500/10" onClick={scrollToFeatures}>
                   Features
                 </Button>
-                <Button variant="ghost" className="hover:bg-primary/10" onClick={scrollToPricing}>
+                <Button variant="ghost" className="hover:bg-brand-500/10" onClick={scrollToPricing}>
                   Pricing
                 </Button>
                 <div className="h-6 w-px bg-white/10 mx-2" />
@@ -451,7 +451,7 @@ export const LandingPage: React.FC = () => {
                 <Button variant="outline" className="border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5" onClick={() => navigate('/pricing')}>
                   Register
                 </Button>
-                <Button variant="primary" className="shadow-lg shadow-primary/20" onClick={() => navigate('/login')}>
+                <Button variant="primary" className="shadow-elev-4 shadow-brand-500/20" onClick={() => navigate('/login')}>
                   Login
                 </Button>
               </div>
@@ -478,7 +478,7 @@ export const LandingPage: React.FC = () => {
           <motion.div variants={fadeInUp} className="max-w-4xl">
             <motion.span
               variants={fadeInUp}
-              className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary uppercase tracking-[0.2em] mb-8"
+              className="inline-block px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-xs font-semibold text-brand-500 uppercase tracking-[0.2em] mb-8"
             >
               Enterprise-Ready HR Management
             </motion.span>
@@ -487,7 +487,7 @@ export const LandingPage: React.FC = () => {
               variant="slide-up"
               className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.1] mb-8 text-gray-900 dark:text-white"
             >
-              Professional <span className="text-primary">HR & Payroll</span> for Growing Organizations.
+              Professional <span className="text-brand-500">HR & Payroll</span> for Growing Organizations.
             </AnimatedText>
 
             <AnimatedText
@@ -517,7 +517,7 @@ export const LandingPage: React.FC = () => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-12">
               <div className="max-w-2xl text-center md:text-left">
                 <AnimatedText variant="slide-up" className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-                  About <span className="text-primary">The Product</span>.
+                  About <span className="text-brand-500">The Product</span>.
                 </AnimatedText>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                   WellZo HRMS is a multi-tenant web application designed to handle the core operational needs of small and mid-sized organizations. It provides a centralized dashboard to manage employee information, documents, attendance, and payroll processing, ensuring administrative consistency and data security for your business.
@@ -537,7 +537,7 @@ export const LandingPage: React.FC = () => {
                     whileHover={{ y: -5, borderColor: 'rgba(var(--primary), 0.5)' }}
                     className="flex flex-col items-center p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-colors"
                   >
-                    <p.icon className="text-primary mb-3" size={32} />
+                    <p.icon className="text-brand-500 mb-3" size={32} />
                     <span className="font-semibold text-sm">{p.name}</span>
                     <span className="text-[10px] uppercase tracking-wider text-muted mt-1">{p.description}</span>
                   </motion.div>
@@ -550,8 +550,8 @@ export const LandingPage: React.FC = () => {
         {/* Who It Is For Section */}
         <section className="mb-24">
           <div className="text-center mb-20">
-            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Tailored for Small & Mid-Sized Organizations</motion.span>
-            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900 dark:text-white">Who It Is <span className="text-primary">For</span>.</AnimatedText>
+            <motion.span variants={fadeInUp} className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Tailored for Small & Mid-Sized Organizations</motion.span>
+            <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900 dark:text-white">Who It Is <span className="text-brand-500">For</span>.</AnimatedText>
             <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Built specifically for Indian SMEs and growing businesses that require a professional system to manage their workforce beyond spreadsheets.
             </p>
@@ -562,7 +562,7 @@ export const LandingPage: React.FC = () => {
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative rounded-3xl overflow-hidden shadow-2xl"
+              className="relative rounded-3xl overflow-hidden shadow-elev-6"
             >
               <img src={rolesVisual} alt="Roles in HRMS" className="w-full h-auto" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
@@ -585,8 +585,8 @@ export const LandingPage: React.FC = () => {
                   )}
                 >
                   <div className="flex items-start gap-5">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-black/50 shadow-lg group-hover:scale-110 transition-transform">
-                      <role.icon className="text-primary" size={28} />
+                    <div className="p-4 rounded-2xl bg-white dark:bg-black/50 shadow-elev-4 group-hover:scale-110 transition-transform">
+                      <role.icon className="text-brand-500" size={28} />
                     </div>
                     <div>
                       <h4 className="text-2xl font-bold mb-2">{role.title}</h4>
@@ -613,12 +613,12 @@ export const LandingPage: React.FC = () => {
           <div className="text-center mb-16">
             <motion.span
               variants={fadeInUp}
-              className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
+              className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
             >
               Product Modules
             </motion.span>
             <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900 dark:text-white">
-              Essential <span className="text-primary">Features</span>.
+              Essential <span className="text-brand-500">Features</span>.
             </AnimatedText>
             <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
               A comprehensive set of tools designed to manage your HR operations efficiently.
@@ -639,13 +639,13 @@ export const LandingPage: React.FC = () => {
                 : (feature as any).isLarge;
 
               const colorConfig = {
-                purple: { text: 'text-purple-500', dot: 'bg-purple-500/40', glow: 'bg-purple-500', gradient: 'from-purple-500/20 via-purple-500/5 to-transparent' },
-                blue: { text: 'text-violet-500', dot: 'bg-violet-500/40', glow: 'bg-violet-500', gradient: 'from-blue-500/20 via-blue-500/5 to-transparent' },
-                amber: { text: 'text-fuchsia-500', dot: 'bg-fuchsia-500/40', glow: 'bg-fuchsia-500', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
-                rose: { text: 'text-rose-500', dot: 'bg-rose-500/40', glow: 'bg-rose-500', gradient: 'from-rose-500/20 via-rose-500/5 to-transparent' },
-                indigo: { text: 'text-purple-500', dot: 'bg-purple-500/40', glow: 'bg-purple-500', gradient: 'from-purple-500/20 via-purple-500/5 to-transparent' },
+                purple: { text: 'text-brand-500', dot: 'bg-brand-500/40', glow: 'bg-brand-500', gradient: 'from-brand-500/20 via-brand-500/5 to-transparent' },
+                blue: { text: 'text-brand-500', dot: 'bg-brand-500/40', glow: 'bg-brand-500', gradient: 'from-blue-500/20 via-blue-500/5 to-transparent' },
+                amber: { text: 'text-coral-500', dot: 'bg-coral-500/40', glow: 'bg-coral-500', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
+                rose: { text: 'text-error-500', dot: 'bg-error-500/40', glow: 'bg-error-500', gradient: 'from-error-500/20 via-rose-500/5 to-transparent' },
+                indigo: { text: 'text-brand-500', dot: 'bg-brand-500/40', glow: 'bg-brand-500', gradient: 'from-brand-500/20 via-brand-500/5 to-transparent' },
                 slate: { text: 'text-slate-500', dot: 'bg-slate-500/40', glow: 'bg-slate-500', gradient: 'from-slate-500/20 via-slate-500/5 to-transparent' },
-              }[feature.color as string] || { text: 'text-primary', dot: 'bg-primary/40', glow: 'bg-primary', gradient: 'from-primary/20 via-primary/5 to-transparent' };
+              }[feature.color as string] || { text: 'text-brand-500', dot: 'bg-brand-500/40', glow: 'bg-brand-500', gradient: 'from-brand-500/20 via-brand-500/5 to-transparent' };
 
               return (
                 <motion.div
@@ -714,9 +714,9 @@ export const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="space-y-8"
           >
-            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase block">Why Choose WellZo</motion.span>
+            <motion.span variants={fadeInUp} className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase block">Why Choose WellZo</motion.span>
             <AnimatedText variant="slide-up" className="text-4xl font-extrabold mb-8 leading-tight text-gray-900 dark:text-white">
-              Built for <span className="text-primary">Reliable HR Operations</span>.
+              Built for <span className="text-brand-500">Reliable HR Operations</span>.
             </AnimatedText>
 
             <motion.div
@@ -732,7 +732,7 @@ export const LandingPage: React.FC = () => {
                   variants={fadeInUp}
                   className="flex gap-6 p-6 rounded-3xl border border-gray-100 dark:border-white/5 bg-white/50 dark:bg-black/20 transition-colors group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-lg group-hover:bg-brand-500 group-hover:text-white transition-all">
                     {item.step}
                   </div>
                   <div>
@@ -751,7 +751,7 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
             <Card className="p-8 border-gray-100 dark:border-white/10 glass-effect h-full">
-              <span className="text-xs uppercase text-primary font-bold tracking-widest block mb-2">Operational Benefits</span>
+              <span className="text-xs uppercase text-brand-500 font-bold tracking-widest block mb-2">Operational Benefits</span>
               <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
                 Maintain accountability and process clarity across your team.
               </h3>
@@ -766,7 +766,7 @@ export const LandingPage: React.FC = () => {
                     transition={{ delay: 0.2 + index * 0.1 }}
                     className="text-center"
                   >
-                    <p className="text-3xl font-extrabold text-primary mb-1">{stat.value}</p>
+                    <p className="text-3xl font-extrabold text-brand-500 mb-1">{stat.value}</p>
                     <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">{stat.label}</p>
                   </motion.div>
                 ))}
@@ -786,7 +786,7 @@ export const LandingPage: React.FC = () => {
                     transition={{ delay: 0.4 + i * 0.1 }}
                     className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400"
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500/40" />
                     {item}
                   </motion.div>
                 ))}
@@ -807,12 +807,12 @@ export const LandingPage: React.FC = () => {
           <div className="text-center mb-16">
             <motion.span
               variants={fadeInUp}
-              className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
+              className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block"
             >
               Subscription Plans
             </motion.span>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-8 text-gray-900 dark:text-white leading-tight">
-              Flexible <span className="text-primary">SaaS Plans</span> for Your Business.
+              Flexible <span className="text-brand-500">SaaS Plans</span> for Your Business.
             </h2>
 
             {/* Billing Toggle - Horizon Style */}
@@ -823,7 +823,7 @@ export const LandingPage: React.FC = () => {
                   className={cn(
                     "px-8 py-2 rounded-lg text-sm font-bold transition-all duration-300 uppercase tracking-widest",
                     billingCycle === 'MONTHLY'
-                      ? "bg-white dark:bg-primary text-black dark:text-white shadow-xl"
+                      ? "bg-white dark:bg-brand-500 text-black dark:text-white shadow-elev-5"
                       : "text-gray-500 hover:text-gray-900 dark:text-muted dark:hover:text-white"
                   )}
                 >
@@ -834,12 +834,12 @@ export const LandingPage: React.FC = () => {
                   className={cn(
                     "px-8 py-2 rounded-lg text-sm font-bold transition-all duration-300 uppercase tracking-widest flex items-center gap-2",
                     billingCycle === 'YEARLY'
-                      ? "bg-white dark:bg-primary text-black dark:text-white shadow-xl"
+                      ? "bg-white dark:bg-brand-500 text-black dark:text-white shadow-elev-5"
                       : "text-gray-500 hover:text-gray-900 dark:text-muted dark:hover:text-white"
                   )}
                 >
                   Annual
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-500 border border-purple-500/20">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-500/20 text-brand-500 border border-brand-500/20">
                     -20%
                   </span>
                 </button>
@@ -850,7 +850,7 @@ export const LandingPage: React.FC = () => {
           {/* Loading State */}
           {isLoading && (
             <div className="flex flex-col justify-center items-center py-20 gap-4">
-              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
               <span className="text-gray-500 dark:text-gray-400 font-medium tracking-widest uppercase text-xs">Accessing Latest Pricing</span>
             </div>
           )}
@@ -866,8 +866,8 @@ export const LandingPage: React.FC = () => {
             )}
             {displayPlans.map((plan, index) => {
               const meta = planMeta[plan.name] || { subtitle: '', tagline: '', highlights: [], included: '' };
-              const iconColor = "text-primary dark:text-primary/90";
-              const checkColor = "text-primary";
+              const iconColor = "text-brand-500 dark:text-brand-500/90";
+              const checkColor = "text-brand-500";
 
               return (
                 <motion.div
@@ -879,17 +879,17 @@ export const LandingPage: React.FC = () => {
                   className={cn(
                     "group relative flex flex-col rounded-[2.5rem] border transition-all duration-500",
                     plan.popular
-                      ? "bg-white dark:bg-[#0a0a0a] border-primary/40 shadow-2xl dark:shadow-[0_0_60px_rgba(var(--primary),0.06)] scale-[1.02]"
-                      : "bg-white dark:bg-[#080808] border-gray-200 dark:border-white/5 shadow-lg dark:shadow-none hover:shadow-xl dark:hover:shadow-[0_0_40px_rgba(255,255,255,0.02)]"
+                      ? "bg-white dark:bg-[#0a0a0a] border-brand-500/40 shadow-elev-6 dark:shadow-[0_0_60px_rgba(var(--primary),0.06)] scale-[1.02]"
+                      : "bg-white dark:bg-[#080808] border-gray-200 dark:border-white/5 shadow-elev-4 dark:shadow-none hover:shadow-elev-5 dark:hover:shadow-[0_0_40px_rgba(255,255,255,0.02)]"
                   )}
                 >
                   {/* Popular Badge */}
                   {plan.popular && (
-                    <div className="absolute -top-px left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0" />
+                    <div className="absolute -top-px left-0 right-0 h-1 bg-gradient-to-r from-brand-500/0 via-brand-500 to-brand-500/0" />
                   )}
                   {plan.popular && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                      <span className="bg-primary text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-xl shadow-primary/30">
+                      <span className="bg-brand-500 text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-elev-5 shadow-brand-500/30">
                         Most Popular
                       </span>
                     </div>
@@ -901,7 +901,7 @@ export const LandingPage: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white">{plan.name}</h3>
-                          <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary/20 text-primary bg-primary/5")}>
+                          <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-brand-500/20 text-brand-500 bg-brand-500/5")}>
                             {meta.subtitle}
                           </span>
                         </div>
@@ -921,7 +921,7 @@ export const LandingPage: React.FC = () => {
                   <div className="px-6 py-6 mx-4 my-2 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
                     <div className="flex flex-col">
                       <div className="flex flex-col gap-1 mb-4">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Billed Periodically</p>
+                        <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em]">Billed Periodically</p>
                         <div className="flex items-baseline gap-2">
                           <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
                             ₹{plan.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -942,7 +942,7 @@ export const LandingPage: React.FC = () => {
 
                         {plan.setupFee > 0 && (
                           <div className="flex flex-col items-end gap-1">
-                            <p className="text-[9px] font-black text-primary uppercase tracking-[0.15em]">One-Time</p>
+                            <p className="text-[9px] font-black text-brand-500 uppercase tracking-[0.15em]">One-Time</p>
                             <p className="text-[11px] font-bold text-gray-900 dark:text-white">₹{plan.setupFee.toLocaleString()} <span className="text-[9px] text-gray-400 uppercase font-bold">setup</span></p>
                           </div>
                         )}
@@ -963,7 +963,7 @@ export const LandingPage: React.FC = () => {
                                 <Check className="w-2.5 h-2.5 text-gray-400" strokeWidth={3} />
                               </div>
                             ) : (
-                              <div className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-primary/10")}>
+                              <div className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-brand-500/10")}>
                                 <Check className={cn("w-2.5 h-2.5", checkColor)} strokeWidth={3} />
                               </div>
                             )}
@@ -992,7 +992,7 @@ export const LandingPage: React.FC = () => {
                       onClick={() => navigate('/pricing')}
                       className={cn(
                         "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
-                        "bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
+                        "bg-brand-500 text-white hover:shadow-elev-4 hover:shadow-brand-500/20 hover:-translate-y-0.5 active:translate-y-0"
                       )}
                     >
                       {plan.name === 'ELITE' ? 'Go Enterprise' : plan.name === 'PREMIUM' ? 'Start Growing' : 'Get Started'}
@@ -1011,12 +1011,12 @@ export const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex p-4 rounded-2xl bg-primary/10 mb-8"
+              className="inline-flex p-4 rounded-2xl bg-brand-500/10 mb-8"
             >
-              <Shield className="text-primary" size={32} />
+              <Shield className="text-brand-500" size={32} />
             </motion.div>
             <AnimatedText variant="slide-up" className="text-4xl font-extrabold mb-8 text-gray-900 dark:text-white leading-tight">
-              Enterprise-Grade <span className="text-primary">Data Security</span>.
+              Enterprise-Grade <span className="text-brand-500">Data Security</span>.
             </AnimatedText>
             <div className="grid md:grid-cols-2 gap-10 text-left">
               <div className="space-y-4">
@@ -1034,7 +1034,7 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
           <div className="absolute top-0 right-0 p-20 opacity-10 pointer-events-none">
-            <Shield size={200} className="text-primary" />
+            <Shield size={200} className="text-brand-500" />
           </div>
         </section>
 
@@ -1042,7 +1042,7 @@ export const LandingPage: React.FC = () => {
         <section id="final-cta" className="rounded-[3rem] bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 p-12 md:p-20 text-center relative overflow-hidden">
           <div className="relative z-10 max-w-3xl mx-auto">
             <AnimatedText variant="slide-up" className="text-4xl md:text-6xl font-extrabold mb-8 leading-tight text-gray-900 dark:text-white">
-              Start Managing Your <span className="text-primary">Workforce</span> Effectively.
+              Start Managing Your <span className="text-brand-500">Workforce</span> Effectively.
             </AnimatedText>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed">
               Join organizations using WellZo to bring structure to their HR and payroll operations.
@@ -1078,11 +1078,11 @@ export const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="mb-16 text-center"
           >
-            <motion.span variants={fadeInUp} className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
+            <motion.span variants={fadeInUp} className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
               Customer Feedback
             </motion.span>
             <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900 dark:text-white">
-              Trusted by <span className="text-primary">Growing Teams</span>.
+              Trusted by <span className="text-brand-500">Growing Teams</span>.
             </AnimatedText>
           </motion.div>
 
@@ -1104,14 +1104,14 @@ export const LandingPage: React.FC = () => {
                   </p>
                   <div className="flex items-center gap-4">
                     <div className={cn(
-                      "w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-xl",
-                      testimonial.avatarColor || "bg-primary"
+                      "w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-elev-5",
+                      testimonial.avatarColor || "bg-brand-500"
                     )}>
                       {testimonial.name.charAt(0)}
                     </div>
                     <div>
                       <p className="font-bold text-lg">{testimonial.name}</p>
-                      <p className="text-sm text-primary font-medium">{testimonial.role}</p>
+                      <p className="text-sm text-brand-500 font-medium">{testimonial.role}</p>
                     </div>
                   </div>
                 </Card>
@@ -1122,7 +1122,7 @@ export const LandingPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="mt-32 border-t border-light-border dark:border-dark-border bg-gradient-to-b from-transparent via-primary/[0.03] to-primary/[0.05] backdrop-blur-3xl relative overflow-hidden">
+      <footer className="mt-32 border-t border-gray-200 dark:border-white/10 bg-gradient-to-b from-transparent via-brand-500/[0.03] to-primary/[0.05] backdrop-blur-3xl relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none" />
 
         <div className="max-w-[90rem] mx-auto px-8 py-24">
@@ -1135,13 +1135,13 @@ export const LandingPage: React.FC = () => {
               >
                 <div className="relative">
                   <AnimatedLogo size="lg" />
-                  <div className="absolute -inset-2 bg-primary/20 blur-xl opacity-0 group-hover/footer-logo:opacity-100 transition-opacity duration-500 -z-10" />
+                  <div className="absolute -inset-2 bg-brand-500/20 blur-xl opacity-0 group-hover/footer-logo:opacity-100 transition-opacity duration-500 -z-10" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white leading-none group-hover/footer-logo:text-primary transition-colors">
-                    GIGGLE<span className="text-primary group-hover/footer-logo:text-primary">ZEN</span>
+                  <span className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white leading-none group-hover/footer-logo:text-brand-500 transition-colors">
+                    GIGGLE<span className="text-brand-500 group-hover/footer-logo:text-brand-500">ZEN</span>
                   </span>
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 mt-1 leading-none">Technologies</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-500/60 mt-1 leading-none">Technologies</p>
                 </div>
               </div>
 
@@ -1163,7 +1163,7 @@ export const LandingPage: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ y: -4, scale: 1.1 }}
-                      className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-500 dark:text-muted hover:text-primary hover:border-primary/30 transition-all duration-300"
+                      className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-500 dark:text-muted hover:text-brand-500 hover:border-brand-500/30 transition-all duration-300"
                     >
                       <social.icon size={18} />
                     </motion.a>
@@ -1187,7 +1187,7 @@ export const LandingPage: React.FC = () => {
                   <li key={link.label}>
                     <button
                       onClick={() => scrollToFeature(link.featureId)}
-                      className="text-sm text-gray-600 dark:text-muted/70 hover:text-primary transition-all flex items-center group font-medium"
+                      className="text-sm text-gray-600 dark:text-muted/70 hover:text-brand-500 transition-all flex items-center group font-medium"
                     >
                       <ArrowRight size={14} className="mr-0 w-0 opacity-0 group-hover:mr-2 group-hover:w-3 group-hover:opacity-100 transition-all duration-300" />
                       {link.label}
@@ -1203,7 +1203,7 @@ export const LandingPage: React.FC = () => {
               <ul className="space-y-4">
                 {['About Us', 'Success Stories', 'Platform Updates', 'Partner Program', 'Security Trust', 'Career'].map((link) => (
                   <li key={link}>
-                    <a href="#" className="text-sm text-gray-600 dark:text-muted/70 hover:text-primary transition-all flex items-center group font-medium">
+                    <a href="#" className="text-sm text-gray-600 dark:text-muted/70 hover:text-brand-500 transition-all flex items-center group font-medium">
                       <ArrowRight size={14} className="mr-0 w-0 opacity-0 group-hover:mr-2 group-hover:w-3 group-hover:opacity-100 transition-all duration-300" />
                       {link}
                     </a>
@@ -1218,29 +1218,29 @@ export const LandingPage: React.FC = () => {
               <ul className="space-y-8">
                 <li>
                   <a href="mailto:support@WellZo.com" className="flex items-center gap-4 group">
-                    <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
+                    <div className="p-3.5 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-500 group-hover:bg-brand-500 group-hover:text-white transition-all duration-500 shadow-elev-1">
                       <Mail size={20} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-primary tracking-widest uppercase mb-0.5 opacity-60">Email Us</p>
-                      <p className="text-base text-gray-900 dark:text-white/90 font-semibold group-hover:text-primary transition-colors">info@WellZo.com</p>
+                      <p className="text-[10px] font-bold text-brand-500 tracking-widest uppercase mb-0.5 opacity-60">Email Us</p>
+                      <p className="text-base text-gray-900 dark:text-white/90 font-semibold group-hover:text-brand-500 transition-colors">info@WellZo.com</p>
                     </div>
                   </a>
                 </li>
                 <li>
                   <div className="flex items-center gap-4 group">
-                    <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500 shadow-sm">
+                    <div className="p-3.5 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-500 shadow-elev-1">
                       <Phone size={20} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-purple-500 tracking-widest uppercase mb-0.5 opacity-60">Call Sales</p>
+                      <p className="text-[10px] font-bold text-brand-500 tracking-widest uppercase mb-0.5 opacity-60">Call Sales</p>
                       <p className="text-base text-gray-900 dark:text-white/90 font-semibold">+91 7842238773</p>
                     </div>
                   </div>
                 </li>
                 <li>
                   <div className="flex items-center gap-4 group">
-                    <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-500 shadow-sm">
+                    <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-500 shadow-elev-1">
                       <MapPin size={20} />
                     </div>
                     <div>
@@ -1253,19 +1253,19 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-12 border-t border-light-border dark:border-dark-border flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="pt-12 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-4">
               <p className="text-xs text-gray-500 dark:text-muted/60 font-medium tracking-wide">
                 &copy; {new Date().getFullYear()} WellZo Technologies Pvt Ltd.
               </p>
-              <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-primary/20" />
-              <p className="hidden md:block text-[10px] text-primary font-bold uppercase tracking-widest opacity-40">Made with Precision</p>
+              <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-brand-500/20" />
+              <p className="hidden md:block text-[10px] text-brand-500 font-bold uppercase tracking-widest opacity-40">Made with Precision</p>
             </div>
 
             <div className="flex items-center gap-10">
               <div className="flex items-center gap-8">
                 {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link) => (
-                  <a key={link} href="#" className="text-xs text-gray-500 dark:text-muted hover:text-primary transition-all font-semibold border-b border-transparent hover:border-primary/30 pb-0.5">
+                  <a key={link} href="#" className="text-xs text-gray-500 dark:text-muted hover:text-brand-500 transition-all font-semibold border-b border-transparent hover:border-brand-500/30 pb-0.5">
                     {link}
                   </a>
                 ))}

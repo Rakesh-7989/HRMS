@@ -100,7 +100,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary-gradient text-white">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white">
                             <Building2 size={24} />
                         </div>
                         <DialogTitle>Edit Organization</DialogTitle>
@@ -117,7 +117,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 onInput={handleInput}
-                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                 placeholder="Acme Inc."
                                 disabled={initialDataLoading}
                             />
@@ -132,7 +132,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                     value={formik.values.phone}
                                     onChange={formik.handleChange}
                                     onInput={handleInput}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                     placeholder="+1 234 567 890"
                                     disabled={initialDataLoading}
                                 />
@@ -146,7 +146,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                     value={formik.values.email}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                     placeholder="admin@company.com"
                                     disabled={initialDataLoading}
                                 />
@@ -160,7 +160,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                 name="address"
                                 value={formik.values.address}
                                 onChange={formik.handleChange}
-                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                 placeholder="123 Main St"
                                 disabled={initialDataLoading}
                             />
@@ -173,7 +173,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                     name="city"
                                     value={formik.values.city}
                                     onChange={formik.handleChange}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                     disabled={initialDataLoading}
                                 />
                             </div>
@@ -183,7 +183,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                     name="state"
                                     value={formik.values.state}
                                     onChange={formik.handleChange}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                     disabled={initialDataLoading}
                                 />
                             </div>
@@ -193,7 +193,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                     name="country"
                                     value={formik.values.country}
                                     onChange={formik.handleChange}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                                     disabled={initialDataLoading}
                                 />
                             </div>

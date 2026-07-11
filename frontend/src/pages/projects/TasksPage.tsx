@@ -440,7 +440,7 @@ export const TasksPage: React.FC = () => {
                                 className={cn(
                                     "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
                                     activeTab === 'list'
-                                        ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+                                        ? "bg-white dark:bg-gray-900 text-brand-500 shadow-elev-1"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                                 )}
                             >
@@ -453,7 +453,7 @@ export const TasksPage: React.FC = () => {
                                     className={cn(
                                         "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
                                         activeTab === 'board'
-                                            ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+                                            ? "bg-white dark:bg-gray-900 text-brand-500 shadow-elev-1"
                                             : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                                     )}
                                 >
@@ -483,7 +483,7 @@ export const TasksPage: React.FC = () => {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as TaskStatus | 'All')}
-                            className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                         >
                             <option value="All">All Status</option>
                             {enabledColumns.length === 0 ? (
@@ -507,7 +507,7 @@ export const TasksPage: React.FC = () => {
                     <select
                         value={assigneeFilter}
                         onChange={(e) => setAssigneeFilter(e.target.value)}
-                        className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                     >
                         <option value="All">All Assignees</option>
                         {projectMembers.length === 0 ? (
@@ -603,7 +603,7 @@ export const TasksPage: React.FC = () => {
                                                                     {task.assignees.slice(0, 3).map((assignee, idx) => (
                                                                         <div
                                                                             key={assignee.id}
-                                                                            className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold border-2 border-white dark:border-gray-900"
+                                                                            className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold border-2 border-white dark:border-gray-900"
                                                                             title={`${assignee.first_name} ${assignee.last_name}`}
                                                                             style={{ zIndex: 3 - idx }}
                                                                         >
@@ -624,7 +624,7 @@ export const TasksPage: React.FC = () => {
                                                             </div>
                                                         ) : task.assignee ? (
                                                             <div className="flex items-center gap-2">
-                                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold">
+                                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold">
                                                                     {task.assignee.first_name.charAt(0)}{task.assignee.last_name?.charAt(0)}
                                                                 </div>
                                                                 <span>{task.assignee.first_name} {task.assignee.last_name}</span>
@@ -659,7 +659,7 @@ export const TasksPage: React.FC = () => {
                                                                 }
                                                                 return true;
                                                             })()}
-                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="h-8 rounded text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-brand-500/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             {enabledColumns.length === 0 ? (
@@ -683,7 +683,7 @@ export const TasksPage: React.FC = () => {
                                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                                 <button
                                                                     onClick={() => handleOpenEditModal(task)}
-                                                                    className="p-2 text-gray-400 hover:text-violet-500 transition-colors"
+                                                                    className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                     title="Edit Task"
                                                                 >
                                                                     <Edit size={16} />
@@ -781,7 +781,7 @@ export const TasksPage: React.FC = () => {
                                         id="priority"
                                         value={formData.priority}
                                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                                        className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     >
                                         <option value="LOW">Low</option>
                                         <option value="MEDIUM">Medium</option>
@@ -796,7 +796,7 @@ export const TasksPage: React.FC = () => {
                                         id="column_key"
                                         value={formData.column_key}
                                         onChange={(e) => setFormData({ ...formData, column_key: e.target.value as TaskStatus })}
-                                        className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     >
                                         {enabledColumns.length === 0 ? (
                                             <>
@@ -822,7 +822,7 @@ export const TasksPage: React.FC = () => {
                                     id="description"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     placeholder="Task details..."
                                 />
                             </div>
@@ -906,7 +906,7 @@ export const TasksPage: React.FC = () => {
                                         value={editFormData.description}
                                         onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                                         placeholder="Enter task description"
-                                        className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm"
+                                        className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 shadow-elev-1"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -916,7 +916,7 @@ export const TasksPage: React.FC = () => {
                                             id="edit_priority"
                                             value={editFormData.priority}
                                             onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value as TaskPriority })}
-                                            className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm"
+                                            className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 shadow-elev-1"
                                         >
                                             <option value="LOW">Low</option>
                                             <option value="MEDIUM">Medium</option>

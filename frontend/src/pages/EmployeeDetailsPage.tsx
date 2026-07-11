@@ -198,7 +198,7 @@ export const EmployeeDetailsPage: React.FC = () => {
         return (
             <DashboardLayout title={t('employees.employeeDetails')}>
                 <div className="h-64 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                 </div>
             </DashboardLayout>
         );
@@ -243,8 +243,8 @@ export const EmployeeDetailsPage: React.FC = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className={cn(
-                                'w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg',
-                                isTerminated ? 'bg-gray-400' : 'bg-gradient-to-br from-primary to-primary-dark'
+                                'w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-elev-4',
+                                isTerminated ? 'bg-gray-400' : 'bg-gradient-to-br from-brand-500 to-brand-500-dark'
                             )}>
                                 {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
                             </div>
@@ -256,8 +256,8 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className={cn(
                                         'px-3 py-1 rounded-full text-xs font-medium',
-                                        employee.role === 'ADMIN' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                                        employee.role === 'HR' && 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+                                        employee.role === 'ADMIN' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
+                                        employee.role === 'HR' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
                                         employee.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
                                         employee.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
                                     )}>
@@ -342,7 +342,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                             className={cn(
                                 'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
                                 activeTab === tab.id
-                                    ? 'border-primary text-primary'
+                                    ? 'border-brand-500 text-brand-500'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             )}
                         >
@@ -543,7 +543,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 value={terminateData.termination_date}
                                 onChange={(e) => setTerminateData({ ...terminateData, termination_date: e.target.value })}
                                 required
-                                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
+                                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50"
                             />
                         </div>
 
@@ -555,7 +555,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                                 value={terminateData.termination_reason}
                                 onChange={(e) => setTerminateData({ ...terminateData, termination_reason: e.target.value })}
                                 rows={3}
-                                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary"
+                                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50"
                                 placeholder="Optional reason for termination..."
                             />
                         </div>
@@ -618,7 +618,7 @@ const SensitiveInfoRow: React.FC<{
                 <div className="flex items-center gap-2">
                     <p className={cn(
                         "text-gray-900 dark:text-white font-mono",
-                        isRevealed && "text-primary font-semibold"
+                        isRevealed && "text-brand-500 font-semibold"
                     )}>
                         {displayValue}
                     </p>
@@ -628,7 +628,7 @@ const SensitiveInfoRow: React.FC<{
                             disabled={isLoading}
                             className={cn(
                                 "p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700",
-                                isRevealed ? "text-primary" : "text-gray-400 hover:text-gray-600"
+                                isRevealed ? "text-brand-500" : "text-gray-400 hover:text-gray-600"
                             )}
                             title={isRevealed ? 'Hide' : 'Reveal (audit-logged)'}
                         >

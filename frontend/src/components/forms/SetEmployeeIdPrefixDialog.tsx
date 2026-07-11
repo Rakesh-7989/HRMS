@@ -59,16 +59,16 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
         >
             <form onSubmit={handleSubmit} className="p-1 space-y-5">
                 {/* Info Banner */}
-                <div className="p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl">
+                <div className="p-3 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-800 rounded-2xl">
                     <div className="flex gap-3">
-                        <div className="w-10 h-10 bg-violet-100 dark:bg-violet-500/20 rounded-xl flex items-center justify-center shrink-0">
-                            <Info className="h-5 w-5 text-violet-500" />
+                        <div className="w-10 h-10 bg-brand-100 dark:bg-brand-500/20 rounded-xl flex items-center justify-center shrink-0">
+                            <Info className="h-5 w-5 text-brand-500" />
                         </div>
                         <div>
-                            <p className="text-sm text-violet-700 dark:text-violet-300 font-bold uppercase tracking-wider text-[10px]">
+                            <p className="text-sm text-brand-600 dark:text-brand-300 font-bold uppercase tracking-wider text-[10px]">
                                 One-time Configuration
                             </p>
-                            <p className="text-xs text-violet-600 dark:text-violet-400 mt-0.5 font-medium leading-relaxed">
+                            <p className="text-xs text-brand-600 dark:text-brand-400 mt-0.5 font-medium leading-relaxed">
                                 IDs will auto-increment (e.g., {prefix || 'EMP'}001, {prefix || 'EMP'}002...)
                             </p>
                         </div>
@@ -77,16 +77,16 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
 
                 {/* Error */}
                 {error && (
-                    <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50 rounded-xl flex items-start gap-2 animate-shake">
-                        <AlertCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                        <p className="text-[12px] text-rose-700 dark:text-rose-400 font-medium">{error}</p>
+                    <div className="p-3 bg-error-50 dark:bg-error-500/10 border border-error-200 dark:border-error-800/50 rounded-xl flex items-start gap-2 animate-shake">
+                        <AlertCircle className="h-4 w-4 text-error-500 shrink-0 mt-0.5" />
+                        <p className="text-[12px] text-error-600 dark:text-error-400 font-medium">{error}</p>
                     </div>
                 )}
 
                 {/* Input */}
                 <div className="space-y-1.5">
                     <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                        Prefix <span className="text-rose-500">*</span>
+                        Prefix <span className="text-error-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -101,7 +101,7 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                         placeholder="e.g., AM, EMP, GZ"
                         maxLength={5}
                         autoFocus
-                        className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary text-xl uppercase font-black tracking-[0.2em] transition-all shadow-sm"
+                        className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 text-xl uppercase font-black tracking-[0.2em] transition-all shadow-elev-1"
                     />
                     <p className="text-[9px] text-gray-400 font-medium ml-1">Must be 2-5 uppercase characters</p>
                 </div>
@@ -113,7 +113,7 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                         {[1, 2, 3, 10].map((num) => (
                             <span
                                 key={num}
-                                className="px-3 py-1.5 bg-white dark:bg-gray-800 text-primary border border-primary/10 dark:border-primary/20 rounded-xl font-black text-xs shadow-sm"
+                                className="px-3 py-1.5 bg-white dark:bg-gray-800 text-brand-500 border border-brand-500/10 dark:border-brand-500/20 rounded-xl font-black text-xs shadow-elev-1"
                             >
                                 {prefix || 'XX'}{String(num).padStart(3, '0')}
                             </span>
@@ -136,7 +136,7 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                         variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={mutation.isPending}
-                        className="rounded-2xl border-slate-200 dark:border-white/10 text-slate-500 font-bold"
+                        className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold"
                     >
                         Cancel
                     </Button>
@@ -144,7 +144,7 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                         type="submit"
                         disabled={!prefix || prefix.length < 2 || mutation.isPending}
                         isLoading={mutation.isPending}
-                        className="rounded-2xl bg-primary text-white font-bold min-w-[140px]"
+                        className="rounded-2xl bg-brand-500 text-white font-bold min-w-[140px]"
                     >
                         Set Prefix
                     </Button>

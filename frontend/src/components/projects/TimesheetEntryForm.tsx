@@ -75,9 +75,9 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
     };
 
     return (
-        <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
+        <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
             <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center">
                     <Clock size={24} className="stroke-[2.5px]" />
                 </div>
                 <div>
@@ -98,7 +98,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                     setProjectId(e.target.value);
                                     setTaskId('');
                                 }}
-                                className="w-full h-11 pl-10 pr-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer shadow-sm text-gray-700 dark:text-gray-200"
+                                className="w-full h-11 pl-10 pr-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer shadow-elev-1 text-gray-700 dark:text-gray-200"
                                 required
                             >
                                 <option value="">Select Project</option>
@@ -106,7 +106,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-brand-500 transition-colors">
                                 <Briefcase size={16} />
                             </div>
                         </div>
@@ -120,7 +120,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                 value={taskId}
                                 onChange={(e) => setTaskId(e.target.value)}
                                 className={cn(
-                                    "w-full h-11 pl-10 pr-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer shadow-sm text-gray-700 dark:text-gray-200",
+                                    "w-full h-11 pl-10 pr-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer shadow-elev-1 text-gray-700 dark:text-gray-200",
                                     !projectId && "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-900/50"
                                 )}
                                 required
@@ -131,7 +131,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                     <option key={t.id} value={t.id}>{t.title}</option>
                                 ))}
                             </select>
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-brand-500 transition-colors">
                                 <ListTodo size={16} />
                             </div>
                         </div>
@@ -146,10 +146,10 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                 type="date"
                                 value={workDate}
                                 onChange={(e) => setWorkDate(e.target.value)}
-                                className="h-11 pl-10 pr-4 font-bold bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+                                className="h-11 pl-10 pr-4 font-bold bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-elev-1"
                                 required
                             />
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors pointer-events-none">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-brand-500 transition-colors pointer-events-none">
                                 <Calendar size={16} />
                             </div>
                         </div>
@@ -167,10 +167,10 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                                 value={hours}
                                 onChange={(e) => setHours(e.target.value)}
                                 placeholder="e.g. 8.0"
-                                className="h-11 pl-10 pr-12 font-black bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+                                className="h-11 pl-10 pr-12 font-black bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-elev-1"
                                 required
                             />
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors pointer-events-none">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-brand-500 transition-colors pointer-events-none">
                                 <Clock size={16} />
                             </div>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-gray-400 uppercase">Hrs</div>
@@ -182,7 +182,7 @@ export const TimesheetEntryForm: React.FC<TimesheetEntryFormProps> = ({ onSucces
                     <Button
                         type="submit"
                         isLoading={isSubmitting}
-                        className="h-11 px-10 bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-primary/90 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-3"
+                        className="h-11 px-10 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-elev-4 transition-all active:scale-[0.98] flex items-center gap-3"
                     >
                         {isSubmitting ? (
                             <Loader2 className="animate-spin" size={16} />

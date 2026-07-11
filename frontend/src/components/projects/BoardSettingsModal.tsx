@@ -73,7 +73,7 @@ export const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({
                                         type="checkbox"
                                         checked={item.isVisible}
                                         onChange={() => handleVisibilityToggle(item.id)}
-                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                         title="Toggle visibility"
                                     />
 

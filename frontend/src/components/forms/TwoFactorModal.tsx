@@ -121,7 +121,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
                         <X size={20} />
                     </button>
                     <DialogTitle className="flex items-center gap-2">
-                        <Shield className="text-primary" size={20} />
+                        <Shield className="text-brand-500" size={20} />
                         Two-Factor Authentication
                     </DialogTitle>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -140,7 +140,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
                                         <img src={qrCode} alt="QR Code" className="w-48 h-48" />
                                     ) : (
                                         <div className="w-48 h-48 flex items-center justify-center bg-gray-50">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                                         </div>
                                     )}
                                 </div>
@@ -202,9 +202,9 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
 
                     {step === 'recovery' && (
                         <div className="space-y-4">
-                            <div className="p-4 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded-xl border border-fuchsia-100 dark:border-fuchsia-800 flex gap-3">
-                                <AlertTriangle className="text-fuchsia-600 shrink-0" size={20} />
-                                <p className="text-xs text-fuchsia-800 dark:text-fuchsia-300">
+                            <div className="p-4 bg-coral-50 dark:bg-coral-500/10 rounded-xl border border-coral-100 dark:border-coral-800 flex gap-3">
+                                <AlertTriangle className="text-coral-600 shrink-0" size={20} />
+                                <p className="text-xs text-coral-700 dark:text-coral-300">
                                     Save these recovery codes in a safe place. They are the <b>only way</b> to access your account if you lose your device.
                                 </p>
                             </div>

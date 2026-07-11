@@ -7,7 +7,7 @@ import { TimesheetDashboardCharts, TimesheetDashboardBreakdown } from '@/types/p
 // --- Components ---
 
 const TaskList: React.FC<{ taskTypes: TimesheetDashboardBreakdown['task_types'] }> = ({ taskTypes }) => (
-    <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border h-full">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-elev-1 border border-gray-100 dark:border-white/10 h-full">
         <div className="flex items-center gap-2 mb-6">
             <h3 className="font-bold text-gray-800 dark:text-gray-200">Task types</h3>
             <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{taskTypes.length}</span>
@@ -26,7 +26,7 @@ const TaskList: React.FC<{ taskTypes: TimesheetDashboardBreakdown['task_types'] 
             {taskTypes.map((task, i) => (
                 <li key={i} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-2 h-2 rounded-full ring-2 ring-white shadow-sm", task.color)} />
+                        <div className={cn("w-2 h-2 rounded-full ring-2 ring-white shadow-elev-1", task.color)} />
                         <span className="text-gray-600 dark:text-gray-300 font-medium">{task.name}</span>
                     </div>
                     <span className="text-gray-400 font-medium">{task.time}</span>
@@ -37,7 +37,7 @@ const TaskList: React.FC<{ taskTypes: TimesheetDashboardBreakdown['task_types'] 
 );
 
 const ProjectsList: React.FC<{ projects: TimesheetDashboardBreakdown['projects'] }> = ({ projects }) => (
-    <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border h-full">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-elev-1 border border-gray-100 dark:border-white/10 h-full">
         <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-800 dark:text-gray-200">Projects</h3>
@@ -67,13 +67,13 @@ const ProjectsList: React.FC<{ projects: TimesheetDashboardBreakdown['projects']
             ))}
         </ul>
         <div className="mt-4 text-center">
-            <button className="text-purple-600 dark:text-purple-400 text-xs font-bold border-b border-dashed border-purple-300 dark:border-purple-500 pb-0.5 hover:text-purple-700 dark:hover:text-purple-300">Show more</button>
+            <button className="text-brand-600 dark:text-brand-400 text-xs font-bold border-b border-dashed border-brand-300 dark:border-brand-500 pb-0.5 hover:text-brand-600 dark:hover:text-purple-300">Show more</button>
         </div>
     </div>
 );
 
 const MainChart: React.FC<{ data: TimesheetDashboardCharts['time_logged'] }> = ({ data }) => (
-    <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-elev-1 border border-gray-100 dark:border-white/10 h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-gray-800 dark:text-gray-200">Time logged</h3>
             <span className="text-xs font-medium text-gray-400">Last 7 days</span>

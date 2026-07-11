@@ -174,19 +174,19 @@ export const ProjectReportsPage: React.FC = () => {
                         <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                             <button
                                 onClick={() => setActiveTab('project')}
-                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'project' ? "bg-white dark:bg-gray-900 shadow text-primary" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
+                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'project' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Project Report
                             </button>
                             <button
                                 onClick={() => setActiveTab('client')}
-                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'client' ? "bg-white dark:bg-gray-900 shadow text-primary" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
+                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'client' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Client Report
                             </button>
                             <button
                                 onClick={() => setActiveTab('utilization')}
-                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'utilization' ? "bg-white dark:bg-gray-900 shadow text-primary" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
+                                className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'utilization' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Utilization Report
                             </button>
@@ -242,8 +242,8 @@ export const ProjectReportsPage: React.FC = () => {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-violet-600" />
+                                        <div className="p-3 bg-brand-100 dark:bg-brand-500/10 rounded-full">
+                                            <Calendar className="h-6 w-6 text-brand-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>
@@ -251,8 +251,8 @@ export const ProjectReportsPage: React.FC = () => {
                                         </div>
                                     </Card>
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
-                                            <Users className="h-6 w-6 text-purple-600" />
+                                        <div className="p-3 bg-brand-100 dark:bg-brand-500/10 rounded-full">
+                                            <Users className="h-6 w-6 text-brand-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Timesheets</p>
@@ -280,8 +280,8 @@ export const ProjectReportsPage: React.FC = () => {
                                         </div>
                                     </Card>
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-violet-100 dark:bg-violet-900/20 rounded-full">
-                                            <Calendar className="h-6 w-6 text-violet-600" />
+                                        <div className="p-3 bg-brand-100 dark:bg-brand-500/10 rounded-full">
+                                            <Calendar className="h-6 w-6 text-brand-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Hours</p>
@@ -289,8 +289,8 @@ export const ProjectReportsPage: React.FC = () => {
                                         </div>
                                     </Card>
                                     <Card className="p-6 flex items-center gap-4">
-                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
-                                            <Users className="h-6 w-6 text-purple-600" />
+                                        <div className="p-3 bg-brand-100 dark:bg-brand-500/10 rounded-full">
+                                            <Users className="h-6 w-6 text-brand-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-500">Total Timesheets</p>
@@ -332,7 +332,7 @@ export const ProjectReportsPage: React.FC = () => {
                                             <TableRow key={emp.id}>
                                                 <TableCell className="font-medium">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-[10px] text-white font-bold">
+                                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold">
                                                             {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
                                                         </div>
                                                         {emp.first_name} {emp.last_name}

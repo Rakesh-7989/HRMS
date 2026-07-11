@@ -22,9 +22,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps & { className?: string }> 
 
     const getStatusColor = (status: TaskStatus) => {
         switch (status) {
-            case 'TODO': return 'bg-slate-500';
-            case 'IN_PROGRESS': return 'bg-violet-500';
-            case 'REVIEW': return 'bg-purple-500';
+            case 'TODO': return 'bg-neutral-500';
+            case 'IN_PROGRESS': return 'bg-brand-500';
+            case 'REVIEW': return 'bg-brand-500';
             case 'DONE': return 'bg-green-500';
             default: return 'bg-gray-500';
         }

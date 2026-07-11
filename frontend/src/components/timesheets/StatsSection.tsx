@@ -13,8 +13,8 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPrimary }) => {
     return (
         <div className={cn(
-            "p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-32 relative overflow-hidden transition-all hover:shadow-md dark:border-dark-border",
-            isPrimary ? "bg-gradient-to-br from-purple-600 to-purple-400 text-white border-none shadow-purple-200" : "bg-white text-gray-800 dark:bg-dark-card dark:text-white"
+            "p-6 rounded-2xl shadow-elev-1 border border-gray-100 flex flex-col justify-between h-32 relative overflow-hidden transition-all hover:shadow-elev-3 dark:border-white/10",
+            isPrimary ? "bg-gradient-to-br from-brand-600 to-purple-400 text-white border-none shadow-brand-200" : "bg-white text-gray-800 dark:bg-gray-900 dark:text-white"
         )}>
             {isPrimary && (
                 <div className="absolute -right-4 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -38,7 +38,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPrimary }) 
 
             <p className={cn(
                 "font-medium text-sm relative z-10",
-                isPrimary ? "text-purple-100" : "text-gray-400 dark:text-gray-400"
+                isPrimary ? "text-brand-100" : "text-gray-400 dark:text-gray-400"
             )}>{title}</p>
         </div>
     );

@@ -34,7 +34,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
                 case 'PLANNING':
                     return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
                 case 'ACTIVE':
-                    return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400';
+                    return 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400';
                 case 'ON_HOLD':
                     return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
                 case 'COMPLETED':
@@ -52,9 +52,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
                 case 'TODO':
                     return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
                 case 'IN_PROGRESS':
-                    return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400';
+                    return 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400';
                 case 'REVIEW':
-                    return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+                    return 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400';
                 case 'DONE':
                     return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
                 default:
@@ -68,7 +68,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
                 case 'LOW':
                     return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
                 case 'MEDIUM':
-                    return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400';
+                    return 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400';
                 case 'HIGH':
                     return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
                 case 'URGENT':
@@ -84,9 +84,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
                 case 'DRAFT':
                     return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700';
                 case 'SUBMITTED':
-                    return 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-400 border-fuchsia-100 dark:border-fuchsia-900/30';
+                    return 'bg-coral-50 text-coral-600 dark:bg-coral-500/10 dark:text-coral-400 border-coral-100 dark:border-coral-500/20';
                 case 'APPROVED':
-                    return 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 border-purple-100 dark:border-purple-900/30';
+                    return 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 border-brand-100 dark:border-brand-500/20';
                 case 'REJECTED':
                     return 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border-red-100 dark:border-red-900/30';
                 default:
@@ -104,7 +104,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, classNam
     return (
         <span
             className={cn(
-                'inline-flex items-center px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] border shadow-sm transition-all',
+                'inline-flex items-center px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] border shadow-elev-1 transition-all',
                 getStatusStyles(),
                 className
             )}
