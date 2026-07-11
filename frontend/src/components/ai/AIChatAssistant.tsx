@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { aiService, AIChatMessage } from '@/services/ai.service';
 import { MessageSquare, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export const AIChatAssistant: React.FC = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<AIChatMessage[]>([
-    { role: 'assistant', content: "Hi! I'm your AI HR assistant. Ask me anything about HR policies, employee queries, or best practices.", timestamp: new Date() },
+    { role: 'assistant', content: t('ai.greeting'), timestamp: new Date() },
   ]);
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,7 @@ export const AIChatAssistant: React.FC = () => {
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-500 to-brand-600">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-white" />
-              <span className="text-sm font-bold text-white">AI HR Assistant</span>
+              <span className="text-sm font-bold text-white">{t('ai.chatAssistant')}</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10">
               <X size={16} className="text-white" />
@@ -84,7 +86,7 @@ export const AIChatAssistant: React.FC = () => {
           <div className="p-3 border-t border-neutral-100 dark:border-neutral-700">
             <div className="flex items-center gap-2">
               <input
-                placeholder="Ask anything HR..."
+                placeholder={t('ai.placeholder')}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -99,7 +101,7 @@ export const AIChatAssistant: React.FC = () => {
               </button>
             </div>
             <p className="text-[10px] text-neutral-400 mt-1.5 text-center">
-              Responses are AI-generated. Verify critical info with HR.
+              {t('ai.disclaimer')}
             </p>
           </div>
         </div>

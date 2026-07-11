@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { complianceService, ComplianceReport } from '@/services/compliance.service';
 import { Card } from '@/components/ui/Card';
@@ -8,10 +9,10 @@ import { Download, RefreshCw, Loader2, FileText } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  GENERATING: { label: 'Generating...', color: 'bg-amber-100 text-amber-700' },
-  READY: { label: 'Ready', color: 'bg-success-100 text-success-700' },
-  FAILED: { label: 'Failed', color: 'bg-error-100 text-error-500' },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  GENERATING: { labelKey: 'compliance.generating', color: 'bg-amber-100 text-amber-700' },
+  READY: { labelKey: 'compliance.ready', color: 'bg-success-100 text-success-700' },
+  FAILED: { labelKey: 'compliance.failed', color: 'bg-error-100 text-error-500' },
 };
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: Icon, color }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -49,7 +51,7 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      toast.error('Download failed');
+      toast.error(t('compliance.downloadFailed'));
     }
   };
 
@@ -63,7 +65,7 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
             </div>
             <div>
               <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{title}</h2>
-              <p className="text-xs text-neutral-400">Generate and download compliance returns</p>
+              <p className="text-xs text-neutral-400">{t('compliance.description')}</p>
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -78,7 +80,7 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
               {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <Button size="sm" onClick={() => generateMutation.mutate()} className="gap-2">
-              <RefreshCw size={14} /> Generate
+              <RefreshCw size={14} /> {t('compliance.generate')}
             </Button>
           </div>
         </div>
@@ -96,14 +98,14 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
                   <div>
                     <p className="font-semibold text-neutral-900 dark:text-white text-sm">{report.title}</p>
                     <p className="text-xs text-neutral-400">
-                      {report.employee_count} employees · {new Date(report.generated_at).toLocaleDateString()}
+                      {report.employee_count} {t('compliance.employees')} · {new Date(report.generated_at).toLocaleDateString()}
                       {report.total_amount ? ` · ₹${report.total_amount.toLocaleString()}` : ''}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[report.status]?.color)}>
-                    {statusConfig[report.status]?.label || report.status}
+                    {t(statusConfig[report.status]?.labelKey || 'compliance.generating') || report.status}
                   </span>
                   {report.status === 'READY' && (
                     <button onClick={() => handleDownload(report.id)}
@@ -117,8 +119,8 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
             {(!reports || reports.length === 0) && (
               <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
                 <FileText className="w-12 h-12 mb-3 opacity-40" />
-                <p className="font-medium">No {title} reports yet</p>
-                <p className="text-sm">Generate your first report for {month}/{year}</p>
+<p className="font-medium">{t('compliance.noReportsYet')}</p>
+              <p className="text-sm">{t('compliance.generateFirstReport', { month, year })}</p>
               </div>
             )}
           </div>

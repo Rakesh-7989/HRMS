@@ -1282,8 +1282,11 @@
         "resumeParserDesc": "Extract key information from resumes automatically",
         "sentimentAnalysis": "Sentiment Analysis",
         "sentimentAnalysisDesc": "Analyze employee feedback for sentiment and trends",
-        "chatAssistant": "Chat Assistant",
-        "chatAssistantDesc": "Get instant answers to HR questions with AI"
+        "chatAssistant": "AI HR Assistant",
+        "chatAssistantDesc": "Get instant answers to HR questions with AI",
+        "greeting": "Hi! I'm your AI HR assistant. Ask me anything about HR policies, employee queries, or best practices.",
+        "placeholder": "Ask anything HR...",
+        "disclaimer": "Responses are AI-generated. Verify critical info with HR."
     },
     "features": {
         "title": "Features"

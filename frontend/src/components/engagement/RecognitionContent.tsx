@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { engagementService } from '@/services/engagement.service';
 import { Card } from '@/components/ui/Card';
@@ -7,16 +8,17 @@ import { PageTransition } from '@/components/common/PageTransition';
 import { Award, Plus, Heart, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
-const categoryConfig: Record<string, { label: string; icon: string; color: string }> = {
-  VALUES: { label: 'Values', icon: '⭐', color: 'bg-amber-100 text-amber-700' },
-  HELPING: { label: 'Helping Hand', icon: '🤝', color: 'bg-blue-100 text-blue-700' },
-  INNOVATION: { label: 'Innovation', icon: '💡', color: 'bg-brand-100 text-brand-700' },
-  LEADERSHIP: { label: 'Leadership', icon: '👑', color: 'bg-coral-100 text-coral-700' },
-  CUSTOMER: { label: 'Customer Focus', icon: '🎯', color: 'bg-teal-100 text-teal-700' },
-  TEAMWORK: { label: 'Teamwork', icon: '🤗', color: 'bg-success-100 text-success-700' },
+const categoryConfig: Record<string, { labelKey: string; icon: string; color: string }> = {
+  VALUES: { labelKey: 'engagement.values', icon: '⭐', color: 'bg-amber-100 text-amber-700' },
+  HELPING: { labelKey: 'engagement.helpingHand', icon: '🤝', color: 'bg-blue-100 text-blue-700' },
+  INNOVATION: { labelKey: 'engagement.innovation', icon: '💡', color: 'bg-brand-100 text-brand-700' },
+  LEADERSHIP: { labelKey: 'engagement.leadership', icon: '👑', color: 'bg-coral-100 text-coral-700' },
+  CUSTOMER: { labelKey: 'engagement.customerFocus', icon: '🎯', color: 'bg-teal-100 text-teal-700' },
+  TEAMWORK: { labelKey: 'engagement.teamwork', icon: '🤗', color: 'bg-success-100 text-success-700' },
 };
 
 export const RecognitionContent: React.FC = () => {
+  const { t } = useTranslation();
   const { data: recognitions, isLoading } = useQuery({
     queryKey: ['engagement-recognition'],
     queryFn: () => engagementService.getRecognition().then(r => r.data),
@@ -28,8 +30,8 @@ export const RecognitionContent: React.FC = () => {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Peer Recognition</h2>
-          <Button size="sm" className="gap-2"><Heart size={16} /> Send Recognition</Button>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{t('engagement.peerRecognition')}</h2>
+          <Button size="sm" className="gap-2"><Heart size={16} /> {t('engagement.sendRecognition')}</Button>
         </div>
         <div className="space-y-3">
           {recognitions?.map(r => (
@@ -48,7 +50,7 @@ export const RecognitionContent: React.FC = () => {
                       {r.to_employee?.first_name} {r.to_employee?.last_name}
                     </span>
                     <span className={cn('px-2 py-0.5 rounded-lg text-[10px] font-bold', categoryConfig[r.category]?.color)}>
-                      {categoryConfig[r.category]?.label || r.category}
+                      {t(categoryConfig[r.category]?.labelKey) || r.category}
                     </span>
                   </div>
                   <p className="text-sm text-neutral-600 dark:text-neutral-300">"{r.message}"</p>
@@ -60,8 +62,8 @@ export const RecognitionContent: React.FC = () => {
           {(!recognitions || recognitions.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
               <Award className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No recognition yet</p>
-              <p className="text-sm">Recognize your colleagues for their contributions</p>
+              <p className="font-medium">{t('engagement.noRecognitionYet')}</p>
+              <p className="text-sm">{t('engagement.recognizeColleagues')}</p>
             </div>
           )}
         </div>
