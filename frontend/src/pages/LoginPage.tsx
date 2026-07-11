@@ -14,6 +14,7 @@ import { authService } from '@/services/auth.service';
 import { Shield } from 'lucide-react';
 import { usersService } from '@/services/users.service';
 import { ROLE_DASHBOARDS } from '@/utils/constants';
+import { showToast } from '@/utils/toast';
 
 import { useTranslation } from 'react-i18next';
 
@@ -63,6 +64,8 @@ export const LoginPage: React.FC = () => {
         if (res?.status === '2FA_REQUIRED') {
           setTwoFactorRequired(true);
           setPreAuthToken(res.preAuthToken);
+        } else {
+          showToast.success(t('common.loginSuccess'));
         }
       } catch (err: any) {
         // Check for payment pending response
@@ -121,6 +124,7 @@ export const LoginPage: React.FC = () => {
       setUser(user);
 
       const dashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
+      showToast.success(t('common.loginSuccess'));
       window.location.href = dashboard; // Force redirect to ensure state is clean
     } catch (err: any) {
       setError(err.response?.data?.message || t('auth.verificationFailed'));

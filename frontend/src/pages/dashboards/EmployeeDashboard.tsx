@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { showToast } from '@/utils/toast';
 
 const STATUS_COLORS: Record<string, string> = {
   DONE: '#10b981',
@@ -179,10 +180,11 @@ export const EmployeeDashboard: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      showToast.success(t('attendance.clockedIn'));
     },
     onError: (error: any) => {
       const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || t('attendance.failedClockIn'));
+      showToast.error(serverMessage || t('attendance.failedClockIn'));
     },
   });
 
@@ -191,10 +193,11 @@ export const EmployeeDashboard: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'personal'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      showToast.success(t('attendance.clockedOut'));
     },
     onError: (error: any) => {
       const serverMessage = error.response?.data?.message || error.message || '';
-      alert(serverMessage || t('attendance.failedClockOut'));
+      showToast.error(serverMessage || t('attendance.failedClockOut'));
     },
   });
 
