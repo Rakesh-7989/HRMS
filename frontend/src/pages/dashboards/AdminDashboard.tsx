@@ -116,7 +116,7 @@ const StatCard = ({
               </div>
             )}
           </div>
-          <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em]">{title}</p>
         </div>
       </div>
     </motion.div>
@@ -146,7 +146,7 @@ const ChartCard = ({
         {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
       </div>
       {badge && (
-        <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+        <span className="shrink-0 px-3 py-1.5 rounded-full text-sm font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
           {badge}
         </span>
       )}
@@ -313,10 +313,10 @@ export const AdminDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-2"
               >
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest leading-none">
-                  {getGreeting(user?.timezone)}
-                </span>
+<Sparkles className="w-5 h-5 text-amber-500" />
+              <span className="text-slate-400 dark:text-slate-500 text-sm font-black uppercase tracking-widest leading-none">
+                {getGreeting(user?.timezone)}
+              </span>
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
                 {t('common.welcomeBack')}, {user?.first_name}!
@@ -334,11 +334,11 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="text-center px-4 border-r border-neutral-200 dark:border-white/10">
                 <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
+                <p className="text-sm text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
               </div>
               <div className="text-center px-4">
                 <p className="text-2xl md:text-3xl font-black text-brand-600 leading-none">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                <p className="text-sm text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
               </div>
             </motion.div>
           </div>

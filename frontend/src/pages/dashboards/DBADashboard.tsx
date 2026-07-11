@@ -127,14 +127,14 @@ export const DBADashboard = () => {
                         </div>
                     </div>
                     <h2 className="text-2xl font-bold text-center text-white mb-2">Restricted Access</h2>
-                    <p className="text-gray-400 text-center mb-8 text-sm">
+                    <p className="text-gray-400 text-center mb-8 text-base">
                         This is a restricted area for Database Administrators only.
                         Please verify your identity to continue.
                     </p>
 
                     <form onSubmit={handleUnlock} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                            <label className="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">
                                 DBA Password
                             </label>
                             <input

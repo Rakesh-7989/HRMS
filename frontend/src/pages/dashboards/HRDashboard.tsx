@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-elev-6 border border-gray-700 min-w-[140px]">
-        <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-extrabold border-b border-gray-700 pb-1">{label}</p>
+        <p className="text-sm text-gray-400 mb-2 uppercase tracking-wider font-extrabold border-b border-gray-700 pb-1">{label}</p>
         {payload.map((entry: any, index: number) => {
           const isUtilization = entry.dataKey === 'value' && entry.payload.count !== undefined;
           return (
@@ -198,7 +198,7 @@ const ChartCard = ({
       <div className="flex items-center gap-3">
         {headerAction}
         {badge && (
-          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+          <span className="px-3 py-1.5 rounded-full text-sm font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
             {badge}
           </span>
         )}

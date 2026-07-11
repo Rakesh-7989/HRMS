@@ -68,7 +68,7 @@ const ChartCard = ({
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 md:gap-0">
       <div className="w-full md:w-auto">
         <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight break-words">{title}</h3>
-        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">{subtitle}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-start sm:justify-end">
         {headerAction}
@@ -92,9 +92,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div key={index} className="flex items-center justify-between gap-4 py-1">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-              <span className="text-xs font-medium text-slate-300">{entry.name}</span>
+              <span className="text-sm font-medium text-slate-300">{entry.name}</span>
             </div>
-            <span className="text-xs font-black">{entry.value}</span>
+            <span className="text-sm font-black">{entry.value}</span>
           </div>
         ))}
       </div>
@@ -181,7 +181,7 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-slate-900 dark:text-white text-sm break-words leading-tight">{member.first_name} {member.last_name}</h4>
+          <h4 className="font-black text-slate-900 dark:text-white text-base break-words leading-tight">{member.first_name} {member.last_name}</h4>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation || t('common.teamMember')}</p>
         </div>
       </div>
@@ -764,10 +764,10 @@ export const ManagerDashboard: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-2 mb-1"
               >
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
-                  {greeting}
-                </span>
+<Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-slate-400 dark:text-slate-500 text-sm font-black uppercase tracking-widest">
+                {greeting}
+              </span>
               </motion.div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
                 {t('common.welcomeBack')}, {user?.first_name}!
@@ -790,11 +790,11 @@ export const ManagerDashboard: React.FC = () => {
               >
                 <div className="text-center px-3 border-r border-neutral-200 dark:border-white/10 min-w-[50px]">
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-3 min-w-[50px]">
                   <p className="text-2xl font-black text-brand-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
             </div>
@@ -900,30 +900,30 @@ export const ManagerDashboard: React.FC = () => {
               <>
                 <div className="mt-2 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-50 dark:border-white/5 pb-6">
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-brand-600">
                         {teamAttendanceSummary.totalMembers}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">members</span>
+                      <span className="text-xs font-bold text-slate-400">members</span>
                     </div>
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Present</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Present</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-emerald-600">
                         {teamAttendanceSummary.totalPresent}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">check-ins</span>
+                      <span className="text-xs font-bold text-slate-400">check-ins</span>
                     </div>
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Lates</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Lates</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-amber-600">
                         {teamAttendanceSummary.totalLate}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">late logins</span>
+                      <span className="text-xs font-bold text-slate-400">late logins</span>
                     </div>
                   </div>
                   <div>
@@ -961,8 +961,8 @@ export const ManagerDashboard: React.FC = () => {
                             const days = eachDayOfInterval({ start: visualStart, end });
                             return days.map((day, i) => (
                               <div key={i} className="w-8 flex flex-col items-center justify-center">
-                                <span className="text-[10px] text-slate-400 font-medium">{format(day, 'EEE')}</span>
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{format(day, 'dd')}</span>
+                                <span className="text-xs text-slate-400 font-medium">{format(day, 'EEE')}</span>
+                                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{format(day, 'dd')}</span>
                               </div>
                             ));
                           })()}
@@ -1042,14 +1042,16 @@ export const ManagerDashboard: React.FC = () => {
                                   }
 
                                   return (
-                                    <div
-                                      key={i}
-                                      className="group/cell relative"
-                                      onMouseEnter={(e) => handleTooltip(e, day, member, statusLabel, record)}
-                                      onMouseLeave={() => setTooltipData(null)}
-                                    >
-                                      <div className={`w-8 h-8 rounded-md transition-all hover:scale-110 ${bgClass}`} />
-                                    </div>
+<div
+                                key={i}
+                                className="w-8 h-8 rounded-md transition-all hover:scale-110 ${bgClass}"
+                              >
+                                {record && (
+                                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-max px-1.5 py-0.5 rounded text-[9px] font-medium text-white shadow-lg bg-gray-900 opacity-0 group-hover/cell:opacity-100 transition-opacity whitespace-nowrap">
+                                    {statusLabel}
+                                  </div>
+                                )}
+                              </div>
                                   );
                                 });
                               })()}
