@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Server, Lock, Award, BadgeCheck, FileCheck } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
+import { Button } from '@/components/ui/Button';
 
 const trustItems = [
   {
@@ -102,9 +103,9 @@ export const TrustSignals: React.FC = () => {
               <h4 className="text-lg font-bold text-neutral-900 dark:text-white mb-1">Need a Compliance Report?</h4>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">Download our SOC 2, ISO 27001 reports, or DPDP compliance whitepaper.</p>
             </div>
-            <button className="px-6 py-3 bg-brand-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-600 transition-colors shrink-0">
+            <Button variant="primary">
               Request Compliance Docs
-            </button>
+            </Button>
           </div>
         </motion.div>
       </div>

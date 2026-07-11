@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -13,6 +14,7 @@ import { AIChatAssistant } from '@/components/ai/AIChatAssistant';
 
 export const RootLayout = () => {
     const { i18n } = useTranslation();
+    const location = useLocation();
 
     useEffect(() => {
         document.dir = i18n.language?.startsWith('ar') ? 'rtl' : 'ltr';
@@ -63,7 +65,17 @@ export const RootLayout = () => {
                                     },
                                 }}
                             />
-                            <Outlet />
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={location.pathname}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <Outlet />
+                                </motion.div>
+                            </AnimatePresence>
                             <CallOverlay />
                             <ChatNotification />
                             <AIChatAssistant />

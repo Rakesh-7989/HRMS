@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/Label';
 import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, IndianRupee, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const SalaryStructuresContent: React.FC = () => {
+    const confirm = useConfirm();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'structures' | 'components' | 'calculator'>('structures');
 
@@ -634,8 +636,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     </Button>
                                                     <Button variant="outline" size="sm"
                                                         title="Migrate All Employees to this Structure"
-                                                        onClick={() => {
-                                                            if (confirm(`Bulk migrate ALL active employees to '${s.name}'? This will recalculate their salary components based on their current CTC.`)) {
+                                                        onClick={async () => {
+                                                            if (await confirm({ type: 'destructive', title: 'Bulk Migrate', message: `Bulk migrate ALL active employees to '${s.name}'? This will recalculate their salary components based on their current CTC.` })) {
                                                                 migrateMut.mutate(s.id);
                                                             }
                                                         }}
@@ -643,8 +645,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     >
                                                         <Users size={14} />
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => {
-                                                        if (confirm('Delete this structure?')) deleteStructureMut.mutate(s.id);
+                                                    <Button variant="outline" size="sm" onClick={async () => {
+                                                        if (await confirm({ type: 'destructive', title: 'Delete Structure', message: 'Delete this structure?' })) deleteStructureMut.mutate(s.id);
                                                     }} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200">
                                                         <Trash2 size={14} />
                                                     </Button>
@@ -731,8 +733,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     <Button variant="outline" size="sm" onClick={() => handleEditComponent(c)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-brand-500">
                                                         <Edit size={14} />
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => {
-                                                        if (confirm('Deactivate this component?')) deleteComponentMut.mutate(c.id);
+                                                    <Button variant="outline" size="sm" onClick={async () => {
+                                                        if (await confirm({ type: 'destructive', title: 'Deactivate Component', message: 'Deactivate this component?' })) deleteComponentMut.mutate(c.id);
                                                     }} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200">
                                                         <Trash2 size={14} />
                                                     </Button>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 
 
@@ -104,6 +105,7 @@ const sampleItems: Item[] = [
 
 const InboxPage: React.FC = () => {
   const { t } = useTranslation();
+  const confirm = useConfirm();
 
   const [items, setItems] = useState<Item[]>(sampleItems);
   const [selected, setSelected] = useState<Item | null>(items[0] || null);
@@ -160,9 +162,9 @@ const InboxPage: React.FC = () => {
     if (item) setActivity((a) => [...a, `Restored "${item.title}"`]);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const item = items.find((it) => it.id === id);
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!await confirm({ type: 'destructive', title: 'Delete Item', message: 'Are you sure you want to delete this item?' })) return;
     setItems((prev) => prev.filter((it) => it.id !== id));
     if (selected?.id === id) setSelected(null);
     if (item) setActivity((a) => [...a, `Deleted "${item.title}"`]);

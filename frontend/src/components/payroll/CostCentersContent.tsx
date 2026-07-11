@@ -11,11 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
 export const CostCentersContent: React.FC = () => {
+    const confirm = useConfirm();
     const queryClient = useQueryClient();
     const [addAllocOpen, setAddAllocOpen] = useState(false);
     const [selectedEmp, setSelectedEmp] = useState('');
@@ -214,8 +216,8 @@ export const CostCentersContent: React.FC = () => {
                                             variant="ghost"
                                             size="sm"
                                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            onClick={() => {
-                                                if (confirm('Are you sure you want to remove this allocation?')) {
+                                            onClick={async () => {
+                                                if (await confirm({ type: 'destructive', title: 'Remove Allocation', message: 'Are you sure you want to remove this allocation?' })) {
                                                     deleteMutation.mutate(a.id);
                                                 }
                                             }}

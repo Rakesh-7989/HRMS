@@ -9,8 +9,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import payrollService from '@/services/payroll.service';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ onCreated }) => {
+  const confirm = useConfirm();
   const { user } = useAuth();
   const role = user?.role || 'EMPLOYEE';
   const canManage = ['HR', 'ADMIN'].includes(role);
@@ -231,7 +233,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
                         <Button variant="ghost" size="sm" onClick={() => openEdit(lt)}>
                           <Edit size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { if (confirm('Delete this loan type?')) deleteMut.mutate(lt.id); }} isLoading={deleteMut.isPending}>
+                        <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ type: 'destructive', title: 'Delete Loan Type', message: 'Delete this loan type?' })) deleteMut.mutate(lt.id); }} isLoading={deleteMut.isPending}>
                           <Trash2 size={16} className="text-red-600" />
                         </Button>
                       </>

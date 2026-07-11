@@ -394,8 +394,8 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
                   <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to remove your profile photo?')) {
+                    onClick={async () => {
+                      if (await confirm({ type: 'destructive', title: 'Remove Photo', message: 'Are you sure you want to remove your profile photo?' })) {
                         removePhotoMutation.mutate();
                       }
                     }}

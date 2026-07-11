@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, IndianRupee, TrendingUp, Users, Building2, Star, Quote } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 
 const caseStudies = [
@@ -173,9 +174,9 @@ export const CaseStudiesSection: React.FC = () => {
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="text-center mt-12">
           <p className="text-neutral-400 text-sm mb-4">Want to be our next success story?</p>
-          <button className="inline-flex items-center gap-2 text-brand-500 font-bold text-sm hover:text-brand-600 transition-colors">
+          <Button variant="outline" onClick={() => window.location.href = '/register'}>
             Start Your Free Trial <ArrowRight size={16} />
-          </button>
+          </Button>
         </motion.div>
       </div>
     </section>

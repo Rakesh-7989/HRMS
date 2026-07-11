@@ -12,9 +12,11 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const LoanTypesPage: React.FC = () => {
   const { t } = useTranslation();
+  const confirm = useConfirm();
   const { user: _user } = useAuth();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission('payroll', 'manage');
@@ -139,7 +141,7 @@ export const LoanTypesPage: React.FC = () => {
                     <Button variant="ghost" size="sm" onClick={() => openEdit(lt)}>
                       <Edit size={16} />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { if (confirm('Delete this loan type?')) deleteMut.mutate(lt.id); }} isLoading={deleteMut.isPending}>
+                    <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ type: 'destructive', title: 'Delete Loan Type', message: 'Delete this loan type?' })) deleteMut.mutate(lt.id); }} isLoading={deleteMut.isPending}>
                       <Trash2 size={16} className="text-red-600" />
                     </Button>
                   </TableCell>

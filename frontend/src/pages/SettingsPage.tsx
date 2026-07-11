@@ -26,6 +26,7 @@ import { ChangePasswordModal } from '@/components/forms/ChangePasswordModal';
 import { subscriptionService } from '@/services/subscription.service';
 import { TwoFactorModal } from '@/components/forms/TwoFactorModal';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 import { SuccessModal } from '@/components/ui/SuccessModal';
 
@@ -36,6 +37,7 @@ import { useTimezones, getTimezoneLabel } from '@/utils/timezone';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export const SettingsPage: React.FC = () => {
+  const confirm = useConfirm();
   const { theme, toggleTheme } = useTheme();
   const { user, setUser } = useAuth();
   const { t } = useTranslation();
@@ -749,8 +751,8 @@ const OrganizationProfileSection: React.FC<{
                 </button>
                 {profile?.settings?.logo_url && (
                   <button
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to remove the logo?')) {
+                    onClick={async () => {
+                      if (await confirm({ type: 'destructive', title: 'Remove Logo', message: 'Are you sure you want to remove the logo?' })) {
                         deleteLogoMutation.mutate();
                       }
                     }}

@@ -6,6 +6,7 @@ import { TaskComment, MentionableUser } from '@/types/project.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { MessageSquare, Send, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 interface TaskCommentsProps {
     taskId: string;
@@ -13,6 +14,7 @@ interface TaskCommentsProps {
 }
 
 export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId }) => {
+    const confirm = useConfirm();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [newComment, setNewComment] = useState('');
@@ -264,8 +266,8 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                                     Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        if (confirm('Delete this comment?')) {
+                                                    onClick={async () => {
+                                                        if (await confirm({ type: 'destructive', title: 'Delete Comment', message: 'Delete this comment?' })) {
                                                             deleteMutation.mutate(comment.id);
                                                         }
                                                         setActiveDropdownId(null);

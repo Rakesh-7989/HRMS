@@ -18,6 +18,7 @@ import {
 import { projectsService } from '@/services/projects.service';
 import { usersService } from '@/services/users.service';
 import type { Project, ProjectMemberRole } from '@/types/project.types';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 interface ProjectMembersModalProps {
     project: Project | null;
@@ -32,6 +33,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
     onClose,
     canManage,
 }) => {
+    const confirm = useConfirm();
     const queryClient = useQueryClient();
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>('MEMBER');
@@ -96,9 +98,9 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
         });
     };
 
-    const handleRemoveMember = (employeeId: string) => {
+    const handleRemoveMember = async (employeeId: string) => {
         if (!project) return;
-        if (!confirm('Are you sure you want to remove this member from the project?')) return;
+        if (!await confirm({ type: 'destructive', title: 'Remove Member', message: 'Are you sure you want to remove this member from the project?' })) return;
         removeMemberMutation.mutate({
             projectId: project.id,
             employeeId,

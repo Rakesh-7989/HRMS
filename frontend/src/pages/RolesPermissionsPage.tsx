@@ -6,6 +6,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import toast from 'react-hot-toast';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/contexts/ConfirmContext';
 import {
     Shield,
     Users,
@@ -92,6 +93,7 @@ const ROLE_COLORS: Record<string, string> = {
 const DEFAULT_GRADIENT = 'from-error-500 to-pink-600';
 
 export const RolesPermissionsPage: React.FC = () => {
+    const confirm = useConfirm();
     const { refreshPermissions } = usePermissions();
     const [roles, setRoles] = useState<TenantRole[]>([]);
     const [activeRole, setActiveRole] = useState<string>('');
@@ -261,7 +263,7 @@ export const RolesPermissionsPage: React.FC = () => {
 
     // ---- Delete Custom Role ----
     const handleDeleteRole = async (role: string) => {
-        if (!confirm(`Are you sure you want to delete the "${role}" role? This cannot be undone.`)) return;
+        if (!await confirm({ type: 'destructive', title: 'Delete Role', message: `Are you sure you want to delete the "${role}" role? This cannot be undone.` })) return;
         try {
             await permissionsService.deleteCustomRole(role);
             toast.success(`Role "${role}" deleted`);

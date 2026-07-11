@@ -11,9 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 const MerchantsPage: React.FC = () => {
   const { t } = useTranslation();
+  const confirm = useConfirm();
 
   const qc = useQueryClient();
   const { data: merchants = [], isLoading } = useQuery<any[]>({ queryKey: ['payroll', 'merchants'], queryFn: () => payrollService.listMerchants() });
@@ -238,7 +240,7 @@ const MerchantsPage: React.FC = () => {
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleVendorPaid(v.id, v.paid)} isLoading={markVendorPaidMut.isPending}>{(v.paid || localVendorPaid.includes(v.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localVendorHidden.includes(v.id) ? (
-                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this vendor payment?')) return; toggleVendorHidden(v.id); }}>{t('common.delete')}</Button>
+                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payment', message: 'Delete this vendor payment?' })) return; toggleVendorHidden(v.id); }}>{t('common.delete')}</Button>
                           ) : (
                             <Button size="sm" variant="outline" onClick={() => toggleVendorHidden(v.id)}>Restore</Button>
                           )}
@@ -287,7 +289,7 @@ const MerchantsPage: React.FC = () => {
                         <>
                           <Button size="sm" variant="ghost" onClick={() => toggleThirdPaid(t.id, t.paid)} isLoading={markThirdPaidMut.isPending}>{(t.paid || localThirdPaid.includes(t.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
                           {!localThirdHidden.includes(t.id) ? (
-                            <Button size="sm" variant="destructive" onClick={() => { if (!confirm('Delete this third-party payout?')) return; toggleThirdHidden(t.id); }}>{t('common.delete')}</Button>
+                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payout', message: 'Delete this third-party payout?' })) return; toggleThirdHidden(t.id); }}>{t('common.delete')}</Button>
                           ) : (
                             <Button size="sm" variant="outline" onClick={() => toggleThirdHidden(t.id)}>Restore</Button>
                           )}

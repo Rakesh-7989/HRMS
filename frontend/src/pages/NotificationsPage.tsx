@@ -9,9 +9,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const NotificationsPage: React.FC = () => {
   const { t } = useTranslation();
+  const confirm = useConfirm();
     const queryClient = useQueryClient();
     const [page, setPage] = useState(0);
     const limit = 20;
@@ -151,9 +153,9 @@ export const NotificationsPage: React.FC = () => {
                                             variant="ghost"
                                             size="sm"
                                             className="text-gray-400 hover:text-red-500"
-                                            onClick={(e) => {
+                                            onClick={async (e) => {
                                                 e.stopPropagation();
-                                                if (confirm('Delete this notification?')) {
+                                                if (await confirm({ type: 'destructive', title: 'Delete Notification', message: 'Delete this notification?' })) {
                                                     deleteMutation.mutate(notification.id);
                                                 }
                                             }}

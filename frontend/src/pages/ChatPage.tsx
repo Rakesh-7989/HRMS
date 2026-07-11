@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
+import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useTranslation } from 'react-i18next';
@@ -335,6 +336,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
 };
 
 export const ChatPage = () => {
+    const confirm = useConfirm();
     const { user, atLeastPlan } = useAuth();
     const { t } = useTranslation();
     const {
@@ -896,7 +898,7 @@ export const ChatPage = () => {
 
     const handleClearChat = async () => {
         if (!selectedConversationId) return;
-        if (!window.confirm("Are you sure you want to clear all messages in this chat? This cannot be undone.")) return;
+        if (!await confirm({ type: 'destructive', title: 'Clear Chat', message: 'Are you sure you want to clear all messages in this chat? This cannot be undone.' })) return;
         try {
             await api.delete(`/chat/conversations/${selectedConversationId}/clear`);
             queryClient.setQueryData(['messages', selectedConversationId], []);
@@ -910,7 +912,7 @@ export const ChatPage = () => {
 
     const handleDeleteConversation = async () => {
         if (!selectedConversationId) return;
-        if (!window.confirm("Are you sure you want to delete this entire conversation? This action is permanent and will remove the chat for all participants.")) return;
+        if (!await confirm({ type: 'destructive', title: 'Delete Conversation', message: 'Are you sure you want to delete this entire conversation? This action is permanent and will remove the chat for all participants.' })) return;
         try {
             await api.delete(`/chat/conversations/${selectedConversationId}`);
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -939,7 +941,7 @@ export const ChatPage = () => {
 
     const handleRemoveParticipant = async (userId: string) => {
         if (!activeConversation) return;
-        if (!window.confirm("Remove this person from the group?")) return;
+        if (!await confirm({ type: 'destructive', title: 'Remove Participant', message: 'Remove this person from the group?' })) return;
         try {
             await api.delete(`/chat/conversations/${activeConversation.id}/participants/${userId}`);
             queryClient.invalidateQueries({ queryKey: ['conversation', activeConversation.id] });
