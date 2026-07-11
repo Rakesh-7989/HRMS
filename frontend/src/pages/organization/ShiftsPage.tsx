@@ -335,7 +335,7 @@ export const ShiftsPage = () => {
                                 id="ot_enabled"
                                 checked={formData.overtime_enabled}
                                 onChange={(e) => setFormData({ ...formData, overtime_enabled: e.target.checked })}
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                                className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                             />
                             <Label htmlFor="ot_enabled">Enable Overtime Calculation</Label>
                         </div>
@@ -354,7 +354,7 @@ export const ShiftsPage = () => {
                                                     : formData.week_offs.filter(d => d !== day);
                                                 setFormData({ ...formData, week_offs: newWeekOffs });
                                             }}
-                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                         />
                                         <span className="text-sm">{day.slice(0, 3)}</span>
                                     </label>

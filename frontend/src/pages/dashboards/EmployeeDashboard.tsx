@@ -57,7 +57,7 @@ const StatCard = ({
     whileHover={{ y: -5, scale: 1.02 }}
     className="relative group h-full"
   >
-    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4">
       {/* Subtle Decorative Pattern */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -68,7 +68,7 @@ const StatCard = ({
 
       {/* Icon Accent */}
       <div
-        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-elev-4 border border-white/10"
         style={{ background: gradient }}
       >
         <Icon className="w-6 h-6 text-white" />
@@ -81,7 +81,7 @@ const StatCard = ({
         </h3>
         <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
         {subtitle && (
-          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
             {subtitle}
           </p>
         )}
@@ -100,16 +100,16 @@ const ActionButton = ({
     whileHover={{ scale: 1.02, x: 8 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`w-full p-4 rounded-[1.5rem] border flex items-center gap-4 group transition-all duration-300 bg-white dark:bg-[#0f172a] shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 ${colorClass}`}
+    className={`w-full p-4 rounded-[1.5rem] border flex items-center gap-4 group transition-all duration-300 bg-white dark:bg-neutral-900 shadow-elev-1 hover:shadow-elev-4 ${colorClass}`}
   >
-    <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg border border-white/10 ${gradientClass}`}>
+    <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-elev-4 border border-white/10 ${gradientClass}`}>
       <Icon className="w-6 h-6" />
     </div>
     <div className="flex-1 text-left">
       <p className="font-black text-slate-900 dark:text-white text-base leading-tight">{title}</p>
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{subtitle}</p>
     </div>
-    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
   </motion.button>
 );
 
@@ -118,7 +118,7 @@ const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
-    className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden"
+    className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2 overflow-hidden"
   >
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -349,7 +349,7 @@ export const EmployeeDashboard: React.FC = () => {
       <DashboardLayout title={t('dashboard.myDashboard')}>
         <div className="space-y-8 pb-10 animate-pulse">
           {/* Welcome Banner Skeleton */}
-          <div className="rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+          <div className="rounded-[2.5rem] p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-3">
                 <div className="w-24 h-4 rounded-full bg-slate-200 dark:bg-slate-800" />
@@ -364,13 +364,13 @@ export const EmployeeDashboard: React.FC = () => {
             {/* Left Column Skeleton */}
             <div className="space-y-8">
               {/* Clock Status Skeleton */}
-              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+              <div className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2">
                 <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
                 <div className="w-full h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-6" />
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 h-20" />
-                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 h-20" />
-                  <div className="col-span-2 p-5 rounded-[1.5rem] bg-indigo-50/50 dark:bg-indigo-500/5 h-24" />
+                  <div className="p-5 rounded-2xl bg-neutral-50 dark:bg-white/5 h-20" />
+                  <div className="p-5 rounded-2xl bg-neutral-50 dark:bg-white/5 h-20" />
+                  <div className="col-span-2 p-5 rounded-[1.5rem] bg-brand-50/50 dark:bg-brand-500/5 h-24" />
                 </div>
               </div>
 
@@ -378,16 +378,16 @@ export const EmployeeDashboard: React.FC = () => {
               <div className="space-y-3">
                 <div className="w-32 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mx-2" />
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} className="w-full p-4 rounded-[1.5rem] bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 h-16" />
+                  <div key={i} className="w-full p-4 rounded-[1.5rem] bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 h-16" />
                 ))}
               </div>
 
               {/* Celebrations Skeleton */}
-              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+              <div className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2">
                 <div className="w-32 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
                 <div className="space-y-3">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 h-16" />
+                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 h-16" />
                   ))}
                 </div>
               </div>
@@ -398,7 +398,7 @@ export const EmployeeDashboard: React.FC = () => {
               {/* Stat Cards Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="rounded-[1.5rem] p-5 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none h-32">
+                  <div key={i} className="rounded-[1.5rem] p-5 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 h-32">
                     <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 mb-4" />
                     <div className="w-16 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 mb-2" />
                     <div className="w-24 h-3 rounded bg-slate-200 dark:bg-slate-800" />
@@ -409,7 +409,7 @@ export const EmployeeDashboard: React.FC = () => {
               {/* Chart Cards Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                  <div key={i} className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2">
                     <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-2" />
                     <div className="w-28 h-4 rounded bg-slate-200 dark:bg-slate-800 mb-6" />
                     <div className="w-full h-[250px] rounded-2xl bg-slate-100 dark:bg-slate-800/50" />
@@ -420,11 +420,11 @@ export const EmployeeDashboard: React.FC = () => {
               {/* Bottom Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                  <div key={i} className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2">
                     <div className="w-40 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 mb-6" />
                     <div className="space-y-3">
                       {[...Array(4)].map((_, j) => (
-                        <div key={j} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 h-14" />
+                        <div key={j} className="flex items-center gap-3 p-3 rounded-2xl bg-neutral-50 dark:bg-white/5 h-14" />
                       ))}
                     </div>
                   </div>
@@ -445,7 +445,7 @@ export const EmployeeDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-3"
         >
           {/* Subtle Patterns */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -471,7 +471,7 @@ export const EmployeeDashboard: React.FC = () => {
                 {t('common.welcomeBack')}, {profile?.first_name || user?.first_name}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-indigo-500" />
+                <MapPin className="w-4 h-4 text-brand-500" />
                 {profile?.designation || t('common.teamMember')} • {profile?.department || t('common.general')}
               </p>
             </div>
@@ -481,14 +481,14 @@ export const EmployeeDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
+                className="flex items-center gap-4 bg-neutral-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-neutral-100 dark:border-white/5 shadow-elev-1"
               >
-                <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+                <div className="text-center px-4 border-r border-neutral-200 dark:border-white/10">
                   <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-2xl md:text-3xl font-black text-brand-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
@@ -505,10 +505,10 @@ export const EmployeeDashboard: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none"
+              className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2"
             >
               <h3 className="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-indigo-500" />
+                <Activity className="w-5 h-5 text-brand-500" />
                 {t('attendance.attendanceStatus')}
               </h3>
 
@@ -521,10 +521,10 @@ export const EmployeeDashboard: React.FC = () => {
                     else if (todayStatus.status === 'CHECKED_IN') handleClockOut();
                   }}
                   disabled={!!todayStatus.check_out_time || clockInMutation.isPending || clockOutMutation.isPending}
-                  className={`w-full py-6 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all mb-6 ${todayStatus.status === 'NOT_CHECKED_IN'
+                  className={`w-full py-6 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-elev-5 transition-all mb-6 ${todayStatus.status === 'NOT_CHECKED_IN'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 hover:shadow-emerald-500/40'
                     : todayStatus.status === 'CHECKED_IN'
-                      ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-rose-500/30 hover:shadow-rose-500/40'
+                      ? 'bg-gradient-to-r from-error-500 to-orange-500 text-white shadow-error-500/30 hover:shadow-error-500/40'
                       : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     }`}
                 >
@@ -541,26 +541,26 @@ export const EmployeeDashboard: React.FC = () => {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
+                <div className="p-5 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-brand-500/5">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('attendance.checkIn')}</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                     {formatTime12Hour(todayStatus.check_in_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-indigo-500/5">
+                <div className="p-5 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 transition-colors hover:bg-white dark:hover:bg-brand-500/5">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('attendance.checkOut')}</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                     {formatTime12Hour(todayStatus.check_out_time, user?.timezone) || '--:--'}
                   </p>
                 </div>
-                <div className="col-span-2 p-5 rounded-[1.5rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10 flex items-center justify-between group">
+                <div className="col-span-2 p-5 rounded-[1.5rem] bg-brand-50/50 dark:bg-brand-500/5 border border-brand-100 dark:border-brand-500/10 flex items-center justify-between group">
                   <div>
-                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500/70 uppercase tracking-widest mb-2">{t('attendance.workingHours')}</p>
-                    <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter leading-none">
+                    <p className="text-[10px] font-black text-brand-400 dark:text-brand-500/70 uppercase tracking-widest mb-2">{t('attendance.workingHours')}</p>
+                    <p className="text-3xl font-black text-brand-600 dark:text-brand-400 tracking-tighter leading-none">
                       {workingTime ? `${workingTime.hours}h ${workingTime.mins}m` : '--:--'}
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-elev-1 flex items-center justify-center text-brand-500 group-hover:scale-110 transition-transform">
                     <Timer className="w-6 h-6" />
                   </div>
                 </div>
@@ -578,14 +578,14 @@ export const EmployeeDashboard: React.FC = () => {
               <ActionButton
                 icon={CalendarPlus} title={t('leave.applyLeave')} subtitle={t('leave.requestTimeOff')}
                 onClick={() => navigate('/leave')}
-                colorClass="bg-white dark:bg-slate-900 border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-300 dark:hover:border-indigo-500"
-                gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
+                colorClass="bg-white dark:bg-neutral-900 border-brand-100 dark:border-brand-500/20 hover:border-brand-300 dark:hover:border-brand-500"
+                gradientClass="bg-gradient-to-br from-brand-500 to-brand-600"
                 delay={0.4}
               />
               <ActionButton
                 icon={Calendar} title={t('leave.myAttendance')} subtitle={t('leave.viewHistory')}
                 onClick={() => navigate('/attendance')}
-                colorClass="bg-white dark:bg-slate-900 border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500"
+                colorClass="bg-white dark:bg-neutral-900 border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500"
                 gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
                 delay={0.5}
               />
@@ -595,21 +595,21 @@ export const EmployeeDashboard: React.FC = () => {
             <ChartCard title={t('dashboard.celebrations')} delay={0.6}>
               <div className="space-y-3">
                 {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 3).map((evt: any, i: number) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-elev-4 border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
                       {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                     </div>
                     <div>
                       <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                        {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? t('dashboard.birthday') : evt.type === 'JOINER' ? 'New Joiner' : t('dashboard.anniversary')}
+                        {evt.date} <span className="text-neutral-200 dark:text-neutral-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? t('dashboard.birthday') : evt.type === 'JOINER' ? 'New Joiner' : t('dashboard.anniversary')}
                       </p>
                     </div>
                   </div>
                 ))}
                 {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length && !peopleEventsData?.joiners?.length) && (
-                  <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
-                    <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                  <div className="flex flex-col items-center justify-center h-[180px] text-center bg-neutral-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-neutral-100 dark:border-slate-800">
+                    <Gift className="w-12 h-12 text-neutral-200 dark:text-neutral-700 mb-3" />
                     <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">{t('dashboard.noEventsThisWeek')}</p>
                   </div>
                 )}
@@ -708,12 +708,12 @@ export const EmployeeDashboard: React.FC = () => {
                             const actual = payload[0].value;
                             const target = 9;
                             return (
-                              <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-100 dark:border-white/5 min-w-[140px]">
+                              <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-elev-5 border border-neutral-100 dark:border-white/5 min-w-[140px]">
                                 <p className="font-bold text-slate-800 dark:text-white mb-2 text-sm">{label}</p>
                                 <div className="space-y-1.5">
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">{t('attendance.required')}:</span>
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">{target} hrs</span>
+                                    <span className="font-semibold text-neutral-700 dark:text-slate-300">{target} hrs</span>
                                   </div>
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">{t('attendance.worked')}:</span>
@@ -757,9 +757,9 @@ export const EmployeeDashboard: React.FC = () => {
                     </div>
                   ) : (departmentMembers?.data?.length || 0) > 0 ? (
                     departmentMembers?.data?.filter((m: any) => m.id !== user?.id).slice(0, 6).map((member: any) => (
-                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors">
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-white dark:border-slate-800 shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-brand-600 font-bold overflow-hidden border border-white dark:border-slate-800 shadow-elev-1">
                             {member.profile_image ? (
                               <img src={member.profile_image} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -772,7 +772,7 @@ export const EmployeeDashboard: React.FC = () => {
                           <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.first_name} {member.last_name}</p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-widest">{member.designation_name || 'Team Member'}</p>
                         </div>
-                        <button className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-indigo-500 transition-colors shadow-sm">
+                        <button className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-neutral-100 dark:border-white/5 text-slate-400 hover:text-brand-500 transition-colors shadow-elev-1">
                           <ExternalLink size={14} />
                         </button>
                       </div>
@@ -831,8 +831,8 @@ export const EmployeeDashboard: React.FC = () => {
                   {(upcomingLeaves?.length || 0) > 0 ? (
                     <div className="space-y-3">
                       {upcomingLeaves.slice(0, 4).map((leave: any, i: number) => (
-                        <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-indigo-500/5 group">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                        <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-brand-500/5 group">
+                          <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                             <Coffee className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -870,8 +870,8 @@ export const EmployeeDashboard: React.FC = () => {
                       .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .slice(0, 4)
                       .map((holiday: Holiday) => (
-                        <div key={holiday.id} className="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 shadow-premium hover:shadow-premium-hover transition-all group">
-                          <div className="w-12 h-12 rounded-2xl bg-primary-gradient flex flex-col items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-3 transition-transform">
+                        <div key={holiday.id} className="flex items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/5 shadow-elev-5 hover:shadow-elev-5-hover transition-all group">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 flex flex-col items-center justify-center text-white shadow-elev-4 shadow-brand-500/20 group-hover:rotate-3 transition-transform">
                             <span className="text-[10px] font-black uppercase leading-none mb-0.5">{format(new Date(holiday.date), 'MMM')}</span>
                             <span className="text-lg font-black leading-none">{format(new Date(holiday.date), 'dd')}</span>
                           </div>
@@ -882,7 +882,7 @@ export const EmployeeDashboard: React.FC = () => {
                             </p>
                           </div>
                           {holiday.is_optional && (
-                            <span className="px-2 py-1 rounded-lg bg-primary/10 text-[9px] font-black text-primary uppercase tracking-tighter shadow-sm">Optional</span>
+                            <span className="px-2 py-1 rounded-lg bg-brand-500/10 text-[9px] font-black text-brand-500 uppercase tracking-tighter shadow-elev-1">Optional</span>
                           )}
                         </div>
                       ))

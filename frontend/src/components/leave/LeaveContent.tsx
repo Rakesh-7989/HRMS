@@ -114,7 +114,7 @@ export const LeaveContent: React.FC = () => {
             {/* Analytics Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Requests', value: leaveSummary?.total_applications || 0, accent: 'text-primary' },
+                    { label: 'Total Requests', value: leaveSummary?.total_applications || 0, accent: 'text-brand-500' },
                     { label: 'Pending', value: leaveSummary?.pending || 0, accent: 'text-yellow-500' },
                     { label: 'Approved', value: leaveSummary?.approved || 0, accent: 'text-accent-green' },
                     { label: 'Rejected', value: leaveSummary?.rejected || 0, accent: 'text-red-500' },
@@ -134,7 +134,7 @@ export const LeaveContent: React.FC = () => {
                 <Card>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-primary" />
+                            <TrendingUp className="h-5 w-5 text-brand-500" />
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">My Leave Balances</h3>
                         </div>
                     </div>
@@ -151,7 +151,7 @@ export const LeaveContent: React.FC = () => {
                                         {balance.leave_type?.name || 'Leave'}
                                     </p>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-xl font-bold text-primary">{balance.available}</span>
+                                        <span className="text-xl font-bold text-brand-500">{balance.available}</span>
                                         <span className="text-xs text-gray-400">/ {balance.entitled}</span>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-1">
@@ -176,7 +176,7 @@ export const LeaveContent: React.FC = () => {
                                 placeholder="Search by employee name, leave type, or reason..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             />
                         </div>
 
@@ -186,7 +186,7 @@ export const LeaveContent: React.FC = () => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             >
                                 <option value="ALL">All Status</option>
                                 <option value="PENDING">Pending</option>
@@ -202,7 +202,7 @@ export const LeaveContent: React.FC = () => {
                             <select
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             >
                                 <option value="ALL">All Types</option>
                                 {leaveTypes.map((type) => (
@@ -222,7 +222,7 @@ export const LeaveContent: React.FC = () => {
                             {canApprove && `, ${filteredPendingApprovals.length} pending approvals`}
                         </span>
                         {searchTerm && (
-                            <span className="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-1 rounded">
+                            <span className="bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-300 px-2 py-1 rounded">
                                 Search: "{searchTerm}"
                             </span>
                         )}
@@ -272,7 +272,7 @@ export const LeaveContent: React.FC = () => {
                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Leave History</h3>
                     {isLoading ? (
                         <div className="h-64 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                         </div>
                     ) : filteredMyLeaves.length === 0 ? (
                         <div className="text-center py-12 text-gray-500 dark:text-muted">
@@ -358,7 +358,7 @@ export const LeaveContent: React.FC = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-light-border dark:border-dark-border">
+                                    <tr className="border-b border-gray-200 dark:border-white/10">
                                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Employee</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Type</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Dates</th>
@@ -370,7 +370,7 @@ export const LeaveContent: React.FC = () => {
                                     {filteredPendingApprovals.map((leave) => (
                                         <tr
                                             key={leave.id}
-                                            className="border-b border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5"
+                                            className="border-b border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                                         >
                                             <td className="py-3 px-4 text-gray-900 dark:text-white">
                                                 {leave.employee?.first_name} {leave.employee?.last_name}
@@ -439,7 +439,7 @@ export const LeaveContent: React.FC = () => {
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm shadow-elev-1 transition-all"
                                     placeholder="Please provide a reason for rejection (minimum 5 characters)..."
                                 />
                                 {rejectionReason.length > 0 && rejectionReason.length < 5 && (
@@ -467,7 +467,7 @@ export const LeaveContent: React.FC = () => {
                                 }}
                                 isLoading={rejectMutation.isPending}
                                 disabled={rejectionReason.trim().length < 5}
-                                className="px-6 bg-red-500 hover:bg-red-600 shadow-md"
+                                className="px-6 bg-red-500 hover:bg-red-600 shadow-elev-3"
                             >
                                 Confirm Rejection
                             </Button>

@@ -356,7 +356,7 @@ export const LeaveSettingsContent: React.FC = () => {
                             className={cn(
                                 'flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors border-b-2 -mb-px',
                                 activeTab === tab.id
-                                    ? 'border-primary text-primary bg-primary/5'
+                                    ? 'border-brand-500 text-brand-500 bg-brand-500/5'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                             )}
                         >
@@ -389,7 +389,7 @@ export const LeaveSettingsContent: React.FC = () => {
 
                     {typesLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-500 border-t-transparent" />
                         </div>
                     ) : leaveTypes.length === 0 ? (
                         <div className="text-center py-12">
@@ -447,7 +447,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                         </TableCell>
                                         <TableCell>
                                             {type.requires_attachment ? (
-                                                <Check size={16} className="text-fuchsia-500" />
+                                                <Check size={16} className="text-coral-500" />
                                             ) : (
                                                 <X size={16} className="text-gray-400" />
                                             )}
@@ -527,7 +527,7 @@ export const LeaveSettingsContent: React.FC = () => {
 
                     {policiesLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-500 border-t-transparent" />
                         </div>
                     ) : policies.length === 0 ? (
                         <div className="text-center py-12">
@@ -668,7 +668,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     type="checkbox"
                                     checked={typeForm.is_paid}
                                     onChange={(e) => setTypeForm({ ...typeForm, is_paid: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.paidLeave')}</span>
                             </label>
@@ -677,7 +677,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     type="checkbox"
                                     checked={typeForm.requires_approval}
                                     onChange={(e) => setTypeForm({ ...typeForm, requires_approval: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.requiresApproval')}</span>
                             </label>
@@ -686,7 +686,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     type="checkbox"
                                     checked={typeForm.requires_attachment}
                                     onChange={(e) => setTypeForm({ ...typeForm, requires_attachment: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">{t('leaveSettings.requiresAttachment')}</span>
                             </label>
@@ -758,7 +758,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 id="policy-type"
                                 value={policyForm.leave_type_id}
                                 onChange={(e) => setPolicyForm({ ...policyForm, leave_type_id: e.target.value })}
-                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                 required
                             >
                                 <option value="">{t('leaveSettings.selectLeaveType')}</option>
@@ -775,7 +775,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 id="policy-accrual-type"
                                 value={policyForm.accrual_type}
                                 onChange={(e) => setPolicyForm({ ...policyForm, accrual_type: e.target.value as any })}
-                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                             >
                                 <option value="MONTHLY">{t('leaveSettings.monthly')}</option>
                                 <option value="YEARLY">{t('leaveSettings.yearly')}</option>
@@ -802,7 +802,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                 id="policy-year-start"
                                 value={policyForm.year_start_month}
                                 onChange={(e) => setPolicyForm({ ...policyForm, year_start_month: Number(e.target.value) })}
-                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                             >
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                                     <option key={m} value={m}>
@@ -817,7 +817,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     type="checkbox"
                                     checked={policyForm.is_probation_eligible}
                                     onChange={(e) => setPolicyForm({ ...policyForm, is_probation_eligible: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
                                     {t('leaveSettings.probationEligible')}
@@ -829,7 +829,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                     type="checkbox"
                                     checked={policyForm.carry_forward_enabled}
                                     onChange={(e) => setPolicyForm({ ...policyForm, carry_forward_enabled: e.target.checked })}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                 />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
                                     {t('leaveSettings.enableCarryForward')}

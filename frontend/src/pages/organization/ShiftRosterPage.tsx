@@ -91,12 +91,12 @@ export const ShiftRosterPage = ({ searchTerm = '' }: { searchTerm?: string }) =>
                         const isAssigned = !!shift;
 
                         return (
-                            <Card key={employee.id} className="overflow-hidden hover:shadow-md transition-shadow p-0">
+                            <Card key={employee.id} className="overflow-hidden hover:shadow-elev-3 transition-shadow p-0">
                                 {/* Header */}
                                 <div className="p-4 pb-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden">
+                                            <div className="h-10 w-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold overflow-hidden">
                                                 {(employee.first_name?.[0] || '')}{(employee.last_name?.[0] || '')}
                                             </div>
                                             <div>
@@ -113,7 +113,7 @@ export const ShiftRosterPage = ({ searchTerm = '' }: { searchTerm?: string }) =>
                                 {/* Content */}
                                 <div className="p-4 pt-4 space-y-3">
                                     <div className="flex items-center gap-3 text-sm">
-                                        <div className={`p-2 rounded-lg ${isAssigned ? 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                        <div className={`p-2 rounded-lg ${isAssigned ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
                                             <Calendar className="h-4 w-4" />
                                         </div>
                                         <div>
@@ -126,7 +126,7 @@ export const ShiftRosterPage = ({ searchTerm = '' }: { searchTerm?: string }) =>
 
                                     {isAssigned && shift.start_time && (
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="p-2 rounded-lg bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300">
+                                            <div className="p-2 rounded-lg bg-coral-50 text-coral-600 dark:bg-coral-500/10 dark:text-coral-300">
                                                 <Clock className="h-4 w-4" />
                                             </div>
                                             <div>

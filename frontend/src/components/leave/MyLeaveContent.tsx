@@ -72,7 +72,7 @@ export const MyLeaveContent: React.FC = () => {
             <Card>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <TrendingUp className="h-5 w-5 text-brand-500" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('leave.myLeaveBalances')}</h3>
                     </div>
                 </div>
@@ -89,7 +89,7 @@ export const MyLeaveContent: React.FC = () => {
                                     {balance.leave_type?.name || 'Leave'}
                                 </p>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-bold text-primary">{balance.available}</span>
+                                    <span className="text-xl font-bold text-brand-500">{balance.available}</span>
                                     <span className="text-xs text-gray-400">/ {balance.entitled}</span>
                                 </div>
                                 <p className="text-xs text-gray-400 mt-1">
@@ -113,7 +113,7 @@ export const MyLeaveContent: React.FC = () => {
                             placeholder={t('leave.searchLeaves')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                         />
                     </div>
 
@@ -124,7 +124,7 @@ export const MyLeaveContent: React.FC = () => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             >
                                 <option value="ALL">{t('leave.allStatus')}</option>
                                 <option value="PENDING">{t('leave.pending')}</option>
@@ -139,7 +139,7 @@ export const MyLeaveContent: React.FC = () => {
                             <select
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             >
                                 <option value="ALL">{t('leave.allTypes')}</option>
                                 {leaveTypes.map((type) => (
@@ -173,7 +173,7 @@ export const MyLeaveContent: React.FC = () => {
 
                 {isLoading ? (
                     <div className="h-64 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                     </div>
                 ) : filteredMyLeaves.length === 0 ? (
                     <div className="text-center py-12 text-gray-500 dark:text-muted">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { PageTransition } from '@/components/common/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700 min-w-[140px]">
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-elev-6 border border-gray-700 min-w-[140px]">
         <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-extrabold border-b border-gray-700 pb-1">{label}</p>
         {payload.map((entry: any, index: number) => {
           const isUtilization = entry.dataKey === 'value' && entry.payload.count !== undefined;
@@ -73,7 +74,7 @@ const StatCard = ({
     whileHover={{ y: -5, scale: 1.02 }}
     className="relative group h-full"
   >
-    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4">
       {/* Subtle Decorative Pattern */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -84,7 +85,7 @@ const StatCard = ({
 
       {/* Icon Accent */}
       <div
-        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-elev-4 border border-white/10"
         style={{ background: gradient }}
       >
         <Icon className="w-6 h-6 text-white" />
@@ -97,7 +98,7 @@ const StatCard = ({
         </h3>
         <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
         {subtitle && (
-          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+          <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] mt-2 font-bold uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
             {subtitle}
           </p>
         )}
@@ -116,11 +117,11 @@ const LeaveRequestCard = ({ request, index }: { request: any; index: number }) =
       transition={{ delay: index * 0.1 }}
       className="group"
     >
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-lg transition-all duration-300">
+      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 hover:border-brand-200 dark:hover:border-indigo-900/50 hover:shadow-elev-4 transition-all duration-300">
         <div className="flex items-center gap-3">
           {/* Avatar with soft glow */}
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-black text-base shadow-elev-3 group-hover:scale-105 transition-transform">
               {request.first_name?.charAt(0)}{request.last_name?.charAt(0)}
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white dark:border-gray-900" />
@@ -138,7 +139,7 @@ const LeaveRequestCard = ({ request, index }: { request: any; index: number }) =
             </div>
 
             <div className="flex items-center gap-2 mt-0.5">
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-wider">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[9px] font-black uppercase tracking-wider">
                 <Calendar className="w-2.5 h-2.5" />
                 {format(new Date(request.start_date), 'MMM dd')} - {format(new Date(request.end_date), 'MMM dd')}
               </div>
@@ -187,7 +188,7 @@ const ChartCard = ({
     animate={{ opacity: 1, y: 0 }}
     whileHover={{ y: -5, transition: { duration: 0.2 } }}
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-gray-900 rounded-3xl p-4 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-gray-200/60 dark:hover:shadow-indigo-500/5 transition-all duration-300 ${className}`}
+    className={`bg-white dark:bg-gray-900 rounded-3xl p-4 border border-gray-100 dark:border-gray-800 shadow-elev-5 shadow-gray-200/50 dark:shadow-none hover:shadow-elev-6 hover:shadow-gray-200/60 dark:hover:shadow-brand-500/5 transition-all duration-300 ${className}`}
   >
     <div className="flex items-center justify-between mb-3">
       <div>
@@ -197,7 +198,7 @@ const ChartCard = ({
       <div className="flex items-center gap-3">
         {headerAction}
         {badge && (
-          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
             {badge}
           </span>
         )}
@@ -311,16 +312,12 @@ export const HRDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title={t('dashboard.hrDashboard')}>
-      <motion.div
-        className="space-y-8"
-        initial="initial"
-        animate="animate"
-      >
+      <PageTransition className="space-y-8">
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-3"
         >
           {/* Subtle Patterns */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -355,14 +352,14 @@ export const HRDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
+                className="flex items-center gap-4 bg-neutral-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-neutral-100 dark:border-white/5 shadow-elev-1"
               >
-                <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+                <div className="text-center px-4 border-r border-neutral-200 dark:border-white/10">
                   <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-2xl md:text-3xl font-black text-brand-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
@@ -428,7 +425,7 @@ export const HRDashboard: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50"
+                    className="h-8 px-2 text-[10px] font-bold text-brand-600 hover:bg-brand-50"
                     onClick={() => setStatusDateRange({ start: undefined, end: undefined })}
                   >
                     {t('common.clear')}
@@ -512,7 +509,7 @@ export const HRDashboard: React.FC = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   {/* Subtle pulse effect in the center */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55px] h-[55px] rounded-full bg-indigo-500/5 dark:bg-indigo-400/5 animate-pulse-slow" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55px] h-[55px] rounded-full bg-brand-500/5 dark:bg-indigo-400/5 animate-pulse-slow" />
                 </div>
 
                 {/* Premium Animated Legend - Right Side */}
@@ -525,18 +522,18 @@ export const HRDashboard: React.FC = () => {
                       transition={{ delay: 0.8 + index * 0.1 }}
                       onMouseEnter={() => setActivePieIndex(index)}
                       onMouseLeave={() => setActivePieIndex(undefined)}
-                      className={`flex flex-col gap-2 p-3 rounded-2xl transition-all duration-300 ${activePieIndex === index ? 'bg-indigo-50/50 dark:bg-indigo-500/10 ring-1 ring-indigo-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                      className={`flex flex-col gap-2 p-3 rounded-2xl transition-all duration-300 ${activePieIndex === index ? 'bg-brand-50/50 dark:bg-brand-500/10 ring-1 ring-indigo-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-2.5 h-2.5 rounded-full shadow-sm"
+                            className="w-2.5 h-2.5 rounded-full shadow-elev-1"
                             style={{ background: item.color.includes('#') ? item.color : `linear-gradient(to bottom right, ${item.color.includes('Green') ? '#10b981, #059669' : item.color.includes('Yellow') ? '#f59e0b, #d97706' : '#ef4444, #dc2626'})` }}
                           />
                           <span className="text-[11px] font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest leading-none">{item.name}</span>
                         </div>
-                        <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded-md min-w-[28px] text-center">
+                        <span className="text-xs font-black text-brand-600 dark:text-brand-400 bg-brand-100 dark:bg-brand-500/20 px-2 py-0.5 rounded-md min-w-[28px] text-center">
                           {item.value}
                         </span>
                       </div>
@@ -568,7 +565,7 @@ export const HRDashboard: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50"
+                    className="h-8 px-2 text-[10px] font-bold text-brand-600 hover:bg-brand-50"
                     onClick={() => setUtilizationDateRange({ start: undefined, end: undefined })}
                   >
                     {t('common.clear')}
@@ -593,13 +590,13 @@ export const HRDashboard: React.FC = () => {
                 {Array(4).fill(0).map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-24 h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                    <div className="flex-1 h-6 bg-indigo-50 dark:bg-indigo-900/20 rounded animate-pulse" />
+                    <div className="flex-1 h-6 bg-brand-50 dark:bg-brand-500/10 rounded animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : leaveDistData.length === 0 ? (
               <div className="h-72 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
-                <div className="p-4 rounded-full bg-slate-50 dark:bg-slate-800/50 mb-3">
+                <div className="p-4 rounded-full bg-neutral-50 dark:bg-slate-800/50 mb-3">
                   <Timer className="w-8 h-8 text-slate-300" />
                 </div>
                 <p className="text-sm font-bold uppercase tracking-widest">{t('dashboard.noLeaveTypesFound')}</p>
@@ -664,12 +661,12 @@ export const HRDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 border border-neutral-100 dark:border-white/5 shadow-elev-3"
         >
           {/* Subtle Accent Pattern */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <circle cx="90" cy="10" r="30" fill="currentColor" className="text-indigo-500" />
+              <circle cx="90" cy="10" r="30" fill="currentColor" className="text-brand-500" />
               <circle cx="10" cy="90" r="20" fill="currentColor" className="text-emerald-500" />
             </svg>
           </div>
@@ -677,7 +674,7 @@ export const HRDashboard: React.FC = () => {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10 transition-transform hover:rotate-6">
+                <div className="w-14 h-14 rounded-2xl bg-brand-500 flex items-center justify-center shadow-elev-4 shadow-brand-500/20 border border-white/10 transition-transform hover:rotate-6">
                   <Clock className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -698,9 +695,9 @@ export const HRDashboard: React.FC = () => {
                   desc: t('attendance.activeWorkforce'),
                   value: attendanceOverview.total_employees || 0,
                   icon: Users,
-                  accent: 'text-indigo-400',
-                  bg: 'bg-indigo-500/15',
-                  glow: 'shadow-indigo-500/10'
+                  accent: 'text-brand-400',
+                  bg: 'bg-brand-500/15',
+                  glow: 'shadow-brand-500/10'
                 },
                 {
                   label: t('attendance.totalPresent'),
@@ -717,8 +714,8 @@ export const HRDashboard: React.FC = () => {
                   value: attendanceOverview.not_clocked_in || 0,
                   icon: UserX,
                   accent: 'text-slate-400',
-                  bg: 'bg-slate-500/15',
-                  glow: 'shadow-slate-500/10'
+                  bg: 'bg-neutral-500/15',
+                  glow: 'shadow-neutral-500/10'
                 },
                 {
                   label: t('attendance.onTime'),
@@ -745,10 +742,10 @@ export const HRDashboard: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 + index * 0.1 }}
-                  className="group relative p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-indigo-500/10 transition-all duration-300 shadow-md hover:shadow-xl"
+                  className="group relative p-6 rounded-3xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 hover:bg-white dark:hover:bg-brand-500/10 transition-all duration-300 shadow-elev-3 hover:shadow-elev-5"
                 >
                   <div className="flex items-center justify-between mb-5">
-                    <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform shadow-elev-4`}>
                       <item.icon className={`w-6 h-6 ${item.accent}`} />
                     </div>
                   </div>
@@ -774,7 +771,7 @@ export const HRDashboard: React.FC = () => {
             headerAction={
               <button
                 onClick={() => navigate('/leave?tab=team-requests')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100/50"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[9px] font-black uppercase tracking-widest hover:bg-brand-100 transition-all border border-brand-100/50"
               >
                 {t('common.manage')}
                 <ExternalLink className="w-2.5 h-2.5" />
@@ -821,13 +818,13 @@ export const HRDashboard: React.FC = () => {
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800/50 hover:border-blue-300 transition-all shadow-sm"
+                    className="group bg-neutral-50/50 dark:bg-slate-800/30 rounded-xl p-3 flex items-center gap-3 border border-neutral-100 dark:border-slate-800/50 hover:border-blue-300 transition-all shadow-elev-1"
                   >
                     <div className="relative shrink-0">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-brand-600 flex items-center justify-center text-white font-black text-sm shadow-elev-1 group-hover:scale-105 transition-transform">
                         {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
                       </div>
-                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900 shadow-sm" />
+                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900 shadow-elev-1" />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -845,7 +842,7 @@ export const HRDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center h-[170px] flex flex-col items-center justify-center bg-slate-50/30 dark:bg-slate-800/10 rounded-2xl border border-dashed border-slate-200">
+              <div className="text-center h-[170px] flex flex-col items-center justify-center bg-neutral-50/30 dark:bg-slate-800/10 rounded-2xl border border-dashed border-neutral-200">
                 <div className="relative mb-2">
                   <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center ring-4 ring-emerald-500/5">
                     <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -857,7 +854,7 @@ export const HRDashboard: React.FC = () => {
             )}
           </ChartCard>
         </div>
-      </motion.div>
+      </PageTransition>
     </DashboardLayout>
   );
 };

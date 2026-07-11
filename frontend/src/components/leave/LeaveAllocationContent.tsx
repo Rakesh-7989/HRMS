@@ -217,11 +217,11 @@ export const LeaveAllocationContent: React.FC = () => {
                                 className={cn(
                                     "flex items-center gap-3 p-3 border-2 rounded-lg text-left transition-all",
                                     target === 'selected'
-                                        ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                        ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
                                         : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                                 )}
                             >
-                                <UserIcon size={20} className={target === 'selected' ? "text-violet-600" : "text-gray-400"} />
+                                <UserIcon size={20} className={target === 'selected' ? "text-brand-600" : "text-gray-400"} />
                                 <div>
                                     <p className="font-medium">{t('leave.selectedOnly')}</p>
                                     <p className="text-xs text-gray-500">{t('leave.chooseEmployees')}</p>
@@ -264,7 +264,7 @@ export const LeaveAllocationContent: React.FC = () => {
                                                 return (
                                                     <TableRow
                                                         key={emp.id}
-                                                        className={cn("cursor-pointer", selectedIds.includes(identifier) && "bg-violet-50 dark:bg-violet-900/20")}
+                                                        className={cn("cursor-pointer", selectedIds.includes(identifier) && "bg-brand-50 dark:bg-brand-500/10")}
                                                         onClick={() => toggleEmployee(identifier)}
                                                     >
                                                         <TableCell>

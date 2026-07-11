@@ -53,15 +53,15 @@ export const SearchPage: React.FC = () => {
     const getIcon = (type: string) => {
         switch (type) {
             case 'employee':
-                return <User size={18} className="text-violet-500" />;
+                return <User size={18} className="text-brand-500" />;
             case 'asset':
                 return <Package size={18} className="text-green-500" />;
             case 'project':
-                return <Briefcase size={18} className="text-purple-500" />;
+                return <Briefcase size={18} className="text-brand-500" />;
             case 'page':
-                return <LayoutDashboard size={18} className="text-purple-500" />;
+                return <LayoutDashboard size={18} className="text-brand-500" />;
             case 'action':
-                return <Zap size={18} className="text-fuchsia-500" />;
+                return <Zap size={18} className="text-coral-500" />;
             default:
                 return <FileText size={18} className="text-gray-500" />;
         }
@@ -87,9 +87,9 @@ export const SearchPage: React.FC = () => {
     const getCategoryColor = (type: string) => {
         switch (type) {
             case 'page':
-                return 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
+                return 'bg-brand-50 dark:bg-brand-500/10 border-brand-200 dark:border-brand-800';
             case 'action':
-                return 'bg-fuchsia-50 dark:bg-fuchsia-900/20 border-fuchsia-200 dark:border-fuchsia-800';
+                return 'bg-coral-50 dark:bg-coral-500/10 border-coral-200 dark:border-coral-800';
             default:
                 return 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700';
         }
@@ -115,23 +115,23 @@ export const SearchPage: React.FC = () => {
                             className={cn(
                                 "w-full text-left p-4 rounded-lg border transition-all duration-200 group",
                                 getCategoryColor(result.type),
-                                "hover:border-primary hover:shadow-md"
+                                "hover:border-brand-500 hover:shadow-elev-3"
                             )}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "w-10 h-10 rounded-full flex items-center justify-center",
-                                        result.type === 'page' && "bg-purple-100 dark:bg-purple-800",
-                                        result.type === 'action' && "bg-fuchsia-100 dark:bg-fuchsia-800",
-                                        result.type === 'employee' && "bg-violet-100 dark:bg-violet-800",
+                                        result.type === 'page' && "bg-brand-100 dark:bg-brand-800",
+                                        result.type === 'action' && "bg-coral-100 dark:bg-coral-800",
+                                        result.type === 'employee' && "bg-brand-100 dark:bg-brand-800",
                                         result.type === 'asset' && "bg-green-100 dark:bg-green-800",
-                                        result.type === 'project' && "bg-purple-100 dark:bg-purple-800"
+                                        result.type === 'project' && "bg-brand-100 dark:bg-brand-800"
                                     )}>
                                         {getIcon(result.type)}
                                     </div>
                                     <div>
-                                        <p className="font-medium text-gray-900 dark:text-white group-hover:text-primary">
+                                        <p className="font-medium text-gray-900 dark:text-white group-hover:text-brand-500">
                                             {result.title}
                                         </p>
                                         {result.subtitle && (
@@ -143,7 +143,7 @@ export const SearchPage: React.FC = () => {
                                 </div>
                                 <ArrowRight
                                     size={16}
-                                    className="text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all"
+                                    className="text-gray-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all"
                                 />
                             </div>
                         </button>
@@ -180,7 +180,7 @@ export const SearchPage: React.FC = () => {
                             autoFocus
                             className="w-full pl-12 pr-12 py-4 text-lg rounded-xl border border-gray-300 dark:border-gray-600 
                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                       focus:ring-2 focus:ring-primary focus:border-transparent
+                       focus:ring-2 focus:ring-brand-500/50 focus:border-transparent
                        placeholder-gray-400 dark:placeholder-gray-500"
                         />
                         {query && (
@@ -199,7 +199,7 @@ export const SearchPage: React.FC = () => {
                         {isFetching && (
                             <Loader2
                                 size={20}
-                                className="absolute right-12 top-1/2 -translate-y-1/2 text-primary animate-spin"
+                                className="absolute right-12 top-1/2 -translate-y-1/2 text-brand-500 animate-spin"
                             />
                         )}
                     </div>
@@ -215,7 +215,7 @@ export const SearchPage: React.FC = () => {
                                     key={suggestion}
                                     onClick={() => setQuery(suggestion.toLowerCase())}
                                     className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 
-                           text-gray-700 dark:text-gray-300 hover:bg-primary hover:text-white transition-colors"
+                           text-gray-700 dark:text-gray-300 hover:bg-brand-500 hover:text-white transition-colors"
                                 >
                                     {suggestion}
                                 </button>
@@ -228,7 +228,7 @@ export const SearchPage: React.FC = () => {
                 {isLoading && debouncedQuery.length >= 2 && (
                     <Card className="p-12">
                         <div className="flex flex-col items-center justify-center text-gray-500">
-                            <Loader2 size={40} className="animate-spin mb-4 text-primary" />
+                            <Loader2 size={40} className="animate-spin mb-4 text-brand-500" />
                             <p>Searching...</p>
                         </div>
                     </Card>
@@ -274,11 +274,11 @@ export const SearchPage: React.FC = () => {
                                 Search across pages, modules, quick actions, employees, assets, and projects.
                             </p>
                             <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
-                                <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded">Pages</span>
-                                <span className="px-2 py-1 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded">Actions</span>
-                                <span className="px-2 py-1 bg-violet-50 dark:bg-violet-900/20 rounded">Employees</span>
+                                <span className="px-2 py-1 bg-brand-50 dark:bg-brand-500/10 rounded">Pages</span>
+                                <span className="px-2 py-1 bg-coral-50 dark:bg-coral-500/10 rounded">Actions</span>
+                                <span className="px-2 py-1 bg-brand-50 dark:bg-brand-500/10 rounded">Employees</span>
                                 <span className="px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded">Assets</span>
-                                <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded">Projects</span>
+                                <span className="px-2 py-1 bg-brand-50 dark:bg-brand-500/10 rounded">Projects</span>
                             </div>
                         </div>
                     </Card>

@@ -143,7 +143,7 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 transition-colors duration-300">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <AnimatedLogo size="lg" />
@@ -159,8 +159,8 @@ export const LoginPage: React.FC = () => {
 
           {twoFactorRequired ? (
             <div className="space-y-4">
-              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-3">
-                <Shield className="text-primary" size={20} />
+              <div className="p-4 bg-brand-500/5 rounded-xl border border-brand-500/10 flex items-center gap-3">
+                <Shield className="text-brand-500" size={20} />
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                   {t('auth.enterCode')}
                 </p>
@@ -233,7 +233,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-primary transition-colors"
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-brand-500 transition-colors"
                     aria-label="Toggle password visibility"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -247,11 +247,11 @@ export const LoginPage: React.FC = () => {
                   <input
                     type="checkbox"
                     {...formik.getFieldProps('rememberMe')}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-dark-border bg-white dark:bg-white/5 text-primary focus:ring-gold transition-colors duration-300"
+                    className="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-brand-500 focus:ring-gold transition-colors duration-300"
                   />
                   <span className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">{t('auth.rememberMe')}</span>
                 </label>
-                <a href="/forgot-password" className="text-sm text-primary hover:underline">
+                <a href="/forgot-password" className="text-sm text-brand-500 hover:underline">
                   {t('auth.forgotPassword')}
                 </a>
               </div>
@@ -265,13 +265,13 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-muted transition-colors duration-300">
               {t('auth.noAccount')}{' '}
-              <a href="/pricing" className="text-primary hover:underline">
+              <a href="/pricing" className="text-brand-500 hover:underline">
                 {t('auth.register')}
               </a>
             </p>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-border transition-colors duration-300">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/10 transition-colors duration-300">
             <a
               href="/"
               className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted hover:text-gray-900 dark:hover:text-white transition-colors"

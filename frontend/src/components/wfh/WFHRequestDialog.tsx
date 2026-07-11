@@ -76,7 +76,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             min={new Date().toISOString().split('T')[0]}
-                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-shadow"
                         />
                         {formik.touched.request_date && formik.errors.request_date && (
                             <p className="text-xs text-red-600 font-medium">{formik.errors.request_date}</p>
@@ -94,7 +94,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             rows={4}
-                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-shadow resize-none"
+                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-shadow resize-none"
                             placeholder="Please provide a reason for working from home (minimum 10 characters)..."
                         />
                         {formik.touched.reason && formik.errors.reason && (

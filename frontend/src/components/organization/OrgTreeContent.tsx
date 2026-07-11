@@ -16,11 +16,11 @@ import { cn } from '@/utils/cn';
 
 // Role-based styling
 const ROLE_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-    'SUPER_ADMIN': { color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-500/10', border: 'border-purple-200 dark:border-purple-800/50', label: 'Super Admin' },
-    'ADMIN': { color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-500/10', border: 'border-rose-200 dark:border-rose-800/50', label: 'Admin' },
+    'SUPER_ADMIN': { color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-500/10', border: 'border-brand-200 dark:border-brand-800/50', label: 'Super Admin' },
+    'ADMIN': { color: 'text-error-600', bg: 'bg-error-50 dark:bg-error-500/10', border: 'border-error-200 dark:border-error-800/50', label: 'Admin' },
     'MANAGER': { color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-800/50', label: 'Manager' },
     'HR': { color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-800/50', label: 'HR' },
-    'EMPLOYEE': { color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-500/10', border: 'border-slate-200 dark:border-slate-800/50', label: 'Employee' }
+    'EMPLOYEE': { color: 'text-slate-600', bg: 'bg-neutral-50 dark:bg-neutral-500/10', border: 'border-neutral-200 dark:border-slate-800/50', label: 'Employee' }
 };
 
 const OrgNode: React.FC<{
@@ -36,9 +36,9 @@ const OrgNode: React.FC<{
     return (
         <div className="relative group perspective-1000">
             <div className={cn(
-                "w-72 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-xl p-4 text-left border overflow-hidden transition-all duration-300",
-                "hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] border-white/50 dark:border-gray-700/50",
-                isRoot && "ring-2 ring-primary ring-offset-4 dark:ring-offset-gray-900 ring-offset-white"
+                "w-72 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-elev-5 p-4 text-left border overflow-hidden transition-all duration-300",
+                "hover:shadow-elev-6 hover:scale-[1.02] active:scale-[0.98] border-white/50 dark:border-gray-700/50",
+                isRoot && "ring-2 ring-brand-500 ring-offset-4 dark:ring-offset-gray-900 ring-offset-white"
             )}>
                 {/* Accent border at top */}
                 <div className={cn("absolute top-0 left-0 right-0 h-1", config.bg.replace('bg-', 'bg-').split(' ')[0])}></div>
@@ -82,7 +82,7 @@ const OrgNode: React.FC<{
                         }}
                         className={cn(
                             "absolute bottom-0 left-0 right-0 h-6 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100",
-                            isExpanded ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"
+                            isExpanded ? "bg-amber-500/10 text-amber-600" : "bg-brand-500/10 text-brand-500"
                         )}
                     >
                         {isExpanded ? <Minus size={14} strokeWidth={3} /> : <Plus size={14} strokeWidth={3} />}
@@ -251,31 +251,31 @@ export const OrgTreeContent: React.FC = () => {
 
             {/* Toolbar - Floating Glassmorphic */}
             <div className="absolute right-6 top-6 flex flex-col gap-3 z-30 order-last">
-                <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 dark:border-gray-700/40">
+                <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-elev-6 border border-white/40 dark:border-gray-700/40">
                     <button
                         title="Fit to Screen"
                         onClick={handleFitToScreen}
-                        className="p-2.5 rounded-xl hover:bg-primary/10 text-gray-600 dark:text-gray-300 hover:text-primary transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><Maximize size={20} /></button>
                     <div className="h-px bg-gray-200 dark:bg-gray-800 mx-2"></div>
                     <button
                         title="Zoom In"
                         onClick={() => handleZoom(0.1)}
-                        className="p-2.5 rounded-xl hover:bg-primary/10 text-gray-600 dark:text-gray-300 hover:text-primary transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><Plus size={20} /></button>
                     <button
                         title="Zoom Out"
                         onClick={() => handleZoom(-0.1)}
-                        className="p-2.5 rounded-xl hover:bg-primary/10 text-gray-600 dark:text-gray-300 hover:text-primary transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><Minus size={20} /></button>
                     <button
                         title="Reset"
                         onClick={() => { setScale(1); x.set(0); y.set(0); }}
-                        className="p-2.5 rounded-xl hover:bg-primary/10 text-gray-600 dark:text-gray-300 hover:text-primary transition-all active:scale-90 font-mono text-xs font-bold"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90 font-mono text-xs font-bold"
                     >100%</button>
                 </div>
 
-                <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 dark:border-gray-700/40">
+                <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-elev-6 border border-white/40 dark:border-gray-700/40">
                     <button
                         title="Expand All"
                         onClick={expandAll}
@@ -284,20 +284,20 @@ export const OrgTreeContent: React.FC = () => {
                     <button
                         title="Collapse All"
                         onClick={collapseAll}
-                        className="p-2.5 rounded-xl hover:bg-rose-500/10 text-gray-600 dark:text-gray-300 hover:text-rose-500 transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-error-500/10 text-gray-600 dark:text-gray-300 hover:text-error-500 transition-all active:scale-90"
                     ><ChevronsUp size={20} /></button>
                 </div>
             </div>
 
             {/* Viewport Hints */}
             <div className="absolute left-6 bottom-6 z-20 pointer-events-none">
-                <div className="flex items-center gap-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 dark:border-gray-800/20 shadow-sm">
+                <div className="flex items-center gap-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 dark:border-gray-800/20 shadow-elev-1">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">
                         <Grab size={12} />
                         Drag to Pan
                     </div>
                     <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                    <div className="text-[10px] uppercase tracking-widest font-bold text-primary">
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-brand-500">
                         Scale: {(scale * 100).toFixed(0)}%
                     </div>
                 </div>
@@ -308,8 +308,8 @@ export const OrgTreeContent: React.FC = () => {
                 {treeLoading ? (
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative w-16 h-16">
-                            <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 border-4 border-brand-500/20 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400 animate-pulse">Building Hierarchy...</p>
                     </div>

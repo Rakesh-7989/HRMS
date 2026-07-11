@@ -41,7 +41,7 @@ export const BreakHistoryContent: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         {canFilterEmployees && (
                             <select
-                                className="h-9 w-full sm:w-[180px] rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
+                                className="h-9 w-full sm:w-[180px] rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-elev-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500/50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
                                 value={selectedEmployeeId}
                                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
                             >
@@ -76,7 +76,7 @@ export const BreakHistoryContent: React.FC = () => {
 
                 {isLoading ? (
                     <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
                     </div>
                 ) : !history || history.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">

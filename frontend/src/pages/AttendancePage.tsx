@@ -11,6 +11,7 @@ import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApproval
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export const AttendancePage: React.FC = () => {
   const { t } = useTranslation();
@@ -76,6 +77,7 @@ export const AttendancePage: React.FC = () => {
         { label: t('common.breadcrumbs.attendance') },
       ]}
     >
+      <PageTransition>
       <div className="space-y-6">
         <div>
           <p className="text-gray-500 dark:text-gray-400">{t('attendance.manageDescription')}</p>
@@ -98,7 +100,7 @@ export const AttendancePage: React.FC = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${isActive
-                    ? 'border-primary text-primary'
+                    ? 'border-brand-500 text-brand-500'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                 >
@@ -120,6 +122,7 @@ export const AttendancePage: React.FC = () => {
           {activeTab === 'geofence' && <GeoFencingSettingsContent />}
         </div>
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 };

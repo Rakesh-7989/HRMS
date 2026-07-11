@@ -368,13 +368,13 @@ export const RegisterPage: React.FC = () => {
     const breakdown = calculateBreakdown();
 
     return (
-        <div className="h-screen w-full bg-gray-50 dark:bg-dark-bg flex flex-col items-center justify-start py-4 lg:py-10 px-4 overflow-y-auto overflow-x-hidden scroll-smooth">
+        <div className="h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-start py-4 lg:py-10 px-4 overflow-y-auto overflow-x-hidden scroll-smooth">
             <div className="w-full max-w-4xl pb-20">
                 <div className="flex justify-center mb-6 translate-y-1 opacity-80 scale-75 transform origin-top shrink-0">
                     <AnimatedLogo size="lg" />
                 </div>
 
-                <Card className="shadow-2xl border-none bg-white dark:bg-dark-card rounded-2xl overflow-visible">
+                <Card className="shadow-elev-6 border-none bg-white dark:bg-gray-900 rounded-2xl overflow-visible">
                     <div className="p-0">
                         {step === 'details' && (
                             <div className="p-4 lg:p-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -394,14 +394,14 @@ export const RegisterPage: React.FC = () => {
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-10 mb-6">
                                         {/* Left Column */}
                                         <div className="space-y-3">
-                                            <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] border-b-2 border-primary/20 pb-1 italic">Basic Identity</h3>
+                                            <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] border-b-2 border-brand-500/20 pb-1 italic">Basic Identity</h3>
                                             
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Company Name *</label>
                                                 <div className="relative group">
-                                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-brand-500 transition-colors" size={16} />
                                                     <input name="name" value={formik.values.name} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.name ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} placeholder="WellZo Tech" />
+                                                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.name ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} placeholder="WellZo Tech" />
                                                 </div>
                                                 {formik.errors.name && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.name as string}</p>}
                                             </div>
@@ -409,9 +409,9 @@ export const RegisterPage: React.FC = () => {
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Org Domain *</label>
                                                 <div className="relative group">
-                                                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-brand-500 transition-colors" size={16} />
                                                     <input name="domain" value={formik.values.domain} onChange={formik.handleChange} onBlur={handleDomainBlur}
-                                                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.domain ? 'border-red-500 shadow-xl shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all lowercase`} placeholder="my-org-domain" />
+                                                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.domain ? 'border-red-500 shadow-elev-5 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all lowercase`} placeholder="my-org-domain" />
                                                 </div>
                                                 {formik.errors.domain && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.domain as string}</p>}
                                             </div>
@@ -419,7 +419,7 @@ export const RegisterPage: React.FC = () => {
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Work Email *</label>
                                                 <input name="email" value={formik.values.email} onChange={formik.handleChange} onBlur={handleEmailBlur}
-                                                    className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.email ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} placeholder="admin@org.com" />
+                                                    className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.email ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} placeholder="admin@org.com" />
                                                 {formik.errors.email && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.email as string}</p>}
                                             </div>
 
@@ -427,25 +427,25 @@ export const RegisterPage: React.FC = () => {
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Phone *</label>
                                                     <input name="phone" value={formik.values.phone} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.phone ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} />
+                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.phone ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} />
                                                     {formik.errors.phone && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.phone as string}</p>}
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Employees *</label>
                                                     <input type="number" name="employee_count" value={formik.values.employee_count} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.employee_count ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} />
+                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.employee_count ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} />
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Right Column */}
                                         <div className="space-y-5">
-                                            <h3 className="text-xs font-black text-primary uppercase tracking-widest border-b-2 border-primary/20 pb-1 italic">Headquarters</h3>
+                                            <h3 className="text-xs font-black text-brand-500 uppercase tracking-widest border-b-2 border-brand-500/20 pb-1 italic">Headquarters</h3>
                                             
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">Address *</label>
                                                 <textarea name="address" rows={2} value={formik.values.address} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                    className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.address ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all resize-none`} placeholder="Full address..." />
+                                                    className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.address ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all resize-none`} placeholder="Full address..." />
                                                 {formik.errors.address && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.address as string}</p>}
                                             </div>
 
@@ -453,13 +453,13 @@ export const RegisterPage: React.FC = () => {
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">City *</label>
                                                     <input name="city" value={formik.values.city} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.city ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} />
+                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.city ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} />
                                                     {formik.errors.city && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase text-[8px] truncate">⚠️ {formik.errors.city as string}</p>}
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">State *</label>
                                                     <input name="state" value={formik.values.state} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.state ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} />
+                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.state ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} />
                                                     {formik.errors.state && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase text-[8px] truncate">⚠️ {formik.errors.state as string}</p>}
                                                 </div>
                                             </div>
@@ -468,7 +468,7 @@ export const RegisterPage: React.FC = () => {
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 ml-1 tracking-widest">ZIP Code *</label>
                                                     <input name="zip_code" value={formik.values.zip_code} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.zip_code ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-primary/50 outline-none text-sm transition-all`} placeholder="533124" />
+                                                        className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 ${formik.errors.zip_code ? 'border-red-500 shadow-elev-4 shadow-red-500/20' : 'border-gray-100 dark:border-white/5'} focus:border-brand-500/50 outline-none text-sm transition-all`} placeholder="533124" />
                                                     {formik.errors.zip_code && <p className="text-xs text-red-500 mt-1 ml-1 font-black italic uppercase">⚠️ {formik.errors.zip_code as string}</p>}
                                                 </div>
                                                 <div>
@@ -482,10 +482,10 @@ export const RegisterPage: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-white/10">
-                                        <button type="button" onClick={() => navigate('/pricing')} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-primary transition-all">
+                                        <button type="button" onClick={() => navigate('/pricing')} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-500 transition-all">
                                             <ArrowLeft size={16} /> Abort
                                         </button>
-                                        <Button type="submit" isLoading={loading} className="h-12 px-12 rounded-xl text-sm font-black tracking-widest uppercase shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-right-4">
+                                        <Button type="submit" isLoading={loading} className="h-12 px-12 rounded-xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/30 animate-in fade-in slide-in-from-right-4">
                                             Next: Review →
                                         </Button>
                                     </div>
@@ -497,14 +497,14 @@ export const RegisterPage: React.FC = () => {
                             <div className="p-4 lg:p-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div className="text-center mb-4">
                                     <h2 className="text-xl lg:text-2xl font-black text-gray-900 dark:text-white inline-flex items-center justify-center gap-2">
-                                        <BadgeCheck className="text-primary" size={24} /> Confirm Details
+                                        <BadgeCheck className="text-brand-500" size={24} /> Confirm Details
                                     </h2>
                                     <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Final verification before security deployment.</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-2">
                                     <div className="bg-gray-50/50 dark:bg-white/5 p-4 rounded-2xl border border-gray-100 dark:border-white/10">
-                                        <h3 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3 pb-1 border-b border-primary/10 italic">Identity Summary</h3>
+                                        <h3 className="text-[9px] font-black uppercase tracking-widest text-brand-500 mb-3 pb-1 border-b border-brand-500/10 italic">Identity Summary</h3>
                                         <div className="space-y-2.5">
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">Org</span>
@@ -516,7 +516,7 @@ export const RegisterPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">Plan</span>
-                                                <span className="text-xs font-black text-primary uppercase italic">{planData?.name || 'Standard'}</span>
+                                                <span className="text-xs font-black text-brand-500 uppercase italic">{planData?.name || 'Standard'}</span>
                                             </div>
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">Cycle</span>
@@ -527,8 +527,8 @@ export const RegisterPage: React.FC = () => {
                                                 <span className="text-xs font-black text-gray-900 dark:text-white truncate ml-4">{formik.values.email}</span>
                                             </div>
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
-                                                <span className="text-[9px] font-bold text-primary uppercase italic">Valid Until</span>
-                                                <span className="text-xs font-black text-primary">
+                                                <span className="text-[9px] font-bold text-brand-500 uppercase italic">Valid Until</span>
+                                                <span className="text-xs font-black text-brand-500">
                                                     {new Date(new Date().setMonth(new Date().getMonth() + breakdown.durationMonths)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </span>
                                             </div>
@@ -541,8 +541,8 @@ export const RegisterPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-2xl border-2 border-primary/20 relative overflow-hidden group">
-                                        <h3 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3 pb-1 border-b border-primary/10 italic">Billing Protocol</h3>
+                                    <div className="bg-brand-500/5 dark:bg-brand-500/10 p-4 rounded-2xl border-2 border-brand-500/20 relative overflow-hidden group">
+                                        <h3 className="text-[9px] font-black uppercase tracking-widest text-brand-500 mb-3 pb-1 border-b border-brand-500/10 italic">Billing Protocol</h3>
                                         <div className="space-y-3 relative z-10">
                                             <div className="flex justify-between items-start text-xs font-bold">
                                                 <div className="space-y-0.5">
@@ -559,7 +559,7 @@ export const RegisterPage: React.FC = () => {
 
                                             {formik.values.coupon && (
                                                 <div className="space-y-1.5 py-1">
-                                                    <div className={`flex justify-between items-center text-xs font-bold ${breakdown.discount > 0 ? 'text-green-500 bg-green-500/10 border-green-500/20' : 'text-yellow-500 bg-yellow-500/5 border-yellow-500/10'} px-3 py-2 rounded-xl border shadow-sm animate-in zoom-in duration-300`}>
+                                                    <div className={`flex justify-between items-center text-xs font-bold ${breakdown.discount > 0 ? 'text-green-500 bg-green-500/10 border-green-500/20' : 'text-yellow-500 bg-yellow-500/5 border-yellow-500/10'} px-3 py-2 rounded-xl border shadow-elev-1 animate-in zoom-in duration-300`}>
                                                         <div className="flex flex-col">
                                                             <span className="uppercase text-[9px] font-black italic">✓ {breakdown.discount > 0 ? 'Coupon Applied' : 'Verifying...'}</span>
                                                             <span className="text-[7.5px] opacity-70 uppercase tracking-widest font-black leading-none">{formik.values.coupon}</span>
@@ -569,7 +569,7 @@ export const RegisterPage: React.FC = () => {
                                                     {breakdown.discount > 0 && (
                                                         <div className="flex justify-between px-1 text-[9px] font-black text-gray-500 uppercase italic">
                                                             <span className="tracking-tight">Taxable Value (Before IGST)</span>
-                                                            <span className="text-primary font-bold">₹{Math.max(0, breakdown.subtotal + breakdown.setup - breakdown.discount).toLocaleString()}</span>
+                                                            <span className="text-brand-500 font-bold">₹{Math.max(0, breakdown.subtotal + breakdown.setup - breakdown.discount).toLocaleString()}</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -580,10 +580,10 @@ export const RegisterPage: React.FC = () => {
                                                 <span className="font-black text-gray-700 dark:text-gray-300">₹{breakdown.gst.toLocaleString()}</span>
                                             </div>
 
-                                            <div className="flex justify-between items-baseline text-xl font-black pt-3 border-t-2 border-primary/10 mt-1">
-                                                <span className="text-primary italic text-[10px] uppercase tracking-[0.2em]">TOTAL DUE</span>
+                                            <div className="flex justify-between items-baseline text-xl font-black pt-3 border-t-2 border-brand-500/10 mt-1">
+                                                <span className="text-brand-500 italic text-[10px] uppercase tracking-[0.2em]">TOTAL DUE</span>
                                                 <div className="text-gray-900 dark:text-white flex items-baseline gap-1">
-                                                    <span className="text-xs font-black text-primary">₹</span>
+                                                    <span className="text-xs font-black text-brand-500">₹</span>
                                                     <span className="tracking-tighter text-2xl">{breakdown.total.toLocaleString()}</span>
                                                 </div>
                                             </div>
@@ -593,7 +593,7 @@ export const RegisterPage: React.FC = () => {
 
                                 <div className="flex gap-4">
                                     <button onClick={() => setStep('details')} className="px-6 h-11 rounded-xl border-2 border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all">Back</button>
-                                    <Button onClick={handleSendOtp} disabled={loading} className="flex-1 h-11 rounded-xl shadow-xl shadow-primary/20 text-[10px] font-black tracking-widest uppercase">
+                                    <Button onClick={handleSendOtp} disabled={loading} className="flex-1 h-11 rounded-xl shadow-elev-5 shadow-brand-500/20 text-[10px] font-black tracking-widest uppercase">
                                         {loading ? <Loader2 className="animate-spin" /> : 'Confirm & Proceed →'}
                                     </Button>
                                 </div>
@@ -602,8 +602,8 @@ export const RegisterPage: React.FC = () => {
 
                         {step === 'otp' && (
                             <div className="p-6 lg:p-12 text-center animate-in fade-in zoom-in duration-300">
-                                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8">
-                                    <Mail className="text-primary" size={40} />
+                                <div className="w-20 h-20 bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                                    <Mail className="text-brand-500" size={40} />
                                 </div>
                                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">Verify Security Code</h2>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 font-bold italic">Sent to: {formik.values.email}</p>
@@ -611,13 +611,13 @@ export const RegisterPage: React.FC = () => {
                                 {error && <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-black italic uppercase">⚠️ {error}</div>}
                                 
                                 <input type="text" maxLength={6} value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                                    className="w-full text-center text-4xl tracking-widest font-black py-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-4 border-gray-100 dark:border-white/10 focus:border-primary outline-none mb-8 transition-all" placeholder="000000" />
+                                    className="w-full text-center text-4xl tracking-widest font-black py-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-4 border-gray-100 dark:border-white/10 focus:border-brand-500 outline-none mb-8 transition-all" placeholder="000000" />
                                 
-                                <Button onClick={handleVerifyOtp} disabled={loading || otpCode.length !== 6} className="w-full h-14 rounded-2xl shadow-xl shadow-primary/20 text-sm font-black tracking-widest uppercase">
+                                <Button onClick={handleVerifyOtp} disabled={loading || otpCode.length !== 6} className="w-full h-14 rounded-2xl shadow-elev-5 shadow-brand-500/20 text-sm font-black tracking-widest uppercase">
                                     {loading ? <Loader2 className="animate-spin" /> : 'Finish Registration'}
                                 </Button>
 
-                                <button onClick={handleResendOtp} disabled={loading} className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest hover:text-primary/70 transition-all disabled:opacity-50 underline decoration-2 underline-offset-4">
+                                <button onClick={handleResendOtp} disabled={loading} className="mt-6 text-[10px] font-black text-brand-500 uppercase tracking-widest hover:text-brand-500/70 transition-all disabled:opacity-50 underline decoration-2 underline-offset-4">
                                     Didn't receive code? Resend
                                 </button>
                                 
@@ -630,7 +630,7 @@ export const RegisterPage: React.FC = () => {
                                 <CheckCircle2 className="text-green-500 mx-auto mb-8" size={80} />
                                 <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tighter">Welcome Aboard!</h1>
                                 <p className="text-lg text-gray-500 dark:text-gray-400 mb-10 max-w-sm mx-auto font-bold italic leading-relaxed">Your organization is active. Initial credentials have been dispatched to your inbox.</p>
-                                <Button onClick={() => navigate('/login')} className="px-12 h-14 rounded-2xl text-sm font-black tracking-widest uppercase shadow-xl shadow-primary/20">Go to Dashboard →</Button>
+                                <Button onClick={() => navigate('/login')} className="px-12 h-14 rounded-2xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/20">Go to Dashboard →</Button>
                             </div>
                         )}
                     </div>

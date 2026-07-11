@@ -48,7 +48,7 @@ const staggerContainer = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700">
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-elev-6 border border-gray-700">
         <p className="text-xs text-gray-400 mb-1">{label}</p>
         {payload.map((entry: any) => (
           <p key={entry.name} className="text-sm font-semibold" style={{ color: entry.color }}>
@@ -83,7 +83,7 @@ const StatCard = ({
       whileHover={{ y: -5, scale: 1.02 }}
       className="relative group"
     >
-      <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+      <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4">
         {/* Subtle Decorative Pattern */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -94,7 +94,7 @@ const StatCard = ({
 
         {/* Icon Accent */}
         <div
-          className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+          className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-elev-4 border border-white/10"
           style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
         >
           <Icon className="w-6 h-6 text-white" />
@@ -109,7 +109,7 @@ const StatCard = ({
             {change !== undefined && (
               <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${isPositive
                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                : 'bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400'
                 }`}>
                 {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                 {Math.abs(change)}%
@@ -138,7 +138,7 @@ const ChartCard = ({
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none ${className}`}
+    className={`bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-5 shadow-gray-200/50 dark:shadow-none ${className}`}
   >
     <div className="flex items-center justify-between mb-6 gap-4">
       <div className="min-w-0">
@@ -146,7 +146,7 @@ const ChartCard = ({
         {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
       </div>
       {badge && (
-        <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
           {badge}
         </span>
       )}
@@ -276,8 +276,8 @@ export const AdminDashboard: React.FC = () => {
       <DashboardLayout title={t('dashboard.adminDashboard')}>
         <div className="flex items-center justify-center h-96">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
-            <Sparkles className="w-6 h-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 border-4 border-brand-200 dark:border-brand-800 rounded-full animate-spin border-t-brand-600" />
+            <Sparkles className="w-6 h-6 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
         </div>
       </DashboardLayout>
@@ -296,7 +296,7 @@ export const AdminDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-3"
         >
           {/* Subtle Patterns */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -330,14 +330,14 @@ export const AdminDashboard: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm"
+              className="flex items-center gap-4 bg-neutral-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-neutral-100 dark:border-white/5 shadow-elev-1"
             >
-              <div className="text-center px-4 border-r border-slate-200 dark:border-white/10">
+              <div className="text-center px-4 border-r border-neutral-200 dark:border-white/10">
                 <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
                 <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
               </div>
               <div className="text-center px-4">
-                <p className="text-2xl md:text-3xl font-black text-indigo-600 leading-none">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                <p className="text-2xl md:text-3xl font-black text-brand-600 leading-none">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
                 <p className="text-xs text-slate-400 uppercase tracking-widest mt-1 font-bold">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
               </div>
             </motion.div>
@@ -486,13 +486,13 @@ export const AdminDashboard: React.FC = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.7 + (i * 0.05) }}
-                    className="group relative overflow-hidden p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all cursor-default"
+                    className="group relative overflow-hidden p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:border-brand-200 dark:hover:border-brand-500/30 transition-all cursor-default"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
+                      <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-elev-1 flex items-center justify-center text-brand-600 transition-transform group-hover:scale-110">
                         <Calendar className="w-5 h-5" />
                       </div>
-                      <span className="font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors text-sm truncate">
+                      <span className="font-bold text-gray-900 dark:text-white group-hover:text-brand-600 transition-colors text-sm truncate">
                         {s.leave_type}
                       </span>
                     </div>
@@ -535,9 +535,9 @@ export const AdminDashboard: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {/* Birthdays */}
-          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-pink-500/5 transition-all duration-300">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2 hover:shadow-elev-6 hover:shadow-pink-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-pink-500 flex items-center justify-center shadow-lg shadow-pink-500/20 border border-white/10">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500 flex items-center justify-center shadow-elev-4 shadow-pink-500/20 border border-white/10">
                 <Cake className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -547,7 +547,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.birthdays || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center font-black text-pink-600 dark:text-pink-400 border border-pink-200/50 dark:border-pink-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
@@ -566,9 +566,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Anniversaries */}
-          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2 hover:shadow-elev-6 hover:shadow-amber-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-white/10">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-elev-4 shadow-amber-500/20 border border-white/10">
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -578,7 +578,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.anniversaries || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center font-black text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
@@ -597,9 +597,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* New Joiners */}
-          <div className="bg-white dark:bg-[#0f172a] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2rem] p-6 border border-neutral-100 dark:border-white/5 shadow-elev-2 hover:shadow-elev-6 hover:shadow-emerald-500/5 transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-white/10">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-elev-4 shadow-emerald-500/20 border border-white/10">
                 <UserPlus className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -609,7 +609,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
             <div className="space-y-3">
               {(peopleEventsData?.joiners || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl p-3 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
+                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/30 group-hover:scale-110 transition-transform">
                     {person.name?.charAt(0)}
                   </div>
@@ -643,10 +643,10 @@ export const AdminDashboard: React.FC = () => {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 flex items-center gap-4 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5 group"
+              className="bg-white dark:bg-neutral-900 rounded-[1.5rem] p-5 border border-neutral-100 dark:border-white/5 flex items-center gap-4 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4 group"
             >
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border border-white/10 group-hover:scale-110 transition-transform"
+                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-elev-1 border border-white/10 group-hover:scale-110 transition-transform"
                 style={{ backgroundColor: `${stat.color}15`, color: stat.color }}
               >
                 <stat.icon className="w-6 h-6" />

@@ -7,6 +7,7 @@ import { auditService, AuditLog } from '@/services/audit.service';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
+import { PageTransition } from '@/components/common/PageTransition';
 
 // Utility for polling
 function useInterval(callback: () => void, delay: number | null) {
@@ -70,13 +71,13 @@ export const ActivityPage: React.FC = () => {
   const getActionBadge = (action: string) => {
     switch (action) {
       case 'CREATE':
-        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Created</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400 border border-brand-200 dark:border-brand-800">Created</span>;
       case 'UPDATE':
-        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400 border border-fuchsia-200 dark:border-fuchsia-800">Updated</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-coral-100 text-coral-600 dark:bg-coral-500/20 dark:text-coral-400 border border-coral-200 dark:border-coral-800">Updated</span>;
       case 'DELETE':
         return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">Deleted</span>;
       case 'LOGIN':
-        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Login</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400 border border-brand-200 dark:border-brand-800">Login</span>;
       default:
         return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">{action}</span>;
     }
@@ -98,7 +99,7 @@ export const ActivityPage: React.FC = () => {
       header: 'Actor',
       cell: (row: AuditLog) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold shadow-elev-1">
             {(row.actor_first_name?.[0] || row.actor_email?.[0] || 'U').toUpperCase()}
           </div>
           <div>
@@ -155,10 +156,11 @@ export const ActivityPage: React.FC = () => {
         { label: 'Audit Activity' },
       ]}
     >
+      <PageTransition>
       <div className="space-y-6">
         {/* Header Stats / Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white border-none shadow-lg relative overflow-hidden">
+          <Card className="p-4 bg-gradient-to-br from-brand-500 to-brand-600 text-white border-none shadow-elev-4 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <Activity size={100} />
             </div>
@@ -167,12 +169,12 @@ export const ActivityPage: React.FC = () => {
                 <Activity size={24} className="text-white" />
               </div>
               <div>
-                <p className="text-purple-100 text-sm font-medium">System Status</p>
+                <p className="text-brand-100 text-sm font-medium">System Status</p>
                 <p className="text-2xl font-bold flex items-center gap-2">
                   Active
                   <span className="flex h-3 w-3 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 border-2 border-purple-600"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 border-2 border-brand-600"></span>
                   </span>
                 </p>
               </div>
@@ -181,8 +183,8 @@ export const ActivityPage: React.FC = () => {
 
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <History size={24} className="text-primary" />
+              <div className="p-2 bg-brand-500/10 rounded-lg">
+                <History size={24} className="text-brand-500" />
               </div>
               <div>
                 <p className="text-muted text-sm font-medium">Total Events</p>
@@ -213,7 +215,7 @@ export const ActivityPage: React.FC = () => {
             <input
               type="text"
               placeholder="Search logs by actor, action or target..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all shadow-elev-1"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -223,7 +225,7 @@ export const ActivityPage: React.FC = () => {
             {/* Live Updates Toggle */}
             <div
               onClick={() => setIsLive(!isLive)}
-              className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+              className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-elev-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             >
               <span className="text-sm font-medium text-gray-700 dark:text-gray-200 select-none">Live Updates</span>
               <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isLive ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
@@ -239,7 +241,7 @@ export const ActivityPage: React.FC = () => {
         </div>
 
         {/* Data Table */}
-        <Card className="border border-gray-200 dark:border-gray-700 shadow-md overflow-hidden rounded-xl bg-white dark:bg-gray-800">
+        <Card className="border border-gray-200 dark:border-gray-700 shadow-elev-3 overflow-hidden rounded-xl bg-white dark:bg-gray-800">
           <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
             <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               Audit Trail
@@ -258,6 +260,7 @@ export const ActivityPage: React.FC = () => {
           />
         </Card>
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 };

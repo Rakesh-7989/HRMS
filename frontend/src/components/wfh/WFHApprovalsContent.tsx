@@ -97,7 +97,7 @@ export const WFHApprovalsContent: React.FC = () => {
 
                 {isLoading ? (
                     <div className="h-64 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                     </div>
                 ) : pendingRequests.length === 0 ? (
                     <div className="text-center py-12 text-gray-500 dark:text-muted">
@@ -212,7 +212,7 @@ export const WFHApprovalsContent: React.FC = () => {
                         <DialogContent className="py-2 px-0">
                             {capacityStats && capacityStats.totalTeamSize > 0 &&
                                 ((capacityStats.approvedWFHCount + capacityStats.approvedLeaveCount) / capacityStats.totalTeamSize) >= 0.5 && (
-                                    <div className="mb-4 bg-orange-50/50 dark:bg-orange-900/10 border-l-4 border-orange-500 p-3 rounded shadow-sm">
+                                    <div className="mb-4 bg-orange-50/50 dark:bg-orange-900/10 border-l-4 border-orange-500 p-3 rounded shadow-elev-1">
                                         <div className="flex">
                                             <div className="flex-shrink-0">
                                                 <svg className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
@@ -232,8 +232,8 @@ export const WFHApprovalsContent: React.FC = () => {
                                     </div>
                                 )}
 
-                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 rounded-lg p-3">
-                                <p className="text-xs text-primary-700 dark:text-primary-300">
+                            <div className="bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/10 dark:border-brand-500/20 rounded-lg p-3">
+                                <p className="text-xs text-brand-500-700 dark:text-brand-500-300">
                                     <strong>{selectedRequest.first_name} {selectedRequest.last_name}</strong> requested WFH for{' '}
                                     <strong>{format(new Date(selectedRequest.request_date), 'MMM dd, yyyy')}</strong>
                                 </p>
@@ -247,7 +247,7 @@ export const WFHApprovalsContent: React.FC = () => {
                                     value={approvalComment}
                                     onChange={(e) => setApprovalComment(e.target.value)}
                                     rows={2}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm shadow-elev-1 transition-all"
                                     placeholder="Add a comment (optional)..."
                                 />
                             </div>
@@ -264,7 +264,7 @@ export const WFHApprovalsContent: React.FC = () => {
                             <Button
                                 onClick={confirmApprove}
                                 isLoading={approveMutation.isPending}
-                                className="px-6 bg-primary hover:bg-primary-600 shadow-md"
+                                className="px-6 bg-brand-500 hover:bg-brand-500-600 shadow-elev-3"
                             >
                                 Confirm Approval
                             </Button>
@@ -297,7 +297,7 @@ export const WFHApprovalsContent: React.FC = () => {
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm shadow-elev-1 transition-all"
                                     placeholder="Please provide a reason for rejection (minimum 5 characters)..."
                                 />
                                 {rejectionReason.length > 0 && rejectionReason.length < 5 && (
@@ -321,7 +321,7 @@ export const WFHApprovalsContent: React.FC = () => {
                                 onClick={confirmReject}
                                 isLoading={rejectMutation.isPending}
                                 disabled={rejectionReason.trim().length < 5}
-                                className="px-6 bg-red-500 hover:bg-red-600 shadow-md"
+                                className="px-6 bg-red-500 hover:bg-red-600 shadow-elev-3"
                             >
                                 Confirm Rejection
                             </Button>

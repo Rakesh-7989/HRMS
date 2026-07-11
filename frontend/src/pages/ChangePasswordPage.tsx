@@ -79,7 +79,7 @@ export const ChangePasswordPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
                 <div className="flex items-center gap-3 mb-8 justify-center">
                     <AnimatedLogo size="lg" />
@@ -88,7 +88,7 @@ export const ChangePasswordPage: React.FC = () => {
                 <Card>
                     <div className="mb-6">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
+                            <div className="p-2 rounded-lg bg-coral-500/10 text-coral-500">
                                 <ShieldAlert size={24} />
                             </div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Change Password</h1>
@@ -106,7 +106,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 <input
                                     type={showCurrent ? 'text' : 'password'}
                                     {...formik.getFieldProps('currentPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-dark-border bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="Enter temporary password"
                                 />
                                 <button
@@ -129,7 +129,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 <input
                                     type={showNew ? 'text' : 'password'}
                                     {...formik.getFieldProps('newPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-dark-border bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="At least 8 characters"
                                 />
                                 <button
@@ -159,7 +159,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 <input
                                     type={showConfirm ? 'text' : 'password'}
                                     {...formik.getFieldProps('confirmPassword')}
-                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-dark-border bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                                    className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="Repeat new password"
                                 />
                                 <button

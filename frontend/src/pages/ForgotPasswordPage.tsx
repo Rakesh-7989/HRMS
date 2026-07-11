@@ -29,7 +29,7 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <AnimatedLogo size="lg" />
@@ -52,7 +52,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted"
+                className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted"
                 placeholder="you@company.com"
               />
             </div>
@@ -61,14 +61,14 @@ export const ForgotPasswordPage: React.FC = () => {
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-border flex justify-between text-sm">
-            <a href="/login" className="text-primary hover:underline flex items-center gap-2">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-between text-sm">
+            <a href="/login" className="text-brand-500 hover:underline flex items-center gap-2">
               <ArrowLeft size={14} />
               Back to login
             </a>
             <p className="text-gray-600 dark:text-muted">
               Don't have an account?{' '}
-              <a href="/pricing" className="text-primary hover:underline">
+              <a href="/pricing" className="text-brand-500 hover:underline">
                 Register now
               </a>
             </p>

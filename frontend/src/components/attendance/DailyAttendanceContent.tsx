@@ -402,7 +402,7 @@ export const DailyAttendanceContent: React.FC = () => {
                             <div className="mt-2 flex gap-6">
                                 <div>
                                     <p className="text-[10px] text-gray-500 dark:text-muted uppercase font-semibold tracking-wider">Session</p>
-                                    <p className="text-xl font-mono font-bold text-primary">{formatDuration(currentTimer)}</p>
+                                    <p className="text-xl font-mono font-bold text-brand-500">{formatDuration(currentTimer)}</p>
                                 </div>
                                 {(breakTimer > 0 || todayAttendance?.active_break) && (
                                     <div>
@@ -490,7 +490,7 @@ export const DailyAttendanceContent: React.FC = () => {
 
                         {isLoadingTeamAttendance ? (
                             <div className="h-64 flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                             </div>
                         ) : filteredTeamLogs.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records for today</div>
@@ -575,7 +575,7 @@ export const DailyAttendanceContent: React.FC = () => {
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Attendance History</h3>
                         {isLoadingMyAttendance ? (
                             <div className="h-64 flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                             </div>
                         ) : myAttendance.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records found</div>
@@ -619,12 +619,12 @@ export const DailyAttendanceContent: React.FC = () => {
                                                 <td className="py-3 px-4">
                                                     <div className="flex flex-col gap-1">
                                                         {att.check_in_device && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 inline-block w-fit">
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
                                                                 IN: {att.check_in_device}
                                                             </span>
                                                         )}
                                                         {att.check_out_device && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 inline-block w-fit">
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
                                                                 OUT: {att.check_out_device}
                                                             </span>
                                                         )}
@@ -766,7 +766,7 @@ export const DailyAttendanceContent: React.FC = () => {
                         <DialogTitle>End of Day Report</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        <div className="bg-violet-50 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200 p-3 rounded-md text-sm border border-violet-100 dark:border-violet-800">
+                        <div className="bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200 p-3 rounded-md text-sm border border-brand-100 dark:border-brand-800">
                             Since you are working from home today, detailed daily report is required to clock out.
                         </div>
                         <div>
@@ -775,7 +775,7 @@ export const DailyAttendanceContent: React.FC = () => {
                                 id="eod-report"
                                 value={eodReport}
                                 onChange={(e) => setEodReport(e.target.value)}
-                                className="w-full mt-2 p-3 border rounded-md min-h-[120px] focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                className="w-full mt-2 p-3 border rounded-md min-h-[120px] focus:ring-2 focus:ring-brand-500/50 focus:border-transparent text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                                 placeholder="Please list your tasks completed, meetings attended, and any pending items... (Min 10 chars)"
                             />
                             <p className="text-xs text-right mt-1 text-gray-500 dark:text-gray-400">

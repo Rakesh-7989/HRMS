@@ -10,6 +10,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export const DesignationsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -94,6 +95,7 @@ export const DesignationsPage: React.FC = () => {
                 { label: 'Designations' },
             ]}
         >
+            <PageTransition>
             <div className="space-y-6">
 
                 {/* Top Actions & Stats */}
@@ -110,7 +112,7 @@ export const DesignationsPage: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="Search designations..."
-                                className="pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none w-64 shadow-sm"
+                                className="pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none w-64 shadow-elev-1"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -131,7 +133,7 @@ export const DesignationsPage: React.FC = () => {
                     <input
                         type="text"
                         placeholder="Search designations..."
-                        className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -141,7 +143,7 @@ export const DesignationsPage: React.FC = () => {
                 {/* Content Grid */}
                 {isLoading ? (
                     <div className="h-64 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500 mb-3"></div>
                         <p className="text-muted text-sm">Loading designations...</p>
                     </div>
                 ) : filteredDesignations.length === 0 ? (
@@ -167,17 +169,17 @@ export const DesignationsPage: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredDesignations.map((d) => (
-                            <Card key={d.id} className="group hover:shadow-md transition-all duration-200 border-gray-200/60 dark:border-gray-700">
+                            <Card key={d.id} className="group hover:shadow-elev-3 transition-all duration-200 border-gray-200/60 dark:border-gray-700">
                                 <div className="p-4" >
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className={`p-2 rounded-lg ${d.is_active ? 'bg-primary/5 text-primary' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                                        <div className={`p-2 rounded-lg ${d.is_active ? 'bg-brand-500/5 text-brand-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
                                             <Briefcase size={20} />
                                         </div>
                                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             {canManage && (<>
                                                 <button
                                                     onClick={() => handleEdit(d)}
-                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                                                    className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
                                                     title="Edit"
                                                 >
                                                     <Edit3 size={15} />
@@ -236,6 +238,7 @@ export const DesignationsPage: React.FC = () => {
                 )}
 
             </div>
+            </PageTransition>
         </DashboardLayout>
     );
 };

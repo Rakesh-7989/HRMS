@@ -96,7 +96,7 @@ export const DelegationContent: React.FC = () => {
             {/* Explanation Card */}
             <Card>
                 <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <Shield className="h-5 w-5 text-brand-500 mt-0.5 flex-shrink-0" />
                     <div>
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('delegation.whatAreDelegations')}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -117,14 +117,14 @@ export const DelegationContent: React.FC = () => {
             {/* My Delegations (created by me) */}
             <Card>
                 <div className="flex items-center gap-2 mb-4">
-                    <ArrowRight className="h-5 w-5 text-primary" />
+                    <ArrowRight className="h-5 w-5 text-brand-500" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('delegation.myDelegations')}</h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{t('delegation.myDelegationsDesc')}</span>
                 </div>
 
                 {loadingMine ? (
                     <div className="h-32 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent" />
                     </div>
                 ) : myDelegations.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -199,7 +199,7 @@ export const DelegationContent: React.FC = () => {
 
                 {loadingToMe ? (
                     <div className="h-32 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent" />
                     </div>
                 ) : delegationsToMe.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -297,10 +297,10 @@ export const DelegationContent: React.FC = () => {
                                         placeholder={t('delegation.searchDelegatePlaceholder')}
                                         value={delegateSearch}
                                         onChange={(e) => setDelegateSearch(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                                     />
                                     {filteredEmployees.length > 0 && (
-                                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-4 max-h-48 overflow-y-auto">
                                             {filteredEmployees.slice(0, 8).map((emp) => (
                                                 <button
                                                     key={emp.id}
@@ -335,7 +335,7 @@ export const DelegationContent: React.FC = () => {
                                     value={startDate}
                                     min={todayStr}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                                 />
                             </div>
                             <div>
@@ -347,7 +347,7 @@ export const DelegationContent: React.FC = () => {
                                     value={endDate}
                                     min={startDate || todayStr}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                                 />
                             </div>
                         </div>
@@ -361,7 +361,7 @@ export const DelegationContent: React.FC = () => {
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 rows={2}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                                 placeholder={t('delegation.reasonPlaceholder')}
                             />
                         </div>

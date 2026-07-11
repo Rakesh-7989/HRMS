@@ -103,12 +103,12 @@ export const TeamLeaveContent: React.FC = () => {
             {/* Analytics Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: t('leave.total30d'), value: leaveSummary?.total_applications || 0, accent: 'text-primary' },
+                    { label: t('leave.total30d'), value: leaveSummary?.total_applications || 0, accent: 'text-brand-500' },
                     { label: t('leave.pending'), value: leaveSummary?.pending || 0, accent: 'text-yellow-500' },
                     { label: t('leave.approved30d'), value: leaveSummary?.approved || 0, accent: 'text-accent-green' },
                     { label: t('leave.rejected30d'), value: leaveSummary?.rejected || 0, accent: 'text-red-500' },
                 ].map((card) => (
-                    <Card key={card.label} className="p-4 border-l-4 border-l-primary/20 hover:shadow-md transition-shadow">
+                    <Card key={card.label} className="p-4 border-l-4 border-l-primary/20 hover:shadow-elev-3 transition-shadow">
                         <p className="text-sm font-medium text-gray-500 dark:text-muted">{card.label}</p>
                         <p className={`text-2xl font-bold mt-1 ${card.accent}`}>{card.value}</p>
                     </Card>
@@ -123,7 +123,7 @@ export const TeamLeaveContent: React.FC = () => {
                             className={cn(
                                 "flex-1 py-2 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'PENDING'
-                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
+                                    ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1"
                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                             )}
                         >
@@ -139,7 +139,7 @@ export const TeamLeaveContent: React.FC = () => {
                             className={cn(
                                 "flex-1 py-2 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'HISTORY'
-                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
+                                    ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1"
                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                             )}
                         >
@@ -164,13 +164,13 @@ export const TeamLeaveContent: React.FC = () => {
                                     placeholder={t('leave.searchByNameOrReason')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                                 />
                             </div>
                             <select
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-transparent"
                             >
                                 <option value="ALL">{t('leave.allTypes')}</option>
                                 {leaveTypes.map((type) => (
@@ -184,7 +184,7 @@ export const TeamLeaveContent: React.FC = () => {
 
                     {isLoading ? (
                         <div className="h-64 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-500 border-t-transparent"></div>
                         </div>
                     ) : filteredList.length === 0 ? (
                         <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/20 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800">
@@ -198,8 +198,8 @@ export const TeamLeaveContent: React.FC = () => {
                         <div className="relative overflow-hidden rounded-lg border border-gray-100 dark:border-gray-800">
                             <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                                 <table className="w-full border-collapse">
-                                    <thead className="sticky top-0 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md z-20 shadow-sm">
-                                        <tr className="border-b border-light-border dark:border-dark-border text-left">
+                                    <thead className="sticky top-0 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md z-20 shadow-elev-1">
+                                        <tr className="border-b border-gray-200 dark:border-white/10 text-left">
                                             <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.employee')}</th>
                                             <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.type')}</th>
                                             <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.duration')}</th>
@@ -216,7 +216,7 @@ export const TeamLeaveContent: React.FC = () => {
                                                 <tr key={leave.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
                                                     <td className="py-4 px-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                                            <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
                                                                 {(emp.first_name?.[0] || '') + (emp.last_name?.[0] || '')}
                                                             </div>
                                                             <div>
@@ -344,7 +344,7 @@ export const TeamLeaveContent: React.FC = () => {
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm shadow-elev-1 transition-all"
                                     placeholder={t('leave.provideReasonPlaceholder')}
                                 />
                                 {rejectionReason.length > 0 && rejectionReason.length < 5 && (
@@ -372,7 +372,7 @@ export const TeamLeaveContent: React.FC = () => {
                                 }}
                                 isLoading={rejectMutation.isPending}
                                 disabled={rejectionReason.trim().length < 5}
-                                className="px-6 bg-red-500 hover:bg-red-600 shadow-md"
+                                className="px-6 bg-red-500 hover:bg-red-600 shadow-elev-3"
                             >
                                 {t('leave.confirmRejection')}
                             </Button>

@@ -441,7 +441,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                 className={cn(
                                     'flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors border-b-2 -mb-px',
                                     activeTab === tab.id
-                                        ? 'border-primary text-primary bg-primary/5'
+                                        ? 'border-brand-500 text-brand-500 bg-brand-500/5'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 )}
                             >
@@ -539,7 +539,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                             </TableCell>
                                             <TableCell>
                                                 {type.requires_attachment ? (
-                                                    <Check size={16} className="text-fuchsia-500" />
+                                                    <Check size={16} className="text-coral-500" />
                                                 ) : (
                                                     <X size={16} className="text-gray-400" />
                                                 )}
@@ -803,11 +803,11 @@ export const LeaveSettingsPage: React.FC = () => {
                                             className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                                         >
                                             <div className="flex items-center gap-4">
-                                                <div className="flex flex-col items-center justify-center w-14 h-14 bg-primary/10 rounded-lg">
-                                                    <span className="text-xs text-primary font-medium">
+                                                <div className="flex flex-col items-center justify-center w-14 h-14 bg-brand-500/10 rounded-lg">
+                                                    <span className="text-xs text-brand-500 font-medium">
                                                         {format(new Date(holiday.date), 'MMM')}
                                                     </span>
-                                                    <span className="text-lg font-bold text-primary">
+                                                    <span className="text-lg font-bold text-brand-500">
                                                         {format(new Date(holiday.date), 'dd')}
                                                     </span>
                                                 </div>
@@ -889,7 +889,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={typeForm.is_paid}
                                         onChange={(e) => setTypeForm({ ...typeForm, is_paid: e.target.checked })}
-                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">Paid Leave</span>
                                 </label>
@@ -898,7 +898,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={typeForm.requires_approval}
                                         onChange={(e) => setTypeForm({ ...typeForm, requires_approval: e.target.checked })}
-                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">Requires Approval</span>
                                 </label>
@@ -907,7 +907,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={typeForm.requires_attachment}
                                         onChange={(e) => setTypeForm({ ...typeForm, requires_attachment: e.target.checked })}
-                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">Requires Attachment</span>
                                 </label>
@@ -1067,7 +1067,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                             type="checkbox"
                                             checked={policyForm.is_probation_eligible}
                                             onChange={(e) => setPolicyForm({ ...policyForm, is_probation_eligible: e.target.checked })}
-                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                         />
                                         <span className="text-sm text-gray-700 dark:text-gray-300">Probation Eligible</span>
                                     </label>
@@ -1141,7 +1141,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={holidayForm.is_optional}
                                         onChange={(e) => setHolidayForm({ ...holidayForm, is_optional: e.target.checked })}
-                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">Optional Holiday</span>
                                 </label>
@@ -1150,7 +1150,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={holidayForm.is_paid}
                                         onChange={(e) => setHolidayForm({ ...holidayForm, is_paid: e.target.checked })}
-                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        className="rounded border-gray-300 text-brand-500 focus:ring-brand-500/50"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">Paid Holiday</span>
                                 </label>

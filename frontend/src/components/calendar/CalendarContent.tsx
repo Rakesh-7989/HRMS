@@ -200,11 +200,11 @@ export const CalendarContent: React.FC = () => {
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-center gap-2"
                     >
-                        <div className="h-1.5 w-6 bg-primary rounded-full" />
+                        <div className="h-1.5 w-6 bg-brand-500 rounded-full" />
                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">{t('calendar.corporateCalendar')}</span>
                     </motion.div>
                     <h2 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">
-                        {format(currentDate, 'MMMM')} <span className="text-primary">{format(currentDate, 'yyyy')}</span>
+                        {format(currentDate, 'MMMM')} <span className="text-brand-500">{format(currentDate, 'yyyy')}</span>
                     </h2>
                     <p className="text-sm font-medium text-gray-400 dark:text-gray-500 max-w-md">
                         {t('calendar.description')}
@@ -212,22 +212,22 @@ export const CalendarContent: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row w-full lg:w-auto items-stretch sm:items-center gap-4">
-                    <div className="flex items-center justify-between bg-gray-50/50 dark:bg-white/[0.03] p-1 border border-light-border dark:border-white/5 rounded-2xl">
+                    <div className="flex items-center justify-between bg-gray-50/50 dark:bg-white/[0.03] p-1 border border-gray-200 dark:border-white/5 rounded-2xl">
                         <button
                             onClick={prevMonth}
-                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-sm active:scale-95"
+                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-elev-1 active:scale-95"
                         >
                             <ChevronLeft size={16} />
                         </button>
                         <button
                             onClick={goToToday}
-                            className="flex-1 px-6 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:text-primary transition-colors text-center"
+                            className="flex-1 px-6 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-colors text-center"
                         >
                             Today
                         </button>
                         <button
                             onClick={nextMonth}
-                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-sm active:scale-95"
+                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-elev-1 active:scale-95"
                         >
                             <ChevronRight size={16} />
                         </button>
@@ -236,7 +236,7 @@ export const CalendarContent: React.FC = () => {
                     <select
                         value={selectedState}
                         onChange={(e) => setSelectedState(e.target.value)}
-                        className="h-11 bg-white dark:bg-[#111] border border-light-border dark:border-white/5 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-primary/20 outline-none transition-all cursor-pointer hover:border-primary/30 text-gray-700 dark:text-gray-200 shadow-sm"
+                        className="h-11 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/5 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-brand-500/20 outline-none transition-all cursor-pointer hover:border-brand-500/30 text-gray-700 dark:text-gray-200 shadow-elev-1"
                     >
                         <option value="">Regions: All</option>
                         {states.map(state => (
@@ -248,12 +248,12 @@ export const CalendarContent: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                             <button
                                 onClick={() => { setIsImportModalOpen(true); setImportStatus({ type: 'idle', message: '' }); setImportFile(null); }}
-                                className="h-11 rounded-2xl px-4 font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-1.5 flex-1 sm:flex-initial border-2 border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95"
+                                className="h-11 rounded-2xl px-4 font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-1.5 flex-1 sm:flex-initial border-2 border-brand-500/30 text-brand-500 bg-brand-500/5 hover:bg-brand-500/10 hover:border-brand-500/50 transition-all active:scale-95"
                             >
                                 <Upload size={14} />
                                 Import
                             </button>
-                            <Button onClick={() => setIsAddModalOpen(true)} className="h-11 rounded-2xl shadow-premium px-5 font-bold uppercase tracking-widest text-[11px] group flex-1 sm:flex-initial">
+                            <Button onClick={() => setIsAddModalOpen(true)} className="h-11 rounded-2xl shadow-elev-5 px-5 font-bold uppercase tracking-widest text-[11px] group flex-1 sm:flex-initial">
                                 <Plus size={14} className="mr-1.5" />
                                 Add Holiday
                             </Button>
@@ -274,9 +274,9 @@ export const CalendarContent: React.FC = () => {
                         exit="exit"
                         transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
                     >
-                        <Card className="p-0 border-none shadow-2xl bg-white dark:bg-[#111] overflow-hidden rounded-3xl md:rounded-[2.5rem]">
+                        <Card className="p-0 border-none shadow-elev-6 bg-white dark:bg-[#111] overflow-hidden rounded-3xl md:rounded-[2.5rem]">
                             {/* Days labels */}
-                            <div className="grid grid-cols-7 border-b border-light-border dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01]">
+                            <div className="grid grid-cols-7 border-b border-gray-200 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01]">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
                                     <div key={d} className={cn(
                                         "py-3 md:py-5 text-center text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em]",
@@ -289,7 +289,7 @@ export const CalendarContent: React.FC = () => {
 
                             <div className="grid grid-cols-7">
                                 {Array.from({ length: startOfMonth(currentDate).getDay() }).map((_, i) => (
-                                    <div key={`pad-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
+                                    <div key={`pad-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-gray-200 dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
                                 ))}
 
                                 {monthDays.map(day => {
@@ -302,20 +302,20 @@ export const CalendarContent: React.FC = () => {
                                         <div
                                             key={dateStr}
                                             className={cn(
-                                                "min-h-[60px] md:min-h-[130px] p-1 md:p-4 border-r border-b border-light-border dark:border-white/5 transition-all relative group",
-                                                isToday && "bg-primary/[0.02] dark:bg-primary/[0.04]",
+                                                "min-h-[60px] md:min-h-[130px] p-1 md:p-4 border-r border-b border-gray-200 dark:border-white/5 transition-all relative group",
+                                                isToday && "bg-brand-500/[0.02] dark:bg-brand-500/[0.04]",
                                                 !holiday?.holiday_name && "hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                                             )}
                                         >
                                             {isToday && (
-                                                <div className="absolute top-2 right-2 md:top-4 md:right-4 h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-primary animate-pulse" />
+                                                <div className="absolute top-2 right-2 md:top-4 md:right-4 h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-brand-500 animate-pulse" />
                                             )}
 
                                             <div className="relative z-10 flex flex-col h-full">
                                                 <div className="mb-1 md:mb-4 flex flex-col items-center md:items-start">
                                                     <span className={cn(
                                                         "text-sm md:text-xl font-bold tracking-tighter",
-                                                        isToday ? "text-primary" :
+                                                        isToday ? "text-brand-500" :
                                                             isWeekend ? "text-red-500/50" :
                                                                 "text-gray-400 dark:text-gray-700 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"
                                                     )}>
@@ -329,10 +329,10 @@ export const CalendarContent: React.FC = () => {
                                                             initial={{ opacity: 0, y: 5 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className={cn(
-                                                                "p-1 md:p-3 rounded-lg md:rounded-2xl flex items-center justify-center md:justify-start gap-1 md:gap-2 border border-transparent shadow-sm",
-                                                                holiday.holiday_type === 'Central' && "bg-violet-50/50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400",
-                                                                holiday.holiday_type === 'State' && "bg-purple-50/50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400",
-                                                                holiday.holiday_type === 'Company' && "bg-fuchsia-50/50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
+                                                                "p-1 md:p-3 rounded-lg md:rounded-2xl flex items-center justify-center md:justify-start gap-1 md:gap-2 border border-transparent shadow-elev-1",
+                                                                holiday.holiday_type === 'Central' && "bg-brand-50/50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400",
+                                                                holiday.holiday_type === 'State' && "bg-brand-50/50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400",
+                                                                holiday.holiday_type === 'Company' && "bg-coral-50/50 dark:bg-coral-500/10 text-coral-600 dark:text-coral-400",
                                                                 holiday.holiday_type === 'Weekend' && "bg-gray-100/50 dark:bg-white/5 text-gray-400 dark:text-gray-600"
                                                             )}
                                                         >
@@ -352,7 +352,7 @@ export const CalendarContent: React.FC = () => {
                                 })}
 
                                 {Array.from({ length: (7 - (endOfMonth(currentDate).getDay() + 1)) % 7 }).map((_, i) => (
-                                    <div key={`pad-end-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-light-border dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
+                                    <div key={`pad-end-${i}`} className="min-h-[60px] md:min-h-[130px] border-r border-b border-gray-200 dark:border-white/5 bg-gray-50/5 dark:bg-white/[0.01]"></div>
                                 ))}
                             </div>
                         </Card>
@@ -374,7 +374,7 @@ export const CalendarContent: React.FC = () => {
                             {canManage && (
                                 <button
                                     onClick={() => setIsAnnouncementModalOpen(true)}
-                                    className="px-4 py-1.5 bg-primary/10 hover:bg-primary/20 rounded-xl text-primary text-xs font-bold uppercase tracking-wider transition-all"
+                                    className="px-4 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 rounded-xl text-brand-500 text-xs font-bold uppercase tracking-wider transition-all"
                                 >
                                     Add
                                 </button>
@@ -382,7 +382,7 @@ export const CalendarContent: React.FC = () => {
                         </div>
                     </div>
 
-                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px]">
+                    <Card className="border-none shadow-elev-5 bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px]">
                         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {announcements.length === 0 ? (
                                 <div className="py-20 text-center opacity-40">
@@ -393,10 +393,10 @@ export const CalendarContent: React.FC = () => {
                                 announcements.map((ann) => (
                                     <div
                                         key={ann.id}
-                                        className="p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 relative group hover:bg-white dark:hover:bg-white/[0.04] transition-all"
+                                        className="p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 relative group hover:bg-white dark:hover:bg-white/[0.04] transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                            <div className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                                             <h4 className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight">{ann.title}</h4>
                                         </div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-4 ml-4">{ann.message}</p>
@@ -423,16 +423,16 @@ export const CalendarContent: React.FC = () => {
                 <div className="space-y-4">
                     <div className="flex flex-col gap-1 px-2">
                         <div className="flex items-center gap-2">
-                            <Sparkles size={12} className="text-fuchsia-500/70" />
+                            <Sparkles size={12} className="text-coral-500/70" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">Priority Overrides</span>
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Custom Calendar</h3>
                     </div>
 
-                    <Card className="border-none shadow-xl bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px] flex flex-col">
+                    <Card className="border-none shadow-elev-5 bg-white dark:bg-[#111] p-4 md:p-5 rounded-3xl md:rounded-[2.5rem] min-h-[250px] flex flex-col">
                         <div className="flex-1 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {companyHolidays.length === 0 ? (
-                                <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-light-border dark:border-white/5 rounded-[2.5rem] py-16 opacity-30">
+                                <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-white/5 rounded-[2.5rem] py-16 opacity-30">
                                     <div className="p-4 bg-gray-100 dark:bg-black/20 rounded-2xl mb-4">
                                         <Building size={32} />
                                     </div>
@@ -440,9 +440,9 @@ export const CalendarContent: React.FC = () => {
                                 </div>
                             ) : (
                                 companyHolidays.map((h) => (
-                                    <div key={h.id} className="flex items-center justify-between p-4 md:p-5 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-light-border dark:border-white/5 group">
+                                    <div key={h.id} className="flex items-center justify-between p-4 md:p-5 rounded-2xl md:rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 group">
                                         <div className="flex items-center gap-5">
-                                            <div className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-white dark:bg-black/40 shadow-sm text-primary font-bold">
+                                            <div className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-white dark:bg-black/40 shadow-elev-1 text-brand-500 font-bold">
                                                 <span className="text-[10px] uppercase opacity-60">{format(new Date(h.date), 'MMM')}</span>
                                                 <span className="text-xl font-bold">{format(new Date(h.date), 'dd')}</span>
                                             </div>
@@ -469,7 +469,7 @@ export const CalendarContent: React.FC = () => {
 
             {/* Modals Refined with Extra Curves */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                <DialogContent className="rounded-[3rem] border-none shadow-2xl p-10 bg-white dark:bg-[#0a0a0a] max-w-lg">
+                <DialogContent className="rounded-[3rem] border-none shadow-elev-6 p-10 bg-white dark:bg-[#0a0a0a] max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="text-3xl font-bold tracking-tight text-center mb-8">Add Holiday</DialogTitle>
                     </DialogHeader>
@@ -480,7 +480,7 @@ export const CalendarContent: React.FC = () => {
                                 type="date"
                                 value={newHolidayDate}
                                 onChange={(e) => setNewHolidayDate(e.target.value)}
-                                className="h-14 rounded-2xl border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/30 px-6 font-bold bg-gray-50 dark:bg-white/[0.03]"
+                                className="h-14 rounded-2xl border-gray-200 dark:border-white/5 focus:ring-1 focus:ring-brand-500/30 px-6 font-bold bg-gray-50 dark:bg-white/[0.03]"
                             />
                         </div>
                         <div className="space-y-3">
@@ -489,7 +489,7 @@ export const CalendarContent: React.FC = () => {
                                 placeholder="e.g. Annual Company Break"
                                 value={newHolidayName}
                                 onChange={(e) => setNewHolidayName(e.target.value)}
-                                className="h-14 rounded-2xl border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/30 px-6 font-bold bg-gray-50 dark:bg-white/[0.03]"
+                                className="h-14 rounded-2xl border-gray-200 dark:border-white/5 focus:ring-1 focus:ring-brand-500/30 px-6 font-bold bg-gray-50 dark:bg-white/[0.03]"
                             />
                         </div>
                         <div className="space-y-3">
@@ -497,7 +497,7 @@ export const CalendarContent: React.FC = () => {
                             <select
                                 value={newHolidayState}
                                 onChange={(e) => setNewHolidayState(e.target.value)}
-                                className="w-full h-14 bg-gray-50 dark:bg-white/[0.03] border border-light-border dark:border-white/5 rounded-2xl px-6 text-sm font-bold focus:ring-1 focus:ring-primary/30 outline-none transition-all cursor-pointer shadow-sm text-gray-900 dark:text-gray-100"
+                                className="w-full h-14 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-6 text-sm font-bold focus:ring-1 focus:ring-brand-500/30 outline-none transition-all cursor-pointer shadow-elev-1 text-gray-900 dark:text-gray-100"
                             >
                                 <option value="">All Regions</option>
                                 {allStates.map(state => (
@@ -506,13 +506,13 @@ export const CalendarContent: React.FC = () => {
                             </select>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="flex-1 h-14 rounded-2xl font-bold border-light-border dark:border-white/10 uppercase tracking-widest text-[11px]">
+                            <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="flex-1 h-14 rounded-2xl font-bold border-gray-200 dark:border-white/10 uppercase tracking-widest text-[11px]">
                                 Cancel
                             </Button>
                             <Button
                                 onClick={() => addCompanyHolidayMutation.mutate({ date: newHolidayDate, holiday_name: newHolidayName, state: newHolidayState || undefined })}
                                 disabled={!newHolidayDate || !newHolidayName || addCompanyHolidayMutation.isPending}
-                                className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] shadow-primary/30"
+                                className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] shadow-brand-500/30"
                             >
                                 Send Board
                             </Button>
@@ -522,7 +522,7 @@ export const CalendarContent: React.FC = () => {
             </Dialog>
 
             <Dialog open={isAnnouncementModalOpen} onOpenChange={setIsAnnouncementModalOpen}>
-                <DialogContent className="rounded-[3.5rem] border-none shadow-2xl p-12 bg-white dark:bg-[#0a0a0a] max-w-xl">
+                <DialogContent className="rounded-[3.5rem] border-none shadow-elev-6 p-12 bg-white dark:bg-[#0a0a0a] max-w-xl">
                     <DialogHeader>
                         <DialogTitle className="text-4xl font-bold tracking-tighter text-center mb-10 text-gray-900 dark:text-white">Broadcast Message</DialogTitle>
                     </DialogHeader>
@@ -533,13 +533,13 @@ export const CalendarContent: React.FC = () => {
                                 placeholder="Important update for all team members"
                                 value={annTitle}
                                 onChange={(e) => setAnnTitle(e.target.value)}
-                                className="h-14 rounded-2xl border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 px-6 font-semibold bg-gray-50/50 dark:bg-white/[0.02] shadow-sm"
+                                className="h-14 rounded-2xl border-gray-200 dark:border-white/5 focus:ring-1 focus:ring-brand-500/20 px-6 font-semibold bg-gray-50/50 dark:bg-white/[0.02] shadow-elev-1"
                             />
                         </div>
                         <div className="space-y-4">
                             <Label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-2">Message Details</Label>
                             <textarea
-                                className="w-full h-44 rounded-[2rem] border border-light-border dark:border-white/5 focus:ring-1 focus:ring-primary/20 p-8 font-semibold bg-gray-50/50 dark:bg-white/[0.02] resize-none outline-none text-[15px] leading-relaxed shadow-sm transition-all"
+                                className="w-full h-44 rounded-[2rem] border border-gray-200 dark:border-white/5 focus:ring-1 focus:ring-brand-500/20 p-8 font-semibold bg-gray-50/50 dark:bg-white/[0.02] resize-none outline-none text-[15px] leading-relaxed shadow-elev-1 transition-all"
                                 placeholder="Type your broadcast message here..."
                                 value={annMessage}
                                 onChange={(e) => setAnnMessage(e.target.value)}
@@ -549,13 +549,13 @@ export const CalendarContent: React.FC = () => {
                             <Button
                                 variant="outline"
                                 onClick={() => setIsAnnouncementModalOpen(false)}
-                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] border-light-border dark:border-white/10"
+                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] border-gray-200 dark:border-white/10"
                             >
                                 Discard
                             </Button>
                             <Button
                                 onClick={() => addAnnouncementMutation.mutate({ title: annTitle, message: annMessage })}
-                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] bg-[#42275a] hover:bg-[#3a214f] text-white shadow-xl shadow-primary/20"
+                                className="h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] bg-brand-500 hover:bg-brand-600 text-white shadow-elev-5 shadow-brand-500/20"
                             >
                                 Send Board
                             </Button>
@@ -565,7 +565,7 @@ export const CalendarContent: React.FC = () => {
             </Dialog>
 
             <Dialog open={isImportModalOpen} onOpenChange={(open) => { setIsImportModalOpen(open); if (!open) { setImportFile(null); setImportStatus({ type: 'idle', message: '' }); } }}>
-                <DialogContent className="rounded-[3rem] border-none shadow-2xl p-10 bg-white dark:bg-[#0a0a0a] max-w-lg">
+                <DialogContent className="rounded-[3rem] border-none shadow-elev-6 p-10 bg-white dark:bg-[#0a0a0a] max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="text-3xl font-bold tracking-tight text-center mb-4">Import Holidays</DialogTitle>
                         <p className="text-xs text-gray-400 dark:text-gray-500 text-center font-medium">
@@ -590,10 +590,10 @@ export const CalendarContent: React.FC = () => {
                             className={cn(
                                 "border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all",
                                 isDragging
-                                    ? "border-primary bg-primary/5 scale-[1.02]"
+                                    ? "border-brand-500 bg-brand-500/5 scale-[1.02]"
                                     : importFile
                                         ? "border-green-500/30 bg-green-50/50 dark:bg-green-500/5"
-                                        : "border-gray-200 dark:border-white/10 hover:border-primary/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02]"
+                                        : "border-gray-200 dark:border-white/10 hover:border-brand-500/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02]"
                             )}
                         >
                             <input
@@ -651,9 +651,9 @@ export const CalendarContent: React.FC = () => {
                         <div className="bg-gray-50 dark:bg-white/[0.02] rounded-2xl p-5 border border-gray-100 dark:border-white/5">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Expected Format</p>
                             <div className="grid grid-cols-3 gap-0 text-xs font-mono">
-                                <div className="p-2 bg-primary/10 text-primary font-bold rounded-tl-lg border-b border-r border-primary/10 truncate">Date</div>
-                                <div className="p-2 bg-primary/10 text-primary font-bold border-b border-r border-primary/10 truncate">Holiday Name</div>
-                                <div className="p-2 bg-primary/10 text-primary font-bold rounded-tr-lg border-b border-primary/10 truncate">Region (Opt.)</div>
+                                <div className="p-2 bg-brand-500/10 text-brand-500 font-bold rounded-tl-lg border-b border-r border-brand-500/10 truncate">Date</div>
+                                <div className="p-2 bg-brand-500/10 text-brand-500 font-bold border-b border-r border-brand-500/10 truncate">Holiday Name</div>
+                                <div className="p-2 bg-brand-500/10 text-brand-500 font-bold rounded-tr-lg border-b border-brand-500/10 truncate">Region (Opt.)</div>
                                 
                                 <div className="p-2 text-gray-600 dark:text-gray-400 border-b border-r border-gray-100 dark:border-white/5 truncate">2026-01-26</div>
                                 <div className="p-2 text-gray-600 dark:text-gray-400 border-b border-r border-gray-100 dark:border-white/5 truncate">Republic Day</div>
@@ -669,14 +669,14 @@ export const CalendarContent: React.FC = () => {
                             <Button
                                 variant="outline"
                                 onClick={() => { setIsImportModalOpen(false); setImportFile(null); setImportStatus({ type: 'idle', message: '' }); }}
-                                className="flex-1 h-14 rounded-2xl font-bold border-light-border dark:border-white/10 uppercase tracking-widest text-[11px]"
+                                className="flex-1 h-14 rounded-2xl font-bold border-gray-200 dark:border-white/10 uppercase tracking-widest text-[11px]"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={() => { if (importFile) importHolidaysMutation.mutate(importFile); }}
                                 disabled={!importFile || importHolidaysMutation.isPending}
-                                className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20 disabled:opacity-50"
+                                className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-elev-4 shadow-brand-500/20 disabled:opacity-50"
                             >
                                 {importHolidaysMutation.isPending ? 'Importing...' : 'Import Holidays'}
                             </Button>

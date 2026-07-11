@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageTransition } from '@/components/common/PageTransition';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -62,7 +63,7 @@ const ChartCard = ({
     animate={{ opacity: 1, y: 0 }}
     whileHover={{ y: -5, transition: { duration: 0.2 } }}
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300 ${className}`}
+    className={`bg-white dark:bg-neutral-900 rounded-[1.5rem] p-5 border border-neutral-100 dark:border-white/5 shadow-elev-2 hover:shadow-elev-4 transition-all duration-300 ${className}`}
   >
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 md:gap-0">
       <div className="w-full md:w-auto">
@@ -72,7 +73,7 @@ const ChartCard = ({
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-start sm:justify-end">
         {headerAction}
         {badge && (
-          <span className="px-2 sm:px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm shrink-0 whitespace-nowrap">
+          <span className="px-2 sm:px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 border border-brand-100 dark:border-brand-500/20 shadow-elev-1 shrink-0 whitespace-nowrap">
             {badge}
           </span>
         )}
@@ -85,7 +86,7 @@ const ChartCard = ({
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 min-w-[150px]">
+      <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-elev-6 border border-white/10 min-w-[150px]">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center justify-between gap-4 py-1">
@@ -121,7 +122,7 @@ const StatCard = ({
     className="relative group"
   >
     <div
-      className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5"
+      className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4"
     >
       {/* Decorative Pattern - Subtle */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
@@ -135,13 +136,13 @@ const StatCard = ({
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border border-white/10"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-elev-4 border border-white/10"
             style={{ background: gradient }}
           >
             <Icon className="w-6 h-6 text-white" />
           </div>
           {trend !== undefined && (
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${trend >= 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${trend >= 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400'}`}>
               {trend >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
               {Math.abs(trend)}%
             </div>
@@ -152,7 +153,7 @@ const StatCard = ({
         </h3>
         <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">{title}</p>
         {subtitle && (
-          <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-2 font-medium bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit tracking-wide border border-slate-100 dark:border-white/5">
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-2 font-medium bg-neutral-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit tracking-wide border border-neutral-100 dark:border-white/5">
             {subtitle}
           </p>
         )}
@@ -170,11 +171,11 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
       transition={{ delay }}
       whileHover={{ x: 5 }}
       onClick={onClick}
-      className="flex items-center justify-between p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 group transition-all cursor-pointer w-full"
+      className="flex items-center justify-between p-4 rounded-[2rem] bg-neutral-50 dark:bg-slate-800/40 border border-neutral-100 dark:border-white/5 group transition-all cursor-pointer w-full"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="relative shrink-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-black text-lg shadow-elev-4 group-hover:scale-110 transition-transform">
             {member.first_name[0]}{member.last_name[0]}
           </div>
           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
@@ -190,7 +191,7 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
             {member.on_leave_today > 0 ? t('profile.profileDropdown.away') : t('common.active')}
           </p>
         </div>
-        <button className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+        <button className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-neutral-200 dark:border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-elev-1">
           <ChevronRight className="w-4 h-4 text-slate-400" />
         </button>
       </div>
@@ -720,7 +721,7 @@ export const ManagerDashboard: React.FC = () => {
   if (isTeamLoading || isTasksLoading || isAttendanceLoading) {
     return (
       <DashboardLayout title={t('dashboard.myDashboard')}>
-        <div className="space-y-8 p-6">
+        <PageTransition className="space-y-8 p-6">
           <Skeleton className="h-64 w-full rounded-[3rem]" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-40 rounded-[2.5rem]" />)}
@@ -729,23 +730,19 @@ export const ManagerDashboard: React.FC = () => {
             <Skeleton className="h-[450px] lg:col-span-2 rounded-[2.5rem]" />
             <Skeleton className="h-[450px] rounded-[2.5rem]" />
           </div>
-        </div>
+        </PageTransition>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout title={t('dashboard.myDashboard')}>
-      <motion.div
-        className="space-y-5 pb-10 px-4 lg:px-6 mt-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <PageTransition className="space-y-5 pb-10 px-4 lg:px-6 mt-4">
         {/* --- Welcome Banner --- */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-6 lg:p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-6 lg:p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-3"
         >
           {/* Decorative Elements */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -772,7 +769,7 @@ export const ManagerDashboard: React.FC = () => {
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
                 {totalPending > 0 ? (
-                  <>You have <span className="text-indigo-600 dark:text-indigo-400 font-bold">{totalPending} pending requests</span> to review today.</>
+                  <>You have <span className="text-brand-600 dark:text-brand-400 font-bold">{totalPending} pending requests</span> to review today.</>
                 ) : (
                   <>You're all caught up! No pending actions for today.</>
                 )}
@@ -784,14 +781,14 @@ export const ManagerDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-[1.5rem] p-3 border border-slate-100 dark:border-white/5 shadow-sm"
+                className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-[1.5rem] p-3 border border-neutral-100 dark:border-white/5 shadow-elev-1"
               >
-                <div className="text-center px-3 border-r border-slate-200 dark:border-white/10 min-w-[50px]">
+                <div className="text-center px-3 border-r border-neutral-200 dark:border-white/10 min-w-[50px]">
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{formatInTimezone(new Date(), user?.timezone, { day: '2-digit' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="text-center px-3 min-w-[50px]">
-                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
+                  <p className="text-2xl font-black text-brand-600 leading-none uppercase">{formatInTimezone(new Date(), user?.timezone, { weekday: 'long' })}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{formatInTimezone(new Date(), user?.timezone, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                 </div>
               </motion.div>
@@ -853,7 +850,7 @@ export const ManagerDashboard: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-[10px] font-black text-indigo-600 hover:bg-indigo-50"
+                      className="h-8 px-2 text-[10px] font-black text-brand-600 hover:bg-brand-50"
                       onClick={() => setAttendanceDateRange({
                         start: format(new Date(), 'yyyy-MM-dd'),
                         end: format(new Date(), 'yyyy-MM-dd')
@@ -878,7 +875,7 @@ export const ManagerDashboard: React.FC = () => {
             {isAttendanceFetching && !attendanceTrends ? (
               <div className="h-[380px] flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3" />
+                  <div className="w-10 h-10 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin mx-auto mb-3" />
                   <p className="text-xs text-slate-400 font-bold">Loading attendance data...</p>
                 </div>
               </div>
@@ -887,7 +884,7 @@ export const ManagerDashboard: React.FC = () => {
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
                   <Calendar className="w-8 h-8 text-slate-400" />
                 </div>
-                <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">
+                <h4 className="text-sm font-black text-neutral-700 dark:text-slate-300 mb-1">
                   {teamMembers.length === 0 ? 'No Team Members Found' : 'No Attendance Data'}
                 </h4>
                 <p className="text-xs text-slate-400">
@@ -900,7 +897,7 @@ export const ManagerDashboard: React.FC = () => {
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black text-indigo-600">
+                      <span className="text-2xl font-black text-brand-600">
                         {teamAttendanceSummary.totalMembers}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400">members</span>
@@ -927,7 +924,7 @@ export const ManagerDashboard: React.FC = () => {
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Absent</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black text-rose-500">
+                      <span className="text-2xl font-black text-error-500">
                         {teamAttendanceSummary.totalAbsent}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400">absent</span>
@@ -943,7 +940,7 @@ export const ManagerDashboard: React.FC = () => {
                       {/* Header Row (Dates) */}
                       <div className="flex">
                         {/* Spacer for Names Column (Sticky) */}
-                        <div className="w-[140px] sm:w-[180px] flex-shrink-0 sticky left-0 z-20 bg-white dark:bg-[#0f172a] border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]"></div>
+                        <div className="w-[140px] sm:w-[180px] flex-shrink-0 sticky left-0 z-20 bg-white dark:bg-neutral-900 border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]"></div>
                         {/* Dates */}
                         <div className="flex gap-1">
                           {(() => {
@@ -973,12 +970,12 @@ export const ManagerDashboard: React.FC = () => {
                           <div key={member.id} className="flex items-center group/row">
                             {/* Name Column */}
                             {/* Name Column (Sticky) */}
-                            <div className="w-[140px] sm:w-[180px] flex-shrink-0 flex items-center gap-3 pr-4 sticky left-0 z-20 bg-white dark:bg-[#0f172a] border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <div className="w-[140px] sm:w-[180px] flex-shrink-0 flex items-center gap-3 pr-4 sticky left-0 z-20 bg-white dark:bg-neutral-900 border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+                              <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-xs font-bold text-brand-600 dark:text-brand-400 shrink-0">
                                 {member.first_name?.[0]}{member.last_name?.[0]}
                               </div>
                               <div className="flex flex-col overflow-hidden">
-                                <span className="text-xs sm:text-sm font-semibold truncate text-slate-700 dark:text-slate-200">
+                                <span className="text-xs sm:text-sm font-semibold truncate text-neutral-700 dark:text-neutral-200">
                                   {member.first_name} {member.last_name}
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] text-slate-400 truncate">
@@ -1024,17 +1021,17 @@ export const ManagerDashboard: React.FC = () => {
                                       bgClass = 'bg-amber-400';
                                       statusLabel = 'Half Day';
                                     } else if (record.status === 'ABSENT') {
-                                      bgClass = 'bg-rose-500';
+                                      bgClass = 'bg-error-500';
                                       statusLabel = 'Absent';
                                     }
                                   } else if (!isFuture) {
                                     // If past and no record, assume Absent (but verify weekend?)
                                     const isWeekend = getDay(day) === 0 || getDay(day) === 6;
                                     if (isWeekend) {
-                                      bgClass = 'bg-slate-50 dark:bg-white/5 opacity-50'; // Weekend
+                                      bgClass = 'bg-neutral-50 dark:bg-white/5 opacity-50'; // Weekend
                                       statusLabel = 'Weekend';
                                     } else {
-                                      bgClass = 'bg-rose-200 dark:bg-rose-900/30'; // Missing/Absent
+                                      bgClass = 'bg-error-200 dark:bg-error-500/20'; // Missing/Absent
                                       statusLabel = 'Absent';
                                     }
                                   }
@@ -1070,12 +1067,12 @@ export const ManagerDashboard: React.FC = () => {
                       transform: 'translate(-50%, -100%)'
                     }}
                   >
-                    <div className="bg-white dark:bg-slate-900 p-2 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 text-xs min-w-[120px]">
+                    <div className="bg-white dark:bg-neutral-900 p-2 rounded-lg shadow-elev-5 border border-neutral-100 dark:border-slate-700 text-xs min-w-[120px]">
                       <div className="font-bold whitespace-nowrap">{format(tooltipData.content.date, 'MMM dd, yyyy')}</div>
                       <div className="text-[10px] text-slate-500 mb-1">{tooltipData.content.member.first_name}</div>
                       <div className={`font-semibold ${tooltipData.content.statusLabel === 'Present' ? 'text-emerald-500' :
                         tooltipData.content.statusLabel === 'Late' ? 'text-amber-500' :
-                          tooltipData.content.statusLabel === 'Absent' ? 'text-rose-500' : 'text-slate-400'
+                          tooltipData.content.statusLabel === 'Absent' ? 'text-error-500' : 'text-slate-400'
                         }`}>
                         {tooltipData.content.statusLabel}
                       </div>
@@ -1099,7 +1096,7 @@ export const ManagerDashboard: React.FC = () => {
                     <span className="text-[10px] font-bold text-slate-500">Late</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-rose-500" />
+                    <div className="w-3 h-3 rounded bg-error-500" />
                     <span className="text-[10px] font-bold text-slate-500">Absent</span>
                   </div>
                 </div>
@@ -1118,7 +1115,7 @@ export const ManagerDashboard: React.FC = () => {
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="form-select bg-slate-50 dark:bg-slate-800 border-none text-xs font-bold text-slate-600 dark:text-slate-300 py-1.5 focus:ring-0 cursor-pointer"
+                  className="form-select bg-neutral-50 dark:bg-slate-800 border-none text-xs font-bold text-slate-600 dark:text-slate-300 py-1.5 focus:ring-0 cursor-pointer"
                 >
                   <option value="" disabled>Select Project</option>
                   {/*  */}
@@ -1172,7 +1169,7 @@ export const ManagerDashboard: React.FC = () => {
                       <motion.div
                         key={i}
                         whileHover={{ scale: 1.05 }}
-                        className="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-3xl border border-slate-100 dark:border-white/5 transition-all"
+                        className="bg-neutral-50 dark:bg-slate-800/30 p-3 rounded-3xl border border-neutral-100 dark:border-white/5 transition-all"
                       >
                         <div className="flex items-center gap-3 mb-2 text-slate-400">
                           <div className="w-2.5 h-2.5 rounded-full ring-4 ring-current/10" style={{ backgroundColor: item.fill }} />
@@ -1252,8 +1249,8 @@ export const ManagerDashboard: React.FC = () => {
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 overflow-y-auto custom-scrollbar pr-3">
               {workloadData.map((item: any, i: number) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                <div key={i} className="flex items-center gap-2 p-2 rounded-xl hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-elev-1" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                   <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 break-words leading-tight flex-1">{item.name}</span>
                   <span className="text-[11px] font-black text-slate-900 dark:text-white shrink-0">{item.value}</span>
                 </div>
@@ -1323,7 +1320,7 @@ export const ManagerDashboard: React.FC = () => {
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
                   <Users className="w-8 h-8 text-slate-400" />
                 </div>
-                <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">No Performance Data</h4>
+                <h4 className="text-sm font-black text-neutral-700 dark:text-slate-300 mb-1">No Performance Data</h4>
                 <p className="text-xs text-slate-400">Select a project to view team performance</p>
               </div>
             ) : (
@@ -1334,7 +1331,7 @@ export const ManagerDashboard: React.FC = () => {
                     const container = document.getElementById('perf-carousel-bottom');
                     if (container) container.scrollBy({ left: -220, behavior: 'smooth' });
                   }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 flex items-center justify-center hover:bg-neutral-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
@@ -1343,7 +1340,7 @@ export const ManagerDashboard: React.FC = () => {
                     const container = document.getElementById('perf-carousel-bottom');
                     if (container) container.scrollBy({ left: 220, behavior: 'smooth' });
                   }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 flex items-center justify-center hover:bg-neutral-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
@@ -1360,12 +1357,12 @@ export const ManagerDashboard: React.FC = () => {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05 }}
-                      className="flex-shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-md transition-all group"
+                      className="flex-shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/50 border border-neutral-100 dark:border-white/10 shadow-elev-1 hover:shadow-elev-3 transition-all group"
                     >
                       {/* Avatar */}
                       <div className="flex items-center gap-3 mb-3">
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-elev-3"
                           style={{ background: COLORS[i % COLORS.length] }}
                         >
                           {item.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
@@ -1426,11 +1423,11 @@ export const ManagerDashboard: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Tasks</span>
-                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">{item.taskScore || 0}%</span>
+                            <span className="text-[10px] font-black text-brand-600 dark:text-brand-400">{item.taskScore || 0}%</span>
                           </div>
                           <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-indigo-400 to-indigo-500 rounded-full transition-all duration-500"
+                              className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full transition-all duration-500"
                               style={{ width: `${item.taskScore || 0}%` }}
                             />
                           </div>
@@ -1450,7 +1447,7 @@ export const ManagerDashboard: React.FC = () => {
             delay={1.2}
             badge={`${totalPending} Pending`}
             headerAction={
-              <Button variant="ghost" size="sm" onClick={() => navigate('/leave?tab=team-requests')} className="text-[10px] font-black text-indigo-600 bg-indigo-50 border-none hover:bg-indigo-100 px-4 py-2 rounded-full flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/leave?tab=team-requests')} className="text-[10px] font-black text-brand-600 bg-brand-50 border-none hover:bg-brand-100 px-4 py-2 rounded-full flex items-center gap-2">
                 All Requests
                 <ExternalLink className="w-3 h-3" />
               </Button>
@@ -1467,7 +1464,7 @@ export const ManagerDashboard: React.FC = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ delay: i * 0.1 }}
-                      className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-800/20 border border-slate-100 dark:border-white/5 shadow-md hover:shadow-xl transition-all group"
+                      className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-800/20 border border-neutral-100 dark:border-white/5 shadow-elev-3 hover:shadow-elev-5 transition-all group"
                     >
                       <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-4">
@@ -1476,7 +1473,7 @@ export const ManagerDashboard: React.FC = () => {
                           </div>
                           <div>
                             <h4 className="font-black text-slate-900 dark:text-white text-base">{request.first_name} {request.last_name}</h4>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
+                            <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest mt-1">
                               {request.leave_type} <span className="text-slate-400 mx-2">•</span> {format(parseISO(request.start_date), 'MMM dd')} - {format(parseISO(request.end_date), 'MMM dd')}
                             </p>
                           </div>
@@ -1486,7 +1483,7 @@ export const ManagerDashboard: React.FC = () => {
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => approveMutation.mutate(request.id)}
-                            className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 shadow-sm"
+                            className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 shadow-elev-1"
                           >
                             <CheckCircle className="w-5 h-5" />
                           </motion.button>
@@ -1497,21 +1494,21 @@ export const ManagerDashboard: React.FC = () => {
                               const reason = prompt('Reason for rejection:');
                               if (reason) rejectMutation.mutate({ id: request.id, reason });
                             }}
-                            className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 shadow-sm"
+                            className="w-10 h-10 rounded-2xl bg-error-50 text-error-600 flex items-center justify-center hover:bg-error-100 shadow-elev-1"
                           >
                             <XCircle className="w-5 h-5" />
                           </motion.button>
                         </div>
                       </div>
                       {request.reason && (
-                        <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                        <div className="bg-neutral-50 dark:bg-slate-700/30 p-4 rounded-2xl border border-neutral-100 dark:border-white/5">
                           <p className="text-xs text-slate-600 dark:text-slate-400 italic font-medium leading-relaxed">"{request.reason}"</p>
                         </div>
                       )}
                     </motion.div>
                   ))
                 ) : (
-                  <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/20 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-700">
+                  <div className="text-center py-20 bg-neutral-50 dark:bg-slate-800/20 rounded-[3rem] border-2 border-dashed border-neutral-200 dark:border-slate-700">
                     <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <CheckCircle className="w-10 h-10 text-emerald-600" />
                     </div>
@@ -1530,21 +1527,21 @@ export const ManagerDashboard: React.FC = () => {
           <ChartCard title="Team Celebrations" subtitle="Birthdays, Anniversaries & New Joinees" delay={1.3}>
             <div className="space-y-3 mt-2">
               {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 4).map((evt: any, i: number) => (
-                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-indigo-500/10 transition-all">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
+                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-elev-4 border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
                     {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                   </div>
                   <div>
                     <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                      {evt.date} <span className="text-slate-200 dark:text-slate-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
+                      {evt.date} <span className="text-neutral-200 dark:text-neutral-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
                     </p>
                   </div>
                 </div>
               ))}
               {(!peopleEventsData?.birthdays?.length && !peopleEventsData?.anniversaries?.length && !peopleEventsData?.joiners?.length) && (
-                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
-                  <Gift className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-neutral-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-neutral-100 dark:border-slate-800">
+                  <Gift className="w-12 h-12 text-neutral-200 dark:text-neutral-700 mb-3" />
                   <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No events this week</p>
                 </div>
               )}
@@ -1563,8 +1560,8 @@ export const ManagerDashboard: React.FC = () => {
                   .sort((a: Holiday, b: Holiday) => new Date(a.date).getTime() - new Date(b.date).getTime())
                   .slice(0, 4)
                   .map((holiday: Holiday) => (
-                    <div key={holiday.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow group">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:rotate-3 transition-transform">
+                    <div key={holiday.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-neutral-100 dark:border-white/5 shadow-elev-1 hover:shadow-elev-3 transition-shadow group">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center text-white shadow-elev-4 shadow-orange-500/20 group-hover:rotate-3 transition-transform">
                         <span className="text-[10px] font-black uppercase leading-none mb-0.5">{format(new Date(holiday.date), 'MMM')}</span>
                         <span className="text-lg font-black leading-none">{format(new Date(holiday.date), 'dd')}</span>
                       </div>
@@ -1574,21 +1571,21 @@ export const ManagerDashboard: React.FC = () => {
                           {format(new Date(holiday.date), 'EEEE')}
                         </p>
                       </div>
-                      <div className="px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                      <div className="px-3 py-1 rounded-full bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5">
                         <Coffee className="w-4 h-4 text-amber-500" />
                       </div>
                     </div>
                   ))
               ) : (
-                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
-                  <CalendarDays className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+                <div className="flex flex-col items-center justify-center h-[180px] text-center bg-neutral-50/50 dark:bg-slate-800/20 rounded-[2.5rem] border-2 border-dashed border-neutral-100 dark:border-slate-800">
+                  <CalendarDays className="w-12 h-12 text-neutral-200 dark:text-neutral-700 mb-3" />
                   <p className="text-sm font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">No upcoming holidays</p>
                 </div>
               )}
             </div>
           </ChartCard>
         </div>
-      </motion.div>
+      </PageTransition>
     </DashboardLayout>
   );
 };

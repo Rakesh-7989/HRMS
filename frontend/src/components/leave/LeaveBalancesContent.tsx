@@ -124,7 +124,7 @@ export const LeaveBalancesContent: React.FC = () => {
                     </div>
 
                     {searchQuery.length > 2 && (
-                        <div className="absolute z-10 w-full max-w-xl bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 mt-1 max-h-60 overflow-auto">
+                        <div className="absolute z-10 w-full max-w-xl bg-white dark:bg-gray-800 rounded-md shadow-elev-4 border border-gray-200 dark:border-gray-700 mt-1 max-h-60 overflow-auto">
                             {searchLoading ? (
                                 <div className="p-4 text-center text-sm text-gray-500">{t('leave.searching')}</div>
                             ) : searchResults.length === 0 ? (
@@ -168,7 +168,7 @@ export const LeaveBalancesContent: React.FC = () => {
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                 {t('leave.balancesFor')} {selectedEmployee.name}
                                 {selectedEmployee.code && (
-                                    <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                    <span className="text-xs font-mono bg-brand-500/10 text-brand-500 px-2 py-0.5 rounded">
                                         {selectedEmployee.code}
                                     </span>
                                 )}
@@ -185,7 +185,7 @@ export const LeaveBalancesContent: React.FC = () => {
 
                     {balancesLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-500 border-t-transparent" />
                         </div>
                     ) : balances.length === 0 ? (
                         <div className="text-center py-12">
@@ -275,7 +275,7 @@ export const LeaveBalancesContent: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="block mb-1.5">{t('leave.action')}</Label>
-                                <div className="flex rounded-md shadow-sm">
+                                <div className="flex rounded-md shadow-elev-1">
                                     <button
                                         type="button"
                                         onClick={() => setAdjustForm({ ...adjustForm, type: 'ADD' })}

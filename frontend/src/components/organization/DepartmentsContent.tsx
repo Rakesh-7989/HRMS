@@ -100,7 +100,7 @@ export const DepartmentsContent: React.FC = () => {
                         <input
                             type="text"
                             placeholder="Search departments..."
-                            className="pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none w-64 shadow-sm"
+                            className="pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none w-64 shadow-elev-1"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -121,7 +121,7 @@ export const DepartmentsContent: React.FC = () => {
                 <input
                     type="text"
                     placeholder="Search departments..."
-                    className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -131,7 +131,7 @@ export const DepartmentsContent: React.FC = () => {
             {/* Content Grid */}
             {isLoading ? (
                 <div className="h-64 flex flex-col items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500 mb-3"></div>
                     <p className="text-muted text-sm">Loading departments...</p>
                 </div>
             ) : filteredDepartments.length === 0 ? (
@@ -151,17 +151,17 @@ export const DepartmentsContent: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredDepartments.map((d) => (
-                        <Card key={d.id} className="group hover:shadow-md transition-all duration-200 border-gray-200/60 dark:border-gray-700">
+                        <Card key={d.id} className="group hover:shadow-elev-3 transition-all duration-200 border-gray-200/60 dark:border-gray-700">
                             <div className="p-4" >
                                 <div className="flex justify-between items-start mb-2">
-                                    <div className={`p-2 rounded-lg ${d.is_active ? 'bg-primary/5 text-primary' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                                    <div className={`p-2 rounded-lg ${d.is_active ? 'bg-brand-500/5 text-brand-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
                                         <Building2 size={20} />
                                     </div>
                                     {canManage && (
                                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleEdit(d)}
-                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-violet-900/20 transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit3 size={15} />

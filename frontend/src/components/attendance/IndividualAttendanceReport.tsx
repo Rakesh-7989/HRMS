@@ -78,7 +78,7 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                             <p className="text-sm text-gray-500">Total Days</p>
                             <p className="text-2xl font-bold">{summary.total_days}</p>
                         </div>
-                        <Calendar className="text-violet-500 w-8 h-8" />
+                        <Calendar className="text-brand-500 w-8 h-8" />
                     </Card>
                     <Card className="p-4 flex items-center justify-between">
                         <div>
@@ -107,7 +107,7 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
             {/* Attendance Table */}
             {isLoading ? (
                 <div className="text-center py-10">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"></div>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500 mx-auto"></div>
                     <p className="mt-2 text-gray-500">Loading Report...</p>
                 </div>
             ) : records.length > 0 ? (
@@ -153,7 +153,7 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium
                                                 ${record.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                                     record.status === 'ABSENT' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                        record.status === 'WEEK_OFF' || record.status === 'HOLIDAY' ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400' :
+                                                        record.status === 'WEEK_OFF' || record.status === 'HOLIDAY' ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400' :
                                                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                                                 }`}>
                                                 {record.status?.replace('_', ' ')}

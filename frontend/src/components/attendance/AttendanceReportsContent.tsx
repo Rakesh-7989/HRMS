@@ -113,7 +113,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Total Employees',
                         value: analytics.overallSummary.total_employees || 0,
                         icon: Users,
-                        color: 'text-violet-500'
+                        color: 'text-brand-500'
                     },
                     {
                         title: 'Present Days',
@@ -155,7 +155,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Team Members',
                         value: analytics.teamSummary.total_team_members || 0,
                         icon: Users,
-                        color: 'text-violet-500'
+                        color: 'text-brand-500'
                     },
                     {
                         title: 'Present Days',
@@ -215,7 +215,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         title: 'Attendance Rate',
                         value: `${analytics.personalSummary.attendance_rate || 0}%`,
                         icon: TrendingUp,
-                        color: 'text-violet-500'
+                        color: 'text-brand-500'
                     }
                 ],
                 monthlyTrends: analytics.monthlyBreakdown?.map(month => ({
@@ -315,7 +315,7 @@ export const AttendanceReportsContent: React.FC = () => {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-white/5 dark:bg-white/5 rounded-lg p-4 border border-light-border dark:border-dark-border"
+                    className="bg-white/5 dark:bg-white/5 rounded-lg p-4 border border-gray-200 dark:border-white/10"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div className="md:col-span-2">

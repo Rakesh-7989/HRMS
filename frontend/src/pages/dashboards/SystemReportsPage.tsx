@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { PageTransition } from '@/components/common/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import {
     BarChart, Bar, LineChart, Line, AreaChart, Area,
@@ -23,7 +24,7 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-gray-800 p-3 rounded-xl shadow-xl">
+            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-gray-800 p-3 rounded-xl shadow-elev-5">
                 <p className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">{label}</p>
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2 mt-1">
@@ -44,11 +45,11 @@ const ReportCard = ({ title, children, icon: Icon, delay = 0 }: any) => (
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay }}
-        className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow"
+        className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-800 shadow-elev-1 hover:shadow-elev-3 transition-shadow"
     >
         <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl">
-                {Icon && <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+            <div className="p-2 bg-brand-50 dark:bg-brand-500/10 rounded-xl">
+                {Icon && <Icon className="w-5 h-5 text-brand-600 dark:text-brand-400" />}
             </div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white uppercase tracking-tight">{title}</h3>
         </div>
@@ -90,23 +91,23 @@ export const SystemReportsPage: React.FC = () => {
     if (isLoading) {
         return (
             <DashboardLayout title={t('reports.title')}>
-                <div className="p-8 space-y-6">
+                <PageTransition className="p-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {[1, 2, 3, 4].map(i => <div key={i} className="h-80 bg-gray-100 dark:bg-gray-800 rounded-[2rem] animate-pulse" />)}
                     </div>
-                </div>
+                </PageTransition>
             </DashboardLayout>
         );
     }
 
     const stats = [
-        { label: 'Total MRR', value: `₹${reports?.stats.total_mrr?.toLocaleString() || '0'}`, icon: IndianRupee, color: 'text-indigo-600', sub: 'Current monthly total' },
+        { label: 'Total MRR', value: `₹${reports?.stats.total_mrr?.toLocaleString() || '0'}`, icon: IndianRupee, color: 'text-brand-600', sub: 'Current monthly total' },
         { label: 'Active Tenants', value: reports?.stats.total_tenants || 0, icon: Building2, color: 'text-emerald-600', sub: 'Organizations onboarded' },
         { label: 'Daily Active Users', value: reports?.stats.active_users || 0, icon: Users, color: 'text-amber-600', sub: 'Last 24h activity' },
-        { label: 'Avg Employees', value: Math.round(reports?.stats.avg_employees || 0), icon: Users2, color: 'text-purple-600', sub: 'Calculated per tenant' },
+        { label: 'Avg Employees', value: Math.round(reports?.stats.avg_employees || 0), icon: Users2, color: 'text-brand-600', sub: 'Calculated per tenant' },
     ];
 
     return (
@@ -117,13 +118,13 @@ export const SystemReportsPage: React.FC = () => {
                 { label: t('common.breadcrumbs.reports') }
             ]}
         >
-            <div className="p-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
+            <PageTransition className="p-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Platform Insights</h1>
                         <p className="text-gray-500 dark:text-gray-400">Core business metrics and platform usage analytics</p>
                     </div>
-                    <Button onClick={() => navigate('/dashboard/system')} className="rounded-xl px-6 h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200">
+                    <Button onClick={() => navigate('/dashboard/system')} className="rounded-xl px-6 h-12 bg-brand-600 hover:bg-brand-600 text-white font-bold shadow-elev-4 shadow-brand-200">
                         <ChevronLeft className="w-5 h-5 mr-2" /> Back to Nexus
                     </Button>
                 </div>
@@ -136,10 +137,10 @@ export const SystemReportsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group hover:border-indigo-200 transition-colors"
+                            className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-elev-1 group hover:border-brand-200 transition-colors"
                         >
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 group-hover:bg-indigo-50 transition-colors">
+                                <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 group-hover:bg-brand-50 transition-colors">
                                     <s.icon className={`w-5 h-5 ${s.color}`} />
                                 </div>
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{s.label}</span>
@@ -216,7 +217,7 @@ export const SystemReportsPage: React.FC = () => {
                         </ResponsiveContainer>
                     </ReportCard>
                 </div>
-            </div>
+            </PageTransition>
         </DashboardLayout>
     );
 };

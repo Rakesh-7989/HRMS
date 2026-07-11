@@ -43,7 +43,7 @@ export const UnifiedShiftsContent: React.FC = () => {
                         className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
                         ${activeTab === 'roster'
-                                ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+                                ? 'bg-white dark:bg-gray-700 text-brand-500 shadow-elev-1'
                                 : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                             }
                     `}
@@ -57,7 +57,7 @@ export const UnifiedShiftsContent: React.FC = () => {
                             className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
                         ${activeTab === 'manage'
-                                    ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+                                    ? 'bg-white dark:bg-gray-700 text-brand-500 shadow-elev-1'
                                     : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                                 }
                     `}

@@ -35,6 +35,7 @@ import { FormError } from '@/components/ui/FormError';
 import { Dialog, DialogFooter } from '@/components/ui/Dialog';
 import { useTimezones } from '@/utils/timezone';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { PageTransition } from '@/components/common/PageTransition';
 
 
 const profileValidationSchema = Yup.object({
@@ -307,7 +308,7 @@ export const ProfilePage: React.FC = () => {
     return (
       <DashboardLayout title={t('profile.title')}>
         <div className="h-64 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
         </div>
       </DashboardLayout>
     );
@@ -322,13 +323,14 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <DashboardLayout title={t('profile.title')}>
+      <PageTransition>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* HEADER CARD */}
-        <Card className="p-6 border-none shadow-md bg-white dark:bg-gray-800">
+        <Card className="p-6 border-none shadow-elev-3 bg-white dark:bg-gray-800">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative group">
-              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-lg ring-4 ring-white dark:ring-gray-700 overflow-hidden">
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-4xl font-bold text-white shadow-elev-4 ring-4 ring-white dark:ring-gray-700 overflow-hidden">
                 {profile.profile_photo_url ? (
                   <img src={resolveImageUrl(profile.profile_photo_url)} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -336,7 +338,7 @@ export const ProfilePage: React.FC = () => {
                 )}
               </div>
               <div className={cn(
-                "absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center shadow-sm",
+                "absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center shadow-elev-1",
                 myStatus === 'available' ? 'bg-green-500' :
                   myStatus === 'away' ? 'bg-amber-500' :
                     myStatus === 'dnd' || myStatus === 'busy' ? 'bg-red-500' : 'bg-gray-400'
@@ -361,7 +363,7 @@ export const ProfilePage: React.FC = () => {
               {photoMenuOpen && (
                 <div
                   ref={photoMenuRef}
-                  className="absolute top-0 left-full ml-4 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2.5 z-50 animate-in fade-in slide-in-from-left-2 duration-200"
+                  className="absolute top-0 left-full ml-4 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-700 py-2.5 z-50 animate-in fade-in slide-in-from-left-2 duration-200"
                 >
                   <button
                     onClick={() => { setViewPhotoOpen(true); setPhotoMenuOpen(false); }}
@@ -385,7 +387,7 @@ export const ProfilePage: React.FC = () => {
                     htmlFor="profile-photo-upload"
                     className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all cursor-pointer active:scale-[0.98]"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500">
+                    <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-500/10 flex items-center justify-center text-brand-500">
                       <Upload size={18} />
                     </div>
                     {t('profile.uploadPhoto')}
@@ -459,19 +461,19 @@ export const ProfilePage: React.FC = () => {
         {/* TABS SECTION */}
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="w-full justify-start h-12 bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
-            <TabsTrigger value="personal" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsTrigger value="personal" className="flex-1 h-full data-[state=active]:bg-brand-500/10 data-[state=active]:text-brand-500">
               <UserCircle className="mr-2" size={18} /> {t('common.personal')}
             </TabsTrigger>
-            <TabsTrigger value="professional" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsTrigger value="professional" className="flex-1 h-full data-[state=active]:bg-brand-500/10 data-[state=active]:text-brand-500">
               <Briefcase className="mr-2" size={18} /> {t('common.professional')}
             </TabsTrigger>
-            <TabsTrigger value="financial" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsTrigger value="financial" className="flex-1 h-full data-[state=active]:bg-brand-500/10 data-[state=active]:text-brand-500">
               <CreditCard className="mr-2" size={18} /> {t('common.financial')}
             </TabsTrigger>
-            <TabsTrigger value="education" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsTrigger value="education" className="flex-1 h-full data-[state=active]:bg-brand-500/10 data-[state=active]:text-brand-500">
               <GraduationCap className="mr-2" size={18} /> {t('common.education')}
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsTrigger value="documents" className="flex-1 h-full data-[state=active]:bg-brand-500/10 data-[state=active]:text-brand-500">
               <FileText className="mr-2" size={18} /> {t('common.documents')}
             </TabsTrigger>
           </TabsList>
@@ -480,7 +482,7 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="personal">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <UserIcon className="text-primary" /> {t('profile.personalInfo')}
+                <UserIcon className="text-brand-500" /> {t('profile.personalInfo')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label={t('profile.firstName')} id="first_name" formik={formik} isEditing={isEditing} required />
@@ -516,7 +518,7 @@ export const ProfilePage: React.FC = () => {
               </div>
 
               <h4 className="text-lg font-medium mt-8 mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                <Phone className="text-primary" size={18} /> {t('profile.emergencyContact')}
+                <Phone className="text-brand-500" size={18} /> {t('profile.emergencyContact')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField label={t('profile.contactName')} id="emergency_name" formik={formik} isEditing={isEditing} />
@@ -530,7 +532,7 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="professional">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <Briefcase className="text-primary" /> {t('profile.professionalDetails')}
+                <Briefcase className="text-brand-500" /> {t('profile.professionalDetails')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <DisplayField label={t('profile.employeeId')} value={profile.employee_id} />
@@ -572,7 +574,7 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="financial">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <CreditCard className="text-primary" /> {t('profile.financialInfo')}
+                <CreditCard className="text-brand-500" /> {t('profile.financialInfo')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label={t('profile.bankName')} id="bank_name" formik={formik} isEditing={isEditing} />
@@ -590,7 +592,7 @@ export const ProfilePage: React.FC = () => {
           <TabsContent value="education">
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <GraduationCap className="text-primary" /> {t('common.education')}
+                <GraduationCap className="text-brand-500" /> {t('common.education')}
               </h3>
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
@@ -618,11 +620,11 @@ export const ProfilePage: React.FC = () => {
           {/* Photo Options Modals */}
           <Dialog open={viewPhotoOpen} onOpenChange={setViewPhotoOpen} title={t('profile.viewPhoto')}>
             <div className="flex items-center justify-center p-4">
-              <div className="w-full max-w-md aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-2xl">
+              <div className="w-full max-w-md aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-elev-6">
                 {profile.profile_photo_url ? (
                   <img src={resolveImageUrl(profile.profile_photo_url)} alt="Profile Large" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-8xl font-bold text-primary/20">
+                  <div className="w-full h-full flex items-center justify-center text-8xl font-bold text-brand-500/20">
                     {profile.first_name?.[0]}{profile.last_name?.[0]}
                   </div>
                 )}
@@ -664,6 +666,7 @@ export const ProfilePage: React.FC = () => {
 
         </Tabs>
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 };
@@ -726,7 +729,7 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           onBlur={formik.handleBlur}
           error={Boolean(isError)}
           placeholder={`e.g. 9876543210`}
-          className="group focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-xl shadow-sm"
+          className="group focus-within:ring-2 focus-within:ring-brand-500/20 transition-all rounded-xl shadow-elev-1"
         />
       ) : (
         <Input
@@ -770,7 +773,7 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
     <div className="space-y-1">
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
       <div className="flex items-center gap-2">
-        <p className={`text-base font-medium font-mono ${isRevealed ? 'text-primary' : 'text-gray-900 dark:text-white'
+        <p className={`text-base font-medium font-mono ${isRevealed ? 'text-brand-500' : 'text-gray-900 dark:text-white'
           }`}>
           {displayValue || <span className="text-gray-400 italic">Not set</span>}
         </p>
@@ -778,7 +781,7 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
           <button
             onClick={() => onReveal(fieldName)}
             disabled={isLoading}
-            className={`p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${isRevealed ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+            className={`p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${isRevealed ? 'text-brand-500' : 'text-gray-400 hover:text-gray-600'
               }`}
             title={isRevealed ? 'Hide' : 'Show full value (audit-logged)'}
           >
@@ -866,13 +869,13 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-elev-1">
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
             placeholder="Find documents..."
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-transparent text-gray-900 dark:text-white"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50 bg-transparent text-gray-900 dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -889,7 +892,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
         )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-elev-1">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
@@ -909,7 +912,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
                 <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                      <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
                         <FileText size={18} />
                       </div>
                       <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>

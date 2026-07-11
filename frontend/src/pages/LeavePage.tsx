@@ -10,6 +10,7 @@ import { DelegationContent } from '@/components/leave/DelegationContent';
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export const LeavePage: React.FC = () => {
   const { t } = useTranslation();
@@ -60,6 +61,7 @@ export const LeavePage: React.FC = () => {
         { label: t('common.breadcrumbs.leave') },
       ]}
     >
+      <PageTransition>
       {/* ===== TAB NAVIGATION ===== */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-3 px-1 custom-scrollbar flex-nowrap w-full snap-x">
         {LEAVE_TABS.map((tab) => {
@@ -71,7 +73,7 @@ export const LeavePage: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0 snap-start ${isActive
-                ? 'bg-primary text-white border-primary'
+                ? 'bg-brand-500 text-white border-brand-500'
                 : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
                 }`}
             >
@@ -90,6 +92,7 @@ export const LeavePage: React.FC = () => {
         {activeTab === 'delegations' && <DelegationContent />}
         {activeTab === 'settings' && <LeaveSettingsContent />}
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 };

@@ -240,7 +240,7 @@ return (
         {settings?.is_enabled && (
             <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Settings size={20} className="text-primary" />
+                    <Settings size={20} className="text-brand-500" />
                     Configuration Options
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -249,7 +249,7 @@ return (
                             type="checkbox"
                             checked={settings?.allow_clock_without_location}
                             onChange={(e) => updateSettingsMutation.mutate({ allow_clock_without_location: e.target.checked })}
-                            className="w-5 h-5 rounded text-primary"
+                            className="w-5 h-5 rounded text-brand-500"
                         />
                         <div>
                             <p className="font-medium text-sm">Allow without location</p>
@@ -261,7 +261,7 @@ return (
                             type="checkbox"
                             checked={settings?.require_high_accuracy}
                             onChange={(e) => updateSettingsMutation.mutate({ require_high_accuracy: e.target.checked })}
-                            className="w-5 h-5 rounded text-primary"
+                            className="w-5 h-5 rounded text-brand-500"
                         />
                         <div>
                             <p className="font-medium text-sm">Require high accuracy</p>
@@ -288,7 +288,7 @@ return (
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <MapPin size={20} className="text-primary" />
+                        <MapPin size={20} className="text-brand-500" />
                         Allowed Locations
                     </h3>
                     <p className="text-sm text-gray-500">Define office locations where employees can clock in/out</p>
@@ -336,7 +336,7 @@ return (
                                 <TableRow key={loc.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <MapPin size={16} className="text-primary" />
+                                            <MapPin size={16} className="text-brand-500" />
                                             <div>
                                                 <p className="font-medium">{loc.name}</p>
                                                 {loc.description && (
@@ -426,7 +426,7 @@ return (
                                         <TableCell>
                                             <span className={cn(
                                                 "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
-                                                v.action_type === 'CLOCK_IN' ? "bg-violet-100 text-violet-700" : "bg-purple-100 text-purple-700"
+                                                v.action_type === 'CLOCK_IN' ? "bg-brand-100 text-brand-600" : "bg-brand-100 text-brand-600"
                                             )}>
                                                 {v.action_type.replace('_', ' ')}
                                             </span>
@@ -528,7 +528,7 @@ return (
                                     type="checkbox"
                                     checked={locationForm.is_active}
                                     onChange={(e) => setLocationForm({ ...locationForm, is_active: e.target.checked })}
-                                    className="w-4 h-4 rounded text-primary"
+                                    className="w-4 h-4 rounded text-brand-500"
                                 />
                                 <span className="text-sm">Active</span>
                             </label>

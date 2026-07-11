@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { PageTransition } from '@/components/common/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -27,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: entry.color }} />
+                <div className="w-2 h-2 rounded-full shadow-elev-1" style={{ backgroundColor: entry.color }} />
                 <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{entry.name}</span>
               </div>
               <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums">
@@ -49,11 +50,11 @@ const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; on
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05 }}
     whileHover={{ y: -4, scale: 1.01 }}
-    className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-none cursor-pointer"
+    className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-elev-4 shadow-gray-200/50 dark:shadow-none cursor-pointer"
     onClick={onClick}
   >
     <div className="flex items-center gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
+      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-elev-4 shadow-brand-500/30">
         {tenant.name?.charAt(0)}
       </div>
       <div className="flex-1 min-w-0">
@@ -70,7 +71,7 @@ const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; on
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-brand-100 dark:hover:bg-brand-500/20 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </motion.button>
@@ -112,7 +113,7 @@ const StatCard = ({
     whileHover={{ y: -5, scale: 1.02 }}
     className="relative group h-full"
   >
-    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-lg dark:shadow-none transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10">
+    <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-4 dark:shadow-none transition-all duration-300 hover:shadow-elev-5 hover:shadow-brand-500/10">
       {/* Subtle Decorative Pattern */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -123,7 +124,7 @@ const StatCard = ({
 
       {/* Icon Accent */}
       <div
-        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+        className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-elev-4 border border-white/10"
         style={{ background: gradient }}
       >
         <Icon className="w-6 h-6 text-white" />
@@ -155,11 +156,11 @@ const SystemStatusCard = ({
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 border border-slate-100 dark:border-white/5 shadow-lg dark:shadow-none hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300"
+    className="bg-white dark:bg-neutral-900 rounded-[1.5rem] p-5 border border-neutral-100 dark:border-white/5 shadow-elev-4 dark:shadow-none hover:shadow-elev-5 hover:shadow-brand-500/10 transition-all duration-300"
   >
     <div className="flex items-center justify-between mb-4">
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border border-white/10"
+        className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-elev-4 border border-white/10"
         style={{ background: gradient }}
       >
         <Icon className="w-6 h-6 text-white" />
@@ -168,9 +169,9 @@ const SystemStatusCard = ({
         ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
         : status === 'warning'
           ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
-          : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+          : 'bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400'
         }`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
+        <span className={`w-1.5 h-1.5 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-error-500'
           } animate-pulse`} />
         {status}
       </div>
@@ -294,28 +295,24 @@ export const SuperAdminDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <DashboardLayout title={t('dashboard.systemDashboard')}>
-        <div className="flex items-center justify-center h-96">
+        <PageTransition className="flex items-center justify-center h-96">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-800 rounded-full animate-spin border-t-indigo-600" />
-            <Sparkles className="w-6 h-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 border-4 border-brand-200 dark:border-brand-800 rounded-full animate-spin border-t-brand-600" />
+            <Sparkles className="w-6 h-6 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-        </div>
+        </PageTransition>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout title={t('dashboard.systemDashboard')}>
-      <motion.div
-        className="space-y-8"
-        initial="initial"
-        animate="animate"
-      >
+      <PageTransition className="space-y-8">
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl dark:shadow-none"
+          className="relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-5 dark:shadow-none"
         >
           {/* Subtle Patterns */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
@@ -349,15 +346,15 @@ export const SuperAdminDashboard: React.FC = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center gap-4"
             >
-              <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-slate-100 dark:border-white/5 shadow-sm">
-                <div className="text-right px-4 border-r border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-4 bg-neutral-50 dark:bg-white/5 rounded-3xl p-4 min-w-fit border border-neutral-100 dark:border-white/5 shadow-elev-1">
+                <div className="text-right px-4 border-r border-neutral-200 dark:border-white/10">
                   <p className="text-2xl font-black text-slate-900 dark:text-white leading-none whitespace-nowrap">
                     {format(currentTime, 'HH:mm:ss')}
                   </p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Local Time</p>
                 </div>
                 <div className="text-right px-4">
-                  <p className="text-2xl font-black text-indigo-600 leading-none uppercase whitespace-nowrap">
+                  <p className="text-2xl font-black text-brand-600 leading-none uppercase whitespace-nowrap">
                     {format(currentTime, 'eee, MMM dd')}
                   </p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">System Date</p>
@@ -412,12 +409,12 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg dark:shadow-none"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-4 dark:shadow-none"
           >
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-indigo-600" />
+                  <Activity className="w-5 h-5 text-brand-600" />
                   Growth Analytics
                 </h3>
                 <p className="text-xs text-gray-500 font-medium">Organizations & Population growth</p>
@@ -425,7 +422,7 @@ export const SuperAdminDashboard: React.FC = () => {
               <div className="flex gap-4">
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tenants</p>
-                  <p className="text-xl font-black text-indigo-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
+                  <p className="text-xl font-black text-brand-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
                 </div>
                 <div className="text-right border-l border-gray-100 dark:border-gray-800 pl-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Employees</p>
@@ -479,17 +476,17 @@ export const SuperAdminDashboard: React.FC = () => {
                     content={({ active, payload }: any) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white dark:bg-gray-900 px-4 py-3 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/5 min-w-[170px]">
+                          <div className="bg-white dark:bg-gray-900 px-4 py-3 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-white/5 min-w-[170px]">
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-50 dark:border-white/5 pb-2">
                               {payload[0].payload.date}
                             </p>
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                  <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                                   <span className="text-xs font-bold text-gray-500">Tenants</span>
                                 </div>
-                                <span className="text-xs font-black text-indigo-600">{payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0}</span>
+                                <span className="text-xs font-black text-brand-600">{payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0}</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -536,9 +533,9 @@ export const SuperAdminDashboard: React.FC = () => {
               </ResponsiveContainer>
 
               <div className="absolute top-0 left-0 pointer-events-none">
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Live Sync</span>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-100 dark:border-white/5 shadow-elev-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                  <span className="text-[9px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest">Live Sync</span>
                 </div>
               </div>
             </div>
@@ -549,7 +546,7 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.55 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-5 shadow-gray-200/50 dark:shadow-none"
           >
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Tenant Status</h4>
             <div className="h-64">
@@ -584,7 +581,7 @@ export const SuperAdminDashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg dark:shadow-none"
+            className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-4 dark:shadow-none"
           >
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">System Resources History</h4>
             <div className="h-64">
@@ -669,12 +666,12 @@ export const SuperAdminDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
-          className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none"
+          className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-elev-5 shadow-gray-200/50 dark:shadow-none"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+                <Building2 className="w-5 h-5 text-brand-600" />
                 Recent Tenants
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">{tenantList.length} organizations</p>
@@ -698,8 +695,8 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                <Building2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              <div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center mx-auto mb-4">
+                <Building2 className="w-8 h-8 text-brand-600 dark:text-brand-400" />
               </div>
               <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Tenants Yet</h4>
               <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first tenant</p>
@@ -716,27 +713,27 @@ export const SuperAdminDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1 }}
-          className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-xl dark:shadow-none"
+          className="relative overflow-hidden bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 border border-neutral-100 dark:border-white/5 shadow-elev-5 dark:shadow-none"
         >
           {/* Subtle Accent Pattern */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <circle cx="90" cy="90" r="30" fill="currentColor" className="text-indigo-500" />
+              <circle cx="90" cy="90" r="30" fill="currentColor" className="text-brand-500" />
               <circle cx="10" cy="10" r="20" fill="currentColor" className="text-amber-500" />
             </svg>
           </div>
 
           <div className="relative z-10">
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 tracking-tight">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-white/10">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-elev-4 shadow-amber-500/20 border border-white/10">
                 <Zap className="w-6 h-6 text-white" />
               </div>
               Quick Control Panel
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-indigo-500 to-purple-600' },
-                { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-rose-500' },
+                { label: 'Manage Tenants', icon: Building2, path: '/tenants', color: 'from-brand-500 to-brand-600' },
+                { label: 'Manage Coupons', icon: Tag, path: '/coupons', color: 'from-pink-500 to-error-500' },
                 { label: 'System Logs', icon: Activity, path: '/activity', color: 'from-emerald-500 to-teal-500' },
                 { label: 'System Settings', icon: Settings, path: '/settings', color: 'from-amber-500 to-orange-500' },
               ].map((action) => (
@@ -745,9 +742,9 @@ export const SuperAdminDashboard: React.FC = () => {
                   whileHover={{ scale: 1.05, y: -5 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate(action.path)}
-                  className="group relative p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex flex-col items-center gap-4 transition-all hover:bg-white dark:hover:bg-indigo-500/10 hover:shadow-xl hover:shadow-indigo-500/5 shadow-md"
+                  className="group relative p-6 rounded-3xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 flex flex-col items-center gap-4 transition-all hover:bg-white dark:hover:bg-brand-500/10 hover:shadow-elev-5 hover:shadow-brand-500/5 shadow-elev-3"
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg border border-white/10 group-hover:rotate-6 transition-transform`}>
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-elev-4 border border-white/10 group-hover:rotate-6 transition-transform`}>
                     <action.icon className="w-7 h-7 text-white" />
                   </div>
                   <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest leading-none text-center">{action.label}</span>
@@ -756,7 +753,7 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </PageTransition>
     </DashboardLayout >
   );
 };

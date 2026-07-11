@@ -277,7 +277,7 @@ export const ReportsPage: React.FC = () => {
                       className={cn(
                         'px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
                         reportType === type
-                          ? 'bg-white dark:bg-gray-900 text-primary shadow-sm'
+                          ? 'bg-white dark:bg-gray-900 text-brand-500 shadow-elev-1'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       )}
                     >
@@ -292,7 +292,7 @@ export const ReportsPage: React.FC = () => {
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value as any)}
-                    className="w-full sm:w-auto px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full sm:w-auto px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                   >
                     <option value="7d">{t('reports.last7Days')}</option>
                     <option value="30d">{t('reports.last30Days')}</option>
@@ -334,8 +334,8 @@ export const ReportsPage: React.FC = () => {
                       +{orgData?.orgMetrics.active_employees || 0} {t('reports.active')}
                     </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-primary-10">
-                    <Users className="text-primary" size={24} />
+                  <div className="p-3 rounded-lg bg-brand-50/80">
+                    <Users className="text-brand-500" size={24} />
                   </div>
                 </div>
               </Card>
@@ -410,7 +410,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <PieChart
@@ -426,7 +426,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <BarChart
@@ -449,7 +449,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[350px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <AreaChart
@@ -473,7 +473,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[350px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <PieChart
@@ -497,7 +497,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <BarChart
@@ -521,7 +521,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <LineChart
@@ -552,7 +552,7 @@ export const ReportsPage: React.FC = () => {
                 </h3>
                 {isLoading ? (
                   <div className="h-[400px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                   </div>
                 ) : (
                   <AreaChart
@@ -618,7 +618,7 @@ export const ReportsPage: React.FC = () => {
                   </h3>
                   {isLoading ? (
                     <div className="h-[300px] flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                     </div>
                   ) : (
                     <PieChart
@@ -637,7 +637,7 @@ export const ReportsPage: React.FC = () => {
                   </h3>
                   {isLoading ? (
                     <div className="h-[300px] flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                     </div>
                   ) : (
                     <BarChart
@@ -710,7 +710,7 @@ export const ReportsPage: React.FC = () => {
                   </h3>
                   {isLoading ? (
                     <div className="h-[300px] flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                     </div>
                   ) : (
                     <PieChart
@@ -735,7 +735,7 @@ export const ReportsPage: React.FC = () => {
                   </h3>
                   {isLoading ? (
                     <div className="h-[300px] flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
                     </div>
                   ) : (
                     <BarChart

@@ -59,7 +59,7 @@ export const ResetPasswordPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
                 <div className="flex items-center gap-3 mb-8 justify-center">
                     <AnimatedLogo size="lg" />
@@ -83,7 +83,7 @@ export const ResetPasswordPage: React.FC = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted pr-10"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted pr-10"
                                     placeholder="Enter new password"
                                 />
                                 <button
@@ -104,7 +104,7 @@ export const ResetPasswordPage: React.FC = () => {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
-                                    className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-dark-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted pr-10"
+                                    className="w-full px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-muted pr-10"
                                     placeholder="Confirm new password"
                                 />
                             </div>
@@ -115,8 +115,8 @@ export const ResetPasswordPage: React.FC = () => {
                         </Button>
                     </form>
 
-                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-border flex justify-center text-sm">
-                        <a href="/login" className="text-primary hover:underline flex items-center gap-2">
+                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-center text-sm">
+                        <a href="/login" className="text-brand-500 hover:underline flex items-center gap-2">
                             <ArrowLeft size={14} />
                             Back to login
                         </a>

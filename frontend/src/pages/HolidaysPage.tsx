@@ -89,8 +89,8 @@ export const HolidaysPage: React.FC = () => {
                 <Card>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-primary/10 rounded-lg">
-                                <Calendar className="h-6 w-6 text-primary" />
+                            <div className="p-3 bg-brand-500/10 rounded-lg">
+                                <Calendar className="h-6 w-6 text-brand-500" />
                             </div>
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -127,7 +127,7 @@ export const HolidaysPage: React.FC = () => {
                 {isLoading ? (
                     <Card>
                         <div className="flex items-center justify-center py-16">
-                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-brand-500 border-t-transparent" />
                         </div>
                     </Card>
                 ) : (
@@ -135,11 +135,11 @@ export const HolidaysPage: React.FC = () => {
                         {/* Upcoming Public Holidays */}
                         <Card>
                             <div className="flex items-center gap-2 mb-6">
-                                <PartyPopper className="h-5 w-5 text-primary" />
+                                <PartyPopper className="h-5 w-5 text-brand-500" />
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     Upcoming Public Holidays
                                 </h3>
-                                <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium">
+                                <span className="ml-2 px-2 py-0.5 bg-brand-500/10 text-brand-500 text-xs rounded-full font-medium">
                                     {upcomingHolidays.length}
                                 </span>
                             </div>
@@ -159,13 +159,13 @@ export const HolidaysPage: React.FC = () => {
                                                 className={cn(
                                                     'flex items-center gap-4 p-4 rounded-lg border transition-all',
                                                     status === 'today'
-                                                        ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/20'
+                                                        ? 'bg-brand-500/5 border-brand-500/30 ring-2 ring-brand-500/20'
                                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
                                                 )}
                                             >
                                                 <div className={cn(
                                                     'flex flex-col items-center justify-center w-16 h-16 rounded-lg',
-                                                    status === 'today' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-800 shadow-sm'
+                                                    status === 'today' ? 'bg-brand-500 text-white' : 'bg-white dark:bg-gray-800 shadow-elev-1'
                                                 )}>
                                                     <span className={cn(
                                                         'text-xs font-medium',
@@ -184,7 +184,7 @@ export const HolidaysPage: React.FC = () => {
                                                     <div className="flex items-center gap-2">
                                                         <h4 className="font-semibold text-gray-900 dark:text-white">{holiday.name}</h4>
                                                         {status === 'today' && (
-                                                            <span className="px-2 py-0.5 bg-primary text-white text-xs rounded-full">
+                                                            <span className="px-2 py-0.5 bg-brand-500 text-white text-xs rounded-full">
                                                                 Today!
                                                             </span>
                                                         )}
@@ -239,10 +239,10 @@ export const HolidaysPage: React.FC = () => {
                                                         ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
                                                         : isPast
                                                             ? 'bg-gray-100 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 opacity-60'
-                                                            : 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-800'
+                                                            : 'bg-brand-50 dark:bg-brand-500/5 border-brand-200 dark:border-brand-800'
                                                 )}
                                             >
-                                                <div className="flex flex-col items-center justify-center w-14 h-14 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                                                <div className="flex flex-col items-center justify-center w-14 h-14 bg-white dark:bg-gray-800 rounded-lg shadow-elev-1">
                                                     <span className="text-xs text-gray-500">
                                                         {format(parseISO(holiday.date), 'MMM')}
                                                     </span>

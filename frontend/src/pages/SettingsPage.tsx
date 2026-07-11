@@ -92,7 +92,7 @@ export const SettingsPage: React.FC = () => {
         {canManageOrg && (
           <Card>
             <div className="flex items-center gap-3 mb-4">
-              <Building2 className="text-primary" size={24} />
+              <Building2 className="text-brand-500" size={24} />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Organization Settings
               </h3>
@@ -109,7 +109,7 @@ export const SettingsPage: React.FC = () => {
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-elev-1 flex items-center justify-center text-brand-500">
                     <FileText size={20} />
                   </div>
                   <div>
@@ -130,7 +130,7 @@ export const SettingsPage: React.FC = () => {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <CreditCard className="text-primary" size={24} />
+                <CreditCard className="text-brand-500" size={24} />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {t('billing.subscription')}
                 </h3>
@@ -155,7 +155,7 @@ export const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
                     <p className="text-sm text-gray-500 mb-1">{t('billing.currentPlan')}</p>
-                    <p className="text-xl font-bold text-primary">{subscription.plan_name}</p>
+                    <p className="text-xl font-bold text-brand-500">{subscription.plan_name}</p>
                   </div>
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
                     <p className="text-sm text-gray-500 mb-1">{t('common.status')}</p>
@@ -169,7 +169,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 {subscription.end_date && (
-                  <div className="p-3 rounded-lg bg-purple-50/50 dark:bg-purple-500/5 text-sm text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-500/10">
+                  <div className="p-3 rounded-lg bg-brand-50/50 dark:bg-brand-500/5 text-sm text-brand-600 dark:text-brand-300 border border-brand-100 dark:border-brand-500/10">
                     Your subscription will {subscription.status === 'CANCELLED' ? 'expire' : 'renew'} on <b>{new Date(subscription.end_date).toLocaleDateString()}</b>
                   </div>
                 )}
@@ -178,7 +178,7 @@ export const SettingsPage: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-primary hover:bg-primary/5 border border-primary/20"
+                    className="w-full text-brand-500 hover:bg-brand-500/5 border border-brand-500/20"
                     onClick={() => navigate('/billing')}
                   >
                     View Billing History & Invoices
@@ -197,7 +197,7 @@ export const SettingsPage: React.FC = () => {
         {/* Notifications */}
         <Card>
           <div className="flex items-center gap-3 mb-4">
-            <Bell className="text-primary" size={24} />
+            <Bell className="text-brand-500" size={24} />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.notifications')}</h3>
           </div>
           <p className="text-gray-600 dark:text-muted mb-4">
@@ -220,7 +220,7 @@ export const SettingsPage: React.FC = () => {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 dark:peer-focus:ring-brand-500/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -239,7 +239,7 @@ export const SettingsPage: React.FC = () => {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 dark:peer-focus:ring-brand-500/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -258,7 +258,7 @@ export const SettingsPage: React.FC = () => {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 dark:peer-focus:ring-brand-500/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
@@ -277,7 +277,7 @@ export const SettingsPage: React.FC = () => {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 dark:peer-focus:ring-brand-500/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="pt-2">
@@ -296,9 +296,9 @@ export const SettingsPage: React.FC = () => {
         <Card>
           <div className="flex items-center gap-3 mb-4">
             {theme === 'dark' ? (
-              <Moon className="text-primary" size={24} />
+              <Moon className="text-brand-500" size={24} />
             ) : (
-              <Sun className="text-primary" size={24} />
+              <Sun className="text-brand-500" size={24} />
             )}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.appearance')}</h3>
           </div>
@@ -329,7 +329,7 @@ export const SettingsPage: React.FC = () => {
         {/* Security */}
         <Card>
           <div className="flex items-center gap-3 mb-4">
-            <Shield className="text-primary" size={24} />
+            <Shield className="text-brand-500" size={24} />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.security')}</h3>
           </div>
           <p className="text-gray-600 dark:text-muted mb-4">
@@ -350,7 +350,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center ${user?.two_factor_enabled ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-white dark:bg-gray-800 text-primary'}`}>
+                <div className={`w-10 h-10 rounded-xl shadow-elev-1 flex items-center justify-center ${user?.two_factor_enabled ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400' : 'bg-white dark:bg-gray-800 text-brand-500'}`}>
                   <Shield size={20} />
                 </div>
                 <div>
@@ -475,7 +475,7 @@ const WorkingHoursSection: React.FC<{
     <>
       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-elev-1 flex items-center justify-center text-brand-500">
             <Clock size={20} />
           </div>
           <div>
@@ -526,7 +526,7 @@ const WorkingHoursSection: React.FC<{
                     type="button"
                     onClick={() => toggleDay(day)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${formData.workingDays.includes(day)
-                      ? 'bg-primary text-white'
+                      ? 'bg-brand-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                   >
@@ -536,14 +536,14 @@ const WorkingHoursSection: React.FC<{
               </div>
             </div>
 
-            <div className="bg-fuchsia-50 dark:bg-fuchsia-500/10 p-3 rounded-lg border border-fuchsia-100 dark:border-fuchsia-500/20">
-              <p className="text-xs text-fuchsia-700 dark:text-fuchsia-400 leading-relaxed">
+            <div className="bg-coral-50 dark:bg-coral-500/10 p-3 rounded-lg border border-coral-100 dark:border-coral-500/20">
+              <p className="text-xs text-coral-600 dark:text-coral-400 leading-relaxed">
                 <b>Note:</b> These are global default hours. For custom requirements like Night Shifts or Rotation, please use advanced shift management.
               </p>
               <button
                 type="button"
                 onClick={() => { setIsModalOpen(false); navigate('/organisation?tab=shifts&subtab=manage'); }}
-                className="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                className="mt-2 text-xs font-bold text-brand-500 hover:underline flex items-center gap-1"
               >
                 Go to Shift Management <ExternalLink size={10} />
               </button>
@@ -730,7 +730,7 @@ const OrganizationProfileSection: React.FC<{
         {/* Logo Section */}
         <div className="flex flex-col items-center gap-3">
           <div className="relative group">
-            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-sm">
+            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-elev-1">
               <img
                 src={profile?.settings?.logo_url ? resolveImageUrl(profile.settings.logo_url) : defaultLogo}
                 alt="Logo"
@@ -830,7 +830,7 @@ const OrganizationProfileSection: React.FC<{
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 md:col-span-2 border border-gray-100 dark:border-gray-800/50">
               <p className="font-medium text-gray-900 dark:text-white text-[10px] uppercase text-muted mb-1">Default Organization Timezone</p>
-              <p className="text-sm font-semibold text-primary">
+              <p className="text-sm font-semibold text-brand-500">
                 {getTimezoneLabel(profile?.settings?.timezone)}
               </p>
             </div>
@@ -871,7 +871,7 @@ const OrganizationProfileSection: React.FC<{
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="Enter organization address"
                   rows={2}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                 />
               </div>
               <div className="space-y-2">
@@ -978,7 +978,7 @@ const EmployeeIdSection: React.FC<{
   return (
     <div className="flex flex-col gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
+        <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-elev-1 flex items-center justify-center text-brand-500">
           <Key size={20} />
         </div>
         <div>
@@ -1001,7 +1001,7 @@ const EmployeeIdSection: React.FC<{
               className="sr-only peer"
               disabled={toggleModeMutation.isPending}
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
           </label>
         </div>
 
@@ -1034,7 +1034,7 @@ const EmployeeIdSection: React.FC<{
                 <div className="flex gap-4 text-xs">
                   <div>
                     <span className="text-gray-500">Current Prefix:</span>
-                    <span className="ml-2 font-bold text-primary">{idSettings.prefix}</span>
+                    <span className="ml-2 font-bold text-brand-500">{idSettings.prefix}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Next ID:</span>

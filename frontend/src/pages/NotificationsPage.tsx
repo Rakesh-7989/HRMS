@@ -53,7 +53,7 @@ export const NotificationsPage: React.FC = () => {
             case 'error':
                 return <AlertCircle className="text-red-500" size={20} />;
             default:
-                return <Info className="text-violet-500" size={20} />;
+                return <Info className="text-brand-500" size={20} />;
         }
     };
 
@@ -87,10 +87,10 @@ export const NotificationsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <Card className="p-0 overflow-hidden bg-white dark:bg-gray-900 border-light-border dark:border-dark-border">
+                <Card className="p-0 overflow-hidden bg-white dark:bg-gray-900 border-gray-200 dark:border-white/10">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
                             <p className="mt-4 text-gray-500">Loading notifications...</p>
                         </div>
                     ) : notifications.length === 0 ? (
@@ -110,7 +110,7 @@ export const NotificationsPage: React.FC = () => {
                                     key={notification.id}
                                     className={cn(
                                         "p-6 flex gap-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 relative group",
-                                        !notification.read && "bg-violet-50/30 dark:bg-violet-900/10"
+                                        !notification.read && "bg-brand-50/30 dark:bg-brand-500/5"
                                     )}
                                     onClick={() => !notification.read && markAsReadMutation.mutate(notification.id)}
                                 >
@@ -136,7 +136,7 @@ export const NotificationsPage: React.FC = () => {
                                         {notification.link && (
                                             <Button
                                                 variant="ghost"
-                                                className="p-0 h-auto mt-3 text-primary text-xs font-semibold hover:bg-transparent hover:underline"
+                                                className="p-0 h-auto mt-3 text-brand-500 text-xs font-semibold hover:bg-transparent hover:underline"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     window.location.href = notification.link!;
@@ -162,7 +162,7 @@ export const NotificationsPage: React.FC = () => {
                                         </Button>
                                     </div>
                                     {!notification.read && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-500" />
                                     )}
                                 </div>
                             ))}

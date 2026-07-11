@@ -58,7 +58,7 @@ export const MyWFHRequestsContent: React.FC = () => {
 
                 {isLoading ? (
                     <div className="h-48 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
                     </div>
                 ) : myRequests.length === 0 ? (
                     <div className="text-center py-12 text-gray-500 dark:text-muted">
