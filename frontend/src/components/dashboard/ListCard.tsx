@@ -114,8 +114,8 @@ export const ListCard: React.FC<ListCardProps> = ({
                                 "group flex items-center justify-between p-3.5 rounded-xl",
                                 "bg-gray-50/80 dark:bg-gray-800/40",
                                 "border border-transparent",
-                                "hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent",
-                                "hover:border-primary/10 dark:hover:border-primary/20",
+                                "hover:bg-gradient-to-r hover:from-brand-500/5 hover:to-transparent",
+                                "hover:border-brand-500/10 dark:hover:border-brand-500/20",
                                 "transition-all duration-200 cursor-default"
                             )}
                         >
@@ -132,7 +132,7 @@ export const ListCard: React.FC<ListCardProps> = ({
                                 <div className="min-w-0">
                                     <p className={cn(
                                         "text-sm font-semibold text-gray-900 dark:text-white",
-                                        "group-hover:text-primary dark:group-hover:text-primary",
+                                        "group-hover:text-brand-500 dark:group-hover:text-brand-500",
                                         "transition-colors duration-200 truncate"
                                     )}>
                                         {item.label}

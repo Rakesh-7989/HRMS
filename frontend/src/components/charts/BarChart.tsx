@@ -85,7 +85,7 @@ export const BarChart: React.FC<BarChartProps> = ({
               color: 'var(--foreground)',
               padding: '4px 0',
             }}
-            cursor={{ fill: 'rgba(107, 70, 193, 0.1)' }}
+            cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
           />
           {name && (
             <Legend

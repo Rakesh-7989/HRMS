@@ -262,7 +262,7 @@
 }
 
 .dashboard-avatar--primary {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
 }
 
 .dashboard-avatar--blue {
@@ -520,7 +520,7 @@
 }
 
 .dashboard-progress-fill--primary {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
 }
 
 .dashboard-progress-fill--blue {

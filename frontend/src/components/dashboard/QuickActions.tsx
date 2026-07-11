@@ -16,15 +16,23 @@ interface QuickActionItem {
   description: string;
   icon: LucideIcon;
   path: string;
-  color: string;
+  color: 'brand' | 'success' | 'teal' | 'coral' | 'warning';
 }
 
 const QUICK_ACTIONS: QuickActionItem[] = [
-  { label: 'New Employee', description: 'Onboard a new team member', icon: UserPlus, path: '/employees/new', color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10' },
-  { label: 'Mark Attendance', description: 'Record today\'s attendance', icon: Clock, path: '/attendance', color: 'text-green-500 bg-green-50 dark:bg-green-500/10' },
-  { label: 'Create Event', description: 'Schedule a company event', icon: CalendarPlus, path: '/calendar/new', color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10' },
-  { label: 'Generate Report', description: 'Export HR analytics report', icon: FileText, path: '/reports', color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' },
+  { label: 'New Employee', description: 'Onboard a new team member', icon: UserPlus, path: '/employees/new', color: 'brand' },
+  { label: 'Mark Attendance', description: 'Record today\'s attendance', icon: Clock, path: '/attendance', color: 'success' },
+  { label: 'Create Event', description: 'Schedule a company event', icon: CalendarPlus, path: '/calendar/new', color: 'teal' },
+  { label: 'Generate Report', description: 'Export HR analytics report', icon: FileText, path: '/reports', color: 'coral' },
 ];
+
+const colorStyles: Record<string, { bg: string; text: string }> = {
+  brand: { bg: 'bg-brand-100 dark:bg-brand-500/15', text: 'text-brand-600 dark:text-brand-400' },
+  success: { bg: 'bg-success-100 dark:bg-success-500/15', text: 'text-success-600 dark:text-success-400' },
+  teal: { bg: 'bg-teal-100 dark:bg-teal-500/15', text: 'text-teal-600 dark:text-teal-400' },
+  coral: { bg: 'bg-coral-100 dark:bg-coral-500/15', text: 'text-coral-600 dark:text-coral-400' },
+  warning: { bg: 'bg-warning-100 dark:bg-warning-500/15', text: 'text-warning-600 dark:text-warning-400' },
+};
 
 interface QuickActionsProps {
   className?: string;
@@ -35,27 +43,28 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className, actions =
   const navigate = useNavigate();
 
   return (
-    <Card className={className}>
+    <Card variant="elevated" className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Quick Actions</h3>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {actions.map((action) => {
           const Icon = action.icon;
+          const colors = colorStyles[action.color];
           return (
             <button
               key={action.label}
               onClick={() => navigate(action.path)}
-              className="flex flex-col items-start gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/30 hover:shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all text-left group"
+              className="flex flex-col items-start gap-2 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-elev-1 hover:bg-brand-50/50 dark:hover:bg-brand-500/5 transition-all text-left group"
             >
-              <div className={cn('p-2 rounded-lg', action.color)}>
+              <div className={cn('p-2 rounded-lg', colors.bg, colors.text)}>
                 <Icon size={18} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                   {action.label}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                   {action.description}
                 </p>
               </div>
@@ -65,7 +74,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className, actions =
       </div>
       <button
         onClick={() => navigate('/activity')}
-        className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-primary py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+        className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs text-neutral-400 hover:text-brand-600 dark:hover:text-brand-400 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
       >
         <span>View all actions</span>
         <ArrowRight size={12} />

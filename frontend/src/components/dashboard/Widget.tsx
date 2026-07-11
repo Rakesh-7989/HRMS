@@ -46,26 +46,26 @@ export const Widget: React.FC<WidgetProps> = ({
       transition={{ duration: 0.3 }}
       className={cn('group', className)}
     >
-      <Card>
+      <Card variant="elevated">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {collapsible && (
               <button
                 onClick={() => setCollapsed(c => !c)}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400"
+                className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"
                 aria-label={collapsed ? 'Expand' : 'Collapse'}
               >
                 {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
               </button>
             )}
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
             {headerAction}
             {error && onRetry && (
               <button
                 onClick={onRetry}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-primary transition-colors"
+                className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-brand-500 transition-colors"
                 aria-label="Retry"
               >
                 <RefreshCw size={14} />
@@ -80,11 +80,11 @@ export const Widget: React.FC<WidgetProps> = ({
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-red-500 mb-3">{error}</p>
+            <p className="text-sm text-error-500 mb-3">{error}</p>
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="text-sm text-primary hover:text-primary-hover underline underline-offset-2"
+                className="text-sm text-brand-600 dark:text-brand-400 hover:underline underline-offset-2 font-medium"
               >
                 Try again
               </button>
@@ -112,7 +112,7 @@ export const DraggableWidget: React.FC<WidgetProps & { dragHandleProps?: Record<
   <div className="relative">
     <div
       {...dragHandleProps}
-      className="absolute -left-2 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      className="absolute -left-2 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
     >
       <GripVertical size={16} />
     </div>

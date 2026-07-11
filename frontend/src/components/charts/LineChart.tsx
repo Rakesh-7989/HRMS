@@ -74,7 +74,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               color: 'var(--foreground)',
               padding: '4px 0',
             }}
-            cursor={{ stroke: 'rgba(107, 70, 193, 0.2)', strokeWidth: 1 }}
+            cursor={{ stroke: 'rgba(99, 102, 241, 0.2)', strokeWidth: 1 }}
           />
           <Legend
             wrapperStyle={{ paddingTop: '20px' }}

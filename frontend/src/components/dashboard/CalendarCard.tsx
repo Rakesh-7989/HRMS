@@ -182,12 +182,12 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                         <div className="flex items-center gap-4">
                             <motion.div
                                 whileHover={{ scale: 1.1, rotate: 5 }}
-                                className="p-3 bg-primary/10 dark:bg-primary/20 rounded-xl"
+                                className="p-3 bg-brand-500/10 dark:bg-brand-500/20 rounded-xl"
                             >
-                                <CalendarIcon size={22} className="text-primary" />
+                                <CalendarIcon size={22} className="text-brand-500" />
                             </motion.div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5">Live Schedule</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-500 mb-0.5">Live Schedule</span>
                                 <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{format(new Date(), 'EEEE')}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 uppercase tracking-tight">{format(new Date(), 'MMMM dd, yyyy')}</p>
                             </div>
@@ -200,12 +200,12 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="mt-4 p-3 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-500/10 border border-fuchsia-200/50 dark:border-fuchsia-500/20 flex items-center gap-3"
+                                className="mt-4 p-3 rounded-xl bg-coral-50 dark:bg-coral-500/10 border border-coral-200/50 dark:border-coral-500/20 flex items-center gap-3"
                             >
-                                <div className="p-2 bg-fuchsia-500 rounded-lg text-white shadow-lg shadow-violet-500/30">
+                                <div className="p-2 bg-coral-500 rounded-lg text-white shadow-elev-4 shadow-brand-500/30">
                                     <Building size={14} />
                                 </div>
-                                <span className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-tight">
+                                <span className="text-xs font-bold text-coral-600 dark:text-coral-400 uppercase tracking-tight">
                                     {todayHoliday.holiday_name}
                                 </span>
                             </motion.div>
@@ -217,7 +217,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                     {/* Announcements Section */}
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2 mb-3">
-                            <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                            <div className="h-1.5 w-1.5 bg-brand-500 rounded-full" />
                             <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Announcements</p>
                         </div>
 
@@ -238,12 +238,12 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                         className={cn(
                                             "p-3.5 rounded-xl",
                                             "bg-gray-50/80 dark:bg-gray-800/40",
-                                            "border border-transparent hover:border-primary/20",
+                                            "border border-transparent hover:border-brand-500/20",
                                             "transition-all cursor-default group"
                                         )}
                                     >
                                         <div className="flex items-center justify-between gap-3 mb-1">
-                                            <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{a.title}</p>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight line-clamp-1 group-hover:text-brand-500 transition-colors">{a.title}</p>
                                             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-full flex-shrink-0">{format(new Date(a.created_at || new Date()), 'MMM dd')}</p>
                                         </div>
                                         <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed line-clamp-1">
@@ -271,21 +271,21 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                     title={day.isHoliday ? day.holidayName || 'Holiday' : day.isSunday ? 'Sunday' : day.day}
                                     className={cn(
                                         'p-2 rounded-lg flex flex-col items-center justify-center transition-all border relative',
-                                        day.isToday && 'ring-2 ring-primary ring-offset-1 bg-primary/10 border-primary/30',
+                                        day.isToday && 'ring-2 ring-brand-500 ring-offset-1 bg-brand-500/10 border-brand-500/30',
                                         (day.isSunday || day.isHoliday) && !day.isToday && 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border-red-200/50 dark:border-red-500/20',
-                                        !day.isSunday && !day.isHoliday && !day.isToday && 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200/50 dark:border-purple-500/20',
+                                        !day.isSunday && !day.isHoliday && !day.isToday && 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-200/50 dark:border-brand-500/20',
                                         day.isFuture && 'opacity-60'
                                     )}
                                 >
                                     <p className={cn(
                                         'text-[8px] font-bold uppercase tracking-tighter mb-0.5',
-                                        (day.isSunday || day.isHoliday) ? 'text-red-400' : day.isToday ? 'text-primary' : 'text-purple-500'
+                                        (day.isSunday || day.isHoliday) ? 'text-red-400' : day.isToday ? 'text-brand-500' : 'text-brand-500'
                                     )}>
                                         {day.dayLetter}
                                     </p>
                                     <p className={cn(
                                         'text-[11px] font-bold tracking-tighter',
-                                        day.isToday && 'text-primary'
+                                        day.isToday && 'text-brand-500'
                                     )}>
                                         {day.date}
                                     </p>
@@ -298,7 +298,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                         {/* Legend */}
                         <div className="flex items-center justify-center gap-4 mt-3 text-[9px] text-gray-400">
                             <div className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                                 <span>Weekday</span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -329,7 +329,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{format(currentMonth, 'MMMM')}</h3>
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-wider mt-1">{format(currentMonth, 'yyyy')}</p>
+                        <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider mt-1">{format(currentMonth, 'yyyy')}</p>
                     </div>
                     <div className="flex items-center bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
                         <motion.button
@@ -385,16 +385,16 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                 }}
                                 className={cn(
                                     "aspect-square rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative group",
-                                    today ? "bg-primary text-white shadow-lg shadow-primary/30 scale-110 z-10" :
+                                    today ? "bg-brand-500 text-white shadow-elev-4 shadow-brand-500/30 scale-110 z-10" :
                                         outOfMonth ? "opacity-20 pointer-events-none" :
-                                            "bg-gray-50/80 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-700/30 hover:bg-white dark:hover:bg-gray-800/50 hover:border-primary/30"
+                                            "bg-gray-50/80 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-700/30 hover:bg-white dark:hover:bg-gray-800/50 hover:border-brand-500/30"
                                 )}
                             >
                                 <span className="text-xs font-bold">{label}</span>
                                 {count > 0 && (
                                     <div className={cn(
                                         "absolute top-1 right-1 w-1.5 h-1.5 rounded-full",
-                                        today ? "bg-white" : "bg-primary"
+                                        today ? "bg-white" : "bg-brand-500"
                                     )} />
                                 )}
                             </motion.div>
@@ -404,7 +404,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
             </div>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl p-6 bg-white dark:bg-gray-900">
+                <DialogContent className="rounded-2xl border border-gray-200 dark:border-gray-700 shadow-elev-6 p-6 bg-white dark:bg-gray-900">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-bold tracking-tight text-center mb-4">{selectedDateLabel}</DialogTitle>
                     </DialogHeader>
@@ -419,14 +419,14 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                                     "p-4 rounded-xl flex items-center justify-between group",
                                     "bg-gray-50 dark:bg-gray-800/50",
                                     "border border-gray-100 dark:border-gray-700/50",
-                                    "hover:border-primary/30 transition-all"
+                                    "hover:border-brand-500/30 transition-all"
                                 )}
                             >
                                 <div className="flex flex-col">
                                     <p className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight">{ev.name}</p>
                                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-1">{ev.date}</p>
                                 </div>
-                                <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary transition-transform group-hover:rotate-12">
+                                <div className="p-2 bg-brand-500/10 dark:bg-brand-500/20 rounded-xl text-brand-500 transition-transform group-hover:rotate-12">
                                     <Megaphone size={16} />
                                 </div>
                             </motion.div>

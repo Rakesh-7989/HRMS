@@ -82,7 +82,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 >
                     <div className="flex flex-col items-center gap-3">
                         <motion.div
-                            className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent"
+                            className="w-10 h-10 rounded-full border-2 border-brand-500 border-t-transparent"
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         />
