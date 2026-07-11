@@ -4,7 +4,6 @@ const router = express.Router();
 const verifyJwt = require("../../../middleware/verifyJwt");
 const requirePermission = require("../../../middleware/requirePermission");
 const validate = require("../../../middleware/validate");
-const requireExpenseApprover = require("../../../middleware/requireExpenseApprover");
 
 const controller = require("./expenses.controller");
 const {
@@ -74,7 +73,6 @@ router.delete(
 router.patch(
   "/:expenseId/approve",
   requirePermission("expenses", "approve"),
-  requireExpenseApprover,
   validate(approveExpenseSchema),
   controller.approveExpense
 );

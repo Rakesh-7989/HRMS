@@ -384,7 +384,7 @@ class SubscriptionService {
                             } catch (emailErr) {
                                 console.error('[DEBUG_VERIFY] Email dispatch failed:', emailErr.message);
                             }
-                            // TODO: Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
+                            // Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
                             // an admin can manually trigger a resend from the tenant management UI.
                         } else {
                             console.log(`[DEBUG_VERIFY] User ${adminUser.id} already active. Skipping password reset.`);

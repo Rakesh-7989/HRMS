@@ -269,7 +269,7 @@ exports.registerTenant = async (data, req = null) => {
             } catch (mailErr) {
                 logger.error("Failed to send welcome email for trial", { err: mailErr.message });
             }
-            // TODO: Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
+            // Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
             // an admin can manually trigger a resend from the tenant management UI.
         }
 

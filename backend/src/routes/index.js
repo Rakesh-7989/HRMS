@@ -23,7 +23,6 @@ const userRouter = require('../modules/users/user.router');
 const attendanceRouter = require('../modules/attendance/attendance.router');
 const leaveRouter = require('../modules/leave/index.router');
 const payrollRouter = require('../modules/payroll/payroll.router');
-//const subscriptionRouter = require('../modules/subscriptions/billing.routes');
 const inboxRouter = require('../modules/inbox/inbox.router');
 const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
@@ -53,7 +52,6 @@ router.use('/auth', authRoutes);
 router.use('/common', commonRouter);
 
 // Subscriptions module (billing routes handle their own auth)
-//router.use('/subscriptions', subscriptionRouter);
 router.use('/subscriptions', billingRouter);
 router.use('/subscriptions', subscriptionAdminRouter);
 
