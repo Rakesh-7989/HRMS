@@ -1169,7 +1169,9 @@
         "noInterviewsScheduled": "No interviews scheduled",
         "scheduleInterviews": "Schedule interviews with candidates to get started",
         "jobPublished": "Job published",
-        "statusUpdated": "Status updated"
+        "statusUpdated": "Status updated",
+        "publish": "Publish",
+        "cancelled": "Cancelled"
     },
     "bonus": {
         "title": "Bonus & Incentives",

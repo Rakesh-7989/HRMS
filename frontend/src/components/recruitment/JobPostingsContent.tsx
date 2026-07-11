@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recruitmentService, JobPosting } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
@@ -8,20 +9,21 @@ import { Briefcase, Plus, MapPin, Clock, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: 'Draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
-  PUBLISHED: { label: 'Published', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
-  CLOSED: { label: 'Closed', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  DRAFT: { labelKey: 'recruitment.draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
+  PUBLISHED: { labelKey: 'recruitment.published', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
+  CLOSED: { labelKey: 'recruitment.closed', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
 };
 
 const typeConfig: Record<string, string> = {
-  FULL_TIME: 'Full Time',
-  PART_TIME: 'Part Time',
-  CONTRACT: 'Contract',
-  INTERNSHIP: 'Internship',
+  FULL_TIME: 'recruitment.fullTime',
+  PART_TIME: 'recruitment.partTime',
+  CONTRACT: 'recruitment.contract',
+  INTERNSHIP: 'recruitment.internship',
 };
 
 export const JobPostingsContent: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filter, setFilter] = React.useState<string | undefined>(undefined);
 
@@ -34,7 +36,7 @@ export const JobPostingsContent: React.FC = () => {
     mutationFn: (id: string) => recruitmentService.publishJob(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recruitment-jobs'] });
-      toast.success('Job published');
+      toast.success(t('recruitment.jobPublished'));
     },
   });
 
@@ -51,22 +53,22 @@ export const JobPostingsContent: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
-            {[{ id: undefined, label: 'All' }, { id: 'PUBLISHED', label: 'Published' }, { id: 'DRAFT', label: 'Draft' }, { id: 'CLOSED', label: 'Closed' }].map(f => (
+            {[{ id: undefined, labelKey: 'recruitment.all' }, { id: 'PUBLISHED', labelKey: 'recruitment.published' }, { id: 'DRAFT', labelKey: 'recruitment.draft' }, { id: 'CLOSED', labelKey: 'recruitment.closed' }].map(f => (
               <button
-                key={f.label}
+                key={f.id || 'all'}
                 onClick={() => setFilter(f.id)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                   filter === f.id ? 'bg-white dark:bg-neutral-900 text-brand-600 dark:text-brand-400 shadow-elev-1' : 'text-neutral-500 dark:text-neutral-400'
                 )}
               >
-                {f.label}
+                {t(f.labelKey)}
               </button>
             ))}
           </div>
           <Button size="sm" className="gap-2">
             <Plus size={16} />
-            New Job
+            {t('recruitment.newJob')}
           </Button>
         </div>
 
@@ -78,7 +80,7 @@ export const JobPostingsContent: React.FC = () => {
                   <Briefcase className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                 </div>
                 <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[job.status]?.color)}>
-                  {statusConfig[job.status]?.label || job.status}
+                  {t(statusConfig[job.status]?.labelKey || 'recruitment.draft')}
                 </span>
               </div>
               <h3 className="font-bold text-neutral-900 dark:text-white mb-1">{job.title}</h3>
@@ -90,11 +92,11 @@ export const JobPostingsContent: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-neutral-400 dark:text-neutral-500">
                   <Clock size={12} />
-                  {typeConfig[job.type] || job.type} · {job.experience_min}-{job.experience_max} yrs
+                  {t(typeConfig[job.type] || job.type)} · {job.experience_min}-{job.experience_max} {t('recruitment.yrs')}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-neutral-400 dark:text-neutral-500">
                   <Users size={12} />
-                  {job.candidate_count || 0} candidates · {job.openings} openings
+                  {job.candidate_count || 0} {t('recruitment.candidates')} · {job.openings} {t('recruitment.openings')}
                 </div>
               </div>
               {job.status === 'DRAFT' && (
@@ -102,7 +104,7 @@ export const JobPostingsContent: React.FC = () => {
                   onClick={() => publishMutation.mutate(job.id)}
                   className="w-full py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-colors"
                 >
-                  Publish
+                  {t('recruitment.publish')}
                 </button>
               )}
             </Card>
@@ -110,8 +112,8 @@ export const JobPostingsContent: React.FC = () => {
           {(!jobs || jobs.length === 0) && (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
               <Briefcase className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No job postings yet</p>
-              <p className="text-sm">Create your first job posting to start recruiting</p>
+              <p className="font-medium">{t('recruitment.noJobsYet')}</p>
+              <p className="text-sm">{t('recruitment.createFirstJob')}</p>
             </div>
           )}
         </div>

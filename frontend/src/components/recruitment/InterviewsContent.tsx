@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { recruitmentService } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
@@ -12,14 +13,15 @@ const modeIcons: Record<string, React.ElementType> = {
   IN_PERSON: MapPin,
 };
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: 'Scheduled', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
-  COMPLETED: { label: 'Completed', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
-  CANCELLED: { label: 'Cancelled', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
-  RESCHEDULED: { label: 'Rescheduled', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  SCHEDULED: { labelKey: 'recruitment.scheduled', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
+  COMPLETED: { labelKey: 'recruitment.completed', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
+  CANCELLED: { labelKey: 'recruitment.cancelled', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
+  RESCHEDULED: { labelKey: 'recruitment.rescheduled', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
 };
 
 export const InterviewsContent: React.FC = () => {
+  const { t } = useTranslation();
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['recruitment-interviews'],
     queryFn: () => recruitmentService.getInterviews().then(r => r.data),
@@ -47,7 +49,7 @@ export const InterviewsContent: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-neutral-900 dark:text-white text-sm">
-                      {interview.candidate?.name || 'Candidate'}
+                      {interview.candidate?.name || t('recruitment.candidates')}
                     </p>
                     <p className="text-xs text-neutral-400 dark:text-neutral-500">
                       {interview.round_name} · {interview.interviewer?.first_name} {interview.interviewer?.last_name}
@@ -57,19 +59,19 @@ export const InterviewsContent: React.FC = () => {
                         <Calendar size={11} />
                         {new Date(interview.scheduled_at).toLocaleString()}
                       </span>
-                      <span>{interview.duration_minutes}min</span>
+                      <span>{interview.duration_minutes}{t('recruitment.min')}</span>
                     </div>
                   </div>
                 </div>
                 <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[interview.status]?.color)}>
-                  {statusConfig[interview.status]?.label || interview.status}
+                  {t(statusConfig[interview.status]?.labelKey || 'recruitment.scheduled')}
                 </span>
               </div>
               {interview.feedback && (
                 <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-300">
                   {interview.feedback}
                   {interview.rating && (
-                    <span className="ml-2 text-brand-500 font-bold">Rating: {interview.rating}/5</span>
+                    <span className="ml-2 text-brand-500 font-bold">{t('recruitment.rating')}: {interview.rating}/5</span>
                   )}
                 </div>
               )}
@@ -79,8 +81,8 @@ export const InterviewsContent: React.FC = () => {
         {(!interviews || interviews.length === 0) && (
           <div className="flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
             <Calendar className="w-12 h-12 mb-3 opacity-40" />
-            <p className="font-medium">No interviews scheduled</p>
-            <p className="text-sm">Schedule interviews with candidates to get started</p>
+            <p className="font-medium">{t('recruitment.noInterviewsScheduled')}</p>
+            <p className="text-sm">{t('recruitment.scheduleInterviews')}</p>
           </div>
         )}
       </div>

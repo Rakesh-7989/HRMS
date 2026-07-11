@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recruitmentService, Candidate } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
@@ -8,21 +9,22 @@ import { Users, Plus, Mail, Phone, Building2, IndianRupee, Loader2 } from 'lucid
 import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  NEW: { label: 'New', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-  SCREENING: { label: 'Screening', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
-  INTERVIEW: { label: 'Interview', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
-  OFFERED: { label: 'Offered', color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' },
-  HIRED: { label: 'Hired', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
-  REJECTED: { label: 'Rejected', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
-  WITHDRAWN: { label: 'Withdrawn', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  NEW: { labelKey: 'recruitment.new', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  SCREENING: { labelKey: 'recruitment.screening', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+  INTERVIEW: { labelKey: 'recruitment.interview', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
+  OFFERED: { labelKey: 'recruitment.offered', color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' },
+  HIRED: { labelKey: 'recruitment.hired', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
+  REJECTED: { labelKey: 'recruitment.rejected', color: 'bg-error-100 dark:bg-error-900/30 text-error-500 dark:text-error-400' },
+  WITHDRAWN: { labelKey: 'recruitment.withdrawn', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
 };
 
 const sourceConfig: Record<string, string> = {
-  WEBSITE: 'Website', REFERRAL: 'Referral', PORTAL: 'Portal', AGENCY: 'Agency', DIRECT: 'Direct',
+  WEBSITE: 'recruitment.website', REFERRAL: 'recruitment.referral', PORTAL: 'recruitment.portal', AGENCY: 'recruitment.agency', DIRECT: 'recruitment.direct',
 };
 
 export const CandidatesContent: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filter, setFilter] = React.useState<string | undefined>(undefined);
 
@@ -36,7 +38,7 @@ export const CandidatesContent: React.FC = () => {
       recruitmentService.updateCandidateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recruitment-candidates'] });
-      toast.success('Status updated');
+      toast.success(t('recruitment.statusUpdated'));
     },
   });
 
@@ -53,22 +55,22 @@ export const CandidatesContent: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
-            {[{ id: undefined, label: 'All' }, { id: 'NEW', label: 'New' }, { id: 'INTERVIEW', label: 'Interview' }, { id: 'HIRED', label: 'Hired' }].map(f => (
+            {[{ id: undefined, labelKey: 'recruitment.all' }, { id: 'NEW', labelKey: 'recruitment.new' }, { id: 'INTERVIEW', labelKey: 'recruitment.interview' }, { id: 'HIRED', labelKey: 'recruitment.hired' }].map(f => (
               <button
-                key={f.label}
+                key={f.id || 'all'}
                 onClick={() => setFilter(f.id)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                   filter === f.id ? 'bg-white dark:bg-neutral-900 text-brand-600 dark:text-brand-400 shadow-elev-1' : 'text-neutral-500 dark:text-neutral-400'
                 )}
               >
-                {f.label}
+                {t(f.labelKey)}
               </button>
             ))}
           </div>
           <Button size="sm" className="gap-2">
             <Plus size={16} />
-            Add Candidate
+            {t('recruitment.addCandidate')}
           </Button>
         </div>
 
@@ -89,10 +91,10 @@ export const CandidatesContent: React.FC = () => {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                  {candidate.experience_years}yrs · {sourceConfig[candidate.source] || candidate.source}
+                  {candidate.experience_years}{t('recruitment.yrs')} · {t(sourceConfig[candidate.source] || candidate.source)}
                 </span>
                 <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[candidate.status]?.color)}>
-                  {statusConfig[candidate.status]?.label || candidate.status}
+                  {t(statusConfig[candidate.status]?.labelKey || 'recruitment.new')}
                 </span>
               </div>
             </Card>
@@ -100,8 +102,8 @@ export const CandidatesContent: React.FC = () => {
           {(!candidates || candidates.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
               <Users className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No candidates yet</p>
-              <p className="text-sm">Candidates will appear when they apply to your jobs</p>
+              <p className="font-medium">{t('recruitment.noCandidatesYet')}</p>
+              <p className="text-sm">{t('recruitment.candidatesWillAppear')}</p>
             </div>
           )}
         </div>
