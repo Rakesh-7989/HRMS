@@ -406,5 +406,137 @@
   {
     "module": "wfh",
     "action": "view_team_stats"
+  },
+  {
+    "module": "performance",
+    "action": "view"
+  },
+  {
+    "module": "performance",
+    "action": "create"
+  },
+  {
+    "module": "performance",
+    "action": "update"
+  },
+  {
+    "module": "performance",
+    "action": "delete"
+  },
+  {
+    "module": "performance",
+    "action": "manage"
+  },
+  {
+    "module": "performance",
+    "action": "review"
+  },
+  {
+    "module": "performance",
+    "action": "acknowledge"
+  },
+  {
+    "module": "performance",
+    "action": "manage_templates"
+  },
+  {
+    "module": "recruitment",
+    "action": "view"
+  },
+  {
+    "module": "recruitment",
+    "action": "create"
+  },
+  {
+    "module": "recruitment",
+    "action": "update"
+  },
+  {
+    "module": "recruitment",
+    "action": "delete"
+  },
+  {
+    "module": "recruitment",
+    "action": "manage"
+  },
+  {
+    "module": "recruitment",
+    "action": "publish"
+  },
+  {
+    "module": "recruitment",
+    "action": "interview"
+  },
+  {
+    "module": "bonus",
+    "action": "view"
+  },
+  {
+    "module": "bonus",
+    "action": "create"
+  },
+  {
+    "module": "bonus",
+    "action": "update"
+  },
+  {
+    "module": "bonus",
+    "action": "delete"
+  },
+  {
+    "module": "bonus",
+    "action": "approve"
+  },
+  {
+    "module": "bonus",
+    "action": "manage"
+  },
+  {
+    "module": "engagement",
+    "action": "view"
+  },
+  {
+    "module": "engagement",
+    "action": "create"
+  },
+  {
+    "module": "engagement",
+    "action": "update"
+  },
+  {
+    "module": "engagement",
+    "action": "delete"
+  },
+  {
+    "module": "engagement",
+    "action": "manage"
+  },
+  {
+    "module": "compliance",
+    "action": "view"
+  },
+  {
+    "module": "compliance",
+    "action": "generate"
+  },
+  {
+    "module": "compliance",
+    "action": "download"
+  },
+  {
+    "module": "compliance",
+    "action": "manage"
+  },
+  {
+    "module": "ai",
+    "action": "view"
+  },
+  {
+    "module": "ai",
+    "action": "use"
+  },
+  {
+    "module": "ai",
+    "action": "manage"
   }
 ]

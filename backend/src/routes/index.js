@@ -126,4 +126,12 @@ router.use('/chat', planGuard('collaboration.chat'), chatRouter);
 router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);
 router.use('/shifts', planGuard('attendance.scheduling'), shiftRouter);
 
+// Phase 5 Modules
+router.use('/performance', planGuard('performance.full_access'), require('../modules/performance/performance.router'));
+router.use('/recruitment', planGuard('recruitment.full_access'), require('../modules/recruitment/recruitment.router'));
+router.use('/bonus', planGuard('bonus.full_access'), require('../modules/bonus/bonus.router'));
+router.use('/engagement', planGuard('engagement.full_access'), require('../modules/engagement/engagement.router'));
+router.use('/compliance', planGuard('compliance.full_access'), require('../modules/compliance/compliance.router'));
+router.use('/ai', planGuard('ai.full_access'), require('../modules/ai/ai.router'));
+
 module.exports = router;
