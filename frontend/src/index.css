@@ -9,22 +9,10 @@
 
     :root {
         --background: #F3F6F9;
-        /* Cultured */
         --foreground: #111827;
         --card: #FFFFFF;
         --border: #BABCC2;
-        --primary: #42275a;
-        /* primary solid fallback (left stop) */
-        --primary-hover: #3a214f;
-        --primary-light: #734b6d;
-        --primary-gradient: linear-gradient(90deg, #42275a 0%, #734b6d 100%);
-        --accent-blue: #BABCC2;
-        /* Gray */
-        --accent-green: #E3E8F0;
-        /* Bright Gray */
-        --accent-purple: #47525A;
-        --accent-indigo: #47525A;
-        --accent-teal: #BABCC2;
+        color-scheme: light;
     }
 
     .dark {
@@ -32,14 +20,6 @@
         --foreground: #F9FAFB;
         --card: #161A1F;
         --border: rgba(255, 255, 255, 0.12);
-        --primary: #734b6d;
-        --primary-hover: #5f3a5e;
-        --primary-gradient: linear-gradient(90deg, #42275a 0%, #734b6d 100%);
-        --accent-blue: #BABCC2;
-        --accent-green: #E3E8F0;
-        --accent-purple: #E3E8F0;
-        --accent-indigo: #BABCC2;
-        --accent-teal: #BABCC2;
         color-scheme: dark;
     }
 
@@ -141,7 +121,7 @@
     }
 
     .bg-gradient-radial {
-        background: radial-gradient(circle at center, rgba(71, 82, 90, 0.08) 0%, transparent 70%);
+        background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
     }
 
     .bg-gradient-premium {
@@ -150,36 +130,10 @@
         animation: gradient 8s ease infinite;
     }
 
-    .bg-primary-gradient {
-        background: var(--primary-gradient);
+    .bg-gradient-brand {
+        background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #818cf8 100%);
         background-size: 200% 200%;
         animation: gradient 8s ease infinite;
-    }
-
-    /* Light gradient tints and border utilities */
-    .bg-primary-10 {
-        background-image: linear-gradient(90deg, rgba(66, 39, 90, 0.08), rgba(115, 75, 109, 0.08));
-    }
-
-    .bg-primary-20 {
-        background-image: linear-gradient(90deg, rgba(66, 39, 90, 0.16), rgba(115, 75, 109, 0.16));
-    }
-
-    .border-primary-gradient {
-        border-image-source: var(--primary-gradient);
-        border-image-slice: 1;
-    }
-
-    .hover\:bg-primary-gradient:hover {
-        background: var(--primary-gradient);
-        background-size: 200% 200%;
-    }
-
-    .text-primary-gradient {
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
 
     .text-gradient {
@@ -240,7 +194,7 @@
 
     /* Common form select utility for consistent dropdown rendering */
     .form-select {
-        @apply appearance-none px-3 py-2 pr-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50;
+        @apply appearance-none px-3 py-2 pr-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 disabled:opacity-50;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239c9e9f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
         background-position: right 0.75rem center;
         background-repeat: no-repeat;
@@ -249,16 +203,6 @@
 
     .dark .form-select {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23E5E7EB' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    }
-
-    /* Hover effects */
-    .hover-lift {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-    }
-
-    .hover-lift:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(107, 70, 193, 0.12);
     }
 
     .animate-fadeIn {
@@ -318,7 +262,7 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(66, 39, 90, 0.1);
+    background-color: rgba(99, 102, 241, 0.15);
     border-radius: 9999px;
 }
 
@@ -327,7 +271,7 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(66, 39, 90, 0.3);
+    background-color: rgba(99, 102, 241, 0.3);
 }
 
 
