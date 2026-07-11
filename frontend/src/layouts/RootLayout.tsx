@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PermissionsProvider } from '@/contexts/PermissionsContext';
@@ -10,6 +12,12 @@ import { ChatNotification } from '@/components/chat/ChatNotification';
 import { AIChatAssistant } from '@/components/ai/AIChatAssistant';
 
 export const RootLayout = () => {
+    const { i18n } = useTranslation();
+
+    useEffect(() => {
+        document.dir = i18n.language?.startsWith('ar') ? 'rtl' : 'ltr';
+    }, [i18n.language]);
+
     return (
         <ThemeProvider>
             <AuthProvider>

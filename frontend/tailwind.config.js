@@ -383,7 +383,9 @@ export default {
         },
     },
     plugins: [
-        function ({ addUtilities }) {
+        function ({ addUtilities, addVariant }) {
+            addVariant('rtl', '&:where([dir="rtl"] *)');
+            addVariant('ltr', '&:where([dir="ltr"] *)');
             addUtilities({
                 // Glass effect utilities
                 '.glass-effect': {
@@ -490,6 +492,10 @@ export default {
                     color: 'white',
                     backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23E5E7EB' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
                 },
+                'html[dir="rtl"] .form-select': {
+                    backgroundPosition: 'left 0.75rem center',
+                    padding: '0.5rem 0.75rem 0.5rem 2.25rem',
+                },
 
                 // Hover effects
                 '.animate-fadeIn': { animation: 'fadeIn 0.2s ease-out' },
@@ -533,6 +539,36 @@ export default {
                     borderRadius: '9999px',
                     whiteSpace: 'nowrap',
                 },
+
+                // RTL logical property utilities
+                '.mis-auto': { marginInlineStart: 'auto' },
+                '.mie-auto': { marginInlineEnd: 'auto' },
+                '.pis-auto': { paddingInlineStart: 'auto' },
+                '.pie-auto': { paddingInlineEnd: 'auto' },
+                '.mis-0': { marginInlineStart: '0px' },
+                '.mie-0': { marginInlineEnd: '0px' },
+                '.pis-0': { paddingInlineStart: '0px' },
+                '.pie-0': { paddingInlineEnd: '0px' },
+                '.mis-1': { marginInlineStart: '0.25rem' },
+                '.mie-1': { marginInlineEnd: '0.25rem' },
+                '.pis-1': { paddingInlineStart: '0.25rem' },
+                '.pie-1': { paddingInlineEnd: '0.25rem' },
+                '.mis-2': { marginInlineStart: '0.5rem' },
+                '.mie-2': { marginInlineEnd: '0.5rem' },
+                '.pis-2': { paddingInlineStart: '0.5rem' },
+                '.pie-2': { paddingInlineEnd: '0.5rem' },
+                '.mis-3': { marginInlineStart: '0.75rem' },
+                '.mie-3': { marginInlineEnd: '0.75rem' },
+                '.pis-3': { paddingInlineStart: '0.75rem' },
+                '.pie-3': { paddingInlineEnd: '0.75rem' },
+                '.mis-4': { marginInlineStart: '1rem' },
+                '.mie-4': { marginInlineEnd: '1rem' },
+                '.pis-4': { paddingInlineStart: '1rem' },
+                '.pie-4': { paddingInlineEnd: '1rem' },
+                '.mis-6': { marginInlineStart: '1.5rem' },
+                '.mie-6': { marginInlineEnd: '1.5rem' },
+                '.pis-6': { paddingInlineStart: '1.5rem' },
+                '.pie-6': { paddingInlineEnd: '1.5rem' },
 
                 // Scrollbar styling
                 '.custom-scrollbar::-webkit-scrollbar': { width: '4px', height: '4px' },
