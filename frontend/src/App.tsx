@@ -14,6 +14,11 @@ const ForgotPasswordPage = React.lazy(() => import('@/pages/ForgotPasswordPage')
 const ResetPasswordPage = React.lazy(() => import('@/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const ChangePasswordPage = React.lazy(() => import('@/pages/ChangePasswordPage').then(m => ({ default: m.ChangePasswordPage })));
 const PricingPage = React.lazy(() => import('@/pages/PricingPage').then(m => ({ default: m.PricingPage })));
+const AboutPage = React.lazy(() => import('@/pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const FeaturesPage = React.lazy(() => import('@/pages/FeaturesPage').then(m => ({ default: m.FeaturesPage })));
+const BlogListPage = React.lazy(() => import('@/pages/BlogPage').then(m => ({ default: m.BlogListPage })));
+const BlogPostPage = React.lazy(() => import('@/pages/BlogPage').then(m => ({ default: m.BlogPostPage })));
+const CareersPage = React.lazy(() => import('@/pages/CareersPage').then(m => ({ default: m.CareersPage })));
 const PaymentSuccessPage = React.lazy(() => import('@/pages/PaymentSuccessPage').then(m => ({ default: m.PaymentSuccessPage })));
 const PaymentFailurePage = React.lazy(() => import('@/pages/PaymentFailurePage').then(m => ({ default: m.PaymentFailurePage })));
 const CompletePaymentPage = React.lazy(() => import('@/pages/CompletePaymentPage').then(m => ({ default: m.CompletePaymentPage })));
@@ -59,6 +64,12 @@ const ShiftsPage = React.lazy(() => import('@/pages/organization/ShiftsPage').th
 const ShiftRosterPage = React.lazy(() => import('@/pages/organization/ShiftRosterPage').then(m => ({ default: m.ShiftRosterPage })));
 const InboxPage = React.lazy(() => import('./pages/InboxPage'));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage').then(m => ({ default: m.ChatPage })));
+const PerformancePage = React.lazy(() => import('@/pages/performance/PerformancePage').then(m => ({ default: m.PerformancePage })));
+const RecruitmentPage = React.lazy(() => import('@/pages/recruitment/RecruitmentPage').then(m => ({ default: m.RecruitmentPage })));
+const BonusPage = React.lazy(() => import('@/pages/bonus/BonusPage').then(m => ({ default: m.BonusPage })));
+const EngagementPage = React.lazy(() => import('@/pages/engagement/EngagementPage').then(m => ({ default: m.EngagementPage })));
+const ComplianceReportsPage = React.lazy(() => import('@/pages/compliance/ComplianceReportsPage').then(m => ({ default: m.ComplianceReportsPage })));
+const AIInsightsPage = React.lazy(() => import('@/pages/ai/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 
 // Payroll
 const Payroll = React.lazy(() => import('@/pages/Payroll'));
@@ -142,7 +153,7 @@ const router = createBrowserRouter(
         path="/"
         element={
           <Suspense fallback={
-            <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center animate-pulse">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center animate-pulse">
               <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-gray-200 dark:bg-gray-800" />
                 <div className="w-32 h-4 rounded-lg bg-gray-200 dark:bg-gray-800" />
@@ -241,8 +252,13 @@ const router = createBrowserRouter(
         }
       />
 
-      {/* Pricing Route */}
+      {/* Public Marketing Routes */}
       <Route path="/pricing" element={<Suspense fallback={<AuthSkeleton />}><PricingPage /></Suspense>} />
+      <Route path="/features" element={<Suspense fallback={<AuthSkeleton />}><FeaturesPage /></Suspense>} />
+      <Route path="/blog" element={<Suspense fallback={<AuthSkeleton />}><BlogListPage /></Suspense>} />
+      <Route path="/blog/:slug" element={<Suspense fallback={<AuthSkeleton />}><BlogPostPage /></Suspense>} />
+      <Route path="/careers" element={<Suspense fallback={<AuthSkeleton />}><CareersPage /></Suspense>} />
+      <Route path="/about" element={<Suspense fallback={<AuthSkeleton />}><AboutPage /></Suspense>} />
       <Route path="/payment-success" element={<Suspense fallback={<AuthSkeleton />}><PaymentSuccessPage /></Suspense>} />
       <Route path="/payment-failure" element={<Suspense fallback={<AuthSkeleton />}><PaymentFailurePage /></Suspense>} />
       <Route path="/complete-payment" element={<Suspense fallback={<AuthSkeleton />}><CompletePaymentPage /></Suspense>} />
@@ -593,6 +609,66 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/performance"
+        element={
+          <ProtectedRoute requiredPermission="performance:view" fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={3}>
+              <PerformancePage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/recruitment"
+        element={
+          <ProtectedRoute requiredPermission="recruitment:view" fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <RecruitmentPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bonus"
+        element={
+          <ProtectedRoute requiredPermission="bonus:view" fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <BonusPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/engagement"
+        element={
+          <ProtectedRoute requiredPermission="engagement:view" fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <EngagementPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/compliance"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR', 'SUPER_ADMIN']} fallback={<TabbedSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <ComplianceReportsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-insights"
+        element={
+          <ProtectedRoute requiredPermission="ai:view" fallback={<DashboardSkeleton />}>
+            <SubscriptionGuard minPlan={2}>
+              <AIInsightsPage />
+            </SubscriptionGuard>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Payroll Route */}
       <Route
@@ -784,11 +860,11 @@ const router = createBrowserRouter(
 
       {/* Catch all - 404 Not Found */}
       <Route path="*" element={
-        <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
           <div className="text-center space-y-4">
             <h1 className="text-6xl font-black text-gray-300 dark:text-gray-700">404</h1>
             <p className="text-lg text-gray-500 dark:text-gray-400">Page not found</p>
-            <a href="/" className="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">Go Home</a>
+            <a href="/" className="inline-block px-6 py-2 bg-brand-500 text-white rounded-lg hover:opacity-90 transition-opacity">Go Home</a>
           </div>
         </div>
       } />
