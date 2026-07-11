@@ -87,7 +87,7 @@ export const SubscriptionPage: React.FC = () => {
         return (
             <DashboardLayout title={t('billing.subscription')}>
                 <div className="flex items-center justify-center min-h-[400px]">
-                    <Loader2 className="animate-spin text-primary" size={32} />
+                    <Loader2 className="animate-spin text-brand-500" size={32} />
                 </div>
             </DashboardLayout>
         );
@@ -109,7 +109,7 @@ export const SubscriptionPage: React.FC = () => {
                         </div>
                         <div className="mb-6">
                             <h3 className="text-xl font-bold mb-1">Current Plan</h3>
-                            <p className="text-4xl font-black text-primary mb-2">
+                            <p className="text-4xl font-black text-brand-500 mb-2">
                                 {subscription?.plan_name || (usage?.plan_name === 'NONE' ? 'No Active Plan' : 'Unknown')}
                             </p>
                             <p className="text-muted text-sm">
@@ -146,7 +146,7 @@ export const SubscriptionPage: React.FC = () => {
                                     <div
                                         className={cn(
                                             "h-2.5 rounded-full transition-all duration-500",
-                                            usage?.max_employees && usage.current_employees / usage.max_employees > 0.9 ? "bg-red-500" : "bg-primary"
+                                            usage?.max_employees && usage.current_employees / usage.max_employees > 0.9 ? "bg-red-500" : "bg-brand-500"
                                         )}
                                         style={{
                                             width: usage?.max_employees
@@ -173,7 +173,7 @@ export const SubscriptionPage: React.FC = () => {
                             onClick={() => setBillingCycle('MONTHLY')}
                             className={cn(
                                 "px-4 py-2 rounded-md transition-all text-sm font-medium",
-                                billingCycle === 'MONTHLY' ? "bg-white dark:bg-gray-800 shadow-sm text-primary" : "text-muted"
+                                billingCycle === 'MONTHLY' ? "bg-white dark:bg-gray-800 shadow-elev-1 text-brand-500" : "text-muted"
                             )}
                         >
                             Monthly
@@ -182,7 +182,7 @@ export const SubscriptionPage: React.FC = () => {
                             onClick={() => setBillingCycle('YEARLY')}
                             className={cn(
                                 "px-4 py-2 rounded-md transition-all text-sm font-medium",
-                                billingCycle === 'YEARLY' ? "bg-white dark:bg-gray-800 shadow-sm text-primary" : "text-muted"
+                                billingCycle === 'YEARLY' ? "bg-white dark:bg-gray-800 shadow-elev-1 text-brand-500" : "text-muted"
                             )}
                         >
                             Yearly (Save 15%)
@@ -196,11 +196,11 @@ export const SubscriptionPage: React.FC = () => {
                             key={p.id}
                             className={cn(
                                 "flex flex-col relative",
-                                p.id === subscription?.plan_id && "border-primary ring-1 ring-primary"
+                                p.id === subscription?.plan_id && "border-brand-500 ring-1 ring-primary"
                             )}
                         >
                             {p.id === subscription?.plan_id && (
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-500 text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">
                                     Current Plan
                                 </div>
                             )}

@@ -85,7 +85,7 @@ export const FnFSettlementsContent: React.FC = () => {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'PAID': return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
-            case 'APPROVED': return <Badge className="bg-violet-100 text-violet-800">Approved</Badge>;
+            case 'APPROVED': return <Badge className="bg-brand-100 text-brand-700">Approved</Badge>;
             case 'REJECTED': return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
             case 'PENDING_APPROVAL': return <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>;
             default: return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
@@ -163,7 +163,7 @@ export const FnFSettlementsContent: React.FC = () => {
                         <div>
                             <Label>Employee</Label>
                             <select
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                 value={form.employeeId}
                                 onChange={e => setForm({ ...form, employeeId: e.target.value })}
                             >

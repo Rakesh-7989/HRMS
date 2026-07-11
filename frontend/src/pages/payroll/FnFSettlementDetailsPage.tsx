@@ -30,7 +30,7 @@ const FnFSettlementDetailsPage: React.FC = () => {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'PAID': return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
-            case 'APPROVED': return <Badge className="bg-violet-100 text-violet-800">Approved</Badge>;
+            case 'APPROVED': return <Badge className="bg-brand-100 text-brand-700">Approved</Badge>;
             case 'REJECTED': return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
             case 'PENDING_APPROVAL': return <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>;
             case 'HOLD_ASSET_PENDING': return <Badge className="bg-orange-100 text-orange-800">Asset Hold</Badge>;
@@ -202,9 +202,9 @@ const FnFSettlementDetailsPage: React.FC = () => {
                         <div className="border-t border-gray-200 my-4"></div>
 
                         {/* Net Pay */}
-                        <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg border border-primary/20 print:bg-transparent print:border-black print:border-2">
-                            <div className="text-lg font-semibold text-primary print:text-black">Net Payable Amount</div>
-                            <div className="text-2xl font-bold text-primary print:text-black">₹{Number(settlement.net_payable || 0).toFixed(2)}</div>
+                        <div className="flex justify-between items-center p-4 bg-brand-500/5 rounded-lg border border-brand-500/20 print:bg-transparent print:border-black print:border-2">
+                            <div className="text-lg font-semibold text-brand-500 print:text-black">Net Payable Amount</div>
+                            <div className="text-2xl font-bold text-brand-500 print:text-black">₹{Number(settlement.net_payable || 0).toFixed(2)}</div>
                         </div>
 
                         {/* Remarks / Hold Reason */}

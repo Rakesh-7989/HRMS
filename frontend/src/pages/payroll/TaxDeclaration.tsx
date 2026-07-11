@@ -141,19 +141,19 @@ export const TaxDeclaration: React.FC = () => {
                 <TabsList className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg mb-6 w-fit border border-gray-200 dark:border-gray-700 h-auto">
                     <TabsTrigger
                         value="regime"
-                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-brand-500 data-[state=active]:shadow-elev-1 data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
                     >
                         Regime Selection
                     </TabsTrigger>
                     <TabsTrigger
                         value="declarations"
-                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-brand-500 data-[state=active]:shadow-elev-1 data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
                     >
                         IT Declarations
                     </TabsTrigger>
                     <TabsTrigger
                         value="form16"
-                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
+                        className="px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-brand-500 data-[state=active]:shadow-elev-1 data-[state=active]:ring-1 data-[state=active]:ring-black/5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 bg-transparent"
                     >
                         Form 16
                     </TabsTrigger>
@@ -164,7 +164,7 @@ export const TaxDeclaration: React.FC = () => {
                     <Card className="p-6 border-l-4 border-l-primary">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-lg font-semibold mb-2">Current Regime: <span className="text-primary">{regime?.regime || 'Not Selected'}</span></h3>
+                                <h3 className="text-lg font-semibold mb-2">Current Regime: <span className="text-brand-500">{regime?.regime || 'Not Selected'}</span></h3>
                                 <p className="text-sm text-gray-500 max-w-xl">
                                     The <strong>New Regime</strong> offers lower tax rates but disallows most exemptions (HRA, 80C, etc.).
                                     The <strong>Old Regime</strong> allows claiming exemptions but has higher slab rates.
@@ -176,13 +176,13 @@ export const TaxDeclaration: React.FC = () => {
                                 <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                                     <button
                                         onClick={() => handleRegimeChange('OLD')}
-                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'OLD' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'OLD' ? 'bg-white shadow-elev-2 text-brand-500' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         Old Regime
                                     </button>
                                     <button
                                         onClick={() => handleRegimeChange('NEW')}
-                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'NEW' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'NEW' ? 'bg-white shadow-elev-2 text-brand-500' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         New Regime
                                     </button>
@@ -192,9 +192,9 @@ export const TaxDeclaration: React.FC = () => {
                     </Card>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                        <Card className="p-4 bg-violet-50 dark:bg-violet-900/20 border-violet-100 dark:border-violet-800">
-                            <h4 className="font-semibold text-violet-800 dark:text-violet-300 mb-2">Why Choose Old Regime?</h4>
-                            <ul className="list-disc list-inside text-sm text-violet-700 dark:text-violet-400 space-y-1">
+                        <Card className="p-4 bg-brand-50 dark:bg-brand-500/10 border-brand-100 dark:border-brand-800">
+                            <h4 className="font-semibold text-brand-700 dark:text-brand-300 mb-2">Why Choose Old Regime?</h4>
+                            <ul className="list-disc list-inside text-sm text-brand-600 dark:text-brand-400 space-y-1">
                                 <li>If you have high HRA (Rent)</li>
                                 <li>If you invest heavily in 80C (LIC, PF, PPF)</li>
                                 <li>If you have Education Loan or Medical Insurance</li>
@@ -229,7 +229,7 @@ export const TaxDeclaration: React.FC = () => {
                             const isEditing = editingId === section.id;
 
                             return (
-                                <Card key={section.id} className="p-6 transition-all hover:shadow-lg">
+                                <Card key={section.id} className="p-6 transition-all hover:shadow-elev-4">
                                     <div className="flex flex-col md:flex-row justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
@@ -315,7 +315,7 @@ export const TaxDeclaration: React.FC = () => {
                 {/* --- FORM 16 --- */}
                 <TabsContent value="form16" className="mt-6">
                     <Card className="p-8 text-center bg-gray-50 dark:bg-gray-800/50">
-                        <FileText className="w-16 h-16 mx-auto text-primary mb-4 opacity-80" />
+                        <FileText className="w-16 h-16 mx-auto text-brand-500 mb-4 opacity-80" />
                         <h3 className="text-xl font-bold mb-2">Form 16 (Part B)</h3>
                         <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
                             Download your Form 16 Part B for the financial year {fy}.

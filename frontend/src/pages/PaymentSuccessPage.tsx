@@ -62,7 +62,7 @@ export const PaymentSuccessPage: React.FC = () => {
   }, [status, navigate, isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -70,7 +70,7 @@ export const PaymentSuccessPage: React.FC = () => {
         className="max-w-md w-full"
       >
         <Card className={`text-center p-8 border-2 transition-colors ${
-          status === 'verifying' ? 'border-primary/20 bg-primary/5' :
+          status === 'verifying' ? 'border-brand-500/20 bg-brand-500/5' :
           status === 'success' ? 'border-green-500/20 bg-green-50/10 dark:bg-green-500/5' :
           'border-red-500/20 bg-red-50/10 dark:bg-red-500/5'
         }`}>
@@ -78,14 +78,14 @@ export const PaymentSuccessPage: React.FC = () => {
           <div className="flex justify-center mb-6">
             <motion.div 
               className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                status === 'verifying' ? 'bg-primary/10' :
+                status === 'verifying' ? 'bg-brand-500/10' :
                 status === 'success' ? 'bg-green-100 dark:bg-green-500/20' :
                 'bg-red-100 dark:bg-red-500/20'
               }`}
               animate={status === 'success' ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 0.5 }}
             >
-              {status === 'verifying' && <Loader2 className="w-12 h-12 text-primary animate-spin" />}
+              {status === 'verifying' && <Loader2 className="w-12 h-12 text-brand-500 animate-spin" />}
               {status === 'success' && <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />}
               {status === 'error' && <XCircle className="w-12 h-12 text-red-600 dark:text-red-400" />}
             </motion.div>

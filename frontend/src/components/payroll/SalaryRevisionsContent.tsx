@@ -135,7 +135,7 @@ export const SalaryRevisionsContent: React.FC = () => {
 
     const getTypeBadge = (type: string) => {
         switch (type) {
-            case 'PROMOTION': return <Badge className="bg-purple-100 text-purple-800">Promotion</Badge>;
+            case 'PROMOTION': return <Badge className="bg-brand-100 text-brand-700">Promotion</Badge>;
             case 'CORRECTION': return <Badge className="bg-blue-100 text-blue-800">Correction</Badge>;
             default: return <Badge className="bg-green-100 text-green-800">Increment</Badge>;
         }

@@ -273,11 +273,11 @@ export const SalaryStructuresContent: React.FC = () => {
         return (
             <div className="space-y-0 animate-fadeIn">
                 {/* Full-Page Structure Editor */}
-                <div className="min-h-[calc(100vh-180px)] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden">
+                <Card padding="none" bordered={false} className="min-h-[calc(100vh-180px)] flex flex-col ring-1 ring-black/5 overflow-hidden">
                     {/* Header Row: Actions & Title */}
                     <header className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 shrink-0">
                         <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                            <div className="w-11 h-11 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
                                 <Package size={22} className="stroke-[2.5px]" />
                             </div>
                             <div>
@@ -299,7 +299,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             <Button
                                 onClick={handleSaveStructure}
                                 disabled={!structureName || selectedComponents.length === 0 || createStructureMut.isPending || updateStructureMut.isPending}
-                                className="px-8 h-10 bg-primary hover:bg-primary/90 font-black text-white rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2.5"
+                                className="px-8 h-10 bg-brand-500 hover:bg-brand-500/90 font-black text-white rounded-xl shadow-elev-4 shadow-brand-500/20 active:scale-95 transition-all flex items-center gap-2.5"
                             >
                                 {(createStructureMut.isPending || updateStructureMut.isPending) ? (
                                     <Loader2 className="animate-spin" size={16} />
@@ -319,7 +319,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 value={structureName}
                                 onChange={e => setStructureName(e.target.value)}
                                 placeholder="e.g., India - Standard Structure"
-                                className="h-10 px-4 text-sm font-semibold bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl shadow-sm transition-all text-gray-900 dark:text-white"
+                                className="h-10 px-4 text-sm font-semibold bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl shadow-elev-1 transition-all text-gray-900 dark:text-white"
                             />
                         </div>
                         <div className="md:col-span-5 space-y-1.5">
@@ -328,12 +328,12 @@ export const SalaryStructuresContent: React.FC = () => {
                                 value={structureDescription}
                                 onChange={e => setStructureDescription(e.target.value)}
                                 placeholder="What is this structure used for?"
-                                className="h-10 px-4 text-sm font-medium bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl shadow-sm transition-all text-gray-900 dark:text-white"
+                                className="h-10 px-4 text-sm font-medium bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl shadow-elev-1 transition-all text-gray-900 dark:text-white"
                             />
                         </div>
                         <div className="md:col-span-3 flex flex-col justify-end">
                             <div
-                                className={`flex items-center gap-2.5 px-5 h-10 rounded-xl border transition-all cursor-pointer select-none font-bold text-[10px] uppercase tracking-widest ${structureIsDefault ? 'bg-slate-900 dark:bg-primary border-slate-900 dark:border-primary text-white shadow-md' : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 text-gray-400 hover:border-primary/50'}`}
+                                className={`flex items-center gap-2.5 px-5 h-10 rounded-xl border transition-all cursor-pointer select-none font-bold text-[10px] uppercase tracking-widest ${structureIsDefault ? 'bg-slate-900 dark:bg-brand-500 border-slate-900 dark:border-brand-500 text-white shadow-elev-3' : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 text-gray-400 hover:border-brand-500/50'}`}
                                 onClick={() => setStructureIsDefault(!structureIsDefault)}
                             >
                                 <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${structureIsDefault ? 'bg-white border-white text-slate-800' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700'}`}>
@@ -370,13 +370,13 @@ export const SalaryStructuresContent: React.FC = () => {
                                         <button
                                             key={c.id}
                                             onClick={() => addComponentToStructure(c)}
-                                            className="w-full group flex justify-between items-center p-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all text-left"
+                                            className="w-full group flex justify-between items-center p-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-brand-500/50 hover:shadow-elev-4 hover:shadow-brand-500/5 transition-all text-left"
                                         >
                                             <div className="min-w-0 pr-3">
-                                                <p className="text-[12px] font-bold text-gray-700 dark:text-gray-200 truncate group-hover:text-primary transition-colors uppercase tracking-tight">{c.name}</p>
+                                                <p className="text-[12px] font-bold text-gray-700 dark:text-gray-200 truncate group-hover:text-brand-500 transition-colors uppercase tracking-tight">{c.name}</p>
                                                 <p className="text-[9px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">{c.code}</p>
                                             </div>
-                                            <div className="w-7 h-7 flex items-center justify-center bg-gray-50 dark:bg-gray-800 group-hover:bg-primary group-hover:text-white rounded-lg transition-all shrink-0">
+                                            <div className="w-7 h-7 flex items-center justify-center bg-gray-50 dark:bg-gray-800 group-hover:bg-brand-500 group-hover:text-white rounded-lg transition-all shrink-0">
                                                 <Plus size={14} />
                                             </div>
                                         </button>
@@ -390,15 +390,15 @@ export const SalaryStructuresContent: React.FC = () => {
                             <div className="px-8 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
                                 <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Structure Workspace</h3>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">{selectedComponents.length} Components Selected</span>
+                                    <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse" />
+                                    <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">{selectedComponents.length} Components Selected</span>
                                 </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto px-8 py-6">
                                 {selectedComponents.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center gap-6 opacity-40 min-h-[300px]">
-                                        <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center border-2 border-white dark:border-gray-700 shadow-lg">
+                                        <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center border-2 border-white dark:border-gray-700 shadow-elev-4">
                                             <Package size={48} className="text-gray-200 dark:text-gray-700" />
                                         </div>
                                         <div className="text-center space-y-1 text-gray-300">
@@ -409,13 +409,13 @@ export const SalaryStructuresContent: React.FC = () => {
                                 ) : (
                                     <div className="space-y-3">
                                         {selectedComponents.map((c, idx) => (
-                                            <div key={c.component_id} className="group flex flex-col md:flex-row md:items-center gap-5 p-5 bg-gray-50/70 dark:bg-gray-950/30 hover:bg-white dark:hover:bg-gray-950 border border-gray-100/60 dark:border-gray-800/60 hover:border-primary/20 rounded-2xl hover:shadow-xl hover:shadow-primary/5 transition-all duration-200">
-                                                <div className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg text-[11px] font-bold text-gray-300 dark:text-gray-600 shadow-sm shrink-0">
+                                            <div key={c.component_id} className="group flex flex-col md:flex-row md:items-center gap-5 p-5 bg-gray-50/70 dark:bg-gray-950/30 hover:bg-white dark:hover:bg-gray-950 border border-gray-100/60 dark:border-gray-800/60 hover:border-brand-500/20 rounded-2xl hover:shadow-elev-5 hover:shadow-brand-500/5 transition-all duration-200">
+                                                <div className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg text-[11px] font-bold text-gray-300 dark:text-gray-600 shadow-elev-1 shrink-0">
                                                     {String(idx + 1).padStart(2, '0')}
                                                 </div>
 
                                                 <div className="w-full md:w-[240px] shrink-0">
-                                                    <p className="text-[13px] font-black text-gray-800 dark:text-gray-200 tracking-tight uppercase leading-tight group-hover:text-primary transition-colors">{c.name}</p>
+                                                    <p className="text-[13px] font-black text-gray-800 dark:text-gray-200 tracking-tight uppercase leading-tight group-hover:text-brand-500 transition-colors">{c.name}</p>
                                                     <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
                                                         <Package size={10} /> {c.code || 'NO-REF'}
                                                     </p>
@@ -424,7 +424,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 <div className="flex-1 space-y-1.5">
                                                     <Label className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 block">Calculation Rule</Label>
                                                     <select
-                                                        className="w-full h-10 px-4 text-[10px] font-bold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm uppercase tracking-tight text-gray-700 dark:text-gray-200"
+                                                        className="w-full h-10 px-4 text-[10px] font-bold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/10 focus:border-brand-500 transition-all cursor-pointer shadow-elev-1 uppercase tracking-tight text-gray-700 dark:text-gray-200"
                                                         value={c.calculation_type}
                                                         onChange={e => updateSelectedComponent(c.component_id, 'calculation_type', e.target.value)}
                                                     >
@@ -442,7 +442,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                             <div className="relative group/input">
                                                                 <Input
                                                                     type="number"
-                                                                    className="h-10 text-right font-black text-sm pr-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm text-gray-800 dark:text-gray-200"
+                                                                    className="h-10 text-right font-black text-sm pr-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all shadow-elev-1 text-gray-800 dark:text-gray-200"
                                                                     value={c.calculation_type === 'FIXED' ? c.fixed_amount : c.percentage}
                                                                     onChange={e => updateSelectedComponent(c.component_id, c.calculation_type === 'FIXED' ? 'fixed_amount' : 'percentage', e.target.value)}
                                                                 />
@@ -469,7 +469,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             </div>
                         </main>
                     </div>
-                </div>
+                </Card>
             </div>
         );
     }
@@ -477,11 +477,11 @@ export const SalaryStructuresContent: React.FC = () => {
     return (
         <div className="space-y-8 animate-fadeIn">
             {/* Header / Top Control Bar */}
-            <Card className="p-4 border-none shadow-sm ring-1 ring-black/5 bg-white dark:bg-gray-800/50">
+            <Card className="p-4 border-none shadow-elev-1 ring-1 ring-black/5 bg-white dark:bg-gray-800/50">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Settings className="text-primary" size={20} />
+                            <Settings className="text-brand-500" size={20} />
                             Salary Structures
                         </h1>
                         <p className="text-xs text-gray-500 mt-1 font-medium">Configure and manage organizational compensation frameworks</p>
@@ -493,7 +493,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                     size="sm"
                                     variant="outline"
                                     disabled={seedDefaultsMut.isPending}
-                                    className="text-xs font-bold uppercase tracking-tight border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-500/50 dark:text-purple-300 dark:hover:bg-purple-500/10"
+                                    className="text-xs font-bold uppercase tracking-tight border-brand-300 text-brand-600 hover:bg-brand-50 dark:border-brand-500/50 dark:text-brand-300 dark:hover:bg-brand-500/10"
                                     onClick={() => seedDefaultsMut.mutate()}
                                 >
                                     {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
@@ -502,7 +502,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="text-xs font-bold uppercase tracking-tight border-primary/30 text-primary hover:bg-primary/5 dark:border-primary/50 dark:hover:bg-primary/10"
+                                    className="text-xs font-bold uppercase tracking-tight border-brand-500/30 text-brand-500 hover:bg-brand-500/5 dark:border-brand-500/50 dark:hover:bg-brand-500/10"
                                     onClick={() => setTemplateDialogOpen(true)}
                                 >
                                     <Sparkles className="mr-2" size={14} />
@@ -512,7 +512,7 @@ export const SalaryStructuresContent: React.FC = () => {
                         )}
                         <Button
                             size="sm"
-                            className="bg-primary hover:bg-primary/90 text-white text-xs font-bold uppercase tracking-tight shadow-lg shadow-primary/20"
+                            className="bg-brand-500 hover:bg-brand-500/90 text-white text-xs font-bold uppercase tracking-tight shadow-elev-4 shadow-brand-500/20"
                             onClick={() => {
                                 if (activeTab === 'structures') {
                                     resetStructureForm();
@@ -542,7 +542,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`flex items-center gap-2 px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all duration-200 ${isActive
-                                    ? 'bg-primary text-white shadow-md'
+                                    ? 'bg-brand-500 text-white shadow-elev-3'
                                     : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-800'
                                     }`}
                             >
@@ -556,21 +556,21 @@ export const SalaryStructuresContent: React.FC = () => {
 
             {/* Structures Tab */}
             {activeTab === 'structures' && (
-                <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden">
+                <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div>
                             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Template Inventory</h3>
                             <p className="text-xs text-gray-500 mt-1">Available salary distribution models</p>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-full ring-1 ring-black/5">
-                            <Info size={12} className="text-primary" />
+                            <Info size={12} className="text-brand-500" />
                             {structures.length} Loaded
                         </div>
                     </div>
 
                     {structuresLoading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <Loader2 className="animate-spin text-primary" size={32} />
+                            <Loader2 className="animate-spin text-brand-500" size={32} />
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Accessing Models...</p>
                         </div>
                     ) : structures.length === 0 ? (
@@ -584,7 +584,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 size="sm"
                                 disabled={seedDefaultsMut.isPending}
                                 onClick={() => seedDefaultsMut.mutate()}
-                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider"
+                                className="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider"
                             >
                                 {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
                                 Seed Default Structure
@@ -606,7 +606,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                         <TableRow key={s.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors group">
                                             <TableCell className="px-6 py-4">
                                                 <div>
-                                                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm group-hover:text-primary transition-colors">{s.name}</p>
+                                                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm group-hover:text-brand-500 transition-colors">{s.name}</p>
                                                     <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 italic">{s.description || 'No descriptive metadata'}</p>
                                                 </div>
                                             </TableCell>
@@ -620,7 +620,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
                                                 {s.is_default ? (
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-purple-50 dark:bg-purple-500/10 text-purple-600 uppercase tracking-tight ring-1 ring-purple-500/20">
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-brand-50 dark:bg-brand-500/10 text-brand-600 uppercase tracking-tight ring-1 ring-purple-500/20">
                                                         <Check size={10} className="mr-1 stroke-[3px]" /> System Default
                                                     </span>
                                                 ) : (
@@ -629,7 +629,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                             </TableCell>
                                             <TableCell className="px-6 py-4 text-right">
                                                 <div className="flex gap-2 justify-end">
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditStructure(s)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-primary">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditStructure(s)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-brand-500">
                                                         <Edit size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm"
@@ -639,7 +639,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                                 migrateMut.mutate(s.id);
                                                             }
                                                         }}
-                                                        className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:border-violet-200"
+                                                        className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:border-brand-200"
                                                     >
                                                         <Users size={14} />
                                                     </Button>
@@ -661,21 +661,21 @@ export const SalaryStructuresContent: React.FC = () => {
 
             {/* Components Tab */}
             {activeTab === 'components' && (
-                <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden">
+                <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div>
                             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Atomic Components</h3>
                             <p className="text-xs text-gray-500 mt-1">Fundamental building blocks for payroll logic</p>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-full ring-1 ring-black/5">
-                            <Package size={12} className="text-primary" />
+                            <Package size={12} className="text-brand-500" />
                             {components.filter(c => c.is_active).length} Active
                         </div>
                     </div>
 
                     {componentsLoading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <Loader2 className="animate-spin text-primary" size={32} />
+                            <Loader2 className="animate-spin text-brand-500" size={32} />
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cataloging Elements...</p>
                         </div>
                     ) : (
@@ -695,9 +695,9 @@ export const SalaryStructuresContent: React.FC = () => {
                                         <TableRow key={c.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors group">
                                             <TableCell className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${c.component_type === 'EARNING' ? 'bg-purple-50 text-purple-600' :
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${c.component_type === 'EARNING' ? 'bg-brand-50 text-brand-600' :
                                                         c.component_type === 'DEDUCTION' ? 'bg-red-50 text-red-600' :
-                                                            'bg-violet-50 text-violet-600'
+                                                            'bg-brand-50 text-brand-600'
                                                         }`}>
                                                         {c.name[0]}
                                                     </div>
@@ -708,27 +708,27 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 <code className="bg-gray-50 dark:bg-gray-950 px-2 py-1 rounded text-[10px] font-bold text-gray-400 ring-1 ring-black/5 uppercase tracking-wider">{c.code}</code>
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.component_type === 'EARNING' ? 'bg-purple-50/50 text-purple-600 dark:bg-purple-500/10' :
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.component_type === 'EARNING' ? 'bg-brand-50/50 text-brand-600 dark:bg-brand-500/10' :
                                                     c.component_type === 'DEDUCTION' ? 'bg-red-50/50 text-red-600 dark:bg-red-500/10' :
-                                                        'bg-violet-50/50 text-violet-600 dark:bg-violet-500/10'
+                                                        'bg-brand-50/50 text-brand-600 dark:bg-brand-500/10'
                                                     }`}>
                                                     {c.component_type.replace('_', ' ')}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
                                                 {c.is_taxable ? (
-                                                    <div className="flex items-center gap-1.5 text-fuchsia-600 font-bold text-[9px] uppercase tracking-wider">
+                                                    <div className="flex items-center gap-1.5 text-coral-600 font-bold text-[9px] uppercase tracking-wider">
                                                         <AlertCircle size={10} /> Taxable
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center gap-1.5 text-purple-600 font-bold text-[9px] uppercase tracking-wider">
+                                                    <div className="flex items-center gap-1.5 text-brand-600 font-bold text-[9px] uppercase tracking-wider">
                                                         <Check size={10} className="stroke-[3px]" /> Exempt
                                                     </div>
                                                 )}
                                             </TableCell>
                                             <TableCell className="px-6 py-4 text-right">
                                                 <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditComponent(c)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-primary">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditComponent(c)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-brand-500">
                                                         <Edit size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm" onClick={() => {
@@ -750,9 +750,9 @@ export const SalaryStructuresContent: React.FC = () => {
             {/* CTC Calculator Tab */}
             {activeTab === 'calculator' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="p-8 border-none shadow-sm ring-1 ring-black/5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50">
+                    <Card className="p-8 border-none shadow-elev-1 ring-1 ring-black/5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
                                 <Calculator size={20} />
                             </div>
                             <div>
@@ -765,7 +765,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Computation Framework</Label>
                                 <select
-                                    className="w-full h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+                                    className="w-full h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
                                     value={calcStructureId}
                                     onChange={e => setCalcStructureId(e.target.value)}
                                 >
@@ -782,7 +782,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                     <Input
                                         type="number"
                                         placeholder="e.g. 1200000"
-                                        className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                                         value={calcCTC}
                                         onChange={e => setCalcCTC(e.target.value)}
                                     />
@@ -793,7 +793,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             <Button
                                 onClick={handleCalculateCTC}
                                 disabled={calculating || !calcStructureId || !calcCTC}
-                                className="w-full h-11 bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-primary/90 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                                className="w-full h-11 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-elev-4 transition-all active:scale-[0.98]"
                             >
                                 {calculating ? <Loader2 className="animate-spin mr-2" size={16} /> : <Calculator className="mr-2" size={16} />}
                                 Execute Projection
@@ -802,23 +802,23 @@ export const SalaryStructuresContent: React.FC = () => {
                     </Card>
 
                     {ctcBreakdown ? (
-                        <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden animate-fadeIn">
+                        <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden animate-fadeIn">
                             <div className="p-8 bg-gray-50/50 dark:bg-gray-950/20 border-b border-gray-100 dark:border-gray-800">
                                 <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-tight">Financial Projection</h2>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl ring-1 ring-black/5 shadow-sm">
+                                    <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl ring-1 ring-black/5 shadow-elev-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Wallet size={14} className="text-primary" />
+                                            <Wallet size={14} className="text-brand-500" />
                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Annual CTC</p>
                                         </div>
                                         <p className="text-xl font-black text-gray-900 dark:text-white">{formatINR(ctcBreakdown.annual_ctc)}</p>
                                     </div>
-                                    <div className="bg-primary/5 p-5 rounded-2xl ring-1 ring-primary/20 shadow-sm border border-primary/10">
+                                    <div className="bg-brand-500/5 p-5 rounded-2xl ring-1 ring-brand-500/20 shadow-elev-1 border border-brand-500/10">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Check size={14} className="text-primary stroke-[3px]" />
-                                            <p className="text-[9px] font-bold text-primary uppercase tracking-[0.2em]">Monthly Take-Home</p>
+                                            <Check size={14} className="text-brand-500 stroke-[3px]" />
+                                            <p className="text-[9px] font-bold text-brand-500 uppercase tracking-[0.2em]">Monthly Take-Home</p>
                                         </div>
-                                        <p className="text-xl font-black text-primary">{formatINR(ctcBreakdown.monthly_net)}</p>
+                                        <p className="text-xl font-black text-brand-500">{formatINR(ctcBreakdown.monthly_net)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -838,10 +838,10 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 <TableCell className="px-8 py-3.5">
                                                     <div className="flex items-center gap-2">
                                                         <div className={`w-1.5 h-1.5 rounded-full ${b.component_type === 'DEDUCTION' ? 'bg-red-400' :
-                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'bg-violet-400' : 'bg-purple-400'
+                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'bg-brand-400' : 'bg-brand-400'
                                                             }`} />
                                                         <span className={`text-[11px] font-bold uppercase tracking-tight ${b.component_type === 'DEDUCTION' ? 'text-red-500' :
-                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'text-violet-500' : 'text-gray-700 dark:text-gray-200'
+                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'text-brand-500' : 'text-gray-700 dark:text-gray-200'
                                                             }`}>
                                                             {b.component_name}
                                                         </span>
@@ -858,13 +858,13 @@ export const SalaryStructuresContent: React.FC = () => {
                             <div className="p-8 bg-slate-900 dark:bg-gray-950 flex justify-between items-center group">
                                 <div className="space-y-0.5">
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.3em]">Final Net Valuation</p>
-                                    <h4 className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-primary transition-colors">Total Net Take-Home (Annual)</h4>
+                                    <h4 className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-brand-500 transition-colors">Total Net Take-Home (Annual)</h4>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-black text-white">{formatINR(ctcBreakdown.net_salary)}</p>
                                     <div className="flex items-center justify-end gap-1 mt-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                                        <p className="text-[8px] font-black text-purple-500 uppercase tracking-tighter">Verified Computation</p>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                                        <p className="text-[8px] font-black text-brand-500 uppercase tracking-tighter">Verified Computation</p>
                                     </div>
                                 </div>
                             </div>
@@ -885,9 +885,9 @@ export const SalaryStructuresContent: React.FC = () => {
 
             {/* Component Dialog */}
             <Dialog open={componentDialogOpen} onOpenChange={setComponentDialogOpen}>
-                <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-none shadow-2xl rounded-3xl p-0 overflow-hidden">
+                <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-none shadow-elev-6 rounded-3xl p-0 overflow-hidden">
                     <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center">
                             <Package size={24} className="stroke-[2.5px]" />
                         </div>
                         <div>
@@ -904,7 +904,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 value={componentName}
                                 onChange={e => setComponentName(e.target.value)}
                                 placeholder="e.g. House Rent Allowance"
-                                className="h-11 px-4 text-sm font-semibold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl transition-all"
+                                className="h-11 px-4 text-sm font-semibold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all"
                             />
                         </div>
                         <div className="grid grid-cols-5 gap-4">
@@ -914,13 +914,13 @@ export const SalaryStructuresContent: React.FC = () => {
                                     value={componentCode}
                                     onChange={e => setComponentCode(e.target.value.toUpperCase())}
                                     placeholder="HRA"
-                                    className="h-11 px-4 text-sm font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl transition-all uppercase"
+                                    className="h-11 px-4 text-sm font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
                                 />
                             </div>
                             <div className="col-span-3 space-y-1.5">
                                 <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Type-Class</Label>
                                 <select
-                                    className="w-full h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer uppercase tracking-tight text-gray-700 dark:text-gray-200"
+                                    className="w-full h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer uppercase tracking-tight text-gray-700 dark:text-gray-200"
                                     value={componentType}
                                     onChange={e => setComponentType(e.target.value as any)}
                                 >
@@ -937,11 +937,11 @@ export const SalaryStructuresContent: React.FC = () => {
                                 value={componentCategory}
                                 onChange={e => setComponentCategory(e.target.value)}
                                 placeholder="e.g. ALLOWANCE, STATUTORY"
-                                className="h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl transition-all uppercase"
+                                className="h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
                             />
                         </div>
                         <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 cursor-pointer select-none" onClick={() => setComponentIsTaxable(!componentIsTaxable)}>
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${componentIsTaxable ? 'bg-primary border-primary text-white' : 'bg-transparent border-gray-200 dark:border-gray-800'}`}>
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${componentIsTaxable ? 'bg-brand-500 border-brand-500 text-white' : 'bg-transparent border-gray-200 dark:border-gray-800'}`}>
                                 {componentIsTaxable && <Check size={14} className="stroke-[3px]" />}
                             </div>
                             <div>
@@ -955,7 +955,7 @@ export const SalaryStructuresContent: React.FC = () => {
                         <Button
                             onClick={handleSaveComponent}
                             disabled={!componentName || !componentCode}
-                            className="flex-[2] h-11 bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20"
+                            className="flex-[2] h-11 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-elev-4 shadow-brand-500/20"
                         >
                             {editingComponent ? 'Update Schema' : 'Commit Component'}
                         </Button>
@@ -966,11 +966,11 @@ export const SalaryStructuresContent: React.FC = () => {
             {/* Template Selection Dialog */}
             {templateDialogOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-                    <div className="w-full max-w-3xl mx-4 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl ring-1 ring-black/10 overflow-hidden">
+                    <div className="w-full max-w-3xl mx-4 bg-white dark:bg-gray-900 rounded-3xl shadow-elev-6 ring-1 ring-black/10 overflow-hidden">
                         {/* Dialog Header */}
                         <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 text-primary rounded-2xl flex items-center justify-center shadow-inner">
+                                <div className="w-12 h-12 bg-gradient-to-br from-brand-500/20 to-brand-500/5 text-brand-500 rounded-2xl flex items-center justify-center shadow-inner">
                                     <FileText size={24} className="stroke-[2px]" />
                                 </div>
                                 <div>
@@ -990,7 +990,7 @@ export const SalaryStructuresContent: React.FC = () => {
                         <div className="p-8 max-h-[70vh] overflow-y-auto">
                             {templatesLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                    <Loader2 className="animate-spin text-primary" size={32} />
+                                    <Loader2 className="animate-spin text-brand-500" size={32} />
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Templates...</p>
                                 </div>
                             ) : templates.length === 0 ? (
@@ -1003,23 +1003,23 @@ export const SalaryStructuresContent: React.FC = () => {
                                     {templates.map(tmpl => (
                                         <div
                                             key={tmpl.id}
-                                            className="group relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
+                                            className="group relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-brand-500/30 hover:shadow-elev-5 hover:shadow-brand-500/5 transition-all duration-300 overflow-hidden"
                                         >
                                             {/* Template Header */}
                                             <div className="p-6 pb-4 flex items-start justify-between">
                                                 <div className="flex items-start gap-4">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-elev-4 shadow-orange-500/20 shrink-0">
                                                         <Globe size={24} className="text-white" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight group-hover:text-primary transition-colors">{tmpl.name}</h3>
+                                                        <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight group-hover:text-brand-500 transition-colors">{tmpl.name}</h3>
                                                         <p className="text-xs text-gray-500 mt-1 max-w-md leading-relaxed">{tmpl.description}</p>
                                                         <div className="flex items-center gap-2 mt-3">
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-500/10 text-orange-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-orange-500/20">
                                                                 <Globe size={10} />
                                                                 {tmpl.country}
                                                             </span>
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 dark:bg-purple-500/10 text-purple-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-purple-500/20">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 dark:bg-brand-500/10 text-brand-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-purple-500/20">
                                                                 <Shield size={10} />
                                                                 Compliant
                                                             </span>
@@ -1033,7 +1033,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     size="sm"
                                                     disabled={createFromTemplateMut.isPending}
                                                     onClick={() => createFromTemplateMut.mutate(tmpl.id)}
-                                                    className="px-6 h-10 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2 shrink-0"
+                                                    className="px-6 h-10 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-xl shadow-elev-4 shadow-brand-500/20 active:scale-95 transition-all flex items-center gap-2 shrink-0"
                                                 >
                                                     {createFromTemplateMut.isPending ? (
                                                         <Loader2 className="animate-spin" size={14} />
@@ -1061,8 +1061,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                                                 <span className="ml-2 text-[9px] text-gray-400 font-medium">{c.code}</span>
                                                             </div>
                                                             <div className="col-span-4">
-                                                                <span className={`inline-flex px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.calculation_type === 'REMAINING' ? 'bg-violet-50/50 text-violet-600 dark:bg-violet-500/10' :
-                                                                    c.calculation_type === 'FIXED' ? 'bg-fuchsia-50/50 text-fuchsia-600 dark:bg-fuchsia-500/10' :
+                                                                <span className={`inline-flex px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.calculation_type === 'REMAINING' ? 'bg-brand-50/50 text-brand-600 dark:bg-brand-500/10' :
+                                                                    c.calculation_type === 'FIXED' ? 'bg-coral-50/50 text-coral-600 dark:bg-coral-500/10' :
                                                                         'bg-gray-50 text-gray-500 dark:bg-gray-800'
                                                                     }`}>
                                                                     {c.calculation_type.replace(/_/g, ' ')}

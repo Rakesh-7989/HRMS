@@ -200,7 +200,7 @@ export const PayslipsContent: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Top controls: Navigation and Actions */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1">
                 {[
                     { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
                     { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
@@ -216,7 +216,7 @@ export const PayslipsContent: React.FC = () => {
                                         key={b.id}
                                         onClick={() => setActiveSection(b.id as any)}
                                         className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
-                                            ? 'bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5'
+                                            ? 'bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1 ring-1 ring-black/5'
                                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
                                             }`}
                                     >
@@ -230,7 +230,7 @@ export const PayslipsContent: React.FC = () => {
 
                 <div className="flex flex-wrap gap-2">
                     {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
-                        <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)} className="shadow-sm">
+                        <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)} className="shadow-elev-1">
                             <FileText className="mr-2" size={14} />Generate Monthly
                         </Button>
                     )}
@@ -258,7 +258,7 @@ export const PayslipsContent: React.FC = () => {
                     <button
                         onClick={() => setActiveSubSection('personal')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'personal'
-                            ? 'bg-primary text-white shadow-md'
+                            ? 'bg-brand-500 text-white shadow-elev-3'
                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
@@ -267,7 +267,7 @@ export const PayslipsContent: React.FC = () => {
                     <button
                         onClick={() => setActiveSubSection('staff')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'staff'
-                            ? 'bg-primary text-white shadow-md'
+                            ? 'bg-brand-500 text-white shadow-elev-3'
                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
@@ -311,10 +311,10 @@ export const PayslipsContent: React.FC = () => {
 
             {/* Section content */}
             {activeSection === 'payslips' && (
-                <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
+                <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden bg-white dark:bg-gray-800/50">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                            <div className="w-9 h-9 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
                                 <FileText size={18} className="stroke-[2.5px]" />
                             </div>
                             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
@@ -339,7 +339,7 @@ export const PayslipsContent: React.FC = () => {
                                     <TableRow>
                                         <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12">
                                             <div className="flex items-center justify-center gap-2 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-                                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
                                                 Retrieving Records...
                                             </div>
                                         </TableCell>
@@ -364,13 +364,13 @@ export const PayslipsContent: React.FC = () => {
                                             <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white text-xs">{formatINR(p.net)}</TableCell>
                                             <TableCell className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => viewPayslip(p)}>Audit</Button>
-                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
+                                                    <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => viewPayslip(p)}>Audit</Button>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-brand-500/5" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
                                                     {user?.role === 'HR' && (
-                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/5" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
+                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-brand-500/5" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
                                                     )}
                                                     {activeSubSection === 'staff' && (
-                                                        <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                        <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
                                                     )}
                                                     {activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
                                                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => confirmDeletePayslip(p)} title="Delete payslip">
@@ -400,7 +400,7 @@ export const PayslipsContent: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                         <div>
                             <Label>Month</Label>
-                            <select value={genMonth} onChange={(e) => setGenMonth(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary">
+                            <select value={genMonth} onChange={(e) => setGenMonth(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50">
                                 <option value={1}>January</option>
                                 <option value={2}>February</option>
                                 <option value={3}>March</option>
@@ -418,7 +418,7 @@ export const PayslipsContent: React.FC = () => {
 
                         <div>
                             <Label>Year</Label>
-                            <input type="number" value={genYear} onChange={(e) => setGenYear(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary" />
+                            <input type="number" value={genYear} onChange={(e) => setGenYear(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50" />
                         </div>
                     </div>
 

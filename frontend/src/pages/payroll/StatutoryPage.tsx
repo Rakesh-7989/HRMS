@@ -145,19 +145,19 @@ const StatutoryPage: React.FC = () => {
             <Card className="p-6">
                 <div className="flex border-b mb-6">
                     <button
-                        className={`px-4 py-2 ${activeTab === 'config' ? 'border-b-2 border-primary font-semibold' : 'text-gray-500'}`}
+                        className={`px-4 py-2 ${activeTab === 'config' ? 'border-b-2 border-brand-500 font-semibold' : 'text-gray-500'}`}
                         onClick={() => setActiveTab('config')}
                     >Configuration</button>
                     <button
-                        className={`px-4 py-2 ${activeTab === 'pt' ? 'border-b-2 border-primary font-semibold' : 'text-gray-500'}`}
+                        className={`px-4 py-2 ${activeTab === 'pt' ? 'border-b-2 border-brand-500 font-semibold' : 'text-gray-500'}`}
                         onClick={() => setActiveTab('pt')}
                     >PT Slabs</button>
                     <button
-                        className={`px-4 py-2 ${activeTab === 'deductions' ? 'border-b-2 border-primary font-semibold' : 'text-gray-500'}`}
+                        className={`px-4 py-2 ${activeTab === 'deductions' ? 'border-b-2 border-brand-500 font-semibold' : 'text-gray-500'}`}
                         onClick={() => setActiveTab('deductions')}
                     >Deduction Types</button>
                     <button
-                        className={`px-4 py-2 ${activeTab === 'cc' ? 'border-b-2 border-primary font-semibold' : 'text-gray-500'}`}
+                        className={`px-4 py-2 ${activeTab === 'cc' ? 'border-b-2 border-brand-500 font-semibold' : 'text-gray-500'}`}
                         onClick={() => setActiveTab('cc')}
                     >Cost Centers</button>
                 </div>

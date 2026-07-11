@@ -107,7 +107,7 @@ export const Payroll: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${isActive
-                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
+                  ? 'bg-white dark:bg-gray-700 text-brand-500 shadow-elev-1 ring-1 ring-black/5'
                   : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-700/50'
                   }`}
               >
@@ -121,7 +121,7 @@ export const Payroll: React.FC = () => {
             <button
               onClick={handlePayRun}
               disabled={payRunLoading}
-              className="ml-2 px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+              className="ml-2 px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-brand-500 to-blue-600 hover:from-brand-600 hover:to-blue-700 text-white shadow-elev-1 flex items-center gap-1.5 disabled:opacity-60"
             >
               {payRunLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

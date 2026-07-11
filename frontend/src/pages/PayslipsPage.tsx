@@ -272,11 +272,11 @@ export const PayslipsPage: React.FC = () => {
                 <>
                   <div>
                     <label htmlFor="from-date" className="text-sm font-medium">From</label>
-                    <input id="from-date" type="date" value={customFromDate} onChange={(e) => setCustomFromDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]" />
+                    <input id="from-date" type="date" value={customFromDate} onChange={(e) => setCustomFromDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50 [color-scheme:light] dark:[color-scheme:dark]" />
                   </div>
                   <div>
                     <label htmlFor="to-date" className="text-sm font-medium">To</label>
-                    <input id="to-date" type="date" value={customToDate} onChange={(e) => setCustomToDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]" />
+                    <input id="to-date" type="date" value={customToDate} onChange={(e) => setCustomToDate(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50 [color-scheme:light] dark:[color-scheme:dark]" />
                   </div>
                 </>
               )}
@@ -375,7 +375,7 @@ export const PayslipsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <div>
                     <Label>Cycle</Label>
-                    <select value={scheduleCycle} onChange={(e) => setScheduleCycle(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary">
+                    <select value={scheduleCycle} onChange={(e) => setScheduleCycle(e.target.value)} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50">
                       <option value="Monthly">Monthly</option>
                       <option value="Fortnightly">Fortnightly</option>
                       <option value="Weekly">Weekly</option>

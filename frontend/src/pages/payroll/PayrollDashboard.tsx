@@ -91,7 +91,7 @@ const formatCurrency = (val: number) => {
 };
 
 // Reusable card class for consistent light/dark theming
-const cardClass = "bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 rounded-[1.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300";
+const cardClass = "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-elev-2 hover:shadow-elev-4 transition-all duration-300";
 
 export const PayrollDashboard = () => {
     const { t } = useTranslation();
@@ -137,7 +137,7 @@ export const PayrollDashboard = () => {
         switch (status) {
             case 'RELEASED': return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800';
             case 'APPROVED': return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
-            case 'CALCULATED': return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800';
+            case 'CALCULATED': return 'bg-brand-50 text-brand-600 border-brand-200 dark:bg-brand-500/20 dark:text-brand-400 dark:border-brand-800';
             case 'PENDING': return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800';
             default: return 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
         }
@@ -154,7 +154,7 @@ export const PayrollDashboard = () => {
         return (
             <div className="flex items-center justify-center h-[60vh]">
                 <div className="text-center space-y-4">
-                    <div className="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin mx-auto" />
+                    <div className="w-16 h-16 border-4 border-brand-200 dark:border-brand-800 border-t-brand-600 dark:border-t-brand-400 rounded-full animate-spin mx-auto" />
                     <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">Loading Payroll Analytics...</p>
                 </div>
             </div>
@@ -168,14 +168,14 @@ export const PayrollDashboard = () => {
                 {/* Filters */}
                 <div className="flex justify-end items-center mb-6 gap-2">
                     <select
-                        className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all shadow-sm"
+                        className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all shadow-elev-1"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                     >
                         {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <select
-                        className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all shadow-sm"
+                        className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all shadow-elev-1"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                     >
@@ -186,7 +186,7 @@ export const PayrollDashboard = () => {
                 {/* Cost Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: t('payroll.totalCostToCompany'), value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-indigo-600', sub: `${stats?.costSummary.processedCount || 0} ${t('payroll.employeesCount')}` },
+                        { label: t('payroll.totalCostToCompany'), value: stats?.costSummary.totalGross || 0, icon: Wallet, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)', accent: 'text-brand-600', sub: `${stats?.costSummary.processedCount || 0} ${t('payroll.employeesCount')}` },
                         { label: t('payroll.totalNetPayout'), value: stats?.costSummary.totalNet || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #10b981, #059669)', accent: 'text-emerald-600', sub: t('payroll.bankTransferAmount') },
                         { label: t('payroll.totalDeductions'), value: stats?.costSummary.totalDeductions || 0, icon: IndianRupee, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', accent: 'text-amber-600', sub: t('payroll.pfEsiPtTds') },
                         { label: t('payroll.taxDeductedTds'), value: stats?.costSummary.totalTds || 0, icon: Shield, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', accent: 'text-pink-600', sub: t('payroll.incomeTaxWithheld') }
@@ -199,7 +199,7 @@ export const PayrollDashboard = () => {
                             whileHover={{ y: -5, scale: 1.02 }}
                             className="relative group h-full"
                         >
-                            <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+                            <div className="relative overflow-hidden rounded-[1.5rem] p-5 h-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 shadow-elev-2 transition-all duration-300 hover:shadow-elev-4">
                                 {/* Subtle Decorative Pattern */}
                                 <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
                                     <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -210,7 +210,7 @@ export const PayrollDashboard = () => {
 
                                 {/* Icon Accent */}
                                 <div
-                                    className="relative z-10 w-11 h-11 rounded-2xl flex items-center justify-center mb-4 shadow-lg border border-white/10"
+                                    className="relative z-10 w-11 h-11 rounded-2xl flex items-center justify-center mb-4 shadow-elev-4 border border-white/10"
                                     style={{ background: card.gradient }}
                                 >
                                     <card.icon className="w-5 h-5 text-white" />
@@ -222,7 +222,7 @@ export const PayrollDashboard = () => {
                                         {formatCurrency(card.value)}
                                     </h3>
                                     <p className="text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-2">{card.label}</p>
-                                    <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] font-bold uppercase tracking-widest bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
+                                    <p className="text-slate-400/60 dark:text-slate-500/60 text-[9px] font-bold uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-0.5 rounded-full w-fit">
                                         {card.sub}
                                     </p>
                                 </div>
@@ -234,18 +234,18 @@ export const PayrollDashboard = () => {
                 {/* Headcount Row */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {[
-                        { label: t('reports.totalEmployees'), value: stats?.headcount.total || 0, icon: Users, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-100 dark:border-indigo-500/20' },
+                        { label: t('reports.totalEmployees'), value: stats?.headcount.total || 0, icon: Users, accent: 'text-brand-600 dark:text-brand-400', bg: 'bg-brand-50 dark:bg-brand-500/10', border: 'border-brand-100 dark:border-brand-500/20' },
                         { label: 'Included', value: stats?.headcount.included || 0, icon: UserCheck, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-100 dark:border-emerald-500/20' },
-                        { label: 'Excluded', value: stats?.headcount.excluded || 0, icon: UserMinus, accent: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-white/5', border: 'border-slate-100 dark:border-white/5' },
+                        { label: 'Excluded', value: stats?.headcount.excluded || 0, icon: UserMinus, accent: 'text-slate-500 dark:text-slate-400', bg: 'bg-neutral-50 dark:bg-white/5', border: 'border-neutral-100 dark:border-white/5' },
                         { label: 'Incomplete', value: stats?.headcount.incomplete || 0, icon: AlertCircle, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-100 dark:border-amber-500/20', alert: true },
-                        { label: 'On Hold', value: stats?.headcount.onHold || 0, icon: Clock, accent: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10', border: 'border-rose-100 dark:border-rose-500/20' }
+                        { label: 'On Hold', value: stats?.headcount.onHold || 0, icon: Clock, accent: 'text-error-600 dark:text-error-400', bg: 'bg-error-50 dark:bg-error-500/10', border: 'border-error-100 dark:border-error-500/20' }
                     ].map((item, idx) => (
                         <motion.div
                             key={idx}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 + idx * 0.05 }}
-                            className={`bg-white dark:bg-[#0f172a] border ${item.border} rounded-2xl p-4 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300`}
+                            className={`bg-white dark:bg-neutral-900 border ${item.border} rounded-2xl p-4 shadow-elev-2 hover:shadow-elev-4 transition-all duration-300`}
                         >
                             <div className="flex justify-between items-start mb-3">
                                 <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">{item.label}</span>
@@ -269,8 +269,8 @@ export const PayrollDashboard = () => {
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Payroll Trend</h3>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">Monthly gross vs net payout</p>
                             </div>
-                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                                <Activity className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                            <div className="p-2 bg-brand-50 dark:bg-brand-500/20 rounded-lg">
+                                <Activity className="w-5 h-5 text-brand-500 dark:text-brand-400" />
                             </div>
                         </div>
                         {trendChartData.length > 0 ? (
@@ -314,8 +314,8 @@ export const PayrollDashboard = () => {
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Dept. Costs</h3>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">Cost distribution</p>
                             </div>
-                            <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                                <Building2 className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                            <div className="p-2 bg-brand-50 dark:bg-brand-500/20 rounded-lg">
+                                <Building2 className="w-5 h-5 text-brand-500 dark:text-brand-400" />
                             </div>
                         </div>
                         {stats?.departmentCosts && stats.departmentCosts.length > 0 ? (
@@ -374,13 +374,13 @@ export const PayrollDashboard = () => {
                                 </div>
                             )}
                             {(stats?.alerts.missingStructures || 0) > 0 && (
-                                <div className="flex items-center gap-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg">
-                                    <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                                <div className="flex items-center gap-3 p-3 bg-error-50 dark:bg-error-500/10 border border-error-200 dark:border-error-800 rounded-lg">
+                                    <AlertCircle className="w-5 h-5 text-error-600 dark:text-error-400 flex-shrink-0" />
                                     <div>
-                                        <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
+                                        <p className="text-sm font-medium text-error-700 dark:text-rose-300">
                                             {stats?.alerts.missingStructures} Missing Salary Structures
                                         </p>
-                                        <p className="text-xs text-rose-600 dark:text-rose-500">Employees without salary assignment</p>
+                                        <p className="text-xs text-error-600 dark:text-error-500">Employees without salary assignment</p>
                                     </div>
                                 </div>
                             )}
@@ -398,11 +398,11 @@ export const PayrollDashboard = () => {
 
                     {/* Process Status Card */}
                     <div className={`${cardClass} p-5 relative overflow-hidden`}>
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16" />
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-brand-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16" />
                         <div className="relative z-10">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                                    <Activity className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                                <div className="p-1.5 bg-brand-50 dark:bg-brand-500/20 rounded-lg">
+                                    <Activity className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                                 </div>
                                 Payroll Status — {MONTHS[selectedMonth - 1]} {selectedYear}
                             </h3>
@@ -427,7 +427,7 @@ export const PayrollDashboard = () => {
                                 <Button
                                     size="sm"
                                     onClick={handleStartProcess}
-                                    className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-indigo-500/40"
+                                    className="gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-purple-700 border-0 text-white shadow-elev-4 shadow-brand-500/25 transition-all duration-200 hover:shadow-brand-500/40"
                                 >
                                     {stats?.runStatus ? 'Continue' : 'Start Payroll'}
                                     <PlayCircle className="w-4 h-4" />
@@ -445,7 +445,7 @@ export const PayrollDashboard = () => {
                                         return (
                                             <React.Fragment key={stage}>
                                                 <div
-                                                    className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all ${isActive ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 dark:ring-indigo-900/50 scale-110' :
+                                                    className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all ${isActive ? 'bg-brand-500 text-white ring-4 ring-brand-100 dark:ring-indigo-900/50 scale-110' :
                                                         isCompleted ? 'bg-emerald-500 text-white' :
                                                             'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
                                                         }`}
@@ -495,7 +495,7 @@ export const PayrollDashboard = () => {
                                                 {MONTHS[run.month - 1]} {run.year}
                                             </td>
                                             <td className="py-3 px-2">
-                                                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">{run.stage}</span>
+                                                <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/20 px-2 py-0.5 rounded">{run.stage}</span>
                                             </td>
                                             <td className="py-3 px-2">
                                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(run.status)}`}>
@@ -514,7 +514,7 @@ export const PayrollDashboard = () => {
                                             <td className="py-3 px-2 text-right">
                                                 <button
                                                     onClick={() => navigate(`/payroll/process/${run.id}`)}
-                                                    className="p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                                                    className="p-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/30 text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                                                 >
                                                     <ArrowRight className="w-4 h-4" />
                                                 </button>

@@ -53,7 +53,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
         <div className="space-y-8 animate-fadeIn">
             {/* KPI Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+                <Card padding="md" className="relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity text-gray-400">
                         <Users size={80} />
                     </div>
@@ -61,12 +61,12 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-24 bg-gray-200 animate-pulse rounded" /> : totalEmployees}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-2 py-1 rounded w-fit">
                         Active Personnel
                     </div>
-                </div>
+                </Card>
 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+                <Card padding="md" className="relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity text-gray-400">
                         <CreditCard size={80} />
                     </div>
@@ -74,12 +74,12 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-40 bg-gray-200 animate-pulse rounded" /> : formatINR(monthlyPayroll)}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-violet-500 bg-violet-50 dark:bg-violet-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-2 py-1 rounded w-fit">
                         Current Cycle
                     </div>
-                </div>
+                </Card>
 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+                <Card padding="md" className="relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity text-gray-400">
                         <FileText size={80} />
                     </div>
@@ -87,10 +87,10 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
                         {loading ? <div className="h-9 w-16 bg-gray-200 animate-pulse rounded" /> : pendingPayslips}
                     </h3>
-                    <div className="mt-4 flex items-center text-xs font-medium text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-500/10 px-2 py-1 rounded w-fit">
+                    <div className="mt-4 flex items-center text-xs font-medium text-coral-500 bg-coral-50 dark:bg-coral-500/10 px-2 py-1 rounded w-fit">
                         Action Required
                     </div>
-                </div>
+                </Card>
             </div>
 
             {/* Main Content Grid */}
@@ -98,9 +98,9 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                 {/* Left Column - Actions and Chart */}
                 <div className="lg:col-span-4 space-y-8">
                     {/* Quick Launch */}
-                    <Card className="p-6 border-none shadow-sm ring-1 ring-black/5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50">
+                    <Card className="p-6 border-none shadow-elev-1 ring-1 ring-black/5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                            <PlayCircle size={18} className="text-primary" />
+                            <PlayCircle size={18} className="text-brand-500" />
                             Operations Center
                         </h3>
                         <div className="space-y-3">
@@ -114,15 +114,15 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                     <button
                                         key={item.label}
                                         onClick={() => item.action === 'payslips' ? navigate('/payroll/dashboard') : onNavigate(item.action)}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/5 transition-all group"
+                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-brand-500/30 hover:bg-brand-500/5 dark:hover:bg-brand-500/5 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                            <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 group-hover:bg-brand-500/10 group-hover:text-brand-500 transition-colors">
                                                 <Icon size={20} />
                                             </div>
                                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{item.label}</span>
                                         </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-primary">
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-500">
                                             <PlayCircle size={16} />
                                         </div>
                                     </button>
@@ -132,11 +132,11 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                     </Card>
 
                     {/* Salary Mix */}
-                    <Card className="p-6 border-none shadow-sm ring-1 ring-black/5">
+                    <Card className="p-6 border-none shadow-elev-1 ring-1 ring-black/5">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-6">Payroll Allocation</h3>
                         {salaryLoading ? (
                             <div className="h-[240px] flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-brand-500"></div>
                             </div>
                         ) : salaryComponents.length === 0 ? (
                             <div className="h-[240px] flex items-center justify-center text-xs text-gray-500">No active structures</div>
@@ -154,7 +154,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
 
                 {/* Right Column - Transactions Table */}
                 <div className="lg:col-span-8">
-                    <Card className="p-0 border-none shadow-sm ring-1 ring-black/5 overflow-hidden">
+                    <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">Transaction Logs</h3>
@@ -184,7 +184,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                             <TableRow key={t.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors">
                                                 <TableCell className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                                        <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
                                                             {(t as any).employee_name?.[0] || 'E'}
                                                         </div>
                                                         <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">

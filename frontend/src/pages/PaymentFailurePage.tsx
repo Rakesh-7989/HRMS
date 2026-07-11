@@ -13,7 +13,7 @@ export const PaymentFailurePage: React.FC = () => {
   const orderId = searchParams.get('order_id');
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -57,7 +57,7 @@ export const PaymentFailurePage: React.FC = () => {
           </div>
 
           {orderId && (
-            <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3 mb-6 border border-gray-200 dark:border-dark-border">
+            <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3 mb-6 border border-gray-200 dark:border-white/10">
               <p className="text-xs text-gray-500 dark:text-gray-400">Order Reference</p>
               <p className="text-sm font-mono font-medium text-gray-700 dark:text-gray-300">{orderId}</p>
             </div>
@@ -94,10 +94,10 @@ export const PaymentFailurePage: React.FC = () => {
           </div>
 
           {/* Support info */}
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-dark-border">
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <Mail size={14} />
-              <span>Need help? Contact <a href="mailto:support@WellZo.com" className="text-primary hover:underline">support@WellZo.com</a></span>
+              <span>Need help? Contact <a href="mailto:support@WellZo.com" className="text-brand-500 hover:underline">support@WellZo.com</a></span>
             </div>
           </div>
         </Card>

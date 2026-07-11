@@ -115,7 +115,7 @@ export const CompletePaymentPage: React.FC = () => {
   if (!tenantId || !email) return null;
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -126,7 +126,7 @@ export const CompletePaymentPage: React.FC = () => {
           <AnimatedLogo size="md" />
         </div>
 
-        <Card className="p-6 border-2 border-amber-500/20 bg-amber-50/5 dark:bg-amber-500/5 shadow-2xl">
+        <Card className="p-6 border-2 border-amber-500/20 bg-amber-50/5 dark:bg-amber-500/5 shadow-elev-6">
           <div className="text-center mb-6">
             <motion.div
               className="w-16 h-16 mx-auto mb-3 bg-amber-100 dark:bg-amber-500/20 rounded-full flex items-center justify-center"
@@ -145,7 +145,7 @@ export const CompletePaymentPage: React.FC = () => {
 
           <div className="space-y-2 mb-5">
             <div className="flex items-start gap-2 p-3 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
-              <Shield className="text-primary mt-0.5 shrink-0" size={14} />
+              <Shield className="text-brand-500 mt-0.5 shrink-0" size={14} />
               <div>
                 <p className="text-[10px] font-black uppercase text-gray-900 dark:text-white">Secure Transaction</p>
                 <p className="text-[9px] text-gray-400 leading-tight">Encryption powered by Cashfree Protocol.</p>
@@ -174,7 +174,7 @@ export const CompletePaymentPage: React.FC = () => {
           <div className="space-y-2">
             <Button
               variant="primary"
-              className="w-full h-11 text-sm font-black tracking-widest uppercase relative overflow-hidden group shadow-lg shadow-primary/20"
+              className="w-full h-11 text-sm font-black tracking-widest uppercase relative overflow-hidden group shadow-elev-4 shadow-brand-500/20"
               onClick={handleCompletePayment}
               disabled={loading}
             >
@@ -196,7 +196,7 @@ export const CompletePaymentPage: React.FC = () => {
             <button
               onClick={handlePayWithUpi}
               disabled={loading}
-              className="w-full h-11 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-black tracking-widest uppercase shadow-lg shadow-green-600/20 transition-all disabled:opacity-50"
+              className="w-full h-11 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-black tracking-widest uppercase shadow-elev-4 shadow-green-600/20 transition-all disabled:opacity-50"
             >
               <Smartphone size={18} />
               {loading ? <Loader2 className="animate-spin" size={18} /> : 'Pay with UPI'}
@@ -223,7 +223,7 @@ export const CompletePaymentPage: React.FC = () => {
 
           <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 text-center">
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-1">Authenticated Account</span>
-            <p className="text-[11px] font-black text-primary leading-none truncate underline decoration-primary/30">
+            <p className="text-[11px] font-black text-brand-500 leading-none truncate underline decoration-primary/30">
               {email}
             </p>
           </div>

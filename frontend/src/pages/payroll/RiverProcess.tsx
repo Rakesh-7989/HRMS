@@ -40,10 +40,10 @@ const formatCurrency = (val: number) => {
 
 const COLOR_CLASSES: any = {
     indigo: {
-        active: 'border-indigo-500 bg-indigo-500/20 text-indigo-400 ring-indigo-500/10',
-        text: 'text-indigo-500 dark:text-indigo-400',
-        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
-        icon: 'text-indigo-500 dark:text-indigo-400'
+        active: 'border-brand-500 bg-brand-500/20 text-brand-400 ring-indigo-500/10',
+        text: 'text-brand-500 dark:text-brand-400',
+        bg: 'bg-brand-50 dark:bg-brand-500/10',
+        icon: 'text-brand-500 dark:text-brand-400'
     },
     blue: {
         active: 'border-blue-500 bg-blue-500/20 text-blue-400 ring-blue-500/10',
@@ -52,10 +52,10 @@ const COLOR_CLASSES: any = {
         icon: 'text-blue-500 dark:text-blue-400'
     },
     purple: {
-        active: 'border-purple-500 bg-purple-500/20 text-purple-400 ring-purple-500/10',
-        text: 'text-purple-600 dark:text-purple-400',
-        bg: 'bg-purple-50 dark:bg-purple-500/10',
-        icon: 'text-purple-500 dark:text-purple-400'
+        active: 'border-brand-500 bg-brand-500/20 text-brand-400 ring-purple-500/10',
+        text: 'text-brand-600 dark:text-brand-400',
+        bg: 'bg-brand-50 dark:bg-brand-500/10',
+        icon: 'text-brand-500 dark:text-brand-400'
     },
     emerald: {
         active: 'border-emerald-500 bg-emerald-500/20 text-emerald-400 ring-emerald-500/10',
@@ -69,14 +69,14 @@ const COLOR_CLASSES: any = {
         icon: 'text-amber-500 dark:text-amber-400'
     },
     rose: {
-        text: 'text-rose-600 dark:text-rose-400',
-        bg: 'bg-rose-50 dark:bg-rose-500/10',
-        icon: 'text-rose-500 dark:text-rose-400'
+        text: 'text-error-600 dark:text-error-400',
+        bg: 'bg-error-50 dark:bg-error-500/10',
+        icon: 'text-error-500 dark:text-error-400'
     },
     indigo_light: {
-        text: 'text-indigo-600 dark:text-indigo-400',
-        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
-        icon: 'text-indigo-500 dark:text-indigo-400'
+        text: 'text-brand-600 dark:text-brand-400',
+        bg: 'bg-brand-50 dark:bg-brand-500/10',
+        icon: 'text-brand-500 dark:text-brand-400'
     }
 };
 
@@ -158,7 +158,7 @@ export const RiverProcess = () => {
             <DashboardLayout title={t('payroll.payrollManagement') || "Payroll Process"}>
                 <div className="flex items-center justify-center h-[60vh]">
                     <div className="text-center space-y-4">
-                        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto" />
+                        <Loader2 className="w-12 h-12 text-brand-500 animate-spin mx-auto" />
                         <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading Stage Data...</p>
                     </div>
                 </div>
@@ -208,7 +208,7 @@ export const RiverProcess = () => {
                                     >
                                         {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                                     </div>
-                                    <span className={`text-xs mt-2 font-semibold tracking-wide ${isActive ? 'text-indigo-500 dark:text-indigo-400' : isCompleted ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-500'}`}>
+                                    <span className={`text-xs mt-2 font-semibold tracking-wide ${isActive ? 'text-brand-500 dark:text-brand-400' : isCompleted ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-500'}`}>
                                         {s}
                                     </span>
                                 </div>
@@ -274,16 +274,16 @@ const ReviewStage = ({ data, onNext }: any) => {
                     const cardStyles: any = {
                         blue: { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', icon: 'text-blue-500 dark:text-blue-400' },
                         amber: { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', icon: 'text-amber-500 dark:text-amber-400' },
-                        purple: { text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10', icon: 'text-purple-500 dark:text-purple-400' },
-                        rose: { text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10', icon: 'text-rose-500 dark:text-rose-400' },
-                        indigo: { text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', icon: 'text-indigo-500 dark:text-indigo-400' },
+                        purple: { text: 'text-brand-600 dark:text-brand-400', bg: 'bg-brand-50 dark:bg-brand-500/10', icon: 'text-brand-500 dark:text-brand-400' },
+                        rose: { text: 'text-error-600 dark:text-error-400', bg: 'bg-error-50 dark:bg-error-500/10', icon: 'text-error-500 dark:text-error-400' },
+                        indigo: { text: 'text-brand-600 dark:text-brand-400', bg: 'bg-brand-50 dark:bg-brand-500/10', icon: 'text-brand-500 dark:text-brand-400' },
                     };
                     const style = cardStyles[card.color] || cardStyles.indigo;
 
                     return (
                         <div
                             key={idx}
-                            className={`bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm transition-all duration-200 ${card.section ? 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600/60 hover:-translate-y-0.5 hover:shadow-md' : ''}`}
+                            className={`bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-elev-1 transition-all duration-200 ${card.section ? 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600/60 hover:-translate-y-0.5 hover:shadow-elev-3' : ''}`}
                             onClick={() => card.section && toggleSection(card.section)}
                         >
                             <div className="flex items-center justify-between">
@@ -339,7 +339,7 @@ const ReviewStage = ({ data, onNext }: any) => {
             {expandedSection === 'revisions' && categories?.finance?.revisionDetails?.length > 0 && (
                 <DetailTable
                     title="Salary Revisions"
-                    icon={<IndianRupee className="w-4 h-4 text-purple-400" />}
+                    icon={<IndianRupee className="w-4 h-4 text-brand-400" />}
                     columns={['Employee', 'Emp Code', 'Structure', 'Annual CTC', 'Effective From']}
                     rows={categories.finance.revisionDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.structure_name || '-',
@@ -351,7 +351,7 @@ const ReviewStage = ({ data, onNext }: any) => {
             {expandedSection === 'arrears' && categories?.arrears?.details?.length > 0 && (
                 <DetailTable
                     title="Pending Arrears to be Processed"
-                    icon={<Receipt className="w-4 h-4 text-rose-400" />}
+                    icon={<Receipt className="w-4 h-4 text-error-400" />}
                     columns={['Employee', 'Emp Code', 'Department', 'Amount', 'Reason']}
                     rows={categories.arrears.details.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
@@ -362,10 +362,10 @@ const ReviewStage = ({ data, onNext }: any) => {
 
             {/* Variance Analysis */}
             {variance && (
-                <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-700/40 flex justify-between items-center">
                         <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <BarChart3 className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                            <BarChart3 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                             Variance Analysis
                         </h4>
                         <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${parseFloat(variance.gross.percent) > 10 ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20' :
@@ -405,10 +405,10 @@ const ReviewStage = ({ data, onNext }: any) => {
             )}
 
             {/* Enhanced Checklist */}
-            <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                 <div className="p-5">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                        <CheckCircle2 className="w-5 h-5 text-brand-500 dark:text-brand-400" />
                         Pre-Payroll Checklist
                     </h3>
                     <div className="space-y-2">
@@ -447,7 +447,7 @@ const ReviewStage = ({ data, onNext }: any) => {
                     <div className="mt-6 flex justify-end">
                         <Button
                             onClick={onNext}
-                            className="gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 border-0 shadow-lg shadow-indigo-500/20"
+                            className="gap-2 bg-gradient-to-r from-brand-500 to-blue-600 hover:from-brand-600 hover:to-blue-700 border-0 shadow-elev-4 shadow-brand-500/20"
                         >
                             Proceed to Initiate <Send className="w-4 h-4" />
                         </Button>
@@ -465,8 +465,8 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <div className="bg-white dark:bg-gray-800/60 border-2 border-blue-200 dark:border-blue-500/30 rounded-2xl overflow-hidden shadow-xl shadow-blue-500/5">
-                <div className="bg-gradient-to-r from-blue-50 dark:from-blue-500/10 to-indigo-50 dark:to-indigo-500/10 p-6 border-b border-gray-100 dark:border-gray-700/40">
+            <div className="bg-white dark:bg-gray-800/60 border-2 border-blue-200 dark:border-blue-500/30 rounded-2xl overflow-hidden shadow-elev-5 shadow-blue-500/5">
+                <div className="bg-gradient-to-r from-blue-50 dark:from-blue-500/10 to-brand-50 dark:to-brand-500/10 p-6 border-b border-gray-100 dark:border-gray-700/40">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Zap className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                         Initiate Payroll Calculation
@@ -496,7 +496,7 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">
                             <div className="text-xs text-gray-500 dark:text-gray-400">Revisions</div>
-                            <div className="text-lg font-bold text-purple-500 dark:text-purple-400">{data?.categories?.finance?.salaryRevisions || 0}</div>
+                            <div className="text-lg font-bold text-brand-500 dark:text-brand-400">{data?.categories?.finance?.salaryRevisions || 0}</div>
                         </div>
                     </div>
 
@@ -507,7 +507,7 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
                         <Button
                             onClick={onInitiate}
                             disabled={loading}
-                            className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0 shadow-lg shadow-blue-500/25 min-w-[200px]"
+                            className="gap-2 bg-gradient-to-r from-blue-500 to-brand-600 hover:from-blue-600 hover:to-brand-700 border-0 shadow-elev-4 shadow-blue-500/25 min-w-[200px]"
                         >
                             {loading ? (
                                 <><Loader2 className="w-4 h-4 animate-spin" /> Calculating...</>
@@ -557,9 +557,9 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                     { label: 'Tax (TDS)', value: data?.summary?.total_tax || 0, icon: Shield, color: 'rose', isCurrency: true },
                     { label: 'Net Payout', value: data?.summary?.total_net || 0, icon: IndianRupee, color: 'emerald', isCurrency: true }
                 ].map((card, idx) => (
-                    <div key={idx} className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-sm">
+                    <div key={idx} className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-elev-1">
                         <div className="flex items-center gap-2 mb-2">
-                            <card.icon className={`w-4 h-4 ${COLOR_CLASSES[card.color]?.icon || 'text-indigo-500'}`} />
+                            <card.icon className={`w-4 h-4 ${COLOR_CLASSES[card.color]?.icon || 'text-brand-500'}`} />
                             <span className="text-xs text-gray-500 dark:text-gray-400">{card.label}</span>
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -573,9 +573,9 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Component Chart */}
                 {componentData.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-sm">
+                    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <BarChart3 className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                            <BarChart3 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                             Component Breakdown
                         </h4>
                         <ResponsiveContainer width="100%" height={220}>
@@ -599,9 +599,9 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
 
                 {/* Department Breakdown */}
                 {data?.departmentBreakdown?.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-sm">
+                    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                            <Building2 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                             Department Summary
                         </h4>
                         <div className="space-y-3 max-h-[220px] overflow-y-auto">
@@ -659,13 +659,13 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
             )}
 
             {/* Employee Detail Toggle */}
-            <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                 <button
                     onClick={() => setShowEmployees(!showEmployees)}
                     className="w-full p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors"
                 >
                     <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Users className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                        <Users className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                         Employee-Level Breakdown ({data?.employees?.length || 0})
                     </span>
                     {showEmployees ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -681,7 +681,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                     placeholder="Search by name, code, or department..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/40 rounded-lg text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/40 rounded-lg text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/40 focus:border-brand-500/40"
                                 />
                             </div>
                             <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
@@ -710,7 +710,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                                 <td className="py-2.5 px-2 text-right text-gray-600 dark:text-gray-300 font-mono text-xs">{formatCurrency(emp.hra)}</td>
                                                 <td className="py-2.5 px-2 text-right text-gray-900 dark:text-white font-mono text-xs">{formatCurrency(emp.grossPay)}</td>
                                                 <td className="py-2.5 px-2 text-right text-amber-400 font-mono text-xs">{formatCurrency(emp.pfEmployee)}</td>
-                                                <td className="py-2.5 px-2 text-right text-rose-400 font-mono text-xs">{formatCurrency(emp.tds)}</td>
+                                                <td className="py-2.5 px-2 text-right text-error-400 font-mono text-xs">{formatCurrency(emp.tds)}</td>
                                                 <td className="py-2.5 px-2 text-right text-emerald-400 font-mono text-xs font-bold">{formatCurrency(emp.netPay)}</td>
                                             </tr>
                                         ))}
@@ -723,7 +723,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
             </div>
 
             {/* Approval Section */}
-            <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-sm">
+            <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Approvals</h4>
                 {data?.approvals?.length === 0 ?
                     <p className="text-sm text-gray-500 mb-4">No approvals yet.</p> :
@@ -752,7 +752,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                         <XCircle className="w-4 h-4 mr-2" /> Reject
                     </Button>
                     <Button
-                        className="flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-lg shadow-emerald-500/20"
+                        className="flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-elev-4 shadow-emerald-500/20"
                         onClick={() => onApprove("Verified and approved")}
                         disabled={loading}
                     >
@@ -765,7 +765,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                     <div className="mt-4 flex justify-end animate-fadeIn">
                         <Button
                             onClick={onNext}
-                            className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg"
+                            className="gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-purple-700 border-0 shadow-elev-4"
                         >
                             Proceed to Release <Send className="w-4 h-4" />
                         </Button>
@@ -826,7 +826,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
         <div className="max-w-6xl mx-auto space-y-5">
             {released ? (
                 // Success State
-                <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl p-10 text-center shadow-lg">
+                <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl p-10 text-center shadow-elev-4">
                     <div className="relative inline-block mb-6">
                         <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
                         <CheckCircle2 className="w-20 h-20 text-emerald-500 dark:text-emerald-400 relative" />
@@ -841,7 +841,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <div className="text-xs text-gray-500 dark:text-gray-400">Total Gross</div>
-                            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
+                            <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <div className="text-xs text-gray-500 dark:text-gray-400">Net Payout</div>
@@ -860,7 +860,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                 </div>
             ) : (
                 // Pre-Release Confirmation
-                <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl overflow-hidden shadow-xl shadow-emerald-500/5">
+                <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl overflow-hidden shadow-elev-5 shadow-emerald-500/5">
                     <div className="bg-gradient-to-r from-emerald-50 dark:from-emerald-500/10 to-green-50 dark:to-green-500/10 p-6 border-b border-gray-100 dark:border-gray-700/40">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Send className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />
@@ -878,7 +878,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Total Gross</div>
-                                <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
+                                <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Deductions</div>
@@ -936,7 +936,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                                 size="lg"
                                 onClick={handleRelease}
                                 disabled={loading}
-                                className="w-full gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-lg shadow-emerald-500/25 text-lg py-3"
+                                className="w-full gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-elev-4 shadow-emerald-500/25 text-lg py-3"
                             >
                                 {loading ? (
                                     <><Loader2 className="w-5 h-5 animate-spin" /> Releasing...</>
@@ -956,7 +956,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
 // HELPER COMPONENTS
 // =============================================================================
 const DetailTable = ({ title, icon, columns, rows }: any) => (
-    <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden animate-fadeIn shadow-sm">
+    <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden animate-fadeIn shadow-elev-1">
         <div className="p-4 border-b border-gray-100 dark:border-gray-700/40 flex items-center gap-2">
             {icon}
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>

@@ -132,7 +132,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-elev-6 border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             {/* Close button */}
             <button
@@ -147,8 +147,8 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
               {/* Status icon */}
               <div className="flex justify-center mb-4">
                 {status === 'generating' && (
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  <div className="w-16 h-16 rounded-full bg-brand-500/10 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
                   </div>
                 )}
                 {status === 'waiting' && (
@@ -183,7 +183,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
               </h3>
 
               {amount && (
-                <p className="text-center text-2xl font-black text-primary mb-4">
+                <p className="text-center text-2xl font-black text-brand-500 mb-4">
                   ₹{amount.toLocaleString()}
                 </p>
               )}
@@ -200,7 +200,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
               {(status === 'waiting' || status === 'verifying') && qrDataUrl && (
                 <div className="space-y-4">
                   <div className="flex justify-center">
-                    <div className="p-3 bg-white rounded-xl shadow-lg border border-gray-100">
+                    <div className="p-3 bg-white rounded-xl shadow-elev-4 border border-gray-100">
                       <img src={qrDataUrl} alt="UPI QR Code" className="w-56 h-56" />
                     </div>
                   </div>
@@ -220,7 +220,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                     </button>
                     <button
                       onClick={openUpiApp}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-all"
                     >
                       <ExternalLink size={14} />
                       Open UPI App
@@ -245,7 +245,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                 <div className="text-center space-y-3">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Your payment has been processed successfully.
-                    {email && <><br />Credentials will be sent to <strong className="text-primary">{email}</strong></>}
+                    {email && <><br />Credentials will be sent to <strong className="text-brand-500">{email}</strong></>}
                   </p>
                   <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div className="h-full bg-green-500 rounded-full animate-pulse" style={{ width: '100%' }} />
@@ -260,7 +260,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                   </p>
                   <button
                     onClick={handleRetry}
-                    className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors"
+                    className="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-500-dark transition-colors"
                   >
                     Retry Payment
                   </button>

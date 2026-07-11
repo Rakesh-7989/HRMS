@@ -80,7 +80,7 @@ export const BillingPortalPage: React.FC = () => {
             <div className="max-w-6xl mx-auto space-y-8">
                 {isLoading ? (
                     <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
                     </div>
                 ) : (
                     <>
@@ -90,13 +90,13 @@ export const BillingPortalPage: React.FC = () => {
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Current Plan</h2>
-                                        <div className="text-3xl font-bold text-primary">{subscription?.plan_name || 'Free Plan'}</div>
+                                        <div className="text-3xl font-bold text-brand-500">{subscription?.plan_name || 'Free Plan'}</div>
                                     </div>
                                     <div className={cn(
                                         "px-3 py-1 rounded-full text-xs font-bold",
                                         subscription?.status === 'ACTIVE' ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400" :
-                                            subscription?.status === 'PAST_DUE' ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-400" :
-                                                subscription?.status === 'TRIAL' ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400" :
+                                            subscription?.status === 'PAST_DUE' ? "bg-coral-100 text-coral-600 dark:bg-coral-500/20 dark:text-coral-400" :
+                                                subscription?.status === 'TRIAL' ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400" :
                                                     "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
                                     )}>
                                         {subscription?.status || 'INACTIVE'}
@@ -105,14 +105,14 @@ export const BillingPortalPage: React.FC = () => {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-gray-50 dark:border-white/5">
                                     <div className="flex items-center gap-3">
-                                        <Calendar className="text-primary-light" size={20} />
+                                        <Calendar className="text-brand-500-light" size={20} />
                                         <div>
                                             <p className="text-xs text-gray-500">Renews on</p>
                                             <p className="font-semibold">{subscription?.end_date ? format(new Date(subscription.end_date), 'MMM dd, yyyy') : 'N/A'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <CreditCard className="text-primary-light" size={20} />
+                                        <CreditCard className="text-brand-500-light" size={20} />
                                         <div>
                                             <p className="text-xs text-gray-500">Billing Cycle</p>
                                             <p className="font-semibold capitalize">{subscription?.billing_cycle || 'N/A'}</p>
@@ -123,20 +123,20 @@ export const BillingPortalPage: React.FC = () => {
 
                             {/* Renewal / Reactivation CTA */}
                             {(!subscription?.status || ['INACTIVE', 'PAST_DUE', 'CANCELLED', 'SUSPENDED'].includes(subscription.status)) && (
-                                <Card className="md:col-span-3 p-6 border-l-4 border-l-amber-500 bg-fuchsia-50 dark:bg-fuchsia-900/10 mb-6">
+                                <Card className="md:col-span-3 p-6 border-l-4 border-l-amber-500 bg-coral-50 dark:bg-coral-500/10 mb-6">
                                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                         <div>
                                             <h3 className="font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                                                <AlertTriangle size={18} className="text-fuchsia-600" />
+                                                <AlertTriangle size={18} className="text-coral-600" />
                                                 Subscription Inactive
                                             </h3>
-                                            <p className="text-sm text-gray-600 dark:text-fuchsia-200/80">
+                                            <p className="text-sm text-gray-600 dark:text-coral-200/80">
                                                 Your subscription is currently inactive. Restore full access to premium features now.
                                             </p>
                                         </div>
                                         <Button
                                             onClick={() => navigate('/pricing')}
-                                            className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white shadow-lg shadow-fuchsia-600/20 w-full sm:w-auto"
+                                            className="bg-coral-500 hover:bg-coral-600 text-white shadow-elev-4 shadow-coral-600/20 w-full sm:w-auto"
                                         >
                                             <Zap size={16} className="mr-2" />
                                             Reactivate Plan
@@ -156,7 +156,7 @@ export const BillingPortalPage: React.FC = () => {
                                         </div>
                                         <div className="w-full h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-primary rounded-full transition-all"
+                                                className="h-full bg-brand-500 rounded-full transition-all"
                                                 style={{ width: `${Math.min(100, ((subscription?.current_employees || 0) / (subscription?.max_employees || 1)) * 100)}%` }}
                                             />
                                         </div>
@@ -177,14 +177,14 @@ export const BillingPortalPage: React.FC = () => {
                         {/* Invoice History */}
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
-                                <Clock size={20} className="text-primary" />
+                                <Clock size={20} className="text-brand-500" />
                                 Invoice History
                             </h2>
-                            <Card className="overflow-hidden border-none shadow-xl">
+                            <Card className="overflow-hidden border-none shadow-elev-5">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead>
-                                            <tr className="bg-gray-50 dark:bg-white/5 border-b border-light-border dark:border-dark-border">
+                                            <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
                                                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Date</th>
                                                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Invoice #</th>
                                                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Amount</th>
@@ -202,12 +202,12 @@ export const BillingPortalPage: React.FC = () => {
                                                         <div className="flex items-center gap-2">
                                                             {invoice.status === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
                                                                 invoice.status === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
-                                                                    <Clock size={14} className="text-fuchsia-500" />}
+                                                                    <Clock size={14} className="text-coral-500" />}
                                                             <span className={cn(
                                                                 "text-[10px] font-black uppercase tracking-widest",
                                                                 invoice.status === 'PAID' ? "text-green-500" :
                                                                     invoice.status === 'FAILED' ? "text-red-500" :
-                                                                        "text-fuchsia-500"
+                                                                        "text-coral-500"
                                                             )}>
                                                                 {invoice.status}
                                                             </span>
@@ -218,14 +218,14 @@ export const BillingPortalPage: React.FC = () => {
                                                             {(invoice.status === 'PENDING' || invoice.status === 'FAILED') && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="h-8 bg-violet-600 hover:bg-violet-700 text-white"
+                                                                    className="h-8 bg-brand-500 hover:bg-brand-600 text-white"
                                                                     onClick={() => handleRetryPayment(invoice.id)}
                                                                 >
                                                                     Pay Now
                                                                 </Button>
                                                             )}
                                                             {invoice.status === 'PAID' && (
-                                                                <Button variant="ghost" size="sm" className="h-8 text-primary hover:bg-primary/10">
+                                                                <Button variant="ghost" size="sm" className="h-8 text-brand-500 hover:bg-brand-500/10">
                                                                     <Download size={16} className="mr-1" />
                                                                     PDF
                                                                 </Button>

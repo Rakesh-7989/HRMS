@@ -108,10 +108,10 @@ export const CostCentersContent: React.FC = () => {
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Allocation" value={formatINR(totalAllocated)} icon={CreditCard} iconColor="text-primary" isLoading={costCentersLoading} />
-                <StatCard title="Total Spent" value={formatINR(totalSpent)} icon={FileText} iconColor="text-yellow-500" isLoading={costCentersLoading} />
-                <StatCard title="Departments" value={displayCostCenters.length} icon={Users} iconColor="text-secondary" isLoading={costCentersLoading} />
-                <StatCard title="Projects" value={displayProjects.length} icon={Banknote} iconColor="text-accent-green" isLoading={projectAllocLoading} />
+                <StatCard title="Total Allocation" value={formatINR(totalAllocated)} icon={CreditCard} iconColor="brand" isLoading={costCentersLoading} />
+                <StatCard title="Total Spent" value={formatINR(totalSpent)} icon={FileText} iconColor="warning" isLoading={costCentersLoading} />
+                <StatCard title="Departments" value={displayCostCenters.length} icon={Users} iconColor="neutral" isLoading={costCentersLoading} />
+                <StatCard title="Projects" value={displayProjects.length} icon={Banknote} iconColor="success" isLoading={projectAllocLoading} />
             </div>
 
             <Card>

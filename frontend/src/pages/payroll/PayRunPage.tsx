@@ -97,8 +97,8 @@ const PayRunPage: React.FC = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'COMPLETED': return 'text-green-600 bg-green-50 border-green-200';
-            case 'APPROVED': return 'text-violet-600 bg-violet-50 border-violet-200';
-            case 'LOCKED': return 'text-purple-600 bg-purple-50 border-purple-200';
+            case 'APPROVED': return 'text-brand-600 bg-brand-50 border-brand-200';
+            case 'LOCKED': return 'text-brand-600 bg-brand-50 border-brand-200';
             case 'DRAFT': return 'text-gray-600 bg-gray-50 border-gray-200';
             default: return 'text-gray-600';
         }
@@ -151,7 +151,7 @@ const PayRunPage: React.FC = () => {
 
                                                 {/* Lock Action */}
                                                 {run.status === 'APPROVED' && (
-                                                    <Button size="sm" variant="ghost" className="text-purple-600" onClick={() => lockMut.mutate(run.id)} title="Lock & Finalize">
+                                                    <Button size="sm" variant="ghost" className="text-brand-600" onClick={() => lockMut.mutate(run.id)} title="Lock & Finalize">
                                                         <Lock size={16} />
                                                     </Button>
                                                 )}

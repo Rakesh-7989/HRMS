@@ -17,7 +17,7 @@ export const TimesheetContent: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shadow-sm">
+                        <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center shadow-elev-1">
                             <Clock size={22} className="stroke-[2.5px]" />
                         </div>
                         <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
@@ -34,7 +34,7 @@ export const TimesheetContent: React.FC = () => {
                             className={cn(
                                 "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                                 activeTab === 'my'
-                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5"
+                                    ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1 ring-1 ring-black/5"
                                     : "text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                             )}
                         >
@@ -46,7 +46,7 @@ export const TimesheetContent: React.FC = () => {
                             className={cn(
                                 "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                                 activeTab === 'approvals'
-                                    ? "bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5"
+                                    ? "bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1 ring-1 ring-black/5"
                                     : "text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                             )}
                         >

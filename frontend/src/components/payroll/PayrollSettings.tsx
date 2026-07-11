@@ -84,7 +84,7 @@ export const PayrollSettings: React.FC = () => {
                                 />
                                 <label
                                     htmlFor="logo-upload"
-                                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-elev-1 text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <Upload className="mr-2" size={16} />
                                     {uploading ? 'Uploading...' : 'Upload New Logo'}
@@ -140,7 +140,7 @@ export const PayrollSettings: React.FC = () => {
                                     }
                                 }}
                                 disabled={uploading}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 transition-colors disabled:opacity-50"
                             >
                                 Save Customization
                             </button>

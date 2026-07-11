@@ -203,13 +203,13 @@ export const ConsultantsContent: React.FC = () => {
                 <div className="flex gap-2">
                     <div className="flex rounded-md border overflow-hidden">
                         <button
-                            className={`px-4 py-2 text-sm ${activeView === 'consultants' ? 'bg-primary text-white' : 'bg-white'}`}
+                            className={`px-4 py-2 text-sm ${activeView === 'consultants' ? 'bg-brand-500 text-white' : 'bg-white'}`}
                             onClick={() => setActiveView('consultants')}
                         >
                             <Users className="w-4 h-4 inline mr-1" /> Consultants
                         </button>
                         <button
-                            className={`px-4 py-2 text-sm ${activeView === 'invoices' ? 'bg-primary text-white' : 'bg-white'}`}
+                            className={`px-4 py-2 text-sm ${activeView === 'invoices' ? 'bg-brand-500 text-white' : 'bg-white'}`}
                             onClick={() => setActiveView('invoices')}
                         >
                             <FileText className="w-4 h-4 inline mr-1" /> Invoices
