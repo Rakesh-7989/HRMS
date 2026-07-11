@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -27,7 +27,9 @@ import {
   Package,
   Wrench,
   CheckCircle2,
-  PlusCircle
+  PlusCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +37,8 @@ import { toast } from 'react-hot-toast';
 import type { Asset, AssetStatus, AssetCategory } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
+import { DataTable } from '@/components/ui/DataTable';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 export const AssetsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -363,6 +367,198 @@ export const AssetsPage: React.FC = () => {
     }
   };
 
+  // DataTable columns
+  const assetColumns = [
+    {
+      header: t('assets.asset'),
+      accessorKey: 'name' as keyof Asset,
+      className: 'w-48',
+      cell: (asset: Asset) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900 dark:text-white">
+            {asset.name}
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {asset.asset_code}
+          </div>
+        </div>
+      ),
+    },
+    ...(canViewBarcode
+      ? [
+          {
+            header: t('assets.barcode'),
+            accessorKey: 'barcode' as keyof Asset,
+            className: 'w-32',
+            cell: (asset: Asset) => (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handlePrintBarcode(asset.id)}
+                    className="text-gray-400 hover:text-gray-600"
+                    title="Print Barcode"
+                  >
+                    <Printer size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDownloadBarcode(asset.id, asset.asset_code)}
+                    className="text-gray-400 hover:text-gray-600"
+                    title="Download Barcode"
+                  >
+                    <Download size={14} />
+                  </button>
+                </div>
+              </div>
+            ),
+          },
+        ]
+      : []),
+    {
+      header: t('assets.category'),
+      accessorKey: 'category' as keyof Asset,
+      className: 'w-32',
+      cell: (asset: Asset) => (
+        <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-1 rounded-md">
+          {asset.category}
+        </span>
+      ),
+    },
+    {
+      header: t('assets.status'),
+      accessorKey: 'status' as keyof Asset,
+      className: 'w-32',
+      cell: (asset: Asset) => (
+        <span
+          className={`inline-flex px-3 py-1 text-[10px] font-black rounded-full border uppercase tracking-wider ${getStatusColor(asset.status)}`}
+        >
+          {asset.status.replace('_', ' ')}
+        </span>
+      ),
+    },
+    {
+      header: t('assets.assignedTo'),
+      accessorKey: 'assigned_employee' as keyof Asset,
+      className: 'w-40',
+      cell: (asset: Asset) => (
+        asset.assigned_employee ? (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              {asset.assigned_employee.first_name} {asset.assigned_employee.last_name}
+            </span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      header: t('assets.assignedBy'),
+      accessorKey: 'assigned_by_employee' as keyof Asset,
+      className: 'w-40',
+      cell: (asset: Asset) => (
+        asset.assigned_by_employee ? (
+          <span className="text-sm text-gray-900 dark:text-white">
+            {asset.assigned_by_employee.first_name} {asset.assigned_by_employee.last_name}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      header: t('assets.assignedDate'),
+      accessorKey: 'assigned_date' as keyof Asset,
+      className: 'w-32',
+      cell: (asset: Asset) => (
+        asset.assigned_date ? format(new Date(asset.assigned_date), 'MMM dd, yyyy') : '-'
+      ),
+    },
+    {
+      header: t('assets.lastUpdated'),
+      accessorKey: 'updated_at' as keyof Asset,
+      className: 'w-32',
+      cell: (asset: Asset) => (
+        format(new Date(asset.updated_at), 'MMM dd, yyyy')
+      ),
+    },
+    {
+      header: t('assets.actions'),
+      accessorKey: 'id' as keyof Asset,
+      className: 'w-56',
+      cell: (asset: Asset) => (
+        <div className="flex items-center gap-2">
+          {canViewDetails && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/assets/${asset.id}`)}
+              title="View Details"
+            >
+              <Eye size={16} />
+            </Button>
+          )}
+          {(canUpdate || canAssign || canDelete) ? (
+            <>
+              {canUpdate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/assets/${asset.id}/edit`)}
+                  title="Edit Asset"
+                >
+                  <Edit size={16} />
+                </Button>
+              )}
+              {canAssign && (
+                asset.status === 'AVAILABLE' ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleAssign(asset.id)}
+                    title="Assign Asset"
+                  >
+                    <UserCheck size={16} />
+                  </Button>
+                ) : asset.status === 'ASSIGNED' ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSwap(asset.id)}
+                      title="Swap / Upgrade Asset"
+                    >
+                      <RefreshCw size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleUnassign(asset.id)}
+                      title="Return Asset"
+                    >
+                      <UserX size={16} />
+                    </Button>
+                  </>
+                ) : null
+              )}
+            </>
+          ) : (
+            canRequestAsset &&
+            asset.status === 'AVAILABLE' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRequest(asset.id)}
+                title="Request Asset"
+              >
+                <UserCheck size={16} />
+              </Button>
+            )
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <DashboardLayout
       title={canManage ? t('assets.assetManagement') : t('assets.myAssets')}
@@ -550,200 +746,15 @@ export const AssetsPage: React.FC = () => {
 
         {/* Assets Table Container */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-white/5 rounded-[2rem] shadow-elev-2 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-neutral-50/50 dark:bg-white/5 border-b border-neutral-100 dark:border-white/5">
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.asset')}</th>
-                  {canViewBarcode && <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.barcode')}</th>}
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.category')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.status')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedTo')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedBy')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.assignedDate')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.lastUpdated')}</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{t('assets.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center">
-                      <div className="flex items-center justify-center gap-2 text-gray-500">
-                        <Loader2 className="animate-spin" size={20} />
-                        Loading assets...
-                      </div>
-                    </td>
-                  </tr>
-                ) : isError ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center">
-                      <div className="flex flex-col items-center gap-2 text-red-500">
-                        <AlertCircle size={24} />
-                        <span>Failed to load assets. Please try again.</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => queryClient.invalidateQueries({ queryKey: ['assets'] })}
-                        >
-                          Retry
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredAssets.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                      {canManage ? t('assets.noAssetsFound') : t('assets.noAssetsAssigned')}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {asset.name}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {asset.asset_code}
-                          </div>
-                        </div>
-                      </td>
-                      {canViewBarcode && (
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => handlePrintBarcode(asset.id)}
-                                className="text-gray-400 hover:text-gray-600"
-                                title="Print Barcode"
-                              >
-                                <Printer size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDownloadBarcode(asset.id, asset.asset_code)}
-                                className="text-gray-400 hover:text-gray-600"
-                                title="Download Barcode"
-                              >
-                                <Download size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                      )}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-neutral-50 dark:bg-white/5 px-2 py-1 rounded-md">
-                          {asset.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-3 py-1 text-[10px] font-black rounded-full border ${getStatusColor(asset.status)} uppercase tracking-wider`}
-                        >
-                          {asset.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {asset.assigned_employee ? (
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {asset.assigned_employee.first_name} {asset.assigned_employee.last_name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {asset.assigned_by_employee ? (
-                          <span className="text-sm text-gray-900 dark:text-white">
-                            {asset.assigned_by_employee.first_name} {asset.assigned_by_employee.last_name}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {asset.assigned_date ? format(new Date(asset.assigned_date), 'MMM dd, yyyy') : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {format(new Date(asset.updated_at), 'MMM dd, yyyy')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          {canViewDetails && (
-                            <button
-                              onClick={() => navigate(`/assets/${asset.id}`)}
-                              className="text-brand-500 hover:text-brand-600"
-                              title="View Details"
-                            >
-                              <Eye size={16} />
-                            </button>
-                          )}
-
-                          {(canUpdate || canAssign || canDelete) ? (
-                            <>
-                              {canUpdate && (
-                                <button
-                                  onClick={() => navigate(`/assets/${asset.id}/edit`)}
-                                  className="text-brand-600 hover:text-brand-700"
-                                  title="Edit Asset"
-                                >
-                                  <Edit size={16} />
-                                </button>
-                              )}
-                              {canAssign && (
-                                asset.status === 'AVAILABLE' ? (
-                                  <button
-                                    onClick={() => handleAssign(asset.id)}
-                                    className="text-green-600 hover:text-green-800"
-                                    title="Assign Asset"
-                                  >
-                                    <UserCheck size={16} />
-                                  </button>
-                                ) : asset.status === 'ASSIGNED' ? (
-                                  <>
-                                    <button
-                                      onClick={() => handleSwap(asset.id)}
-                                      className="text-amber-600 hover:text-amber-800"
-                                      title="Swap / Upgrade Asset"
-                                    >
-                                      <RefreshCw size={16} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleUnassign(asset.id)}
-                                      className="text-red-600 hover:text-red-800"
-                                      title="Return Asset"
-                                    >
-                                      <UserX size={16} />
-                                    </button>
-                                  </>
-                                ) : null
-                              )}
-                            </>
-                          ) : (
-                            canRequestAsset &&
-                            asset.status === 'AVAILABLE' && (
-                              <button
-                                onClick={() => handleRequest(asset.id)}
-                                className="text-brand-600 hover:text-brand-700"
-                                title="Request Asset"
-                              >
-                                <UserCheck size={16} />
-                              </button>
-                            )
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            data={filteredAssets}
+            columns={assetColumns}
+            loading={isLoading}
+            emptyMessage={canManage ? t('assets.noAssetsFound') : t('assets.noAssetsAssigned')}
+            pageSize={10}
+            pageSizeOptions={[10, 25, 50, 100]}
+          />
         </div>
-      </div>
 
       {/* Request Asset Modal */}
       <Dialog
@@ -1076,6 +1087,7 @@ export const AssetsPage: React.FC = () => {
           </div>
         </form>
       </Dialog>
-    </DashboardLayout >
+      </div>
+    </DashboardLayout>
   );
 };
