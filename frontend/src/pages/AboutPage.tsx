@@ -5,6 +5,7 @@ import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
+import { useTranslation } from 'react-i18next';
 
 const team = [
   { name: 'Arun Mehta', role: 'CEO & Co-Founder', avatar: 'AM', color: 'from-brand-500 to-brand-700', bio: 'Ex-Zoho, 15+ years in HR tech' },
@@ -23,13 +24,14 @@ const milestones = [
 ];
 
 export const AboutPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white">
       <SEO
-        title="About WellZo - HR & Payroll Made in India"
-        description="WellZo is on a mission to simplify HR and payroll for every Indian business. Born in Bengaluru, built for Bharat. SOC 2 certified, 100% data localisation."
+        title={t('marketing.about.pageTitle')}
+        description={t('marketing.about.sectionSubtitle')}
         keywords="About WellZo, Indian HRMS company, HR software India, Bengaluru startup"
       />
       {/* Hero */}
@@ -44,11 +46,11 @@ export const AboutPage: React.FC = () => {
           <AnimatedText variant="slide-up" className="text-4xl md:text-6xl font-extrabold mb-6 text-white">
             HR & Payroll,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-teal-400">
-              Made in India
+              {t('marketing.about.sectionTitleAccent')}
             </span>
           </AnimatedText>
           <p className="text-neutral-300 text-lg max-w-2xl mx-auto leading-relaxed">
-            We're on a mission to simplify HR and payroll for every Indian business. Born in Bengaluru, built for Bharat.
+            {t('marketing.about.sectionSubtitle')}
           </p>
         </div>
       </section>
@@ -58,13 +60,13 @@ export const AboutPage: React.FC = () => {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-12">
             {[
-              { icon: Target, title: 'Our Mission', desc: 'Make world-class HR technology accessible to every Indian SMB. No complexity, no enterprise pricing.' },
-              { icon: Heart, title: 'Our Values', desc: 'Trust, transparency, and compliance-first design. We treat your employee data with the same care we expect for our own.' },
-              { icon: Shield, title: 'Our Commitment', desc: '100% data localisation in India. Full compliance with Indian labour laws, tax regimes, and data protection acts.' },
+              { icon: Target, title: t('marketing.about.values[0]'), desc: t('marketing.about.values[1]') },
+              { icon: Heart, title: t('marketing.about.values[2]'), desc: t('marketing.about.values[3]') },
+              { icon: Shield, title: t('marketing.about.values[4]'), desc: t('marketing.about.values[5]') },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
-                <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
                   <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/20 text-brand-500 flex items-center justify-center mb-4">
                     <Icon size={24} />
@@ -81,7 +83,7 @@ export const AboutPage: React.FC = () => {
       {/* Milestones */}
       <section className="py-24 bg-neutral-50 dark:bg-neutral-900/50">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-extrabold text-center mb-16">Our Journey</h2>
+          <h2 className="text-3xl font-extrabold text-center mb-16">{t('marketing.about.journeyTitle')}</h2>
           <div className="relative">
             <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-brand-500 via-teal-500 to-brand-500 hidden md:block" />
             <div className="space-y-12">
@@ -104,9 +106,9 @@ export const AboutPage: React.FC = () => {
       {/* Team */}
       <section className="py-24">
         <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-3xl font-extrabold text-center mb-4">Meet the Team</h2>
+          <h2 className="text-3xl font-extrabold text-center mb-4">{t('marketing.about.teamTitle')}</h2>
           <p className="text-neutral-500 dark:text-neutral-400 text-center mb-16 max-w-xl mx-auto">
-            Built by HR tech veterans who understand the pain of Indian compliance.
+            {t('marketing.about.teamSubtitle')}
           </p>
           <div className="grid md:grid-cols-4 gap-6">
             {team.map((member, i) => (
@@ -128,10 +130,10 @@ export const AboutPage: React.FC = () => {
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-brand-900 to-neutral-950 text-center">
         <div className="max-w-2xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to Simplify HR?</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">{t('marketing.about.ctaTitle')}</h2>
           <p className="text-neutral-300 mb-8">Join 10,000+ Indian businesses using WellZo.</p>
           <Button variant="premium" size="xl" onClick={() => navigate('/pricing')}>
-            Start Free Trial <ArrowRight size={20} />
+            {t('marketing.about.ctaButton')} <ArrowRight size={20} />
           </Button>
         </div>
       </section>

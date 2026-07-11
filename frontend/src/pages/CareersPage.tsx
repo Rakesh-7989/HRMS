@@ -5,6 +5,7 @@ import { MapPin, Briefcase, Clock, IndianRupee, Heart, Zap, Users, BookOpen, Cof
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { SEO } from '@/components/SEO';
+import { useTranslation } from 'react-i18next';
 
 interface Position {
   id: string;
@@ -35,6 +36,7 @@ const benefits = [
 
 export const CareersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [selectedDept, setSelectedDept] = useState('All');
   const depts = ['All', ...new Set(positions.map(p => p.department))];
   const filtered = selectedDept === 'All' ? positions : positions.filter(p => p.department === selectedDept);

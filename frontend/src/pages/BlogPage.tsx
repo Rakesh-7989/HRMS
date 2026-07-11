@@ -5,6 +5,8 @@ import { Search, Calendar, Clock, ArrowRight, Tag, ChevronRight } from 'lucide-r
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { SEO } from '@/components/SEO';
+import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface BlogPost {
   slug: string;
@@ -123,6 +125,7 @@ const imageColors: Record<string, string> = {
 };
 
 export const BlogListPage: React.FC = () => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const navigate = useNavigate();
@@ -135,7 +138,7 @@ export const BlogListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white">
-      <SEO title="Blog - HR, Payroll & Compliance Insights for Indian SMBs" description="Expert insights on HR management, payroll compliance, PF/ESI, Form 16, and AI in HR for Indian businesses." keywords="HR blog India, payroll compliance, PF ESI guide, Form 16, HR technology" />
+      <SEO title={t('marketing.blog.pageTitle')} description={t('marketing.blog.sectionSubtitle')} keywords="HR blog India, payroll compliance, PF ESI guide, Form 16, HR technology" />
 
       <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-800">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -144,9 +147,9 @@ export const BlogListPage: React.FC = () => {
             <span className="font-bold">WellZo</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/features" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">Features</Link>
-            <Link to="/pricing" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">Pricing</Link>
-            <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>Start Free Trial</Button>
+            <Link to="/features" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">{t('marketing.nav.features')}</Link>
+            <Link to="/pricing" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">{t('marketing.nav.pricing')}</Link>
+            <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>{t('marketing.hero.ctaPrimary')}</Button>
           </div>
         </div>
       </nav>
@@ -154,15 +157,17 @@ export const BlogListPage: React.FC = () => {
       <section className="pt-32 pb-16 bg-gradient-to-b from-neutral-950 via-brand-950 to-neutral-950">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-white">
-            HR & Compliance{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-teal-400">Blog</span>
+            {t('marketing.blog.sectionTitle')} {' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-teal-400">
+              {t('marketing.blog.sectionTitleAccent')}
+            </span>
           </AnimatedText>
           <p className="text-neutral-300 text-lg max-w-2xl mx-auto mb-8">
-            Expert insights on HR management, payroll compliance, and building great workplaces in India.
+            {t('marketing.blog.sectionSubtitle')}
           </p>
           <div className="max-w-md mx-auto relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input type="text" placeholder="Search articles..."
+            <input type="text" placeholder={t('marketing.blog.searchPlaceholder')}
               value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder:text-neutral-500 focus:outline-none focus:border-brand-500/50 text-sm" />
           </div>
@@ -178,7 +183,7 @@ export const BlogListPage: React.FC = () => {
                   ? 'bg-brand-500 text-white shadow-elev-2'
                   : 'bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 hover:border-brand-300'
               }`}>
-              {cat}
+              {cat === 'All' ? t('common.all') : cat}
             </button>
           ))}
         </div>

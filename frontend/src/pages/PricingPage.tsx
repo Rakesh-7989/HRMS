@@ -15,6 +15,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { ContactSalesModal } from '@/components/ContactSalesModal';
 import { SEO } from '@/components/SEO';
+import { useTranslation } from 'react-i18next';
 
 declare global {
   interface Window {
@@ -358,6 +359,7 @@ export const PricingPage: React.FC = () => {
   const tenantId = searchParams.get('tenantId');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
   const [employeeCount] = React.useState<number>(1);
   const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
@@ -521,45 +523,44 @@ export const PricingPage: React.FC = () => {
     }
   };
 
-  return (
+return (
     <>
       <SEO
-        title="Pricing - WellZo HR & Payroll Platform"
-        description="Transparent pricing for Indian SMBs. Standard, Premium, and Elite plans with PF/ESI/PT/LWF compliance, attendance, leave, performance management, and more. 14-day free trial."
+        title={t('marketing.pricing.pageTitle')}
+        description={t('marketing.pricing.sectionSubtitle')}
         keywords="HRMS pricing, payroll software cost, HR software India pricing, PF ESI software price, SMB HRMS plans"
       />
       <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
-      <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <AnimatedLogo size="sm" />
+        <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+              <AnimatedLogo size="sm" />
+            </div>
+            <div className="flex items-center gap-6">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <ThemeToggle />
+                  <button onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))} className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">
+                    {t('common.dashboard')}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-6">
+                  <ThemeToggle />
+                  <button onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">{t('marketing.hero.signIn')}</button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            {user ? (
-              <div className="flex items-center gap-4">
-                <ThemeToggle />
-                <button onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))} className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">
-                  Dashboard
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-6">
-                <ThemeToggle />
-                <button onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">Login</button>
-              </div>
-            )}
+        </nav>
 
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto pt-24 pb-20 px-6">
-        {/* Header Section - More Compact */}
-        <div className="flex flex-col items-center text-center mb-12">
-          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter max-w-2xl leading-tight text-gray-900 dark:text-white">
-            Pricing Built for <span className="text-brand-500">Indian SMBs</span>
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg mb-8">All plans include PF, ESI, PT, LWF compliance, Form 16 generation, and Indian tax regime support. No hidden fees.</p>
+        <div className="max-w-7xl mx-auto pt-24 pb-20 px-6">
+          {/* Header Section - More Compact */}
+          <div className="flex flex-col items-center text-center mb-12">
+            <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter max-w-2xl leading-tight text-gray-900 dark:text-white">
+              {t('marketing.pricing.sectionTitle')} <span className="text-brand-500">{t('marketing.pricing.sectionTitleAccent')}</span>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg mb-8">{t('marketing.pricing.sectionSubtitle')}</p>
 
           {/* Dynamic Calculator Controls */}
           {/* Note: Employee count selector is hidden for now as it's fixed to 10. */}
