@@ -87,7 +87,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ module, surveyId, em
         {module === 'recruitment' && (
           <div>
             <h3 className="font-bold text-neutral-900 dark:text-white mb-4">Resume Parser</h3>
-            <AIResumeParser onParsed={(data) => console.log('Parsed resume:', data)} />
+            <AIResumeParser onParsed={() => {}} />
           </div>
         )}
       </div>

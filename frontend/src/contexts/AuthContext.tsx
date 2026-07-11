@@ -74,7 +74,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               navigate('/login');
             } else {
               // For other errors, fall back to stored minimal user
-              console.log('Using stored user data due to profile fetch error');
               setUser(storedUser);
             }
           })

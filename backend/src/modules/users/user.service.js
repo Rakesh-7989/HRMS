@@ -214,7 +214,6 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
           throw new Error("An employee with this email already exists in your organization.");
         } else {
           // No employee record for this existing user - we can proceed by linking them
-          console.log(`[DEBUG_USER] Linking existing user ${existingUser.id} to new employee record`);
           existingUserId = existingUser.id;
         }
       } else {
@@ -1474,8 +1473,6 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
   // config: backend/src/config/env -> ../../config/env
   const env = require('../../config/env');
 
-  console.log("[updateProfilePhoto] Service called for User:", userId, "Tenant:", actor.tenantId, "Path:", photoPath);
-
   // Use a raw client to bypass RLS restrictions that block self-update visibility
   const client = new Client({
     connectionString: env.DATABASE_URL,
@@ -1498,14 +1495,11 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
       try {
         if (fs.existsSync(currentRes.rows[0].profile_photo_url)) {
           fs.unlinkSync(currentRes.rows[0].profile_photo_url);
-          console.log("[updateProfilePhoto] Deleted old photo:", currentRes.rows[0].profile_photo_url);
         }
       } catch (e) {
         console.error("Failed to delete old profile photo:", e);
       }
     }
-    console.log("[updateProfilePhoto] Executing UPDATE employees SET profile_photo_url =", updatedUrl);
-
     const updateRes = await client.query(
       `UPDATE employees SET profile_photo_url=$1, updated_at=now() WHERE user_id=$2 RETURNING *`,
       [updatedUrl, userId]
@@ -1513,7 +1507,6 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
 
     if (updateRes.rowCount === 0) {
       console.warn("[updateProfilePhoto] UPDATE affected 0 rows via raw client. Attempting to create employee record.");
-
       // Fetch user details for insert
       const userDetails = await client.query(`SELECT first_name, last_name, email, role FROM users WHERE id = $1`, [userId]);
 
@@ -1532,11 +1525,9 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
             RETURNING *
           `, [userId, actor.tenantId, updatedUrl, first_name || '', last_name || '', email, role]);
 
-      console.log("[updateProfilePhoto] Created new employee record:", insertRes.rows[0].id);
       return insertRes.rows[0];
     }
 
-    console.log("[updateProfilePhoto] UPDATE success via raw client. Row returned:", updateRes.rows[0].id);
     return updateRes.rows[0];
 
   } catch (err) {

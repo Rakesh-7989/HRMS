@@ -276,7 +276,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         pc.onconnectionstatechange = () => {
             if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
-                console.log(`[WebRTC] Connection with ${targetUserId} state: ${pc.connectionState}. Cleaning up.`);
                 peerConnections.current.delete(targetUserId);
                 setRemoteStreams(prev => { const next = { ...prev }; delete next[targetUserId]; return next; });
                 setCallParticipants(prev => { const next = { ...prev }; delete next[targetUserId]; return next; });
@@ -325,7 +324,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         s.on('incoming-call', async (data) => {
             if (data.isGroup) {
                 setActiveRoomCall(data.conversationId);
-                console.log(`[GroupSignal] From: ${data.from} Room: ${data.conversationId}`);
             }
 
             const isAlreadyInThisCall = !!(data.conversationId && activeCallRef.current?.conversationId === data.conversationId);
@@ -335,7 +333,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (localStreamRef.current) {
                     const existingPC = peerConnections.current.get(data.from);
                     if (!existingPC || ["closed", "failed", "disconnected"].includes(existingPC.connectionState)) {
-                        console.log(`[Mesh] Proactive handshake with new joiner: ${data.from}`);
                         const pc = setupPeerConnection(data.from, localStreamRef.current, s);
                         try {
                             const offer = await pc.createOffer();
@@ -355,8 +352,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // 2. NEW CALL NOTIFICATION: If it's a new call (or one we haven't joined yet)
             const isInvite = data.isGroup && !data.offer;
             const isNewCallSync = data.offer || isInvite;
-
-            console.log(`[CallSignal] isInvite: ${isInvite}, isNew Call: ${isNewCallSync}, AlreadyIn: ${isAlreadyInThisCall}`);
 
             if (isNewCallSync && data.from && data.from !== user?.id) {
                 // ALLOW offers if we are in the call but the PC is gone (someone re-joined)
@@ -442,7 +437,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         s.on('group-call-ended', ({ conversationId }) => {
-            console.log(`🚫 Room ${conversationId} call has completely ended.`);
             setActiveRoomCall(prev => prev === conversationId ? null : prev);
         });
 
@@ -638,7 +632,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Handle concurrent calls: Put existing call on hold
         if (activeCallRef.current) {
-            console.log("[Call] Putting current call on hold to accept incoming call.");
             const current = activeCallRef.current;
             setIsResuming(true);
             setHeldCall(current);
@@ -714,7 +707,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Handle concurrent calls: Leave current room before joining new one
         if (activeCallRef.current && activeCallRef.current.conversationId !== conversationId) {
-            console.log("[Call] Putting current call on hold to join new session.");
             const current = activeCallRef.current;
             setIsResuming(true);
             setHeldCall(current);
@@ -765,7 +757,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // If screen sharing is active, stop it first so we don't conflict tracks
         if (isScreenSharing) {
-            console.log("[toggleVideo] Stopping active screen share before toggling camera");
             if (screenStreamRef.current) {
                 screenStreamRef.current.getTracks().forEach(t => t.stop());
                 screenStreamRef.current = null;
@@ -824,7 +815,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const h = heldCallRef.current;
             setHeldCall(null);
             setIsResuming(true);
-            console.log("[Call] Automatically resuming previous call.");
             import('react-hot-toast').then(({ toast }) => {
                 toast("Resuming previous call...", { icon: '🔄', duration: 3000 });
             });
@@ -901,7 +891,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const stopScreenShare = useCallback(() => {
         if (!isScreenSharing) return;
 
-        console.log("[ScreenShare] Stopping share.");
         if (screenStreamRef.current) {
             screenStreamRef.current.getTracks().forEach(t => t.stop());
             screenStreamRef.current = null;
@@ -943,7 +932,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                 // CRITICAL: Use a stable reference to stopScreenShare to avoid stale closure
                 track.onended = () => {
-                    console.log("[ScreenShare] Track ended via browser UI");
                     stopScreenShare();
                 };
 

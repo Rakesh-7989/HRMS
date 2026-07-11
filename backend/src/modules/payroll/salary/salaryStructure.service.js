@@ -301,8 +301,6 @@ exports.updateSalaryStructure = async (tenantId, structureId, data) => {
                 [tenantId, structureId]
             );
 
-            console.log(`[updateSalaryStructure] Refreshing ${assignments.rowCount} employee assignments for structure ${structureId}`);
-
             for (const assign of assignments.rows) {
                 try {
                     // Recalculate breakdown using the UPDATED structure
@@ -770,8 +768,6 @@ exports.migrateEmployeesToStructure = async (tenantId, structureId, userId) => {
     let successCount = 0;
     let failCount = 0;
     const errors = [];
-
-    console.log(`[MigrateStructure] Found ${employeesRes.rowCount} employees eligible for migration to ${structure.name}`);
 
     for (const emp of employeesRes.rows) {
         try {

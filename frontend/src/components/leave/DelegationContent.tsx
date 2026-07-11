@@ -40,9 +40,7 @@ export const DelegationContent: React.FC = () => {
         queryFn: async () => {
             try {
                 const res = await api.get('/users', { params: { limit: 200 } });
-                console.log('[Delegation] Raw API response:', res.data);
                 const users = res.data?.users || res.data?.data || res.data || [];
-                console.log('[Delegation] Parsed users:', users.length, 'items');
                 if (Array.isArray(users)) {
                     return users.filter((u: any) => u.id !== user?.id);
                 }

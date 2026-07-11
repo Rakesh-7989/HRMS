@@ -330,19 +330,10 @@ exports.getOrgTree = async (req, res) => {
 
 exports.uploadProfilePhoto = async (req, res) => {
   try {
-    console.log("[uploadProfilePhoto] Start. User:", req.user.id, "Tenant:", req.user.tenantId);
 
     if (!req.file) {
       console.error("[uploadProfilePhoto] No file received");
       throw new Error("Please upload a file");
-    }
-
-    // Log critical details about where multer put the file
-    console.log("[uploadProfilePhoto LOG] CWD:", process.cwd());
-    if (req.file) {
-      console.log("[uploadProfilePhoto LOG] req.file path (multer):", req.file.path);
-      console.log("[uploadProfilePhoto LOG] req.file dest:", req.file.destination);
-      console.log("[uploadProfilePhoto LOG] req.file filename:", req.file.filename);
     }
 
     // Prepare filename and destination
@@ -361,12 +352,10 @@ exports.uploadProfilePhoto = async (req, res) => {
     if (req.file.buffer) {
       // If using memoryStorage, write buffer to final destination
       fs.writeFileSync(finalPath, req.file.buffer);
-      console.log(`[uploadProfilePhoto LOG] Buffer written to: ${finalPath}`);
     } else if (req.file.path) {
       // If using diskStorage, move/rename the file
       try {
         fs.renameSync(req.file.path, finalPath);
-        console.log(`[uploadProfilePhoto LOG] File moved manually to: ${finalPath}`);
       } catch (mvErr) {
         // Fallback copy+unlink if across devices
         if (mvErr.code === 'EXDEV') {
@@ -382,15 +371,12 @@ exports.uploadProfilePhoto = async (req, res) => {
 
     // Relative path for DB/URL
     const dbPath = `uploads/profiles/${filename}`;
-    console.log("[uploadProfilePhoto] File received (relative):", dbPath);
 
     // Update DB
     const result = await userService.updateProfilePhoto(req.db, req.user.id, dbPath, req.user);
 
     if (!result) {
       console.error("[uploadProfilePhoto] DB Update returned no result! Checking user match...");
-    } else {
-      console.log("[uploadProfilePhoto] DB Update success. New URL:", result.profile_photo_url);
     }
 
     // Audit

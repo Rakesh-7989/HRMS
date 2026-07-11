@@ -688,7 +688,6 @@ const emailPayslip = async (tenantId, payslipId, toEmail) => {
 };
 
 const generateBulk = async (tenantId, runId) => {
-    console.log(`[Payslip Service] Starting bulk generation for run ${runId}`);
 
     // Fetch all processed items
     const itemsRes = await db.query(
@@ -709,8 +708,6 @@ const generateBulk = async (tenantId, runId) => {
             console.error(`Failed to process payslip for item ${item.id}`, error);
         }
     }
-
-    console.log(`[Payslip Service] Bulk generation completed. Processed ${successCount} payslips.`);
 
     // Notify employees: payslip ready
     try {

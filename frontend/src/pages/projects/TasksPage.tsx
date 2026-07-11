@@ -143,19 +143,12 @@ export const TasksPage: React.FC = () => {
 
     // Update board config from backend Kanban columns when they're loaded
     React.useEffect(() => {
-        console.log('[TasksPage] boardConfig useEffect triggered', {
-            hasKanbanStatus: !!kanbanStatus,
-            columnsCount: kanbanStatus?.columns?.length,
-            columns: kanbanStatus?.columns
-        });
         if (kanbanStatus?.columns && kanbanStatus.columns.length > 0) {
-            // Convert backend columns to board config format
             const configFromBackend: BoardConfigItem[] = kanbanStatus.columns.map(col => ({
                 id: col.column_key as TaskStatus,
                 title: col.column_label,
                 isVisible: col.is_enabled,
             }));
-            console.log('[TasksPage] Setting boardConfig from backend:', configFromBackend);
             setBoardConfig(configFromBackend);
         } else if (projectId) {
             // Fallback: try to load from localStorage for sample project
@@ -164,7 +157,7 @@ export const TasksPage: React.FC = () => {
                 try {
                     setBoardConfig(JSON.parse(savedConfig));
                 } catch (e) {
-                    console.error("Failed to parse board settings", e);
+            console.error("Failed to parse board settings", e);
                     setBoardConfig(DEFAULT_BOARD_CONFIG);
                 }
             } else {
@@ -175,7 +168,6 @@ export const TasksPage: React.FC = () => {
 
     // Handler for when Kanban board is set up
     const handleKanbanSetupComplete = () => {
-        console.log('[TasksPage] Kanban setup complete, invalidating queries and clearing localStorage');
         // Clear any cached localStorage settings that might override backend columns
         if (projectId) {
             localStorage.removeItem(`kanban_settings_${projectId}`);

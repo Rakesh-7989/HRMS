@@ -385,7 +385,6 @@ export const PricingPage: React.FC = () => {
 
   const displayPlans = React.useMemo(() => {
     if (!Array.isArray(plans)) return [];
-    console.log('--- ALL PLANS FROM BACKEND ---', plans.map(p => ({ name: p.name, setup_fee: p.setup_fee })));
 
     const targetPlans = plans.filter(p => ['STANDARD', 'PREMIUM', 'ELITE'].includes(p.name));
 

@@ -50,7 +50,6 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
     });
 
     const handleUseDefault = () => {
-        console.log('[KanbanSetupCard] handleUseDefault called - creating with default columns');
         createKanbanMutation.mutate({ useDefault: true, forceReset: true });
     };
 
@@ -63,8 +62,6 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
             alert('Please add at least one column.');
             return;
         }
-        console.log('[KanbanSetupCard] handleSaveCustomColumns called with:', customColumns);
-        console.log('[KanbanSetupCard] Mutation payload:', { useDefault: false, columns: customColumns, forceReset: true });
         createKanbanMutation.mutate({ useDefault: false, columns: customColumns, forceReset: true });
         setShowCustomizeModal(false);
     };

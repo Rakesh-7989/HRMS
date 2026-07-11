@@ -84,14 +84,11 @@ export const RegisterPage: React.FC = () => {
             employee_count: Yup.number().min(1, 'Min 1').required('Required'),
         }),
         onSubmit: async () => {
-            console.log("Submit Step 1 triggered", formik.values);
             setError(null);
             setLoading(true);
             try {
                 // 1. Check Domain Availability
-                console.log("Checking domain availability:", formik.values.domain);
                 const domainCheck = await tenantRegistrationService.checkAvailability({ subdomain: formik.values.domain });
-                console.log("Domain check result:", domainCheck);
                 if (!domainCheck.available) {
                     const msg = domainCheck.message || 'Workspace name is already taken';
                     formik.setFieldError('domain', msg);
@@ -101,9 +98,7 @@ export const RegisterPage: React.FC = () => {
                 }
 
                 // 2. Check Email Availability
-                console.log("Checking email availability:", formik.values.email);
                 const emailCheck = await tenantRegistrationService.checkAvailability({ email: formik.values.email });
-                console.log("Email check result:", emailCheck);
                 if (!emailCheck.available) {
                     const msg = emailCheck.message || 'Email is already registered';
                     formik.setFieldError('email', msg);
@@ -113,7 +108,6 @@ export const RegisterPage: React.FC = () => {
                 }
 
                 // If all good, proceed to review
-                console.log("Validation passed, going to review step");
                 setStep('review');
             } catch (err: any) {
                 console.error("Submission error in Step 1:", err);
@@ -189,7 +183,6 @@ export const RegisterPage: React.FC = () => {
         }
 
         try {
-            console.log("Validating coupon:", code);
             const response = await api.post('/subscriptions/coupons/validate', { code });
             if (response.data.success) {
                 setCouponData(response.data.data);
@@ -234,9 +227,6 @@ export const RegisterPage: React.FC = () => {
         }
         setError(null);
         setLoading(true);
-        console.log('--- Handle Verify OTP Start ---');
-        console.log('Email:', formik.values.email);
-        console.log('Plan ID:', planId);
 
         try {
             await tenantRegistrationService.verifyOtp(formik.values.email, otpCode);
@@ -248,9 +238,6 @@ export const RegisterPage: React.FC = () => {
                 coupon_code: formik.values.coupon || undefined
             });
 
-            console.log('--- Register Response Received ---', response);
-            
-            // The service returns the whole JSON object: { status, message, data: { paymentRequired, paymentData, ... } }
             const resultData = response.data;
             const paymentRequired = resultData?.paymentRequired;
             const paymentData = resultData?.paymentData;
@@ -258,7 +245,6 @@ export const RegisterPage: React.FC = () => {
             if (paymentRequired && paymentData) {
                 // If amount is 0, backend might say skip_checkout
                 if ((paymentData as any).skip_checkout) {
-                    console.log('Zero amount detected, bypassing Cashfree and verifying...');
                     try {
                         await tenantRegistrationService.verifyPaymentPublic((paymentData as any).order_id);
                         setStep('success');
@@ -269,7 +255,6 @@ export const RegisterPage: React.FC = () => {
                     return;
                 }
 
-                console.log('Proceeding to Cashfree Checkout with Session:', paymentData.payment_session_id);
                 try {
                     const cashfree = (window as any).Cashfree({ mode: "sandbox" });
                     await cashfree.checkout({
@@ -293,7 +278,6 @@ export const RegisterPage: React.FC = () => {
                 });
                 window.location.href = `/complete-payment?${params.toString()}`;
             } else {
-                console.log('Registration success - No payment required.');
                 setStep('success');
             }
         } catch (err: any) {
@@ -301,7 +285,6 @@ export const RegisterPage: React.FC = () => {
             setError(err?.response?.data?.message || 'Failed to complete registration');
         } finally {
             setLoading(false);
-            console.log('--- Handle Verify OTP End ---');
         }
     };
 
