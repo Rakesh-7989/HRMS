@@ -9,8 +9,11 @@ import { Plus, CheckCircle, XCircle, Search, Filter, Calendar, User, TrendingUp 
 import { format, subDays } from 'date-fns';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { LeaveApplication } from '@/services/leave.service';
+import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 export const LeaveContent: React.FC = () => {
+    const { t } = useTranslation();
     const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
@@ -89,6 +92,7 @@ export const LeaveContent: React.FC = () => {
         mutationFn: (id: string) => leaveService.approveLeave(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leaves'] });
+            showToast.success(t('common.leaveApproved', { defaultValue: 'Leave request approved' }));
         },
     });
 
@@ -96,6 +100,7 @@ export const LeaveContent: React.FC = () => {
         mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveService.rejectLeave(id, reason),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leaves'] });
+            showToast.success(t('common.leaveRejected', { defaultValue: 'Leave request rejected' }));
             setShowRejectDialog(false);
             setRejectionReason('');
             setSelectedLeave(null);
@@ -106,6 +111,7 @@ export const LeaveContent: React.FC = () => {
         mutationFn: (id: string) => leaveService.cancelMyLeave(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leaves'] });
+            showToast.success(t('common.leaveCancelled', { defaultValue: 'Leave request cancelled' }));
         },
     });
 

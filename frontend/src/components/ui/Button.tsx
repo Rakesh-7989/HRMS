@@ -27,7 +27,7 @@ export const Button: React.FC<ButtonProps> = ({
   const effectivelyDisabled = disabled || isLoading || isSubscriptionDisabled;
 
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-950';
 
   const getVariantClasses = () => {
     switch (variant) {
@@ -40,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
       case 'outline':
         return 'border-2 border-brand-300 dark:border-brand-600 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all duration-200 hover:border-brand-500 hover:shadow-elev-3';
       case 'ghost':
-        return 'text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all duration-200';
+        return 'text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all duration-200 focus-visible:bg-brand-50 dark:focus-visible:bg-brand-900/20';
       case 'destructive':
         return 'bg-error-500 text-white shadow-elev-4 hover:bg-error-600 hover:shadow-elev-5 active:bg-error-700 border border-error-400/20';
       case 'success':

@@ -26,6 +26,7 @@ import {
   PieChart, Pie, Cell, Legend, ComposedChart, Line
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 
 const STATUS_COLORS: Record<string, string> = {
   DONE: '#10b981',
@@ -772,9 +773,9 @@ export const EmployeeDashboard: React.FC = () => {
                           <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.first_name} {member.last_name}</p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-widest">{member.designation_name || 'Team Member'}</p>
                         </div>
-                        <button className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-neutral-100 dark:border-white/5 text-slate-400 hover:text-brand-500 transition-colors shadow-elev-1">
+                        <Button variant="ghost" size="icon" aria-label={`View profile for ${member.first_name} ${member.last_name}`}>
                           <ExternalLink size={14} />
-                        </button>
+                        </Button>
                       </div>
                     ))
                   ) : (

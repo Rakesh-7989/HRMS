@@ -769,13 +769,15 @@ export const HRDashboard: React.FC = () => {
             badge={t('common.review')}
             delay={0.9}
             headerAction={
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/leave?tab=team-requests')}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[9px] font-black uppercase tracking-widest hover:bg-brand-100 transition-all border border-brand-100/50"
               >
                 {t('common.manage')}
                 <ExternalLink className="w-2.5 h-2.5" />
-              </button>
+              </Button>
             }
           >
             {pendingRequests.length > 0 ? (
@@ -801,13 +803,15 @@ export const HRDashboard: React.FC = () => {
             subtitle={`${employeesOnLeave.length} ${t('common.staffAway')}`}
             delay={1.0}
             headerAction={
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/attendance')}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100/50"
               >
                 {t('common.logs')}
                 <ExternalLink className="w-2.5 h-2.5" />
-              </button>
+              </Button>
             }
           >
             {employeesOnLeave.length > 0 ? (

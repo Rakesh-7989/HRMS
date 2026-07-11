@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageTransition } from '@/components/common/PageTransition';
 import api from '@/services/api'; // Adjust path if needed
 import { authService } from '@/services/auth.service';
+import { Button } from '@/components/ui/Button';
 import {
     Database,
     Terminal,
@@ -145,18 +146,15 @@ export const DBADashboard = () => {
                                 autoFocus
                             />
                         </div>
-                        <button
+                        <Button
                             type="submit"
                             disabled={!password || verifying}
-                            className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                            variant="destructive"
+                            className="w-full py-3 flex items-center justify-center gap-2"
+                            isLoading={verifying}
                         >
-                            {verifying ? (
-                                <RefreshCcw className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <Unlock className="w-5 h-5" />
-                            )}
                             {verifying ? 'Verifying...' : 'Unlock Console'}
-                        </button>
+                        </Button>
                     </form>
                 </div>
             </PageTransition>
@@ -172,9 +170,9 @@ export const DBADashboard = () => {
                         <Database className="w-5 h-5 text-brand-400" />
                         <span className="font-bold text-lg tracking-tight">DBA Console</span>
                     </div>
-                    <button onClick={fetchTables} className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white" title="Refresh Tables">
+                    <Button variant="ghost" size="sm" onClick={fetchTables} aria-label="Refresh tables" isLoading={loading}>
                         <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="p-2 border-b border-gray-800">
@@ -196,17 +194,19 @@ export const DBADashboard = () => {
                     ) : (
                         <div className="py-2">
                             {filteredTables.map(table => (
-                                <button
+                                <Button
                                     key={table}
                                     onClick={() => fetchTableData(table)}
+                                    variant="ghost"
                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${selectedTable === table
                                         ? 'bg-brand-500/10 text-brand-400 border-r-2 border-brand-500'
                                         : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
                                         }`}
+                                    aria-label={`View table ${table}`}
                                 >
                                     <TableIcon className="w-3.5 h-3.5 opacity-70" />
                                     <span className="truncate">{table}</span>
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     )}
@@ -223,49 +223,49 @@ export const DBADashboard = () => {
                 {/* Toolbar / Tabs */}
                 <div className="h-14 border-b border-gray-800 bg-gray-950 flex items-center px-4 justify-between">
                     <div className="flex space-x-1 bg-gray-900 p-1 rounded-lg border border-gray-800">
-                        <button
+                        <Button
+                            variant={activeTab === 'sql' ? 'primary' : 'ghost'}
+                            size="sm"
                             onClick={() => setActiveTab('sql')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'sql'
-                                ? 'bg-brand-500 text-white shadow-elev-1'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                                }`}
+                            className="px-4 py-1.5 text-sm font-medium"
                         >
                             <Terminal className="w-4 h-4" />
                             SQL Runner
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant={activeTab === 'explorer' ? 'primary' : 'ghost'}
+                            size="sm"
                             onClick={() => setActiveTab('explorer')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'explorer'
-                                ? 'bg-brand-500 text-white shadow-elev-1'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                                }`}
+                            className="px-4 py-1.5 text-sm font-medium"
                         >
                             <TableIcon className="w-4 h-4" />
                             Data Explorer
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {activeTab === 'sql' && (
-                            <button
+                            <Button
                                 onClick={executeQuery}
                                 disabled={loading}
-                                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded shadow-elev-4 shadow-brand-900/20 text-sm font-bold transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold"
+                                isLoading={loading}
                             >
                                 <Play className="w-4 h-4 fill-current" />
                                 Run Query (Ctrl+Enter)
-                            </button>
+                            </Button>
                         )}
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => {
                                 setIsLocked(true);
                                 sessionStorage.removeItem('dba_unlocked');
                             }}
-                            className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                            title="Lock Console"
+                            aria-label="Lock Console"
                         >
                             <Lock className="w-5 h-5" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

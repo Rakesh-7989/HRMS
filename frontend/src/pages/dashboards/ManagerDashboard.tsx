@@ -191,9 +191,14 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
             {member.on_leave_today > 0 ? t('profile.profileDropdown.away') : t('common.active')}
           </p>
         </div>
-        <button className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-neutral-200 dark:border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-elev-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-neutral-200 dark:border-white/5 shadow-elev-1"
+          aria-label="View member details"
+        >
           <ChevronRight className="w-4 h-4 text-slate-400" />
-        </button>
+        </Button>
       </div>
     </motion.div>
   );
@@ -1326,24 +1331,30 @@ export const ManagerDashboard: React.FC = () => {
             ) : (
               <div className="relative mt-4">
                 {/* Navigation Arrows */}
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 hover:bg-neutral-50 dark:hover:bg-slate-700"
                   onClick={() => {
                     const container = document.getElementById('perf-carousel-bottom');
                     if (container) container.scrollBy({ left: -220, behavior: 'smooth' });
                   }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 flex items-center justify-center hover:bg-neutral-50 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="Scroll performance cards left"
                 >
                   <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 hover:bg-neutral-50 dark:hover:bg-slate-700"
                   onClick={() => {
                     const container = document.getElementById('perf-carousel-bottom');
                     if (container) container.scrollBy({ left: 220, behavior: 'smooth' });
                   }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 flex items-center justify-center hover:bg-neutral-50 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="Scroll performance cards right"
                 >
                   <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </button>
+                </Button>
 
                 {/* Carousel Container */}
                 <div
