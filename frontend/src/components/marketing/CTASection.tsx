@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, IndianRupee, Shield, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export const CTASection: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -18,38 +20,38 @@ export const CTASection: React.FC = () => {
         <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-white/80 text-xs font-semibold uppercase tracking-[0.2em] mb-6">
           <Building2 size={14} />
-          Built for Indian SMBs
+          {t('marketing.cta.badge')}
         </motion.span>
 
         <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight">
-          From Payroll to Compliance —{' '}
+          {t('marketing.cta.headline')}{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-teal-300">
-            We've Got India Covered
+            {t('marketing.cta.headlineAccent')}
           </span>
         </motion.h2>
 
         <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
           className="text-neutral-300 text-lg max-w-2xl mx-auto mb-10">
-          14-day free trial. No credit card needed. Full access to all features including PF/ESI compliance.
+          {t('marketing.cta.subtext')}
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          className="flex flex-col sm:flex_row items-center justify-center gap-4 mb-12">
           <Button size="xl" variant="premium" className="rounded-xl px-10 group" onClick={() => navigate('/pricing')}>
-            Start Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            {t('marketing.cta.ctaPrimary')} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Button>
-          <Button size="xl" variant="outline" className="rounded-xl px-10 border-white/20 text-white hover:bg-white/10">
-            Talk to Sales
+          <Button size="xl" variant="outline" className="rounded-xl px-10 border-white/20 text-white hover:bg-white/10" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
+            {t('marketing.cta.ctaSecondary')}
           </Button>
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
           className="flex flex-wrap justify-center gap-6 text-sm text-neutral-300">
           {[
-            { icon: Shield, text: 'PF/ESI/PT/LWF Compliant' },
-            { icon: IndianRupee, text: 'Form 16 Auto-Generation' },
-            { icon: CheckCircle, text: 'No Credit Card Required' },
+            { icon: Shield, text: t('marketing.cta.badge1') },
+            { icon: IndianRupee, text: t('marketing.cta.badge2') },
+            { icon: CheckCircle, text: t('marketing.cta.badge3') },
           ].map((item) => {
             const Icon = item.icon;
             return (

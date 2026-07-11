@@ -1,10 +1,11 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Play, Shield, CheckCircle, IndianRupee, Building2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Play, Shield, CheckCircle, IndianRupee, Building2, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -16,15 +17,27 @@ const fadeInUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
-const indiaTrustSignals = [
-  { icon: Shield, label: 'PF/ESI/PT/LWF Compliant' },
-  { icon: CheckCircle, label: 'Aadhaar & PAN Verified' },
-  { icon: IndianRupee, label: 'New Tax Regime Ready' },
-  { icon: Building2, label: 'Made for Indian SMBs' },
-];
+const trustIcons = [Shield, CheckCircle, IndianRupee, Building2];
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: t('marketing.nav.features'), onClick: () => navigate('/features') },
+    { label: t('marketing.nav.pricing'), onClick: () => navigate('/pricing') },
+    { label: t('marketing.nav.about'), onClick: () => navigate('/about') },
+  ];
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const trustSignals = [
+    { icon: Shield, label: t('marketing.hero.trustSignals[0]') },
+    { icon: CheckCircle, label: t('marketing.hero.trustSignals[1]') },
+    { icon: IndianRupee, label: t('marketing.hero.trustSignals[2]') },
+    { icon: Building2, label: t('marketing.hero.trustSignals[3]') },
+  ];
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-b from-neutral-950 via-brand-950 to-neutral-950">
@@ -44,17 +57,52 @@ export const HeroSection: React.FC = () => {
               <span className="text-white font-bold text-lg">WellZo</span>
             </motion.div>
             <div className="hidden md:flex items-center gap-4">
-              <button onClick={() => navigate('/features')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">Features</button>
-              <button onClick={() => navigate('/pricing')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">Pricing</button>
-              <button onClick={() => navigate('/about')} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">About</button>
+              {navItems.map(item => (
+                <button key={item.label} onClick={item.onClick} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">{item.label}</button>
+              ))}
               <LanguageSwitcher />
               <div className="h-6 w-px bg-white/10 mx-2" />
-              <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate('/login')}>Sign In</Button>
-              <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>Start Free Trial <ArrowRight size={16} /></Button>
+              <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate('/login')}>{t('marketing.hero.signIn')}</Button>
+              <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
             </div>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white p-2">
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
       </nav>
+
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-24 left-4 right-4 z-40 md:hidden glass-strong rounded-2xl shadow-elev-6 border border-white/10 p-4"
+          >
+            <div className="flex flex-col gap-2">
+              {navItems.map(item => (
+                <button
+                  key={item.label}
+                  onClick={() => { item.onClick(); closeMobileMenu(); }}
+                  className="text-left px-4 py-3 text-neutral-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors text-sm font-medium"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <div className="border-t border-white/10 my-2" />
+              <div className="flex items-center gap-3 px-4 py-2">
+                <LanguageSwitcher />
+              </div>
+              <div className="flex flex-col gap-2 px-4 pt-2">
+                <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10 w-full justify-center" onClick={() => { navigate('/login'); closeMobileMenu(); }}>{t('marketing.hero.signIn')}</Button>
+                <Button variant="premium" size="sm" className="w-full justify-center" onClick={() => { navigate('/pricing'); closeMobileMenu(); }}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -62,25 +110,24 @@ export const HeroSection: React.FC = () => {
             <motion.div variants={fadeInUp} className="mb-6">
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-semibold uppercase tracking-[0.2em]">
                 <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
-                India's #1 HRMS for SMBs
+                {t('marketing.hero.badge')}
               </span>
             </motion.div>
 
             <AnimatedText variant="slide-up" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6 text-white">
-              HR & Payroll{' '}
+              {t('marketing.hero.headline')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-400 to-brand-300">
-                Built for India
+                {t('marketing.hero.headlineAccent')}
               </span>
             </AnimatedText>
 
             <AnimatedText variant="fade-in" delay={0.4} className="text-lg text-neutral-400 max-w-lg mb-6 leading-relaxed">
-              Full-featured HRMS with PF, ESI, PT, LWF, and Form 16 compliance. 
-              Automate attendance, leave, payroll, and performance — so you can focus on growing your business.
+              {t('marketing.hero.subheadline')}
             </AnimatedText>
 
             {/* India Trust Signals */}
             <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-2 mb-8">
-              {indiaTrustSignals.map((s) => {
+              {trustSignals.map((s) => {
                 const Icon = s.icon;
                 return (
                   <div key={s.label} className="flex items-center gap-2 text-xs text-neutral-300">
@@ -93,10 +140,10 @@ export const HeroSection: React.FC = () => {
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
               <Button size="xl" variant="premium" className="rounded-xl px-8 group" onClick={() => navigate('/pricing')}>
-                Start Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                {t('marketing.hero.ctaPrimary')} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button size="xl" variant="outline" className="rounded-xl px-8 border-white/10 text-white hover:bg-white/10">
-                <Play size={20} /> Watch Demo
+              <Button size="xl" variant="outline" className="rounded-xl px-8 border-white/10 text-white hover:bg-white/10" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+                <Play size={20} /> {t('marketing.hero.ctaSecondary')}
               </Button>
             </motion.div>
 
@@ -114,8 +161,8 @@ export const HeroSection: React.FC = () => {
                 ))}
               </div>
               <div>
-                <p className="text-white font-bold text-lg">10K+</p>
-                <p className="text-neutral-400 text-sm">SMBs across India</p>
+                <p className="text-white font-bold text-lg">{t('marketing.hero.socialProof')}</p>
+                <p className="text-neutral-400 text-sm">{t('marketing.hero.socialProofLabel')}</p>
               </div>
             </motion.div>
           </div>
@@ -149,11 +196,11 @@ export const HeroSection: React.FC = () => {
             </div>
             <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute -top-4 -right-4 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-elev-5">
-              <p className="text-white text-sm font-semibold">🇮🇳 100% Made in India</p>
+              {t('marketing.hero.floatingBadge1')}
             </motion.div>
             <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
               className="absolute -bottom-4 -left-4 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-elev-5">
-              <p className="text-white text-sm font-semibold">⭐ 4.9/5 G2 Rating</p>
+              {t('marketing.hero.floatingBadge2')}
             </motion.div>
           </motion.div>
         </div>

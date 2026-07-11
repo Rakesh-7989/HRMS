@@ -9,6 +9,7 @@ import { AnimatedText } from '@/components/ui/AnimatedText';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Feature {
   id: string;
@@ -122,23 +123,22 @@ const colorConfig: Record<string, { text: string; bg: string; border: string }> 
 };
 
 export const FeatureGrid: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 bg-white dark:bg-neutral-950">
+    <section id="features" className="py-24 bg-white dark:bg-neutral-950">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-20">
           <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
             className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
-            Built for Indian Businesses
+            {t('marketing.features.sectionTitle')}
           </motion.span>
           <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-neutral-900 dark:text-white">
-            Everything Your{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-teal-500">Indian SMB</span>{' '}
-            Needs
+            {t('marketing.features.sectionSubtitle')}
           </AnimatedText>
           <p className="text-neutral-500 dark:text-neutral-400 text-lg max-w-2xl mx-auto">
-            PF, ESI, PT, LWF, Form 16, Aadhaar integration — we handle Indian compliance so you don't have to.
+            {t('marketing.features.sectionDesc')}
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export const FeatureGrid: React.FC = () => {
                   {isLarge && (
                     <div className="mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800">
                       <button className="text-sm font-semibold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1">
-                        Learn more <ArrowRight size={14} />
+                        {t('common.view')} <ArrowRight size={14} />
                       </button>
                     </div>
                   )}
@@ -188,7 +188,7 @@ export const FeatureGrid: React.FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="text-center mt-16">
           <Button variant="premium" size="lg" onClick={() => navigate('/features')}>
-            Explore All Features <ArrowRight size={20} />
+            {t('marketing.features.cta')} <ArrowRight size={20} />
           </Button>
         </motion.div>
       </div>

@@ -2,56 +2,59 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, ArrowUpRight, Shield, IndianRupee } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const footerLinks = [
   {
-    title: 'Product',
+    title: 'marketing.footer.product',
     links: [
-      { label: 'Payroll', to: '/features#payroll' },
-      { label: 'Attendance', to: '/features#attendance' },
-      { label: 'Leave Management', to: '/features#leave' },
-      { label: 'Statutory Compliance', to: '/features#statutory' },
-      { label: 'Performance Mgmt', to: '/features#performance' },
-      { label: 'Recruitment ATS', to: '/features#recruitment' },
-      { label: 'Pricing', to: '/pricing' },
+      { label: 'marketing.footer.productLinks.payroll', to: '/features#payroll' },
+      { label: 'marketing.footer.productLinks.attendance', to: '/features#attendance' },
+      { label: 'marketing.footer.productLinks.leave', to: '/features#leave' },
+      { label: 'marketing.footer.productLinks.statutory', to: '/features#statutory' },
+      { label: 'marketing.footer.productLinks.performance', to: '/features#performance' },
+      { label: 'marketing.footer.productLinks.recruitment', to: '/features#recruitment' },
+      { label: 'marketing.footer.productLinks.pricing', to: '/pricing' },
     ],
   },
   {
-    title: 'Resources',
+    title: 'marketing.footer.resources',
     links: [
-      { label: 'Help Center', to: '#' },
-      { label: 'API Documentation', to: '#' },
-      { label: 'Compliance Guide', to: '#' },
-      { label: 'Form 16 Help', to: '#' },
-      { label: 'PF/ESI Calculator', to: '#' },
-      { label: 'Release Notes', to: '#' },
+      { label: 'marketing.footer.resourceLinks.help', to: '#' },
+      { label: 'marketing.footer.resourceLinks.api', to: '#' },
+      { label: 'marketing.footer.resourceLinks.compliance', to: '#' },
+      { label: 'marketing.footer.resourceLinks.form16', to: '#' },
+      { label: 'marketing.footer.resourceLinks.calculator', to: '#' },
+      { label: 'marketing.footer.resourceLinks.releases', to: '#' },
     ],
   },
   {
-    title: 'Company',
+    title: 'marketing.footer.company',
     links: [
-      { label: 'About Us', to: '/about' },
-      { label: 'Careers', to: '#' },
-      { label: 'Blog', to: '#' },
-      { label: 'Privacy Policy', to: '#' },
-      { label: 'Terms of Service', to: '#' },
-      { label: 'G2 Reviews', to: '#' },
+      { label: 'marketing.footer.companyLinks.about', to: '/about' },
+      { label: 'marketing.footer.companyLinks.careers', to: '/careers' },
+      { label: 'marketing.footer.companyLinks.blog', to: '/blog' },
+      { label: 'marketing.footer.companyLinks.privacy', to: '#' },
+      { label: 'marketing.footer.companyLinks.terms', to: '#' },
+      { label: 'marketing.footer.companyLinks.g2', to: '#' },
     ],
   },
   {
-    title: 'Contact',
+    title: 'marketing.footer.contact',
     links: [
-      { label: 'sales@wellzo.in', to: 'mailto:sales@wellzo.in' },
-      { label: '+91-804-XXX-XXXX', to: 'tel:+91804XXXXXXX' },
-      { label: 'Bengaluru, India', to: '#' },
-      { label: 'Support Portal', to: '#' },
+      { label: 'marketing.footer.contactLinks.email', to: 'mailto:sales@wellzo.in' },
+      { label: 'marketing.footer.contactLinks.phone', to: 'tel:+91804XXXXXXX' },
+      { label: 'marketing.footer.contactLinks.address', to: '#' },
+      { label: 'marketing.footer.contactLinks.support', to: '#' },
     ],
   },
 ];
 
 export const LandingFooter: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
-    <footer className="relative bg-neutral-950 border-t border-neutral-800">
+    <footer id="contact" className="relative bg-neutral-950 border-t border-neutral-800">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -62,7 +65,7 @@ export const LandingFooter: React.FC = () => {
               <span className="text-white font-bold text-lg">WellZo</span>
             </div>
             <p className="text-neutral-400 text-sm mb-6 leading-relaxed">
-              India's most trusted HR & payroll platform for SMBs. 100% Made in India.
+              {t('marketing.footer.tagline')}
             </p>
             <div className="space-y-2 text-neutral-500 text-xs">
               <div className="flex items-center gap-2">
@@ -83,13 +86,13 @@ export const LandingFooter: React.FC = () => {
           {footerLinks.map((group) => (
             <motion.div key={group.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: 0.1 }}>
-              <h4 className="text-white font-bold text-sm mb-4">{group.title}</h4>
+              <h4 className="text-white font-bold text-sm mb-4">{t(group.title)}</h4>
               <ul className="space-y-3">
                 {group.links.map((link) => (
                   <li key={link.label}>
                     <Link to={link.to}
                       className="text-neutral-400 hover:text-white transition-colors text-sm flex items-center gap-1 group/link">
-                      {link.label}
+                      {t(link.label)}
                       {link.to.startsWith('mailto:') || link.to.startsWith('tel:') ? (
                         <ArrowUpRight size={12} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
                       ) : null}
@@ -105,15 +108,15 @@ export const LandingFooter: React.FC = () => {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 text-neutral-500 text-xs">
               <Shield size={12} />
-              SOC 2 Type II Certified
+              {t('marketing.footer.badgeSoc2')}
             </div>
             <div className="flex items-center gap-2 text-neutral-500 text-xs">
               <IndianRupee size={12} />
-              Data stored in India
+              {t('marketing.footer.badgeData')}
             </div>
           </div>
           <p className="text-neutral-500 text-xs">
-            © 2025 WellZo. All rights reserved. Made with ❤️ in Bengaluru, India.
+            © {new Date().getFullYear()} {t('marketing.footer.copyright')}
           </p>
         </div>
       </div>

@@ -3,75 +3,78 @@ import { motion } from 'framer-motion';
 import { Star, Quote, Building2, IndianRupee, Users } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { cn } from '@/utils/cn';
-
-const testimonials = [
-  {
-    name: 'Ananya Sharma',
-    role: 'Head of HR',
-    company: 'BharatPay Fintech',
-    location: 'Bengaluru, KA',
-    avatar: 'AS',
-    avatarColor: 'from-brand-500 to-brand-700',
-    quote: 'WellZo handles our PF, ESI, and PT filings automatically. What used to take our CA 3 days now happens in 2 hours. The Form 16 generation alone saved us lakhs in compliance costs.',
-    rating: 5,
-    industry: 'Fintech',
-    metric: '₹12L saved/year',
-  },
-  {
-    name: 'Rahul Verma',
-    role: 'CEO',
-    company: 'TechBolt Solutions',
-    location: 'Pune, MH',
-    avatar: 'RV',
-    avatarColor: 'from-teal-500 to-teal-700',
-    quote: 'We went from 5 Excel sheets to one dashboard. Attendance geo-fencing solved our field team tracking issues. The new tax regime calculator is a game changer for employee tax planning.',
-    rating: 5,
-    industry: 'IT Services',
-    metric: '80% less paperwork',
-  },
-  {
-    name: 'Priya Patel',
-    role: 'Director - Operations',
-    company: 'GreenLeaf Manufacturing',
-    location: 'Ahmedabad, GJ',
-    avatar: 'PP',
-    avatarColor: 'from-coral-500 to-coral-700',
-    quote: 'Shift management with 500+ factory workers was a nightmare. WellZo\'s biometric integration and shift roster made it effortless. Our HR team finally has weekends free.',
-    rating: 5,
-    industry: 'Manufacturing',
-    metric: '500+ employees',
-  },
-  {
-    name: 'Suresh K.',
-    role: 'Founder',
-    company: 'QuickCart Retail',
-    location: 'Mumbai, MH',
-    avatar: 'SK',
-    avatarColor: 'from-amber-500 to-amber-700',
-    quote: 'As a startup, we needed an affordable HRMS that scales. WellZo\'s Standard plan gave us everything — leave, attendance, payslips — at a price that works for a 30-person team.',
-    rating: 5,
-    industry: 'Retail',
-    metric: '30 to 150 team',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export const TestimonialsSection: React.FC = () => {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      name: t('marketing.testimonials.items[0].author'),
+      role: t('marketing.testimonials.items[0].role'),
+      company: t('marketing.testimonials.items[0].company'),
+      location: t('marketing.testimonials.items[0].location'),
+      avatar: 'AS',
+      avatarColor: 'from-brand-500 to-brand-700',
+      quote: t('marketing.testimonials.items[0].quote'),
+      rating: 5,
+      industry: t('marketing.testimonials.industries[0]'),
+      metric: t('marketing.testimonials.items[0].metric'),
+    },
+    {
+      name: t('marketing.testimonials.items[1].author'),
+      role: t('marketing.testimonials.items[1].role'),
+      company: t('marketing.testimonials.items[1].company'),
+      location: t('marketing.testimonials.items[1].location'),
+      avatar: 'RV',
+      avatarColor: 'from-teal-500 to-teal-700',
+      quote: t('marketing.testimonials.items[1].quote'),
+      rating: 5,
+      industry: t('marketing.testimonials.industries[1]'),
+      metric: t('marketing.testimonials.items[1].metric'),
+    },
+    {
+      name: t('marketing.testimonials.items[2].author'),
+      role: t('marketing.testimonials.items[2].role'),
+      company: t('marketing.testimonials.items[2].company'),
+      location: t('marketing.testimonials.items[2].location'),
+      avatar: 'PP',
+      avatarColor: 'from-coral-500 to-coral-700',
+      quote: t('marketing.testimonials.items[2].quote'),
+      rating: 5,
+      industry: t('marketing.testimonials.industries[2]'),
+      metric: t('marketing.testimonials.items[2].metric'),
+    },
+    {
+      name: t('marketing.testimonials.items[3].author'),
+      role: t('marketing.testimonials.items[3].role'),
+      company: t('marketing.testimonials.items[3].company'),
+      location: t('marketing.testimonials.items[3].location'),
+      avatar: 'SK',
+      avatarColor: 'from-amber-500 to-amber-700',
+      quote: t('marketing.testimonials.items[3].quote'),
+      rating: 5,
+      industry: t('marketing.testimonials.industries[3]'),
+      metric: t('marketing.testimonials.items[3].metric'),
+    },
+  ];
+
   return (
     <section className="py-24 bg-neutral-50 dark:bg-neutral-900/50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
             className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
-            Customer Stories
+            {t('marketing.testimonials.sectionLabel')}
           </motion.span>
           <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-neutral-900 dark:text-white">
-            Trusted by{' '}
+            {t('marketing.testimonials.sectionTitle')} {' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-teal-500">
-              Indian Businesses
+              {t('marketing.testimonials.sectionTitleAccent')}
             </span>
           </AnimatedText>
           <p className="text-neutral-500 dark:text-neutral-400 text-lg max-w-2xl mx-auto">
-            From Bengaluru to Ahmedabad, companies rely on WellZo for HR and payroll.
+            {t('marketing.testimonials.sectionSubtitle')}
           </p>
 
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
@@ -79,8 +82,8 @@ export const TestimonialsSection: React.FC = () => {
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (<Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />))}
             </div>
-            <span className="font-bold text-neutral-900 dark:text-white">4.9</span>
-            <span className="text-neutral-400 text-sm">G2 Rating · 500+ Reviews</span>
+            <span className="font-bold text-neutral-900 dark:text-white">{t('marketing.testimonials.g2Rating')}</span>
+            <span className="text-neutral-400 text-sm">{t('marketing.testimonials.g2Count')}</span>
           </motion.div>
         </div>
 
@@ -121,22 +124,12 @@ export const TestimonialsSection: React.FC = () => {
 
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="flex flex-wrap justify-center gap-6 mt-12 text-sm text-neutral-500">
-          {[
-            { icon: Building2, text: 'Fintech' },
-            { icon: Users, text: 'IT Services' },
-            { icon: IndianRupee, text: 'Manufacturing' },
-            { icon: Building2, text: 'Retail' },
-            { icon: Users, text: 'Healthcare' },
-            { icon: IndianRupee, text: 'EdTech' },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <span key={item.text} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
-                <Icon size={14} className="text-neutral-400" />
-                {item.text}
-              </span>
-            );
-          })}
+          {t('marketing.testimonials.industries', { returnObjects: true }).map((industry, index) => (
+            <span key={index} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+              <Building2 size={14} className="text-neutral-400" />
+              {industry}
+            </span>
+          ))}
         </motion.div>
       </div>
     </section>

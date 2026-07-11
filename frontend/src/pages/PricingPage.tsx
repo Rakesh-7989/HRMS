@@ -14,6 +14,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { ContactSalesModal } from '@/components/ContactSalesModal';
+import { SEO } from '@/components/SEO';
 
 declare global {
   interface Window {
@@ -521,7 +522,13 @@ export const PricingPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
+    <>
+      <SEO
+        title="Pricing - WellZo HR & Payroll Platform"
+        description="Transparent pricing for Indian SMBs. Standard, Premium, and Elite plans with PF/ESI/PT/LWF compliance, attendance, leave, performance management, and more. 14-day free trial."
+        keywords="HRMS pricing, payroll software cost, HR software India pricing, PF ESI software price, SMB HRMS plans"
+      />
+      <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
       <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -795,5 +802,6 @@ export const PricingPage: React.FC = () => {
         type="error"
       />
     </div>
+    </>
   );
 };

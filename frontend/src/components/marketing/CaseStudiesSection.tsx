@@ -4,6 +4,7 @@ import { ArrowRight, IndianRupee, TrendingUp, Users, Building2, Star, Quote } fr
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 
 const caseStudies = [
   {
@@ -63,22 +64,24 @@ const caseStudies = [
 ];
 
 export const CaseStudiesSection: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 bg-white dark:bg-neutral-950">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
             className="text-brand-500 text-xs font-bold tracking-[0.3em] uppercase mb-4 block">
-            Case Studies
+            {t('marketing.caseStudies.sectionLabel')}
           </motion.span>
           <AnimatedText variant="slide-up" className="text-4xl md:text-5xl font-extrabold mb-6 text-neutral-900 dark:text-white">
-            Real Results from{' '}
+            {t('marketing.caseStudies.sectionTitle')} {' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-teal-500">
-              Indian Businesses
+              {t('marketing.caseStudies.sectionTitleAccent')}
             </span>
           </AnimatedText>
           <p className="text-neutral-500 dark:text-neutral-400 text-lg max-w-2xl mx-auto">
-            See how companies across India use WellZo to streamline HR, payroll, and compliance.
+            {t('marketing.caseStudies.sectionSubtitle')}
           </p>
         </div>
 
@@ -109,11 +112,11 @@ export const CaseStudiesSection: React.FC = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-bold text-coral-500 uppercase tracking-wider mb-1">Challenge</p>
+                    <p className="text-xs font-bold text-coral-500 uppercase tracking-wider mb-1">{t('marketing.caseStudies.challenge')}</p>
                     <p className="text-sm text-neutral-600 dark:text-neutral-300">{cs.challenge}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-teal-500 uppercase tracking-wider mb-1">Solution</p>
+                    <p className="text-xs font-bold text-teal-500 uppercase tracking-wider mb-1">{t('marketing.caseStudies.solution')}</p>
                     <p className="text-sm text-neutral-600 dark:text-neutral-300">{cs.solution}</p>
                   </div>
                 </div>
@@ -134,7 +137,7 @@ export const CaseStudiesSection: React.FC = () => {
               </div>
 
               <div className="md:col-span-3">
-                <p className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-4">Results</p>
+                <p className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-4">{t('marketing.caseStudies.results')}</p>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   {cs.results.map((r) => (
                     <div key={r.label} className="text-center p-4 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
@@ -146,7 +149,7 @@ export const CaseStudiesSection: React.FC = () => {
 
                 <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
                   <div className="p-4 border-b border-neutral-100 dark:border-neutral-700">
-                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Timeline</p>
+                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('marketing.caseStudies.timeline')}</p>
                   </div>
                   <div className="p-4 space-y-4">
                     {[
@@ -173,9 +176,9 @@ export const CaseStudiesSection: React.FC = () => {
 
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="text-center mt-12">
-          <p className="text-neutral-400 text-sm mb-4">Want to be our next success story?</p>
-          <Button variant="outline" onClick={() => window.location.href = '/register'}>
-            Start Your Free Trial <ArrowRight size={16} />
+          <p className="text-neutral-400 text-sm mb-4">{t('marketing.caseStudies.cta')}</p>
+          <Button variant="premium" size="xl" onClick={() => window.location.href = '/register'}>
+            {t('marketing.caseStudies.ctaButton')} <ArrowRight size={16} />
           </Button>
         </motion.div>
       </div>
