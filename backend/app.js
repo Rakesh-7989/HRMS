@@ -13,11 +13,15 @@ const env = require('./src/config/env');
 const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 const requestLogger = require('./src/middleware/requestLogger');
 const { generalLimiter } = require('./src/middleware/rateLimiter');
+const httpsRedirect = require('./src/middleware/httpsRedirect');
+const originCheck = require('./src/middleware/originCheck');
 
 
 const app = express();
 app.set('trust proxy', 1); 
 // Security + parsers
+app.use(httpsRedirect);
+app.use(originCheck);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {

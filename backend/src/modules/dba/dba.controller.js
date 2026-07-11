@@ -90,9 +90,26 @@ exports.executeQuery = async (req, res) => {
         return res.status(400).json({ status: 'error', message: 'Query is required' });
     }
 
-    // Basic safety check: only allow SELECT for now? 
-    // The requirement says "execute arbitrary SQL queries", so maybe allow everything for Super Admin.
-    // However, for safety let's just warn or allow. Since it's Super Admin, we trust them.
+    // Safety: restrict to SELECT-only queries for non-super-admin-like protection
+    // Also block dangerous DDL/DML statements
+    const normalized = sqlQuery.trim().toUpperCase();
+    if (!normalized.startsWith('SELECT') && !normalized.startsWith('WITH')) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Only SELECT queries are allowed for security reasons.'
+        });
+    }
+
+    // Block dangerous patterns even in SELECT
+    const dangerousPatterns = [/\b(PG_SLEEP|PG_READ_FILE|LOAD_FILE|INTO\s+OUTFILE|COPY\s+\()/i];
+    for (const pattern of dangerousPatterns) {
+        if (pattern.test(sqlQuery)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Query contains blocked patterns for security reasons.'
+            });
+        }
+    }
 
     const start = Date.now();
     try {
@@ -110,8 +127,7 @@ exports.executeQuery = async (req, res) => {
         console.error('Error executing custom query:', err);
         res.status(400).json({
             status: 'error',
-            message: err.message,
-            detail: err.detail
+            message: 'Query execution failed'
         });
     }
 };
