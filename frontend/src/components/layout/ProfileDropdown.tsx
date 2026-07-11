@@ -22,7 +22,6 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/Dialog';
 import { useTranslation } from 'react-i18next';
-import './ProfileDropdown.css';
 
 interface ProfileDropdownProps {
     onClose: () => void;
@@ -127,11 +126,11 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
     const currentStatus = getStatusInfo(status);
 
     return (
-        <div className="profile-dropdown-container">
+        <div className="absolute top-full right-0 mt-2 w-[320px] bg-white dark:bg-[#161A1F] border border-gray-200 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
             {view === 'main' ? (
                 <>
                     {/* Header with User Info */}
-                    <div className="p-4 bg-gradient-to-br from-primary/5 to-transparent dark:from-white/5">
+                    <div className="p-4 bg-gradient-to-br from-brand-500/5 to-transparent dark:from-white/5">
                         <div className="flex items-start justify-between mb-3">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Account</span>
                             <button
@@ -147,7 +146,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
 
                         <div className="flex items-center gap-4">
                             <div className="relative group cursor-pointer" onClick={() => setView('photo')}>
-                                <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 p-0.5 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+                                <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 p-0.5 shadow-elev-1 ring-1 ring-gray-100 dark:ring-gray-700">
                                     <div className="h-full w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 relative">
                                         {user?.profile_photo_url ? (
                                             <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="h-full w-full object-cover" />
@@ -163,7 +162,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 </div>
 
                                 <div className={cn(
-                                    "absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center shadow-sm",
+                                    "absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center shadow-elev-1",
                                     status === 'available' ? 'bg-green-500' :
                                         status === 'away' ? 'bg-amber-500' :
                                             status === 'dnd' || status === 'busy' ? 'bg-red-500' : 'bg-gray-400'
@@ -188,7 +187,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 )}
                                 <button
                                     onClick={() => { onClose(); navigate('/profile'); }}
-                                    className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"
+                                    className="text-xs font-medium text-brand-500 hover:text-brand-600 hover:underline flex items-center gap-1"
                                 >
                                     Manage Profile <ExternalLink size={10} />
                                 </button>
@@ -257,7 +256,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                     </div>
 
                     <div className="p-6 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
-                        <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 shadow-md ring-4 ring-white dark:ring-gray-800">
+                        <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 shadow-elev-3 ring-4 ring-white dark:ring-gray-800">
                             {user?.profile_photo_url ? (
                                 <img src={resolveImageUrl(user.profile_photo_url)} alt="Profile" className="h-full w-full object-cover" />
                             ) : (
@@ -324,14 +323,14 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             return (
                                 <button
                                     key={s}
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-brand-500/5 dark:bg-brand-500/10 ring-1 ring-brand-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                                     onClick={() => handleStatusChange(s)}
                                 >
-                                    <div className={`w-3 h-3 rounded-full ${s === 'available' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : s === 'busy' ? 'bg-rose-500' : s === 'dnd' ? 'bg-rose-500' : s === 'away' ? 'bg-amber-500' : 'bg-gray-400'}`} />
-                                    <span className={`text-sm font-medium ${isActive ? 'text-primary font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>
+                                    <div className={`w-3 h-3 rounded-full ${s === 'available' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : s === 'busy' ? 'bg-error-500' : s === 'dnd' ? 'bg-error-500' : s === 'away' ? 'bg-amber-500' : 'bg-gray-400'}`} />
+                                    <span className={`text-sm font-medium ${isActive ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>
                                         {info.label}
                                     </span>
-                                    {isActive && <CheckCircle2 size={16} className="ml-auto text-primary" />}
+                                    {isActive && <CheckCircle2 size={16} className="ml-auto text-brand-500" />}
                                 </button>
                             );
                         })}
@@ -354,7 +353,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             <input
                                 type="text"
                                 placeholder="What's happening?"
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-elev-1"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 maxLength={100}
@@ -367,7 +366,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Clear after</label>
                             <div className="relative">
                                 <select
-                                    className="w-full pl-3 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
+                                    className="w-full pl-3 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer"
                                     value={expiryOption}
                                     onChange={(e) => setExpiryOption(e.target.value)}
                                 >
@@ -390,7 +389,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             </button>
                             <button
                                 onClick={handleSaveMessage}
-                                className="flex-1 py-2.5 px-4 bg-primary-gradient text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl text-sm font-semibold hover:shadow-elev-4 hover:shadow-brand-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 Save Status
                             </button>
@@ -410,7 +409,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             <img
                                 src={resolveImageUrl(user.profile_photo_url)}
                                 alt="Profile Full"
-                                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-elev-6"
                             />
                         )}
                     </div>

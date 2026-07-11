@@ -48,7 +48,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-elev-6 border border-gray-100 dark:border-gray-800 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-3 py-1.5 mb-1">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('common.selectLanguage')}</span>
                     </div>
@@ -58,7 +58,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
                             onClick={() => changeLanguage(lang.code)}
                             className={cn(
                                 "w-full flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800",
-                                i18n.language?.startsWith(lang.code) ? "text-primary font-bold bg-primary/5 dark:bg-primary/10" : "text-gray-700 dark:text-gray-300"
+                                i18n.language?.startsWith(lang.code) ? "text-brand-500 font-bold bg-brand-500/5 dark:bg-brand-500/10" : "text-gray-700 dark:text-gray-300"
                             )}
                         >
                             <div className="flex items-center gap-3">
@@ -66,7 +66,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
                                 <span>{lang.name}</span>
                             </div>
                             {i18n.language?.startsWith(lang.code) && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                             )}
                         </button>
                     ))}
