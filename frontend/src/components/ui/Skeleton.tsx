@@ -34,7 +34,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 };
 
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('p-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-800 rounded-xl space-y-4', className)}>
+  <div className={cn('p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl space-y-4', className)}>
     <Skeleton variant="circular" width={48} height={48} />
     <Skeleton variant="text" width="60%" />
     <Skeleton variant="text" width="80%" />

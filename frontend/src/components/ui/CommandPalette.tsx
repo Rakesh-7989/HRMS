@@ -93,7 +93,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -20 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+              className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-xl shadow-elev-6 border border-gray-200 dark:border-gray-800 overflow-hidden"
             >
               <div className="flex items-center gap-3 px-4 border-b border-gray-200 dark:border-gray-800">
                 <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -181,7 +181,7 @@ const CommandItemRow: React.FC<{
     className={cn(
       'w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm text-left transition-colors',
       selected
-        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300'
+        ? 'bg-brand-50/800 dark:bg-brand-500-900/30 text-brand-500-600 dark:text-brand-500-300'
         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
     )}
   >

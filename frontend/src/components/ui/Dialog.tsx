@@ -51,7 +51,7 @@ export const Dialog: React.FC<DialogProps> = ({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden',
+                'relative bg-white dark:bg-gray-900 rounded-xl shadow-elev-5 max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden',
                 className
               )}
               onClick={(e) => e.stopPropagation()}

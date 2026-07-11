@@ -52,7 +52,7 @@ export const RadioGroupItem: React.FC<RadioGroupItemProps> = ({
       checked={selectedValue === value}
       onChange={(e) => onValueChange(e.target.value)}
       className={cn(
-        'h-4 w-4 rounded-full border border-gray-300 dark:border-gray-700 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+        'h-4 w-4 rounded-full border border-gray-300 dark:border-gray-700 text-brand-500 focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       {...props}

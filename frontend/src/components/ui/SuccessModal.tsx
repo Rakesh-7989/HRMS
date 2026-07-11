@@ -17,8 +17,8 @@ interface SuccessModalProps {
 const iconConfig = {
     success: {
         icon: CheckCircle,
-        bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-        iconColor: 'text-purple-500',
+        bgColor: 'bg-brand-100 dark:bg-brand-500/20',
+        iconColor: 'text-brand-500',
         ringColor: 'ring-purple-500/20',
     },
     error: {
@@ -29,23 +29,23 @@ const iconConfig = {
     },
     warning: {
         icon: AlertCircle,
-        bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
-        iconColor: 'text-fuchsia-500',
+        bgColor: 'bg-coral-100 dark:bg-coral-500/20',
+        iconColor: 'text-coral-500',
         ringColor: 'ring-amber-500/20',
     },
     info: {
         icon: Info,
-        bgColor: 'bg-violet-100 dark:bg-violet-900/30',
-        iconColor: 'text-violet-500',
+        bgColor: 'bg-brand-100 dark:bg-brand-500/20',
+        iconColor: 'text-brand-500',
         ringColor: 'ring-blue-500/20',
     },
 };
 
 const buttonConfig = {
-    success: 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-500/50',
+    success: 'bg-brand-500 hover:bg-brand-500 focus:ring-purple-500/50',
     error: 'bg-red-500 hover:bg-red-600 focus:ring-red-500/50',
-    warning: 'bg-fuchsia-500 hover:bg-fuchsia-600 focus:ring-amber-500/50',
-    info: 'bg-violet-500 hover:bg-violet-600 focus:ring-blue-500/50',
+    warning: 'bg-coral-500 hover:bg-coral-500 focus:ring-amber-500/50',
+    info: 'bg-brand-500 hover:bg-brand-500 focus:ring-blue-500/50',
 };
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -89,10 +89,10 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none"
                     >
-                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-8 pointer-events-auto relative overflow-hidden">
+                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-elev-6 max-w-sm w-full p-8 pointer-events-auto relative overflow-hidden">
                             {/* Decorative background circles */}
-                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full" />
-                            <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-full" />
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full" />
+                            <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-brand-500/5 to-transparent rounded-full" />
 
                             {/* Navigation Buttons */}
                             <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">

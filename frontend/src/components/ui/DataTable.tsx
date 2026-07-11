@@ -32,7 +32,7 @@ export function DataTable<T>({ data, columns, loading, emptyMessage = "No data f
     }
 
     return (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-border">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
             <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 uppercase text-xs font-semibold">
                     <tr>
@@ -43,7 +43,7 @@ export function DataTable<T>({ data, columns, loading, emptyMessage = "No data f
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-dark-border bg-white dark:bg-dark-card">
+                <tbody className="divide-y divide-gray-200 dark:divide-dark-border bg-white dark:bg-gray-900">
                     {data.map((row, rIdx) => (
                         <tr key={rIdx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                             {columns.map((col, cIdx) => (

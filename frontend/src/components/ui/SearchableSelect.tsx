@@ -118,10 +118,10 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 disabled={disabled}
                 onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
                 onKeyDown={handleKeyDown}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-left transition-all duration-200 shadow-sm ${disabled
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-left transition-all duration-200 shadow-elev-1 ${disabled
                         ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-60'
                         : isOpen
-                            ? 'border-primary ring-2 ring-primary/20 bg-white dark:bg-gray-800/50'
+                            ? 'border-brand-500 ring-2 ring-brand-500/20 bg-white dark:bg-gray-800/50'
                             : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                     } text-gray-900 dark:text-white`}
             >
@@ -136,7 +136,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
             {/* Dropdown */}
             {isOpen && (
-                <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-elev-5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Search input */}
                     <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                         <Search size={14} className="text-gray-400 flex-shrink-0" />
@@ -183,7 +183,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                     }}
                                     onMouseEnter={() => setHighlightedIndex(idx)}
                                     className={`px-4 py-2 text-sm cursor-pointer transition-colors ${idx === highlightedIndex
-                                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                                            ? 'bg-brand-500/10 text-brand-500 dark:bg-brand-500/20'
                                             : option.value === value
                                                 ? 'bg-gray-50 dark:bg-gray-700/50 font-medium text-gray-900 dark:text-white'
                                                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'

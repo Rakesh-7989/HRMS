@@ -198,7 +198,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     }, [yearPageStart, minYear, maxYear]);
 
     const renderHeader = () => (
-        <div className="flex items-center justify-between px-3 py-3 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between px-3 py-3 bg-gradient-to-br from-brand-500/10 via-brand-500/5 to-transparent border-b border-gray-100 dark:border-gray-800">
             {viewMode === 'calendar' && (
                 <>
                     <button
@@ -214,7 +214,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
                         className="px-3 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
                     >
-                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-primary">
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500">
                             {format(currentMonth, 'MMMM yyyy')}
                         </span>
                     </button>
@@ -237,7 +237,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         onClick={(e) => { e.stopPropagation(); setViewMode('year'); }}
                         className="px-4 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
                     >
-                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-primary">
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500">
                             {currentYear}
                         </span>
                     </button>
@@ -290,7 +290,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         className={cn(
                             "py-3 px-2 rounded-xl text-sm font-medium transition-all",
                             currentMonthIndex === index
-                                ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+                                ? "bg-gradient-to-br from-brand-500 to-brand-500/80 text-white shadow-elev-4 shadow-brand-500/25"
                                 : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                         )}
                     >
@@ -301,7 +301,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('calendar'); }}
-                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-primary"
+                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500"
             >
                 ← Back to calendar
             </button>
@@ -319,9 +319,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         className={cn(
                             "py-3 px-2 rounded-xl text-sm font-medium transition-all",
                             currentYear === year
-                                ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+                                ? "bg-gradient-to-br from-brand-500 to-brand-500/80 text-white shadow-elev-4 shadow-brand-500/25"
                                 : year === new Date().getFullYear()
-                                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                                    ? "bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/20"
                                     : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                         )}
                     >
@@ -332,7 +332,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
-                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-primary"
+                className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500"
             >
                 ← Back to months
             </button>
@@ -395,11 +395,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                         ? 'text-red-500 dark:text-red-400'
                                         : 'text-gray-800 dark:text-gray-200'
                                     : 'text-gray-300 dark:text-gray-700',
-                            !isBeforeMinDate && inRange && !isStart && !isEnd && 'bg-primary/10 dark:bg-primary/20',
-                            !isBeforeMinDate && isStart && 'bg-gradient-to-r from-primary to-primary/90 text-white rounded-l-xl',
-                            !isBeforeMinDate && isEnd && !isStart && 'bg-gradient-to-l from-primary to-primary/90 text-white rounded-r-xl',
+                            !isBeforeMinDate && inRange && !isStart && !isEnd && 'bg-brand-500/10 dark:bg-brand-500/20',
+                            !isBeforeMinDate && isStart && 'bg-gradient-to-r from-brand-500 to-brand-500/90 text-white rounded-l-xl',
+                            !isBeforeMinDate && isEnd && !isStart && 'bg-gradient-to-l from-brand-500 to-brand-500/90 text-white rounded-r-xl',
                             !isBeforeMinDate && isStart && isEnd && 'rounded-xl',
-                            !isBeforeMinDate && isTodayDate && !isStart && !isEnd && 'font-bold text-primary ring-2 ring-primary/30 rounded-full',
+                            !isBeforeMinDate && isTodayDate && !isStart && !isEnd && 'font-bold text-brand-500 ring-2 ring-brand-500/30 rounded-full',
                             !isBeforeMinDate && !inRange && !isStart && !isEnd && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl'
                         )}
                     >
@@ -446,14 +446,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     className={cn(
                         'flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border transition-all w-full group',
                         'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
-                        'hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
+                        'hover:border-brand-500/50 hover:shadow-elev-1 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
                         'text-xs sm:text-sm font-medium text-gray-900 dark:text-white',
-                        isOpen && 'ring-2 ring-primary/30 border-primary shadow-sm'
+                        isOpen && 'ring-2 ring-brand-500/30 border-brand-500 shadow-elev-1'
                     )}
                 >
                     <Calendar size={16} className={cn(
                         "text-gray-400 flex-shrink-0 transition-colors sm:w-[18px] sm:h-[18px]",
-                        isOpen && "text-primary"
+                        isOpen && "text-brand-500"
                     )} />
                     <span className={cn(
                         !start && 'text-gray-400 dark:text-gray-500',
@@ -462,7 +462,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         {displayText()}
                     </span>
                     {daysBetween > 0 && (
-                        <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-semibold whitespace-nowrap hidden xs:inline-flex">
+                        <span className="ml-auto px-1.5 py-0.5 rounded-full bg-brand-500/10 text-brand-500 text-[10px] sm:text-xs font-semibold whitespace-nowrap hidden xs:inline-flex">
                             {daysBetween} day{daysBetween !== 1 ? 's' : ''}
                         </span>
                     )}
@@ -473,7 +473,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 <div
                     ref={dropdownRef}
                     className={cn(
-                        'bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden',
+                        'bg-white dark:bg-gray-900 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-800 overflow-hidden',
                         'animate-fadeIn'
                     )}
                     style={{
@@ -487,7 +487,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                             <div className={cn(
                                 'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
                                 selectingStart
-                                    ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/25'
+                                    ? 'bg-gradient-to-r from-brand-500 to-brand-500/90 text-white shadow-elev-4 shadow-brand-500/25'
                                     : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                             )}>
                                 <span className="text-xs font-medium opacity-70">Start</span>
@@ -497,7 +497,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                             <div className={cn(
                                 'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
                                 !selectingStart
-                                    ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/25'
+                                    ? 'bg-gradient-to-r from-brand-500 to-brand-500/90 text-white shadow-elev-4 shadow-brand-500/25'
                                     : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                             )}>
                                 <span className="text-xs font-medium opacity-70">End</span>

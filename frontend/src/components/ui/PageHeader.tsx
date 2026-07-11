@@ -47,7 +47,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   {crumb.href ? (
                     <button
                       onClick={() => navigate(crumb.href!)}
-                      className="hover:text-primary transition-colors"
+                      className="hover:text-brand-500 transition-colors"
                     >
                       {crumb.label}
                     </button>

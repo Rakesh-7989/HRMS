@@ -2,7 +2,7 @@ import React from 'react';
 
 // Shared skeleton building blocks
 const SidebarSkeleton = () => (
-    <div className="hidden md:flex flex-col w-[90px] border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shrink-0 z-40 relative shadow-sm">
+    <div className="hidden md:flex flex-col w-[90px] border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shrink-0 z-40 relative shadow-elev-1">
         <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-800 mx-auto mb-8" />
         <div className="flex flex-col gap-4">
             {[...Array(6)].map((_, i) => (
@@ -13,7 +13,7 @@ const SidebarSkeleton = () => (
 );
 
 const HeaderSkeleton = () => (
-    <header className="sticky top-0 z-30 min-h-[64px] border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 md:px-6 flex items-center justify-between py-2 shadow-sm">
+    <header className="sticky top-0 z-30 min-h-[64px] border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 md:px-6 flex items-center justify-between py-2 shadow-elev-1">
         <div className="flex items-center gap-4 w-1/3">
             <div className="md:hidden w-6 h-6 rounded bg-gray-200 dark:bg-gray-800 shrink-0" />
             <div className="w-32 md:w-48 h-6 rounded-md bg-gray-200 dark:bg-gray-800" />
@@ -48,7 +48,7 @@ export const PageSkeleton: React.FC = () => (
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm h-32 flex flex-col justify-between">
+                <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 h-32 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div className="w-24 h-4 rounded bg-gray-200 dark:bg-gray-800" />
                         <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-800" />
@@ -58,7 +58,7 @@ export const PageSkeleton: React.FC = () => (
             ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-950 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm lg:col-span-2 min-h-[400px] flex flex-col">
+            <div className="bg-white dark:bg-gray-950 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 lg:col-span-2 min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <div className="w-40 h-6 rounded bg-gray-200 dark:bg-gray-800" />
                     <div className="w-24 h-8 rounded-md bg-gray-200 dark:bg-gray-800" />
@@ -78,7 +78,7 @@ export const PageSkeleton: React.FC = () => (
                     ))}
                 </div>
             </div>
-            <div className="bg-white dark:bg-gray-950 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm min-h-[400px]">
+            <div className="bg-white dark:bg-gray-950 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 min-h-[400px]">
                 <div className="w-32 h-6 rounded bg-gray-200 dark:bg-gray-800 mb-6" />
                 <div className="space-y-4">
                     {[...Array(5)].map((_, i) => (
@@ -103,7 +103,7 @@ export const DashboardSkeleton: React.FC = () => (
         {/* Stat cards row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm h-[130px] flex flex-col justify-between">
+                <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-elev-1 h-[130px] flex flex-col justify-between">
                     <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-800" />
                     <div>
                         <div className="w-16 h-7 rounded bg-gray-200 dark:bg-gray-800 mb-1" />
@@ -116,7 +116,7 @@ export const DashboardSkeleton: React.FC = () => (
         {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {[...Array(2)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-950 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div key={i} className="bg-white dark:bg-gray-950 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-elev-1">
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <div className="w-36 h-5 rounded bg-gray-200 dark:bg-gray-800 mb-1" />
@@ -131,7 +131,7 @@ export const DashboardSkeleton: React.FC = () => (
         {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-950 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div key={i} className="bg-white dark:bg-gray-950 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-elev-1">
                     <div className="w-32 h-5 rounded bg-gray-200 dark:bg-gray-800 mb-5" />
                     <div className="space-y-3">
                         {[...Array(3)].map((_, j) => (
@@ -167,7 +167,7 @@ export const TableSkeleton: React.FC = () => (
         </div>
 
         {/* Table */}
-        <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 overflow-hidden">
             {/* Table header */}
             <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                 {[100, 80, 80, 60, 60, 70].map((w, i) => (
@@ -247,7 +247,7 @@ export const TabbedSkeleton: React.FC = () => (
             {/* Content cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                    <div key={i} className="bg-white dark:bg-gray-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-800" />
@@ -292,7 +292,7 @@ export const FormSkeleton: React.FC = () => (
 
         {/* Form card */}
         <div className="max-w-4xl">
-            <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 space-y-6">
+            <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 p-6 space-y-6">
                 {/* Section title */}
                 <div className="w-40 h-5 rounded bg-gray-200 dark:bg-gray-800 mb-4" />
 
@@ -346,7 +346,7 @@ export const AuthSkeleton: React.FC = () => (
             </div>
 
             {/* Card */}
-            <div className="bg-white dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-lg p-8">
+            <div className="bg-white dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-elev-4 p-8">
                 {/* Title */}
                 <div className="w-48 h-7 rounded-lg bg-gray-200 dark:bg-gray-800 mb-2" />
                 <div className="w-64 h-4 rounded bg-gray-200 dark:bg-gray-800 mb-8" />
@@ -396,7 +396,7 @@ export const MinimalSkeleton: React.FC = () => (
         {/* Content list */}
         <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+                <div key={i} className="bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 shrink-0" />
                     <div className="flex-1 space-y-2">
                         <div className="w-3/4 h-4 rounded bg-gray-200 dark:bg-gray-800" />

@@ -52,11 +52,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             case 'destructive':
                 return <AlertCircle className="text-red-500" size={24} />;
             case 'info':
-                return <Info className="text-violet-500" size={24} />;
+                return <Info className="text-brand-500" size={24} />;
             case 'prompt':
-                return <HelpCircle className="text-primary" size={24} />;
+                return <HelpCircle className="text-brand-500" size={24} />;
             default:
-                return <HelpCircle className="text-primary" size={24} />;
+                return <HelpCircle className="text-brand-500" size={24} />;
         }
     };
 
@@ -90,7 +90,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+                            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-elev-6 max-w-md w-full overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header with Close and optional Back */}
@@ -119,8 +119,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                                     <div className={cn(
                                         "p-3 rounded-xl shrink-0",
                                         type === 'destructive' ? "bg-red-50 dark:bg-red-900/20" :
-                                            type === 'info' ? "bg-violet-50 dark:bg-violet-900/20" :
-                                                "bg-primary/10 dark:bg-primary/20"
+                                            type === 'info' ? "bg-brand-50 dark:bg-brand-500/10" :
+                                                "bg-brand-500/10 dark:bg-brand-500/20"
                                     )}>
                                         {getIcon()}
                                     </div>
