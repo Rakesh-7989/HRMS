@@ -5,6 +5,8 @@ const validate = require("../../middleware/validate");
 const verifyJwt = require("../../middleware/verifyJwt");
 const requirePermission = require("../../middleware/requirePermission");
 const { checkLimit } = require("../../middleware/subscription.middleware");
+const { uploadLimiter } = require("../../middleware/rateLimiter");
+const multer = require("multer");
 
 const {
   createUserSchema,
@@ -16,7 +18,18 @@ const {
   assignDesignationSchema
 } = require("./user.validator");
 
-const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
+const excelUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+    }
+  }
+});
 
 // Auth required for all routes
 router.use(verifyJwt);
@@ -40,9 +53,10 @@ router.post(
 // BULK IMPORT
 router.post(
   "/bulk-import",
+  uploadLimiter,
   requirePermission('employees', 'import'),
   checkLimit('employees'),
-  uploadTemp.single("file"),
+  excelUpload.single("file"),
   controller.bulkImportEmployees
 );
 
@@ -152,7 +166,15 @@ selfService.get("/me/reveal", controller.revealOwnSensitiveField);
 // Profile photo
 const uploadPhoto = require("multer")({
   storage: require("multer").memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'), false);
+    }
+  }
 });
 selfService.post("/me/profile-photo", uploadPhoto.single("photo"), controller.uploadProfilePhoto);
 selfService.delete("/me/profile-photo", controller.removeProfilePhoto);

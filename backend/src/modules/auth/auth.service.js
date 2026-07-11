@@ -5,7 +5,7 @@ const pool = require("../../config/db");
 const env = require("../../config/env");
 
 const ACCESS_EXP = env.JWT_EXPIRES_IN || "15m";
-const REFRESH_DAYS = parseInt(env.REFRESH_TOKEN_EXPIRY_DAYS || "7", 10);
+const REFRESH_DAYS = parseInt(env.REFRESH_TOKEN_EXPIRES_IN ? env.REFRESH_TOKEN_EXPIRES_IN.replace('d', '') : "7", 10);
 
 exports.generateTokens = async (user, rememberMe = false) => {
   const refreshDays = rememberMe ? 30 : REFRESH_DAYS;
@@ -65,23 +65,27 @@ exports.verifyRefreshToken = async (refreshToken, ip, userAgent) => {
   if (new Date(row.expires_at) < new Date()) return null;
 
   if (row.ip_address && row.ip_address !== ip) {
-    throw new Error("Session fingerprint mismatch. Please login again.");
+    await pool.query('UPDATE user_sessions SET is_revoked = true WHERE id = $1', [row.id]);
+    throw new Error("Session fingerprint mismatch. Session revoked for security.");
   }
 
   if (row.user_agent && row.user_agent !== userAgent) {
-    throw new Error("Session fingerprint mismatch. Please login again.");
+    await pool.query('UPDATE user_sessions SET is_revoked = true WHERE id = $1', [row.id]);
+    throw new Error("Session fingerprint mismatch. Session revoked for security.");
   }
 
   return row;
 };
 
-exports.updateSessionActivity = async (sessionId, newToken) => {
-  await pool.query(
+exports.updateSessionActivity = async (oldToken, newToken) => {
+  const res = await pool.query(
     `UPDATE user_sessions 
      SET refresh_token = $1, updated_at = now()
-     WHERE id = $2`,
-    [newToken, sessionId]
+     WHERE refresh_token = $2 AND is_revoked = false
+     RETURNING id`,
+    [newToken, oldToken]
   );
+  return res.rowCount > 0;
 };
 
 exports.revokeRefreshToken = async (token) => {
@@ -102,12 +106,14 @@ exports.revokeAllOtherSessions = async (userId, exceptToken) => {
 
 exports.listSessions = async (userId) => {
   const res = await pool.query(
-    `SELECT id, refresh_token AS token, created_at, expires_at, 
+    `SELECT id,
+            CONCAT(LEFT(refresh_token::text, 8), '****', RIGHT(refresh_token::text, 4)) AS token_masked,
+            created_at, expires_at, 
             ip_address, user_agent, is_revoked
      FROM user_sessions
      WHERE user_id = $1
      ORDER BY created_at DESC`,
     [userId]
   );
-  return res.rows;
+  return res.rows.map(r => ({ ...r, token: r.token_masked, token_masked: undefined }));
 };

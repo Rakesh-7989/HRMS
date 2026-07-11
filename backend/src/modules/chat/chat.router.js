@@ -4,6 +4,10 @@ const verifyJwt = require("../../middleware/verifyJwt");
 const requirePermission = require("../../middleware/requirePermission");
 const multer = require("multer");
 const path = require("path");
+const crypto = require("crypto");
+
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip', 'application/x-rar-compressed'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.txt', '.docx', '.xlsx', '.zip', '.rar'];
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -11,10 +15,25 @@ const storage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
+        const ext = path.extname(file.originalname).toLowerCase();
+        const safeName = crypto.randomBytes(16).toString('hex') + ext;
+        cb(null, safeName);
     }
 });
-const upload = multer({ storage });
+
+const fileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_MIMES.includes(file.mimetype) && !ALLOWED_EXTENSIONS.includes(ext)) {
+        return cb(new Error(`File type ${file.mimetype} is not allowed`), false);
+    }
+    cb(null, true);
+};
+
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 
 router.use(verifyJwt);
 

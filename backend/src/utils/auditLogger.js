@@ -12,7 +12,7 @@ const db = require('../config/db'); // Assuming this is your DB connection pool
 const logAudit = async (req, targetTable, targetId, action, oldData = null, newData = null) => {
   try {
     const tenantId = req.user?.tenantId;
-    const actorId = req.user?.userId; // The user performing the action
+    const actorId = req.user?.id || req.user?.userId; // The user performing the action
 
     if (!actorId) {
       console.warn('Audit Log skipped: Missing actorId');

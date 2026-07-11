@@ -15,7 +15,7 @@ try {
   generateURI = otplib.generateURI;
   verifySync = otplib.verifySync;
 } catch (err) {
-  console.error("otplib not available, TOTP disabled:", err.message);
+  logger.error("otplib not available, TOTP disabled:", err.message);
   generateSecret = () => crypto.randomBytes(20).toString("hex").toUpperCase();
   generateURI = () => "";
   verifySync = () => false;
@@ -60,14 +60,12 @@ exports.login = async (req, res) => {
        if (user.tenant_id) {
          // 1. Check if plan is expired
          const now = new Date();
-         if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
-            return res.status(403).json({ 
-              message: "Subscription Expired", 
-              planExpired: true,
-              tenant_id: user.tenant_id,
-              email: user.email,
-              detail: "Your organization subscription has expired. Please renew your plan to continue." 
-            });
+          if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
+             return res.status(403).json({ 
+               message: "Subscription Expired", 
+               planExpired: true,
+               detail: "Your organization subscription has expired. Please renew your plan to continue." 
+             });
          }
 
          // 2. Check if organization is explicitly inactive
@@ -79,8 +77,6 @@ exports.login = async (req, res) => {
                 return res.status(403).json({ 
                   message: "Payment Required", 
                   paymentPending: true,
-                  tenant_id: user.tenant_id,
-                  email: user.email,
                   detail: "Your organization subscription setup is incomplete. Please complete the payment."
                 });
               }
@@ -150,7 +146,7 @@ exports.login = async (req, res) => {
     // Audit Login (Async, don't await)
     // We construct a mock req where user is populated for logAudit
     const mockReq = { ...req, user: { tenantId: user.tenant_id, userId: user.id } };
-    logAudit(mockReq, 'users', user.id, 'LOGIN', null, { ip: req.ip }).catch(e => console.error(e));
+    logAudit(mockReq, 'users', user.id, 'LOGIN', null, { ip: req.ip }).catch(e => logger.error(e));
 
     return res.json({
       status: "success",
@@ -162,7 +158,7 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    logger.error("LOGIN ERROR:", error);
     return res.status(500).json({ message: "Login failed" });
   }
 };
@@ -206,7 +202,13 @@ exports.refreshToken = async (req, res) => {
 
     const newRefreshToken = crypto.randomBytes(48).toString("hex");
 
-    await authService.updateSessionActivity(session.id, newRefreshToken);
+    const rotated = await authService.updateSessionActivity(refresh_token, newRefreshToken);
+    if (!rotated) {
+      // Token was already rotated or revoked — possible token theft
+      await authService.revokeRefreshToken(refresh_token);
+      await authService.revokeRefreshToken(newRefreshToken);
+      return res.status(401).json({ message: "Session expired. Please login again." });
+    }
 
     return res.json({
       status: "success",
@@ -215,8 +217,8 @@ exports.refreshToken = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("REFRESH TOKEN ERROR:", error);
-    return res.status(500).json({ message: "Refresh failed" });
+    logger.error("REFRESH TOKEN ERROR:", error);
+    return res.status(401).json({ message: "Refresh failed. Please login again." });
   }
 };
 
@@ -240,13 +242,13 @@ exports.logout = async (req, res) => {
 
     // Audit Logout
     if (req.user) {
-      logAudit(req, 'users', req.user.id, 'LOGOUT', null, null).catch(e => console.error(e));
+      logAudit(req, 'users', req.user.id, 'LOGOUT', null, null).catch(e => logger.error(e));
     }
 
     return res.json({ status: "success", message: "Logged out successfully" });
 
   } catch (error) {
-    console.error("LOGOUT ERROR:", error);
+    logger.error("LOGOUT ERROR:", error);
     return res.status(500).json({ status: "error", message: "Logout failed" });
   }
 };
@@ -280,7 +282,7 @@ exports.logoutAllOtherDevices = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("LOGOUT OTHER DEVICES ERROR:", error);
+    logger.error("LOGOUT OTHER DEVICES ERROR:", error);
     return res.status(500).json({ status: "error", message: "Failed to logout from other devices" });
   }
 };
@@ -295,7 +297,7 @@ exports.listActiveSessions = async (req, res) => {
     return res.json({ status: "success", sessions });
 
   } catch (error) {
-    console.error("LIST SESSIONS ERROR:", error);
+    logger.error("LIST SESSIONS ERROR:", error);
     return res.status(500).json({ message: "Failed to fetch sessions" });
   }
 };
@@ -322,7 +324,7 @@ exports.forgotPassword = async (req, res) => {
     try {
       await mailer.sendPasswordResetEmail(email, token);
     } catch (mailErr) {
-      console.error("Email sending failed:", mailErr);
+      logger.error("Email sending failed:", mailErr);
     }
 
     return res.json({
@@ -331,7 +333,7 @@ exports.forgotPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("FORGOT PASSWORD ERROR:", error);
+    logger.error("FORGOT PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to process request" });
   }
 };
@@ -394,7 +396,7 @@ exports.resetPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("RESET PASSWORD ERROR:", error);
+    logger.error("RESET PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to reset password" });
   }
 };
@@ -455,7 +457,7 @@ exports.changePassword = async (req, res) => {
     try {
       await mailer.sendPasswordChangedNotification(user.email);
     } catch (mailErr) {
-      console.error("Failed to send password change notification:", mailErr);
+      logger.error("Failed to send password change notification:", mailErr);
       // Don't fail the request if email fails, but log it
     }
 
@@ -465,7 +467,7 @@ exports.changePassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("CHANGE PASSWORD ERROR:", error);
+    logger.error("CHANGE PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to change password" });
   }
 };
@@ -499,7 +501,7 @@ exports.setup2FA = async (req, res) => {
       secret
     });
   } catch (error) {
-    console.error("SETUP 2FA ERROR:", error);
+    logger.error("SETUP 2FA ERROR:", error);
     return res.status(500).json({ message: "Failed to setup 2FA" });
   }
 };
@@ -519,12 +521,13 @@ exports.enable2FA = async (req, res) => {
       return res.status(400).json({ message: "Invalid 2FA token" });
     }
 
-    // Generate recovery codes
+    // Generate recovery codes and hash them before storing
     const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(4).toString("hex"));
+    const hashedCodes = await Promise.all(recoveryCodes.map(code => bcrypt.hash(code, 10)));
 
     await pool.query(
       "UPDATE users SET two_factor_enabled = true, two_factor_recovery_codes = $1 WHERE id = $2",
-      [JSON.stringify(recoveryCodes), userId]
+      [JSON.stringify(hashedCodes), userId]
     );
 
     return res.json({
@@ -533,7 +536,7 @@ exports.enable2FA = async (req, res) => {
       recoveryCodes
     });
   } catch (error) {
-    console.error("ENABLE 2FA ERROR:", error);
+    logger.error("ENABLE 2FA ERROR:", error);
     return res.status(500).json({ message: "Failed to enable 2FA" });
   }
 };
@@ -561,7 +564,7 @@ exports.disable2FA = async (req, res) => {
       message: "2FA disabled successfully"
     });
   } catch (error) {
-    console.error("DISABLE 2FA ERROR:", error);
+    logger.error("DISABLE 2FA ERROR:", error);
     return res.status(500).json({ message: "Failed to disable 2FA" });
   }
 };
@@ -587,7 +590,7 @@ exports.verifyPassword = async (req, res) => {
 
     return res.json({ status: "success", message: "Password verified" });
   } catch (error) {
-    console.error("VERIFY PASSWORD ERROR:", error);
+    logger.error("VERIFY PASSWORD ERROR:", error);
     return res.status(500).json({ message: "Failed to verify password" });
   }
 };
@@ -653,7 +656,7 @@ exports.verify2FALogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("VERIFY 2FA LOGIN ERROR:", error);
+    logger.error("VERIFY 2FA LOGIN ERROR:", error);
     return res.status(500).json({ message: "2FA verification failed" });
   }
 };

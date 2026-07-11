@@ -136,16 +136,14 @@ exports.createCompanyHoliday = async (db, tenantId, date, holidayName, state = n
 
         if (usersRes.rowCount > 0) {
             const regionText = state ? ` (Region: ${state})` : '';
-            const title = `New Holiday: ${holidayName}${regionText}`.replace(/'/g, "''");
-            const message = `A new company holiday has been added for ${date}.`.replace(/'/g, "''");
-            
-            const values = usersRes.rows.map(u =>
-                `('${tenantId}', '${u.id}', '${title}', '${message}', 'info')`
-            ).join(',');
+            const title = `New Holiday: ${holidayName}${regionText}`;
+            const message = `A new company holiday has been added for ${date}.`;
+            const userIds = usersRes.rows.map(u => u.id);
 
             await query(
                 `INSERT INTO notifications (tenant_id, user_id, title, message, type)
-                 VALUES ${values}`
+                 SELECT $1, unnest($2::uuid[]), $3, $4, $5`,
+                [tenantId, userIds, title, message, 'info']
             );
         }
     } catch (err) {
@@ -221,13 +219,11 @@ exports.createAnnouncement = async (db, tenantId, userId, data) => {
         );
 
         if (usersRes.rowCount > 0) {
-            const values = usersRes.rows.map(u =>
-                `('${tenantId}', '${u.id}', '${data.title}', '${data.message.replace(/'/g, "''")}', 'info')`
-            ).join(',');
-
+            const userIds = usersRes.rows.map(u => u.id);
             await query(
                 `INSERT INTO notifications (tenant_id, user_id, title, message, type)
-                 VALUES ${values}`
+                 SELECT $1, unnest($2::uuid[]), $3, $4, $5`,
+                [tenantId, userIds, data.title, data.message, 'info']
             );
         }
     } catch (err) {
@@ -277,14 +273,13 @@ exports.bulkImportHolidays = async (db, tenantId, holidays) => {
                 [tenantId]
             );
             if (usersRes.rowCount > 0) {
-                const title = `Holiday Calendar Updated`.replace(/'/g, "''");
-                const message = `${imported} company holidays have been imported for ${years.join(', ')}.`.replace(/'/g, "''");
-                const values = usersRes.rows.map(u =>
-                    `('${tenantId}', '${u.id}', '${title}', '${message}', 'info')`
-                ).join(',');
-                
+                const title = `Holiday Calendar Updated`;
+                const message = `${imported} company holidays have been imported for ${years.join(', ')}.`;
+                const userIds = usersRes.rows.map(u => u.id);
                 await query(
-                    `INSERT INTO notifications (tenant_id, user_id, title, message, type) VALUES ${values}`
+                    `INSERT INTO notifications (tenant_id, user_id, title, message, type)
+                     SELECT $1, unnest($2::uuid[]), $3, $4, $5`,
+                    [tenantId, userIds, title, message, 'info']
                 );
             }
         } catch (notifErr) {

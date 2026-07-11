@@ -12,9 +12,16 @@ module.exports = function requestLogger(req, res, next) {
             : {};
 
     if (Object.keys(safeBody).length > 0) {
+        const REDACTED_FIELDS = ['password', 'refresh_token', 'token', 'newPassword', 'currentPassword', 'secret', 'authorization'];
+        const redacted = { ...safeBody };
+        for (const field of REDACTED_FIELDS) {
+            if (redacted[field] !== undefined) {
+                redacted[field] = '***REDACTED***';
+            }
+        }
         console.log(
             '   Body:',
-            JSON.stringify(safeBody, null, 2).substring(0, 200)
+            JSON.stringify(redacted, null, 2).substring(0, 200)
         );
     }
 

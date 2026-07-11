@@ -76,8 +76,8 @@ const initSocket = (httpServer) => {
             (async () => {
                 const client = await pool.connect();
                 try {
-                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
-                    await client.query(`SET app.user_id = '${socket.user.id}'`);
+                    await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', socket.user.tenant_id]);
+                    await client.query('SELECT set_config($1, $2, true)', ['app.user_id', socket.user.id]);
                     await client.query('UPDATE users SET status = $1 WHERE id = $2', ['ONLINE', socket.user.id]);
                     io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'ONLINE' });
                     logger.info(`User ${socket.user.id} status updated to ONLINE`);
@@ -131,8 +131,8 @@ const initSocket = (httpServer) => {
                     // But to be safe lets reuse the pattern if needed, or rely on super admin bypass if we had it.
                     // Actually, simple SELECT might work if RLS allows reading own conversations.
                     // Let's just use the query directly.
-                    await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
-                    await client.query(`SET app.user_id = '${socket.user.id}'`);
+                    await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', socket.user.tenant_id]);
+                    await client.query('SELECT set_config($1, $2, true)', ['app.user_id', socket.user.id]);
 
                     const participantsRes = await client.query(
                         "SELECT user_id FROM conversation_participants WHERE conversation_id = $1",
@@ -223,7 +223,7 @@ const initSocket = (httpServer) => {
                         const client = await pool.connect();
                         try {
                             // Manual RLS
-                            await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
+                            await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', socket.user.tenant_id]);
 
                             const parts = await client.query("SELECT user_id FROM conversation_participants WHERE conversation_id = $1", [to]);
 
@@ -265,8 +265,8 @@ const initSocket = (httpServer) => {
             const client = await pool.connect();
             try {
                 // newStatus: available, busy, dnd, away, offline
-                await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
-                await client.query(`SET app.user_id = '${socket.user.id}'`);
+                await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', socket.user.tenant_id]);
+                await client.query('SELECT set_config($1, $2, true)', ['app.user_id', socket.user.id]);
 
                 await client.query('UPDATE users SET status = $1 WHERE id = $2', [newStatus.toUpperCase(), socket.user.id]);
 
@@ -292,8 +292,8 @@ const initSocket = (httpServer) => {
                 if (!userSockets || userSockets.size === 0) {
                     const client = await pool.connect();
                     try {
-                        await client.query(`SET app.tenant_id = '${socket.user.tenant_id}'`);
-                        await client.query(`SET app.user_id = '${socket.user.id}'`);
+                        await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', socket.user.tenant_id]);
+                        await client.query('SELECT set_config($1, $2, true)', ['app.user_id', socket.user.id]);
                         await client.query('UPDATE users SET status = $1 WHERE id = $2', ['OFFLINE', socket.user.id]);
                         io.to(`tenant_${socket.user.tenant_id}`).emit('user_status_change', { userId: socket.user.id, status: 'OFFLINE' });
                         logger.info(`User ${socket.user.id} status updated to OFFLINE`);

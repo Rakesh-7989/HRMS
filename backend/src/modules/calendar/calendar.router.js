@@ -1,12 +1,27 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 
 const verifyJwt = require("../../middleware/verifyJwt");
 const validate = require("../../middleware/validate");
 const requirePermission = require("../../middleware/requirePermission");
+const { uploadLimiter } = require("../../middleware/rateLimiter");
 
 const controller = require("./calendar.controller");
 const validator = require("./calendar.validator");
+
+const excelUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+    }
+  }
+});
 
 // All routes require authentication
 router.use(verifyJwt);
@@ -45,11 +60,11 @@ router.delete(
 );
 
 // Bulk Import Holidays from Excel
-const uploadTemp = require("multer")({ storage: require("multer").memoryStorage() });
 router.post(
     "/company/holidays/import",
+    uploadLimiter,
     requirePermission("calendar", "manage_holidays"),
-    uploadTemp.single("file"),
+    excelUpload.single("file"),
     controller.bulkImportHolidays
 );
 
