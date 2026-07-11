@@ -1203,7 +1203,10 @@
         "newStructure": "New Structure",
         "above": "Above",
         "noStructuresYet": "No commission structures yet",
-        "bonusApproved": "Bonus approved"
+        "bonusApproved": "Bonus approved",
+        "pending": "Pending",
+        "cancelled": "Cancelled",
+        "max": "Max"
     },
     "engagement": {
         "title": "Employee Engagement",

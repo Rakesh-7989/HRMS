@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { bonusService } from '@/services/bonus.service';
 import { Card } from '@/components/ui/Card';
@@ -8,6 +9,7 @@ import { Percent, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export const CommissionStructuresContent: React.FC = () => {
+  const { t } = useTranslation();
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['commission-structures'],
     queryFn: () => bonusService.getCommissionStructures().then(r => r.data),
@@ -19,8 +21,8 @@ export const CommissionStructuresContent: React.FC = () => {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Commission Structures</h2>
-          <Button size="sm" className="gap-2"><Plus size={16} /> New Structure</Button>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{t('bonus.commissionStructures')}</h2>
+          <Button size="sm" className="gap-2"><Plus size={16} /> {t('bonus.newStructure')}</Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {commissions?.map(c => (
@@ -32,21 +34,21 @@ export const CommissionStructuresContent: React.FC = () => {
                 <span className={cn(
                   'px-2.5 py-1 rounded-lg text-xs font-bold',
                   c.is_active ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-500'
-                )}>{c.is_active ? 'Active' : 'Inactive'}</span>
+                )}>{c.is_active ? t('bonus.active') : t('bonus.inactive')}</span>
               </div>
               <h3 className="font-bold text-neutral-900 dark:text-white mb-1">{c.name}</h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3 capitalize">{c.applicable_to.replace('_', ' ').toLowerCase()}</p>
               <div className="text-sm font-bold text-brand-500">
                 {c.calculation_type === 'PERCENTAGE' ? `${c.value}%` : `₹${c.value}`}
-                {c.threshold ? ` (above ₹${c.threshold.toLocaleString()})` : ''}
+                {c.threshold ? ` (${t('bonus.above')} ₹${c.threshold.toLocaleString()})` : ''}
               </div>
-              <p className="text-xs text-neutral-400 mt-1 capitalize">Frequency: {c.frequency.replace('_', ' ').toLowerCase()}</p>
+              <p className="text-xs text-neutral-400 mt-1 capitalize">{t('bonus.frequency')}: {c.frequency.replace('_', ' ').toLowerCase()}</p>
             </Card>
           ))}
           {(!commissions || commissions.length === 0) && (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-neutral-400">
               <Percent className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No commission structures yet</p>
+              <p className="font-medium">{t('bonus.noStructuresYet')}</p>
             </div>
           )}
         </div>
