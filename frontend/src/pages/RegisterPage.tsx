@@ -256,7 +256,7 @@ export const RegisterPage: React.FC = () => {
                 }
 
                 try {
-                    const cashfree = (window as any).Cashfree({ mode: "sandbox" });
+                    const cashfree = (window as any).Cashfree({ mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox' });
                     await cashfree.checkout({
                         paymentSessionId: paymentData.payment_session_id,
                         redirectTarget: "_self"

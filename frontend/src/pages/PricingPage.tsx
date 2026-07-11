@@ -503,7 +503,7 @@ export const PricingPage: React.FC = () => {
       if (result.payment_session_id) {
           // Initialize Cashfree
           const cashfree = (window as any).Cashfree({
-              mode: "sandbox" // Change to "production" for live
+              mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox'
           });
 
           await cashfree.checkout({
