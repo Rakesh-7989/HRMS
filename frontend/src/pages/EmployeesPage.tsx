@@ -32,10 +32,8 @@ import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
-import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
-import { permissionsService } from '@/services/permissions.service';
-import { Dialog } from '@/components/ui/Dialog';
-import { PageTransition } from '@/components/common/PageTransition';
+import { DataTable } from '@/components/ui/DataTable';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -194,6 +192,167 @@ export const EmployeesPage: React.FC = () => {
 
   const hasActiveFilters = roleFilter || departmentFilter || statusFilter;
 
+  // Define DataTable columns
+  const employeeColumns = [
+    {
+      header: t('common.employee'),
+      accessorKey: 'first_name' as keyof User,
+      className: 'w-48',
+      cell: (emp: User) => (
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white overflow-hidden',
+            emp.is_active ? 'bg-gradient-to-br from-brand-500 to-brand-500-dark' : 'bg-gray-400'
+          )}>
+            {emp.profile_photo_url ? (
+              <img src={resolveImageUrl(emp.profile_photo_url)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <>{emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}</>
+            )}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900 dark:text-white">
+              {emp.first_name} {emp.last_name}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {emp.email}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: t('common.department'),
+      accessorKey: 'department_id' as keyof User,
+      className: 'w-40',
+      cell: (emp: User) => getDepartmentName(emp.department_id)
+    },
+    {
+      header: t('common.designation'),
+      accessorKey: 'designation_id' as keyof User,
+      className: 'w-40',
+      cell: (emp: User) => getDesignationName(emp.designation_id)
+    },
+    {
+      header: t('common.role'),
+      accessorKey: 'role' as keyof User,
+      className: 'w-32',
+      cell: (emp: User) => (
+        <span className={cn(
+          'px-2 py-0.5 rounded text-xs font-medium',
+          emp.role === 'ADMIN' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
+          emp.role === 'HR' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
+          emp.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+          emp.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+        )}>
+          {emp.role?.replace('_', ' ')}
+        </span>
+      )
+    },
+    {
+      header: t('common.status'),
+      accessorKey: 'is_active' as keyof User,
+      className: 'w-24',
+      cell: (emp: User) => (
+        emp.is_active ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+            <UserCheck size={14} />
+            {t('common.active')}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400">
+            <UserX size={14} />
+            {t('common.inactive')}
+          </span>
+        )
+      )
+    },
+    {
+      header: t('common.joined'),
+      accessorKey: 'join_date' as keyof User,
+      className: 'w-32',
+      cell: (emp: User) => emp.join_date || emp.created_at
+        ? format(new Date(emp.join_date || emp.created_at!), 'MMM dd, yyyy')
+        : '-'
+    },
+    {
+      header: t('common.actions'),
+      accessorKey: 'id' as keyof User,
+      className: 'w-48 text-right',
+      cell: (emp: User) => (
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleRowClick(emp)}
+            title="View Details"
+          >
+            <Eye size={16} />
+          </Button>
+          {canUpdate && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const secureId = obfuscateId(emp.employee_id || emp.id);
+                  navigate(`/dashboard/employees/${secureId}/edit`);
+                }}
+                title="Edit"
+              >
+                <Edit size={16} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleStatusMutation.mutate({
+                  id: emp.id,
+                  is_active: !emp.is_active
+                })}
+                disabled={toggleStatusMutation.isPending || user?.id === emp.id}
+                title={
+                  user?.id === emp.id
+                    ? "You cannot deactivate your own account"
+                    : emp.is_active
+                      ? "Deactivate"
+                      : "Activate"
+                }
+                className={cn(
+                  user?.id === emp.id ? 'opacity-50 cursor-not-allowed' : '',
+                  emp.is_active ? 'text-red-500 hover:text-red-600' : 'text-green-500 hover:text-green-600'
+                )}
+              >
+                {emp.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
+              </Button>
+            </>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                const result = await confirm({
+                  title: 'Delete Employee',
+                  message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
+                  type: 'destructive',
+                  confirmText: 'Delete Employee',
+                  cancelText: 'Cancel'
+                });
+                if (result) {
+                  deleteMutation.mutate(emp.id);
+                }
+              }}
+              disabled={deleteMutation.isPending || user?.id === emp.id}
+              title="Delete"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 size={16} />
+            </Button>
+          )}
+        </div>
+      )
+    }
+  ];
   // Subscription Query for Limit Check
   const { data: subscription } = useQuery({
     queryKey: ['my-subscription'],
