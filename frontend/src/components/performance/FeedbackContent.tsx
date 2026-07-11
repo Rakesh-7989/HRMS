@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { performanceService, FeedbackRequest } from '@/services/performance.service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -9,6 +10,7 @@ import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 
 export const FeedbackContent: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [view, setView] = useState<'received' | 'pending' | 'sent'>('pending');
   const [responseText, setResponseText] = useState<Record<string, string>>({});
@@ -26,7 +28,7 @@ export const FeedbackContent: React.FC = () => {
       performanceService.submitFeedback(id, response),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-feedback'] });
-      toast.success('Feedback submitted');
+      toast.success(t('performance.feedbackSubmitted'));
       setResponseText({});
     },
   });
@@ -45,9 +47,9 @@ export const FeedbackContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
             {[
-              { id: 'pending', label: 'Pending Feedback' },
-              { id: 'received', label: 'Received' },
-              { id: 'sent', label: 'Sent' },
+              { id: 'pending', labelKey: 'performance.pendingFeedback' },
+              { id: 'received', labelKey: 'performance.received' },
+              { id: 'sent', labelKey: 'performance.sent' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -59,13 +61,13 @@ export const FeedbackContent: React.FC = () => {
                     : 'text-neutral-500 dark:text-neutral-400'
                 )}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>
           <Button size="sm" className="gap-2">
             <Plus size={16} />
-            Request Feedback
+            {t('performance.requestFeedback')}
           </Button>
         </div>
 
@@ -108,14 +110,14 @@ export const FeedbackContent: React.FC = () => {
               </p>
               {fb.response && (
                 <div className="text-sm text-neutral-500 dark:text-neutral-400 bg-brand-50 dark:bg-brand-900/10 rounded-xl p-3 mb-3">
-                  <span className="font-bold text-brand-600 dark:text-brand-400">Response: </span>
+                  <span className="font-bold text-brand-600 dark:text-brand-400">{t('performance.response')}: </span>
                   {fb.response}
                 </div>
               )}
               {view === 'pending' && fb.status === 'PENDING' && (
                 <div className="space-y-3">
                   <textarea
-                    placeholder="Write your feedback..."
+                    placeholder={t('performance.writeFeedback')}
                     value={responseText[fb.id] || ''}
                     onChange={(e) => setResponseText(prev => ({ ...prev, [fb.id]: e.target.value }))}
                     className="w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
@@ -132,7 +134,7 @@ export const FeedbackContent: React.FC = () => {
                     className="gap-2"
                   >
                     <Send size={14} />
-                    Submit Feedback
+                    {t('performance.submitFeedback')}
                   </Button>
                 </div>
               )}
@@ -141,8 +143,8 @@ export const FeedbackContent: React.FC = () => {
           {(!feedbackList || feedbackList.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
               <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No feedback requests</p>
-              <p className="text-sm">Request feedback from colleagues to get started</p>
+              <p className="font-medium">{t('performance.noFeedback')}</p>
+              <p className="text-sm">{t('performance.requestFeedbackCTA')}</p>
             </div>
           )}
         </div>

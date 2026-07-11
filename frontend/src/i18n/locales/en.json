@@ -521,7 +521,13 @@
         "loans": "Loans",
         "inbox": "Inbox",
         "billing": "Billing",
-        "subscription": "Subscription"
+        "subscription": "Subscription",
+        "performance": "Performance",
+        "recruitment": "Recruitment",
+        "bonus": "Bonus & Incentives",
+        "engagement": "Employee Engagement",
+        "compliance": "Compliance Reports",
+        "aiInsights": "AI Insights"
     },
     "chat": {
         "searchConversations": "Search conversations...",
@@ -689,7 +695,8 @@
         "employees": "Employees",
         "users": "Users",
         "filterByDept": "Filter by Department:",
-        "allDepartments": "All Departments"
+        "allDepartments": "All Departments",
+        "costCenters": "Cost Centers"
     },
     "payroll": {
         "title": "Payroll",
@@ -1064,14 +1071,6 @@
         "cancel": "Cancel",
         "revokeDelegation": "Revoke delegation"
     },
-    "sidebar": {
-        "performance": "Performance",
-        "recruitment": "Recruitment",
-        "bonus": "Bonus & Incentives",
-        "engagement": "Employee Engagement",
-        "compliance": "Compliance Reports",
-        "aiInsights": "AI Insights"
-    },
     "performance": {
         "title": "Performance Management",
         "reviews": "Reviews",
@@ -1123,7 +1122,9 @@
         "createTemplate": "Create review templates to define rating scales and sections",
         "reviewCycleClosed": "Review cycle closed",
         "reviewSubmitted": "Review submitted",
-        "feedbackSubmitted": "Feedback submitted"
+        "feedbackSubmitted": "Feedback submitted",
+        "response": "Response",
+        "inactive": "Inactive"
     },
     "recruitment": {
         "title": "Recruitment & ATS",

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { performanceService, ReviewCycle, PerformanceReview } from '@/services/performance.service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -9,19 +10,20 @@ import { cn } from '@/utils/cn';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: 'Draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400' },
-  ACTIVE: { label: 'Active', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
-  CLOSED: { label: 'Closed', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  DRAFT: { labelKey: 'performance.draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400' },
+  ACTIVE: { labelKey: 'performance.active', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
+  CLOSED: { labelKey: 'performance.closed', color: 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' },
 };
 
-const reviewStatusConfig: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Pending', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
-  SUBMITTED: { label: 'Submitted', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-  ACKNOWLEDGED: { label: 'Acknowledged', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
+const reviewStatusConfig: Record<string, { labelKey: string; color: string }> = {
+  PENDING: { labelKey: 'performance.pending', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+  SUBMITTED: { labelKey: 'performance.submitted', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  ACKNOWLEDGED: { labelKey: 'performance.acknowledged', color: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' },
 };
 
 export const ReviewCyclesContent: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export const ReviewCyclesContent: React.FC = () => {
     mutationFn: (id: string) => performanceService.closeCycle(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-cycles'] });
-      toast.success('Review cycle closed');
+      toast.success(t('performance.reviewCycleClosed'));
     },
   });
 
@@ -50,7 +52,7 @@ export const ReviewCyclesContent: React.FC = () => {
       performanceService.submitReview(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-reviews'] });
-      toast.success('Review submitted');
+      toast.success(t('performance.reviewSubmitted'));
     },
   });
 
@@ -66,10 +68,10 @@ export const ReviewCyclesContent: React.FC = () => {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Review Cycles</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{t('performance.reviewCycles')}</h2>
           <Button size="sm" className="gap-2">
             <Plus size={16} />
-            New Cycle
+            {t('performance.newCycle')}
           </Button>
         </div>
 
@@ -90,7 +92,7 @@ export const ReviewCyclesContent: React.FC = () => {
                   <BarChart3 className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                 </div>
                 <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[cycle.status]?.color)}>
-                  {statusConfig[cycle.status]?.label || cycle.status}
+                  {t(statusConfig[cycle.status]?.labelKey || 'performance.draft')}
                 </span>
               </div>
               <h3 className="font-bold text-neutral-900 dark:text-white mb-1">{cycle.title}</h3>
@@ -109,7 +111,7 @@ export const ReviewCyclesContent: React.FC = () => {
                     onClick={(e) => { e.stopPropagation(); closeCycleMutation.mutate(cycle.id); }}
                     className="text-xs font-bold text-error-500 hover:text-error-600 transition-colors"
                   >
-                    Close Cycle
+                    {t('performance.closeCycle')}
                   </button>
                 </div>
               )}
@@ -118,15 +120,15 @@ export const ReviewCyclesContent: React.FC = () => {
           {(!cycles || cycles.length === 0) && (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
               <BarChart3 className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No review cycles yet</p>
-              <p className="text-sm">Create your first review cycle to get started</p>
+              <p className="font-medium">{t('performance.noCyclesYet')}</p>
+              <p className="text-sm">{t('performance.createFirstCycle')}</p>
             </div>
           )}
         </div>
 
         {selectedCycle && (
           <div>
-            <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-4">Reviews</h3>
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-4">{t('performance.reviewsInCycle')}</h3>
             {reviewsLoading ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
@@ -144,13 +146,13 @@ export const ReviewCyclesContent: React.FC = () => {
                           {review.employee?.first_name} {review.employee?.last_name}
                         </p>
                         <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                          Reviewer: {review.reviewer?.first_name} {review.reviewer?.last_name}
+                          {t('performance.reviewer')}: {review.reviewer?.first_name} {review.reviewer?.last_name}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', reviewStatusConfig[review.status]?.color)}>
-                        {reviewStatusConfig[review.status]?.label || review.status}
+                        {t(reviewStatusConfig[review.status]?.labelKey || 'performance.pending')}
                       </span>
                       {review.rating > 0 && (
                         <span className="text-lg font-black text-brand-500">{review.rating}/5</span>
@@ -159,7 +161,7 @@ export const ReviewCyclesContent: React.FC = () => {
                   </Card>
                 ))}
                 {(!reviews || reviews.length === 0) && (
-                  <p className="text-center text-neutral-400 dark:text-neutral-500 py-8">No reviews in this cycle</p>
+                  <p className="text-center text-neutral-400 dark:text-neutral-500 py-8">{t('performance.noReviewsInCycle')}</p>
                 )}
               </div>
             )}

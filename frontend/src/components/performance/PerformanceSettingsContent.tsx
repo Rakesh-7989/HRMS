@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { performanceService } from '@/services/performance.service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -7,6 +8,7 @@ import { Settings, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export const PerformanceSettingsContent: React.FC = () => {
+  const { t } = useTranslation();
   const { data: templates, isLoading } = useQuery({
     queryKey: ['performance-templates'],
     queryFn: () => performanceService.getTemplates().then(r => r.data),
@@ -24,10 +26,10 @@ export const PerformanceSettingsContent: React.FC = () => {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Review Templates</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{t('performance.reviewTemplates')}</h2>
           <Button size="sm" className="gap-2">
             <Plus size={16} />
-            New Template
+            {t('performance.newTemplate')}
           </Button>
         </div>
 
@@ -43,7 +45,7 @@ export const PerformanceSettingsContent: React.FC = () => {
                     <h3 className="font-bold text-neutral-900 dark:text-white">{template.name}</h3>
                   </div>
                   <p className="text-xs text-neutral-400 dark:text-neutral-500 ml-9">
-                    Rating Scale: {template.rating_scale} points
+                    {t('performance.ratingScale')}: {template.rating_scale} points
                   </p>
                 </div>
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
@@ -51,15 +53,15 @@ export const PerformanceSettingsContent: React.FC = () => {
                     ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400'
                     : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
                 }`}>
-                  {template.is_active ? 'Active' : 'Inactive'}
+                  {template.is_active ? t('performance.active') : t('performance.inactive')}
                 </span>
               </div>
               <div className="ml-9 space-y-2">
                 {template.sections.map((section, idx) => (
                   <div key={idx} className="flex items-center gap-3 text-sm">
                     <div className="flex-1 text-neutral-700 dark:text-neutral-300">{section.name}</div>
-                    <div className="text-xs text-neutral-400 dark:text-neutral-500">Weight: {section.weight}%</div>
-                    <div className="text-xs text-neutral-400 dark:text-neutral-500">Max: {section.max_score}</div>
+                    <div className="text-xs text-neutral-400 dark:text-neutral-500">{t('performance.weight')}: {section.weight}%</div>
+                    <div className="text-xs text-neutral-400 dark:text-neutral-500">{t('performance.max')}: {section.max_score}</div>
                   </div>
                 ))}
               </div>
@@ -68,8 +70,8 @@ export const PerformanceSettingsContent: React.FC = () => {
           {(!templates || templates.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
               <Settings className="w-12 h-12 mb-3 opacity-40" />
-              <p className="font-medium">No templates yet</p>
-              <p className="text-sm">Create review templates to define rating scales and sections</p>
+              <p className="font-medium">{t('performance.noTemplatesYet')}</p>
+              <p className="text-sm">{t('performance.createTemplate')}</p>
             </div>
           )}
         </div>
