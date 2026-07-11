@@ -264,7 +264,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
             <select
               value={interestType}
               onChange={(e) => setInterestType(e.target.value as any)}
-              className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50"
             >
               <option value="FLAT">FLAT</option>
               <option value="REDUCING">REDUCING</option>
@@ -311,7 +311,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
             <select
               value={interestType}
               onChange={(e) => setInterestType(e.target.value as any)}
-              className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50"
             >
               <option value="FLAT">FLAT</option>
               <option value="REDUCING">REDUCING</option>

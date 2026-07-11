@@ -135,7 +135,7 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
                                 <textarea
                                     required
                                     name="message"
-                                    className="w-full min-h-[100px] pl-10 pt-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm outline-none"
+                                    className="w-full min-h-[100px] pl-10 pt-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all text-sm outline-none"
                                     placeholder="Tell us about your requirements..."
                                 />
                             </div>

@@ -68,48 +68,48 @@ const planMeta: Record<string, {
 }> = {
   STANDARD: {
     subtitle: 'Starter',
-    tagline: 'Essential HR tools for small teams looking to digitize their operations',
+    tagline: 'Essential HR & compliance tools for small Indian teams',
     highlights: [
-      'Digital Employee Directory & Org Chart',
-      'Basic Leave & Attendance Mgmt',
-      'Team Collaboration & Announcements',
-      'Personal Employee Dashboards',
-      'Holiday Calendar Integration',
-      'Mobile Attendance (GPS restricted)',
+      'PF/ESI/PT & LWF Compliance Ready',
+      'Form 16 & Payslip Generation',
+      'Leave & Attendance Management',
+      'Indian Holiday Calendar (Central + State)',
+      'Employee Directory & Org Chart',
+      'Mobile Attendance with GPS',
+      'Self-Service Portal & Announcements',
       'Basic Email Notifications',
-      'Self-Service Portal Access',
     ],
-    included: 'Core HR foundation for up to 50 members',
+    included: 'Perfect for teams up to 50 members',
   },
   PREMIUM: {
     subtitle: 'Growth',
-    tagline: 'Advanced automation and insights for scaling mid-market organizations',
+    tagline: 'Advanced automation & payroll for scaling Indian businesses',
     highlights: [
       'Everything in Standard, plus:',
-      'Advanced Attendance (Geo-fencing & IP)',
-      'Kanban Boards & Resource Planning',
-      'Asset Lifecycle & Inventory Mgmt',
+      'Full Payroll with Auto Tax Calculation',
+      'Geo-fencing & Biometric Attendance',
+      'New vs Old Tax Regime Comparison',
+      'Expense Reimbursement & Declarations',
       'KPI/OKR Tracking & 360° Feedback',
-      'Custom Approval Chains & Triggers',
-      'Full Payroll Compliance & Expenses',
+      'Asset Lifecycle & Inventory Management',
       'Priority 9/5 Email Support',
     ],
-    included: 'Growth powerhouse for teams up to 250 members',
+    included: 'Designed for teams up to 250 members',
   },
   ELITE: {
     subtitle: 'Enterprise',
-    tagline: 'Complete ecosystem with AI insights, deep security, and dedicated support',
+    tagline: 'Complete HRMS with AI, ATS & dedicated support',
     highlights: [
       'Everything in Premium, plus:',
-      'AI Productivity Scoring & Activity Monitoring',
-      'Recruitment & ATS Applicant Tracking',
+      'AI Productivity Scoring & Insights',
+      'Recruitment & ATS with Resume Parsing',
+      'Employee Engagement Surveys',
+      'Custom Workflow Automation',
       'White-Label Branding & SSO/SAML',
-      'Dedicated Customer Success Manager',
-      'Advanced API & Multi-System Integration',
       'Shift Roster & Biometric Integration',
       '24/7 Priority Phone & Chat Support',
     ],
-    included: 'Enterprise resilience for unlimited scaling',
+    included: 'Unlimited scaling for growing enterprises',
   },
 };
 
@@ -154,7 +154,7 @@ const BillingCycleSelector: React.FC<{
               className={cn(
                 "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                 current === cycle
-                  ? "bg-white dark:bg-white text-black shadow-lg"
+                  ? "bg-white dark:bg-white text-black shadow-elev-4"
                   : "text-gray-500 hover:text-black dark:hover:text-white"
               )}
             >
@@ -254,7 +254,7 @@ const FeatureCategory: React.FC<{
         <div className="flex items-center gap-4">
           <div className={cn(
             "w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700 transition-all duration-500",
-            isExpanded ? "h-6 w-1 bg-primary rounded-full" : "group-hover:bg-primary/50"
+            isExpanded ? "h-6 w-1 bg-brand-500 rounded-full" : "group-hover:bg-brand-500/50"
           )} />
           <span className={cn(
             "text-xs font-black uppercase tracking-[0.2em] transition-colors duration-300",
@@ -265,7 +265,7 @@ const FeatureCategory: React.FC<{
         </div>
         <div className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 text-gray-400 transition-all duration-300",
-          isExpanded ? "rotate-180 bg-black dark:bg-white text-white dark:text-black border-transparent" : "group-hover:border-primary/30 group-hover:text-primary"
+          isExpanded ? "rotate-180 bg-black dark:bg-white text-white dark:text-black border-transparent" : "group-hover:border-brand-500/30 group-hover:text-brand-500"
         )}>
           <ChevronDown className="w-4 h-4" />
         </div>
@@ -324,9 +324,9 @@ const FeatureCategory: React.FC<{
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: true }}
-                                className="w-6 h-6 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center"
+                                className="w-6 h-6 rounded-full bg-brand-500/10 dark:bg-brand-500/20 flex items-center justify-center"
                               >
-                                <Check className="text-primary w-3.5 h-3.5" strokeWidth={3} />
+                                <Check className="text-brand-500 w-3.5 h-3.5" strokeWidth={3} />
                               </motion.div>
                             </div>
                           ) : displayValue ? (
@@ -522,7 +522,7 @@ export const PricingPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-primary/30 transition-colors duration-300">
+    <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
       <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -551,9 +551,9 @@ export const PricingPage: React.FC = () => {
         {/* Header Section - More Compact */}
         <div className="flex flex-col items-center text-center mb-12">
           <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter max-w-2xl leading-tight text-gray-900 dark:text-white">
-            Plans built for <span className="text-primary">hyper-growth</span>
+            Pricing Built for <span className="text-brand-500">Indian SMBs</span>
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg mb-8">Scale your HR presence with surgical precision and dynamic per-user pricing.</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg mb-8">All plans include PF, ESI, PT, LWF compliance, Form 16 generation, and Indian tax regime support. No hidden fees.</p>
 
           {/* Dynamic Calculator Controls */}
           {/* Note: Employee count selector is hidden for now as it's fixed to 10. */}
@@ -589,8 +589,8 @@ export const PricingPage: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-6 mb-20 max-w-6xl mx-auto">
           {displayPlans.map((plan, index) => {
             const meta = planMeta[plan.name] || { subtitle: '', tagline: '', highlights: [], included: '' };
-            const iconColor = "text-primary dark:text-primary/90";
-            const checkColor = "text-primary";
+            const iconColor = "text-brand-500 dark:text-brand-500/90";
+            const checkColor = "text-brand-500";
 
             return (
               <motion.div
@@ -601,17 +601,17 @@ export const PricingPage: React.FC = () => {
                 className={cn(
                   "group relative flex flex-col rounded-[2rem] border transition-all duration-500",
                   plan.popular
-                    ? "bg-white dark:bg-[#0a0a0a] border-primary/40 shadow-2xl dark:shadow-[0_0_60px_rgba(var(--primary),0.06)] scale-[1.02]"
-                    : "bg-white dark:bg-[#080808] border-gray-200 dark:border-white/5 shadow-lg dark:shadow-none hover:shadow-xl dark:hover:shadow-[0_0_40px_rgba(255,255,255,0.02)]"
+                    ? "bg-white dark:bg-[#0a0a0a] border-brand-500/40 shadow-elev-6 dark:shadow-[0_0_60px_rgba(var(--primary),0.06)] scale-[1.02]"
+                    : "bg-white dark:bg-[#080808] border-gray-200 dark:border-white/5 shadow-elev-4 dark:shadow-none hover:shadow-elev-5 dark:hover:shadow-[0_0_40px_rgba(255,255,255,0.02)]"
                 )}
               >
                 {/* Popular Badge */}
                 {plan.popular && (
-                  <div className="absolute -top-px left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0" />
+                  <div className="absolute -top-px left-0 right-0 h-1 bg-gradient-to-r from-brand-500/0 via-brand-500 to-brand-500/0" />
                 )}
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="bg-primary text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-xl shadow-primary/30">
+                    <span className="bg-brand-500 text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-elev-5 shadow-brand-500/30">
                       Most Popular
                     </span>
                   </div>
@@ -623,7 +623,7 @@ export const PricingPage: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white">{plan.name}</h3>
-                        <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary/20 text-primary bg-primary/5")}>
+                        <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-brand-500/20 text-brand-500 bg-brand-500/5")}>
                           {meta.subtitle}
                         </span>
                       </div>
@@ -643,7 +643,7 @@ export const PricingPage: React.FC = () => {
                 <div className="px-6 py-6 mx-4 my-2 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
                   <div className="flex flex-col">
                     <div className="flex flex-col gap-1 mb-4">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Billed Periodically</p>
+                      <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em]">Billed Periodically</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
                           ₹{plan.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -661,7 +661,7 @@ export const PricingPage: React.FC = () => {
 
                       {plan.setupFee > 0 && (
                         <div className="flex flex-col items-end gap-1">
-                          <p className="text-[9px] font-black text-primary uppercase tracking-[0.15em]">One-Time</p>
+                          <p className="text-[9px] font-black text-brand-500 uppercase tracking-[0.15em]">One-Time</p>
                           <p className="text-[11px] font-bold text-gray-900 dark:text-white">₹{plan.setupFee.toLocaleString()} <span className="text-[9px] text-gray-400 uppercase font-bold">setup</span></p>
                         </div>
                       )}
@@ -682,7 +682,7 @@ export const PricingPage: React.FC = () => {
                               <Check className="w-2.5 h-2.5 text-gray-400" strokeWidth={3} />
                             </div>
                           ) : (
-                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-primary/10")}>
+                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-brand-500/10")}>
                               <Check className={cn("w-2.5 h-2.5", checkColor)} strokeWidth={3} />
                             </div>
                           )}
@@ -711,7 +711,7 @@ export const PricingPage: React.FC = () => {
                     onClick={() => handlePlanSelection(plan)}
                     className={cn(
                       "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
-                      "bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
+                      "bg-brand-500 text-white hover:shadow-elev-4 hover:shadow-brand-500/20 hover:-translate-y-0.5 active:translate-y-0"
                     )}
                   >
                     {plan.name === 'ELITE' ? 'Go Enterprise' : plan.name === 'PREMIUM' ? 'Start Growing' : 'Get Started'}
@@ -729,26 +729,26 @@ export const PricingPage: React.FC = () => {
           viewport={{ once: true }}
           className="mb-20 max-w-4xl mx-auto"
         >
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-[#111] text-gray-900 dark:text-white p-12 border border-gray-200 dark:border-white/5 shadow-xl dark:shadow-2xl">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-[#111] text-gray-900 dark:text-white p-12 border border-gray-200 dark:border-white/5 shadow-elev-5 dark:shadow-elev-6">
             {/* Decorative background */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 dark:bg-primary/20 rounded-full blur-[100px] -mr-48 -mt-48" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 dark:bg-primary/10 rounded-full blur-[80px] -ml-32 -mb-32" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/20 rounded-full blur-[100px] -mr-48 -mt-48" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-500/5 dark:bg-brand-500/10 rounded-full blur-[80px] -ml-32 -mb-32" />
 
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 mb-4">
-                  <Star className="w-3 h-3 text-primary fill-primary" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary">Enterprise Only</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/20 dark:border-brand-500/30 mb-4">
+                  <Star className="w-3 h-3 text-brand-500 fill-primary" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-brand-500">Enterprise Only</span>
                 </div>
                 <h2 className="text-3xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">Custom Enterprise Plan</h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg leading-relaxed">
-                  For organizations with more than 500+ employees, complex compliance needs, or custom integration requirements. Get a dedicated instance with white-labeling.
+                  500+ employees? Need custom compliance workflows, dedicated server in India, or white-labeling? Get a tailored plan with priority support and SLA guarantees.
                 </p>
               </div>
               <div className="flex-shrink-0">
                 <button
                   onClick={() => setIsContactModalOpen(true)}
-                  className="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-gray-900/10 dark:shadow-white/10"
+                  className="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-elev-5 shadow-gray-900/10 dark:shadow-white/10"
                 >
                   Contact Sales
                 </button>
@@ -758,7 +758,7 @@ export const PricingPage: React.FC = () => {
         </motion.div>
 
         {/* Compressed Feature Comparison */}
-        <div className="max-w-4xl mx-auto border border-gray-200 dark:border-white/5 rounded-[2.5rem] bg-gray-50 dark:bg-[#080808] overflow-hidden shadow-xl dark:shadow-none transition-colors">
+        <div className="max-w-4xl mx-auto border border-gray-200 dark:border-white/5 rounded-[2.5rem] bg-gray-50 dark:bg-[#080808] overflow-hidden shadow-elev-5 dark:shadow-none transition-colors">
           <div className="p-8 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-white/[0.5] dark:bg-white/[0.01]">
             <div>
               <h2 className="text-xl font-black tracking-tight mb-1 uppercase tracking-widest text-sm text-gray-900 dark:text-white">Feature Comparison</h2>
