@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { BonusPlansContent } from '@/components/bonus/BonusPlansContent';
@@ -7,13 +8,14 @@ import { EmployeeBonusesContent } from '@/components/bonus/EmployeeBonusesConten
 import { CommissionStructuresContent } from '@/components/bonus/CommissionStructuresContent';
 import { Gift, Users, Percent } from 'lucide-react';
 
-const TABS = [
-  { id: 'plans', label: 'Bonus Plans', icon: Gift, permission: ['bonus', 'view'] },
-  { id: 'bonuses', label: 'Employee Bonuses', icon: Users, permission: ['bonus', 'view'] },
-  { id: 'commissions', label: 'Commissions', icon: Percent, permission: ['bonus', 'manage'] },
+const TABS: { id: string; labelKey: string; icon: React.ElementType; permission: [string, string] }[] = [
+  { id: 'plans', labelKey: 'bonus.bonusPlans', icon: Gift, permission: ['bonus', 'view'] },
+  { id: 'bonuses', labelKey: 'bonus.employeeBonuses', icon: Users, permission: ['bonus', 'view'] },
+  { id: 'commissions', labelKey: 'bonus.commissions', icon: Percent, permission: ['bonus', 'manage'] },
 ];
 
 export const BonusPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
 
@@ -30,7 +32,7 @@ export const BonusPage: React.FC = () => {
   }, [tabParam]);
 
   return (
-    <DashboardLayout title="Bonus & Incentives">
+    <DashboardLayout title={t('bonus.title')}>
       <div className="space-y-6">
         <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-2xl w-fit">
           {TABS.map(tab => {
@@ -48,7 +50,7 @@ export const BonusPage: React.FC = () => {
                 }`}
               >
                 <Icon size={16} />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}

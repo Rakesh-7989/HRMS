@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PFReportsContent } from '@/components/compliance/PFReportsContent';
 import { ESIReportsContent } from '@/components/compliance/ESIReportsContent';
@@ -7,14 +8,15 @@ import { PTReportsContent } from '@/components/compliance/PTReportsContent';
 import { LWFReportsContent } from '@/components/compliance/LWFReportsContent';
 import { Shield, Activity, FileText, Building2 } from 'lucide-react';
 
-const TABS = [
-  { id: 'pf', label: 'PF Returns', icon: Shield },
-  { id: 'esi', label: 'ESI Returns', icon: Activity },
-  { id: 'pt', label: 'PT Returns', icon: FileText },
-  { id: 'lwf', label: 'LWF Returns', icon: Building2 },
+const TABS: { id: string; labelKey: string; icon: React.ElementType }[] = [
+  { id: 'pf', labelKey: 'compliance.pfReturns', icon: Shield },
+  { id: 'esi', labelKey: 'compliance.esiReturns', icon: Activity },
+  { id: 'pt', labelKey: 'compliance.ptReturns', icon: FileText },
+  { id: 'lwf', labelKey: 'compliance.lwfReturns', icon: Building2 },
 ];
 
 export const ComplianceReportsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const getInitialTab = () => tabParam && TABS.some(t => t.id === tabParam) ? tabParam : 'pf';
@@ -25,7 +27,7 @@ export const ComplianceReportsPage: React.FC = () => {
   }, [tabParam]);
 
   return (
-    <DashboardLayout title="Compliance Reports">
+    <DashboardLayout title={t('compliance.title')}>
       <div className="space-y-6">
         <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-2xl w-fit">
           {TABS.map(tab => {
@@ -38,7 +40,7 @@ export const ComplianceReportsPage: React.FC = () => {
                     : 'text-neutral-500 hover:text-neutral-700'
                 }`}
               >
-                <Icon size={16} /> {tab.label}
+                <Icon size={16} /> {t(tab.labelKey)}
               </button>
             );
           })}

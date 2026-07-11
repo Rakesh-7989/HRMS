@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobPostingsContent } from '@/components/recruitment/JobPostingsContent';
@@ -8,14 +9,15 @@ import { InterviewsContent } from '@/components/recruitment/InterviewsContent';
 import { Briefcase, Users, Calendar, Brain } from 'lucide-react';
 import { AITabContent } from '@/components/ai/AITabContent';
 
-const TABS = [
-  { id: 'jobs', label: 'Job Postings', icon: Briefcase, permission: ['recruitment', 'view'] },
-  { id: 'candidates', label: 'Candidates', icon: Users, permission: ['recruitment', 'view'] },
-  { id: 'interviews', label: 'Interviews', icon: Calendar, permission: ['recruitment', 'view'] },
-  { id: 'ai', label: 'AI Tools', icon: Brain, permission: ['recruitment', 'view'] },
+const TABS: { id: string; labelKey: string; icon: React.ElementType; permission: [string, string] }[] = [
+  { id: 'jobs', labelKey: 'recruitment.jobPostings', icon: Briefcase, permission: ['recruitment', 'view'] },
+  { id: 'candidates', labelKey: 'recruitment.candidates', icon: Users, permission: ['recruitment', 'view'] },
+  { id: 'interviews', labelKey: 'recruitment.interviews', icon: Calendar, permission: ['recruitment', 'view'] },
+  { id: 'ai', labelKey: 'recruitment.aiTools', icon: Brain, permission: ['recruitment', 'view'] },
 ];
 
 export const RecruitmentPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
 
@@ -48,7 +50,7 @@ export const RecruitmentPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Recruitment & ATS">
+    <DashboardLayout title={t('recruitment.title')}>
       <div className="space-y-6">
         <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-2xl w-fit">
           {TABS.map(tab => {
@@ -66,7 +68,7 @@ export const RecruitmentPage: React.FC = () => {
                 }`}
               >
                 <Icon size={16} />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}

@@ -10,12 +10,12 @@ import { PerformanceSettingsContent } from '@/components/performance/Performance
 import { BarChart3, Target, MessageSquare, Settings, Brain } from 'lucide-react';
 import { AITabContent } from '@/components/ai/AITabContent';
 
-const TABS = [
-  { id: 'reviews', label: 'Reviews', icon: BarChart3, permission: ['performance', 'view'] },
-  { id: 'goals', label: 'Goals', icon: Target, permission: ['performance', 'view'] },
-  { id: 'feedback', label: 'Feedback', icon: MessageSquare, permission: ['performance', 'view'] },
-  { id: 'ai', label: 'AI Insights', icon: Brain, permission: ['performance', 'view'] },
-  { id: 'settings', label: 'Settings', icon: Settings, permission: ['performance', 'manage'] },
+const TABS: { id: string; labelKey: string; icon: React.ElementType; permission: [string, string] }[] = [
+  { id: 'reviews', labelKey: 'performance.reviews', icon: BarChart3, permission: ['performance', 'view'] },
+  { id: 'goals', labelKey: 'performance.goals', icon: Target, permission: ['performance', 'view'] },
+  { id: 'feedback', labelKey: 'performance.feedback', icon: MessageSquare, permission: ['performance', 'view'] },
+  { id: 'ai', labelKey: 'performance.aiInsights', icon: Brain, permission: ['performance', 'view'] },
+  { id: 'settings', labelKey: 'performance.settings', icon: Settings, permission: ['performance', 'manage'] },
 ];
 
 export const PerformancePage: React.FC = () => {
@@ -53,7 +53,7 @@ export const PerformancePage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title="Performance Management">
+    <DashboardLayout title={t('performance.title')}>
       <div className="space-y-6">
         <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-2xl w-fit">
           {TABS.map(tab => {
@@ -71,7 +71,7 @@ export const PerformancePage: React.FC = () => {
                 }`}
               >
                 <Icon size={16} />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { aiService } from '@/services/ai.service';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -15,13 +16,14 @@ const severityConfig: Record<string, { color: string; icon: React.ElementType }>
 };
 
 export const AIInsightsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data: insights, isLoading } = useQuery({
     queryKey: ['ai-insights'],
     queryFn: () => aiService.getInsights().then(r => r.data),
   });
 
   return (
-    <DashboardLayout title="AI Insights">
+    <DashboardLayout title={t('ai.title')}>
       <PageTransition>
         <div className="space-y-6">
           <div className="flex items-center gap-3">
@@ -29,9 +31,9 @@ export const AIInsightsPage: React.FC = () => {
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-white">AI-Powered Insights</h1>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{t('ai.aiPoweredInsights')}</h1>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Intelligent recommendations and predictions for your organization
+                {t('ai.subtitle')}
               </p>
             </div>
           </div>
@@ -58,11 +60,11 @@ export const AIInsightsPage: React.FC = () => {
                             'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
                             config.color
                           )}>
-                            {insight.confidence}% confidence
+                            {insight.confidence}{t('ai.confidence')}
                           </span>
                           {insight.affected_count && (
                             <span className="flex items-center gap-1 text-xs text-neutral-400">
-                              <Users size={12} /> {insight.affected_count} affected
+                              <Users size={12} /> {insight.affected_count} {t('ai.affected')}
                             </span>
                           )}
                         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SurveysContent } from '@/components/engagement/SurveysContent';
@@ -8,14 +9,15 @@ import { CelebrationsContent } from '@/components/engagement/CelebrationsContent
 import { ClipboardCheck, Award, Cake, Brain } from 'lucide-react';
 import { AITabContent } from '@/components/ai/AITabContent';
 
-const TABS = [
-  { id: 'surveys', label: 'Surveys', icon: ClipboardCheck, permission: ['engagement', 'view'] },
-  { id: 'recognition', label: 'Recognition', icon: Award, permission: ['engagement', 'view'] },
-  { id: 'celebrations', label: 'Celebrations', icon: Cake, permission: ['engagement', 'view'] },
-  { id: 'ai', label: 'AI Insights', icon: Brain, permission: ['engagement', 'view'] },
+const TABS: { id: string; labelKey: string; icon: React.ElementType; permission: [string, string] }[] = [
+  { id: 'surveys', labelKey: 'engagement.surveys', icon: ClipboardCheck, permission: ['engagement', 'view'] },
+  { id: 'recognition', labelKey: 'engagement.recognition', icon: Award, permission: ['engagement', 'view'] },
+  { id: 'celebrations', labelKey: 'engagement.celebrations', icon: Cake, permission: ['engagement', 'view'] },
+  { id: 'ai', labelKey: 'engagement.aiInsights', icon: Brain, permission: ['engagement', 'view'] },
 ];
 
 export const EngagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
 
@@ -32,7 +34,7 @@ export const EngagementPage: React.FC = () => {
   }, [tabParam]);
 
   return (
-    <DashboardLayout title="Employee Engagement">
+    <DashboardLayout title={t('engagement.title')}>
       <div className="space-y-6">
         <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-2xl w-fit">
           {TABS.map(tab => {
@@ -47,7 +49,7 @@ export const EngagementPage: React.FC = () => {
                     : 'text-neutral-500 hover:text-neutral-700'
                 }`}
               >
-                <Icon size={16} /> {tab.label}
+                <Icon size={16} /> {t(tab.labelKey)}
               </button>
             );
           })}
