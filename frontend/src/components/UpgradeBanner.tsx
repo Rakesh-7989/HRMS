@@ -24,14 +24,14 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
     };
 
     return (
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-brand-500/10 via-brand-500/5 to-transparent border border-brand-500/20 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/20 rounded-lg text-primary">
+                <div className="p-3 bg-brand-500/20 rounded-lg text-brand-500">
                     <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                        Available on <span className="text-primary italic">{planName}</span>
+                        Available on <span className="text-brand-500 italic">{planName}</span>
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-md">
                         {message}
@@ -43,7 +43,7 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
                 <Button
                     size="lg"
                     onClick={handleUpgrade}
-                    className="shadow-lg shadow-primary/25 whitespace-nowrap"
+                    className="shadow-elev-4 shadow-brand-500/25 whitespace-nowrap"
                 >
                     Upgrade Now
                 </Button>
