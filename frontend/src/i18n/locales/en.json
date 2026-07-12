@@ -75,6 +75,8 @@
         "joined": "Joined",
         "active": "Active",
         "inactive": "Inactive",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
         "filters": "Filters",
         "types": "Types",
         "submissions": "Submissions",
@@ -461,6 +463,25 @@
         "systemDate": "System Date",
         "superAdministrator": "Super Administrator"
     },
+    "departments": {
+        "title": "Departments",
+        "description": "Manage organizational departments and divisions.",
+        "searchPlaceholder": "Search departments...",
+        "addDepartment": "Add Department",
+        "noMatching": "No matching departments",
+        "noMatchingDesc": "We couldn't find any department matching \"{{searchTerm}}\".",
+        "noDepartments": "No departments yet",
+        "noDepartmentsDesc": "No departments available at this time.",
+        "noDescription": "No description provided.",
+        "deleted": "Department deleted",
+        "deleteFailed": "Failed to delete",
+        "activated": "Department activated",
+        "deactivated": "Department deactivated",
+        "statusUpdateFailed": "Failed to update status",
+        "deleteTitle": "Delete Department",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and may affect assigned employees.",
+        "thisDepartment": "this department"
+    },
     "profile": {
         "title": "My Profile",
         "personalInfo": "Personal Information",
@@ -579,7 +600,14 @@
         "dates": "Dates",
         "actions": "Actions",
         "pendingRequests": "Pending WFH Requests",
-        "noPendingRequests": "No pending WFH requests"
+        "noPendingRequests": "No pending WFH requests",
+        "requestTitle": "Request Work From Home",
+        "submitRequest": "Submit Request",
+        "submitFailed": "Failed to submit WFH request",
+        "reasonPlaceholder": "Please provide a reason for working from home (minimum 10 characters)...",
+        "dateRequired": "Date is required",
+        "reasonRequired": "Reason is required",
+        "reasonMinLength": "Reason must be at least 10 characters"
     },
     "chat": {
         "searchConversations": "Search conversations...",

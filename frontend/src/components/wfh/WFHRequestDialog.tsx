@@ -6,22 +6,23 @@ import { Button } from '@/components/ui/Button';
 import { wfhService, CreateWFHRequestData } from '@/services/wfh.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WFHRequestDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-const validationSchema = Yup.object({
-    request_date: Yup.string().required('Date is required'),
-    reason: Yup.string().required('Reason is required').min(10, 'Reason must be at least 10 characters'),
-});
-
 export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
     open,
     onOpenChange,
 }) => {
     const queryClient = useQueryClient();
+    const { t } = useTranslation();
+    const validationSchema = Yup.object({
+        request_date: Yup.string().required(t('wfh.dateRequired')),
+        reason: Yup.string().required(t('wfh.reasonRequired')).min(10, t('wfh.reasonMinLength')),
+    });
 
     const requestMutation = useMutation({
         mutationFn: (data: CreateWFHRequestData) => wfhService.requestWFH(data),
@@ -51,7 +52,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
     };
 
     return (
-        <Dialog open={open} onOpenChange={handleClose} title="Request Work From Home" className="max-w-md">
+        <Dialog open={open} onOpenChange={handleClose} title={t('wfh.requestTitle')} className="max-w-md">
             <form onSubmit={formik.handleSubmit} className="p-6">
                 <DialogContent>
                     {/* Error Message */}
@@ -59,7 +60,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-red-500" />
                             <p className="text-red-700 dark:text-red-400 text-sm">
-                                {(requestMutation.error as Error).message || 'Failed to submit WFH request'}
+                                {(requestMutation.error as Error).message || t('wfh.submitFailed')}
                             </p>
                         </div>
                     )}
@@ -67,7 +68,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                     {/* Date */}
                     <div className="space-y-1.5">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Date *
+                            {t('common.date')} *
                         </label>
                         <input
                             type="date"
@@ -86,7 +87,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                     {/* Reason */}
                     <div className="space-y-1.5">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Reason *
+                            {t('common.reason')} *
                         </label>
                         <textarea
                             name="reason"
@@ -95,7 +96,7 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                             onBlur={formik.handleBlur}
                             rows={4}
                             className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-shadow resize-none"
-                            placeholder="Please provide a reason for working from home (minimum 10 characters)..."
+                            placeholder={t('wfh.reasonPlaceholder')}
                         />
                         {formik.touched.reason && formik.errors.reason && (
                             <p className="text-xs text-red-600 font-medium">{formik.errors.reason}</p>
@@ -106,14 +107,14 @@ export const WFHRequestDialog: React.FC<WFHRequestDialogProps> = ({
                 {/* Footer */}
                 <DialogFooter className="mt-8">
                     <Button type="button" variant="outline" onClick={handleClose}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         type="submit"
                         isLoading={requestMutation.isPending}
                         disabled={!formik.isValid || !formik.dirty}
                     >
-                        Submit Request
+                        {t('wfh.submitRequest')}
                     </Button>
                 </DialogFooter>
             </form>
