@@ -449,7 +449,7 @@ export const ProfilePage: React.FC = () => {
                   <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
                     <X className="mr-2" size={16} /> {t('common.cancel')}
                   </Button>
-                  <Button type="submit" onClick={() => formik.handleSubmit()} isLoading={updateMutation.isPending}>
+                  <Button type="submit" onClick={() => formik.handleSubmit()} isLoading={updateMutation.isPending} disabled={!formik.isValid && formik.submitCount > 0}>
                     <Save className="mr-2" size={16} /> {t('profile.saveChanges')}
                   </Button>
                 </div>
@@ -701,7 +701,11 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           value={formik.values[id]}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          className={`flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:text-white ${
+            isError
+              ? 'border-red-500 focus-visible:ring-red-500 dark:border-red-500'
+              : 'border-gray-300 dark:border-gray-700'
+          } bg-white dark:bg-gray-900`}
         >
           <option value="">Select {label}</option>
           {options?.map((opt: any) => {

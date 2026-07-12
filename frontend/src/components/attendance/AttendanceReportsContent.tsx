@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
-import { Table } from '@/components/ui/Table';
+import { DataTable } from '@/components/ui/DataTable';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 import { motion } from 'framer-motion';
 import {
     TrendingUp,
@@ -261,6 +262,67 @@ export const AttendanceReportsContent: React.FC = () => {
 
 
 
+    const reportColumns = useMemo(() => [
+        {
+            header: 'Date',
+            accessorKey: 'date' as const,
+            cell: (row: any) => format(new Date(row.date), 'MMM dd'),
+        },
+        {
+            header: 'Employee',
+            cell: (row: any) => (
+                <div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{row.first_name} {row.last_name}</div>
+                    <div className="text-xs text-muted-foreground">{row.department}</div>
+                </div>
+            ),
+        },
+        {
+            header: 'Check In',
+            cell: (row: any) => (
+                row.check_in_time ? (
+                    <div className={row.is_late ? 'text-red-500 font-medium' : ''}>
+                        {formatTime12Hour(row.check_in_time, user?.timezone)}
+                        {row.is_late && <span className="text-[10px] ml-1 block">Late: {row.late_by}</span>}
+                    </div>
+                ) : '-'
+            ),
+        },
+        {
+            header: 'Check Out',
+            cell: (row: any) => formatTime12Hour(row.check_out_time, user?.timezone) || '-',
+        },
+        {
+            header: 'Status',
+            cell: (row: any) => (
+                <span className={`px-2 py-1 rounded text-xs font-medium ${row.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                    row.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    }`}>
+                    {row.status}
+                </span>
+            ),
+        },
+        {
+            header: 'Work Hrs',
+            accessorKey: 'work_hours' as const,
+            cell: (row: any) => row.work_hours || '-',
+        },
+        {
+            header: 'Eff. Hrs',
+            accessorKey: 'effective_work_hours' as const,
+            cell: (row: any) => <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{row.effective_work_hours || '-'}</span>,
+        },
+        {
+            header: 'Overtime',
+            cell: (row: any) => (
+                Number(row.overtime_hours) > 0 ? (
+                    <span className="text-green-600 font-medium">+{row.overtime_hours}</span>
+                ) : '-'
+            ),
+        },
+    ], [user?.timezone]);
+
     return (
         <div className="space-y-6">
             {/* Header and Controls */}
@@ -485,76 +547,12 @@ export const AttendanceReportsContent: React.FC = () => {
                                 )}
                             </div>
 
-                            {reportsLoading ? (
-                                <div className="space-y-4">
-                                    {[1, 2, 3].map((i) => (
-                                        <div key={i} className="h-12 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />
-                                    ))}
-                                </div>
-                            ) : reports?.reports && reports.reports.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <thead>
-                                            <tr>
-                                                <th className="text-left py-3 px-4">Date</th>
-                                                <th className="text-left py-3 px-4">Employee</th>
-                                                <th className="text-left py-3 px-4">Check In</th>
-                                                <th className="text-left py-3 px-4">Check Out</th>
-                                                <th className="text-left py-3 px-4">Status</th>
-                                                <th className="text-left py-3 px-4">Total Hrs</th>
-                                                <th className="text-left py-3 px-4">Eff. Hrs</th>
-                                                <th className="text-left py-3 px-4">Overtime</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {reports.reports.map((report, index) => (
-                                                <motion.tr
-                                                    key={index}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                                                >
-                                                    <td className="py-3 px-4 whitespace-nowrap">{format(new Date(report.date), 'MMM dd')}</td>
-                                                    <td className="py-3 px-4">
-                                                        <div className="font-medium text-gray-900 dark:text-gray-100">{report.first_name} {report.last_name}</div>
-                                                        <div className="text-xs text-muted-foreground">{report.department}</div>
-                                                    </td>
-                                                    <td className="py-3 px-4">
-                                                        {report.check_in_time ? (
-                                                            <div className={report.is_late ? 'text-red-500 font-medium' : ''}>
-                                                                {formatTime12Hour(report.check_in_time, user?.timezone)}
-                                                                {report.is_late && <span className="text-[10px] ml-1 block">Late: {report.late_by}</span>}
-                                                            </div>
-                                                        ) : '-'}
-                                                    </td>
-                                                    <td className="py-3 px-4">{formatTime12Hour(report.check_out_time, user?.timezone) || '-'}</td>
-                                                    <td className="py-3 px-4">
-                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${report.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                            report.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                            }`}>
-                                                            {report.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3 px-4">{report.work_hours || '-'}</td>
-                                                    <td className="py-3 px-4 font-mono text-sm text-gray-600 dark:text-gray-400">{report.effective_work_hours || '-'}</td>
-                                                    <td className="py-3 px-4">
-                                                        {Number(report.overtime_hours) > 0 ? (
-                                                            <span className="text-green-600 font-medium">+{report.overtime_hours}</span>
-                                                        ) : '-'}
-                                                    </td>
-                                                </motion.tr>
-                                            ))}
-                                        </tbody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 text-muted">
-                                    <FileText size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p>No attendace records found for this period.</p>
-                                </div>
-                            )}
+                            <DataTable
+                                data={reports?.reports || []}
+                                columns={reportColumns}
+                                loading={reportsLoading}
+                                emptyMessage="No attendance records found for this period."
+                            />
                         </Card>
                     )}
                 </motion.div>

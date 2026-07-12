@@ -11,6 +11,7 @@ import { usersService } from '@/services/users.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { formatTime12Hour, getGreeting, formatInTimezone, getCurrentTime } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -782,10 +783,11 @@ export const EmployeeDashboard: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-32 text-center opacity-60">
-                      <Users className="w-10 h-10 text-slate-300 mb-2" />
-                      <p className="text-sm font-bold text-slate-400 text-xs">No team members found</p>
-                    </div>
+                    <EmptyState
+                      icon={<Users className="w-6 h-6" />}
+                      title="No team members found"
+                      compact
+                    />
                   )}
                 </div>
               </ChartCard>

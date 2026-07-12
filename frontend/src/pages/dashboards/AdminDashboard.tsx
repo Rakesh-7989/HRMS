@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // Modern color palette
 const COLORS = {
@@ -558,9 +559,10 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.birthdays || peopleEventsData.birthdays.length === 0) && (
-                <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noBirthdays')}</p>
-                </div>
+                <EmptyState
+                  title={t('dashboard.noBirthdays')}
+                  compact
+                />
               )}
             </div>
           </div>
@@ -589,9 +591,10 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.anniversaries || peopleEventsData.anniversaries.length === 0) && (
-                <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noAnniversaries')}</p>
-                </div>
+                <EmptyState
+                  title={t('dashboard.noAnniversaries')}
+                  compact
+                />
               )}
             </div>
           </div>
@@ -620,9 +623,10 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {(!peopleEventsData?.joiners || peopleEventsData.joiners.length === 0) && (
-                <div className="text-center py-10">
-                  <p className="text-slate-300 dark:text-slate-600 font-bold text-sm">{t('dashboard.noNewJoiners')}</p>
-                </div>
+                <EmptyState
+                  title={t('dashboard.noNewJoiners')}
+                  compact
+                />
               )}
             </div>
           </div>

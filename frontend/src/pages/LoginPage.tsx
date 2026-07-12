@@ -217,6 +217,7 @@ export const LoginPage: React.FC = () => {
                   {...formik.getFieldProps('email')}
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   placeholder="you@company.com"
+                  autoComplete="email"
                 />
                 <FormError message={formik.touched.email ? formik.errors.email : undefined} />
               </div>
@@ -233,6 +234,7 @@ export const LoginPage: React.FC = () => {
                     error={formik.touched.password && Boolean(formik.errors.password)}
                     className="pr-11"
                     placeholder="••••••••"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"

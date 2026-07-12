@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { DataTable } from '@/components/ui/DataTable';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 export const DailyAttendanceContent: React.FC = () => {
     const { user } = useAuth();
@@ -360,14 +362,148 @@ export const DailyAttendanceContent: React.FC = () => {
         },
     });
 
-    const status = todayAttendance?.status || 'NOT_CHECKED_IN';
-    const canClockOut = !!todayAttendance?.check_in_time && !todayAttendance?.check_out_time;
-
     // Helper to filter team logs
     const filteredTeamLogs = todayTeamAttendance.filter(record =>
         (record.first_name + ' ' + record.last_name).toLowerCase().includes(searchQuery.toLowerCase()) ||
         (record.email || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // DataTable column definitions
+    const teamAttendanceColumns = [
+        {
+            header: 'Employee',
+            cell: (att: any) => `${att.first_name} ${att.last_name}`,
+        },
+        {
+            header: 'Check In',
+            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+        },
+        {
+            header: 'Check Out',
+            cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
+        },
+        {
+            header: 'Status',
+            cell: (att: any) => (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    {att.is_late ? `Late ${att.late_by ? `(${att.late_by})` : ''}` : 'On Time'}
+                </span>
+            ),
+        },
+    ];
+
+    const pendingCheckoutColumns = [
+        {
+            header: 'Employee',
+            cell: (att: any) => `${att.first_name} ${att.last_name}`,
+        },
+        {
+            header: 'Date',
+            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+        },
+        {
+            header: 'Check In',
+            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+        },
+        {
+            header: 'Status',
+            cell: () => (
+                <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-medium">
+                    Warning: Pending
+                </span>
+            ),
+        },
+    ];
+
+    const myAttendanceColumns = [
+        {
+            header: 'Date',
+            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+        },
+        {
+            header: 'Check In',
+            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+        },
+        {
+            header: 'Check Out',
+            cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
+        },
+        {
+            header: 'Total Duration',
+            cell: (att: any) => calculateWorkDuration(att.check_in_time, att.check_out_time),
+        },
+        {
+            header: 'Eff. Hours',
+            cell: (att: any) => att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-',
+        },
+        {
+            header: 'Overtime',
+            cell: (att: any) => att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
+                <span className="text-green-600 font-semibold">+{att.overtime_hours} hrs</span>
+            ) : '-',
+        },
+        {
+            header: 'Device',
+            cell: (att: any) => (
+                <div className="flex flex-col gap-1">
+                    {att.check_in_device && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
+                            IN: {att.check_in_device}
+                        </span>
+                    )}
+                    {att.check_out_device && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
+                            OUT: {att.check_out_device}
+                        </span>
+                    )}
+                </div>
+            ),
+        },
+        {
+            header: 'Status',
+            cell: (att: any) => (
+                <div className="flex flex-col gap-1 items-start">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : att.status === 'REJECTED'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
+                        {att.status.replace('_', ' ')}
+                    </span>
+                    {att.is_late && (
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            Late {att.late_by ? `(${att.late_by})` : ''}
+                        </span>
+                    )}
+                </div>
+            ),
+        },
+    ];
+
+    const myPendingCheckoutColumns = [
+        {
+            header: 'Date',
+            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+        },
+        {
+            header: 'Check In',
+            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+        },
+        {
+            header: 'Status',
+            cell: () => (
+                <span className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium">
+                    Pending
+                </span>
+            ),
+        },
+        {
+            header: 'Actions',
+            cell: (att: any) => (
+                <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>Confirm</Button>
+            ),
+        },
+    ];
 
     return (
         <div className="space-y-6">
@@ -495,35 +631,12 @@ export const DailyAttendanceContent: React.FC = () => {
                         ) : filteredTeamLogs.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records for today</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Employee</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                        {filteredTeamLogs.map((att) => (
-                                            <tr key={att.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                                                    {att.first_name} {att.last_name}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4">
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                                                        }`}>
-                                                        {att.is_late ? `Late ${att.late_by ? `(${att.late_by})` : ''}` : 'On Time'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable
+                                data={filteredTeamLogs}
+                                columns={teamAttendanceColumns}
+                                loading={isLoadingTeamAttendance}
+                                emptyMessage="No attendance records for today"
+                            />
                         )}
                     </Card>
 
@@ -535,36 +648,12 @@ export const DailyAttendanceContent: React.FC = () => {
                         {teamPendingCheckouts.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts to review</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Employee</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                        {teamPendingCheckouts.map((att) => (
-                                            <tr key={att.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                                                    {att.first_name} {att.last_name}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4">
-                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-medium">
-                                                        Warning: Pending
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable
+                                data={teamPendingCheckouts}
+                                columns={pendingCheckoutColumns}
+                                loading={false}
+                                emptyMessage="No pending checkouts to review"
+                            />
                         )}
                     </Card>
                 </>
@@ -580,82 +669,14 @@ export const DailyAttendanceContent: React.FC = () => {
                         ) : myAttendance.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No attendance records found</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Duration</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Eff. Hours</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Overtime</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Device</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                        {myAttendance.map((att) => (
-                                            <tr
-                                                key={att.id}
-                                                className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                                            >
-                                                <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_out_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                                    {calculateWorkDuration(att.check_in_time, att.check_out_time)}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                                                    {att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-'}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                                                    {att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
-                                                        <span className="text-green-600 font-semibold">+{att.overtime_hours} hrs</span>
-                                                    ) : '-'}
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex flex-col gap-1">
-                                                        {att.check_in_device && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
-                                                                IN: {att.check_in_device}
-                                                            </span>
-                                                        )}
-                                                        {att.check_out_device && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
-                                                                OUT: {att.check_out_device}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex flex-col gap-1 items-start">
-                                                        <span
-                                                            className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
-                                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                                : att.status === 'REJECTED'
-                                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                                }`}
-                                                        >
-                                                            {att.status.replace('_', ' ')}
-                                                        </span>
-                                                        {att.is_late && (
-                                                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                                Late {att.late_by ? `(${att.late_by})` : ''}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable
+                                data={myAttendance}
+                                columns={myAttendanceColumns}
+                                loading={isLoadingMyAttendance}
+                                emptyMessage="No attendance records found"
+                            />
                         )}
-                    </Card>
+</Card>
 
                     {/* EMPLOYEE VIEW: MY PENDING CHECKOUTS */}
                     <Card>
@@ -663,43 +684,14 @@ export const DailyAttendanceContent: React.FC = () => {
                         {myPendingCheckouts.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 dark:text-muted">No pending checkouts</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Check In</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                        {myPendingCheckouts.map((att) => (
-                                            <tr
-                                                key={att.id}
-                                                className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                                            >
-                                                <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                    {format(new Date(att.date), 'MMM dd, yyyy')}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{formatTime12Hour(att.check_in_time, user?.timezone)}</td>
-                                                <td className="py-3 px-4">
-                                                    <span
-                                                        className={'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium'}
-                                                    >
-                                                        {att.status.replace('_', ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>Confirm</Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable
+                                data={myPendingCheckouts}
+                                columns={myPendingCheckoutColumns}
+                                loading={false}
+                                emptyMessage="No pending checkouts"
+                            />
                         )}
-                    </Card>
+</Card>
                 </>
             )}
 

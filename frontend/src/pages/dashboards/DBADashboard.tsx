@@ -3,6 +3,7 @@ import { PageTransition } from '@/components/common/PageTransition';
 import api from '@/services/api'; // Adjust path if needed
 import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
     Database,
     Terminal,
@@ -190,7 +191,7 @@ export const DBADashboard = () => {
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {tables.length === 0 && !loading ? (
-                        <div className="p-4 text-center text-gray-500 text-sm">No tables found</div>
+                        <EmptyState title="No tables found" compact />
                     ) : (
                         <div className="py-2">
                             {filteredTables.map(table => (
