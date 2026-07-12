@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { attendanceService } from '@/services/attendance.service';
 import { Card } from '@/components/ui/Card';
-import { Loader2, Calendar as CalIcon, RefreshCw } from 'lucide-react';
+import { Calendar as CalIcon, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { usersService } from '@/services/users.service';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const BreakHistoryContent: React.FC = () => {
     const { user } = useAuth();
@@ -74,60 +75,37 @@ export const BreakHistoryContent: React.FC = () => {
                     </div>
                 </div>
 
-                {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
-                    </div>
-                ) : !history || history.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        No break records found for this date.
-                    </div>
-                ) : (
-                    <div className="relative overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                <tr>
-                                    <th className="px-6 py-3">Employee</th>
-                                    <th className="px-6 py-3">Start Time</th>
-                                    <th className="px-6 py-3">End Time</th>
-                                    <th className="px-6 py-3">Duration</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map((record) => (
-                                    <tr key={record.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                            {record.first_name} {record.last_name}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {formatTime12Hour(record.start_time, user?.timezone)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-'}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {record.duration_minutes
-                                                ? `${Math.round(record.duration_minutes)} mins`
-                                                : '-'}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {record.end_time ? (
-                                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
-                                                    Completed
-                                                </span>
-                                            ) : (
-                                                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">
-                                                    Ongoing
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    data={history || []}
+                    columns={[
+                        {
+                            header: 'Employee',
+                            cell: (record: any) => `${record.first_name} ${record.last_name}`,
+                        },
+                        {
+                            header: 'Start Time',
+                            cell: (record: any) => formatTime12Hour(record.start_time, user?.timezone),
+                        },
+                        {
+                            header: 'End Time',
+                            cell: (record: any) => record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-',
+                        },
+                        {
+                            header: 'Duration',
+                            cell: (record: any) => record.duration_minutes ? `${Math.round(record.duration_minutes)} mins` : '-',
+                        },
+                        {
+                            header: 'Status',
+                            cell: (record: any) => record.end_time ? (
+                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Completed</span>
+                            ) : (
+                                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">Ongoing</span>
+                            ),
+                        },
+                    ]}
+                    loading={isLoading}
+                    emptyMessage="No break records found for this date."
+                />
             </div>
         </Card>
     );

@@ -2,10 +2,11 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { attendanceService } from '@/services/attendance.service';
 import { Card } from '@/components/ui/Card';
-import { Loader2, RefreshCw, Coffee, Clock } from 'lucide-react';
+import { Loader2, RefreshCw, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatTime12Hour } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const CurrentBreaksContent: React.FC = () => {
     const { user } = useAuth();
@@ -45,66 +46,51 @@ export const CurrentBreaksContent: React.FC = () => {
                     </Button>
                 </div>
 
-                {!breaks || breaks.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>No one is currently on break.</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
-                                <tr>
-                                    <th className="px-6 py-3">Employee</th>
-                                    <th className="px-6 py-3">Department</th>
-                                    <th className="px-6 py-3">Break Start</th>
-                                    <th className="px-6 py-3">Duration (Approx)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {breaks.map((item, index) => {
-                                    const startTime = new Date(item.start_time);
-
-                                    // Calculate time difference
-                                    // Note: dates from API might be UTC. new Date(item.start_time) usually handles ISO strings correctly.
-                                    // Ensure we compare against current time correctly.
-                                    let diffMinutes = 0;
-                                    if (!isNaN(startTime.getTime())) {
-                                        diffMinutes = Math.floor((new Date().getTime() - startTime.getTime()) / 60000);
-                                    }
-
-                                    // Fix for negative or zero duration if clock skews slightly or just started
-                                    if (diffMinutes < 0) diffMinutes = 0;
-
-                                    return (
-                                        <tr key={index} className="bg-white border-b dark:bg-gray-900 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                                <div>
-                                                    {item.first_name} {item.last_name}
-                                                </div>
-                                                <div className="text-xs text-gray-500">{item.email}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-gray-900 dark:text-white">{item.department_name || '-'}</div>
-                                                <div className="text-xs text-gray-500">{item.designation_name || '-'}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock size={14} className="text-gray-400" />
-                                                    {formatTime12Hour(item.start_time, user?.timezone)}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${diffMinutes > 60 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
-                                                    {diffMinutes} mins
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    data={breaks || []}
+                    columns={[
+                        {
+                            header: 'Employee',
+                            cell: (item: any) => (
+                                <div>
+                                    <div>{item.first_name} {item.last_name}</div>
+                                    <div className="text-xs text-gray-500">{item.email}</div>
+                                </div>
+                            ),
+                        },
+                        {
+                            header: 'Department',
+                            cell: (item: any) => (
+                                <div>
+                                    <div>{item.department_name || '-'}</div>
+                                    <div className="text-xs text-gray-500">{item.designation_name || '-'}</div>
+                                </div>
+                            ),
+                        },
+                        {
+                            header: 'Break Start',
+                            cell: (item: any) => formatTime12Hour(item.start_time, user?.timezone),
+                        },
+                        {
+                            header: 'Duration (Approx)',
+                            cell: (item: any) => {
+                                const startTime = new Date(item.start_time);
+                                let diffMinutes = 0;
+                                if (!isNaN(startTime.getTime())) {
+                                    diffMinutes = Math.floor((new Date().getTime() - startTime.getTime()) / 60000);
+                                }
+                                if (diffMinutes < 0) diffMinutes = 0;
+                                return (
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${diffMinutes > 60 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
+                                        {diffMinutes} mins
+                                    </span>
+                                );
+                            },
+                        },
+                    ]}
+                    loading={isLoading}
+                    emptyMessage="No one is currently on break."
+                />
             </div>
         </Card>
     );
