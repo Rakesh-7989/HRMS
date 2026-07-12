@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/Label';
 import { Textarea } from '@/components/ui/Textarea';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { CheckCircle, XCircle, Clock, Calendar } from 'lucide-react';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const RegularizationRequestsContent: React.FC = () => {
     const queryClient = useQueryClient();
@@ -141,90 +142,94 @@ export const RegularizationRequestsContent: React.FC = () => {
             {/* Content */}
             <Card>
                 {activeTab === 'my' ? (
-                    myLoading ? <div className="p-8 text-center">Loading...</div> :
-                        myRequests.length === 0 ? <div className="p-8 text-center text-muted">No regularization requests found.</div> :
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Time</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {myRequests.map((req) => (
-                                            <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                                <td className="py-3 px-4 whitespace-nowrap">{format(new Date(req.date), 'MMM dd, yyyy')}</td>
-                                                <td className="py-3 px-4 whitespace-nowrap">
-                                                    In: {req.check_in_time} <br />
-                                                    Out: {req.check_out_time || '-'}
-                                                </td>
-                                                <td className="py-3 px-4 max-w-xs truncate" title={req.reason}>{req.reason}</td>
-                                                <td className="py-3 px-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        req.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                        }`}>
-                                                        {req.status}
-                                                    </span>
-                                                    {req.rejection_reason && <div className="text-xs text-red-500 mt-1">{req.rejection_reason}</div>}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                    <DataTable
+                        columns={[
+                            { header: 'Date', accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
+                            {
+                                header: 'Time',
+                                accessor: (row) => (
+                                    <>
+                                        In: {row.check_in_time}<br />
+                                        Out: {row.check_out_time || '-'}
+                                    </>
+                                ),
+                                sortKey: 'check_in_time',
+                            },
+                            { header: 'Reason', accessor: (row) => row.reason },
+                            {
+                                header: 'Status',
+                                accessor: (row) => (
+                                    <div>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${row.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                            row.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                            }`}>
+                                            {row.status}
+                                        </span>
+                                        {row.rejection_reason && <div className="text-xs text-red-500 mt-1">{row.rejection_reason}</div>}
+                                    </div>
+                                ),
+                                sortKey: 'status',
+                            },
+                        ]}
+                        data={myRequests}
+                        isLoading={myLoading}
+                        emptyMessage="No regularization requests found."
+                        pageSize={10}
+                    />
                 ) : (
-                    // TEAM REQUESTS
-                    teamLoading ? <div className="p-8 text-center">Loading...</div> :
-                        teamRequests.length === 0 ? <div className="p-8 text-center text-muted">No pending requests for your team.</div> :
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-left">
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Employee</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date/Time</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Reason</th>
-                                            <th className="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {teamRequests.map((req) => (
-                                            <tr key={req.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                                <td className="py-3 px-4 whitespace-nowrap">
-                                                    <div className="font-medium">{req.first_name} {req.last_name}</div>
-                                                    <div className="text-xs text-muted">{req.designation_name || req.email}</div>
-                                                </td>
-                                                <td className="py-3 px-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-1"><Calendar size={12} /> {format(new Date(req.date), 'MMM dd')}</div>
-                                                    <div className="text-xs text-muted mt-0.5">
-                                                        In: {req.check_in_time} | Out: {req.check_out_time || '-'}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4 max-w-xs truncate" title={req.reason}>{req.reason}</td>
-                                                <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => { setSelectedRequest(req); setReviewAction('APPROVED'); setOverrideCheckIn(req.check_in_time || ''); setOverrideCheckOut(req.check_out_time || ''); }}
-                                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                                    >
-                                                        <CheckCircle size={14} className="mr-1" /> Approve
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        onClick={() => { setSelectedRequest(req); setReviewAction('REJECTED'); }}
-                                                    >
-                                                        <XCircle size={14} className="mr-1" /> Reject
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                    <DataTable
+                        columns={[
+                            {
+                                header: 'Employee',
+                                accessor: (row) => (
+                                    <div>
+                                        <div className="font-medium">{row.first_name} {row.last_name}</div>
+                                        <div className="text-xs text-muted">{row.designation_name || row.email}</div>
+                                    </div>
+                                ),
+                                sortKey: 'first_name',
+                            },
+                            {
+                                header: 'Date/Time',
+                                accessor: (row) => (
+                                    <div>
+                                        <div className="flex items-center gap-1"><Calendar size={12} /> {format(new Date(row.date), 'MMM dd')}</div>
+                                        <div className="text-xs text-muted mt-0.5">
+                                            In: {row.check_in_time} | Out: {row.check_out_time || '-'}
+                                        </div>
+                                    </div>
+                                ),
+                                sortKey: 'date',
+                            },
+                            { header: 'Reason', accessor: (row) => row.reason },
+                            {
+                                header: 'Actions',
+                                accessor: (row) => (
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            onClick={() => { setSelectedRequest(row); setReviewAction('APPROVED'); setOverrideCheckIn(row.check_in_time || ''); setOverrideCheckOut(row.check_out_time || ''); }}
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                        >
+                                            <CheckCircle size={14} className="mr-1" /> Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => { setSelectedRequest(row); setReviewAction('REJECTED'); }}
+                                        >
+                                            <XCircle size={14} className="mr-1" /> Reject
+                                        </Button>
+                                    </div>
+                                ),
+                            },
+                        ]}
+                        data={teamRequests}
+                        isLoading={teamLoading}
+                        emptyMessage="No pending requests for your team."
+                        pageSize={10}
+                    />
                 )}
             </Card>
 

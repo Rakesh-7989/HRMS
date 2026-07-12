@@ -15,6 +15,7 @@ import {
     XCircle,
     Clock
 } from 'lucide-react';
+import { DataTable } from '@/components/ui/DataTable';
 
 interface IndividualAttendanceReportProps {
     employeeId: string;
@@ -119,58 +120,53 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                             Export CSV
                         </Button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Check In</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Total Hrs</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Eff. Hrs</th>
-                                    <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider">Overtime</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                {records.map((record: any, idx: number) => (
-                                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                        <td className="px-4 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100">{format(new Date(record.date), 'MMM dd, yyyy')}</td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{record.day_of_week}</td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{record.shift_name || '-'}</td>
-                                        <td className="px-4 py-3">
-                                            {record.check_in_time ? (
-                                                <span className={record.is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
-                                                    {formatTime12Hour(record.check_in_time, user?.timezone)}
-                                                    {record.is_late && <span className="text-xs ml-1 text-red-500">({record.late_by})</span>}
-                                                </span>
-                                            ) : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatTime12Hour(record.check_out_time, user?.timezone) || '-'}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium
-                                                ${record.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                    record.status === 'ABSENT' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                        record.status === 'WEEK_OFF' || record.status === 'HOLIDAY' ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400' :
-                                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                }`}>
-                                                {record.status?.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{record.work_hours || '-'}</td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono">{record.effective_work_hours || '-'}</td>
-                                        <td className="px-4 py-3 font-medium">
-                                            {Number(record.overtime_hours) > 0 ? (
-                                                <span className="text-green-600">+{record.overtime_hours}</span>
-                                            ) : '-'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable
+                        columns={[
+                            { header: 'Date', accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
+                            { header: 'Day', accessor: (row) => row.day_of_week, sortKey: 'day_of_week' },
+                            { header: 'Shift', accessor: (row) => row.shift_name || '-', sortKey: 'shift_name' },
+                            {
+                                header: 'Check In',
+                                accessor: (row) => (
+                                    row.check_in_time ? (
+                                        <span className={row.is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                                            {formatTime12Hour(row.check_in_time, user?.timezone)}
+                                            {row.is_late && <span className="text-xs ml-1 text-red-500">({row.late_by})</span>}
+                                        </span>
+                                    ) : '-'
+                                ),
+                                sortKey: 'check_in_time',
+                            },
+                            { header: 'Check Out', accessor: (row) => formatTime12Hour(row.check_out_time, user?.timezone) || '-', sortKey: 'check_out_time' },
+                            {
+                                header: 'Status',
+                                accessor: (row) => (
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium
+                                        ${row.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                            row.status === 'ABSENT' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                                row.status === 'WEEK_OFF' || row.status === 'HOLIDAY' ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400' :
+                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                        }`}>
+                                        {row.status?.replace('_', ' ')}
+                                    </span>
+                                ),
+                                sortKey: 'status',
+                            },
+                            { header: 'Total Hrs', accessor: (row) => row.work_hours || '-', sortKey: 'work_hours' },
+                            { header: 'Eff. Hrs', accessor: (row) => row.effective_work_hours || '-', sortKey: 'effective_work_hours' },
+                            {
+                                header: 'Overtime',
+                                accessor: (row) => (
+                                    Number(row.overtime_hours) > 0 ? (
+                                        <span className="text-green-600">+{row.overtime_hours}</span>
+                                    ) : '-'
+                                ),
+                                sortKey: 'overtime_hours',
+                            },
+                        ]}
+                        data={records}
+                        pageSize={15}
+                    />
                 </Card>
             ) : (
                 <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">

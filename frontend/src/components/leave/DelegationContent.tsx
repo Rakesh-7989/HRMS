@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import api from '@/services/api';
 import type { User } from '@/services/users.service';
 import { useTranslation } from 'react-i18next';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const DelegationContent: React.FC = () => {
     const { t } = useTranslation();
@@ -119,72 +120,67 @@ export const DelegationContent: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('delegation.myDelegations')}</h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{t('delegation.myDelegationsDesc')}</span>
                 </div>
-
-                {loadingMine ? (
-                    <div className="h-32 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent" />
-                    </div>
-                ) : myDelegations.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Users className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p className="text-sm">{t('delegation.noActiveDelegations')}</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.delegate')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.period')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.reason')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.status')}</th>
-                                    <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {myDelegations.map((d: Delegation) => {
-                                    const isActive = d.is_active && new Date(d.end_date) >= new Date(todayStr);
-                                    return (
-                                        <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                                            <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                {[(d as any).delegate_first_name, (d as any).delegate_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
-                                                {d.delegate_email && (
-                                                    <span className="block text-xs text-gray-500 dark:text-gray-400">{d.delegate_email}</span>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                                {format(new Date(d.start_date), 'MMM dd')} — {format(new Date(d.end_date), 'MMM dd, yyyy')}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 max-w-[200px] truncate">
-                                                {d.reason || '—'}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                                    }`}>
-                                                    {isActive ? t('delegation.active') : t('delegation.expired')}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
-                                                {isActive && (
-                                                    <button
-                                                        onClick={() => revokeMutation.mutate(d.id)}
-                                                        disabled={revokeMutation.isPending}
-                                                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
-                                                        title={t('delegation.revokeDelegation')}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    columns={[
+                        {
+                            header: t('delegation.delegate'),
+                            accessor: (row: Delegation) => (
+                                <div>
+                                    <span className="text-gray-900 dark:text-white">
+                                        {[(row as any).delegate_first_name, (row as any).delegate_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
+                                    </span>
+                                    {row.delegate_email && (
+                                        <span className="block text-xs text-gray-500 dark:text-gray-400">{row.delegate_email}</span>
+                                    )}
+                                </div>
+                            ),
+                            sortKey: 'delegate_first_name',
+                        },
+                        {
+                            header: t('delegation.period'),
+                            accessor: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
+                            sortKey: 'start_date',
+                        },
+                        { header: t('delegation.reason'), accessor: (row: Delegation) => row.reason || '—' },
+                        {
+                            header: t('delegation.status'),
+                            accessor: (row: Delegation) => {
+                                const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
+                                return (
+                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        }`}>
+                                        {isActive ? t('delegation.active') : t('delegation.expired')}
+                                    </span>
+                                );
+                            },
+                            sortKey: 'is_active',
+                        },
+                        {
+                            header: t('delegation.actions'),
+                            accessor: (row: Delegation) => {
+                                const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
+                                return isActive ? (
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={() => revokeMutation.mutate(row.id)}
+                                            disabled={revokeMutation.isPending}
+                                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                                            title={t('delegation.revokeDelegation')}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : null;
+                            },
+                        },
+                    ]}
+                    data={myDelegations}
+                    isLoading={loadingMine}
+                    emptyMessage={t('delegation.noActiveDelegations')}
+                    pageSize={10}
+                />
             </Card>
 
             {/* Delegations To Me (given to me by others) */}
@@ -194,59 +190,49 @@ export const DelegationContent: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('delegation.delegatedToMe')}</h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{t('delegation.delegatedToMeDesc')}</span>
                 </div>
-
-                {loadingToMe ? (
-                    <div className="h-32 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent" />
-                    </div>
-                ) : delegationsToMe.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Shield className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p className="text-sm">{t('delegation.noOneDelegated')}</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.delegatedBy')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.period')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.reason')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('delegation.status')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {delegationsToMe.map((d: Delegation) => {
-                                    const isActive = d.is_active && new Date(d.end_date) >= new Date(todayStr);
-                                    return (
-                                        <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                                            <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                                                {[(d as any).delegator_first_name, (d as any).delegator_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
-                                                {d.delegator_email && (
-                                                    <span className="block text-xs text-gray-500 dark:text-gray-400">{d.delegator_email}</span>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                                {format(new Date(d.start_date), 'MMM dd')} — {format(new Date(d.end_date), 'MMM dd, yyyy')}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 max-w-[200px] truncate">
-                                                {d.reason || '—'}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                                    }`}>
-                                                    {isActive ? t('delegation.active') : t('delegation.expired')}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    columns={[
+                        {
+                            header: t('delegation.delegatedBy'),
+                            accessor: (row: Delegation) => (
+                                <div>
+                                    <span className="text-gray-900 dark:text-white">
+                                        {[(row as any).delegator_first_name, (row as any).delegator_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
+                                    </span>
+                                    {row.delegator_email && (
+                                        <span className="block text-xs text-gray-500 dark:text-gray-400">{row.delegator_email}</span>
+                                    )}
+                                </div>
+                            ),
+                            sortKey: 'delegator_first_name',
+                        },
+                        {
+                            header: t('delegation.period'),
+                            accessor: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
+                            sortKey: 'start_date',
+                        },
+                        { header: t('delegation.reason'), accessor: (row: Delegation) => row.reason || '—' },
+                        {
+                            header: t('delegation.status'),
+                            accessor: (row: Delegation) => {
+                                const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
+                                return (
+                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        }`}>
+                                        {isActive ? t('delegation.active') : t('delegation.expired')}
+                                    </span>
+                                );
+                            },
+                            sortKey: 'is_active',
+                        },
+                    ]}
+                    data={delegationsToMe}
+                    isLoading={loadingToMe}
+                    emptyMessage={t('delegation.noOneDelegated')}
+                    pageSize={10}
+                />
             </Card>
 
             {/* Create Delegation Dialog */}
