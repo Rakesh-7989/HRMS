@@ -7,7 +7,6 @@ import { assetsService } from '@/services/assets.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { EmptyState } from '@/components/ui/EmptyState';
 import {
     CheckCircle,
     XCircle,
@@ -22,6 +21,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const AssetRequestsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -202,133 +202,124 @@ export const AssetRequestsPage: React.FC = () => {
                 </div>
 
                 <Card>
-                    {isLoading ? (
-                        <div className="p-8 text-center">Loading requests...</div>
-                    ) : !requests || requests.length === 0 ? (
-                        <EmptyState
-                            icon={<ClipboardList size={32} />}
-                            title="No asset requests found."
-                        />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-800">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Employee</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Asset Details</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Requested On</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {requests.map((request: any) => (
-                                        <tr key={request.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {request.first_name} {request.last_name}
-                                                </div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">{request.employee_code}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{request.asset_name}</div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">{request.category}</div>
-                                                {request.reason && (
-                                                    <div className="mt-1 text-xs text-gray-400 max-w-xs truncate" title={request.reason}>
-                                                        Reason: {request.reason}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                {getPriorityBadge(request.priority)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(request.status)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {format(new Date(request.created_at), 'MMM dd, yyyy')}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {request.status === 'PENDING' ? (
-                                                    <div className="flex justify-end space-x-2">
-                                                        {(() => {
-                                                            const isSelfRequest = user?.employee_id === request.employee_id;
-
-                                                            if (isSelfRequest) {
-                                                                return (
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="text-brand-600 border-brand-200 hover:bg-brand-50"
-                                                                            title="Edit Request"
-                                                                            onClick={() => handleEdit(request)}
-                                                                        >
-                                                                            <Edit size={14} />
-                                                                        </Button>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="text-red-600 border-red-200 hover:bg-red-50"
-                                                                            title="Cancel Request"
-                                                                            onClick={() => handleDelete(request.id)}
-                                                                        >
-                                                                            <Trash2 size={14} />
-                                                                        </Button>
-                                                                    </div>
-                                                                );
-                                                            }
-
-                                                            if (canManageRequests) {
-                                                                return (
-                                                                    <>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            className="bg-green-600 hover:bg-green-700"
-                                                                            title="Approve Request"
-                                                                            onClick={() => handleActionMutation.mutate({ id: request.id, status: 'APPROVED' })}
-                                                                        >
-                                                                            Approve
-                                                                        </Button>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="text-red-600 border-red-200 hover:bg-red-50"
-                                                                            title="Reject Request"
-                                                                            onClick={async () => {
-                                                                                const notes = await showPrompt({
-                                                                                    title: 'Reject Request',
-                                                                                    message: 'Please provide a reason for rejecting this request.',
-                                                                                    placeholder: 'Reason for rejection...',
-                                                                                    confirmText: 'Reject',
-                                                                                    cancelText: 'Cancel'
-                                                                                });
-                                                                                if (notes !== null) {
-                                                                                    handleActionMutation.mutate({ id: request.id, status: 'REJECTED', admin_notes: notes });
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            Reject
-                                                                        </Button>
-                                                                    </>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        })()}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400 italic text-xs">
-                                                        {request.status === 'APPROVED' ? 'Approved' : 'Rejected'}
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                    <DataTable
+                        columns={[
+                            {
+                                header: 'Employee',
+                                accessor: (row: any) => (
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                            {row.first_name} {row.last_name}
+                                        </div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.employee_code}</div>
+                                    </div>
+                                ),
+                                sortKey: 'first_name',
+                            },
+                            {
+                                header: 'Asset Details',
+                                accessor: (row: any) => (
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{row.asset_name}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.category}</div>
+                                        {row.reason && (
+                                            <div className="mt-1 text-xs text-gray-400 max-w-xs truncate" title={row.reason}>
+                                                Reason: {row.reason}
+                                            </div>
+                                        )}
+                                    </div>
+                                ),
+                                sortKey: 'asset_name',
+                            },
+                            {
+                                header: 'Priority',
+                                accessor: (row: any) => getPriorityBadge(row.priority),
+                                sortKey: 'priority',
+                            },
+                            {
+                                header: 'Status',
+                                accessor: (row: any) => getStatusBadge(row.status),
+                                sortKey: 'status',
+                            },
+                            {
+                                header: 'Requested On',
+                                accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy'),
+                                sortKey: 'created_at',
+                            },
+                            {
+                                header: 'Actions',
+                                accessor: (row: any) => {
+                                    if (row.status !== 'PENDING') {
+                                        return <span className="text-gray-400 italic text-xs">{row.status === 'APPROVED' ? 'Approved' : 'Rejected'}</span>;
+                                    }
+                                    const isSelfRequest = user?.employee_id === row.employee_id;
+                                    if (isSelfRequest) {
+                                        return (
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-brand-600 border-brand-200 hover:bg-brand-50"
+                                                    title="Edit Request"
+                                                    onClick={() => handleEdit(row)}
+                                                >
+                                                    <Edit size={14} />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                    title="Cancel Request"
+                                                    onClick={() => handleDelete(row.id)}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </Button>
+                                            </div>
+                                        );
+                                    }
+                                    if (canManageRequests) {
+                                        return (
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    title="Approve Request"
+                                                    onClick={() => handleActionMutation.mutate({ id: row.id, status: 'APPROVED' })}
+                                                >
+                                                    Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                    title="Reject Request"
+                                                    onClick={async () => {
+                                                        const notes = await showPrompt({
+                                                            title: 'Reject Request',
+                                                            message: 'Please provide a reason for rejecting this request.',
+                                                            placeholder: 'Reason for rejection...',
+                                                            confirmText: 'Reject',
+                                                            cancelText: 'Cancel'
+                                                        });
+                                                        if (notes !== null) {
+                                                            handleActionMutation.mutate({ id: row.id, status: 'REJECTED', admin_notes: notes });
+                                                        }
+                                                    }}
+                                                >
+                                                    Reject
+                                                </Button>
+                                            </div>
+                                        );
+                                                    }
+                                    return null;
+                                },
+                            },
+                        ]}
+                        data={requests || []}
+                        isLoading={isLoading}
+                        emptyMessage="No asset requests found."
+                        pageSize={10}
+                    />
                 </Card>
             </div>
 

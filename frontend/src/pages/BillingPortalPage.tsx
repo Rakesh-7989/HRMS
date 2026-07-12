@@ -13,6 +13,7 @@ import { subscriptionService } from '@/services/subscription.service';
 
 import { load } from '@cashfreepayments/cashfree-js';
 import { useTranslation } from 'react-i18next';
+import { DataTable } from '@/components/ui/DataTable';
 
 
 export const BillingPortalPage: React.FC = () => {
@@ -181,72 +182,58 @@ export const BillingPortalPage: React.FC = () => {
                                 Invoice History
                             </h2>
                             <Card className="overflow-hidden border-none shadow-elev-5">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
-                                                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Date</th>
-                                                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Invoice #</th>
-                                                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Amount</th>
-                                                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-gray-500">Status</th>
-                                                <th className="p-4 text-right"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-light-border dark:divide-dark-border">
-                                            {invoices?.map((invoice) => (
-                                                <tr key={invoice.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
-                                                    <td className="p-4 text-sm">{format(new Date(invoice.created_at), 'MMM dd, yyyy')}</td>
-                                                    <td className="p-4 text-sm font-mono text-gray-500">{invoice.invoice_number || invoice.id.slice(0, 8)}</td>
-                                                    <td className="p-4 text-sm font-bold">₹{invoice.amount?.toLocaleString()}</td>
-                                                    <td className="p-4">
-                                                        <div className="flex items-center gap-2">
-                                                            {invoice.status === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
-                                                                invoice.status === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
-                                                                    <Clock size={14} className="text-coral-500" />}
-                                                            <span className={cn(
-                                                                "text-[10px] font-black uppercase tracking-widest",
-                                                                invoice.status === 'PAID' ? "text-green-500" :
-                                                                    invoice.status === 'FAILED' ? "text-red-500" :
-                                                                        "text-coral-500"
-                                                            )}>
-                                                                {invoice.status}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4 text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            {(invoice.status === 'PENDING' || invoice.status === 'FAILED') && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="h-8 bg-brand-500 hover:bg-brand-600 text-white"
-                                                                    onClick={() => handleRetryPayment(invoice.id)}
-                                                                >
-                                                                    Pay Now
-                                                                </Button>
-                                                            )}
-                                                            {invoice.status === 'PAID' && (
-                                                                <Button variant="ghost" size="sm" className="h-8 text-brand-500 hover:bg-brand-500/10">
-                                                                    <Download size={16} className="mr-1" />
-                                                                    PDF
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {(!invoices || invoices.length === 0) && (
-                                                <tr>
-                                                    <td colSpan={5} className="p-12 text-center">
-                                                        <div className="flex flex-col items-center gap-2 text-gray-400">
-                                                            <AlertTriangle size={32} />
-                                                            <p>No billing transactions found for this organization.</p>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <DataTable
+                                    columns={[
+                                        { header: 'Date', accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy'), sortKey: 'created_at' },
+                                        { header: 'Invoice #', accessor: (row: any) => <span className="font-mono text-gray-500">{row.invoice_number || row.id.slice(0, 8)}</span> },
+                                        { header: 'Amount', accessor: (row: any) => <span className="font-bold">₹{row.amount?.toLocaleString()}</span>, sortKey: 'amount' },
+                                        {
+                                            header: 'Status',
+                                            accessor: (row: any) => (
+                                                <div className="flex items-center gap-2">
+                                                    {row.status === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
+                                                        row.status === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
+                                                            <Clock size={14} className="text-coral-500" />}
+                                                    <span className={cn(
+                                                        "text-[10px] font-black uppercase tracking-widest",
+                                                        row.status === 'PAID' ? "text-green-500" :
+                                                            row.status === 'FAILED' ? "text-red-500" :
+                                                                "text-coral-500"
+                                                    )}>
+                                                        {row.status}
+                                                    </span>
+                                                </div>
+                                            ),
+                                            sortKey: 'status',
+                                        },
+                                        {
+                                            header: '',
+                                            accessor: (row: any) => (
+                                                <div className="flex justify-end gap-2">
+                                                    {(row.status === 'PENDING' || row.status === 'FAILED') && (
+                                                        <Button
+                                                            size="sm"
+                                                            className="h-8 bg-brand-500 hover:bg-brand-600 text-white"
+                                                            onClick={() => handleRetryPayment(row.id)}
+                                                        >
+                                                            Pay Now
+                                                        </Button>
+                                                    )}
+                                                    {row.status === 'PAID' && (
+                                                        <Button variant="ghost" size="sm" className="h-8 text-brand-500 hover:bg-brand-500/10">
+                                                            <Download size={16} className="mr-1" />
+                                                            PDF
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ),
+                                        },
+                                    ]}
+                                    data={invoices || []}
+                                    isLoading={isLoading}
+                                    emptyMessage="No billing transactions found for this organization."
+                                    pageSize={10}
+                                />
                             </Card>
                         </div>
                     </>

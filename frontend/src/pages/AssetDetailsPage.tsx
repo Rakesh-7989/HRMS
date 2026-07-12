@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { AssetStatus } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const AssetDetailsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -534,97 +535,61 @@ export const AssetDetailsPage: React.FC = () => {
 
                 {historyView === 'tracking' && (
                   <div>
-                    {isLoadingTracking ? (
-                      <div className="text-center py-4">Loading tracking events...</div>
-                    ) : trackingHistory?.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500">No tracking events found.</div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                          <thead className="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Performed By</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                            {trackingHistory?.map((event: any, index: number) => (
-                              <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                  {format(new Date(event.created_at), 'MMM dd, yyyy HH:mm')}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{event.event_type}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{event.description || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {event.created_by_name || 'System'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                    <DataTable
+                      columns={[
+                        { header: 'Date', accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy HH:mm'), sortKey: 'created_at' },
+                        { header: 'Event', accessor: (row: any) => row.event_type, sortKey: 'event_type' },
+                        { header: 'Description', accessor: (row: any) => row.description || '-' },
+                        { header: 'Performed By', accessor: (row: any) => row.created_by_name || 'System', sortKey: 'created_by_name' },
+                      ]}
+                      data={trackingHistory || []}
+                      isLoading={isLoadingTracking}
+                      emptyMessage="No tracking events found."
+                      pageSize={10}
+                    />
                   </div>
                 )}
 
                 {historyView === 'usage' && (
                   <div>
-                    {isLoadingUsage ? (
-                      <div className="text-center py-4">Loading usage history...</div>
-                    ) : usageHistory?.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500">No usage history found.</div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                          <thead className="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Employee</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Department</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Return Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                            {usageHistory?.map((usage: any, index: number) => {
-                              const start = new Date(usage.assigned_date);
-                              const end = usage.return_date ? new Date(usage.return_date) : new Date();
-                              const diffTime = Math.abs(end.getTime() - start.getTime());
-                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                              const duration = `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-
-                              return (
-                                <tr key={index}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                    {usage.first_name && usage.last_name
-                                      ? `${usage.first_name} ${usage.last_name}`
-                                      : usage.employee_id || '-'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {usage.department_name || '-'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {usage.assigned_date ? format(new Date(usage.assigned_date), 'MMM dd, yyyy') : '-'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {usage.return_date ? format(new Date(usage.return_date), 'MMM dd, yyyy') : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {duration}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                    {usage.description || '-'}
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                    <DataTable
+                      columns={[
+                        {
+                          header: 'Employee',
+                          accessor: (row: any) => {
+                            const name = row.first_name && row.last_name
+                              ? `${row.first_name} ${row.last_name}`
+                              : row.employee_id || '-';
+                            return name;
+                          },
+                          sortKey: 'first_name',
+                        },
+                        { header: 'Department', accessor: (row: any) => row.department_name || '-', sortKey: 'department_name' },
+                        { header: 'Assigned Date', accessor: (row: any) => row.assigned_date ? format(new Date(row.assigned_date), 'MMM dd, yyyy') : '-', sortKey: 'assigned_date' },
+                        {
+                          header: 'Return Date',
+                          accessor: (row: any) => row.return_date
+                            ? format(new Date(row.return_date), 'MMM dd, yyyy')
+                            : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>,
+                          sortKey: 'return_date',
+                        },
+                        {
+                          header: 'Duration',
+                          accessor: (row: any) => {
+                            const start = new Date(row.assigned_date);
+                            const end = row.return_date ? new Date(row.return_date) : new Date();
+                            const diffTime = Math.abs(end.getTime() - start.getTime());
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+                          },
+                        },
+                        { header: 'Description', accessor: (row: any) => row.description || '-' },
+                      ]}
+                      data={usageHistory || []}
+                      isLoading={isLoadingUsage}
+                      emptyMessage="No usage history found."
+                      pageSize={10}
+                    />
                   </div>
                 )}
               </div>
