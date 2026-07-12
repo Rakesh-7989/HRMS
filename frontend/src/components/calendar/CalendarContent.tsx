@@ -213,24 +213,29 @@ export const CalendarContent: React.FC = () => {
 
                 <div className="flex flex-col sm:flex-row w-full lg:w-auto items-stretch sm:items-center gap-4">
                     <div className="flex items-center justify-between bg-gray-50/50 dark:bg-white/[0.03] p-1 border border-gray-200 dark:border-white/5 rounded-2xl">
-                        <button
+                        <Button
                             onClick={prevMonth}
-                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-elev-1 active:scale-95"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Previous month"
                         >
                             <ChevronLeft size={16} />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={goToToday}
-                            className="flex-1 px-6 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-colors text-center"
+                            variant="ghost"
+                            className="flex-1 px-6 py-2 font-bold uppercase tracking-widest"
                         >
                             Today
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={nextMonth}
-                            className="p-2.5 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all shadow-elev-1 active:scale-95"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Next month"
                         >
                             <ChevronRight size={16} />
-                        </button>
+                        </Button>
                     </div>
 
                     <select
@@ -246,13 +251,14 @@ export const CalendarContent: React.FC = () => {
 
                     {canManage && (
                         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                            <button
+                            <Button
                                 onClick={() => { setIsImportModalOpen(true); setImportStatus({ type: 'idle', message: '' }); setImportFile(null); }}
-                                className="h-11 rounded-2xl px-4 font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-1.5 flex-1 sm:flex-initial border-2 border-brand-500/30 text-brand-500 bg-brand-500/5 hover:bg-brand-500/10 hover:border-brand-500/50 transition-all active:scale-95"
+                                variant="outline"
+                                className="rounded-2xl uppercase tracking-widest text-[11px]"
                             >
                                 <Upload size={14} />
                                 Import
-                            </button>
+                            </Button>
                             <Button onClick={() => setIsAddModalOpen(true)} className="h-11 rounded-2xl shadow-elev-5 px-5 font-bold uppercase tracking-widest text-[11px] group flex-1 sm:flex-initial">
                                 <Plus size={14} className="mr-1.5" />
                                 Add Holiday
@@ -372,12 +378,14 @@ export const CalendarContent: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Announcements</h3>
                             {canManage && (
-                                <button
+                                <Button
                                     onClick={() => setIsAnnouncementModalOpen(true)}
-                                    className="px-4 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 rounded-xl text-brand-500 text-xs font-bold uppercase tracking-wider transition-all"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="uppercase tracking-wider"
                                 >
                                     Add
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
 import { useTranslation } from 'react-i18next';
 
@@ -55,19 +56,13 @@ export const AddEmployeePage: React.FC = () => {
             You have reached the maximum number of employees ({maxEmployees}) for your current plan.
             Please upgrade your plan to add more employees.
           </p>
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={() => navigate('/dashboard/employees')}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors"
-            >
+            <div className="flex gap-3 mt-4">
+            <Button variant="outline" onClick={() => navigate('/dashboard/employees')}>
               Back to Employees
-            </button>
-            <button
-              onClick={() => navigate('/settings/billing')} // Assuming billing page link
-              className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-500-dark transition-colors"
-            >
+            </Button>
+            <Button onClick={() => navigate('/settings/billing')}>
               Upgrade Plan
-            </button>
+            </Button>
           </div>
         </Card>
       </DashboardLayout>
