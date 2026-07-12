@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { DataTable } from '@/components/ui/DataTable';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
 import { PhoneInput } from '@/components/ui/PhoneInput';
@@ -878,7 +879,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
-            placeholder="Find documents..."
+            placeholder={t('common.searchDocuments')}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50 bg-transparent text-gray-900 dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -890,80 +891,85 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} />
             <Button onClick={() => fileInputRef.current?.click()} isLoading={uploadMutation.isPending} className="flex items-center gap-2">
               <Upload size={16} />
-              Upload New
+              Upload {t('common.new')}
             </Button>
           </>
         )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-elev-1">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-              <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Document Name</th>
-              <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploaded On</th>
-              <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {isLoading ? (
-              <tr><td colSpan={4} className="py-8 text-center text-gray-400">Loading documents...</td></tr>
-            ) : filteredDocs.length === 0 ? (
-              <tr><td colSpan={4} className="py-8 text-center text-gray-400">No documents found</td></tr>
-            ) : (
-              filteredDocs.map(doc => (
-                <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
-                        <FileText size={18} />
-                      </div>
-                      <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-xs text-gray-500">{doc.file_type || 'Unknown'}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-xs text-gray-500">{format(new Date(doc.created_at), 'MMM d, yyyy')}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-                      >
-                        <Download size={16} />
-                      </a>
-                      {canManage && (
-                        <button
-                          onClick={async () => {
-                            const result = await confirm({
-                              title: 'Delete Document',
-                              message: `Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`,
-                              type: 'destructive',
-                              confirmText: 'Delete',
-                              cancelText: 'Cancel'
-                            });
-                            if (result) {
-                              deleteMutation.mutate(doc.id);
-                            }
-                          }}
-                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        {(() => {
+          const columns = [
+            {
+              header: t('common.documentName'),
+              cell: (doc: any) => (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
+                    <FileText size={18} />
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>
+                </div>
+              ),
+            },
+            {
+              header: t('common.type'),
+              cell: (doc: any) => (
+                <span className="text-xs text-gray-500">{doc.file_type || t('common.unknown')}</span>
+              ),
+            },
+            {
+              header: t('common.uploadedOn'),
+              cell: (doc: any) => (
+                <span className="text-xs text-gray-500">{format(new Date(doc.created_at), 'MMM d, yyyy')}</span>
+              ),
+            },
+            {
+              header: t('common.actions'),
+              cell: (doc: any) => (
+                <div className="flex items-center justify-end gap-2">
+                  <a
+                    href={doc.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
+                    title={t('common.download')}
+                  >
+                    <Download size={16} />
+                  </a>
+                  {canManage && (
+                    <button
+                      onClick={async () => {
+                        const result = await confirm({
+                          title: t('profile.deleteDocumentTitle'),
+                          message: t('profile.deleteDocumentMessage', { name: doc.file_name }),
+                          type: 'destructive',
+                          confirmText: t('common.delete'),
+                          cancelText: t('common.cancel')
+                        });
+                        if (result) {
+                          deleteMutation.mutate(doc.id);
+                        }
+                      }}
+                      className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600"
+                      title={t('common.delete')}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ),
+            },
+          ];
+          return (
+            <DataTable
+              columns={columns}
+              data={filteredDocs}
+              isLoading={isLoading}
+              pageSize={10}
+              emptyMessage={t('common.noDocuments')}
+            />
+          );
+        })()}
       </div>
     </div>
   );

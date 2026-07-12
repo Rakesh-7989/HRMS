@@ -115,6 +115,11 @@
         "endDate": "End Date",
         "createdAt": "Created At",
         "updatedAt": "Updated At",
+        "documentName": "Document Name",
+        "uploadedOn": "Uploaded On",
+        "unknown": "Unknown",
+        "noDocuments": "No documents found",
+        "searchDocuments": "Find documents...",
         "breadcrumbs": {
             "dashboard": "Dashboard",
             "attendance": "Attendance",
@@ -529,6 +534,8 @@
         "nationality": "Nationality",
         "address": "Address",
         "phone": "Phone",
+        "deleteDocumentTitle": "Delete Document",
+        "deleteDocumentMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
         "profileDropdown": {
             "removeProfilePhotoTitle": "Remove Profile Photo",
             "removeProfilePhotoMessage": "Are you sure you want to remove your profile photo?",
