@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { cn } from '@/utils/cn';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SkeletonTable } from '@/components/ui/Skeleton';
@@ -19,6 +20,7 @@ interface DataTableProps<T> {
     pageSize?: number;
     pageSizeOptions?: number[];
     onRowClick?: (row: T) => void;
+    className?: string;
 }
 
 export function DataTable<T>({
@@ -29,6 +31,7 @@ export function DataTable<T>({
     pageSize: defaultPageSize = 25,
     pageSizeOptions = [10, 25, 50],
     onRowClick,
+    className = "",
 }: DataTableProps<T>) {
     const [sortKey, setSortKey] = useState<keyof T | null>(null);
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -77,7 +80,7 @@ export function DataTable<T>({
 
     return (
         <div>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+            <div className={cn("overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10", className)}>
                 <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 uppercase text-xs font-semibold">
                         <tr>

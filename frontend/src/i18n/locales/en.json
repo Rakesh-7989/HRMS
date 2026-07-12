@@ -335,6 +335,7 @@
         "noMatchingRequests": "No requests match your current filters",
         "greatNoPending": "Great! No pending leave requests",
         "noProcessedFound": "No processed requests found",
+        "noRequests": "No requests found",
         "approver": "Approver",
         "reportingManager": "Reporting Manager",
         "noManager": "No Manager",

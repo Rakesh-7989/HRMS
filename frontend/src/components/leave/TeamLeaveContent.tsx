@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { LeaveApplication } from '@/services/leave.service';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const TeamLeaveContent: React.FC = () => {
     const { hasPermission } = usePermissions();
@@ -95,6 +96,130 @@ export const TeamLeaveContent: React.FC = () => {
             return matchesSearch && matchesType;
         });
     }, [currentList, searchTerm, typeFilter]);
+
+    const teamLeaveColumns = useMemo(() => [
+        {
+            header: t('leave.employee'),
+            cell: (leave: LeaveApplication) => {
+                const emp = leave.employee || (leave as any).user || (leave as any);
+                return (
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
+                            {(emp.first_name?.[0] || '') + (emp.last_name?.[0] || '')}
+                        </div>
+                        <div>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                                {emp.first_name} {emp.last_name}
+                            </p>
+                            <p className="text-[10px] text-gray-500">{emp.email}</p>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            header: t('leave.type'),
+            cell: (leave: LeaveApplication) => (
+                <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm text-gray-600 dark:text-muted">
+                    {(leave as any).leave_type_name || leave.leave_type}
+                </span>
+            ),
+        },
+        {
+            header: t('leave.duration'),
+            cell: (leave: LeaveApplication) => (
+                <div className="text-sm text-gray-600 dark:text-muted">
+                    <div className="font-medium">{leave.days_count} days</div>
+                    <div className="text-[10px]">
+                        {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd, yyyy')}
+                    </div>
+                </div>
+            ),
+        },
+        {
+            header: t('leave.approver'),
+            cell: (leave: LeaveApplication) => (
+                (leave as any).manager_first_name ? (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
+                            {(leave as any).manager_first_name} {(leave as any).manager_last_name}
+                        </span>
+                        <span className="text-[9px] text-muted uppercase tracking-tighter italic">{t('leave.reportingManager')}</span>
+                    </div>
+                ) : (
+                    <span className="text-gray-400 text-xs italic">{t('leave.noManager')}</span>
+                )
+            ),
+        },
+        {
+            header: t('leave.reason'),
+            cell: (leave: LeaveApplication) => (
+                <div className="text-sm text-gray-600 dark:text-muted max-w-xs truncate" title={leave.reason}>
+                    {leave.reason || '-'}
+                </div>
+            ),
+        },
+        {
+            header: t('leave.status'),
+            cell: (leave: LeaveApplication) => (
+                <div className="flex flex-col gap-1 items-start">
+                    <span className={cn(
+                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
+                        leave.status === 'APPROVED' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                            leave.status === 'REJECTED' ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                                leave.status === 'PENDING' ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                    leave.status === 'CANCELLED' ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" :
+                                        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                    )}>
+                        {t(`leave.${leave.status.toLowerCase()}`, { defaultValue: leave.status })}
+                    </span>
+                    {leave.status === 'REJECTED' && leave.rejection_reason && (
+                        <span className="text-[10px] text-red-600 dark:text-red-400 leading-tight max-w-[150px]">
+                            {t('leave.reason')}: {leave.rejection_reason}
+                        </span>
+                    )}
+                </div>
+            ),
+        },
+        {
+            header: t('leave.actions'),
+            cell: (leave: LeaveApplication) => (
+                leave.status === 'PENDING' && (leave as any).can_approve ? (
+                    <div className="flex gap-1 justify-end">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={approveMutation.isPending}
+                            className="h-8 w-8 p-0 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                            onClick={() => approveMutation.mutate(leave.id)}
+                            isLoading={approveMutation.isPending}
+                            title={t('leave.approve')}
+                        >
+                            <CheckCircle size={18} />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={rejectMutation.isPending}
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            onClick={() => {
+                                setSelectedLeave(leave);
+                                setShowRejectDialog(true);
+                            }}
+                            isLoading={rejectMutation.isPending}
+                            title={t('leave.reject')}
+                        >
+                            <XCircle size={18} />
+                        </Button>
+                    </div>
+                ) : (
+                    <span className="text-xs text-gray-400 font-medium italic">
+                        {format(new Date(leave.updated_at || leave.created_at), 'MMM dd')}
+                    </span>
+                )
+            ),
+        },
+    ], [t, approveMutation.isPending, rejectMutation.isPending, approveMutation, rejectMutation]);
 
     if (!canApprove) return <div className="p-8 text-center bg-red-50 text-red-600 rounded-lg">{t('leave.accessDenied')}: Insufficient permissions</div>;
 
@@ -195,127 +320,13 @@ export const TeamLeaveContent: React.FC = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="relative overflow-hidden rounded-lg border border-gray-100 dark:border-gray-800">
-                            <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
-                                <table className="w-full border-collapse">
-                                    <thead className="sticky top-0 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md z-20 shadow-elev-1">
-                                        <tr className="border-b border-gray-200 dark:border-white/10 text-left">
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.employee')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.type')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.duration')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.approver')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.reason')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('leave.status')}</th>
-                                            <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">{t('leave.actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                        {filteredList.map((leave) => {
-                                            const emp = leave.employee || (leave as any).user || (leave as any);
-                                            return (
-                                                <tr key={leave.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
-                                                    <td className="py-4 px-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
-                                                                {(emp.first_name?.[0] || '') + (emp.last_name?.[0] || '')}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-medium text-gray-900 dark:text-white">
-                                                                    {emp.first_name} {emp.last_name}
-                                                                </p>
-                                                                <p className="text-[10px] text-gray-500">{emp.email}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-sm text-gray-600 dark:text-muted">
-                                                        <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
-                                                            {(leave as any).leave_type_name || leave.leave_type}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-sm text-gray-600 dark:text-muted">
-                                                        <div className="font-medium">{leave.days_count} days</div>
-                                                        <div className="text-[10px]">
-                                                            {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd, yyyy')}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-sm">
-                                                        {(leave as any).manager_first_name ? (
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium text-gray-800 dark:text-gray-200">
-                                                                    {(leave as any).manager_first_name} {(leave as any).manager_last_name}
-                                                                </span>
-                                                                <span className="text-[9px] text-muted uppercase tracking-tighter italic">{t('leave.reportingManager')}</span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-gray-400 text-xs italic">{t('leave.noManager')}</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="py-4 px-4 text-sm text-gray-600 dark:text-muted max-w-xs">
-                                                        <div className="truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
-                                                            {leave.reason || '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4">
-                                                        <div className="flex flex-col gap-1 items-start">
-                                                            <span className={cn(
-                                                                "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
-                                                                leave.status === 'APPROVED' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                                                    leave.status === 'REJECTED' ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-                                                                        leave.status === 'PENDING' ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                                                                            leave.status === 'CANCELLED' ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" :
-                                                                                "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
-                                                            )}>
-                                                                {t(`leave.${leave.status.toLowerCase()}`, { defaultValue: leave.status })}
-                                                            </span>
-                                                            {leave.status === 'REJECTED' && leave.rejection_reason && (
-                                                                <span className="text-[10px] text-red-600 dark:text-red-400 leading-tight max-w-[150px]">
-                                                                    {t('leave.reason')}: {leave.rejection_reason}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right">
-                                                        {leave.status === 'PENDING' && (leave as any).can_approve ? (
-                                                            <div className="flex gap-1 justify-end">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    disabled={approveMutation.isPending}
-                                                                    className="h-8 w-8 p-0 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                                                    onClick={() => approveMutation.mutate(leave.id)}
-                                                                    isLoading={approveMutation.isPending}
-                                                                    title="Approve"
-                                                                >
-                                                                    <CheckCircle size={18} />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    disabled={rejectMutation.isPending}
-                                                                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                                    onClick={() => {
-                                                                        setSelectedLeave(leave);
-                                                                        setShowRejectDialog(true);
-                                                                    }}
-                                                                    isLoading={rejectMutation.isPending}
-                                                                    title="Reject"
-                                                                >
-                                                                    <XCircle size={18} />
-                                                                </Button>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-xs text-gray-400 font-medium italic">
-                                                                {format(new Date(leave.updated_at || leave.created_at), 'MMM dd')}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <DataTable
+                            columns={teamLeaveColumns}
+                            data={filteredList}
+                            pageSize={10}
+                            className="max-h-[500px] overflow-y-auto custom-scrollbar"
+                            emptyMessage={t('leave.noRequests')}
+                        />
                     )}
                 </div>
             </Card>
