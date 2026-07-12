@@ -18,6 +18,7 @@ interface DataTableProps<T> {
     emptyMessage?: string;
     pageSize?: number;
     pageSizeOptions?: number[];
+    onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({
@@ -27,6 +28,7 @@ export function DataTable<T>({
     emptyMessage = "No data found",
     pageSize: defaultPageSize = 25,
     pageSizeOptions = [10, 25, 50],
+    onRowClick,
 }: DataTableProps<T>) {
     const [sortKey, setSortKey] = useState<keyof T | null>(null);
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -97,7 +99,7 @@ export function DataTable<T>({
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-dark-border bg-white dark:bg-gray-900">
                         {paginatedData.map((row, rIdx) => (
-                            <tr key={rIdx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                            <tr key={rIdx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" onClick={() => onRowClick?.(row)} style={onRowClick ? { cursor: 'pointer' } : undefined}>
                                 {columns.map((col, cIdx) => (
                                     <td key={cIdx} className={`px-4 py-3 ${col.className || ''}`}>
                                         {col.cell ? col.cell(row) : String(row[col.accessorKey!] ?? '')}

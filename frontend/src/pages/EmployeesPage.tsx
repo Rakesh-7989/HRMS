@@ -50,7 +50,6 @@ export const EmployeesPage: React.FC = () => {
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | 'active' | 'inactive'>('');
   const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(0);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const { hasPermission } = usePermissions();
@@ -67,14 +66,9 @@ export const EmployeesPage: React.FC = () => {
     ...(departmentFilter && { department_id: departmentFilter }),
     ...(statusFilter && { is_active: statusFilter === 'active' }),
     ...(searchTerm && { search: searchTerm }),
-    limit: PAGE_SIZE,
-    offset: page * PAGE_SIZE,
   };
 
-  // Reset page when filters or search change
-  React.useEffect(() => {
-    setPage(0);
-  }, [searchTerm, roleFilter, departmentFilter, statusFilter]);
+  // Reset page when filters or search change (handled by DataTable)
 
   // Queries
   const { data: usersResponse, isLoading } = useQuery({
@@ -167,9 +161,6 @@ export const EmployeesPage: React.FC = () => {
     }
   };
 
-  const totalFiltered = filteredEmployees.length;
-  const displayEmployees = filteredEmployees.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
   // Get department/designation names
   const getDepartmentName = (deptId?: string) => {
     if (!deptId) return '-';
@@ -187,7 +178,6 @@ export const EmployeesPage: React.FC = () => {
     setRoleFilter('');
     setDepartmentFilter('');
     setStatusFilter('');
-    setPage(0);
   };
 
   const hasActiveFilters = roleFilter || departmentFilter || statusFilter;
@@ -312,10 +302,10 @@ export const EmployeesPage: React.FC = () => {
                 disabled={toggleStatusMutation.isPending || user?.id === emp.id}
                 title={
                   user?.id === emp.id
-                    ? "You cannot deactivate your own account"
+                    ? t('employees.cannotDeactivateSelf')
                     : emp.is_active
-                      ? "Deactivate"
-                      : "Activate"
+                      ? t('common.deactivate')
+                      : t('common.activate')
                 }
                 className={cn(
                   user?.id === emp.id ? 'opacity-50 cursor-not-allowed' : '',
@@ -330,20 +320,20 @@ export const EmployeesPage: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={async () => {
-                const result = await confirm({
-                  title: 'Delete Employee',
-                  message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
-                  type: 'destructive',
-                  confirmText: 'Delete Employee',
-                  cancelText: 'Cancel'
-                });
-                if (result) {
-                  deleteMutation.mutate(emp.id);
-                }
-              }}
-              disabled={deleteMutation.isPending || user?.id === emp.id}
-              title="Delete"
+                onClick={async () => {
+                  const result = await confirm({
+                    title: t('employees.deleteTitle'),
+                    message: t('employees.deleteMessage'),
+                    type: 'destructive',
+                    confirmText: t('employees.deleteConfirm'),
+                    cancelText: t('common.cancel')
+                  });
+                  if (result) {
+                    deleteMutation.mutate(emp.id);
+                  }
+                }}
+                disabled={deleteMutation.isPending || user?.id === emp.id}
+                title={t('common.delete')}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               <Trash2 size={16} />
@@ -446,7 +436,7 @@ export const EmployeesPage: React.FC = () => {
                 <Building2 size={16} className="text-gray-500" />
                 <select
                   value={departmentFilter}
-                  onChange={(e) => { setDepartmentFilter(e.target.value); setPage(0); }}
+                  onChange={(e) => { setDepartmentFilter(e.target.value); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">{t('employees.filterByDepartment')}</option>
@@ -460,7 +450,7 @@ export const EmployeesPage: React.FC = () => {
                 <Briefcase size={16} className="text-gray-500" />
                 <select
                   value={roleFilter}
-                  onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
+                  onChange={(e) => { setRoleFilter(e.target.value); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">{t('employees.filterByRole')}</option>
@@ -474,7 +464,7 @@ export const EmployeesPage: React.FC = () => {
                 <UserCheck size={16} className="text-gray-500" />
                 <select
                   value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as any); setPage(0); }}
+                  onChange={(e) => { setStatusFilter(e.target.value as any); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">{t('employees.filterByStatus')}</option>
@@ -499,212 +489,22 @@ export const EmployeesPage: React.FC = () => {
             <div className="h-64 flex items-center justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
             </div>
-          ) : displayEmployees.length === 0 ? (
+          ) : filteredEmployees.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <UserX className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-lg font-medium">{t('employees.noEmployeesFound')}</p>
               <p className="text-sm">{t('common.tryAgain')}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.employee')}
-                    </th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.department')}
-                    </th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.designation')}
-                    </th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.role')}
-                    </th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.status')}
-                    </th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.joined')}
-                    </th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      {t('common.actions')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {displayEmployees.map((emp) => (
-                    <tr
-                      key={emp.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer"
-                      onClick={() => handleRowClick(emp)}
-                    >
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white overflow-hidden',
-                            emp.is_active ? 'bg-gradient-to-br from-brand-500 to-brand-500-dark' : 'bg-gray-400'
-                          )}>
-                            {emp.profile_photo_url ? (
-                              <img src={resolveImageUrl(emp.profile_photo_url)} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <>{emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}</>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {emp.first_name} {emp.last_name}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {emp.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                        {getDepartmentName(emp.department_id)}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                        {getDesignationName(emp.designation_id)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded text-xs font-medium',
-                          emp.role === 'ADMIN' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
-                          emp.role === 'HR' && 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
-                          emp.role === 'MANAGER' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                          emp.role === 'EMPLOYEE' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-                        )}>
-                          {emp.role?.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {emp.is_active ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
-                            <UserCheck size={14} />
-                            {t('common.active')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400">
-                            <UserX size={14} />
-                            {t('common.inactive')}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                        {emp.join_date || emp.created_at
-                          ? format(new Date(emp.join_date || emp.created_at!), 'MMM dd, yyyy')
-                          : '-'}
-                      </td>
-                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRowClick(emp)}
-                            title="View Details"
-                          >
-                            <Eye size={16} />
-                          </Button>
-                          {canUpdate && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  const secureId = obfuscateId(emp.employee_id || emp.id);
-                                  navigate(`/dashboard/employees/${secureId}/edit`);
-                                }}
-                                title="Edit"
-                              >
-                                <Edit size={16} />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleStatusMutation.mutate({
-                                  id: emp.id,
-                                  is_active: !emp.is_active
-                                })}
-                                disabled={toggleStatusMutation.isPending || user?.id === emp.id}
-                                title={
-                                  user?.id === emp.id
-                                    ? "You cannot deactivate your own account"
-                                    : emp.is_active
-                                      ? "Deactivate"
-                                      : "Activate"
-                                }
-                                className={cn(
-                                  user?.id === emp.id ? 'opacity-50 cursor-not-allowed' : '',
-                                  emp.is_active ? 'text-red-500 hover:text-red-600' : 'text-green-500 hover:text-green-600'
-                                )}
-                              >
-                                {emp.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
-                              </Button>
-                            </>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async () => {
-                                const result = await confirm({
-                                  title: 'Delete Employee',
-                                  message: 'Are you sure you want to delete this employee? This action cannot be undone and will remove their access to the system.',
-                                  type: 'destructive',
-                                  confirmText: 'Delete Employee',
-                                  cancelText: 'Cancel'
-                                });
-                                if (result) {
-                                  deleteMutation.mutate(emp.id);
-                                }
-                              }}
-                              disabled={deleteMutation.isPending || user?.id === emp.id}
-                              title="Delete"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={employeeColumns}
+              data={filteredEmployees}
+              pageSize={PAGE_SIZE}
+              onRowClick={handleRowClick}
+              emptyMessage={t('employees.noEmployeesFound')}
+            />
           )}
 
-          {/* Pagination */}
-          {!isLoading && employees.length > 0 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {t('common.showing')} {totalFiltered === 0 ? 0 : page * PAGE_SIZE + 1} - {Math.min((page + 1) * PAGE_SIZE, totalFiltered)} {t('common.of')} {totalFiltered}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('common.page')} {page + 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={(page + 1) * PAGE_SIZE >= totalFiltered}
-                >
-                  <ChevronRight size={16} />
-                </Button>
-              </div>
-            </div>
-          )}
         </Card>
       </div>
 
