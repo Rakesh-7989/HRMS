@@ -499,6 +499,25 @@
         "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and may affect assigned employees.",
         "thisDepartment": "this department"
     },
+    "designations": {
+        "title": "Designations",
+        "description": "Manage job titles and roles across your organization.",
+        "searchPlaceholder": "Search designations...",
+        "addDesignation": "Add Designation",
+        "loading": "Loading designations...",
+        "noMatching": "No matching designations",
+        "noMatchingDesc": "We couldn't find any designation matching \"{{searchTerm}}\".",
+        "noDesignations": "No designations yet",
+        "noDesignationsDesc": "No designations available at this time.",
+        "noDescription": "No description provided.",
+        "deleted": "Designation deleted",
+        "deleteFailed": "Failed to delete",
+        "activated": "Designation activated",
+        "deactivated": "Designation deactivated",
+        "statusUpdateFailed": "Failed to update status",
+        "deleteTitle": "Delete Designation",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and may affect assigned employees."
+    },
     "profile": {
         "title": "My Profile",
         "personalInfo": "Personal Information",
