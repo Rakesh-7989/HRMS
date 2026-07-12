@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Download, RefreshCw, Loader2, FileText } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   GENERATING: { labelKey: 'compliance.generating', color: 'bg-amber-100 text-amber-700' },
@@ -37,7 +37,7 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
     mutationFn: () => complianceService.generateReport(type, month, year),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compliance-reports'] });
-      toast.success(`${title} report generating...`);
+      showToast.success(`${title} report generating...`);
     },
   });
 
@@ -51,7 +51,7 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      toast.error(t('compliance.downloadFailed'));
+      showToast.error(t('compliance.downloadFailed'));
     }
   };
 

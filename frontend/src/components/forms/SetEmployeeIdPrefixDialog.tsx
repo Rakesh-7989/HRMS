@@ -4,7 +4,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { AlertCircle, Info } from 'lucide-react';
 import { tenantService } from '@/services/tenant.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 interface SetEmployeeIdPrefixDialogProps {
     open: boolean;
@@ -25,13 +25,13 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
         mutationFn: (prefix: string) => tenantService.setEmployeeIdPrefix(prefix),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
-            toast.success(`Employee ID prefix set to "${data.prefix}". First employee will be ${data.nextId}`);
+            showToast.success(`Employee ID prefix set to "${data.prefix}". First employee will be ${data.nextId}`);
             onOpenChange(false);
             onSuccess?.();
         },
         onError: (err: Error) => {
             setError(err.message);
-            toast.error(err.message);
+            showToast.error(err.message);
         },
     });
 

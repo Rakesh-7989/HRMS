@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -74,11 +74,11 @@ export const LeaveSettingsContent: React.FC = () => {
             setTypeDialogOpen(false);
             resetTypeForm();
             setErrorMessage(null);
-            toast.success(t('leaveSettings.leaveTypeCreated'));
+            showToast.success(t('leaveSettings.leaveTypeCreated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to create leave type');
-            toast.error(error.message || 'Failed to create leave type');
+            showToast.error(error.message || 'Failed to create leave type');
         },
     });
 
@@ -91,11 +91,11 @@ export const LeaveSettingsContent: React.FC = () => {
             setEditingType(null);
             resetTypeForm();
             setErrorMessage(null);
-            toast.success(t('leaveSettings.leaveTypeUpdated'));
+            showToast.success(t('leaveSettings.leaveTypeUpdated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to update leave type');
-            toast.error(error.message || 'Failed to update leave type');
+            showToast.error(error.message || 'Failed to update leave type');
         },
     });
 
@@ -104,11 +104,11 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-types'] });
             setErrorMessage(null);
-            toast.success(t('leaveSettings.leaveTypeDeleted'));
+            showToast.success(t('leaveSettings.leaveTypeDeleted'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to delete leave type');
-            toast.error(error.message || 'Failed to delete leave type');
+            showToast.error(error.message || 'Failed to delete leave type');
         },
     });
 
@@ -120,11 +120,11 @@ export const LeaveSettingsContent: React.FC = () => {
             setPolicyDialogOpen(false);
             resetPolicyForm();
             setErrorMessage(null);
-            toast.success(t('leaveSettings.policyCreated'));
+            showToast.success(t('leaveSettings.policyCreated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to create policy');
-            toast.error(error.message || 'Failed to create policy');
+            showToast.error(error.message || 'Failed to create policy');
         },
     });
 
@@ -137,11 +137,11 @@ export const LeaveSettingsContent: React.FC = () => {
             setEditingPolicy(null);
             resetPolicyForm();
             setErrorMessage(null);
-            toast.success(t('leaveSettings.policyUpdated'));
+            showToast.success(t('leaveSettings.policyUpdated'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to update policy');
-            toast.error(error.message || 'Failed to update policy');
+            showToast.error(error.message || 'Failed to update policy');
         },
     });
 
@@ -150,11 +150,11 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leave-policies'] });
             setErrorMessage(null);
-            toast.success(t('leaveSettings.policyDeleted'));
+            showToast.success(t('leaveSettings.policyDeleted'));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to delete policy');
-            toast.error(error.message || 'Failed to delete policy');
+            showToast.error(error.message || 'Failed to delete policy');
         },
     });
 
@@ -164,11 +164,11 @@ export const LeaveSettingsContent: React.FC = () => {
         onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(t('leaveSettings.allocationCompleted', { count: data.accruals_processed }));
+            showToast.success(t('leaveSettings.allocationCompleted', { count: data.accruals_processed }));
         },
         onError: (error: Error) => {
             setErrorMessage(error.message || 'Failed to run allocation');
-            toast.error(error.message || 'Failed to run allocation');
+            showToast.error(error.message || 'Failed to run allocation');
         },
     });
 

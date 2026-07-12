@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Plus, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
 // payrollService is available but we use api directly for flexibility
 import api from '@/services/api';
@@ -78,13 +78,13 @@ export const SalaryRevisionsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Salary revision created');
+            showToast.success('Salary revision created');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-revisions'] });
             setAddOpen(false);
             resetForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to create revision');
+            showToast.error(err?.response?.data?.message || 'Failed to create revision');
         }
     });
 
@@ -95,11 +95,11 @@ export const SalaryRevisionsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Revision updated');
+            showToast.success('Revision updated');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-revisions'] });
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to update');
+            showToast.error(err?.response?.data?.message || 'Failed to update');
         }
     });
 
@@ -113,7 +113,7 @@ export const SalaryRevisionsContent: React.FC = () => {
 
     const handleCreate = () => {
         if (!employeeId || !newCtc) {
-            toast.error('Please fill all required fields');
+            showToast.error('Please fill all required fields');
             return;
         }
         createMutation.mutate({

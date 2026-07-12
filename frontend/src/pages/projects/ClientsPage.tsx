@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Building2, Edit, Trash2, ArrowLeft } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -86,7 +86,7 @@ export const ClientsPage: React.FC = () => {
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to create client');
+            showToast.error(error.response?.data?.message || 'Failed to create client');
         },
     });
 
@@ -102,7 +102,7 @@ export const ClientsPage: React.FC = () => {
         },
         onError: (error: any) => {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || 'Failed to update client');
+            showToast.error(error.response?.data?.message || 'Failed to update client');
         },
     });
 
@@ -114,7 +114,7 @@ export const ClientsPage: React.FC = () => {
             setClientToDelete(null);
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to delete client. It may have linked projects.');
+            showToast.error(error.response?.data?.message || 'Failed to delete client. It may have linked projects.');
             setClientToDelete(null);
         },
     });

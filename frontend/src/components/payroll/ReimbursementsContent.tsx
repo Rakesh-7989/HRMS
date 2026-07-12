@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Plus, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
 import payrollService from '@/services/payroll.service';
 
@@ -52,13 +52,13 @@ export const ReimbursementsContent: React.FC = () => {
         mutationFn: (payload: { category: string; amount: number; claimDate: string; description?: string; receiptUrl?: string }) =>
             payrollService.createReimbursement(payload),
         onSuccess: () => {
-            toast.success('Reimbursement claim submitted');
+            showToast.success('Reimbursement claim submitted');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'reimbursements'] });
             setAddOpen(false);
             resetForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to submit claim');
+            showToast.error(err?.response?.data?.message || 'Failed to submit claim');
         }
     });
 
@@ -67,11 +67,11 @@ export const ReimbursementsContent: React.FC = () => {
         mutationFn: ({ id, status, includeInPayroll }: { id: string; status: 'APPROVED' | 'REJECTED'; includeInPayroll?: boolean }) =>
             payrollService.approveReimbursement(id, { status, includeInPayroll }),
         onSuccess: () => {
-            toast.success('Reimbursement updated');
+            showToast.success('Reimbursement updated');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'reimbursements'] });
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to update');
+            showToast.error(err?.response?.data?.message || 'Failed to update');
         }
     });
 
@@ -85,7 +85,7 @@ export const ReimbursementsContent: React.FC = () => {
 
     const handleCreate = () => {
         if (!amount || Number(amount) <= 0) {
-            toast.error('Please enter a valid amount');
+            showToast.error('Please enter a valid amount');
             return;
         }
         createMutation.mutate({

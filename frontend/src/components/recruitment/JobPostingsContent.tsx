@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Briefcase, Plus, MapPin, Clock, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   DRAFT: { labelKey: 'recruitment.draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
@@ -36,7 +36,7 @@ export const JobPostingsContent: React.FC = () => {
     mutationFn: (id: string) => recruitmentService.publishJob(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recruitment-jobs'] });
-      toast.success(t('recruitment.jobPublished'));
+      showToast.success(t('recruitment.jobPublished'));
     },
   });
 

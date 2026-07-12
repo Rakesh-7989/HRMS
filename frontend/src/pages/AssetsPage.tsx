@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import type { Asset, AssetStatus, AssetCategory } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
@@ -102,9 +102,9 @@ export const AssetsPage: React.FC = () => {
     setExportingCSV(true);
     try {
       await assetsService.exportCSV();
-      toast.success('Assets exported successfully!');
+      showToast.success('Assets exported successfully!');
     } catch {
-      toast.error('Failed to export assets.');
+      showToast.error('Failed to export assets.');
     } finally {
       setExportingCSV(false);
     }
@@ -220,10 +220,10 @@ export const AssetsPage: React.FC = () => {
           printWindow.document.close();
         }
       } else {
-        toast.error('Barcode not available for this asset.');
+        showToast.error('Barcode not available for this asset.');
       }
     } catch {
-      toast.error('Failed to retrieve barcode.');
+      showToast.error('Failed to retrieve barcode.');
     }
   };
 
@@ -236,10 +236,10 @@ export const AssetsPage: React.FC = () => {
         link.download = `barcode-${assetCode}.png`;
         link.click();
       } else {
-        toast.error('Barcode not available for this asset.');
+        showToast.error('Barcode not available for this asset.');
       }
     } catch {
-      toast.error('Failed to download barcode.');
+      showToast.error('Failed to download barcode.');
     }
   };
 
@@ -255,7 +255,7 @@ export const AssetsPage: React.FC = () => {
         reason: requestForm.reason
       });
 
-      toast.success('Asset request submitted successfully!');
+      showToast.success('Asset request submitted successfully!');
 
       setRequestForm({
         assetName: '',
@@ -265,7 +265,7 @@ export const AssetsPage: React.FC = () => {
       });
       setShowRequestModal(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit request');
+      showToast.error(error.message || 'Failed to submit request');
     } finally {
       setRequestSubmitting(false);
     }
@@ -275,7 +275,7 @@ export const AssetsPage: React.FC = () => {
   const handleAssignAssetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignForm.assetId || !assignForm.employeeId) {
-      toast.error('Please select both an asset and an employee.');
+      showToast.error('Please select both an asset and an employee.');
       return;
     }
     setAssignSubmitting(true);
@@ -284,14 +284,14 @@ export const AssetsPage: React.FC = () => {
       { id: assignForm.assetId, employeeId: assignForm.employeeId, accessories: assignAccessories.length > 0 ? assignAccessories : undefined },
       {
         onSuccess: () => {
-          toast.success('Asset assigned successfully!');
+          showToast.success('Asset assigned successfully!');
           setAssignForm({ assetId: '', employeeId: '' });
           setAssignAccessories([]);
           setShowAssignModal(false);
           setAssignSubmitting(false);
         },
         onError: () => {
-          toast.error('Failed to assign asset. Please try again.');
+          showToast.error('Failed to assign asset. Please try again.');
           setAssignSubmitting(false);
         },
       }
@@ -317,7 +317,7 @@ export const AssetsPage: React.FC = () => {
   const handleSwapSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!swapOldAssetId || !swapNewAssetId) {
-      toast.error('Please select a replacement asset.');
+      showToast.error('Please select a replacement asset.');
       return;
     }
     setSwapSubmitting(true);
@@ -326,7 +326,7 @@ export const AssetsPage: React.FC = () => {
       { oldAssetId: swapOldAssetId, newAssetId: swapNewAssetId, newAccessories: swapAccessories.length > 0 ? swapAccessories : undefined },
       {
         onSuccess: () => {
-          toast.success('Asset swapped successfully!');
+          showToast.success('Asset swapped successfully!');
           setSwapOldAssetId('');
           setSwapNewAssetId('');
           setSwapAccessories([]);
@@ -334,7 +334,7 @@ export const AssetsPage: React.FC = () => {
           setSwapSubmitting(false);
         },
         onError: (error: Error) => {
-          toast.error(error.message || 'Failed to swap asset.');
+          showToast.error(error.message || 'Failed to swap asset.');
           setSwapSubmitting(false);
         },
       }

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { MessageSquare, Plus, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 export const FeedbackContent: React.FC = () => {
   const { t } = useTranslation();
@@ -28,7 +28,7 @@ export const FeedbackContent: React.FC = () => {
       performanceService.submitFeedback(id, response),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-feedback'] });
-      toast.success(t('performance.feedbackSubmitted'));
+      showToast.success(t('performance.feedbackSubmitted'));
       setResponseText({});
     },
   });

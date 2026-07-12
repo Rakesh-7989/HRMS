@@ -12,7 +12,7 @@ import {
     XCircle, TrendingUp, TrendingDown, Eye,
     Loader2, Receipt, Clock
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
@@ -116,7 +116,7 @@ export const RiverProcess = () => {
             }
         } catch (error: any) {
             console.error(error);
-            toast.error(error.response?.data?.error || t('riverProcess.fetchFailed'));
+            showToast.error(error.response?.data?.error || t('riverProcess.fetchFailed'));
         } finally {
             setLoading(false);
         }
@@ -129,23 +129,23 @@ export const RiverProcess = () => {
             if (action === 'INITIATE') {
                 await api.post(`/payroll/river/initiate/${runId}`);
                 setStage('VERIFY');
-                toast.success(t('riverProcess.calculatedFrozen'));
+                showToast.success(t('riverProcess.calculatedFrozen'));
             } else if (action === 'APPROVE') {
                 await api.post(`/payroll/river/verify/${runId}/approve`, { status: 'APPROVED', comments: payload.comments || 'Approved' });
-                toast.success(t('riverProcess.approved'));
+                showToast.success(t('riverProcess.approved'));
                 fetchStageData();
             } else if (action === 'REJECT') {
                 await api.post(`/payroll/river/verify/${runId}/approve`, { status: 'REJECTED', comments: payload.comments || 'Rejected' });
-                toast.error(t('riverProcess.rejected'));
+                showToast.error(t('riverProcess.rejected'));
                 fetchStageData();
             } else if (action === 'RELEASE') {
                 await api.post(`/payroll/river/release/${runId}`);
-                toast.success(t('riverProcess.released'));
+                showToast.success(t('riverProcess.released'));
                 setStage('RELEASE');
                 fetchStageData();
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.error || t('riverProcess.actionFailed'));
+            showToast.error(err.response?.data?.error || t('riverProcess.actionFailed'));
         } finally {
             setActionLoading(false);
         }
@@ -779,9 +779,9 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
             a.download = `${type === 'bank' ? 'bank_file' : 'salary_register'}_${runId?.substring(0, 8)}.csv`;
             a.click();
             URL.revokeObjectURL(url);
-            toast.success(type === 'bank' ? t('riverProcess.bankFileDownloaded') : t('riverProcess.registerDownloaded'));
+            showToast.success(type === 'bank' ? t('riverProcess.bankFileDownloaded') : t('riverProcess.registerDownloaded'));
         } catch (err) {
-            toast.error(t('riverProcess.downloadFailed'));
+            showToast.error(t('riverProcess.downloadFailed'));
         }
     };
 

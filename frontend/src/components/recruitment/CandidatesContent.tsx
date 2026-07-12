@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Users, Plus, Mail, Phone, Building2, IndianRupee, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   NEW: { labelKey: 'recruitment.new', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
@@ -38,7 +38,7 @@ export const CandidatesContent: React.FC = () => {
       recruitmentService.updateCandidateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recruitment-candidates'] });
-      toast.success(t('recruitment.statusUpdated'));
+      showToast.success(t('recruitment.statusUpdated'));
     },
   });
 

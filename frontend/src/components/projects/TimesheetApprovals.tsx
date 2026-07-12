@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { Check, X, Calendar, Clock, Loader2, CheckSquare, Square, History as HistoryIcon } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -107,7 +107,7 @@ export const TimesheetApprovals: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
             setSelectedTimesheet(null); // Close modal if open
-            toast.success('Timesheet approved');
+            showToast.success('Timesheet approved');
         },
         onError: (error: any) => {
             showAlert({
@@ -131,7 +131,7 @@ export const TimesheetApprovals: React.FC = () => {
                     confirmText: 'Dismiss'
                 });
             } else {
-                toast.success(`Successfully approved ${data.results.length} entries`);
+                showToast.success(`Successfully approved ${data.results.length} entries`);
             }
         },
         onError: (error: any) => {
@@ -150,7 +150,7 @@ export const TimesheetApprovals: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
             setSelectedTimesheet(null); // Close modal if open
-            toast.success('Timesheet entry rejected');
+            showToast.success('Timesheet entry rejected');
         },
         onError: (error: any) => {
             showAlert({

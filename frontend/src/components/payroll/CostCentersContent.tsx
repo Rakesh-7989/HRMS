@@ -10,7 +10,7 @@ import { CreditCard, FileText, Users, Banknote, Plus, Trash2 } from 'lucide-reac
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
 const formatINR = (amount: number | null | undefined) =>
@@ -54,7 +54,7 @@ export const CostCentersContent: React.FC = () => {
         mutationFn: (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) =>
             payrollService.upsertCostCentreAllocation(payload),
         onSuccess: () => {
-            toast.success('Allocation saved successfully');
+            showToast.success('Allocation saved successfully');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centre-allocations'] });
             setAddAllocOpen(false);
             setSelectedEmp('');
@@ -62,24 +62,24 @@ export const CostCentersContent: React.FC = () => {
             setPercentage(100);
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to save allocation');
+            showToast.error(err?.response?.data?.message || 'Failed to save allocation');
         }
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => payrollService.deleteCostCentreAllocation(id),
         onSuccess: () => {
-            toast.success('Allocation removed');
+            showToast.success('Allocation removed');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centre-allocations'] });
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to remove allocation');
+            showToast.error(err?.response?.data?.message || 'Failed to remove allocation');
         }
     });
 
     const handleSaveAllocation = () => {
         if (!selectedEmp || !selectedCC) {
-            toast.error('Please select both employee and cost center');
+            showToast.error('Please select both employee and cost center');
             return;
         }
         upsertMutation.mutate({

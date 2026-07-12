@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Plus, CheckCircle, FileText, Users, DollarSign } from 'lucide-react';
 import api from '@/services/api';
 
@@ -94,13 +94,13 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Consultant added');
+            showToast.success('Consultant added');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultants'] });
             setAddConsultantOpen(false);
             resetConsultantForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to add consultant');
+            showToast.error(err?.response?.data?.message || 'Failed to add consultant');
         }
     });
 
@@ -111,13 +111,13 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Invoice created');
+            showToast.success('Invoice created');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
             setAddInvoiceOpen(false);
             resetInvoiceForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to create invoice');
+            showToast.error(err?.response?.data?.message || 'Failed to create invoice');
         }
     });
 
@@ -128,7 +128,7 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Invoice approved');
+            showToast.success('Invoice approved');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
         }
     });
@@ -140,7 +140,7 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Invoice marked as paid');
+            showToast.success('Invoice marked as paid');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
         }
     });
@@ -161,7 +161,7 @@ export const ConsultantsContent: React.FC = () => {
 
     const handleCreateConsultant = () => {
         if (!name || !email) {
-            toast.error('Name and email are required');
+            showToast.error('Name and email are required');
             return;
         }
         createConsultantMutation.mutate({
@@ -175,7 +175,7 @@ export const ConsultantsContent: React.FC = () => {
 
     const handleCreateInvoice = () => {
         if (!selectedConsultant || !invoiceAmount) {
-            toast.error('Consultant and amount are required');
+            showToast.error('Consultant and amount are required');
             return;
         }
         createInvoiceMutation.mutate({

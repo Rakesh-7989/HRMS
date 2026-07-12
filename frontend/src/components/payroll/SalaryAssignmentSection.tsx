@@ -43,7 +43,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
     const calculateMut = useMutation({
         mutationFn: () => payrollService.calculateCTC(selectedStructureId, Number(annualCTC)),
         onSuccess: (data) => setBreakdown(data),
-        onError: (err: any) => toast.error(err.message || 'Failed to calculate breakdown')
+        onError: (err: any) => showToast.error(err.message || 'Failed to calculate breakdown')
     });
 
     const assignMut = useMutation({
@@ -56,11 +56,11 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-salary', employeeId] });
             queryClient.invalidateQueries({ queryKey: ['employee-salary-history', employeeId] });
-            toast.success('Salary assigned successfully');
+            showToast.success('Salary assigned successfully');
             setReason('');
             setBreakdown(null);
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to assign salary')
+        onError: (err: any) => showToast.error(err.message || 'Failed to assign salary')
     });
 
     useEffect(() => {

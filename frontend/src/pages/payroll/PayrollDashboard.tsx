@@ -10,7 +10,7 @@ import {
     FileText, AlertTriangle, CheckCircle2, Building2,
     Calendar, Wallet, Activity
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import {
     XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, AreaChart, Area
@@ -109,7 +109,7 @@ export const PayrollDashboard = () => {
             setStats(res.data);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load dashboard stats");
+            showToast.error("Failed to load dashboard stats");
         } finally {
             setLoading(false);
         }
@@ -125,10 +125,10 @@ export const PayrollDashboard = () => {
         try {
             setLoading(true);
             const res = await api.post('/payroll/river/run', { month: selectedMonth, year: selectedYear });
-            toast.success("New Payroll Run Started!");
+            showToast.success("New Payroll Run Started!");
             navigate(`/payroll/process/${res.data.id}`);
         } catch (error: any) {
-            toast.error(error.response?.data?.error || "Failed to start payroll run");
+            showToast.error(error.response?.data?.error || "Failed to start payroll run");
         } finally {
             setLoading(false);
         }

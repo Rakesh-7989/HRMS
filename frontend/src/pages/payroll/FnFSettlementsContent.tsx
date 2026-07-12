@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Badge } from '@/components/ui/Badge';
 import { Plus, CheckCircle, XCircle, Banknote, FileText, Send } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 export const FnFSettlementsContent: React.FC = () => {
@@ -40,16 +40,16 @@ export const FnFSettlementsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
             setOpen(false); setForm({ employeeId: '', lastWorkingDay: '', resignationDate: '' });
-            toast.success('F&F Initiated');
+            showToast.success('F&F Initiated');
         },
-        onError: (err: any) => toast.error('Failed to initiate: ' + (err.response?.data?.message || err.message))
+        onError: (err: any) => showToast.error('Failed to initiate: ' + (err.response?.data?.message || err.message))
     });
 
     const approveMut = useMutation({
         mutationFn: ({ id, status }: { id: string, status: 'APPROVED' | 'REJECTED' }) => payrollService.approveFnF(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            toast.success('Status updated');
+            showToast.success('Status updated');
         }
     });
 
@@ -57,7 +57,7 @@ export const FnFSettlementsContent: React.FC = () => {
         mutationFn: (id: string) => payrollService.payFnF(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            toast.success('Marked as Paid');
+            showToast.success('Marked as Paid');
         }
     });
 
@@ -65,14 +65,14 @@ export const FnFSettlementsContent: React.FC = () => {
         mutationFn: (id: string) => payrollService.submitFnF(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            toast.success('Submitted for Approval');
+            showToast.success('Submitted for Approval');
         },
-        onError: (err: any) => toast.error('Failed to submit: ' + (err.response?.data?.message || err.message))
+        onError: (err: any) => showToast.error('Failed to submit: ' + (err.response?.data?.message || err.message))
     });
 
     const handleCreate = () => {
         if (!form.employeeId || !form.lastWorkingDay) {
-            toast.error('Employee ID and Last Working Day are required');
+            showToast.error('Employee ID and Last Working Day are required');
             return;
         }
         createMut.mutate({

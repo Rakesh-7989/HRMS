@@ -142,7 +142,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const users = await usersService.getUsers({ role: 'ADMIN' });
             setAdminCount(Array.isArray(users) ? users.length : 0);
         } catch (err: any) {
-            toast.error('Failed to load roles');
+            showToast.error('Failed to load roles');
         } finally {
             setRolesLoading(false);
         }
@@ -164,7 +164,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const modules = new Set(perms.map(p => p.module));
             setExpandedModules(modules);
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Failed to load permissions');
+            showToast.error(err?.response?.data?.message || 'Failed to load permissions');
         } finally {
             setLoading(false);
         }
@@ -193,7 +193,7 @@ export const RolesPermissionsPage: React.FC = () => {
             }).map(p => ({ permission_id: p.permission_id, enabled: p.enabled }));
 
             if (changed.length === 0) {
-                toast('No changes to save');
+                showToast.info('No changes to save');
                 setSaving(false);
                 return;
             }
@@ -205,9 +205,9 @@ export const RolesPermissionsPage: React.FC = () => {
             // Refresh current user's permissions in context so they see changes immediately
             await refreshPermissions();
 
-            toast.success(`Permissions updated for ${activeRole} role`);
+            showToast.success(`Permissions updated for ${activeRole} role`);
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Failed to save permissions');
+            showToast.error(err?.response?.data?.message || 'Failed to save permissions');
         } finally {
             setSaving(false);
         }
@@ -247,7 +247,7 @@ export const RolesPermissionsPage: React.FC = () => {
         setCreating(true);
         try {
             await permissionsService.createCustomRole(newRoleName.trim(), newRoleDesc.trim());
-            toast.success(`Role "${newRoleName.trim().toUpperCase()}" created`);
+            showToast.success(`Role "${newRoleName.trim().toUpperCase()}" created`);
             setShowAddRole(false);
             setNewRoleName('');
             setNewRoleDesc('');
@@ -255,7 +255,7 @@ export const RolesPermissionsPage: React.FC = () => {
             // Switch to the new role
             setActiveRole(newRoleName.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_'));
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Failed to create role');
+            showToast.error(err?.response?.data?.message || 'Failed to create role');
         } finally {
             setCreating(false);
         }
@@ -266,13 +266,13 @@ export const RolesPermissionsPage: React.FC = () => {
         if (!await confirm({ type: 'destructive', title: 'Delete Role', message: `Are you sure you want to delete the "${role}" role? This cannot be undone.` })) return;
         try {
             await permissionsService.deleteCustomRole(role);
-            toast.success(`Role "${role}" deleted`);
+            showToast.success(`Role "${role}" deleted`);
             await fetchRoles();
             if (activeRole === role) {
                 setActiveRole('ADMIN');
             }
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Failed to delete role');
+            showToast.error(err?.response?.data?.message || 'Failed to delete role');
         }
     };
 
@@ -309,7 +309,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const perms = await permissionsService.getUserPermissions(usr.user_id || usr.id);
             setUserPermissions(perms);
         } catch {
-            toast.error('Failed to load user permissions');
+            showToast.error('Failed to load user permissions');
         } finally {
             setUserPermLoading(false);
         }
@@ -330,9 +330,9 @@ export const RolesPermissionsPage: React.FC = () => {
             ]);
             const perms = await permissionsService.getUserPermissions(userId);
             setUserPermissions(perms);
-            toast.success('User permission updated');
+            showToast.success('User permission updated');
         } catch {
-            toast.error('Failed to update user permission');
+            showToast.error('Failed to update user permission');
         }
     };
 

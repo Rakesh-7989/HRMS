@@ -4,7 +4,7 @@ import { Clock, CheckCircle2, AlertCircle,
     Search, Filter,
     Calendar, TrendingUp, RefreshCw
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +50,7 @@ export const ArrearsPage: React.FC = () => {
             setSummary(summaryRes.data.data);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load arrears data");
+            showToast.error("Failed to load arrears data");
         } finally {
             setLoading(false);
         }

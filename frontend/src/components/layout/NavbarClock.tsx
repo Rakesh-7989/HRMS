@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -143,7 +143,7 @@ export const NavbarClock: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
-            toast.success('Successfully clocked in!');
+            showToast.success('Successfully clocked in!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
@@ -163,7 +163,7 @@ export const NavbarClock: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
-            toast.success('Successfully clocked out!');
+            showToast.success('Successfully clocked out!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
@@ -182,7 +182,7 @@ export const NavbarClock: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success('Break started');
+            showToast.success('Break started');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
@@ -200,7 +200,7 @@ export const NavbarClock: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success('Break ended');
+            showToast.success('Break ended');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';

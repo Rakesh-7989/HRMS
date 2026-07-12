@@ -22,7 +22,7 @@ import {
   CheckCircle,
   ShieldAlert,
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { AssetStatus } from '@/types';
@@ -157,7 +157,7 @@ export const AssetDetailsPage: React.FC = () => {
         printWindow.document.close();
       }
     } else {
-      toast.error('Barcode not available to print.');
+      showToast.error('Barcode not available to print.');
     }
   };
 
@@ -168,7 +168,7 @@ export const AssetDetailsPage: React.FC = () => {
       link.download = `barcode-${asset?.asset_code || 'asset'}.png`;
       link.click();
     } else {
-      toast.error('Barcode not available to download.');
+      showToast.error('Barcode not available to download.');
     }
   };
 

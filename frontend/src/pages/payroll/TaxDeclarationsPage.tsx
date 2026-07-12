@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const TaxDeclarationsPage: React.FC = () => {
@@ -51,10 +51,10 @@ const TaxDeclarationsPage: React.FC = () => {
     const submitMut = useMutation({
         mutationFn: (payload: any) => payrollService.submitTaxDeclaration(payload),
         onSuccess: () => {
-            toast.success('Tax Declaration Submitted');
+            showToast.success('Tax Declaration Submitted');
             queryClient.invalidateQueries({ queryKey: ['tax-declaration'] });
         },
-        onError: (err: any) => toast.error('Failed to submit: ' + (err?.response?.data?.message || err.message))
+        onError: (err: any) => showToast.error('Failed to submit: ' + (err?.response?.data?.message || err.message))
     });
 
     const handleSubmit = () => {

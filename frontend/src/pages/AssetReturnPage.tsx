@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService } from '@/services/assets.service';
 import { ArrowLeft, Save, AlertTriangle, Plus, Trash2, X } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
 
@@ -68,11 +68,11 @@ export const AssetReturnPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['assets'] });
             queryClient.invalidateQueries({ queryKey: ['asset', id] });
             queryClient.invalidateQueries({ queryKey: ['asset-accessories', id] });
-            toast.success('Asset returned successfully');
+            showToast.success('Asset returned successfully');
             navigate(`/assets/${id}`);
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to return asset');
+            showToast.error(error.message || 'Failed to return asset');
             setIsSubmitting(false);
         },
     });
@@ -87,7 +87,7 @@ export const AssetReturnPage: React.FC = () => {
         const trimmed = newItemName.trim();
         if (!trimmed) return;
         if (checklist.some(item => item.item_name.toLowerCase() === trimmed.toLowerCase())) {
-            toast.error('This item is already in the checklist');
+            showToast.error('This item is already in the checklist');
             return;
         }
         setChecklist(prev => [...prev, { item_name: trimmed, is_returned: false, notes: '' }]);
@@ -104,7 +104,7 @@ export const AssetReturnPage: React.FC = () => {
 
         // Enforce notes when condition is DAMAGED or LOST
         if ((form.condition === 'DAMAGED' || form.condition === 'LOST') && !form.notes.trim()) {
-            toast.error(`Please provide notes when marking asset as ${form.condition.toLowerCase()}.`);
+            showToast.error(`Please provide notes when marking asset as ${form.condition.toLowerCase()}.`);
             return;
         }
 

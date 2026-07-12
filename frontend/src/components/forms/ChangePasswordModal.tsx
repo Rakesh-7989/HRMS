@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Key, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
@@ -48,12 +48,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                     values.newPassword,
                     values.confirmPassword
                 );
-                toast.success('Password changed successfully');
+                showToast.success('Password changed successfully');
                 formik.resetForm();
                 onClose();
             } catch (err: any) {
                 const message = err.response?.data?.message || err.message || 'Failed to change password';
-                toast.error(message);
+                showToast.error(message);
             } finally {
                 setIsLoading(false);
             }

@@ -72,11 +72,11 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            toast.success('Plan updated successfully');
+            showToast.success('Plan updated successfully');
             setEditingPlan(null);
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to update plan');
+            showToast.error(error.response?.data?.message || 'Failed to update plan');
         }
     });
 
@@ -85,11 +85,11 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            toast.success('Plan created successfully');
+            showToast.success('Plan created successfully');
             setIsCreating(false);
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to create plan');
+            showToast.error(error.response?.data?.message || 'Failed to create plan');
         }
     });
 
@@ -98,10 +98,10 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            toast.success('Plan deleted successfully');
+            showToast.success('Plan deleted successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to delete plan');
+            showToast.error(error.response?.data?.message || 'Failed to delete plan');
         }
     });
 

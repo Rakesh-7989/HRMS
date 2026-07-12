@@ -4,7 +4,7 @@ import { Check, Mail, Building2, User, Users, MessageSquare, Phone } from 'lucid
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import api from '@/services/api';
 
 interface ContactSalesModalProps {
@@ -26,7 +26,7 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
 
             // Simple client side validation
             if (!data.fullName || !data.workEmail || !data.message) {
-                toast.error('Please fill in all required fields');
+                showToast.error('Please fill in all required fields');
                 setIsSubmitting(false);
                 return;
             }
@@ -34,14 +34,14 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
             await api.post('/common/contact-sales', data);
 
             setIsSuccess(true);
-            toast.success('Inquiry sent successfully!');
+            showToast.success('Inquiry sent successfully!');
             setTimeout(() => {
                 onClose();
                 setIsSuccess(false);
             }, 2000);
         } catch (error: any) {
             console.error('Submission error:', error);
-            toast.error(error.message || 'Failed to send inquiry. Please try again.');
+            showToast.error(error.message || 'Failed to send inquiry. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

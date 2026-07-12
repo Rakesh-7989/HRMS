@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
@@ -43,12 +43,12 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                         workingHours: values
                     }
                 });
-                toast('Working hours updated successfully', { icon: '✅' });
+                showToast.info('Working hours updated successfully', { icon: '✅' });
                 if (onSuccess) onSuccess();
                 onClose();
             } catch (err: any) {
                 const message = err.response?.data?.message || err.message || 'Failed to update working hours';
-                toast(message, { icon: '❌' });
+                showToast.info(message, { icon: '❌' });
             } finally {
                 setIsLoading(false);
             }

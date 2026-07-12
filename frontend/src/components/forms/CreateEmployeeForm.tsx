@@ -12,7 +12,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { AlertCircle, Briefcase, Building2, Phone, User as UserIcon, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { SuccessModal } from '@/components/ui/SuccessModal';
 import { tenantService } from '@/services/tenant.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -296,7 +296,7 @@ export const CreateEmployeeForm = ({
       const employeeName = `${formik.values.first_name} ${formik.values.last_name}`;
       formik.resetForm();
       setCreatedEmployeeName(employeeName);
-      toast.success('Employee created successfully!');
+      showToast.success('Employee created successfully!');
       setShowSuccessModal(true);
     },
     onError: (err: Error) => {
@@ -324,7 +324,7 @@ export const CreateEmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employee', editEmployee?.id] });
       formik.resetForm(); // Clear dirty state
       setCreatedEmployeeName(`${formik.values.first_name} ${formik.values.last_name}`);
-      toast.success('Employee profile updated!');
+      showToast.success('Employee profile updated!');
       setShowSuccessModal(true);
     },
     onError: (err: Error) => {
@@ -342,21 +342,21 @@ export const CreateEmployeeForm = ({
       if (!prefixInput || prefixInput.length < 2) return;
       await tenantService.setEmployeeIdPrefix(prefixInput);
       setPrefixInput('');
-      toast.success('Employee ID prefix configured successfully');
+      showToast.success('Employee ID prefix configured successfully');
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
     } catch (err: any) {
-      toast.error(err.message);
+      showToast.error(err.message);
     }
   };
 
   const toggleModeMutation = useMutation({
     mutationFn: (usePrefix: boolean) => tenantService.toggleEmployeeIdMode(usePrefix),
     onSuccess: (data) => {
-      toast.success(data.message);
+      showToast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      showToast.error(err.message);
     },
   });
 
@@ -474,7 +474,7 @@ export const CreateEmployeeForm = ({
             const data = await response.json();
             formik.setFieldValue('bank_name', data.BANK);
             formik.setFieldValue('branch_name', data.BRANCH);
-            toast.success(`Bank details fetched: ${data.BANK}`);
+            showToast.success(`Bank details fetched: ${data.BANK}`);
           }
         } catch (err) {
           // Silent fail or optional toast
@@ -571,7 +571,7 @@ export const CreateEmployeeForm = ({
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      toast.error(`Please fix ${stepErrors.length} error(s) before proceeding`);
+      showToast.error(`Please fix ${stepErrors.length} error(s) before proceeding`);
     }
   };
 

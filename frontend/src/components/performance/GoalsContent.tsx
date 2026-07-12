@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Target, Plus, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const goalStatusConfig: Record<string, { labelKey: string; color: string }> = {

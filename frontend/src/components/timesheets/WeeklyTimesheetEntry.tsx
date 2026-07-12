@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay, isAfter, startOfDay } from 'date-fns';
 import { Loader2, ChevronLeft, ChevronRight, Plus, Trash2, Save, IndianRupee, Ban, Check, X } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -242,7 +242,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 if (totalRowHours === 0) continue;
 
                 if (!row.projectId) {
-                    toast.error("Please select a project for all rows with hours");
+                    showToast.error("Please select a project for all rows with hours");
                     hasErrors = true;
                     break;
                 }
@@ -253,7 +253,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         // Block future date entries
                         const entryDate = new Date(dateStr);
                         if (isAfter(startOfDay(entryDate), startOfDay(new Date()))) {
-                            toast.error(`Cannot log time for future date: ${format(entryDate, 'MMM d')}`);
+                            showToast.error(`Cannot log time for future date: ${format(entryDate, 'MMM d')}`);
                             hasErrors = true;
                             break;
                         }
@@ -276,7 +276,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             }
 
             if (entries.length === 0) {
-                toast.error("Please enter some time before saving");
+                showToast.error("Please enter some time before saving");
                 setIsSubmitting(false);
                 return;
             }
@@ -288,7 +288,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             }
             for (const [dateStr, total] of Object.entries(dailyTotals)) {
                 if (total > 24) {
-                    toast.error(`Total hours for ${format(new Date(dateStr), 'MMM d')} exceed 24h (${total}h logged)`);
+                    showToast.error(`Total hours for ${format(new Date(dateStr), 'MMM d')} exceed 24h (${total}h logged)`);
                     setIsSubmitting(false);
                     return;
                 }
@@ -304,9 +304,9 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             });
 
             if (shouldSubmit) {
-                toast.success("Timesheet submitted successfully");
+                showToast.success("Timesheet submitted successfully");
             } else {
-                toast.success("Timesheet draft saved successfully");
+                showToast.success("Timesheet draft saved successfully");
             }
 
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
@@ -316,7 +316,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
         } catch (error: any) {
             console.error(error);
-            toast.error(shouldSubmit ? "Failed to submit timesheet" : "Failed to save timesheet");
+            showToast.error(shouldSubmit ? "Failed to submit timesheet" : "Failed to save timesheet");
         } finally {
             setIsSubmitting(false);
         }

@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Settings, Plus, Trash2, Save } from 'lucide-react';
 import api from '@/services/api';
 
@@ -133,11 +133,11 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Statutory configuration saved');
+            showToast.success('Statutory configuration saved');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'statutory-config'] });
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to save configuration');
+            showToast.error(err?.response?.data?.message || 'Failed to save configuration');
         }
     });
 
@@ -148,13 +148,13 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('PT slab added');
+            showToast.success('PT slab added');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'pt-slabs'] });
             setAddPtOpen(false);
             resetPtForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to add PT slab');
+            showToast.error(err?.response?.data?.message || 'Failed to add PT slab');
         }
     });
 
@@ -165,7 +165,7 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data;
         },
         onSuccess: () => {
-            toast.success('PT slab deleted');
+            showToast.success('PT slab deleted');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'pt-slabs'] });
         }
     });
@@ -177,13 +177,13 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            toast.success('Deduction type added');
+            showToast.success('Deduction type added');
             queryClient.invalidateQueries({ queryKey: ['payroll', 'deduction-types'] });
             setAddDeductionOpen(false);
             resetDeductionForm();
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to add deduction type');
+            showToast.error(err?.response?.data?.message || 'Failed to add deduction type');
         }
     });
 
@@ -217,7 +217,7 @@ export const StatutorySettingsContent: React.FC = () => {
 
     const handleCreateDeductionType = () => {
         if (!dedName || !dedCode) {
-            toast.error('Name and code are required');
+            showToast.error('Name and code are required');
             return;
         }
         createDeductionTypeMutation.mutate({

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/Table';
 import { Users, Briefcase, Calendar, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 type ReportType = 'project' | 'client' | 'utilization';
 
@@ -99,7 +99,7 @@ export const ProjectReportsContent: React.FC = () => {
                     ['Total Timesheets', String(projectReport.total_timesheets || 0)],
                 ];
                 downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                toast.success('Project report exported successfully!');
+                showToast.success('Project report exported successfully!');
 
             } else if (activeTab === 'client' && clientReport) {
                 const clientName = clients.find(c => c.id === selectedClient)?.name || 'Client';
@@ -118,7 +118,7 @@ export const ProjectReportsContent: React.FC = () => {
                     ...(clientReport.projects || []).map((p: string) => [p]),
                 ];
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                toast.success('Client report exported successfully!');
+                showToast.success('Client report exported successfully!');
 
             } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
                 const rows: string[][] = [
@@ -136,14 +136,14 @@ export const ProjectReportsContent: React.FC = () => {
                     ]),
                 ];
                 downloadCSV(rows, `utilization_report_${dateRange}.csv`);
-                toast.success('Utilization report exported successfully!');
+                showToast.success('Utilization report exported successfully!');
 
             } else {
-                toast.error('No data available to export. Please select filters and load report first.');
+                showToast.error('No data available to export. Please select filters and load report first.');
             }
         } catch (error) {
             console.error('Export error:', error);
-            toast.error('Failed to export report. Please try again.');
+            showToast.error('Failed to export report. Please try again.');
         }
     };
 

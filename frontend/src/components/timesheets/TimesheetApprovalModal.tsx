@@ -4,7 +4,7 @@ import { WeeklyTimesheetEntry } from './WeeklyTimesheetEntry';
 import { Timesheet } from '@/types/project.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { timesheetService } from '@/services/timesheet.service';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 
 interface TimesheetApprovalModalProps {
@@ -23,12 +23,12 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
     const approveMutation = useMutation({
         mutationFn: timesheetService.approveTimesheet,
         onSuccess: () => {
-            toast.success("Timesheet approved successfully");
+            showToast.success("Timesheet approved successfully");
             queryClient.invalidateQueries({ queryKey: ['timesheets', 'pending-approvals'] });
             onClose();
         },
         onError: (error: any) => {
-            toast.error(error.message || "Failed to approve timesheet");
+            showToast.error(error.message || "Failed to approve timesheet");
         }
     });
 
@@ -36,12 +36,12 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
         mutationFn: ({ id, reason }: { id: string; reason: string }) =>
             timesheetService.rejectTimesheet(id, reason),
         onSuccess: () => {
-            toast.success("Timesheet rejected");
+            showToast.success("Timesheet rejected");
             queryClient.invalidateQueries({ queryKey: ['timesheets', 'pending-approvals'] });
             onClose();
         },
         onError: (error: any) => {
-            toast.error(error.message || "Failed to reject timesheet");
+            showToast.error(error.message || "Failed to reject timesheet");
         }
     });
 
@@ -73,7 +73,7 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
             const input = window.prompt("Please provide a reason for rejection:");
             if (input === null) return; // Cancelled
             if (!input.trim()) {
-                toast.error("Rejection reason is required");
+                showToast.error("Rejection reason is required");
                 return;
             }
             finalReason = input;

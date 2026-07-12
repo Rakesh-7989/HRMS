@@ -14,7 +14,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 interface SessionsModalProps {
     isOpen: boolean;
@@ -33,11 +33,11 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
     const logoutAllMutation = useMutation({
         mutationFn: authService.logoutAll,
         onSuccess: () => {
-            toast('Successfully logged out from other devices', { icon: '✅' });
+            showToast.info('Successfully logged out from other devices', { icon: '✅' });
             queryClient.invalidateQueries({ queryKey: ['active-sessions'] });
         },
         onError: (err: any) => {
-            toast(err.message || 'Failed to logout from other devices', { icon: '❌' });
+            showToast.info(err.message || 'Failed to logout from other devices', { icon: '❌' });
         }
     });
 

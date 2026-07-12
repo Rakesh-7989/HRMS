@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { couponService, Coupon } from '@/services/coupons.service';
 import { Plus, Copy, Tag, Calendar, Percent, IndianRupee, RefreshCw } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -36,11 +36,11 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                     max_redemptions: values.max_redemptions ? Number(values.max_redemptions) : undefined,
                     expires_at: values.expires_at || undefined
                 } as any);
-                toast.success('Coupon created');
+                showToast.success('Coupon created');
                 onSuccess();
                 onClose();
             } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to create coupon');
+                showToast.error(error.response?.data?.message || 'Failed to create coupon');
             }
         }
     });
@@ -148,7 +148,7 @@ export const CouponsPage: React.FC = () => {
     const copyLink = (code: string) => {
         const link = `${window.location.origin}/pricing?coupon=${code}`;
         navigator.clipboard.writeText(link);
-        toast.success('Link copied to clipboard');
+        showToast.success('Link copied to clipboard');
     };
 
     return (

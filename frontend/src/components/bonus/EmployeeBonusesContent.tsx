@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Users, Plus, IndianRupee, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   PENDING: { labelKey: 'bonus.pending', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700' },
@@ -28,7 +28,7 @@ export const EmployeeBonusesContent: React.FC = () => {
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => bonusService.approveBonus(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employee-bonuses'] }); toast.success(t('bonus.bonusApproved')); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employee-bonuses'] }); showToast.success(t('bonus.bonusApproved')); },
   });
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;

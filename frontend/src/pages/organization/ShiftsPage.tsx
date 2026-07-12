@@ -49,11 +49,11 @@ export const ShiftsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setIsModalOpen(false);
-            toast.success('Shift created successfully');
+            showToast.success('Shift created successfully');
         },
         onError: (error: any) => {
             const msg = error.response?.data?.message || 'Failed to create shift';
-            toast.error(msg);
+            showToast.error(msg);
         }
     });
 
@@ -63,11 +63,11 @@ export const ShiftsPage = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setIsModalOpen(false);
             setEditingShift(null);
-            toast.success('Shift updated successfully');
+            showToast.success('Shift updated successfully');
         },
         onError: (error: any) => {
             const msg = error.response?.data?.message || 'Failed to update shift';
-            toast.error(msg);
+            showToast.error(msg);
         }
     });
 
@@ -75,13 +75,13 @@ export const ShiftsPage = () => {
         mutationFn: deleteShift,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
-            toast.success('Shift deleted successfully');
+            showToast.success('Shift deleted successfully');
             setIsDeleteModalOpen(false);
             setShiftToDelete(null);
         },
         onError: (error: any) => {
             const msg = error.response?.data?.message || 'Failed to delete shift';
-            toast.error(msg);
+            showToast.error(msg);
         }
     });
 
@@ -95,9 +95,9 @@ export const ShiftsPage = () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             const count = data?.data?.updatedCount || data?.updatedCount || 'users';
-            toast.success(`Shift assigned to ${count} successfully`);
+            showToast.success(`Shift assigned to ${count} successfully`);
         },
-        onError: () => toast.error('Failed to assign shift')
+        onError: () => showToast.error('Failed to assign shift')
     });
 
     const [formData, setFormData] = useState<{
@@ -174,11 +174,11 @@ export const ShiftsPage = () => {
     const handleAssignSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedShiftId) {
-            toast.error('Please select a shift');
+            showToast.error('Please select a shift');
             return;
         }
         if (!assignToAll && selectedEmployeeIds.length === 0) {
-            toast.error('Please select at least one employee');
+            showToast.error('Please select at least one employee');
             return;
         }
         assignMutation.mutate({

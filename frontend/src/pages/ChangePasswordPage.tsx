@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { Key, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { Card } from '@/components/ui/Card';
@@ -48,7 +48,7 @@ export const ChangePasswordPage: React.FC = () => {
                     values.newPassword,
                     values.confirmPassword
                 );
-                toast.success('Password changed successfully! Please login with your new password.');
+                showToast.success('Password changed successfully! Please login with your new password.');
 
                 // Clear all tokens and flags - user needs to login fresh
                 localStorage.removeItem('accessToken');
@@ -64,7 +64,7 @@ export const ChangePasswordPage: React.FC = () => {
                 setTimeout(() => navigate('/login'), 1500);
             } catch (err: any) {
                 const message = err.response?.data?.message || err.message || 'Failed to change password';
-                toast.error(message);
+                showToast.error(message);
             } finally {
                 setIsLoading(false);
             }

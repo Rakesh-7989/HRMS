@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { FileText, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 export const TaxDeclaration: React.FC = () => {
@@ -44,7 +44,7 @@ export const TaxDeclaration: React.FC = () => {
             setDeclarations(declarationsData);
         } catch (error) {
             console.error(error);
-            toast.error('Failed to load tax data');
+            showToast.error('Failed to load tax data');
         } finally {
             setLoading(false);
         }
@@ -54,10 +54,10 @@ export const TaxDeclaration: React.FC = () => {
         try {
             await taxService.setRegime(fy, newRegime);
             setRegime({ ...regime!, regime: newRegime });
-            toast.success(`Tax regime updated to ${newRegime}`);
+            showToast.success(`Tax regime updated to ${newRegime}`);
         } catch (error: any) {
             const message = error.response?.data?.message || error.message || 'Failed to update regime';
-            toast.error(message);
+            showToast.error(message);
         }
     };
 
@@ -74,27 +74,27 @@ export const TaxDeclaration: React.FC = () => {
                 declaredAmount: parseFloat(editAmount),
                 proofUrl: editLink
             });
-            toast.success('Declaration saved');
+            showToast.success('Declaration saved');
             setEditingId(null);
             setEditAmount('');
             setEditLink('');
             fetchData(); // Refresh to show pending status
         } catch (error: any) {
             const message = error.response?.data?.message || error.message || 'Failed to save declaration';
-            toast.error(message);
+            showToast.error(message);
         }
     };
 
     const handleDownloadForm16 = async () => {
         try {
-            toast.loading('Generating Form 16...');
+            showToast.loading('Generating Form 16...');
             await taxService.downloadForm16(fy);
-            toast.dismiss();
-            toast.success('Form 16 downloaded');
+            showToast.dismiss();
+            showToast.success('Form 16 downloaded');
         } catch (error: any) {
-            toast.dismiss();
+            showToast.dismiss();
             const message = error.response?.data?.message || error.message || 'Failed to download Form 16';
-            toast.error(message);
+            showToast.error(message);
         }
     };
 

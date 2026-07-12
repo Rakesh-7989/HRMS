@@ -48,12 +48,12 @@ export const LeaveAllocationContent: React.FC = () => {
             setResult({ success: true, processed: data.processed || 0, failed: data.failed || 0 });
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(t('leave.allocatedToMsg', { count: data.processed || 0 }));
+            showToast.success(t('leave.allocatedToMsg', { count: data.processed || 0 }));
             resetForm();
         },
         onError: (error: Error) => {
             setResult({ success: false, processed: 0, failed: 0 });
-            toast.error(error.message);
+            showToast.error(error.message);
         },
     });
 
@@ -63,12 +63,12 @@ export const LeaveAllocationContent: React.FC = () => {
             setResult({ success: true, processed: data.processed || 0, failed: data.failed || 0 });
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            toast.success(t('leave.resetSuccessMsg', { count: data.processed || 0 }));
+            showToast.success(t('leave.resetSuccessMsg', { count: data.processed || 0 }));
             resetForm();
         },
         onError: (error: Error) => {
             setResult({ success: false, processed: 0, failed: 0 });
-            toast.error(error.message);
+            showToast.error(error.message);
         },
     });
 
@@ -82,11 +82,11 @@ export const LeaveAllocationContent: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!leaveTypeId || days <= 0) {
-            toast.error(t('leave.selectLeaveTypeError'));
+            showToast.error(t('leave.selectLeaveTypeError'));
             return;
         }
         if (target === 'selected' && selectedIds.length === 0) {
-            toast.error(t('leave.selectEmployeeError'));
+            showToast.error(t('leave.selectEmployeeError'));
             return;
         }
 

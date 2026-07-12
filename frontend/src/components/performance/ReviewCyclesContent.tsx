@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { BarChart3, Plus, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
@@ -43,7 +43,7 @@ export const ReviewCyclesContent: React.FC = () => {
     mutationFn: (id: string) => performanceService.closeCycle(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-cycles'] });
-      toast.success(t('performance.reviewCycleClosed'));
+      showToast.success(t('performance.reviewCycleClosed'));
     },
   });
 
@@ -52,7 +52,7 @@ export const ReviewCyclesContent: React.FC = () => {
       performanceService.submitReview(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-reviews'] });
-      toast.success(t('performance.reviewSubmitted'));
+      showToast.success(t('performance.reviewSubmitted'));
     },
   });
 

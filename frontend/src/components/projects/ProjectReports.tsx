@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/Label';
 import { projectsService } from '@/services/projects.service';
 import { Users, Briefcase, Calendar, Download, IndianRupee, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 type ReportType = 'project' | 'client';
 
@@ -95,7 +95,7 @@ export const ProjectReports: React.FC = () => {
                     ['Total Timesheets', String(projectReport.total_timesheets || 0)],
                 ];
                 downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                toast.success('Project report exported successfully!');
+                showToast.success('Project report exported successfully!');
 
             } else if (activeTab === 'client' && clientReport) {
                 const clientName = clients.find((c: any) => c.id === selectedClient)?.name || 'Client';
@@ -114,16 +114,16 @@ export const ProjectReports: React.FC = () => {
                     ...(clientReport.projects || []).map((p: string) => [p]),
                 ];
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                toast.success('Client report exported successfully!');
+                showToast.success('Client report exported successfully!');
 
 
 
             } else {
-                toast.error('No data available to export. Please select filters and load report first.');
+                showToast.error('No data available to export. Please select filters and load report first.');
             }
         } catch (error) {
             console.error('Export error:', error);
-            toast.error('Failed to export report. Please try again.');
+            showToast.error('Failed to export report. Please try again.');
         }
     };
 

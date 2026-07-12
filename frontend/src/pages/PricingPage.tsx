@@ -9,7 +9,7 @@ import { plansService } from '@/services/plans.service';
 
 import { subscriptionService } from '@/services/subscription.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 import { AnimatedLogo } from '@/components/AnimatedLogo';
@@ -514,9 +514,9 @@ export const PricingPage: React.FC = () => {
               redirectTarget: "_self"
           });
           
-          toast.success('Redirecting to checkout...');
+          showToast.success('Redirecting to checkout...');
       } else {
-        toast.success('Subscription initiated!');
+        showToast.success('Subscription initiated!');
       }
     } catch (error: any) {
       setErrorConfig({ isOpen: true, title: 'Action Failed', message: error.message || 'Error initiating payment' });

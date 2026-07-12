@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -207,22 +207,22 @@ export const DailyAttendanceContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
-            toast.success('Successfully clocked in!');
+            showToast.success('Successfully clocked in!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
 
             let message = serverMessage || 'Failed to clock in. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                toast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                showToast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
             } else if (serverMessage.includes('on approved leave')) {
-                toast.error('You are on approved leave today and cannot clock in.');
+                showToast.error('You are on approved leave today and cannot clock in.');
             } else if (serverMessage.includes('Already clocked in')) {
-                toast.error('You have already clocked in today.');
+                showToast.error('You have already clocked in today.');
             } else if (serverMessage.includes('Location validation failed')) {
-                toast.error(serverMessage);
+                showToast.error(serverMessage);
             } else {
-                toast.error(serverMessage || 'Failed to clock in. Please try again.');
+                showToast.error(serverMessage || 'Failed to clock in. Please try again.');
             }
 
             showAlert({
@@ -240,22 +240,22 @@ export const DailyAttendanceContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
-            toast.success('Successfully clocked out!');
+            showToast.success('Successfully clocked out!');
         },
         onError: (error: any) => {
             const serverMessage = error.response?.data?.message || error.message || '';
 
             let message = serverMessage || 'Failed to clock out. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                toast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                showToast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
             } else if (serverMessage.includes('No check-in found')) {
-                toast.error('No check-in record found for today. Please clock in first.');
+                showToast.error('No check-in record found for today. Please clock in first.');
             } else if (serverMessage.includes('Already clocked out')) {
-                toast.error('You have already clocked out today.');
+                showToast.error('You have already clocked out today.');
             } else if (serverMessage.includes('Location validation failed')) {
-                toast.error(serverMessage);
+                showToast.error(serverMessage);
             } else {
-                toast.error(serverMessage || 'Failed to clock out. Please try again.');
+                showToast.error(serverMessage || 'Failed to clock out. Please try again.');
             }
 
             showAlert({

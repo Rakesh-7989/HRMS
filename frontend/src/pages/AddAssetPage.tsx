@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { assetsService, fetchAssetConfiguration } from '@/services/assets.service';
 import { ArrowLeft, Save, Loader2, X } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
 import { useTranslation } from 'react-i18next';
@@ -136,12 +136,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.createAsset(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast.success('Asset created successfully');
+      showToast.success('Asset created successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast.error(err.message);
+      showToast.error(err.message);
     },
   });
 
@@ -150,12 +150,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.updateAsset(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast.success('Asset updated successfully');
+      showToast.success('Asset updated successfully');
       navigate('/assets');
     },
     onError: (err: Error) => {
       setError(err.message);
-      toast.error(err.message);
+      showToast.error(err.message);
     },
   });
 
@@ -166,7 +166,7 @@ export const AddAssetPage: React.FC = () => {
     // Basic client-side validation to surface missing required fields
     if (!formData.asset_code || !formData.asset_code.trim() || !formData.name || !formData.name.trim()) {
       setError('Please provide both Asset Code and Asset Name.');
-      toast.error('Please provide both Asset Code and Asset Name.');
+      showToast.error('Please provide both Asset Code and Asset Name.');
       return;
     }
 
@@ -180,7 +180,7 @@ export const AddAssetPage: React.FC = () => {
 
       if (purchaseDate > today) {
         setError('Purchase date cannot be in the future.');
-        toast.error('Purchase date cannot be in the future.');
+        showToast.error('Purchase date cannot be in the future.');
         return;
       }
 
@@ -190,7 +190,7 @@ export const AddAssetPage: React.FC = () => {
 
         if (expiryDate < purchaseDate) {
           setError('Warranty expiry date cannot be before purchase date.');
-          toast.error('Warranty expiry date cannot be before purchase date.');
+          showToast.error('Warranty expiry date cannot be before purchase date.');
           return;
         }
       }

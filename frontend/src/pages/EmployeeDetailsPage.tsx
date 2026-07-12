@@ -90,7 +90,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                 });
             }, 10000);
         } catch (err: any) {
-            toast.error(err.message || 'Failed to reveal field');
+            showToast.error(err.message || 'Failed to reveal field');
         } finally {
             setRevealingField(null);
         }
@@ -136,9 +136,9 @@ export const EmployeeDetailsPage: React.FC = () => {
             }
             // Also invalidate the employee list so any lists refresh
             queryClient.invalidateQueries({ queryKey: ['employees'] });
-            toast.success('Employee status updated');
+            showToast.success('Employee status updated');
         },
-        onError: (err: Error) => toast.error(err.message),
+        onError: (err: Error) => showToast.error(err.message),
     });
 
     const terminateMutation = useMutation({
@@ -158,10 +158,10 @@ export const EmployeeDetailsPage: React.FC = () => {
             });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             setTerminateDialogOpen(false);
-            toast.success(result.message);
+            showToast.success(result.message);
             navigate('/dashboard/employees');
         },
-        onError: (err: Error) => toast.error(err.message),
+        onError: (err: Error) => showToast.error(err.message),
     });
 
 

@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
 import api from '@/services/api';
 import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { resolveImageUrl } from '@/utils/image';
 
 interface ParticipantInfo {
@@ -153,13 +154,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleMediaError = useCallback((err: any) => {
         console.error("Media access error:", err);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            toast.error("Permission denied. Please allow access to your microphone/camera.");
+            showToast.error("Permission denied. Please allow access to your microphone/camera.");
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-            toast.error("No microphone or camera found. Please connect a device.");
+            showToast.error("No microphone or camera found. Please connect a device.");
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-            toast.error("Device is currently in use by another application.");
+            showToast.error("Device is currently in use by another application.");
         } else {
-            toast.error("Failed to access media devices: " + (err.message || "Unknown error"));
+            showToast.error("Failed to access media devices: " + (err.message || "Unknown error"));
         }
     }, []);
 

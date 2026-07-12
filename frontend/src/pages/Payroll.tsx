@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, Loader2 } from 'lucide-react';
 import api from '@/services/api';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -78,10 +78,10 @@ export const Payroll: React.FC = () => {
 
       // No existing run — create a new one
       const res = await api.post('/payroll/river/run', { month, year });
-      toast.success('New Payroll Run Started!');
+      showToast.success('New Payroll Run Started!');
       navigate(`/payroll/process/${res.data.id}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to start payroll run');
+      showToast.error(error.response?.data?.error || 'Failed to start payroll run');
     } finally {
       setPayRunLoading(false);
     }

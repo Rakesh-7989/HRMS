@@ -16,7 +16,7 @@ import {
     Edit,
     Trash2
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
@@ -66,10 +66,10 @@ export const AssetRequestsPage: React.FC = () => {
             assetsService.handleRequest(id, { status, admin_notes }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            toast.success('Request updated successfully');
+            showToast.success('Request updated successfully');
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to update request');
+            showToast.error(error.message || 'Failed to update request');
         }
     });
 
@@ -78,12 +78,12 @@ export const AssetRequestsPage: React.FC = () => {
             assetsService.updateRequest(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            toast.success('Request updated successfully');
+            showToast.success('Request updated successfully');
             setShowModal(false);
             resetForm();
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to update request');
+            showToast.error(error.message || 'Failed to update request');
             setIsSubmitting(false);
         }
     });
@@ -92,10 +92,10 @@ export const AssetRequestsPage: React.FC = () => {
         mutationFn: (id: string) => assetsService.cancelRequest(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            toast.success('Request cancelled successfully');
+            showToast.success('Request cancelled successfully');
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to cancel request');
+            showToast.error(error.message || 'Failed to cancel request');
         }
     });
 

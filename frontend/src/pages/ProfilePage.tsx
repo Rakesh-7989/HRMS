@@ -28,7 +28,7 @@ import { format } from 'date-fns';
 import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { documentsService } from '@/services/documents.service';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';
 import { showToast } from '@/utils/toast';
@@ -103,7 +103,7 @@ export const ProfilePage: React.FC = () => {
         });
       }, 10000);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to reveal field');
+      showToast.error(err.message || 'Failed to reveal field');
     } finally {
       setRevealingField(null);
     }
@@ -164,11 +164,11 @@ export const ProfilePage: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setAuthUser(updatedUser);
       }
-      toast.success('Profile photo removed');
+      showToast.success('Profile photo removed');
       setPhotoMenuOpen(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to remove photo');
+      showToast.error(error.message || 'Failed to remove photo');
     }
   });
 
@@ -193,7 +193,7 @@ export const ProfilePage: React.FC = () => {
         }
       }, 100);
     } catch (err) {
-      toast.error("Could not access camera");
+      showToast.error("Could not access camera");
       setTakePhotoOpen(false);
     }
   };
@@ -237,7 +237,7 @@ export const ProfilePage: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setAuthUser(updatedUser);
       }
-      toast.success('Profile photo updated successfully');
+      showToast.success('Profile photo updated successfully');
     },
     onError: (error: any) => {
       showAlert({
@@ -259,7 +259,7 @@ export const ProfilePage: React.FC = () => {
         setAuthUser(merged);
       }
       setIsEditing(false);
-      toast.success('Profile updated successfully');
+      showToast.success('Profile updated successfully');
     },
     onError: (error: any) => {
       showAlert({

@@ -7,7 +7,7 @@ import { notificationsService, Notification } from '@/services/notifications.ser
 import { Bell, CheckCheck, Trash2, Info, AlertCircle, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/utils/cn';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
@@ -34,7 +34,7 @@ export const NotificationsPage: React.FC = () => {
         mutationFn: () => notificationsService.markAllAsRead(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            toast.success('All notifications marked as read');
+            showToast.success('All notifications marked as read');
         },
     });
 
@@ -42,7 +42,7 @@ export const NotificationsPage: React.FC = () => {
         mutationFn: (id: string) => notificationsService.deleteNotification(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            toast.success('Notification deleted');
+            showToast.success('Notification deleted');
         },
     });
 

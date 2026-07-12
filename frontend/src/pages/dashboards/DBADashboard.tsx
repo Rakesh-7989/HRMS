@@ -14,7 +14,7 @@ import {
     Lock,
     Unlock
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 export const DBADashboard = () => {
 
@@ -54,13 +54,13 @@ export const DBADashboard = () => {
             if (isValid) {
                 setIsLocked(false);
                 sessionStorage.setItem('dba_unlocked', 'true');
-                toast.success('Console Unlocked');
+                showToast.success('Console Unlocked');
                 fetchTables();
             } else {
-                toast.error('Invalid Credentials');
+                showToast.error('Invalid Credentials');
             }
         } catch (error) {
-            toast.error('Verification failed');
+            showToast.error('Verification failed');
         } finally {
             setVerifying(false);
         }
@@ -72,7 +72,7 @@ export const DBADashboard = () => {
             const res = await api.get('/dba/tables');
             setTables(res.data.tables);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to fetch tables');
+            showToast.error(err.response?.data?.message || 'Failed to fetch tables');
         } finally {
             setLoading(false);
         }
@@ -87,7 +87,7 @@ export const DBADashboard = () => {
             const res = await api.get(`/dba/tables/${tableName}?limit=${limit}`);
             setTableData(res.data);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to fetch table data');
+            showToast.error(err.response?.data?.message || 'Failed to fetch table data');
         } finally {
             setLoading(false);
         }
@@ -95,7 +95,7 @@ export const DBADashboard = () => {
 
     const executeQuery = async () => {
         if (!query.trim()) {
-            toast.error('Query cannot be empty');
+            showToast.error('Query cannot be empty');
             return;
         }
 
@@ -104,12 +104,12 @@ export const DBADashboard = () => {
             const res = await api.post('/dba/query', { query });
             setQueryResult(res.data);
             if (res.data.status === 'success') {
-                toast.success(`Query executed in ${res.data.duration}`);
+                showToast.success(`Query executed in ${res.data.duration}`);
             }
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message;
             const detail = err.response?.data?.detail;
-            toast.error(`${msg} ${detail ? `(${detail})` : ''}`);
+            showToast.error(`${msg} ${detail ? `(${detail})` : ''}`);
             setQueryResult(null);
         } finally {
             setLoading(false);

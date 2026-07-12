@@ -56,10 +56,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         mutationFn: (data: Partial<GeoFencingSettings>) => geoFencingService.updateSettings(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-settings'] });
-            toast.success('Geo-fencing settings updated');
+            showToast.success('Geo-fencing settings updated');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to update settings');
+            showToast.error(error.message || 'Failed to update settings');
         }
     });
 
@@ -68,10 +68,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
             handleCloseDialog();
-            toast.success('Location added');
+            showToast.success('Location added');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to add location');
+            showToast.error(error.message || 'Failed to add location');
         }
     });
 
@@ -81,10 +81,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
             handleCloseDialog();
-            toast.success('Location updated');
+            showToast.success('Location updated');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to update location');
+            showToast.error(error.message || 'Failed to update location');
         }
     });
 
@@ -92,16 +92,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
         mutationFn: (id: string) => geoFencingService.deleteLocation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
-            toast.success('Location deleted');
+            showToast.success('Location deleted');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to delete location');
+            showToast.error(error.message || 'Failed to delete location');
         }
     });
 
     const handleToggleGeoFencing = () => {
         if (!canManageGeo) {
-            toast.error('You do not have permission to manage geo-fencing');
+            showToast.error('You do not have permission to manage geo-fencing');
             return;
         }
         updateSettingsMutation.mutate({ is_enabled: !settings?.is_enabled });
@@ -140,16 +140,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
     const handleSubmitLocation = (e: React.FormEvent) => {
         e.preventDefault();
         if (!locationForm.name.trim()) {
-            toast.error('Location name is required');
+            showToast.error('Location name is required');
             return;
         }
         if (locationForm.latitude === 0 && locationForm.longitude === 0) {
-            toast.error('Please enter valid coordinates');
+            showToast.error('Please enter valid coordinates');
             return;
         }
 
         if (!canManageGeo) {
-            toast.error('You do not have permission to manage locations');
+            showToast.error('You do not have permission to manage locations');
             return;
         }
         if (editingLocation) {
@@ -161,7 +161,7 @@ export const GeoFencingSettingsContent: React.FC = () => {
 
     const handleDeleteLocation = async (id: string) => {
         if (!canManageGeo) {
-            toast.error('You do not have permission to delete locations');
+            showToast.error('You do not have permission to delete locations');
             return;
         }
         const location = locations.find(l => l.id === id);
@@ -186,14 +186,14 @@ const handleGetCurrentLocation = () => {
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude
                 });
-                toast.success('Location captured from your device');
+                showToast.success('Location captured from your device');
             },
             (error) => {
-                toast.error('Unable to get your location: ' + error.message);
+                showToast.error('Unable to get your location: ' + error.message);
             }
         );
     } else {
-        toast.error('Geolocation is not supported by your browser');
+        showToast.error('Geolocation is not supported by your browser');
     }
 };
 
