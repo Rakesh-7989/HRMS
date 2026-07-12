@@ -7,8 +7,10 @@ import { Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatTime12Hour, calculateWorkDuration } from '@/utils/timeFormat';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 export const MyAttendanceContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { data: attendanceHistory = [], isLoading } = useQuery({
         queryKey: ['attendance', 'history'],
@@ -17,7 +19,7 @@ export const MyAttendanceContent: React.FC = () => {
 
     const columns = [
         {
-            header: 'Date',
+            header: t('common.date'),
             cell: (record: any) => (
                 <div>
                     <div className="font-medium whitespace-nowrap">{format(new Date(record.date), 'MMM dd, yyyy')}</div>
@@ -26,7 +28,7 @@ export const MyAttendanceContent: React.FC = () => {
             ),
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: (record: any) => (
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${record.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                     record.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
@@ -37,28 +39,28 @@ export const MyAttendanceContent: React.FC = () => {
                     {record.status === 'APPROVED' ? 'REGULARIZED' : record.status}
                     {record.is_late && (
                         <span className="ml-1 text-red-600 font-bold">
-                            • LATE {record.late_by ? `(${record.late_by})` : ''}
+                            • {t('attendance.late')} {record.late_by ? `(${record.late_by})` : ''}
                         </span>
                     )}
                 </span>
             ),
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             className: 'text-center',
             cell: (record: any) => (
                 <span className="font-mono">{formatTime12Hour(record.check_in_time, user?.timezone)}</span>
             ),
         },
         {
-            header: 'Check Out',
+            header: t('attendance.checkOut'),
             className: 'text-center',
             cell: (record: any) => (
                 <span className="font-mono">{formatTime12Hour(record.check_out_time, user?.timezone)}</span>
             ),
         },
         {
-            header: 'Details',
+            header: t('common.notes'),
             className: 'text-right',
             cell: (record: any) => (
                 record.check_in_time && record.check_out_time ? (
@@ -74,14 +76,14 @@ export const MyAttendanceContent: React.FC = () => {
         <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Calendar className="text-brand-500" size={20} />
-                My Attendance History (Last 30 Days)
+                {t('attendance.title')} ({t('common.overallData')})
             </h3>
 
             <DataTable
                 data={attendanceHistory}
                 columns={columns}
                 loading={isLoading}
-                emptyMessage="No attendance records found."
+                emptyMessage={t('common.noData')}
             />
         </Card>
     );
