@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { MyLeaveContent } from '@/components/leave/MyLeaveContent';
@@ -69,7 +70,7 @@ export const LeavePage: React.FC = () => {
 
           const isActive = tab.id === activeTab;
           return (
-            <button
+             <Button variant="ghost" 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0 snap-start ${isActive
@@ -78,7 +79,7 @@ export const LeavePage: React.FC = () => {
                 }`}
             >
               {tab.label}
-            </button>
+            </Button>
           );
         })}
       </div>

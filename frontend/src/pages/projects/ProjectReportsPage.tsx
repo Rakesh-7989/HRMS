@@ -172,24 +172,24 @@ export const ProjectReportsPage: React.FC = () => {
                 <Card className="p-4">
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
                         <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setActiveTab('project')}
                                 className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'project' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Project Report
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 onClick={() => setActiveTab('client')}
                                 className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'client' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Client Report
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 onClick={() => setActiveTab('utilization')}
                                 className={cn("px-4 py-2 text-sm font-medium rounded-md transition-colors", activeTab === 'utilization' ? "bg-white dark:bg-gray-900 shadow-elev-2 text-brand-500" : "text-gray-600 dark:text-gray-400 hover:text-gray-900")}
                             >
                                 Utilization Report
-                            </button>
+                            </Button>
                         </div>
                         <Button variant="outline" size="sm" onClick={handleExport}>
                             <Download className="mr-2 h-4 w-4" /> Export

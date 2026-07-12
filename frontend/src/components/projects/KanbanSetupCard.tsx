@@ -122,7 +122,7 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                     {/* Options */}
                     <div className="grid gap-4 md:grid-cols-2 pt-4">
                         {/* Use Default Option */}
-                        <button
+                         <Button variant="ghost" 
                             onClick={handleUseDefault}
                             disabled={isLoading}
                             className="group p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-500 hover:bg-brand-500/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
@@ -148,10 +148,10 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                                     </span>
                                 ))}
                             </div>
-                        </button>
+                        </Button>
 
                         {/* Customize Option */}
-                        <button
+                         <Button variant="ghost" 
                             onClick={handleCustomize}
                             disabled={isLoading}
                             className="group p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-500 hover:bg-brand-500/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
@@ -172,7 +172,7 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                                     + Add custom columns
                                 </span>
                             </div>
-                        </button>
+                        </Button>
                     </div>
 
                     {isLoading && (
@@ -203,7 +203,7 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                             >
                                 <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
                                 <span className="flex-1 font-medium">{col.column_label}</span>
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => handleMoveColumn(index, 'up')}
                                     disabled={index === 0}
@@ -211,8 +211,8 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                                     title="Move up"
                                 >
                                     ↑
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => handleMoveColumn(index, 'down')}
                                     disabled={index === customColumns.length - 1}
@@ -220,15 +220,15 @@ export const KanbanSetupCard: React.FC<KanbanSetupCardProps> = ({ projectId, onS
                                     title="Move down"
                                 >
                                     ↓
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => handleRemoveColumn(index)}
                                     className="p-1 text-red-400 hover:text-red-600"
                                     title="Remove column"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </div>
                         ))}
                     </div>

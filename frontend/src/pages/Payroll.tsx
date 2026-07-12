@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, Loader2 } from 'lucide-react';
 import api from '@/services/api';
@@ -103,7 +104,7 @@ export const Payroll: React.FC = () => {
             if (!hasPermission('payroll', tab.action)) return null;
             const isActive = tab.id === activeTab;
             return (
-              <button
+               <Button variant="ghost" 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${isActive
@@ -112,13 +113,13 @@ export const Payroll: React.FC = () => {
                   }`}
               >
                 {t((tab as any).labelKey)}
-              </button>
+              </Button>
             );
           })}
 
           {/* Pay Run Button */}
           {canRunPayroll && (
-            <button
+             <Button variant="ghost" 
               onClick={handlePayRun}
               disabled={payRunLoading}
               className="ml-2 px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-brand-500 to-blue-600 hover:from-brand-600 hover:to-blue-700 text-white shadow-elev-1 flex items-center gap-1.5 disabled:opacity-60"
@@ -129,7 +130,7 @@ export const Payroll: React.FC = () => {
                 <Play className="w-3.5 h-3.5" />
               )}
               {t('payroll.payRun')}
-            </button>
+            </Button>
           )}
         </div>
       )}

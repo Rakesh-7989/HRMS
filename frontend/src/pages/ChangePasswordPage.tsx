@@ -109,13 +109,13 @@ export const ChangePasswordPage: React.FC = () => {
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="Enter temporary password"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowCurrent((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 >
                                     {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.currentPassword && formik.errors.currentPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.currentPassword}</p>
@@ -132,13 +132,13 @@ export const ChangePasswordPage: React.FC = () => {
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="At least 8 characters"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowNew((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 >
                                     {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.newPassword && formik.errors.newPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.newPassword}</p>
@@ -162,13 +162,13 @@ export const ChangePasswordPage: React.FC = () => {
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
                                     placeholder="Repeat new password"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowConfirm((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 >
                                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.confirmPassword && formik.errors.confirmPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.confirmPassword}</p>

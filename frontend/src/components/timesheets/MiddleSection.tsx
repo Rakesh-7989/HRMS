@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -43,7 +44,7 @@ const ProjectsList: React.FC<{ projects: TimesheetDashboardBreakdown['projects']
                 <h3 className="font-bold text-gray-800 dark:text-gray-200">Projects</h3>
                 <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{projects.length}</span>
             </div>
-            <button className="text-gray-400 hover:text-gray-600"><MoreHorizontal size={16} /></button>
+             <Button variant="ghost" className="text-gray-400 hover:text-gray-600"><MoreHorizontal size={16} /></Button>
         </div>
 
         {/* Progress Bar */}
@@ -67,7 +68,7 @@ const ProjectsList: React.FC<{ projects: TimesheetDashboardBreakdown['projects']
             ))}
         </ul>
         <div className="mt-4 text-center">
-            <button className="text-brand-600 dark:text-brand-400 text-xs font-bold border-b border-dashed border-brand-300 dark:border-brand-500 pb-0.5 hover:text-brand-600 dark:hover:text-purple-300">Show more</button>
+             <Button variant="ghost" className="text-brand-600 dark:text-brand-400 text-xs font-bold border-b border-dashed border-brand-300 dark:border-brand-500 pb-0.5 hover:text-brand-600 dark:hover:text-purple-300">Show more</Button>
         </div>
     </div>
 );

@@ -228,7 +228,7 @@ export const ProjectsPage: React.FC = () => {
                 {/* Tabs & Actions */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
                     <div className="flex items-center gap-2">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('list')}
                             className={cn(
                                 "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
@@ -239,9 +239,9 @@ export const ProjectsPage: React.FC = () => {
                         >
                             <List size={16} />
                             {t('projects.list')}
-                        </button>
+                        </Button>
                         {canViewReports && (
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setActiveTab('reports')}
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
@@ -252,9 +252,9 @@ export const ProjectsPage: React.FC = () => {
                             >
                                 <BarChart3 size={16} />
                                 {t('projects.reports')}
-                            </button>
+                            </Button>
                         )}
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('timesheets')}
                             className={cn(
                                 "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
@@ -265,7 +265,7 @@ export const ProjectsPage: React.FC = () => {
                         >
                             <Clock size={16} />
                             {t('projects.timesheets')}
-                        </button>
+                        </Button>
                     </div>
 
                     {activeTab === 'list' && (
@@ -389,30 +389,30 @@ export const ProjectsPage: React.FC = () => {
                                                     <TableCell>
                                                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                             {canManageMembers && (
-                                                                <button
+                                                                 <Button variant="ghost" 
                                                                     onClick={() => handleOpenMembersModal(project)}
                                                                     className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                     title="Manage Members"
                                                                 >
                                                                     <Users size={16} />
-                                                                </button>
+                                                                </Button>
                                                             )}
                                                             {canManage && (
                                                                 <>
-                                                                    <button
+                                                                     <Button variant="ghost" 
                                                                         onClick={() => handleOpenEditModal(project)}
                                                                         className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                         title="Edit Project"
                                                                     >
                                                                         <Edit size={16} />
-                                                                    </button>
-                                                                    <button
+                                                                    </Button>
+                                                                     <Button variant="ghost" 
                                                                         onClick={() => setProjectToDelete(project)}
                                                                         className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                                                                         title="Delete Project"
                                                                     >
                                                                         <Trash2 size={16} />
-                                                                    </button>
+                                                                    </Button>
                                                                 </>
                                                             )}
                                                         </div>

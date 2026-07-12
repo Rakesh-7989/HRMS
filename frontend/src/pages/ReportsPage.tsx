@@ -271,7 +271,7 @@ export const ReportsPage: React.FC = () => {
               <div className="w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 min-w-max">
                   {(['overview', 'attendance', 'leave', 'employee'] as const).map((type) => (
-                    <button
+                     <Button variant="ghost" 
                       key={type}
                       onClick={() => setReportType(type)}
                       className={cn(
@@ -282,7 +282,7 @@ export const ReportsPage: React.FC = () => {
                       )}
                     >
                       {t(`reports.${type}`)}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

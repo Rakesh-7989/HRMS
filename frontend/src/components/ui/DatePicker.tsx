@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/Button';
 import { createPortal } from 'react-dom';
 import {
     format,
@@ -176,15 +177,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <div className="flex items-center justify-between px-3 py-3 bg-gradient-to-br from-brand-500/10 via-brand-500/5 to-transparent border-b border-gray-100 dark:border-gray-800">
             {viewMode === 'calendar' && (
                 <>
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); prevMonth(); }}
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1"
                     >
                         <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
                         className="px-3 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1 group"
@@ -192,22 +193,22 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500 transition-colors">
                             {format(currentMonth, 'MMMM yyyy')}
                         </span>
-                    </button>
+                    </Button>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); nextMonth(); }}
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1"
                     >
                         <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
                 </>
             )}
 
             {viewMode === 'month' && (
                 <>
                     <div className="flex-1" />
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setViewMode('year'); }}
                         className="px-4 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1 group"
@@ -215,14 +216,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500 transition-colors">
                             {currentYear}
                         </span>
-                    </button>
+                    </Button>
                     <div className="flex-1" />
                 </>
             )}
 
             {viewMode === 'year' && (
                 <>
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -232,13 +233,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <ChevronsLeft size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
 
                     <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
                         {yearPageStart} - {Math.min(yearPageStart + 11, maxYear)}
                     </span>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -248,7 +249,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-elev-1 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <ChevronsRight size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
                 </>
             )}
         </div>
@@ -262,7 +263,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     const isCurrentMonth = new Date().getMonth() === index && currentYear === new Date().getFullYear();
 
                     return (
-                        <button
+                         <Button variant="ghost" 
                             key={month}
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleMonthSelect(index); }}
@@ -279,18 +280,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             {isSelected && (
                                 <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
                             )}
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
 
-            <button
+             <Button variant="ghost" 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('calendar'); }}
                 className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500 transition-colors"
             >
                 ← Back to calendar
-            </button>
+            </Button>
         </div>
     );
 
@@ -302,7 +303,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     const isCurrentYear = new Date().getFullYear() === year;
 
                     return (
-                        <button
+                         <Button variant="ghost" 
                             key={year}
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleYearSelect(year); }}
@@ -319,18 +320,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             {isSelected && (
                                 <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
                             )}
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
 
-            <button
+             <Button variant="ghost" 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
                 className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500 transition-colors"
             >
                 ← Back to months
-            </button>
+            </Button>
         </div>
     );
 
@@ -373,7 +374,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     (maxDate && isAfter(startOfDay(day), startOfDay(maxDate)));
 
                 days.push(
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         key={day.toString()}
                         onClick={(e) => { e.stopPropagation(); if (!isDisabled) handleDateClick(cloneDay); }}
@@ -391,7 +392,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         )}
                     >
                         {format(day, 'd')}
-                    </button>
+                    </Button>
                 );
                 day = addDays(day, 1);
             }
@@ -407,7 +408,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     return (
         <div ref={containerRef} className={cn('relative', className)}>
-            <button
+             <Button variant="ghost" 
                 type="button"
                 onClick={handleOpenChange}
                 disabled={disabled}
@@ -431,7 +432,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     "text-gray-300 dark:text-gray-600 transition-transform",
                     isOpen && "rotate-90 text-brand-500"
                 )} />
-            </button>
+            </Button>
 
             {isOpen && createPortal(
                 <div
@@ -459,7 +460,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
                     {viewMode === 'calendar' && (
                         <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                            <button
+                             <Button variant="ghost" 
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -471,9 +472,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                 className="text-xs font-semibold text-brand-500 hover:underline"
                             >
                                 Today
-                            </button>
+                            </Button>
                             {value && (
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -483,7 +484,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                     className="text-xs text-gray-400 hover:text-red-500 font-medium transition-colors"
                                 >
                                     Clear
-                                </button>
+                                </Button>
                             )}
                         </div>
                     )}

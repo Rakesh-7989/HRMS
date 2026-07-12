@@ -362,13 +362,13 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
                       <span className="text-xs text-green-500">✓ Uploaded</span>
                     )}
                   </div>
-                  <button
+                   <Button variant="ghost" 
                     type="button"
                     onClick={handleRemoveFile}
                     className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                   >
                     <X size={16} className="text-gray-500" />
-                  </button>
+                  </Button>
                 </div>
               )}
 

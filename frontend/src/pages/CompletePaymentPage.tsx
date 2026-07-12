@@ -7,9 +7,11 @@ import { Card } from '@/components/ui/Card';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { tenantRegistrationService } from '@/services/tenantRegistration.service';
 import { UpiPaymentModal } from '@/components/payment/UpiPaymentModal';
+import { useTranslation } from 'react-i18next';
 
 export const CompletePaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const tenantId = searchParams.get('tenant_id');
   const email = searchParams.get('email');
@@ -47,10 +49,10 @@ export const CompletePaymentPage: React.FC = () => {
           redirectTarget: '_self'
         });
       } else {
-        setError('Unable to create payment session. Please try again or contact support.');
+        setError(t('payment.errors.createSession'));
       }
     } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || 'Failed to initiate payment. Please try again.';
+      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.initPayment');
       setError(errMsg);
     } finally {
       setLoading(false);
@@ -76,13 +78,13 @@ export const CompletePaymentPage: React.FC = () => {
             orderId: response.data.order_id,
           });
         } else {
-          setError(qrResponse.message || 'Failed to generate UPI QR code. Please try the gateway option.');
+          setError(qrResponse.message || t('payment.errors.upiQrFailed'));
         }
       } else {
-        setError('Unable to create payment session. Please try again or contact support.');
+        setError(t('payment.errors.createSession'));
       }
     } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || 'Failed to initiate UPI payment.';
+      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.initUpi');
       setError(errMsg);
     } finally {
       setLoading(false);
@@ -94,7 +96,7 @@ export const CompletePaymentPage: React.FC = () => {
       const result = await tenantRegistrationService.verifyPaymentPublic(orderId);
       return { success: true, data: result };
     } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || 'Verification failed';
+      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.verificationFailed');
       if (err?.response?.status === 500 || errMsg.includes('not found') || errMsg.includes('No')) {
         return { success: true, data: { success: false, error: errMsg } };
       }
@@ -136,10 +138,10 @@ export const CompletePaymentPage: React.FC = () => {
               <CreditCard className="w-8 h-8 text-amber-600 dark:text-amber-400" />
             </motion.div>
             <h1 className="text-xl font-black text-gray-900 dark:text-white mb-1 uppercase tracking-tight">
-              Complete Payment
+              {t('payment.title')}
             </h1>
             <p className="text-xs text-gray-500 dark:text-muted leading-tight px-4 font-bold italic">
-              Almost there! Activate your organization's account by completing the transaction.
+              {t('payment.subtitle')}
             </p>
           </div>
 
@@ -147,15 +149,15 @@ export const CompletePaymentPage: React.FC = () => {
             <div className="flex items-start gap-2 p-3 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
               <Shield className="text-brand-500 mt-0.5 shrink-0" size={14} />
               <div>
-                <p className="text-[10px] font-black uppercase text-gray-900 dark:text-white">Secure Transaction</p>
-                <p className="text-[9px] text-gray-400 leading-tight">Encryption powered by Cashfree Protocol.</p>
+                <p className="text-[10px] font-black uppercase text-gray-900 dark:text-white">{t('payment.secureLabel')}</p>
+                <p className="text-[9px] text-gray-400 leading-tight">{t('payment.secureDesc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-2 p-3 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
               <CheckCircle className="text-green-500 mt-0.5 shrink-0" size={14} />
               <div>
-                <p className="text-[10px] font-black uppercase text-gray-900 dark:text-white">Instant Deployment</p>
-                <p className="text-[9px] text-gray-400 leading-tight">Credentials will be dispatched to your email instantly.</p>
+                <p className="text-[10px] font-black uppercase text-gray-900 dark:text-white">{t('payment.instantLabel')}</p>
+                <p className="text-[9px] text-gray-400 leading-tight">{t('payment.instantDesc')}</p>
               </div>
             </div>
           </div>
@@ -179,7 +181,7 @@ export const CompletePaymentPage: React.FC = () => {
               disabled={loading}
             >
               <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              {loading ? <Loader2 className="animate-spin" size={18} /> : 'Proceed to Gateway →'}
+              {loading ? <Loader2 className="animate-spin" size={18} /> : t('payment.gatewayCta')}
             </Button>
 
             <div className="relative my-3">
@@ -188,41 +190,41 @@ export const CompletePaymentPage: React.FC = () => {
               </div>
               <div className="relative flex justify-center">
                 <span className="px-3 text-[10px] font-bold text-gray-400 bg-white dark:bg-gray-900 uppercase tracking-widest">
-                  or
+                  {t('payment.orDivider')}
                 </span>
               </div>
             </div>
 
-            <button
+             <Button variant="ghost" 
               onClick={handlePayWithUpi}
               disabled={loading}
               className="w-full h-11 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-black tracking-widest uppercase shadow-elev-4 shadow-green-600/20 transition-all disabled:opacity-50"
             >
               <Smartphone size={18} />
-              {loading ? <Loader2 className="animate-spin" size={18} /> : 'Pay with UPI'}
-            </button>
+              {loading ? <Loader2 className="animate-spin" size={18} /> : t('payment.upiCta')}
+            </Button>
 
-            <button
+             <Button variant="ghost" 
               className="w-full h-10 text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-500/10 rounded-xl transition-all"
               onClick={() => navigate('/register')}
               disabled={loading}
             >
               <RefreshCw size={12} />
-              Edit My Details
-            </button>
+              {t('payment.editDetails')}
+            </Button>
 
-            <button
+             <Button variant="ghost" 
               className="w-full h-10 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-500/10 rounded-xl transition-all"
               onClick={() => navigate('/login')}
               disabled={loading}
             >
               <ArrowLeft size={12} />
-              Back to Login
-            </button>
+              {t('payment.backToLogin')}
+            </Button>
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 text-center">
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-1">Authenticated Account</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-1">{t('payment.authenticatedLabel')}</span>
             <p className="text-[11px] font-black text-brand-500 leading-none truncate underline decoration-primary/30">
               {email}
             </p>

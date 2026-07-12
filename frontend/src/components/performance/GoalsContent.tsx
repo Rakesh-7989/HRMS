@@ -50,7 +50,7 @@ export const GoalsContent: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
-            <button
+             <Button variant="ghost" 
               onClick={() => setView('mine')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
@@ -58,8 +58,8 @@ export const GoalsContent: React.FC = () => {
               )}
             >
               {t('performance.myGoals')}
-            </button>
-            <button
+            </Button>
+             <Button variant="ghost" 
               onClick={() => setView('all')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
@@ -67,7 +67,7 @@ export const GoalsContent: React.FC = () => {
               )}
             >
               {t('performance.allGoals')}
-            </button>
+            </Button>
           </div>
           <Button size="sm" className="gap-2">
             <Plus size={16} />

@@ -15,8 +15,11 @@ import {
     Unlock
 } from 'lucide-react';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
+import { DataTable, Column } from '@/components/ui/DataTable';
 
 export const DBADashboard = () => {
+    const { t } = useTranslation();
 
     // Auth State for DBA Console
     const [isLocked, setIsLocked] = useState(true);
@@ -54,13 +57,13 @@ export const DBADashboard = () => {
             if (isValid) {
                 setIsLocked(false);
                 sessionStorage.setItem('dba_unlocked', 'true');
-                showToast.success('Console Unlocked');
+                showToast.success(t('dba.consoleUnlocked'));
                 fetchTables();
             } else {
-                showToast.error('Invalid Credentials');
+                showToast.error(t('dba.invalidCredentials'));
             }
         } catch (error) {
-            showToast.error('Verification failed');
+            showToast.error(t('dba.verificationFailed'));
         } finally {
             setVerifying(false);
         }
@@ -72,7 +75,7 @@ export const DBADashboard = () => {
             const res = await api.get('/dba/tables');
             setTables(res.data.tables);
         } catch (err: any) {
-            showToast.error(err.response?.data?.message || 'Failed to fetch tables');
+            showToast.error(err.response?.data?.message || t('dba.failedFetchTables'));
         } finally {
             setLoading(false);
         }
@@ -87,7 +90,7 @@ export const DBADashboard = () => {
             const res = await api.get(`/dba/tables/${tableName}?limit=${limit}`);
             setTableData(res.data);
         } catch (err: any) {
-            showToast.error(err.response?.data?.message || 'Failed to fetch table data');
+            showToast.error(err.response?.data?.message || t('dba.failedFetchTableData'));
         } finally {
             setLoading(false);
         }
@@ -95,7 +98,7 @@ export const DBADashboard = () => {
 
     const executeQuery = async () => {
         if (!query.trim()) {
-            showToast.error('Query cannot be empty');
+            showToast.error(t('dba.queryEmpty'));
             return;
         }
 
@@ -104,12 +107,12 @@ export const DBADashboard = () => {
             const res = await api.post('/dba/query', { query });
             setQueryResult(res.data);
             if (res.data.status === 'success') {
-                showToast.success(`Query executed in ${res.data.duration}`);
+                showToast.success(t('dba.queryExecuted', { duration: res.data.duration }));
             }
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message;
             const detail = err.response?.data?.detail;
-            showToast.error(`${msg} ${detail ? `(${detail})` : ''}`);
+            showToast.error(t('dba.queryError', { msg, detail: detail || '' }));
             setQueryResult(null);
         } finally {
             setLoading(false);
@@ -127,23 +130,22 @@ export const DBADashboard = () => {
                             <Lock className="w-8 h-8 text-red-500" />
                         </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-center text-white mb-2">Restricted Access</h2>
+                    <h2 className="text-2xl font-bold text-center text-white mb-2">{t('dba.lockedTitle')}</h2>
                     <p className="text-gray-400 text-center mb-8 text-base">
-                        This is a restricted area for Database Administrators only.
-                        Please verify your identity to continue.
+                        {t('dba.lockedDesc')}
                     </p>
 
                     <form onSubmit={handleUnlock} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">
-                                DBA Password
+                                {t('dba.dbaPassword')}
                             </label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                                placeholder="Enter your password..."
+                                placeholder={t('dba.passwordPlaceholder')}
                                 autoFocus
                             />
                         </div>
@@ -154,7 +156,7 @@ export const DBADashboard = () => {
                             className="w-full py-3 flex items-center justify-center gap-2"
                             isLoading={verifying}
                         >
-                            {verifying ? 'Verifying...' : 'Unlock Console'}
+                            {verifying ? t('dba.verifying') : t('dba.unlockConsole')}
                         </Button>
                     </form>
                 </div>
@@ -169,7 +171,7 @@ export const DBADashboard = () => {
                 <div className="p-4 border-b border-gray-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Database className="w-5 h-5 text-brand-400" />
-                        <span className="font-bold text-lg tracking-tight">DBA Console</span>
+                        <span className="font-bold text-lg tracking-tight">{t('dba.consoleName')}</span>
                     </div>
                     <Button variant="ghost" size="sm" onClick={fetchTables} aria-label="Refresh tables" isLoading={loading}>
                         <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -181,7 +183,7 @@ export const DBADashboard = () => {
                         <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-500" />
                         <input
                             type="text"
-                            placeholder="Filter tables..."
+                            placeholder={t('dba.filterTables')}
                             className="w-full bg-gray-900 border border-gray-800 rounded pl-9 pr-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand-500 transition-colors"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -191,7 +193,7 @@ export const DBADashboard = () => {
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {tables.length === 0 && !loading ? (
-                        <EmptyState title="No tables found" compact />
+                        <EmptyState title={t('dba.noTables')} compact />
                     ) : (
                         <div className="py-2">
                             {filteredTables.map(table => (
@@ -214,7 +216,7 @@ export const DBADashboard = () => {
                 </div>
 
                 <div className="p-3 border-t border-gray-800 text-xs text-gray-600 flex justify-between">
-                    <span>{filteredTables.length} tables</span>
+                    <span>{t('dba.tablesCount', { count: filteredTables.length })}</span>
                     <span>v1.0.0</span>
                 </div>
             </div>
@@ -231,7 +233,7 @@ export const DBADashboard = () => {
                             className="px-4 py-1.5 text-sm font-medium"
                         >
                             <Terminal className="w-4 h-4" />
-                            SQL Runner
+                            {t('dba.sqlRunner')}
                         </Button>
                         <Button
                             variant={activeTab === 'explorer' ? 'primary' : 'ghost'}
@@ -240,7 +242,7 @@ export const DBADashboard = () => {
                             className="px-4 py-1.5 text-sm font-medium"
                         >
                             <TableIcon className="w-4 h-4" />
-                            Data Explorer
+                            {t('dba.dataExplorer')}
                         </Button>
                     </div>
 
@@ -253,7 +255,7 @@ export const DBADashboard = () => {
                                 isLoading={loading}
                             >
                                 <Play className="w-4 h-4 fill-current" />
-                                Run Query (Ctrl+Enter)
+                                {t('dba.runQuery')}
                             </Button>
                         )}
                         <Button
@@ -287,8 +289,7 @@ export const DBADashboard = () => {
                                     className="w-full h-full bg-gray-950 text-green-400 font-mono text-sm border border-gray-800 rounded p-4 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-blue-500/50 resize-none shadow-inner"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="-- Write your SQL query here
-SELECT * FROM users LIMIT 10;"
+                                    placeholder={t('dba.sqlPlaceholder')}
                                     spellCheck={false}
                                     onKeyDown={(e) => {
                                         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -302,11 +303,11 @@ SELECT * FROM users LIMIT 10;"
                             <div className="h-1/2 border-t border-gray-800 bg-gray-900 flex flex-col">
                                 <div className="px-4 py-2 bg-gray-950 border-b border-gray-800 flex justify-between items-center">
                                     <span className="text-xs uppercase tracking-wider font-bold text-gray-500">
-                                        Query Results
+                                        {t('dba.queryResults')}
                                     </span>
                                     {queryResult && (
                                         <span className="text-xs text-gray-400 font-mono">
-                                            {queryResult.rowCount} rows • {queryResult.duration}
+                                            {t('dba.rowsDuration', { count: queryResult.rowCount, duration: queryResult.duration })}
                                         </span>
                                     )}
                                 </div>
@@ -315,7 +316,7 @@ SELECT * FROM users LIMIT 10;"
                                     {!queryResult ? (
                                         <div className="h-full flex flex-col items-center justify-center text-gray-600">
                                             <Terminal className="w-12 h-12 mb-2 opacity-20" />
-                                            <p>Execute a query to see results here</p>
+                                            <p>{t('dba.executeToSee')}</p>
                                         </div>
                                     ) : (
                                         <ResultsTable
@@ -340,7 +341,7 @@ SELECT * FROM users LIMIT 10;"
                                         </h2>
                                         <div className="flex gap-2">
                                             <span className="text-sm text-gray-400 self-center mr-4">
-                                                Limit:
+                                                {t('dba.limit')}
                                                 <select
                                                     value={limit}
                                                     onChange={(e) => {
@@ -359,44 +360,26 @@ SELECT * FROM users LIMIT 10;"
 
                                     <div className="flex-1 overflow-auto bg-gray-900 p-4">
                                         {tableData ? (
-                                            <div className="border border-gray-800 rounded-lg overflow-hidden shadow-elev-5">
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-left text-sm whitespace-nowrap">
-                                                        <thead className="bg-gray-800 text-gray-400 font-medium">
-                                                            <tr>
-                                                                {tableData.columns.map((col: any) => (
-                                                                    <th key={col.column_name} className="px-4 py-3 border-b border-gray-700">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-gray-200">{col.column_name}</span>
-                                                                            <span className="text-[10px] text-gray-500 font-mono">{col.data_type}</span>
-                                                                        </div>
-                                                                    </th>
-                                                                ))}
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-800 bg-gray-950">
-                                                            {tableData.rows.map((row: any, i: number) => (
-                                                                <tr key={i} className="hover:bg-gray-800/50 transition-colors">
-                                                                    {tableData.columns.map((col: any) => (
-                                                                        <td key={col.column_name} className="px-4 py-2 text-gray-300 border-r border-gray-800/30 last:border-r-0">
-                                                                            <CellValue value={row[col.column_name]} />
-                                                                        </td>
-                                                                    ))}
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
+                                            <DataTable
+                                                data={tableData.rows}
+                                                columns={tableData.columns.map((col: any) => ({
+                                                    header: `${col.column_name} · ${col.data_type}`,
+                                                    accessorKey: col.column_name,
+                                                    cell: (row: any) => <CellValue value={row[col.column_name]} />,
+                                                }))}
+                                                pageSize={limit}
+                                                pageSizeOptions={[50, 100, 500]}
+                                                className="bg-gray-950"
+                                            />
                                         ) : (
-                                            <div className="p-10 text-center">Loading data...</div>
+                                            <div className="p-10 text-center">{t('dba.loadingData')}</div>
                                         )}
                                     </div>
                                 </>
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-gray-500">
                                     <Database className="w-16 h-16 mb-4 opacity-20" />
-                                    <p className="text-lg">Select a table from the sidebar to explore data</p>
+                                    <p className="text-lg">{t('dba.selectTable')}</p>
                                 </div>
                             )}
                         </div>
@@ -411,8 +394,9 @@ SELECT * FROM users LIMIT 10;"
 // Start Helper Components
 
 const CellValue = ({ value }: { value: any }) => {
+    const { t } = useTranslation();
     if (value === null || value === undefined) {
-        return <span className="text-gray-600 italic">null</span>;
+        return <span className="text-gray-600 italic">{t('dba.nullValue')}</span>;
     }
     if (typeof value === 'boolean') {
         return (
@@ -428,32 +412,22 @@ const CellValue = ({ value }: { value: any }) => {
 };
 
 const ResultsTable = ({ columns, rows }: { columns: string[], rows: any[] }) => {
-    if (!rows || rows.length === 0) return <div className="p-4 text-gray-500 italic">No rows returned</div>;
+    const { t } = useTranslation();
+    if (!rows || rows.length === 0) return <div className="p-4 text-gray-500 italic">{t('dba.noRows')}</div>;
+
+    const tableColumns: Column<any>[] = columns.map((col) => ({
+        header: col,
+        accessorKey: col,
+        cell: (row: any) => <CellValue value={row[col]} />,
+    }));
 
     return (
-        <div className="w-full">
-            <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
-                <thead className="bg-gray-800 text-gray-400 font-medium sticky top-0 z-10">
-                    <tr>
-                        {columns.map((col) => (
-                            <th key={col} className="px-4 py-2 border-b border-gray-700 bg-gray-800">
-                                {col}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800 bg-gray-950">
-                    {rows.map((row: any, i: number) => (
-                        <tr key={i} className="hover:bg-gray-800/50 transition-colors">
-                            {columns.map((col) => (
-                                <td key={col} className="px-4 py-2 text-gray-300 border-r border-gray-800/30 last:border-r-0 font-mono text-xs">
-                                    <CellValue value={row[col]} />
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <DataTable
+            data={rows}
+            columns={tableColumns}
+            emptyMessage={t('dba.noRows')}
+            pageSize={50}
+            pageSizeOptions={[50, 100, 500]}
+        />
     );
 };

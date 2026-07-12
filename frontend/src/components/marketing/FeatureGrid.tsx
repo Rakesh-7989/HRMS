@@ -174,9 +174,9 @@ export const FeatureGrid: React.FC = () => {
                   </div>
                   {isLarge && (
                     <div className="mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-                      <button className="text-sm font-semibold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1">
+                       <Button variant="ghost" className="text-sm font-semibold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1">
                         {t('common.view')} <ArrowRight size={14} />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

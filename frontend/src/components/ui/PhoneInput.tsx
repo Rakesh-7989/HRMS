@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Search, ChevronDown, Check } from 'lucide-react';
 import { countries, Country } from '@/data/countries';
 import { cn } from '@/utils/cn';
@@ -87,14 +88,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     >
       {/* Country Selector */}
       <div className="relative shrink-0" ref={dropdownRef}>
-        <button
+         <Button variant="ghost" 
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-1.5 h-10 pl-4 pr-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-l-xl border-r border-gray-200 dark:border-gray-700"
         >
           <span className="tabular-nums">{selectedCountry.dial_code}</span>
           <ChevronDown className={cn("w-3.5 h-3.5 text-gray-400 transition-transform duration-300", isOpen && "rotate-180")} />
-        </button>
+        </Button>
 
         {isOpen && (
           <div className="absolute top-full left-0 z-[100] mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-elev-6 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
@@ -113,7 +114,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             </div>
             <div className="max-h-72 overflow-y-auto p-1 custom-scrollbar">
               {filteredCountries.map((country) => (
-                <button
+                 <Button variant="ghost" 
                   key={country.code}
                   type="button"
                   onClick={() => handleCountrySelect(country)}
@@ -134,7 +135,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
                       <Check className="w-4 h-4" />
                     )}
                   </div>
-                </button>
+                </Button>
               ))}
               {filteredCountries.length === 0 && (
                 <div className="py-8 text-center">

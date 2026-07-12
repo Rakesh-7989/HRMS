@@ -91,7 +91,7 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
             </div>
             <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                 {filtered.map(conv => (
-                    <button
+                     <Button variant="ghost" 
                         key={conv.id}
                         onClick={() => { onForward(conv.id); onClose(); }}
                         className="w-full flex items-center gap-3 p-3 hover:bg-brand-50/80 dark:hover:bg-brand-100/80 rounded-xl transition-colors text-left"
@@ -103,7 +103,7 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
                             <p className="text-sm font-medium truncate">{conv.name || t('chat.groupChat')}</p>
                         </div>
                         <ArrowRight size={16} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
-                    </button>
+                    </Button>
                 ))}
             </div>
         </Dialog>
@@ -150,15 +150,15 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
             className="max-w-md"
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                    <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</button>
-                    <button
+                     <Button variant="ghost" type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</Button>
+                     <Button variant="ghost" 
                         type="submit"
                         form="create-group-form"
                         disabled={!groupName || selectedUsers.length === 0}
                         className="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                     >
                         Create
-                    </button>
+                    </Button>
                 </div>
             }
         >
@@ -233,16 +233,16 @@ const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; on
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete this message?</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">This action will remove the message for participants</p>
                 <div className="flex flex-col gap-2 w-full mb-4">
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => { onDelete('me'); onClose(); }}
                         className="w-full py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30"
                     >
                         Delete for me
-                    </button>
+                    </Button>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-2.5 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
-                    <button onClick={() => { onDelete('everyone'); onClose(); }} className="flex-1 py-2.5 px-4 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">Delete for everyone</button>
+                     <Button variant="ghost" onClick={onClose} className="flex-1 py-2.5 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</Button>
+                     <Button variant="ghost" onClick={() => { onDelete('everyone'); onClose(); }} className="flex-1 py-2.5 px-4 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">Delete for everyone</Button>
                 </div>
             </div>
         </div>
@@ -274,14 +274,14 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
             className="max-w-md"
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                    <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-xl transition-colors">Cancel</button>
-                    <button
+                     <Button variant="ghost" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-xl transition-colors">Cancel</Button>
+                     <Button variant="ghost" 
                         onClick={() => { onAdd(selectedIds); onClose(); }}
                         disabled={selectedIds.length === 0}
                         className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                     >
                         Add {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
-                    </button>
+                    </Button>
                 </div>
             }
         >
@@ -306,7 +306,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                 ) : filtered.map(contact => {
                     const isSelected = selectedIds.includes(contact.id);
                     return (
-                        <button
+                         <Button variant="ghost" 
                             key={contact.id}
                             onClick={() => toggleUser(contact.id)}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group border ${isSelected ? 'bg-brand-500/5 border-brand-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent'}`}
@@ -327,7 +327,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">{contact.email}</p>
                             </div>
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
@@ -1028,7 +1028,7 @@ export const ChatPage = () => {
                                 </div>
                                 <div className="absolute top-8 left-0 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-elev-5 border border-gray-200 dark:border-gray-700 p-1 hidden group-hover/status:block z-50">
                                     {(['available', 'away', 'dnd', 'busy', 'offline'] as const).map(s => (
-                                        <button
+                                         <Button variant="ghost" 
                                             key={s}
                                             onClick={() => updateMyStatus(s)}
                                             className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md flex items-center gap-2"
@@ -1040,7 +1040,7 @@ export const ChatPage = () => {
                                                         s === 'dnd' || s === 'busy' ? 'bg-error-500' : 'bg-gray-400'
                                             )} />
                                             {s === 'busy' ? 'In a Meeting' : s}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             </div>
@@ -1051,22 +1051,22 @@ export const ChatPage = () => {
                         </div>
                         <div className="flex gap-1">
                             {canCreateGroup && (
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setIsGroupModalOpen(true)}
                                     className="p-2.5 hover:bg-brand-500/10 dark:hover:bg-brand-500/20 rounded-xl text-gray-500 hover:text-brand-500 transition-all duration-200 hover:scale-105"
                                     title="New Group"
                                 >
                                     <Users className="h-5 w-5" />
-                                </button>
+                                </Button>
                             )}
                             {canSend && (
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setIsSelectingContact(!isSelectingContact)}
                                     className="p-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 hover:opacity-90 rounded-xl text-white transition-all duration-200 hover:scale-105 hover:shadow-elev-4 hover:shadow-brand-500/25"
                                     title="New Chat"
                                 >
                                     <Plus className="h-5 w-5" />
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -1091,7 +1091,7 @@ export const ChatPage = () => {
                                 {/* Filter Tabs */}
                                 <div className="flex p-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-lg animate-in fade-in slide-in-from-top-1 duration-300 delay-75">
                                     {(['all', 'unread', 'groups'] as const).map((filter) => (
-                                        <button
+                                         <Button variant="ghost" 
                                             key={filter}
                                             onClick={() => setConversationFilter(filter)}
                                             className={cn(
@@ -1102,7 +1102,7 @@ export const ChatPage = () => {
                                             )}
                                         >
                                             {filter}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             </>
@@ -1110,12 +1110,12 @@ export const ChatPage = () => {
                             /* Contact Search & Header */
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-3">
                                 <div className="flex items-center gap-3 pt-1">
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={() => { setIsSelectingContact(false); setContactSearchQuery(''); }}
                                         className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 hover:text-brand-500 transition-colors"
                                     >
                                         <ArrowRight className="h-5 w-5 rotate-180" />
-                                    </button>
+                                    </Button>
                                     <h3 className="font-bold text-gray-900 dark:text-white text-lg">{t('chat.newChat')}</h3>
                                 </div>
 
@@ -1158,7 +1158,7 @@ export const ChatPage = () => {
                                                 const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
                                                 return fullName.includes(q) || contact.email?.toLowerCase().includes(q) || contact.employee_id?.toLowerCase().includes(q);
                                             }).map(contact => (
-                                                <button
+                                                 <Button variant="ghost" 
                                                     key={contact.id}
                                                     onClick={() => handleStartDirectChat(contact.id)}
                                                     className="w-full p-2.5 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-xl transition-all duration-200 text-left group hover:scale-[1.01] hover:shadow-elev-1 border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
@@ -1187,7 +1187,7 @@ export const ChatPage = () => {
                                                             {contact.designation || contact.email}
                                                         </p>
                                                     </div>
-                                                </button>
+                                                </Button>
                                             ))}
                                         </div>
                                     )}
@@ -1206,12 +1206,12 @@ export const ChatPage = () => {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 px-6">
                                             {t('chat.connectWithTeam')}
                                         </p>
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => setIsSelectingContact(true)}
                                             className="px-5 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-elev-4 shadow-brand-500/20 hover:scale-105 active:scale-95 transition-all"
                                         >
                                             {t('chat.startNewChat')}
-                                        </button>
+                                        </Button>
                                     </div>
                                 ) : (() => {
                                     const filteredConversations = conversations?.filter(conv => {
@@ -1247,13 +1247,13 @@ export const ChatPage = () => {
                                                 <p className="text-xs text-gray-400 dark:text-gray-500 text-center mb-4 max-w-[200px]">
                                                     {t('chat.noConversationsMatching')} "<span className="font-medium text-brand-500">{searchQuery}</span>"
                                                 </p>
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={() => { setIsSelectingContact(true); setSearchQuery(''); }}
                                                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 rounded-xl hover:opacity-90 transition-all hover:shadow-elev-4 hover:shadow-brand-500/20 active:scale-95"
                                                 >
                                                     <Plus size={14} />
                                                     {t('chat.startNewChat')}
-                                                </button>
+                                                </Button>
                                             </div>
                                         );
                                     }
@@ -1262,7 +1262,7 @@ export const ChatPage = () => {
                                         const details = getConversationDetails(conv);
                                         const isActive = selectedConversationId === conv.id;
                                         return (
-                                            <button
+                                             <Button variant="ghost" 
                                                 key={conv.id}
                                                 onClick={() => setSelectedConversationId(conv.id)}
                                                 className={cn(
@@ -1358,7 +1358,7 @@ export const ChatPage = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                            </button>
+                                            </Button>
                                         );
                                     });
                                 })()}
@@ -1411,7 +1411,7 @@ export const ChatPage = () => {
                                     </div>
                                     <div className="flex items-center gap-1 h-full border-l border-gray-200 dark:border-gray-800 ml-4 pl-4 hidden md:flex">
                                         {(['chat', 'files', 'photos'] as const).map(tab => (
-                                            <button
+                                             <Button variant="ghost" 
                                                 key={tab}
                                                 onClick={() => setChatViewTab(tab)}
                                                 className={cn(
@@ -1425,13 +1425,13 @@ export const ChatPage = () => {
                                                 {chatViewTab === tab && (
                                                     <div className="absolute -bottom-2.5 left-0 right-0 h-[2px] bg-brand-500 rounded-full" />
                                                 )}
-                                            </button>
+                                            </Button>
                                         ))}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4 text-gray-400">
                                     {activeRoomCall === selectedConversationId && !activeCall && (
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => joinActiveCall(selectedConversationId, 'video')}
                                             className="group relative flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-md transition-all border border-emerald-500/20 active:scale-95 mr-2"
                                             title="Meeting in progress - Click to Join"
@@ -1442,10 +1442,10 @@ export const ChatPage = () => {
                                             </div>
                                             <Video size={16} className="animate-pulse" />
                                             <span className="text-[11px] font-bold">Join</span>
-                                        </button>
+                                        </Button>
                                     )}
                                     {canVoiceCall && atLeastPlan(3) && (
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => {
                                                 if (activeCall) { toggleAudio(); return; }
                                                 const conv = conversations?.find(c => c.id === selectedConversationId);
@@ -1459,10 +1459,10 @@ export const ChatPage = () => {
                                             title={activeCall ? "Toggle Audio" : "Audio Call"}
                                         >
                                             {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
-                                        </button>
+                                        </Button>
                                     )}
                                     {canVideoCall && atLeastPlan(3) && (
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => {
                                                 if (activeCall) { toggleVideo(); return; }
                                                 const conv = conversations?.find(c => c.id === selectedConversationId);
@@ -1476,24 +1476,24 @@ export const ChatPage = () => {
                                             title={activeCall ? "Toggle Video" : "Video Call"}
                                         >
                                             {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
-                                        </button>
+                                        </Button>
                                     )}
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={() => setShowMessageSearch(!showMessageSearch)}
                                         className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-brand-500")}
                                         title="Search in conversation"
                                     >
                                         <Search size={20} />
-                                    </button>
+                                    </Button>
                                     {canManageChat && (
                                         <div className="relative">
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
                                                 className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-brand-500 bg-brand-500/10" : "text-gray-500")}
                                                 title="More options"
                                             >
                                                 <MoreHorizontal size={20} />
-                                            </button>
+                                            </Button>
                                             {showHeaderMoreMenu && (
                                                 <>
                                                     <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
@@ -1501,25 +1501,25 @@ export const ChatPage = () => {
                                                         <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
                                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
                                                         </div>
-                                                        <button onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                         <Button variant="ghost" onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                             <User size={16} className="text-gray-400" />
                                                             View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
-                                                        </button>
-                                                        <button onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                        </Button>
+                                                         <Button variant="ghost" onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                             <Pin size={16} className={cn("text-gray-400", showPins && "text-brand-500 fill-primary")} />
                                                             {showPins ? 'Hide' : 'Show'} Pinned Messages
-                                                        </button>
+                                                        </Button>
                                                         {canManageChat && (
                                                             <>
                                                                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
-                                                                <button onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                                                                 <Button variant="ghost" onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
                                                                     <Eraser size={16} />
                                                                     Clear Chat History
-                                                                </button>
-                                                                <button onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                                </Button>
+                                                                 <Button variant="ghost" onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                                                     <Trash2 size={16} />
                                                                     Delete Conversation
-                                                                </button>
+                                                                </Button>
                                                             </>
                                                         )}
                                                     </div>
@@ -1679,8 +1679,8 @@ export const ChatPage = () => {
                                                                             }}
                                                                         />
                                                                         <div className="flex justify-end gap-2">
-                                                                            <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></button>
-                                                                            <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></button>
+                                                                             <Button variant="ghost" onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded"><X size={14} /></Button>
+                                                                             <Button variant="ghost" onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded"><Check size={14} /></Button>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
@@ -1808,7 +1808,7 @@ export const ChatPage = () => {
                                                                                         return acc;
                                                                                     }, {});
                                                                                     return Object.entries(grouped).map(([emoji, count]) => (
-                                                                                        <button
+                                                                                         <Button variant="ghost" 
                                                                                             key={emoji}
                                                                                             onClick={(e) => { e.stopPropagation(); handleToggleReaction(msg.id, emoji, msg.reactions); }}
                                                                                             className={cn(
@@ -1820,7 +1820,7 @@ export const ChatPage = () => {
                                                                                         >
                                                                                             <span className="text-[11px]">{emoji}</span>
                                                                                             {Number(count) > 1 && <span className="text-[9px] font-bold">{count}</span>}
-                                                                                        </button>
+                                                                                        </Button>
                                                                                     ));
                                                                                 })()}
                                                                             </div>
@@ -1850,7 +1850,7 @@ export const ChatPage = () => {
                                                                     <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-elev-4 shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
                                                                         {/* Quick emoji reactions */}
                                                                         {['👍', '❤️', '😆', '😮'].map(emoji => (
-                                                                            <button
+                                                                             <Button variant="ghost" 
                                                                                 key={emoji}
                                                                                 onClick={() => handleToggleReaction(msg.id, emoji, msg.reactions)}
                                                                                 className={cn(
@@ -1859,23 +1859,23 @@ export const ChatPage = () => {
                                                                                 )}
                                                                             >
                                                                                 {emoji}
-                                                                            </button>
+                                                                            </Button>
                                                                         ))}
 
                                                                         {/* More reactions button */}
                                                                         <div className="relative">
-                                                                            <button
+                                                                             <Button variant="ghost" 
                                                                                 onClick={() => setShowReactionPicker(showReactionPicker === msg.id ? null : msg.id)}
                                                                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
                                                                                 title="More reactions"
                                                                             >
                                                                                 <Smile size={16} className={showReactionPicker === msg.id ? 'text-brand-500' : ''} />
-                                                                            </button>
+                                                                            </Button>
                                                                             {showReactionPicker === msg.id && (
                                                                                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-elev-5 border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
                                                                                     <div className="flex gap-1">
                                                                                         {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '💯', '🙏'].map(emoji => (
-                                                                                            <button
+                                                                                             <Button variant="ghost" 
                                                                                                 key={emoji}
                                                                                                 onClick={() => {
                                                                                                     handleToggleReaction(msg.id, emoji, msg.reactions);
@@ -1884,7 +1884,7 @@ export const ChatPage = () => {
                                                                                                 className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
                                                                                             >
                                                                                                 {emoji}
-                                                                                            </button>
+                                                                                            </Button>
                                                                                         ))}
                                                                                     </div>
                                                                                 </div>
@@ -1895,7 +1895,7 @@ export const ChatPage = () => {
                                                                         <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-600" />
 
                                                                         {/* Reply button */}
-                                                                        <button
+                                                                         <Button variant="ghost" 
                                                                             onClick={() => {
                                                                                 setReplyToMessage(msg);
                                                                             }}
@@ -1903,11 +1903,11 @@ export const ChatPage = () => {
                                                                             title="Reply"
                                                                         >
                                                                             <CornerUpLeft size={16} />
-                                                                        </button>
+                                                                        </Button>
 
                                                                         {/* More options button */}
                                                                         <div className="relative">
-                                                                            <button
+                                                                             <Button variant="ghost" 
                                                                                 onClick={() => setShowMoreMenu(showMoreMenu === msg.id ? null : msg.id)}
                                                                                 className={cn(
                                                                                     "w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg transition-all duration-150",
@@ -1916,7 +1916,7 @@ export const ChatPage = () => {
                                                                                 title="More options"
                                                                             >
                                                                                 <MoreHorizontal size={16} />
-                                                                            </button>
+                                                                            </Button>
 
                                                                             {/* More options dropdown */}
                                                                             {showMoreMenu === msg.id && (
@@ -1927,14 +1927,14 @@ export const ChatPage = () => {
                                                                                         "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-elev-5 shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
                                                                                         isMe ? "right-0" : "left-0"
                                                                                     )}>
-                                                                                        <button
+                                                                                         <Button variant="ghost" 
                                                                                             onClick={() => { setForwardingMessage(msg); setShowMoreMenu(null); }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
                                                                                             <Share size={16} className="text-gray-400" />
                                                                                             Forward
-                                                                                        </button>
-                                                                                        <button
+                                                                                        </Button>
+                                                                                         <Button variant="ghost" 
                                                                                             onClick={() => {
                                                                                                 navigator.clipboard.writeText(msg.content);
                                                                                                 setShowMoreMenu(null);
@@ -1944,38 +1944,38 @@ export const ChatPage = () => {
                                                                                         >
                                                                                             <Copy size={16} className="text-gray-400" />
                                                                                             Copy message
-                                                                                        </button>
-                                                                                        <button
+                                                                                        </Button>
+                                                                                         <Button variant="ghost" 
                                                                                             onClick={() => { handleTogglePin(msg.id); setShowMoreMenu(null); }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
                                                                                             <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-brand-500")} />
                                                                                             {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
-                                                                                        </button>
+                                                                                        </Button>
 
                                                                                          {isMe && msg.type === 'TEXT' && canEditMessages && (
                                                                                             <>
                                                                                                 <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
-                                                                                                <button
+                                                                                                 <Button variant="ghost" 
                                                                                                     onClick={() => { startEditing(msg); setShowMoreMenu(null); }}
                                                                                                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                                 >
                                                                                                     <Edit2 size={16} className="text-gray-400" />
                                                                                                     Edit
-                                                                                                </button>
+                                                                                                </Button>
                                                                                             </>
                                                                                         )}
 
                                                                                         {canDeleteMessages && (
                                                                                             <>
                                                                                                 <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
-                                                                                                <button
+                                                                                                 <Button variant="ghost" 
                                                                                                     onClick={() => { setDeletingMessage(msg); setShowMoreMenu(null); }}
                                                                                                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                                                                                 >
                                                                                                     <Trash2 size={16} />
                                                                                                     Delete
-                                                                                                </button>
+                                                                                                </Button>
                                                                                             </>
                                                                                         )}
                                                                                     </div>
@@ -2054,13 +2054,13 @@ export const ChatPage = () => {
                                                                             {format(new Date(msg.created_at), 'dd MMM yyyy')}
                                                                         </span>
                                                                         <div className="w-16 flex justify-center">
-                                                                            <button
+                                                                             <Button variant="ghost" 
                                                                                 onClick={(e) => { e.stopPropagation(); if (fileUrl) handleDownload(fileUrl, msg.content); }}
                                                                                 className="p-2 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
                                                                                 title="Download"
                                                                             >
                                                                                 <Download size={16} />
-                                                                            </button>
+                                                                            </Button>
                                                                         </div>
                                                                     </div>
                                                                 );
@@ -2160,7 +2160,7 @@ export const ChatPage = () => {
                                                                         <p className="text-gray-500 text-xs truncate max-w-[300px]">{replyToMessage.content.substring(0, 60)}</p>
                                                                     </div>
                                                                 </div>
-                                                                <button onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></button>
+                                                                 <Button variant="ghost" onClick={() => setReplyToMessage(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><X size={14} /></Button>
                                                             </div>
                                                         )}
                                                         <form onSubmit={handleSendMessage} className="px-5 py-3">
@@ -2183,14 +2183,14 @@ export const ChatPage = () => {
                                                                 <div className="flex items-center gap-0.5 pr-2">
                                                                     {/* Emoji */}
                                                                     <div className="relative">
-                                                                        <button
+                                                                         <Button variant="ghost" 
                                                                             type="button"
                                                                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                                                             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                                                                             title="Emoji"
                                                                         >
                                                                             <Smile size={20} />
-                                                                        </button>
+                                                                        </Button>
                                                                         {showEmojiPicker && (
                                                                             <>
                                                                                 <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
@@ -2204,7 +2204,7 @@ export const ChatPage = () => {
                                                                     </div>
 
                                                                     {/* Image/GIF */}
-                                                                    <button
+                                                                     <Button variant="ghost" 
                                                                         type="button"
                                                                         onClick={() => {
                                                                             const input = document.createElement('input');
@@ -2225,37 +2225,37 @@ export const ChatPage = () => {
                                                                         title="Send image"
                                                                     >
                                                                         <Image size={20} />
-                                                                    </button>
+                                                                    </Button>
 
                                                                     {/* Attachment */}
-                                                                    <button
+                                                                     <Button variant="ghost" 
                                                                         type="button"
                                                                         onClick={() => fileInputRef.current?.click()}
                                                                         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                                                                         title="Attach file"
                                                                     >
                                                                         <Paperclip size={20} />
-                                                                    </button>
+                                                                    </Button>
 
                                                                     {/* More options */}
-                                                                    <button
+                                                                     <Button variant="ghost" 
                                                                         type="button"
                                                                         onClick={() => setShowPins(!showPins)}
                                                                         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                                                                         title="More options"
                                                                     >
                                                                         <Plus size={20} />
-                                                                    </button>
+                                                                    </Button>
 
                                                                     {/* Send */}
-                                                                    <button
+                                                                     <Button variant="ghost" 
                                                                         type="submit"
                                                                         disabled={!messageInput.trim()}
                                                                         className="p-2 text-gray-400 hover:text-brand-500 disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-brand-500/10"
                                                                         title="Send"
                                                                     >
                                                                         <Send size={20} />
-                                                                    </button>
+                                                                    </Button>
                                                                 </div>
                                                             </div>
                                                         </form>
@@ -2299,12 +2299,12 @@ export const ChatPage = () => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">Start a Conversation</h3>
                             <p className="text-sm text-gray-400 text-center max-w-xs mb-6">Select a conversation from the sidebar or start a new chat with your team members</p>
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setIsSelectingContact(true)}
                                 className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl font-medium text-sm hover:shadow-elev-4 hover:shadow-brand-500/25 transition-all duration-300 hover:scale-105"
                             >
                                 New Conversation
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </div >
@@ -2349,12 +2349,12 @@ export const ChatPage = () => {
                         <div className="flex items-center justify-between">
                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Team Members</h4>
                             {activeConversation?.type === 'GROUP' && canManageGroup && (
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setIsAddingParticipant(true)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
                                 >
                                     <UserPlus size={12} strokeWidth={3} /> Add
-                                </button>
+                                </Button>
                             )}
                         </div>
                         <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -2373,13 +2373,13 @@ export const ChatPage = () => {
                                         <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest px-2 py-1 bg-brand-500/10 rounded-lg">You</span>
                                     ) : (
                                         activeConversation?.type === 'GROUP' && canManageGroup && (
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={() => handleRemoveParticipant(p.id)}
                                                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
                                                 title="Remove participant"
                                             >
                                                 <UserMinus size={14} />
-                                            </button>
+                                            </Button>
                                         )
                                     )}
                                 </div>
@@ -2443,51 +2443,51 @@ export const ChatPage = () => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(z => Math.max(z - 0.25, 0.25))}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
                                     title="Zoom Out (-)"
                                 >
                                     <ZoomOut size={20} />
-                                </button>
+                                </Button>
                                 <span className="text-white/50 text-xs font-mono w-12 text-center">{Math.round(lightboxZoom * 100)}%</span>
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(z => Math.min(z + 0.25, 5))}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
                                     title="Zoom In (+)"
                                 >
                                     <ZoomIn size={20} />
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(1)}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
                                     title="Reset Zoom"
                                 >
                                     <Maximize2 size={18} />
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     onClick={() => setLightboxRotation(r => r + 90)}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
                                     title="Rotate (R)"
                                 >
                                     <RotateCw size={18} />
-                                </button>
+                                </Button>
                                 <div className="w-px h-6 bg-white/20 mx-2" />
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => handleDownload(lightboxImage.url, lightboxImage.name)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
                                     title="Download"
                                 >
                                     <Download size={16} />
                                     Download
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     onClick={closeLightbox}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
                                     title="Close (Esc)"
                                 >
                                     <X size={22} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
@@ -2547,29 +2547,29 @@ export const ChatPage = () => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => handleDownload(filePreview.url, filePreview.name)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
                                     title="Download"
                                 >
                                     <Download size={16} />
                                     Download
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     onClick={() => window.open(filePreview.url, '_blank')}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
                                     title="Open in new tab"
                                 >
                                     <ExternalLink size={16} />
                                     New Tab
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     onClick={closeFilePreview}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
                                     title="Close (Esc)"
                                 >
                                     <X size={22} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
 

@@ -243,7 +243,7 @@ export const TeamLeaveContent: React.FC = () => {
             <Card className="overflow-hidden">
                 <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-1">
                     <div className="flex gap-1">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('PENDING')}
                             className={cn(
                                 "flex-1 py-2 text-sm font-medium rounded-md transition-all",
@@ -258,8 +258,8 @@ export const TeamLeaveContent: React.FC = () => {
                                     {pendingApprovals.length}
                                 </span>
                             )}
-                        </button>
-                        <button
+                        </Button>
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('HISTORY')}
                             className={cn(
                                 "flex-1 py-2 text-sm font-medium rounded-md transition-all",
@@ -269,7 +269,7 @@ export const TeamLeaveContent: React.FC = () => {
                             )}
                         >
                             {t('leave.requestHistory')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

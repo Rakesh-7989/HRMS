@@ -523,7 +523,7 @@ const WorkingHoursSection: React.FC<{
               <Label>Working Days</Label>
               <div className="flex flex-wrap gap-2">
                 {days.map(day => (
-                  <button
+                   <Button variant="ghost" 
                     key={day}
                     type="button"
                     onClick={() => toggleDay(day)}
@@ -533,7 +533,7 @@ const WorkingHoursSection: React.FC<{
                       }`}
                   >
                     {day.slice(0, 3)}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -542,13 +542,13 @@ const WorkingHoursSection: React.FC<{
               <p className="text-xs text-coral-600 dark:text-coral-400 leading-relaxed">
                 <b>Note:</b> These are global default hours. For custom requirements like Night Shifts or Rotation, please use advanced shift management.
               </p>
-              <button
+               <Button variant="ghost" 
                 type="button"
                 onClick={() => { setIsModalOpen(false); navigate('/organisation?tab=shifts&subtab=manage'); }}
                 className="mt-2 text-xs font-bold text-brand-500 hover:underline flex items-center gap-1"
               >
                 Go to Shift Management <ExternalLink size={10} />
-              </button>
+              </Button>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -741,16 +741,16 @@ const OrganizationProfileSection: React.FC<{
             </div>
             {canEditProfile && (
               <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-3">
-                <button
+                 <Button variant="ghost" 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                   title="Update Logo"
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:cursor-not-allowed"
                 >
                   {uploading ? <RefreshCw size={20} className="animate-spin" /> : <Upload size={20} />}
-                </button>
+                </Button>
                 {profile?.settings?.logo_url && (
-                  <button
+                   <Button variant="ghost" 
                     onClick={async () => {
                       if (await confirm({ type: 'destructive', title: 'Remove Logo', message: 'Are you sure you want to remove the logo?' })) {
                         deleteLogoMutation.mutate();
@@ -761,7 +761,7 @@ const OrganizationProfileSection: React.FC<{
                     className="p-2 hover:bg-red-500/40 rounded-lg transition-colors disabled:cursor-not-allowed text-red-200"
                   >
                     {deleteLogoMutation.isPending ? <RefreshCw size={20} className="animate-spin" /> : <Trash2 size={20} />}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

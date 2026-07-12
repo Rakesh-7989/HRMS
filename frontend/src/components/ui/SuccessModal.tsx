@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, AlertCircle, Info, X, ArrowLeft } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -97,21 +98,21 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                             {/* Navigation Buttons */}
                             <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
                                 {onBack ? (
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={onBack}
                                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
                                         title="Back"
                                     >
                                         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                                    </button>
+                                    </Button>
                                 ) : <div />}
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={onClose}
                                     className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
                                     title="Close"
                                 >
                                     <X size={20} />
-                                </button>
+                                </Button>
                             </div>
 
                             {/* Content */}

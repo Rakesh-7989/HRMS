@@ -163,7 +163,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
                                         >
                                             <Download size={16} />
                                         </a>
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={async () => {
                                                 const result = await confirm({
                                                     title: t('profile.deleteDocumentTitle'),
@@ -180,7 +180,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
                                             title={t('common.delete')}
                                         >
                                             <Trash2 size={16} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 ),
                             },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { adminService, TenantProfile } from '@/services/admin.service';
 import { Upload, Image as ImageIcon } from 'lucide-react';
@@ -123,7 +124,7 @@ export const PayrollSettings: React.FC = () => {
                         </div>
 
                         <div className="flex items-end">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={async () => {
                                     try {
                                         setUploading(true);
@@ -143,7 +144,7 @@ export const PayrollSettings: React.FC = () => {
                                 className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 transition-colors disabled:opacity-50"
                             >
                                 Save Customization
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

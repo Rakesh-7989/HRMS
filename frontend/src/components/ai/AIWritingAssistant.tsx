@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
 import { aiService } from '@/services/ai.service';
 import { Sparkles, Loader2, X, Wand2 } from 'lucide-react';
@@ -51,9 +52,9 @@ export const AIWritingAssistant: React.FC<AIWritingAssistantProps> = ({ targetTe
           <Wand2 className="w-4 h-4 text-brand-500" />
           <span className="text-sm font-bold text-neutral-900 dark:text-white">AI Writing</span>
         </div>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">
+         <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">
           <X size={14} className="text-neutral-400" />
-        </button>
+        </Button>
       </div>
 
       {generateMutation.isPending ? (
@@ -71,21 +72,21 @@ export const AIWritingAssistant: React.FC<AIWritingAssistantProps> = ({ targetTe
                 </p>
               )}
               {PROMPT_OPTIONS.map((opt) => (
-                <button
+                 <Button variant="ghost" 
                   key={opt.label}
                   onClick={() => handleOption(opt)}
                   className="w-full text-left px-3 py-2 rounded-xl text-sm text-neutral-700 dark:text-neutral-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 transition-all"
                 >
                   <Sparkles size={12} className="inline mr-2 text-brand-400" />
                   {opt.label}
-                </button>
+                </Button>
               ))}
-              <button
+               <Button variant="ghost" 
                 onClick={() => setMode('custom')}
                 className="w-full text-left px-3 py-2 rounded-xl text-sm text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-all"
               >
                 Custom prompt...
-              </button>
+              </Button>
             </>
           ) : (
             <div className="space-y-2">
@@ -98,19 +99,19 @@ export const AIWritingAssistant: React.FC<AIWritingAssistantProps> = ({ targetTe
                 rows={3}
               />
               <div className="flex gap-2">
-                <button
+                 <Button variant="ghost" 
                   onClick={() => setMode('options')}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-500 hover:bg-neutral-100"
                 >
                   Back
-                </button>
-                <button
+                </Button>
+                 <Button variant="ghost" 
                   onClick={() => generateMutation.mutate(customPrompt)}
                   disabled={!customPrompt.trim()}
                   className="px-4 py-1.5 rounded-lg bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 disabled:opacity-50"
                 >
                   Generate
-                </button>
+                </Button>
               </div>
             </div>
           )}

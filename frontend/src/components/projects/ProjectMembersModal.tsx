@@ -217,14 +217,14 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                                         </TableCell>
                                         {canManage && (
                                             <TableCell>
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={() => handleRemoveMember(member.employee_id)}
                                                     className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                                                     title="Remove member"
                                                     disabled={removeMemberMutation.isPending}
                                                 >
                                                     <Trash2 size={16} />
-                                                </button>
+                                                </Button>
                                             </TableCell>
                                         )}
                                     </TableRow>

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useMotionValue } from 'framer-motion';
 import {
@@ -75,7 +76,7 @@ const OrgNode: React.FC<{
 
                 {/* Bottom interactive area if has children */}
                 {hasChildren && (
-                    <button
+                     <Button variant="ghost" 
                         onClick={(e) => {
                             e.stopPropagation();
                             onToggle?.();
@@ -86,7 +87,7 @@ const OrgNode: React.FC<{
                         )}
                     >
                         {isExpanded ? <Minus size={14} strokeWidth={3} /> : <Plus size={14} strokeWidth={3} />}
-                    </button>
+                    </Button>
                 )}
             </div>
 
@@ -252,40 +253,40 @@ export const OrgTreeContent: React.FC = () => {
             {/* Toolbar - Floating Glassmorphic */}
             <div className="absolute right-6 top-6 flex flex-col gap-3 z-30 order-last">
                 <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-elev-6 border border-white/40 dark:border-gray-700/40">
-                    <button
+                     <Button variant="ghost" 
                         title="Fit to Screen"
                         onClick={handleFitToScreen}
                         className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
-                    ><Maximize size={20} /></button>
+                    ><Maximize size={20} /></Button>
                     <div className="h-px bg-gray-200 dark:bg-gray-800 mx-2"></div>
-                    <button
+                     <Button variant="ghost" 
                         title="Zoom In"
                         onClick={() => handleZoom(0.1)}
                         className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
-                    ><Plus size={20} /></button>
-                    <button
+                    ><Plus size={20} /></Button>
+                     <Button variant="ghost" 
                         title="Zoom Out"
                         onClick={() => handleZoom(-0.1)}
                         className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
-                    ><Minus size={20} /></button>
-                    <button
+                    ><Minus size={20} /></Button>
+                     <Button variant="ghost" 
                         title="Reset"
                         onClick={() => { setScale(1); x.set(0); y.set(0); }}
                         className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90 font-mono text-xs font-bold"
-                    >100%</button>
+                    >100%</Button>
                 </div>
 
                 <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-elev-6 border border-white/40 dark:border-gray-700/40">
-                    <button
+                     <Button variant="ghost" 
                         title="Expand All"
                         onClick={expandAll}
                         className="p-2.5 rounded-xl hover:bg-blue-500/10 text-gray-600 dark:text-gray-300 hover:text-blue-500 transition-all active:scale-90"
-                    ><ChevronsDown size={20} /></button>
-                    <button
+                    ><ChevronsDown size={20} /></Button>
+                     <Button variant="ghost" 
                         title="Collapse All"
                         onClick={collapseAll}
                         className="p-2.5 rounded-xl hover:bg-error-500/10 text-gray-600 dark:text-gray-300 hover:text-error-500 transition-all active:scale-90"
-                    ><ChevronsUp size={20} /></button>
+                    ><ChevronsUp size={20} /></Button>
                 </div>
             </div>
 

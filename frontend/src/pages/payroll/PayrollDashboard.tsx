@@ -521,13 +521,13 @@ export const PayrollDashboard = () => {
                                 {
                                     header: t('common.actions'),
                                     cell: (run: any) => (
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => navigate(`/payroll/process/${run.id}`)}
                                             className="p-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/30 text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                                             title={t('payroll.viewRun')}
                                         >
                                             <ArrowRight className="w-4 h-4" />
-                                        </button>
+                                        </Button>
                                     ),
                                 },
                             ];

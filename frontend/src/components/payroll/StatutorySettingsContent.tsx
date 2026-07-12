@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { showToast } from '@/utils/toast';
 import { Settings, Plus, Trash2, Save } from 'lucide-react';
 import api from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 interface StatutoryConfig {
     id?: string;
@@ -56,6 +57,7 @@ export const StatutorySettingsContent: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+    const { t } = useTranslation();
 
     // Config state
     const [config, setConfig] = useState<StatutoryConfig>({
@@ -133,11 +135,11 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Statutory configuration saved');
+            showToast.success(t('payroll.statutory.toast.configSaved'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'statutory-config'] });
         },
         onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to save configuration');
+            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.saveFailed'));
         }
     });
 
@@ -148,13 +150,13 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('PT slab added');
+            showToast.success(t('payroll.statutory.toast.ptSlabAdded'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'pt-slabs'] });
             setAddPtOpen(false);
             resetPtForm();
         },
         onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to add PT slab');
+            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.ptSlabAddFailed'));
         }
     });
 
@@ -165,7 +167,7 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data;
         },
         onSuccess: () => {
-            showToast.success('PT slab deleted');
+            showToast.success(t('payroll.statutory.toast.ptSlabDeleted'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'pt-slabs'] });
         }
     });
@@ -177,13 +179,13 @@ export const StatutorySettingsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Deduction type added');
+            showToast.success(t('payroll.statutory.toast.deductionAdded'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'deduction-types'] });
             setAddDeductionOpen(false);
             resetDeductionForm();
         },
         onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to add deduction type');
+            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.deductionAddFailed'));
         }
     });
 
@@ -217,7 +219,7 @@ export const StatutorySettingsContent: React.FC = () => {
 
     const handleCreateDeductionType = () => {
         if (!dedName || !dedCode) {
-            showToast.error('Name and code are required');
+            showToast.error(t('payroll.statutory.toast.nameCodeRequired'));
             return;
         }
         createDeductionTypeMutation.mutate({
@@ -235,8 +237,8 @@ export const StatutorySettingsContent: React.FC = () => {
         return (
             <Card className="p-8 text-center">
                 <Settings className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium">Access Restricted</h3>
-                <p className="text-muted-foreground">Only HR and Admin can access statutory settings.</p>
+                <h3 className="text-lg font-medium">{t('payroll.statutory.accessRestricted')}</h3>
+                <p className="text-muted-foreground">{t('payroll.statutory.accessRestrictedDesc')}</p>
             </Card>
         );
     }
@@ -246,16 +248,16 @@ export const StatutorySettingsContent: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Settings className="w-5 h-5" /> Statutory Settings
+                    <Settings className="w-5 h-5" /> {t('payroll.statutory.title')}
                 </h2>
                 <Button onClick={handleSaveConfig} disabled={saveConfigMutation.isPending} className="flex items-center gap-2">
-                    <Save className="w-4 h-4" /> {saveConfigMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                    <Save className="w-4 h-4" /> {saveConfigMutation.isPending ? t('payroll.statutory.saving') : t('payroll.statutory.saveConfig')}
                 </Button>
             </div>
 
             {/* PF Settings */}
             <Card className="p-6">
-                <h3 className="text-lg font-medium mb-4">Provident Fund (PF)</h3>
+                <h3 className="text-lg font-medium mb-4">{t('payroll.statutory.pfTitle')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="flex items-center gap-2">
                         <input
@@ -265,10 +267,10 @@ export const StatutorySettingsContent: React.FC = () => {
                             onChange={(e) => setConfig({ ...config, pf_enabled: e.target.checked })}
                             className="w-4 h-4"
                         />
-                        <Label htmlFor="pf_enabled">Enable PF</Label>
+                        <Label htmlFor="pf_enabled">{t('payroll.statutory.pfEnabled')}</Label>
                     </div>
                     <div>
-                        <Label>Employee Rate (%)</Label>
+                        <Label>{t('payroll.statutory.employeeRate')}</Label>
                         <Input
                             type="number"
                             step="0.01"
@@ -278,7 +280,7 @@ export const StatutorySettingsContent: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <Label>Employer Rate (%)</Label>
+                        <Label>{t('payroll.statutory.employerRate')}</Label>
                         <Input
                             type="number"
                             step="0.01"
@@ -288,7 +290,7 @@ export const StatutorySettingsContent: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <Label>Wage Ceiling (₹)</Label>
+                        <Label>{t('payroll.statutory.wageCeiling')}</Label>
                         <Input
                             type="number"
                             value={config.pf_wage_ceiling}
@@ -301,7 +303,7 @@ export const StatutorySettingsContent: React.FC = () => {
 
             {/* ESI Settings */}
             <Card className="p-6">
-                <h3 className="text-lg font-medium mb-4">Employee State Insurance (ESI)</h3>
+                <h3 className="text-lg font-medium mb-4">{t('payroll.statutory.esiTitle')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="flex items-center gap-2">
                         <input
@@ -311,10 +313,10 @@ export const StatutorySettingsContent: React.FC = () => {
                             onChange={(e) => setConfig({ ...config, esi_enabled: e.target.checked })}
                             className="w-4 h-4"
                         />
-                        <Label htmlFor="esi_enabled">Enable ESI</Label>
+                        <Label htmlFor="esi_enabled">{t('payroll.statutory.esiEnabled')}</Label>
                     </div>
                     <div>
-                        <Label>Employee Rate (%)</Label>
+                        <Label>{t('payroll.statutory.employeeRate')}</Label>
                         <Input
                             type="number"
                             step="0.01"
@@ -324,7 +326,7 @@ export const StatutorySettingsContent: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <Label>Employer Rate (%)</Label>
+                        <Label>{t('payroll.statutory.employerRate')}</Label>
                         <Input
                             type="number"
                             step="0.01"
@@ -334,7 +336,7 @@ export const StatutorySettingsContent: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <Label>Wage Ceiling (₹)</Label>
+                        <Label>{t('payroll.statutory.wageCeiling')}</Label>
                         <Input
                             type="number"
                             value={config.esi_wage_ceiling}
@@ -348,9 +350,9 @@ export const StatutorySettingsContent: React.FC = () => {
             {/* Professional Tax Settings */}
             <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium">Professional Tax (PT)</h3>
+                    <h3 className="text-lg font-medium">{t('payroll.statutory.ptTitle')}</h3>
                     <Button size="sm" variant="outline" onClick={() => setAddPtOpen(true)} className="flex items-center gap-1">
-                        <Plus className="w-4 h-4" /> Add PT Slab
+                        <Plus className="w-4 h-4" /> {t('payroll.statutory.addPtSlab')}
                     </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -362,10 +364,10 @@ export const StatutorySettingsContent: React.FC = () => {
                             onChange={(e) => setConfig({ ...config, pt_enabled: e.target.checked })}
                             className="w-4 h-4"
                         />
-                        <Label htmlFor="pt_enabled">Enable PT</Label>
+                        <Label htmlFor="pt_enabled">{t('payroll.statutory.ptEnabled')}</Label>
                     </div>
                     <div>
-                        <Label>Default State</Label>
+                        <Label>{t('payroll.statutory.defaultState')}</Label>
                         <select
                             className="w-full border rounded p-2"
                             value={config.pt_state}
@@ -382,11 +384,11 @@ export const StatutorySettingsContent: React.FC = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>State</TableHead>
-                                <TableHead>Min Salary</TableHead>
-                                <TableHead>Max Salary</TableHead>
-                                <TableHead>Monthly Tax</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead>{t('payroll.statutory.table.state')}</TableHead>
+                                <TableHead>{t('payroll.statutory.table.minSalary')}</TableHead>
+                                <TableHead>{t('payroll.statutory.table.maxSalary')}</TableHead>
+                                <TableHead>{t('payroll.statutory.table.monthlyTax')}</TableHead>
+                                <TableHead>{t('payroll.statutory.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -394,7 +396,7 @@ export const StatutorySettingsContent: React.FC = () => {
                                 <TableRow key={slab.id}>
                                     <TableCell>{slab.state}</TableCell>
                                     <TableCell>{formatAmount(slab.min_salary)}</TableCell>
-                                    <TableCell>{slab.max_salary ? formatAmount(slab.max_salary) : 'No limit'}</TableCell>
+                                    <TableCell>{slab.max_salary ? formatAmount(slab.max_salary) : t('payroll.statutory.noLimit')}</TableCell>
                                     <TableCell>{formatAmount(slab.monthly_tax)}</TableCell>
                                     <TableCell>
                                         <Button
@@ -416,24 +418,24 @@ export const StatutorySettingsContent: React.FC = () => {
             {/* Deduction Types */}
             <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium">Deduction Types</h3>
+                    <h3 className="text-lg font-medium">{t('payroll.statutory.deductionTypes')}</h3>
                     <Button size="sm" variant="outline" onClick={() => setAddDeductionOpen(true)} className="flex items-center gap-1">
-                        <Plus className="w-4 h-4" /> Add Deduction Type
+                        <Plus className="w-4 h-4" /> {t('payroll.statutory.addDeductionType')}
                     </Button>
                 </div>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Code</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Recurring</TableHead>
+                            <TableHead>{t('payroll.statutory.table.name')}</TableHead>
+                            <TableHead>{t('payroll.statutory.table.code')}</TableHead>
+                            <TableHead>{t('payroll.statutory.table.category')}</TableHead>
+                            <TableHead>{t('payroll.statutory.table.type')}</TableHead>
+                            <TableHead>{t('payroll.statutory.table.recurring')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {deductionTypes.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No deduction types configured</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">{t('payroll.statutory.noDeductionTypes')}</TableCell></TableRow>
                         ) : (
                             deductionTypes.map((ded) => (
                                 <TableRow key={ded.id}>
@@ -441,7 +443,7 @@ export const StatutorySettingsContent: React.FC = () => {
                                     <TableCell><code className="bg-gray-100 px-2 py-1 rounded">{ded.code}</code></TableCell>
                                     <TableCell><Badge variant="outline">{ded.category}</Badge></TableCell>
                                     <TableCell>{ded.calculation_type}</TableCell>
-                                    <TableCell>{ded.is_recurring ? '✅ Yes' : '❌ No'}</TableCell>
+                                    <TableCell>{ded.is_recurring ? t('payroll.statutory.yes') : t('payroll.statutory.no')}</TableCell>
                                 </TableRow>
                             ))
                         )}
@@ -453,33 +455,33 @@ export const StatutorySettingsContent: React.FC = () => {
             <Dialog open={addPtOpen} onOpenChange={setAddPtOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add PT Slab</DialogTitle>
+                        <DialogTitle>{t('payroll.statutory.addPtSlab')}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div>
-                            <Label>State</Label>
+                            <Label>{t('payroll.statutory.state')}</Label>
                             <select className="w-full border rounded p-2 mt-1" value={ptState} onChange={(e) => setPtState(e.target.value)}>
                                 {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
                             </select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label>Min Salary (₹)</Label>
+                                <Label>{t('payroll.statutory.minSalary')}</Label>
                                 <Input type="number" value={ptMinSalary} onChange={(e) => setPtMinSalary(Number(e.target.value))} />
                             </div>
                             <div>
-                                <Label>Max Salary (₹)</Label>
-                                <Input type="number" value={ptMaxSalary} onChange={(e) => setPtMaxSalary(e.target.value ? Number(e.target.value) : '')} placeholder="Leave empty for no limit" />
+                                <Label>{t('payroll.statutory.maxSalary')}</Label>
+                                <Input type="number" value={ptMaxSalary} onChange={(e) => setPtMaxSalary(e.target.value ? Number(e.target.value) : '')} placeholder={t('payroll.statutory.maxSalaryPlaceholder')} />
                             </div>
                         </div>
                         <div>
-                            <Label>Monthly Tax (₹)</Label>
+                            <Label>{t('payroll.statutory.monthlyTax')}</Label>
                             <Input type="number" value={ptMonthlyTax} onChange={(e) => setPtMonthlyTax(Number(e.target.value))} />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setAddPtOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreatePtSlab} disabled={createPtSlabMutation.isPending}>Add Slab</Button>
+                        <Button variant="ghost" onClick={() => setAddPtOpen(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleCreatePtSlab} disabled={createPtSlabMutation.isPending}>{t('payroll.statutory.addSlab')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -488,42 +490,42 @@ export const StatutorySettingsContent: React.FC = () => {
             <Dialog open={addDeductionOpen} onOpenChange={setAddDeductionOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add Deduction Type</DialogTitle>
+                        <DialogTitle>{t('payroll.statutory.addDeductionType')}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div>
-                            <Label>Name *</Label>
-                            <Input value={dedName} onChange={(e) => setDedName(e.target.value)} placeholder="e.g., Income Tax" />
+                            <Label>{t('payroll.statutory.nameRequired')}</Label>
+                            <Input value={dedName} onChange={(e) => setDedName(e.target.value)} placeholder={t('payroll.statutory.namePlaceholder')} />
                         </div>
                         <div>
-                            <Label>Code *</Label>
-                            <Input value={dedCode} onChange={(e) => setDedCode(e.target.value.toUpperCase())} placeholder="e.g., TDS" />
+                            <Label>{t('payroll.statutory.codeRequired')}</Label>
+                            <Input value={dedCode} onChange={(e) => setDedCode(e.target.value.toUpperCase())} placeholder={t('payroll.statutory.codePlaceholder')} />
                         </div>
                         <div>
-                            <Label>Category</Label>
+                            <Label>{t('payroll.statutory.categoryLabel')}</Label>
                             <select className="w-full border rounded p-2 mt-1" value={dedCategory} onChange={(e) => setDedCategory(e.target.value)}>
-                                <option value="STATUTORY">Statutory</option>
-                                <option value="LOAN">Loan</option>
-                                <option value="ADVANCE">Advance</option>
-                                <option value="PENALTY">Penalty</option>
-                                <option value="OTHER">Other</option>
+                                <option value="STATUTORY">{t('payroll.statutory.category.statutory')}</option>
+                                <option value="LOAN">{t('payroll.statutory.category.loan')}</option>
+                                <option value="ADVANCE">{t('payroll.statutory.category.advance')}</option>
+                                <option value="PENALTY">{t('payroll.statutory.category.penalty')}</option>
+                                <option value="OTHER">{t('payroll.statutory.category.other')}</option>
                             </select>
                         </div>
                         <div>
-                            <Label>Calculation Type</Label>
+                            <Label>{t('payroll.statutory.calculationType')}</Label>
                             <select className="w-full border rounded p-2 mt-1" value={dedCalculationType} onChange={(e) => setDedCalculationType(e.target.value)}>
-                                <option value="FIXED">Fixed Amount</option>
-                                <option value="PERCENTAGE">Percentage</option>
+                                <option value="FIXED">{t('payroll.statutory.calc.fixed')}</option>
+                                <option value="PERCENTAGE">{t('payroll.statutory.calc.percentage')}</option>
                             </select>
                         </div>
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="ded_recurring" checked={dedIsRecurring} onChange={(e) => setDedIsRecurring(e.target.checked)} className="w-4 h-4" />
-                            <Label htmlFor="ded_recurring">Recurring Deduction</Label>
+                            <Label htmlFor="ded_recurring">{t('payroll.statutory.recurringDeduction')}</Label>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setAddDeductionOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateDeductionType} disabled={createDeductionTypeMutation.isPending}>Add Type</Button>
+                        <Button variant="ghost" onClick={() => setAddDeductionOpen(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleCreateDeductionType} disabled={createDeductionTypeMutation.isPending}>{t('payroll.statutory.addType')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

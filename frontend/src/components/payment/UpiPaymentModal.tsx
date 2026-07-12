@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, Loader2, CheckCircle, XCircle, AlertCircle, Copy, ExternalLink, X } from 'lucide-react';
 import QRCode from 'qrcode';
@@ -135,12 +136,12 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
             className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-elev-6 border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             {/* Close button */}
-            <button
+             <Button variant="ghost" 
               onClick={onClose}
               className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X size={18} />
-            </button>
+            </Button>
 
             {/* Content */}
             <div className="p-6 pt-8">
@@ -206,7 +207,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                   </div>
 
                   <div className="flex justify-center gap-2">
-                    <button
+                     <Button variant="ghost" 
                       onClick={handleCopy}
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
@@ -217,14 +218,14 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                     >
                       <Copy size={14} />
                       {copied ? 'Copied!' : 'Copy UPI ID'}
-                    </button>
-                    <button
+                    </Button>
+                     <Button variant="ghost" 
                       onClick={openUpiApp}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-all"
                     >
                       <ExternalLink size={14} />
                       Open UPI App
-                    </button>
+                    </Button>
                   </div>
 
                   <p className="text-[10px] text-center text-gray-400 font-medium px-4">
@@ -258,12 +259,12 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
                   <p className="text-sm text-red-600 dark:text-red-400 font-medium">
                     {errorMessage || 'Payment could not be processed.'}
                   </p>
-                  <button
+                   <Button variant="ghost" 
                     onClick={handleRetry}
                     className="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-500-dark transition-colors"
                   >
                     Retry Payment
-                  </button>
+                  </Button>
                 </div>
               )}
 

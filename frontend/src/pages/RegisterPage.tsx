@@ -467,9 +467,9 @@ export const RegisterPage: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-white/10">
-                                        <button type="button" onClick={() => navigate('/pricing')} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-500 transition-all">
+                                         <Button variant="ghost" type="button" onClick={() => navigate('/pricing')} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-500 transition-all">
                                             <ArrowLeft size={16} /> {t('registration.abort')}
-                                        </button>
+                                        </Button>
                                         <Button type="submit" isLoading={loading} className="h-12 px-12 rounded-xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/30 animate-in fade-in slide-in-from-right-4">
                                             {t('registration.nextReview')}
                                         </Button>
@@ -577,7 +577,7 @@ export const RegisterPage: React.FC = () => {
                                 </div>
 
                                 <div className="flex gap-4">
-                                    <button onClick={() => setStep('details')} className="px-6 h-11 rounded-xl border-2 border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all">{t('registration.back')}</button>
+                                     <Button variant="ghost" onClick={() => setStep('details')} className="px-6 h-11 rounded-xl border-2 border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all">{t('registration.back')}</Button>
                                     <Button onClick={handleSendOtp} disabled={loading} className="flex-1 h-11 rounded-xl shadow-elev-5 shadow-brand-500/20 text-[10px] font-black tracking-widest uppercase">
                                         {loading ? <Loader2 className="animate-spin" /> : t('registration.confirmProceed')}
                                     </Button>
@@ -602,11 +602,11 @@ export const RegisterPage: React.FC = () => {
                                     {loading ? <Loader2 className="animate-spin" /> : t('registration.finishRegistration')}
                                 </Button>
 
-                                <button onClick={handleResendOtp} disabled={loading} className="mt-6 text-[10px] font-black text-brand-500 uppercase tracking-widest hover:text-brand-500/70 transition-all disabled:opacity-50 underline decoration-2 underline-offset-4">
+                                 <Button variant="ghost" onClick={handleResendOtp} disabled={loading} className="mt-6 text-[10px] font-black text-brand-500 uppercase tracking-widest hover:text-brand-500/70 transition-all disabled:opacity-50 underline decoration-2 underline-offset-4">
                                     {t('registration.resendCode')}
-                                </button>
+                                </Button>
                                 
-                                <button onClick={() => setStep('review')} className="mt-8 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-600">{t('registration.backToReview')}</button>
+                                 <Button variant="ghost" onClick={() => setStep('review')} className="mt-8 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-600">{t('registration.backToReview')}</Button>
                             </div>
                         )}
 

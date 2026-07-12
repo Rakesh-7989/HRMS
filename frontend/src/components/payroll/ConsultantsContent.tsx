@@ -202,18 +202,18 @@ export const ConsultantsContent: React.FC = () => {
                 <h2 className="text-xl font-semibold">Consultant Payroll</h2>
                 <div className="flex gap-2">
                     <div className="flex rounded-md border overflow-hidden">
-                        <button
+                         <Button variant="ghost" 
                             className={`px-4 py-2 text-sm ${activeView === 'consultants' ? 'bg-brand-500 text-white' : 'bg-white'}`}
                             onClick={() => setActiveView('consultants')}
                         >
                             <Users className="w-4 h-4 inline mr-1" /> Consultants
-                        </button>
-                        <button
+                        </Button>
+                         <Button variant="ghost" 
                             className={`px-4 py-2 text-sm ${activeView === 'invoices' ? 'bg-brand-500 text-white' : 'bg-white'}`}
                             onClick={() => setActiveView('invoices')}
                         >
                             <FileText className="w-4 h-4 inline mr-1" /> Invoices
-                        </button>
+                        </Button>
                     </div>
                     {isAdmin && activeView === 'consultants' && (
                         <Button onClick={() => setAddConsultantOpen(true)} className="flex items-center gap-2">

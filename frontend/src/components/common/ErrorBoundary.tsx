@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { Button } from '@/components/ui/Button';
 import i18n from '@/i18n/config';
 
 interface Props {
@@ -57,12 +58,12 @@ export class ErrorBoundary extends Component<Props, State> {
                                 {this.state.error.toString()}
                             </div>
                         )}
-                        <button
+                         <Button variant="ghost" 
                             onClick={this.handleReload}
                             className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                             {i18n.t('errorBoundary.reload')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             );

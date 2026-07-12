@@ -9,9 +9,11 @@ import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, IndianRupee, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { useTranslation } from 'react-i18next';
 
 export const SalaryStructuresContent: React.FC = () => {
-    const confirm = useConfirm();
+    const { confirm } = useConfirm();
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'structures' | 'components' | 'calculator'>('structures');
 
@@ -103,10 +105,10 @@ export const SalaryStructuresContent: React.FC = () => {
                 // Use a custom toast or just success
                 alert(result.message); // Simple alert for detailed message
             } else {
-                alert('No eligible active employees found to migrate (must have existing assignments or legacy data with CTC > 0).');
+                alert(t('payroll.salaryStructure.alerts.noEligibleEmployees'));
             }
         },
-        onError: (err: any) => alert(err.message || 'Migration failed')
+        onError: (err: any) => alert(err.message || t('payroll.salaryStructure.alerts.migrationFailed'))
     });
 
     const createComponentMut = useMutation({
@@ -138,9 +140,9 @@ export const SalaryStructuresContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['salary-structures'] });
             queryClient.invalidateQueries({ queryKey: ['salary-components'] });
-            alert('Default salary components and structure initialized successfully!');
+            alert(t('payroll.salaryStructure.alerts.seedSuccess'));
         },
-        onError: (err: any) => alert('Failed to seed defaults: ' + (err.response?.data?.message || err.message))
+        onError: (err: any) =>             alert(t('payroll.salaryStructure.alerts.seedFailed') + (err.response?.data?.message || err.message))
     });
 
 
@@ -261,7 +263,7 @@ export const SalaryStructuresContent: React.FC = () => {
             const breakdown = await payrollService.calculateCTC(calcStructureId, parseFloat(calcCTC));
             setCtcBreakdown(breakdown);
         } catch (err: any) {
-            alert('Calculation failed: ' + (err?.response?.data?.message || err.message));
+            alert(t('payroll.salaryStructure.alerts.calculationFailed') + (err?.response?.data?.message || err.message));
         } finally {
             setCalculating(false);
         }
@@ -284,9 +286,9 @@ export const SalaryStructuresContent: React.FC = () => {
                             </div>
                             <div>
                                 <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-white leading-tight">
-                                    {editingStructure ? 'Edit' : 'Create'} Salary Structure
+                                    {editingStructure ? t('payroll.salaryStructure.editor.editTitle') : t('payroll.salaryStructure.editor.createTitle')}
                                 </h1>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mt-0.5">Automated Payroll Logic</p>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mt-0.5">{t('payroll.salaryStructure.editor.subtitle')}</p>
                             </div>
                         </div>
 
@@ -296,7 +298,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 onClick={() => { setStructureDialogOpen(false); resetStructureForm(); }}
                                 className="px-5 h-10 text-gray-400 font-bold hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all"
                             >
-                                CANCEL
+                                {t('payroll.salaryStructure.editor.cancel')}
                             </Button>
                             <Button
                                 onClick={handleSaveStructure}
@@ -308,7 +310,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 ) : (
                                     <Check className="stroke-[3px]" size={16} />
                                 )}
-                                {editingStructure ? 'UPDATE' : 'SAVE'}
+                                {editingStructure ? t('payroll.salaryStructure.editor.update') : t('payroll.salaryStructure.editor.save')}
                             </Button>
                         </div>
                     </header>
@@ -316,20 +318,20 @@ export const SalaryStructuresContent: React.FC = () => {
                     {/* Config Bar: Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-5 px-8 py-5 bg-gray-50/60 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-800 shrink-0">
                         <div className="md:col-span-4 space-y-1.5">
-                            <Label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Structure Name</Label>
+                            <Label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.editor.structureName')}</Label>
                             <Input
                                 value={structureName}
                                 onChange={e => setStructureName(e.target.value)}
-                                placeholder="e.g., India - Standard Structure"
+                                placeholder={t('payroll.salaryStructure.editor.structureNamePlaceholder')}
                                 className="h-10 px-4 text-sm font-semibold bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl shadow-elev-1 transition-all text-gray-900 dark:text-white"
                             />
                         </div>
                         <div className="md:col-span-5 space-y-1.5">
-                            <Label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Description</Label>
+                            <Label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.editor.description')}</Label>
                             <Input
                                 value={structureDescription}
                                 onChange={e => setStructureDescription(e.target.value)}
-                                placeholder="What is this structure used for?"
+                                placeholder={t('payroll.salaryStructure.editor.descriptionPlaceholder')}
                                 className="h-10 px-4 text-sm font-medium bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl shadow-elev-1 transition-all text-gray-900 dark:text-white"
                             />
                         </div>
@@ -341,7 +343,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${structureIsDefault ? 'bg-white border-white text-slate-800' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700'}`}>
                                     {structureIsDefault && <Check size={12} className="stroke-[4px] text-slate-900" />}
                                 </div>
-                                Set as Default
+                                {t('payroll.salaryStructure.editor.setAsDefault')}
                             </div>
                         </div>
                     </div>
@@ -351,7 +353,7 @@ export const SalaryStructuresContent: React.FC = () => {
                         {/* Library (Left) */}
                         <aside className="w-full md:w-[320px] shrink-0 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-950/20 flex flex-col min-h-0">
                             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 flex justify-between items-center shrink-0">
-                                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Available Components</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">{t('payroll.salaryStructure.editor.availableComponents')}</h3>
                                 <div className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md text-[10px] font-bold">
                                     {components.filter(c => c.is_active && !selectedComponents.some(sc => sc.component_id === c.id)).length}
                                 </div>
@@ -360,16 +362,16 @@ export const SalaryStructuresContent: React.FC = () => {
                                 {componentsLoading ? (
                                     <div className="flex flex-col items-center justify-center py-16 gap-3 opacity-30">
                                         <Loader2 className="animate-spin" size={28} />
-                                        <p className="text-[9px] font-bold uppercase tracking-widest">Loading...</p>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest">{t('payroll.salaryStructure.editor.loading')}</p>
                                     </div>
                                 ) : components.filter(c => c.is_active && !selectedComponents.some(sc => sc.component_id === c.id)).length === 0 ? (
                                     <div className="p-10 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl bg-white/50 dark:bg-gray-900/50 flex flex-col items-center gap-3 mt-6">
                                         <Package size={24} className="text-gray-200" />
-                                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-relaxed">All Components<br />Added</p>
+                                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-relaxed">{t('payroll.salaryStructure.editor.allComponents')}<br />{t('payroll.salaryStructure.editor.added')}</p>
                                     </div>
                                 ) : (
                                     components.filter(c => c.is_active && !selectedComponents.some(sc => sc.component_id === c.id)).map(c => (
-                                        <button
+                                         <Button variant="ghost" 
                                             key={c.id}
                                             onClick={() => addComponentToStructure(c)}
                                             className="w-full group flex justify-between items-center p-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-brand-500/50 hover:shadow-elev-4 hover:shadow-brand-500/5 transition-all text-left"
@@ -381,7 +383,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                             <div className="w-7 h-7 flex items-center justify-center bg-gray-50 dark:bg-gray-800 group-hover:bg-brand-500 group-hover:text-white rounded-lg transition-all shrink-0">
                                                 <Plus size={14} />
                                             </div>
-                                        </button>
+                                        </Button>
                                     ))
                                 )}
                             </div>
@@ -393,7 +395,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Structure Workspace</h3>
                                 <div className="flex items-center gap-2">
                                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse" />
-                                    <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">{selectedComponents.length} Components Selected</span>
+                                    <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">{t('payroll.salaryStructure.editor.componentsSelected', { count: selectedComponents.length })}</span>
                                 </div>
                             </div>
 
@@ -404,8 +406,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                             <Package size={48} className="text-gray-200 dark:text-gray-700" />
                                         </div>
                                         <div className="text-center space-y-1 text-gray-300">
-                                            <p className="text-lg font-bold uppercase tracking-[0.15em]">Empty Workspace</p>
-                                            <p className="text-sm">Select components from the library to build logic</p>
+                                            <p className="text-lg font-bold uppercase tracking-[0.15em]">{t('payroll.salaryStructure.editor.emptyWorkspace')}</p>
+                                            <p className="text-sm">{t('payroll.salaryStructure.editor.emptyWorkspaceHint')}</p>
                                         </div>
                                     </div>
                                 ) : (
@@ -419,28 +421,28 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 <div className="w-full md:w-[240px] shrink-0">
                                                     <p className="text-[13px] font-black text-gray-800 dark:text-gray-200 tracking-tight uppercase leading-tight group-hover:text-brand-500 transition-colors">{c.name}</p>
                                                     <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
-                                                        <Package size={10} /> {c.code || 'NO-REF'}
+                                                         <Package size={10} /> {c.code || t('payroll.salaryStructure.editor.noRef')}
                                                     </p>
                                                 </div>
 
                                                 <div className="flex-1 space-y-1.5">
-                                                    <Label className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 block">Calculation Rule</Label>
+                                                    <Label className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 block">{t('payroll.salaryStructure.editor.calculationRule')}</Label>
                                                     <select
                                                         className="w-full h-10 px-4 text-[10px] font-bold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/10 focus:border-brand-500 transition-all cursor-pointer shadow-elev-1 uppercase tracking-tight text-gray-700 dark:text-gray-200"
                                                         value={c.calculation_type}
                                                         onChange={e => updateSelectedComponent(c.component_id, 'calculation_type', e.target.value)}
                                                     >
-                                                        <option value="PERCENTAGE_OF_CTC">% OF ANNUAL CTC</option>
-                                                        <option value="PERCENTAGE_OF_BASIC">% OF BASIC SALARY</option>
-                                                        <option value="FIXED">FLAT FIXED AMOUNT</option>
-                                                        <option value="REMAINING">BALANCE (REMAINING GROSS)</option>
+                                                        <option value="PERCENTAGE_OF_CTC">{t('payroll.salaryStructure.editor.calcPercentageOfCtc')}</option>
+                                                        <option value="PERCENTAGE_OF_BASIC">{t('payroll.salaryStructure.editor.calcPercentageOfBasic')}</option>
+                                                        <option value="FIXED">{t('payroll.salaryStructure.editor.calcFixed')}</option>
+                                                        <option value="REMAINING">{t('payroll.salaryStructure.editor.calcRemaining')}</option>
                                                     </select>
                                                 </div>
 
                                                 <div className="w-full md:w-[150px] shrink-0">
                                                     {c.calculation_type !== 'REMAINING' && (
                                                         <div className="space-y-1.5">
-                                                            <Label className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 block">Value</Label>
+                                                            <Label className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 block">{t('payroll.salaryStructure.editor.value')}</Label>
                                                             <div className="relative group/input">
                                                                 <Input
                                                                     type="number"
@@ -484,9 +486,9 @@ export const SalaryStructuresContent: React.FC = () => {
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Settings className="text-brand-500" size={20} />
-                            Salary Structures
+                            {t('payroll.salaryStructure.list.title')}
                         </h1>
-                        <p className="text-xs text-gray-500 mt-1 font-medium">Configure and manage organizational compensation frameworks</p>
+                        <p className="text-xs text-gray-500 mt-1 font-medium">{t('payroll.salaryStructure.list.subtitle')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         {activeTab === 'structures' && (
@@ -499,7 +501,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                     onClick={() => seedDefaultsMut.mutate()}
                                 >
                                     {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
-                                    Seed Defaults
+                                    {t('payroll.salaryStructure.list.seedDefaults')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -508,7 +510,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                     onClick={() => setTemplateDialogOpen(true)}
                                 >
                                     <Sparkles className="mr-2" size={14} />
-                                    From Template
+                                    {t('payroll.salaryStructure.list.fromTemplate')}
                                 </Button>
                             </>
                         )}
@@ -526,7 +528,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             }}
                         >
                             <Plus className="mr-2" size={14} />
-                            {activeTab === 'structures' ? 'New Structure' : 'New Component'}
+                            {activeTab === 'structures' ? t('payroll.salaryStructure.list.newStructure') : t('payroll.salaryStructure.list.newComponent')}
                         </Button>
                     </div>
                 </div>
@@ -534,13 +536,13 @@ export const SalaryStructuresContent: React.FC = () => {
                 {/* Pill Navigation */}
                 <div className="mt-6 flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-950/50 rounded-lg w-fit border border-gray-100 dark:border-gray-800">
                     {[
-                        { id: 'structures', label: 'Structures', icon: Settings },
-                        { id: 'components', label: 'Components', icon: Package },
-                        { id: 'calculator', label: 'CTC Calculator', icon: Calculator }
+                        { id: 'structures', label: t('payroll.salaryStructure.list.tabStructures'), icon: Settings },
+                        { id: 'components', label: t('payroll.salaryStructure.list.tabComponents'), icon: Package },
+                        { id: 'calculator', label: t('payroll.salaryStructure.list.tabCalculator'), icon: Calculator }
                     ].map(tab => {
                         const isActive = activeTab === tab.id;
                         return (
-                            <button
+                             <Button variant="ghost" 
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`flex items-center gap-2 px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all duration-200 ${isActive
@@ -550,7 +552,7 @@ export const SalaryStructuresContent: React.FC = () => {
                             >
                                 <tab.icon size={14} className={isActive ? 'text-white' : 'text-gray-400'} />
                                 {tab.label}
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
@@ -561,27 +563,27 @@ export const SalaryStructuresContent: React.FC = () => {
                 <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Template Inventory</h3>
-                            <p className="text-xs text-gray-500 mt-1">Available salary distribution models</p>
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('payroll.salaryStructure.list.templateInventory')}</h3>
+                            <p className="text-xs text-gray-500 mt-1">{t('payroll.salaryStructure.list.templateInventoryDesc')}</p>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-full ring-1 ring-black/5">
                             <Info size={12} className="text-brand-500" />
-                            {structures.length} Loaded
+                            {t('payroll.salaryStructure.list.loaded', { count: structures.length })}
                         </div>
                     </div>
 
                     {structuresLoading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <Loader2 className="animate-spin text-brand-500" size={32} />
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Accessing Models...</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.list.accessingModels')}</p>
                         </div>
                     ) : structures.length === 0 ? (
                         <div className="text-center py-24 bg-gray-50/30 dark:bg-gray-900/10">
                             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-gray-200 dark:border-gray-700">
                                 <AlertCircle size={24} className="text-gray-300" />
                             </div>
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">System Empty</h4>
-                            <p className="text-xs text-gray-500 mt-2 mb-6 max-w-[280px] mx-auto leading-relaxed">No salary structures detected in calculations. Use "Seed Defaults" to initialize standard Indian components.</p>
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('payroll.salaryStructure.list.systemEmpty')}</h4>
+                            <p className="text-xs text-gray-500 mt-2 mb-6 max-w-[280px] mx-auto leading-relaxed">{t('payroll.salaryStructure.list.systemEmptyDesc')}</p>
                             <Button
                                 size="sm"
                                 disabled={seedDefaultsMut.isPending}
@@ -589,7 +591,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 className="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider"
                             >
                                 {seedDefaultsMut.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : <Sparkles className="mr-2" size={14} />}
-                                Seed Default Structure
+                                {t('payroll.salaryStructure.list.seedDefaultStructure')}
                             </Button>
                         </div>
                     ) : (
@@ -597,10 +599,10 @@ export const SalaryStructuresContent: React.FC = () => {
                             <Table>
                                 <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
                                     <TableRow>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Structure Name</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Components</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Status</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4 text-right">Operations</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.table.structureName')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.table.components')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.table.status')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4 text-right">{t('payroll.salaryStructure.list.table.operations')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -609,7 +611,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                             <TableCell className="px-6 py-4">
                                                 <div>
                                                     <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm group-hover:text-brand-500 transition-colors">{s.name}</p>
-                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 italic">{s.description || 'No descriptive metadata'}</p>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 italic">{s.description || t('payroll.salaryStructure.list.table.noDescription')}</p>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
@@ -617,16 +619,16 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-gray-500">
                                                         {s.component_count || 0}
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Elements</span>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.list.table.elements')}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
                                                 {s.is_default ? (
                                                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-brand-50 dark:bg-brand-500/10 text-brand-600 uppercase tracking-tight ring-1 ring-purple-500/20">
-                                                        <Check size={10} className="mr-1 stroke-[3px]" /> System Default
+                                                        <Check size={10} className="mr-1 stroke-[3px]" /> {t('payroll.salaryStructure.list.table.systemDefault')}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Secondary</span>
+                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.list.table.secondary')}</span>
                                                 )}
                                             </TableCell>
                                             <TableCell className="px-6 py-4 text-right">
@@ -635,9 +637,9 @@ export const SalaryStructuresContent: React.FC = () => {
                                                         <Edit size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm"
-                                                        title="Migrate All Employees to this Structure"
+                                                        title={t('payroll.salaryStructure.list.migrateTooltip')}
                                                         onClick={async () => {
-                                                            if (await confirm({ type: 'destructive', title: 'Bulk Migrate', message: `Bulk migrate ALL active employees to '${s.name}'? This will recalculate their salary components based on their current CTC.` })) {
+                                                            if (await confirm({ type: 'destructive', title: t('payroll.salaryStructure.list.confirmBulkMigrateTitle'), message: t('payroll.salaryStructure.list.confirmBulkMigrateMessage', { name: s.name }) })) {
                                                                 migrateMut.mutate(s.id);
                                                             }
                                                         }}
@@ -646,7 +648,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                         <Users size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm" onClick={async () => {
-                                                        if (await confirm({ type: 'destructive', title: 'Delete Structure', message: 'Delete this structure?' })) deleteStructureMut.mutate(s.id);
+                                                        if (await confirm({ type: 'destructive', title: t('payroll.salaryStructure.list.confirmDeleteStructureTitle'), message: t('payroll.salaryStructure.list.confirmDeleteStructureMessage') })) deleteStructureMut.mutate(s.id);
                                                     }} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200">
                                                         <Trash2 size={14} />
                                                     </Button>
@@ -666,29 +668,29 @@ export const SalaryStructuresContent: React.FC = () => {
                 <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Atomic Components</h3>
-                            <p className="text-xs text-gray-500 mt-1">Fundamental building blocks for payroll logic</p>
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('payroll.salaryStructure.list.atomicComponents')}</h3>
+                            <p className="text-xs text-gray-500 mt-1">{t('payroll.salaryStructure.list.atomicComponentsDesc')}</p>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-full ring-1 ring-black/5">
                             <Package size={12} className="text-brand-500" />
-                            {components.filter(c => c.is_active).length} Active
+                            {t('payroll.salaryStructure.list.active', { count: components.filter(c => c.is_active).length })}
                         </div>
                     </div>
 
                     {componentsLoading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <Loader2 className="animate-spin text-brand-500" size={32} />
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cataloging Elements...</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.list.catalogingElements')}</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
                                     <TableRow>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Component</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Reference</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Classification</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">Tax Impact</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.component')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.reference')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.classification')}</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.taxImpact')}</TableHead>
                                         <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4 text-right">Operations</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -720,11 +722,11 @@ export const SalaryStructuresContent: React.FC = () => {
                                             <TableCell className="px-6 py-4">
                                                 {c.is_taxable ? (
                                                     <div className="flex items-center gap-1.5 text-coral-600 font-bold text-[9px] uppercase tracking-wider">
-                                                        <AlertCircle size={10} /> Taxable
+                                                         <AlertCircle size={10} /> {t('payroll.salaryStructure.list.taxable')}
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center gap-1.5 text-brand-600 font-bold text-[9px] uppercase tracking-wider">
-                                                        <Check size={10} className="stroke-[3px]" /> Exempt
+                                                         <Check size={10} className="stroke-[3px]" /> {t('payroll.salaryStructure.list.exempt')}
                                                     </div>
                                                 )}
                                             </TableCell>
@@ -734,7 +736,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                         <Edit size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm" onClick={async () => {
-                                                        if (await confirm({ type: 'destructive', title: 'Deactivate Component', message: 'Deactivate this component?' })) deleteComponentMut.mutate(c.id);
+                                                        if (await confirm({ type: 'destructive', title: t('payroll.salaryStructure.list.confirmDeactivateComponentTitle'), message: t('payroll.salaryStructure.list.confirmDeactivateComponentMessage') })) deleteComponentMut.mutate(c.id);
                                                     }} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200">
                                                         <Trash2 size={14} />
                                                     </Button>
@@ -758,20 +760,20 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <Calculator size={20} />
                             </div>
                             <div>
-                                <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">Parametric Simulator</h2>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Quick CTC Breakdown</p>
+                                <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('payroll.salaryStructure.calculator.simulator')}</h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('payroll.salaryStructure.calculator.simulatorDesc')}</p>
                             </div>
                         </div>
 
                         <div className="space-y-6">
                             <div className="space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Computation Framework</Label>
+                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.computationFramework')}</Label>
                                 <select
                                     className="w-full h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
                                     value={calcStructureId}
                                     onChange={e => setCalcStructureId(e.target.value)}
                                 >
-                                    <option value="">Select structure...</option>
+                                    <option value="">{t('payroll.salaryStructure.calculator.selectStructure')}</option>
                                     {structures.map(s => (
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
@@ -779,11 +781,11 @@ export const SalaryStructuresContent: React.FC = () => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Annual CTC (Gross Valuation)</Label>
+                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.annualCtcGross')}</Label>
                                 <div className="relative group/input">
                                     <Input
                                         type="number"
-                                        placeholder="e.g. 1200000"
+                                        placeholder={t('payroll.salaryStructure.calculator.annualCtcPlaceholder')}
                                         className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                                         value={calcCTC}
                                         onChange={e => setCalcCTC(e.target.value)}
@@ -798,7 +800,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                 className="w-full h-11 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-elev-4 transition-all active:scale-[0.98]"
                             >
                                 {calculating ? <Loader2 className="animate-spin mr-2" size={16} /> : <Calculator className="mr-2" size={16} />}
-                                Execute Projection
+                                 {t('payroll.salaryStructure.calculator.executeProjection')}
                             </Button>
                         </div>
                     </Card>
@@ -806,19 +808,19 @@ export const SalaryStructuresContent: React.FC = () => {
                     {ctcBreakdown ? (
                         <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden animate-fadeIn">
                             <div className="p-8 bg-gray-50/50 dark:bg-gray-950/20 border-b border-gray-100 dark:border-gray-800">
-                                <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-tight">Financial Projection</h2>
+                                <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-tight">{t('payroll.salaryStructure.calculator.financialProjection')}</h2>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl ring-1 ring-black/5 shadow-elev-1">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Wallet size={14} className="text-brand-500" />
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Annual CTC</p>
+                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{t('payroll.salaryStructure.calculator.annualCtc')}</p>
                                         </div>
                                         <p className="text-xl font-black text-gray-900 dark:text-white">{formatINR(ctcBreakdown.annual_ctc)}</p>
                                     </div>
                                     <div className="bg-brand-500/5 p-5 rounded-2xl ring-1 ring-brand-500/20 shadow-elev-1 border border-brand-500/10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Check size={14} className="text-brand-500 stroke-[3px]" />
-                                            <p className="text-[9px] font-bold text-brand-500 uppercase tracking-[0.2em]">Monthly Take-Home</p>
+                                             <p className="text-[9px] font-bold text-brand-500 uppercase tracking-[0.2em]">{t('payroll.salaryStructure.calculator.monthlyTakeHome')}</p>
                                         </div>
                                         <p className="text-xl font-black text-brand-500">{formatINR(ctcBreakdown.monthly_net)}</p>
                                     </div>
@@ -829,9 +831,9 @@ export const SalaryStructuresContent: React.FC = () => {
                                 <Table>
                                     <TableHeader className="bg-white dark:bg-gray-900">
                                         <TableRow>
-                                            <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3">Compensation Element</TableHead>
-                                            <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">Monthly</TableHead>
-                                            <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">Annual</TableHead>
+                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3">{t('payroll.salaryStructure.calculator.compensationElement')}</TableHead>
+                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">{t('payroll.salaryStructure.calculator.monthly')}</TableHead>
+                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">{t('payroll.salaryStructure.calculator.annual')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -859,14 +861,14 @@ export const SalaryStructuresContent: React.FC = () => {
 
                             <div className="p-8 bg-slate-900 dark:bg-gray-950 flex justify-between items-center group">
                                 <div className="space-y-0.5">
-                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.3em]">Final Net Valuation</p>
-                                    <h4 className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-brand-500 transition-colors">Total Net Take-Home (Annual)</h4>
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.3em]">{t('payroll.salaryStructure.calculator.finalNetValuation')}</p>
+                                    <h4 className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-brand-500 transition-colors">{t('payroll.salaryStructure.calculator.totalNetTakeHome')}</h4>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-black text-white">{formatINR(ctcBreakdown.net_salary)}</p>
                                     <div className="flex items-center justify-end gap-1 mt-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                                        <p className="text-[8px] font-black text-brand-500 uppercase tracking-tighter">Verified Computation</p>
+                                        <p className="text-[8px] font-black text-brand-500 uppercase tracking-tighter">{t('payroll.salaryStructure.calculator.verifiedComputation')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -876,8 +878,8 @@ export const SalaryStructuresContent: React.FC = () => {
                             <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-3xl flex items-center justify-center mb-6">
                                 <Calculator size={32} className="text-gray-300" />
                             </div>
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Simulator Ready</h3>
-                            <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">Adjust parameters and execute projection to view breakdown.</p>
+                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.calculator.simulatorReady')}</h3>
+                            <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">{t('payroll.salaryStructure.calculator.simulatorReadyHint')}</p>
                         </div>
                     )}
                 </div>
@@ -894,51 +896,51 @@ export const SalaryStructuresContent: React.FC = () => {
                         </div>
                         <div>
                             <DialogTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
-                                {editingComponent ? 'Modify' : 'Construct'} Element
+                                {editingComponent ? t('payroll.salaryStructure.componentDialog.modifyTitle') : t('payroll.salaryStructure.componentDialog.constructTitle')}
                             </DialogTitle>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mt-0.5">Component Definition</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mt-0.5">{t('payroll.salaryStructure.componentDialog.definition')}</p>
                         </div>
                     </div>
                     <div className="p-8 space-y-6">
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Official Name</Label>
+                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.officialName')}</Label>
                             <Input
                                 value={componentName}
                                 onChange={e => setComponentName(e.target.value)}
-                                placeholder="e.g. House Rent Allowance"
+                                placeholder={t('payroll.salaryStructure.componentDialog.officialNamePlaceholder')}
                                 className="h-11 px-4 text-sm font-semibold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all"
                             />
                         </div>
                         <div className="grid grid-cols-5 gap-4">
                             <div className="col-span-2 space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Code-Ref</Label>
+                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.codeRef')}</Label>
                                 <Input
                                     value={componentCode}
                                     onChange={e => setComponentCode(e.target.value.toUpperCase())}
-                                    placeholder="HRA"
+                                    placeholder={t('payroll.salaryStructure.componentDialog.codeRefPlaceholder')}
                                     className="h-11 px-4 text-sm font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
                                 />
                             </div>
                             <div className="col-span-3 space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Type-Class</Label>
+                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.typeClass')}</Label>
                                 <select
                                     className="w-full h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer uppercase tracking-tight text-gray-700 dark:text-gray-200"
                                     value={componentType}
                                     onChange={e => setComponentType(e.target.value as any)}
                                 >
-                                    <option value="EARNING">Earnings (+)</option>
-                                    <option value="DEDUCTION">Deductions (-)</option>
-                                    <option value="EMPLOYER_CONTRIBUTION">Contributions (Co.)</option>
-                                    <option value="REIMBURSEMENT">Reimbursement (±)</option>
+                                    <option value="EARNING">{t('payroll.salaryStructure.componentDialog.typeEarning')}</option>
+                                    <option value="DEDUCTION">{t('payroll.salaryStructure.componentDialog.typeDeduction')}</option>
+                                    <option value="EMPLOYER_CONTRIBUTION">{t('payroll.salaryStructure.componentDialog.typeEmployerContribution')}</option>
+                                    <option value="REIMBURSEMENT">{t('payroll.salaryStructure.componentDialog.typeReimbursement')}</option>
                                 </select>
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Functional Category</Label>
+                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.functionalCategory')}</Label>
                             <Input
                                 value={componentCategory}
                                 onChange={e => setComponentCategory(e.target.value)}
-                                placeholder="e.g. ALLOWANCE, STATUTORY"
+                                placeholder={t('payroll.salaryStructure.componentDialog.functionalCategoryPlaceholder')}
                                 className="h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
                             />
                         </div>
@@ -947,19 +949,19 @@ export const SalaryStructuresContent: React.FC = () => {
                                 {componentIsTaxable && <Check size={14} className="stroke-[3px]" />}
                             </div>
                             <div>
-                                <Label htmlFor="isTaxable" className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight cursor-pointer">Taxable Increment</Label>
-                                <p className="text-[9px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">Subject to income tax deductions</p>
+                                <Label htmlFor="isTaxable" className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight cursor-pointer">{t('payroll.salaryStructure.componentDialog.taxableIncrement')}</Label>
+                                <p className="text-[9px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">{t('payroll.salaryStructure.componentDialog.taxableIncrementHint')}</p>
                             </div>
                         </div>
                     </div>
                     <div className="p-8 pt-0 flex gap-3">
-                        <Button variant="ghost" className="flex-1 h-11 rounded-xl font-bold text-gray-400 text-xs uppercase" onClick={() => setComponentDialogOpen(false)}>Abort</Button>
+                        <Button variant="ghost" className="flex-1 h-11 rounded-xl font-bold text-gray-400 text-xs uppercase"                                 onClick={() => setComponentDialogOpen(false)}>{t('payroll.salaryStructure.componentDialog.abort')}</Button>
                         <Button
                             onClick={handleSaveComponent}
                             disabled={!componentName || !componentCode}
                             className="flex-[2] h-11 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-elev-4 shadow-brand-500/20"
                         >
-                            {editingComponent ? 'Update Schema' : 'Commit Component'}
+                            {editingComponent ? t('payroll.salaryStructure.componentDialog.updateSchema') : t('payroll.salaryStructure.componentDialog.commitComponent')}
                         </Button>
                     </div>
                 </DialogContent>
@@ -976,16 +978,16 @@ export const SalaryStructuresContent: React.FC = () => {
                                     <FileText size={24} className="stroke-[2px]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Structure Templates</h2>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-0.5">Pre-built Compliance-Ready Structures</p>
+                                <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">{t('payroll.salaryStructure.templateDialog.title')}</h2>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-0.5">{t('payroll.salaryStructure.templateDialog.subtitle')}</p>
                                 </div>
                             </div>
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setTemplateDialogOpen(false)}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-all"
                             >
                                 <X size={20} />
-                            </button>
+                            </Button>
                         </div>
 
                         {/* Dialog Body */}
@@ -993,12 +995,12 @@ export const SalaryStructuresContent: React.FC = () => {
                             {templatesLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                                     <Loader2 className="animate-spin text-brand-500" size={32} />
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Templates...</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.templateDialog.loading')}</p>
                                 </div>
                             ) : templates.length === 0 ? (
                                 <div className="text-center py-20">
                                     <FileText size={48} className="mx-auto text-gray-200 mb-4" />
-                                    <p className="text-sm font-bold text-gray-400">No templates available</p>
+                                    <p className="text-sm font-bold text-gray-400">{t('payroll.salaryStructure.templateDialog.noTemplates')}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-6">
@@ -1023,10 +1025,10 @@ export const SalaryStructuresContent: React.FC = () => {
                                                             </span>
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 dark:bg-brand-500/10 text-brand-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-purple-500/20">
                                                                 <Shield size={10} />
-                                                                Compliant
+                                                                 {t('payroll.salaryStructure.templateDialog.compliant')}
                                                             </span>
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-gray-800 text-gray-500 rounded-full text-[9px] font-bold uppercase tracking-tight ring-1 ring-black/5">
-                                                                {tmpl.components.length} Components
+                                                                 {t('payroll.salaryStructure.templateDialog.componentsCount', { count: tmpl.components.length })}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -1042,7 +1044,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                     ) : (
                                                         <ArrowRight size={14} className="stroke-[2.5px]" />
                                                     )}
-                                                    Use Template
+                                                     {t('payroll.salaryStructure.templateDialog.useTemplate')}
                                                 </Button>
                                             </div>
 
@@ -1051,9 +1053,9 @@ export const SalaryStructuresContent: React.FC = () => {
                                                 <div className="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
                                                     <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-950/30 border-b border-gray-100 dark:border-gray-800">
                                                         <div className="grid grid-cols-12 gap-2 text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                                            <div className="col-span-4">Component</div>
-                                                            <div className="col-span-4">Calculation Rule</div>
-                                                            <div className="col-span-4">Value</div>
+                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewComponent')}</div>
+                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewCalcRule')}</div>
+                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewValue')}</div>
                                                         </div>
                                                     </div>
                                                     {tmpl.components.map((c, idx) => (
@@ -1071,7 +1073,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                                                 </span>
                                                             </div>
                                                             <div className="col-span-4 text-gray-500 font-medium text-[10px]">
-                                                                {c.calculation_type === 'REMAINING' ? 'Balance Amount' :
+                                                                {                                                                 c.calculation_type === 'REMAINING' ? t('payroll.salaryStructure.templateDialog.balanceAmount') :
                                                                     c.calculation_type === 'FIXED' ? `₹${c.fixed_amount?.toLocaleString('en-IN')}/mo` :
                                                                         `${c.percentage}%${c.max_value ? ` (max ₹${c.max_value.toLocaleString('en-IN')}/mo)` : ''}`
                                                                 }

@@ -3,10 +3,11 @@ import { permissionsService, Permission, TenantRole } from '@/services/permissio
 import { usersService } from '@/services/users.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
-import toast from 'react-hot-toast';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 import {
     Shield,
     Users,
@@ -61,26 +62,26 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
 };
 
 const MODULE_LABELS: Record<string, string> = {
-    employees: 'Employees',
-    attendance: 'Attendance',
-    leave: 'Leave Management',
-    payroll: 'Payroll',
-    departments: 'Departments',
-    designations: 'Designations',
-    assets: 'Asset Management',
-    projects: 'Project Management',
-    reports: 'Reports & Analytics',
-    chat: 'Chat & Messaging',
-    calendar: 'Calendar',
-    organisation: 'Organisation',
-    roles: 'Roles & Permissions',
-    audit_logs: 'Audit Logs',
-    shifts: 'Shifts & Rostering',
-    wfh: 'Work From Home',
-    expenses: 'Expenses',
-    documents: 'Documents',
-    tasks: 'Tasks & Inbox',
-    events: 'Events & Birthdays',
+    employees: 'roles.modules.employees',
+    attendance: 'roles.modules.attendance',
+    leave: 'roles.modules.leave',
+    payroll: 'roles.modules.payroll',
+    departments: 'roles.modules.departments',
+    designations: 'roles.modules.designations',
+    assets: 'roles.modules.assets',
+    projects: 'roles.modules.projects',
+    reports: 'roles.modules.reports',
+    chat: 'roles.modules.chat',
+    calendar: 'roles.modules.calendar',
+    organisation: 'roles.modules.organisation',
+    roles: 'roles.modules.roles',
+    audit_logs: 'roles.modules.audit_logs',
+    shifts: 'roles.modules.shifts',
+    wfh: 'roles.modules.wfh',
+    expenses: 'roles.modules.expenses',
+    documents: 'roles.modules.documents',
+    tasks: 'roles.modules.tasks',
+    events: 'roles.modules.events',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -93,7 +94,8 @@ const ROLE_COLORS: Record<string, string> = {
 const DEFAULT_GRADIENT = 'from-error-500 to-pink-600';
 
 export const RolesPermissionsPage: React.FC = () => {
-    const confirm = useConfirm();
+    const { t } = useTranslation();
+    const { confirm } = useConfirm();
     const { refreshPermissions } = usePermissions();
     const [roles, setRoles] = useState<TenantRole[]>([]);
     const [activeRole, setActiveRole] = useState<string>('');
@@ -142,7 +144,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const users = await usersService.getUsers({ role: 'ADMIN' });
             setAdminCount(Array.isArray(users) ? users.length : 0);
         } catch (err: any) {
-            showToast.error('Failed to load roles');
+            showToast.error(t('roles.failedLoadRoles'));
         } finally {
             setRolesLoading(false);
         }
@@ -164,7 +166,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const modules = new Set(perms.map(p => p.module));
             setExpandedModules(modules);
         } catch (err: any) {
-            showToast.error(err?.response?.data?.message || 'Failed to load permissions');
+            showToast.error(err?.response?.data?.message || t('roles.failedLoadPerms'));
         } finally {
             setLoading(false);
         }
@@ -193,7 +195,7 @@ export const RolesPermissionsPage: React.FC = () => {
             }).map(p => ({ permission_id: p.permission_id, enabled: p.enabled }));
 
             if (changed.length === 0) {
-                showToast.info('No changes to save');
+                showToast.info(t('roles.noChanges'));
                 setSaving(false);
                 return;
             }
@@ -205,9 +207,9 @@ export const RolesPermissionsPage: React.FC = () => {
             // Refresh current user's permissions in context so they see changes immediately
             await refreshPermissions();
 
-            showToast.success(`Permissions updated for ${activeRole} role`);
+            showToast.success(t('roles.permissionsUpdated', { role: activeRole }));
         } catch (err: any) {
-            showToast.error(err?.response?.data?.message || 'Failed to save permissions');
+            showToast.error(err?.response?.data?.message || t('roles.failedSavePerms'));
         } finally {
             setSaving(false);
         }
@@ -247,7 +249,7 @@ export const RolesPermissionsPage: React.FC = () => {
         setCreating(true);
         try {
             await permissionsService.createCustomRole(newRoleName.trim(), newRoleDesc.trim());
-            showToast.success(`Role "${newRoleName.trim().toUpperCase()}" created`);
+            showToast.success(t('roles.roleCreated', { name: newRoleName.trim().toUpperCase() }));
             setShowAddRole(false);
             setNewRoleName('');
             setNewRoleDesc('');
@@ -255,7 +257,7 @@ export const RolesPermissionsPage: React.FC = () => {
             // Switch to the new role
             setActiveRole(newRoleName.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_'));
         } catch (err: any) {
-            showToast.error(err?.response?.data?.message || 'Failed to create role');
+            showToast.error(err?.response?.data?.message || t('roles.failedCreateRole'));
         } finally {
             setCreating(false);
         }
@@ -263,16 +265,16 @@ export const RolesPermissionsPage: React.FC = () => {
 
     // ---- Delete Custom Role ----
     const handleDeleteRole = async (role: string) => {
-        if (!await confirm({ type: 'destructive', title: 'Delete Role', message: `Are you sure you want to delete the "${role}" role? This cannot be undone.` })) return;
+        if (!await confirm({ type: 'destructive', title: t('roles.deleteRoleTitle'), message: t('roles.deleteRoleMessage', { name: role }) })) return;
         try {
             await permissionsService.deleteCustomRole(role);
-            showToast.success(`Role "${role}" deleted`);
+            showToast.success(t('roles.roleDeleted', { name: role }));
             await fetchRoles();
             if (activeRole === role) {
                 setActiveRole('ADMIN');
             }
         } catch (err: any) {
-            showToast.error(err?.response?.data?.message || 'Failed to delete role');
+            showToast.error(err?.response?.data?.message || t('roles.failedDeleteRole'));
         }
     };
 
@@ -309,7 +311,7 @@ export const RolesPermissionsPage: React.FC = () => {
             const perms = await permissionsService.getUserPermissions(usr.user_id || usr.id);
             setUserPermissions(perms);
         } catch {
-            showToast.error('Failed to load user permissions');
+            showToast.error(t('roles.failedLoadPerms'));
         } finally {
             setUserPermLoading(false);
         }
@@ -330,9 +332,9 @@ export const RolesPermissionsPage: React.FC = () => {
             ]);
             const perms = await permissionsService.getUserPermissions(userId);
             setUserPermissions(perms);
-            showToast.success('User permission updated');
+            showToast.success(t('roles.permUpdatedUser'));
         } catch {
-            showToast.error('Failed to update user permission');
+            showToast.error(t('roles.failedSavePerms'));
         }
     };
 
@@ -351,7 +353,7 @@ export const RolesPermissionsPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Roles</h2>
                     <div className="flex items-center gap-2">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setShowUserOverrides(!showUserOverrides)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${showUserOverrides
                                 ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
@@ -359,17 +361,17 @@ export const RolesPermissionsPage: React.FC = () => {
                                 }`}
                         >
                             <User className="h-4 w-4" />
-                            <span className="hidden sm:inline">User Overrides</span>
-                        </button>
-                        <button
+                            <span className="hidden sm:inline">{t('roles.userOverrides')}</span>
+                        </Button>
+                         <Button variant="ghost" 
                             onClick={() => {
                                 setShowAddRole(true);
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white shadow-elev-3 transition-all bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700"
                         >
                             <Plus className="h-4 w-4" />
-                            Add Role
-                        </button>
+                            {t('roles.addRole')}
+                        </Button>
                     </div>
                 </div>
 
@@ -380,13 +382,13 @@ export const RolesPermissionsPage: React.FC = () => {
                             <Users className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Admin Seats</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('roles.adminSeats')}</p>
                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                 {adminCount} <span className="text-gray-400 font-medium">/ {adminLimit === 9999 ? '∞' : adminLimit}</span>
                             </p>
                         </div>
                         {adminCount >= adminLimit && adminLimit !== 9999 && (
-                            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">LIMIT REACHED</span>
+                            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">{t('roles.limitReached')}</span>
                         )}
                     </div>
 
@@ -395,7 +397,7 @@ export const RolesPermissionsPage: React.FC = () => {
                             <Shield className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Plan Access</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('roles.planAccess')}</p>
                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                 {currentUser?.plan_type === 1 ? 'Standard (Trial)' : (currentUser?.plan_type === 2 ? 'Premium' : 'Elite')}
                             </p>
@@ -427,21 +429,21 @@ export const RolesPermissionsPage: React.FC = () => {
                                     )}
                                 </div>
                                 {!r.is_system && (
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteRole(r.role);
                                         }}
                                         className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-all"
-                                        title="Delete role"
+                                        title={t('roles.deleteRole')}
                                     >
                                         <Trash2 className="h-3 w-3 text-white" />
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                             {r.is_system && (
                                 <div className="relative z-10 mt-1">
-                                    <span className="text-[9px] text-white/50 uppercase tracking-wider">System</span>
+                                    <span className="text-[9px] text-white/50 uppercase tracking-wider">{t('roles.system')}</span>
                                 </div>
                             )}
                         </div>
@@ -454,8 +456,8 @@ export const RolesPermissionsPage: React.FC = () => {
                 open={showAddRole}
                 onOpenChange={setShowAddRole}
                 onBack={() => setShowAddRole(false)}
-                title="Create Custom Role"
-                description="Define a new role for your organization"
+                title={t('roles.createCustomRole')}
+                description={t('roles.defineNewRole')}
                 className="max-w-md"
                 footer={
                     <div className="flex justify-end gap-3 w-full">
@@ -464,7 +466,7 @@ export const RolesPermissionsPage: React.FC = () => {
                             onClick={() => setShowAddRole(false)}
                             className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5"
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={handleCreateRole}
@@ -472,30 +474,30 @@ export const RolesPermissionsPage: React.FC = () => {
                             isLoading={creating}
                             className="rounded-2xl bg-brand-500 text-white font-bold min-w-[140px]"
                         >
-                            Create Role
+                            {t('roles.createRole')}
                         </Button>
                     </div>
                 }
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role Name *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('roles.roleName')} *</label>
                         <input
                             type="text"
                             value={newRoleName}
                             onChange={e => setNewRoleName(e.target.value)}
-                            placeholder="e.g. TEAM_LEAD, FINANCE, INTERN"
+                            placeholder={t('roles.roleNamePlaceholder')}
                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
                         />
-                        <p className="text-xs text-gray-400 mt-1">Will be converted to UPPERCASE with underscores</p>
+                        <p className="text-xs text-gray-400 mt-1">{t('roles.roleNameHint')}</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('roles.description')}</label>
                         <input
                             type="text"
                             value={newRoleDesc}
                             onChange={e => setNewRoleDesc(e.target.value)}
-                            placeholder="Brief description of this role"
+                            placeholder={t('roles.descPlaceholder')}
                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
                         />
                     </div>
@@ -507,24 +509,25 @@ export const RolesPermissionsPage: React.FC = () => {
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                         <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                        <span className="text-sm font-medium">You have unsaved changes for {activeRole}</span>
+                        <span className="text-sm font-medium">{t('roles.unsavedChanges', { role: activeRole })}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                         >
                             <RotateCcw className="h-3.5 w-3.5" />
-                            Reset
-                        </button>
-                        <button
+                            {t('common.reset')}
+                        </Button>
+                         <Button variant="ghost" 
                             onClick={handleSave}
                             disabled={saving}
                             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 shadow-elev-3 transition-all disabled:opacity-50"
                         >
                             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                            Save Changes
-                        </button>
+                            {t('common.saveChanges')}
+                        </Button>
                     </div>
                 </div>
             )}
@@ -539,7 +542,7 @@ export const RolesPermissionsPage: React.FC = () => {
                     ) : activeRole ? (
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Permissions for {activeRole}
+                                {t('roles.permissionsFor', { role: activeRole })}
                             </h3>
                             {Object.entries(grouped).map(([module, perms]) => {
                                 const ModIcon = MODULE_ICONS[module] || Shield;
@@ -566,15 +569,15 @@ export const RolesPermissionsPage: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                                        {MODULE_LABELS[module] || module}
+                                                        {t(MODULE_LABELS[module] || module)}
                                                     </h3>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {perms.filter(p => p.enabled).length} of {perms.length} enabled
+                                                        {t('roles.xOfYEnabled', { count: perms.filter(p => p.enabled).length, total: perms.length })}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     toggleAllInModule(module, !allEnabled);
@@ -590,7 +593,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                                     className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-elev-2 transition-transform ${allEnabled ? 'translate-x-6' : 'translate-x-1'
                                                         }`}
                                                 />
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {/* Permission Items */}
@@ -607,7 +610,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{perm.description}</p>
                                                             )}
                                                         </div>
-                                                        <button
+                                                         <Button variant="ghost" 
                                                             onClick={() => handleTogglePermission(perm.permission_id)}
                                                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${perm.enabled ? 'bg-brand-500' : 'bg-gray-300 dark:bg-gray-600'
                                                                 }`}
@@ -616,7 +619,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                                                 className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-elev-2 transition-transform ${perm.enabled ? 'translate-x-6' : 'translate-x-1'
                                                                     }`}
                                                             />
-                                                        </button>
+                                                        </Button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -626,7 +629,7 @@ export const RolesPermissionsPage: React.FC = () => {
                             })}
                         </div>
                     ) : (
-                        <div className="text-center py-20 text-gray-500">Select a role to manage permissions</div>
+                        <div className="text-center py-20 text-gray-500">{t('roles.selectRole')}</div>
                     )}
                 </div>
 
@@ -637,10 +640,10 @@ export const RolesPermissionsPage: React.FC = () => {
                             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                     <User className="h-4 w-4 text-brand-500" />
-                                    User Permission Overrides
+                                    {t('roles.userOverrides')}
                                 </h3>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Grant or deny specific permissions to individual users
+                                    {t('roles.userOverridesDesc')}
                                 </p>
                             </div>
 
@@ -651,7 +654,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                         type="text"
                                         value={userSearchQuery}
                                         onChange={e => setUserSearchQuery(e.target.value)}
-                                        placeholder="Search employee by name..."
+                                        placeholder={t('roles.searchEmployee')}
                                         className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                                     />
                                     {searchLoading && (
@@ -662,7 +665,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                 {userSearchResults.length > 0 && (
                                     <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-elev-4 max-h-48 overflow-y-auto">
                                         {userSearchResults.map((usr: any) => (
-                                            <button
+                                             <Button variant="ghost" 
                                                 key={usr.user_id || usr.id}
                                                 onClick={() => selectUserForOverride(usr)}
                                                 className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors"
@@ -674,7 +677,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{usr.first_name} {usr.last_name}</p>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{usr.email} · {usr.role}</p>
                                                 </div>
-                                            </button>
+                                            </Button>
                                         ))}
                                     </div>
                                 )}
@@ -689,15 +692,16 @@ export const RolesPermissionsPage: React.FC = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{selectedUser.first_name} {selectedUser.last_name}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Role: {selectedUser.role}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('roles.roleLabel')} {selectedUser.role}</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => { setSelectedUser(null); setUserPermissions([]); }}
-                                            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                        >
-                                            Clear
-                                        </button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setSelectedUser(null); setUserPermissions([]); }}
+                        >
+                            {t('common.clear')}
+                        </Button>
                                     </div>
 
                                     {userPermLoading ? (
@@ -721,16 +725,16 @@ export const RolesPermissionsPage: React.FC = () => {
                                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                                     : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                                     }`}>
-                                                                    Role: {perm.role_enabled ? 'ON' : 'OFF'}
+                                                                    {t('roles.roleLabel')} {perm.role_enabled ? t('common.on') : t('common.off')}
                                                                 </span>
                                                                 {hasOverride && (
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                                        Override: {perm.user_override ? 'Grant' : 'Deny'}
+                                                                        {t('roles.overrideLabel')} {perm.user_override ? t('roles.grant') : t('roles.deny')}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <button
+                                                         <Button variant="ghost" 
                                                             onClick={() => handleUserOverrideToggle(perm.permission_id, perm.user_override ?? null, perm.role_enabled)}
                                                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${perm.effective
                                                                 ? hasOverride ? 'bg-amber-500' : 'bg-brand-500'
@@ -741,7 +745,7 @@ export const RolesPermissionsPage: React.FC = () => {
                                                                 className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-elev-2 transition-transform"
                                                                 style={{ transform: `translateX(${perm.effective ? '18px' : '2px'})` }}
                                                             />
-                                                        </button>
+                                                        </Button>
                                                     </div>
                                                 );
                                             })}

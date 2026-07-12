@@ -168,12 +168,11 @@ export const RiverProcess = () => {
         <DashboardLayout title={t('payroll.payrollManagement') || t('riverProcess.title')}>
             <div className="space-y-6">
                 <div className="flex items-center gap-4 mb-6">
-                    <button
-                        onClick={() => navigate('/payroll')}
+                     <Button variant="ghost"                         onClick={() => navigate('/payroll')}
                         className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    </button>
+                    </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('riverProcess.title')}</h1>
                         <p className="text-xs text-gray-500">{t('riverProcess.runId', { id: runId?.substring(0, 8) })}...</p>
@@ -636,8 +635,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
             )}
 
             <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
-                <button
-                    onClick={() => setShowEmployees(!showEmployees)}
+                 <Button variant="ghost"                     onClick={() => setShowEmployees(!showEmployees)}
                     className="w-full p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors"
                 >
                     <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -645,7 +643,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                         {t('riverProcess.employeeBreakdown', { count: data?.employees?.length || 0 })}
                     </span>
                     {showEmployees ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                </button>
+                </Button>
 
                 {showEmployees && (
                     <div className="border-t border-gray-200 dark:border-gray-700/40">

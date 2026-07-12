@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DailyAttendanceContent } from '@/components/attendance/DailyAttendanceContent';
@@ -96,7 +97,7 @@ export const AttendancePage: React.FC = () => {
 
               const isActive = tab.id === activeTab;
               return (
-                <button
+                 <Button variant="ghost" 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${isActive
@@ -105,7 +106,7 @@ export const AttendancePage: React.FC = () => {
                     }`}
                 >
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
           </div>

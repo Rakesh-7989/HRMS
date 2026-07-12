@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, XCircle, CheckCircle, Info } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -46,12 +47,12 @@ export const ValidationAlert: React.FC<ValidationAlertProps> = ({
                     <div className="shrink-0">{icons[type]}</div>
                     <div className="text-sm font-bold flex-1">{message}</div>
                     {onClose && (
-                        <button
+                         <Button variant="ghost" 
                             onClick={onClose}
                             className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
                         >
                             <XCircle className="w-4 h-4 opacity-50" />
-                        </button>
+                        </Button>
                     )}
                 </motion.div>
             )}

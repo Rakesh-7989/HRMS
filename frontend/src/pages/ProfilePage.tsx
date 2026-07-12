@@ -366,7 +366,7 @@ export const ProfilePage: React.FC = () => {
                   ref={photoMenuRef}
                   className="absolute top-0 left-full ml-4 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-700 py-2.5 z-50 animate-in fade-in slide-in-from-left-2 duration-200"
                 >
-                  <button
+                   <Button variant="ghost" 
                     onClick={() => { setViewPhotoOpen(true); setPhotoMenuOpen(false); }}
                     className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all active:scale-[0.98]"
                   >
@@ -374,8 +374,8 @@ export const ProfilePage: React.FC = () => {
                       <Eye size={18} />
                     </div>
                     {t('profile.viewPhoto')}
-                  </button>
-                  <button
+                  </Button>
+                   <Button variant="ghost" 
                     onClick={startCamera}
                     className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all active:scale-[0.98]"
                   >
@@ -383,7 +383,7 @@ export const ProfilePage: React.FC = () => {
                       <CameraIcon size={18} />
                     </div>
                     {t('profile.takePhoto')}
-                  </button>
+                  </Button>
                   <label
                     htmlFor="profile-photo-upload"
                     className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all cursor-pointer active:scale-[0.98]"
@@ -394,7 +394,7 @@ export const ProfilePage: React.FC = () => {
                     {t('profile.uploadPhoto')}
                   </label>
                   <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
-                  <button
+                   <Button variant="ghost" 
                     onClick={async () => {
                       if (await confirm({ type: 'destructive', title: 'Remove Photo', message: 'Are you sure you want to remove your profile photo?' })) {
                         removePhotoMutation.mutate();
@@ -406,7 +406,7 @@ export const ProfilePage: React.FC = () => {
                       <Trash2 size={18} />
                     </div>
                     {t('profile.removePhoto')}
-                  </button>
+                  </Button>
                   <input
                     type="file"
                     id="profile-photo-upload"
@@ -783,7 +783,7 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
           {displayValue || <span className="text-gray-400 italic">Not set</span>}
         </p>
         {hasValue && (
-          <button
+           <Button variant="ghost" 
             onClick={() => onReveal(fieldName)}
             disabled={isLoading}
             className={`p-1 rounded-md transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${isRevealed ? 'text-brand-500' : 'text-gray-400 hover:text-gray-600'
@@ -797,7 +797,7 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
             )}
-          </button>
+          </Button>
         )}
       </div>
       {isRevealed && (
@@ -937,7 +937,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
                     <Download size={16} />
                   </a>
                   {canManage && (
-                    <button
+                     <Button variant="ghost" 
                       onClick={async () => {
                         const result = await confirm({
                           title: t('profile.deleteDocumentTitle'),
@@ -954,7 +954,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
                       title={t('common.delete')}
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               ),

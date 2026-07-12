@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Dialog } from '@/components/ui/Dialog';
@@ -81,7 +82,7 @@ export const TimesheetDashboard: React.FC = () => {
 
                 <div className="flex items-center gap-6 w-full md:w-auto justify-end">
                     <div className="flex items-center gap-4">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => {
                                 setSelectedDate(new Date());
                                 setShowEntryForm(true);
@@ -90,7 +91,7 @@ export const TimesheetDashboard: React.FC = () => {
                         >
                             <Plus size={16} />
                             {t('timesheets.logTime')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </motion.div>

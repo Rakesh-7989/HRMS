@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +53,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className, actions =
           const Icon = action.icon;
           const colors = colorStyles[action.color];
           return (
-            <button
+             <Button variant="ghost" 
               key={action.label}
               onClick={() => navigate(action.path)}
               className="flex flex-col items-start gap-2 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-elev-1 hover:bg-brand-50/50 dark:hover:bg-brand-500/5 transition-all text-left group"
@@ -68,17 +69,17 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className, actions =
                   {action.description}
                 </p>
               </div>
-            </button>
+            </Button>
           );
         })}
       </div>
-      <button
+       <Button variant="ghost" 
         onClick={() => navigate('/activity')}
         className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs text-neutral-400 hover:text-brand-600 dark:hover:text-brand-400 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
       >
         <span>View all actions</span>
         <ArrowRight size={12} />
-      </button>
+      </Button>
     </Card>
   );
 };

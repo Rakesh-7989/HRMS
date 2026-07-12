@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Search, X, Paperclip, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
@@ -88,12 +89,12 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Find in chat</h2>
-                <button
+                 <Button variant="ghost" 
                     onClick={onClose}
                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                     <X size={18} />
-                </button>
+                </Button>
             </div>
 
             {/* Search input */}
@@ -118,7 +119,7 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
 
             {/* Filter chips */}
             <div className="px-4 pb-3 flex items-center gap-2">
-                <button
+                 <Button variant="ghost" 
                     onClick={() => setHasAttachmentFilter(!hasAttachmentFilter)}
                     className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
@@ -129,7 +130,7 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                 >
                     <Paperclip size={12} />
                     Has attachment
-                </button>
+                </Button>
             </div>
 
             {/* Results area */}
@@ -183,29 +184,29 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                                 {results.length} result{results.length !== 1 ? 's' : ''}
                             </span>
                             <div className="flex items-center gap-1">
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={goPrevious}
                                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500"
                                     title="Previous result"
                                 >
                                     <ArrowUp size={14} />
-                                </button>
+                                </Button>
                                 <span className="text-xs text-gray-400 min-w-[32px] text-center">
                                     {currentIndex + 1}/{results.length}
                                 </span>
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={goToNext}
                                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500"
                                     title="Next result"
                                 >
                                     <ArrowDown size={14} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
                         {/* Result cards */}
                         {results.map((msg, index) => (
-                            <button
+                             <Button variant="ghost" 
                                 key={msg.id}
                                 onClick={() => {
                                     setCurrentIndex(index);
@@ -245,7 +246,7 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                                         </p>
                                     </div>
                                 </div>
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 
 interface EmojiPickerProps {
@@ -225,7 +226,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
             {!searchQuery && (
                 <div className="flex gap-1 p-2 border-b border-gray-100 dark:border-gray-700 overflow-x-auto scrollbar-hide">
                     {Object.keys(EMOJI_CATEGORIES).map((category) => (
-                        <button
+                         <Button variant="ghost" 
                             key={category}
                             onClick={() => setActiveCategory(category as keyof typeof EMOJI_CATEGORIES)}
                             className={cn(
@@ -236,7 +237,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                             )}
                         >
                             {category}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}
@@ -245,7 +246,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
             <div className="p-3 h-48 overflow-y-auto">
                 <div className="grid grid-cols-8 gap-1">
                     {filteredEmojis.map((emoji, index) => (
-                        <button
+                         <Button variant="ghost" 
                             key={`${emoji.char}-${index}`}
                             onClick={() => {
                                 onSelect(emoji.char);
@@ -254,7 +255,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                             className="w-8 h-8 flex items-center justify-center text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors hover:scale-110"
                         >
                             {emoji.char}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 {filteredEmojis.length === 0 && (
@@ -270,7 +271,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                     <span className="text-[10px] font-medium text-gray-400 uppercase">Quick Reactions</span>
                     <div className="flex gap-1">
                         {['👍', '❤️', '😂', '😮', '😢', '👏'].map((emoji) => (
-                            <button
+                             <Button variant="ghost" 
                                 key={emoji}
                                 onClick={() => {
                                     onSelect(emoji);
@@ -279,7 +280,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps & { className?: string }> = 
                                 className="w-7 h-7 flex items-center justify-center text-lg hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors hover:scale-125"
                             >
                                 {emoji}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>

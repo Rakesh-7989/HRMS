@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService, Notification } from '@/services/notifications.service';
@@ -88,7 +89,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     return (
         <div className="relative" ref={dropdownRef}>
             {/* Bell Button */}
-            <button
+             <Button variant="ghost" 
                 onClick={onToggle}
                 className="relative p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Notifications"
@@ -99,7 +100,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
-            </button>
+            </Button>
 
             {/* Dropdown */}
             <AnimatePresence>
@@ -118,22 +119,22 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                             </h3>
                             <div className="flex items-center gap-2">
                                 {unreadCount > 0 && (
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={() => markAllAsReadMutation.mutate()}
                                         className="text-xs text-brand-500 hover:underline flex items-center gap-1"
                                         disabled={markAllAsReadMutation.isPending}
                                     >
                                         <CheckCheck size={14} />
                                         Mark all read
-                                    </button>
+                                    </Button>
                                 )}
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={onClose}
                                     className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                     aria-label="Close"
                                 >
                                     <X size={16} className="text-gray-500 dark:text-gray-400" />
-                                </button>
+                                </Button>
                             </div>
                         </div>
 

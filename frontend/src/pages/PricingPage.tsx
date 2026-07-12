@@ -16,29 +16,13 @@ import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { ContactSalesModal } from '@/components/ContactSalesModal';
 import { SEO } from '@/components/SEO';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
-
-const categoryLabels: Record<string, string> = {
-  dashboard: 'Core HR & Dashboards',
-  collaboration: 'Engagement & Collaboration',
-  employee_management: 'Advanced Employee Mgmt',
-  leave_tracker: 'Leave & Absence Management',
-  attendance_tracker: 'Time & Attendance Tracking',
-  project_management: 'Project & Resource Planning',
-  asset_management: 'Asset & IT Inventory',
-  employee_activity_monitoring: 'Productivity & Activity Monitoring',
-  automation: 'Advanced Workflow Automation',
-  performance_management: 'Talent & Performance',
-  payroll_automation: 'Global Payroll & Compliance',
-  recruitment: 'Recruitment & ATS (Applicant Tracking)',
-  security_enterprise: 'Security & Enterprise Infrastructure',
-  mobile_application: 'Mobile Experience',
-};
 
 const featureKeys: Record<string, string[]> = {
   dashboard: ['personal_dashboard', 'team_analytics', 'org_insights', 'custom_data_widgets', 'ai_summary_dashboard'],
@@ -61,82 +45,6 @@ const formatFeatureLabel = (key: string) => {
   return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-// ── Plan Metadata for Professional Card Display ──
-const planMeta: Record<string, {
-  subtitle: string;
-  tagline: string;
-  highlights: string[];
-  included: string;
-}> = {
-  STANDARD: {
-    subtitle: 'Starter',
-    tagline: 'Essential HR & compliance tools for small Indian teams',
-    highlights: [
-      'PF/ESI/PT & LWF Compliance Ready',
-      'Form 16 & Payslip Generation',
-      'Leave & Attendance Management',
-      'Indian Holiday Calendar (Central + State)',
-      'Employee Directory & Org Chart',
-      'Mobile Attendance with GPS',
-      'Self-Service Portal & Announcements',
-      'Basic Email Notifications',
-    ],
-    included: 'Perfect for teams up to 50 members',
-  },
-  PREMIUM: {
-    subtitle: 'Growth',
-    tagline: 'Advanced automation & payroll for scaling Indian businesses',
-    highlights: [
-      'Everything in Standard, plus:',
-      'Full Payroll with Auto Tax Calculation',
-      'Geo-fencing & Biometric Attendance',
-      'New vs Old Tax Regime Comparison',
-      'Expense Reimbursement & Declarations',
-      'KPI/OKR Tracking & 360° Feedback',
-      'Asset Lifecycle & Inventory Management',
-      'Priority 9/5 Email Support',
-    ],
-    included: 'Designed for teams up to 250 members',
-  },
-  ELITE: {
-    subtitle: 'Enterprise',
-    tagline: 'Complete HRMS with AI, ATS & dedicated support',
-    highlights: [
-      'Everything in Premium, plus:',
-      'AI Productivity Scoring & Insights',
-      'Recruitment & ATS with Resume Parsing',
-      'Employee Engagement Surveys',
-      'Custom Workflow Automation',
-      'White-Label Branding & SSO/SAML',
-      'Shift Roster & Biometric Integration',
-      '24/7 Priority Phone & Chat Support',
-    ],
-    included: 'Unlimited scaling for growing enterprises',
-  },
-};
-
-// Helper to count enabled features in a plan  
-const countEnabledFeatures = (features: Record<string, any>): string[] => {
-  const enabledList: string[] = [];
-  Object.entries(features).forEach(([category, value]) => {
-    if (category === 'contact_sales') return;
-    if (typeof value === 'object' && value !== null) {
-      const enabledCount = Object.values(value).filter(Boolean).length;
-      const totalCount = Object.keys(value).length;
-      if (enabledCount > 0) {
-        const label = categoryLabels[category] || category.replace(/_/g, ' ');
-        if (enabledCount === totalCount) {
-          enabledList.push(`Full ${label}`);
-        } else {
-          enabledList.push(`${label} (${enabledCount}/${totalCount})`);
-        }
-      }
-    }
-  });
-  return enabledList;
-};
-
-
 const BillingCycleSelector: React.FC<{
   current: string;
   onChange: (cycle: any) => void;
@@ -150,7 +58,7 @@ const BillingCycleSelector: React.FC<{
           if (!isAvailable) return null;
 
           return (
-            <button
+             <Button variant="ghost" 
               key={cycle}
               onClick={() => onChange(cycle)}
               className={cn(
@@ -161,13 +69,65 @@ const BillingCycleSelector: React.FC<{
               )}
             >
               {cycle.replace('_', ' ')}
-            </button>
+            </Button>
           );
         })}
       </div>
     </div>
   );
 };
+
+export const PricingPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const tenantId = searchParams.get('tenantId');
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
+  const [employeeCount] = React.useState<number>(1);
+  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
+
+  const getCategoryLabel = (key: string) => t('marketing.pricing.categories.' + key);
+  const getPlanMeta = () => ({
+    STANDARD: {
+      subtitle: t('marketing.pricing.plans.STANDARD.subtitle'),
+      tagline: t('marketing.pricing.plans.STANDARD.tagline'),
+      highlights: t('marketing.pricing.plans.STANDARD.highlights', { returnObjects: true }) as string[],
+      included: t('marketing.pricing.plans.STANDARD.included'),
+    },
+    PREMIUM: {
+      subtitle: t('marketing.pricing.plans.PREMIUM.subtitle'),
+      tagline: t('marketing.pricing.plans.PREMIUM.tagline'),
+      highlights: t('marketing.pricing.plans.PREMIUM.highlights', { returnObjects: true }) as string[],
+      included: t('marketing.pricing.plans.PREMIUM.included'),
+    },
+    ELITE: {
+      subtitle: t('marketing.pricing.plans.ELITE.subtitle'),
+      tagline: t('marketing.pricing.plans.ELITE.tagline'),
+      highlights: t('marketing.pricing.plans.ELITE.highlights', { returnObjects: true }) as string[],
+      included: t('marketing.pricing.plans.ELITE.included'),
+    },
+  });
+
+  const countEnabledFeatures = (features: Record<string, any>): string[] => {
+    const enabledList: string[] = [];
+    Object.entries(features).forEach(([category, value]) => {
+      if (category === 'contact_sales') return;
+      if (typeof value === 'object' && value !== null) {
+        const enabledCount = Object.values(value).filter(Boolean).length;
+        const totalCount = Object.keys(value).length;
+        if (enabledCount > 0) {
+          const label = getCategoryLabel(category);
+          if (enabledCount === totalCount) {
+            enabledList.push(t('marketing.pricing.fullLabel', { label }));
+          } else {
+            enabledList.push(t('marketing.pricing.partialLabel', { label, enabledCount, totalCount }));
+          }
+        }
+      }
+    });
+    return enabledList;
+  };
 
 // ── Feature Mapping (New Key -> DB Key) ──
 const featureMapping: Record<string, string> = {
@@ -249,7 +209,7 @@ const FeatureCategory: React.FC<{
 
   return (
     <div className="border-b border-gray-200 dark:border-white/5 last:border-0">
-      <button
+       <Button variant="ghost" 
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-6 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-all duration-300 group"
       >
@@ -271,7 +231,7 @@ const FeatureCategory: React.FC<{
         )}>
           <ChevronDown className="w-4 h-4" />
         </div>
-      </button>
+      </Button>
 
       <motion.div
         initial={false}
@@ -284,7 +244,7 @@ const FeatureCategory: React.FC<{
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02]">
-                  <th className="p-4 pl-8 text-[10px] uppercase tracking-widest text-gray-400 font-bold w-1/3">Feature</th>
+                  <th className="p-4 pl-8 text-[10px] uppercase tracking-widest text-gray-400 font-bold w-1/3">{t('marketing.pricing.tableHeaderFeature')}</th>
                   {displayPlans.map(p => (
                     <th key={p.id} className="p-4 text-center text-[9px] uppercase tracking-widest text-gray-400 font-bold w-[200px]">
                       {p.name}
@@ -351,20 +311,6 @@ const FeatureCategory: React.FC<{
     </div>
   );
 };
-
-
-
-export const PricingPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const tenantId = searchParams.get('tenantId');
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const [billingCycle, setBillingCycle] = React.useState<string>('MONTHLY');
-  const [employeeCount] = React.useState<number>(1);
-  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
-
-
 
 
 
@@ -514,12 +460,12 @@ export const PricingPage: React.FC = () => {
               redirectTarget: "_self"
           });
           
-          showToast.success('Redirecting to checkout...');
+          showToast.success(t('marketing.pricing.redirectingToCheckout'));
       } else {
-        showToast.success('Subscription initiated!');
+        showToast.success(t('marketing.pricing.subscriptionInitiated'));
       }
     } catch (error: any) {
-      setErrorConfig({ isOpen: true, title: 'Action Failed', message: error.message || 'Error initiating payment' });
+      setErrorConfig({ isOpen: true, title: t('marketing.pricing.actionFailed'), message: error.message || t('marketing.pricing.errorInitiatingPayment') });
     }
   };
 
@@ -528,7 +474,7 @@ return (
       <SEO
         title={t('marketing.pricing.pageTitle')}
         description={t('marketing.pricing.sectionSubtitle')}
-        keywords="HRMS pricing, payroll software cost, HR software India pricing, PF ESI software price, SMB HRMS plans"
+        keywords={t('marketing.pricing.pageKeywords')}
       />
       <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
         <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
@@ -540,14 +486,18 @@ return (
               {user ? (
                 <div className="flex items-center gap-4">
                   <ThemeToggle />
-                  <button onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))} className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all">
+                  <Button
+                    onClick={() => navigate('/dashboard/' + (user.role === 'ADMIN' ? 'organization' : 'personal'))}
+                    size="sm"
+                    className="rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+                  >
                     {t('common.dashboard')}
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-6">
                   <ThemeToggle />
-                  <button onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">{t('marketing.hero.signIn')}</button>
+                   <Button variant="ghost" onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">{t('marketing.hero.signIn')}</Button>
                 </div>
               )}
             </div>
@@ -576,13 +526,13 @@ return (
                 onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon(couponInput)}
               />
-              <button
+               <Button variant="ghost" 
                 onClick={() => handleApplyCoupon(couponInput)}
                 disabled={isApplying || !couponInput}
                 className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:opacity-80 disabled:opacity-50 transition-all"
               >
                 {isApplying ? '...' : 'Apply'}
-              </button>
+              </Button>
             </div> */}
             {/* {appliedCoupon && (
               <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest animate-pulse">
@@ -595,7 +545,7 @@ return (
         {/* ── Pricing Cards ── */}
         <div className="grid md:grid-cols-3 gap-6 mb-20 max-w-6xl mx-auto">
           {displayPlans.map((plan, index) => {
-            const meta = planMeta[plan.name] || { subtitle: '', tagline: '', highlights: [], included: '' };
+            const meta = getPlanMeta()[plan.name as keyof ReturnType<typeof getPlanMeta>] || { subtitle: '', tagline: '', highlights: [], included: '' };
             const iconColor = "text-brand-500 dark:text-brand-500/90";
             const checkColor = "text-brand-500";
 
@@ -619,7 +569,7 @@ return (
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
                     <span className="bg-brand-500 text-white dark:text-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-elev-5 shadow-brand-500/30">
-                      Most Popular
+                      {t('marketing.pricing.mostPopular')}
                     </span>
                   </div>
                 )}
@@ -650,7 +600,7 @@ return (
                 <div className="px-6 py-6 mx-4 my-2 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
                   <div className="flex flex-col">
                     <div className="flex flex-col gap-1 mb-4">
-                      <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em]">Billed Periodically</p>
+                      <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em]">{t('marketing.pricing.billedPeriodically')}</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
                           ₹{plan.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -660,16 +610,16 @@ return (
 
                     <div className="pt-4 border-t border-gray-200/50 dark:border-white/5 flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">Rate Breakdown</p>
+                        <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">{t('marketing.pricing.rateBreakdown')}</p>
                         <p className="text-[11px] font-bold text-gray-900 dark:text-white">
-                          ₹{parseFloat(plan.unitPrice).toLocaleString()} <span className="text-[9px] text-gray-400 font-bold lowercase">per user / mo</span>
+                          ₹{parseFloat(plan.unitPrice).toLocaleString()} <span className="text-[9px] text-gray-400 font-bold lowercase">{t('marketing.pricing.perUser')}</span>
                         </p>
                       </div>
 
                       {plan.setupFee > 0 && (
                         <div className="flex flex-col items-end gap-1">
-                          <p className="text-[9px] font-black text-brand-500 uppercase tracking-[0.15em]">One-Time</p>
-                          <p className="text-[11px] font-bold text-gray-900 dark:text-white">₹{plan.setupFee.toLocaleString()} <span className="text-[9px] text-gray-400 uppercase font-bold">setup</span></p>
+                          <p className="text-[9px] font-black text-brand-500 uppercase tracking-[0.15em]">{t('marketing.pricing.oneTime')}</p>
+                          <p className="text-[11px] font-bold text-gray-900 dark:text-white">₹{plan.setupFee.toLocaleString()} <span className="text-[9px] text-gray-400 uppercase font-bold">{t('marketing.pricing.setup')}</span></p>
                         </div>
                       )}
                     </div>
@@ -678,7 +628,7 @@ return (
 
                 {/* Feature Highlights */}
                 <div className="p-6 pt-4 flex-1">
-                  <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">What's included</p>
+                  <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">{t('marketing.pricing.whatsIncluded')}</p>
                   <div className="space-y-2.5">
                     {meta.highlights.map((feature, i) => {
                       const isInheritLine = feature.includes('Everything in');
@@ -714,15 +664,16 @@ return (
                       {meta.included}
                     </p>
                   </div>
-                  <button
+                  <Button
                     onClick={() => handlePlanSelection(plan)}
+                    variant="primary"
                     className={cn(
                       "w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
                       "bg-brand-500 text-white hover:shadow-elev-4 hover:shadow-brand-500/20 hover:-translate-y-0.5 active:translate-y-0"
                     )}
                   >
-                    {plan.name === 'ELITE' ? 'Go Enterprise' : plan.name === 'PREMIUM' ? 'Start Growing' : 'Get Started'}
-                  </button>
+                    {plan.name === 'ELITE' ? t('marketing.pricing.ctaElite') : plan.name === 'PREMIUM' ? t('marketing.pricing.ctaPremium') : t('marketing.pricing.ctaStandard')}
+                  </Button>
                 </div>
               </motion.div>
             );
@@ -745,20 +696,20 @@ return (
               <div className="flex-1 text-center md:text-left">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/20 dark:border-brand-500/30 mb-4">
                   <Star className="w-3 h-3 text-brand-500 fill-primary" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-brand-500">Enterprise Only</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-brand-500">{t('marketing.pricing.enterpriseBadge')}</span>
                 </div>
-                <h2 className="text-3xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">Custom Enterprise Plan</h2>
+                <h2 className="text-3xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">{t('marketing.pricing.enterpriseTitle')}</h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm max-w-lg leading-relaxed">
-                  500+ employees? Need custom compliance workflows, dedicated server in India, or white-labeling? Get a tailored plan with priority support and SLA guarantees.
+                  {t('marketing.pricing.enterpriseSubtext')}
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <button
-                  onClick={() => setIsContactModalOpen(true)}
-                  className="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-elev-5 shadow-gray-900/10 dark:shadow-white/10"
-                >
-                  Contact Sales
-                </button>
+                   <Button variant="ghost" 
+                    onClick={() => setIsContactModalOpen(true)}
+                    className="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-elev-5 shadow-gray-900/10 dark:shadow-white/10"
+                  >
+                    {t('marketing.pricing.enterpriseCta')}
+                  </Button>
               </div>
             </div>
           </div>
@@ -768,8 +719,8 @@ return (
         <div className="max-w-4xl mx-auto border border-gray-200 dark:border-white/5 rounded-[2.5rem] bg-gray-50 dark:bg-[#080808] overflow-hidden shadow-elev-5 dark:shadow-none transition-colors">
           <div className="p-8 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-white/[0.5] dark:bg-white/[0.01]">
             <div>
-              <h2 className="text-xl font-black tracking-tight mb-1 uppercase tracking-widest text-sm text-gray-900 dark:text-white">Feature Comparison</h2>
-              <p className="text-[10px] text-gray-500 dark:text-gray-600 font-bold uppercase tracking-widest">Detailed breakdown of enterprise capabilities</p>
+              <h2 className="text-xl font-black tracking-tight mb-1 uppercase tracking-widest text-sm text-gray-900 dark:text-white">{t('marketing.pricing.featureComparison')}</h2>
+              <p className="text-[10px] text-gray-500 dark:text-gray-600 font-bold uppercase tracking-widest">{t('marketing.pricing.featureComparisonSub')}</p>
             </div>
             <div className="flex gap-16 mr-12 opacity-40 grayscale pointer-events-none select-none">
               {['STANDARD', 'PREMIUM', 'ELITE'].map(p => (
@@ -781,7 +732,7 @@ return (
             {Object.entries(featureKeys).map(([category, features]) => (
               <FeatureCategory
                 key={category}
-                label={categoryLabels[category]}
+                label={getCategoryLabel(category)}
                 features={features}
                 plans={plans || []}
                 categoryKey={category}

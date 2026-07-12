@@ -108,10 +108,10 @@ export const ComplianceReportsContent: React.FC<Props> = ({ type, title, icon: I
                     {t(statusConfig[report.status]?.labelKey || 'compliance.generating') || report.status}
                   </span>
                   {report.status === 'READY' && (
-                    <button onClick={() => handleDownload(report.id)}
+                     <Button variant="ghost" onClick={() => handleDownload(report.id)}
                       className="p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 text-brand-500 transition-colors">
                       <Download size={16} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </Card>

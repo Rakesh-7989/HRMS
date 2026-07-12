@@ -195,7 +195,7 @@ export const LeaveAllocationContent: React.FC = () => {
                     <div>
                         <Label className="mb-2">{t('leave.allocateTo')}</Label>
                         <div className="grid grid-cols-2 gap-3">
-                            <button
+                             <Button variant="ghost" 
                                 type="button"
                                 onClick={() => setTarget('all')}
                                 className={cn(
@@ -210,8 +210,8 @@ export const LeaveAllocationContent: React.FC = () => {
                                     <p className="font-medium">{t('leave.allEmployeesTitle')}</p>
                                     <p className="text-xs text-gray-500">{t('leave.allActiveEmployees')}</p>
                                 </div>
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 type="button"
                                 onClick={() => setTarget('selected')}
                                 className={cn(
@@ -226,7 +226,7 @@ export const LeaveAllocationContent: React.FC = () => {
                                     <p className="font-medium">{t('leave.selectedOnly')}</p>
                                     <p className="text-xs text-gray-500">{t('leave.chooseEmployees')}</p>
                                 </div>
-                            </button>
+                            </Button>
                         </div>
                     </div>
 

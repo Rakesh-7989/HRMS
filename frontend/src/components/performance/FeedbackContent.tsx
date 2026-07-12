@@ -51,7 +51,7 @@ export const FeedbackContent: React.FC = () => {
               { id: 'received', labelKey: 'performance.received' },
               { id: 'sent', labelKey: 'performance.sent' },
             ].map(tab => (
-              <button
+               <Button variant="ghost" 
                 key={tab.id}
                 onClick={() => setView(tab.id as 'received' | 'pending' | 'sent')}
                 className={cn(
@@ -62,7 +62,7 @@ export const FeedbackContent: React.FC = () => {
                 )}
               >
                 {t(tab.labelKey)}
-              </button>
+              </Button>
             ))}
           </div>
           <Button size="sm" className="gap-2">

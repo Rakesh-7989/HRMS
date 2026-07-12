@@ -13,8 +13,10 @@ import { Input } from '@/components/ui/Input';
 import { PayrollSettings } from './PayrollSettings';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export const PayslipsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
@@ -93,10 +95,10 @@ export const PayslipsContent: React.FC = () => {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['payslips'] });
             setGenDialogOpen(false);
-            alert(`Payslips generated successfully! Total employees: ${data?.total_employees ?? 0}`);
+            alert(t('payroll.generatedSuccess', { count: data?.total_employees ?? 0 }));
         },
         onError: (err: any) => {
-            alert(`Failed to generate payslips: ${err?.response?.data?.message || err?.message || 'Unknown error'}`);
+            alert(t('payroll.generateFailed', { error: err?.response?.data?.message || err?.message || t('payroll.unknownError') }));
         }
     });
 
@@ -115,7 +117,7 @@ export const PayslipsContent: React.FC = () => {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error(err);
-            alert('Failed to download payslip.');
+            alert(t('payroll.downloadFailed'));
         }
     };
 
@@ -126,16 +128,16 @@ export const PayslipsContent: React.FC = () => {
             window.open(url, '_blank');
         } catch (err) {
             console.error(err);
-            alert('Failed to view payslip.');
+            alert(t('payroll.viewFailed'));
         }
     };
 
     const emailPayslipMut = useMutation({
         mutationFn: ({ payslipId, to }: { payslipId: string; to?: string }) => payrollService.emailPayslip(payslipId, { to }),
         onSuccess: () => {
-            alert('Payslip emailed successfully.');
+            alert(t('payroll.emailedSuccess'));
         },
-        onError: () => alert('Failed to send payslip email.')
+        onError: () => alert(t('payroll.sendEmailFailed'))
     });
 
     const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -176,7 +178,7 @@ export const PayslipsContent: React.FC = () => {
             setDeleteTargetPayslip(null);
         },
         onError: (err: any) => {
-            alert(`Failed to delete payslip: ${err?.response?.data?.message || err?.message || 'Unknown error'}`);
+            alert(t('payroll.deleteFailed', { error: err?.response?.data?.message || err?.message || t('payroll.unknownError') }));
         }
     });
 
@@ -189,7 +191,7 @@ export const PayslipsContent: React.FC = () => {
         if (!deleteTargetPayslip) return;
         const payrunId = deleteTargetPayslip.payroll_run_id || deleteTargetPayslip.payrollRunId || deleteTargetPayslip.payrun_id;
         if (!payrunId) {
-            alert('Unable to determine the pay run for this payslip. Please refresh the page and try again.');
+            alert(t('payroll.unableDeterminePayrun'));
             return;
         }
         deletePayslipMut.mutate({ payrunId, itemId: deleteTargetPayslip.id });
@@ -202,27 +204,26 @@ export const PayslipsContent: React.FC = () => {
             {/* Top controls: Navigation and Actions */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-elev-1">
                 {[
-                    { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-                    { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                    { id: 'payslips', label: t('payroll.payslipsReport'), roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                    { id: 'settings', label: t('payroll.settingsTab'), icon: Settings, roles: ['ADMIN', 'HR'] },
                 ].filter(b => b.roles.includes(user?.role || '')).length > 1 && (
                         <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
                             {[
-                                { id: 'payslips', label: 'Payslips Report', roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-                                { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'HR'] },
+                                { id: 'payslips', label: t('payroll.payslipsReport'), roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
+                                { id: 'settings', label: t('payroll.settingsTab'), icon: Settings, roles: ['ADMIN', 'HR'] },
                             ].map((b) => {
                                 if (!b.roles.includes(user?.role || '')) return null;
                                 return (
-                                    <button
+                                     <Button variant="ghost" 
                                         key={b.id}
                                         onClick={() => setActiveSection(b.id as any)}
                                         className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
                                             ? 'bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1 ring-1 ring-black/5'
-                                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                                            }`}
-                                    >
-                                        {b.icon && <b.icon className="mr-1.5" size={14} />}
-                                        {b.label}
-                                    </button>
+                         : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                            }`}
+                    >
+                        {t('payroll.myPayslips')}
+                    </Button>
                                 );
                             })}
                         </div>
@@ -231,12 +232,12 @@ export const PayslipsContent: React.FC = () => {
                 <div className="flex flex-wrap gap-2">
                     {(user?.role === 'ADMIN' || user?.role === 'HR') && activeSection === 'payslips' && activeSubSection === 'staff' && (
                         <Button variant="primary" size="sm" onClick={() => setGenDialogOpen(true)} className="shadow-elev-1">
-                            <FileText className="mr-2" size={14} />Generate Monthly
+                            <FileText className="mr-2" size={14} />{t('payroll.generateMonthly')}
                         </Button>
                     )}
 
                     <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <Filter className="mr-2" size={14} />Filters
+                        <Filter className="mr-2" size={14} />{t('payroll.filters')}
                     </Button>
                     <Button
                         variant="outline"
@@ -247,7 +248,7 @@ export const PayslipsContent: React.FC = () => {
                         disabled={(activeSection === 'payslips' && !displayPayslips.length)}
                         className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                     >
-                        <Download className="mr-2" size={14} />Export CSV
+                        <Download className="mr-2" size={14} />{t('payroll.exportCsv')}
                     </Button>
                 </div>
             </div>
@@ -255,7 +256,7 @@ export const PayslipsContent: React.FC = () => {
             {/* Sub-tabs for HR/Admin under Payslips Report */}
             {activeSection === 'payslips' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
                 <div className="flex gap-2 p-1 bg-white/50 dark:bg-gray-800/30 rounded-lg w-fit border border-gray-100 dark:border-gray-800/50">
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => setActiveSubSection('personal')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'personal'
                             ? 'bg-brand-500 text-white shadow-elev-3'
@@ -263,16 +264,16 @@ export const PayslipsContent: React.FC = () => {
                             }`}
                     >
                         My Payslips
-                    </button>
-                    <button
+                    </Button>
+                     <Button variant="ghost" 
                         onClick={() => setActiveSubSection('staff')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'staff'
                             ? 'bg-brand-500 text-white shadow-elev-3'
                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
-                        Staff Payslips (Report)
-                    </button>
+                        {t('payroll.staffPayslipsReport')}
+                    </Button>
                 </div>
             )}
 
@@ -281,24 +282,24 @@ export const PayslipsContent: React.FC = () => {
                 <Card>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="text-sm font-medium">Time Period</label>
+                            <label className="text-sm font-medium">{t('payroll.timePeriod')}</label>
                             <div className="flex gap-3 mt-2">
                                 <Button size="sm" variant={selectedPeriod === '7d' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('7d')}>7d</Button>
                                 <Button size="sm" variant={selectedPeriod === '30d' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('30d')}>30d</Button>
                                 <Button size="sm" variant={selectedPeriod === '90d' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('90d')}>90d</Button>
-                                <Button size="sm" variant={selectedPeriod === 'custom' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('custom')}>Custom</Button>
+                                <Button size="sm" variant={selectedPeriod === 'custom' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('custom')}>{t('payroll.custom')}</Button>
                             </div>
                         </div>
 
                         {selectedPeriod === 'custom' && (
                             <div className="mt-4">
-                                <label className="text-sm font-medium mb-2 block">Custom Date Range</label>
+                                <label className="text-sm font-medium mb-2 block">{t('payroll.customDateRange')}</label>
                                 <DateRangePicker
                                     startDate={customFromDate}
                                     endDate={customToDate}
                                     onStartDateChange={setCustomFromDate}
                                     onEndDateChange={setCustomToDate}
-                                    placeholder="Select period"
+                                    placeholder={t('payroll.selectPeriod')}
                                 />
                             </div>
                         )}
@@ -318,7 +319,7 @@ export const PayslipsContent: React.FC = () => {
                                 <FileText size={18} className="stroke-[2.5px]" />
                             </div>
                             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                                {activeSubSection === 'staff' ? 'Staff Payslips Report' : (isHRorAdmin ? 'My Payslips Audit' : 'Payslips Report')}
+                                {activeSubSection === 'staff' ? t('payroll.staffPayslipsReportTitle') : (isHRorAdmin ? t('payroll.myPayslipsAudit') : t('payroll.payslipsReportTitle'))}
                             </h3>
                         </div>
                     </div>
@@ -326,12 +327,12 @@ export const PayslipsContent: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
                                 <TableRow>
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Month</TableHead>
-                                    {activeSubSection === 'staff' && <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Employee</TableHead>}
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Gross Pay</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Deductions</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">Net Pay</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 text-right tracking-widest">Actions</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">{t('payroll.month')}</TableHead>
+                                    {activeSubSection === 'staff' && <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">{t('payroll.employee')}</TableHead>}
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">{t('payroll.grossPay')}</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">{t('payroll.deductions')}</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 tracking-widest">{t('payroll.netPay')}</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-gray-400 px-6 py-4 text-right tracking-widest">{t('payroll.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -340,14 +341,14 @@ export const PayslipsContent: React.FC = () => {
                                         <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12">
                                             <div className="flex items-center justify-center gap-2 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
                                                 <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                                                Retrieving Records...
+                                                {t('payroll.retrievingRecords')}
                                             </div>
                                         </TableCell>
                                     </TableRow>
                                 ) : displayPayslips.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-                                            No payslip data detected for selected cycle.
+                                            <TableCell colSpan={activeSubSection === 'staff' ? 6 : 5} className="text-center py-12 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                                            {t('payroll.noPayslipData')}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -364,16 +365,16 @@ export const PayslipsContent: React.FC = () => {
                                             <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white text-xs">{formatINR(p.net)}</TableCell>
                                             <TableCell className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => viewPayslip(p)}>Audit</Button>
+                                                     <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => viewPayslip(p)}>{t('payroll.audit')}</Button>
                                                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-brand-500/5" onClick={() => downloadPayslip(p)}><Download size={14} /></Button>
                                                     {user?.role === 'HR' && (
                                                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-brand-500/5" onClick={() => emailPayslip(p)}><Mail size={14} /></Button>
                                                     )}
                                                     {activeSubSection === 'staff' && (
-                                                        <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>History</Button>
+                                                        <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-brand-500/5" onClick={() => { setHistoryEmployee(p); setHistoryDialogOpen(true); }}>{t('payroll.history')}</Button>
                                                     )}
                                                     {activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
-                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => confirmDeletePayslip(p)} title="Delete payslip">
+                                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => confirmDeletePayslip(p)} title={t('payroll.deletePayslipTitle')}>
                                                             <Trash2 size={14} />
                                                         </Button>
                                                     )}
@@ -394,37 +395,37 @@ export const PayslipsContent: React.FC = () => {
             <Dialog open={genDialogOpen} onOpenChange={setGenDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Generate Monthly Payslips</DialogTitle>
+                        <DialogTitle>{t('payroll.generateMonthlyPayslips')}</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                         <div>
-                            <Label>Month</Label>
+                            <Label>{t('payroll.month')}</Label>
                             <select value={genMonth} onChange={(e) => setGenMonth(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50">
-                                <option value={1}>January</option>
-                                <option value={2}>February</option>
-                                <option value={3}>March</option>
-                                <option value={4}>April</option>
-                                <option value={5}>May</option>
-                                <option value={6}>June</option>
-                                <option value={7}>July</option>
-                                <option value={8}>August</option>
-                                <option value={9}>September</option>
-                                <option value={10}>October</option>
-                                <option value={11}>November</option>
-                                <option value={12}>December</option>
+                                <option value={1}>{t('payroll.months.january')}</option>
+                                <option value={2}>{t('payroll.months.february')}</option>
+                                <option value={3}>{t('payroll.months.march')}</option>
+                                <option value={4}>{t('payroll.months.april')}</option>
+                                <option value={5}>{t('payroll.months.may')}</option>
+                                <option value={6}>{t('payroll.months.june')}</option>
+                                <option value={7}>{t('payroll.months.july')}</option>
+                                <option value={8}>{t('payroll.months.august')}</option>
+                                <option value={9}>{t('payroll.months.september')}</option>
+                                <option value={10}>{t('payroll.months.october')}</option>
+                                <option value={11}>{t('payroll.months.november')}</option>
+                                <option value={12}>{t('payroll.months.december')}</option>
                             </select>
                         </div>
 
                         <div>
-                            <Label>Year</Label>
+                            <Label>{t('payroll.year')}</Label>
                             <input type="number" value={genYear} onChange={(e) => setGenYear(Number(e.target.value))} className="mt-2 p-2 border rounded-md w-full bg-white dark:bg-gray-900 text-sm dark:text-white dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50" />
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setGenDialogOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleGeneratePayslips} isLoading={generateMut.isPending}>Generate</Button>
+                        <Button variant="outline" onClick={() => setGenDialogOpen(false)}>{t('payroll.cancel')}</Button>
+                        <Button variant="primary" onClick={handleGeneratePayslips} isLoading={generateMut.isPending}>{t('payroll.generate')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -433,22 +434,22 @@ export const PayslipsContent: React.FC = () => {
             <Dialog open={historyDialogOpen} onOpenChange={(open) => { setHistoryDialogOpen(open); if (!open) setHistoryEmployee(null); }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Payslip History {historyEmployee ? `— ${historyEmployee.employee_name}` : ''}</DialogTitle>
+                        <DialogTitle>{t('payroll.payrollHistory')}{historyEmployee ? ` — ${historyEmployee.employee_name}` : ''}</DialogTitle>
                     </DialogHeader>
 
                     {payslipHistoryLoading ? (
-                        <div className="p-4">Loading...</div>
+                        <div className="p-4">{t('payroll.loading')}</div>
                     ) : !payslipHistory || payslipHistory.length === 0 ? (
-                        <div className="p-4">No payslip history for this employee.</div>
+                        <div className="p-4">{t('payroll.noPayslipHistory')}</div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <tr>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Gross</TableHead>
-                                    <TableHead>Deductions</TableHead>
-                                    <TableHead>Net</TableHead>
-                                    <TableHead>Actions</TableHead>
+                                    <TableHead>{t('payroll.date')}</TableHead>
+                                    <TableHead>{t('payroll.gross')}</TableHead>
+                                    <TableHead>{t('payroll.deductions')}</TableHead>
+                                    <TableHead>{t('payroll.net')}</TableHead>
+                                    <TableHead>{t('payroll.actions')}</TableHead>
                                 </tr>
                             </TableHeader>
                             <TableBody>
@@ -460,8 +461,8 @@ export const PayslipsContent: React.FC = () => {
                                         <TableCell>{formatINR(h.net)}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>Download</Button>
-                                                <Button size="sm" variant="outline" onClick={() => emailPayslip(h)}>Email</Button>
+                                                <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>{t('payroll.download')}</Button>
+                                                <Button size="sm" variant="outline" onClick={() => emailPayslip(h)}>{t('payroll.email')}</Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -471,7 +472,7 @@ export const PayslipsContent: React.FC = () => {
                     )}
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>Close</Button>
+                        <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>{t('payroll.close')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -482,19 +483,19 @@ export const PayslipsContent: React.FC = () => {
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Email Payslip {emailTargetPayslip ? `— ${emailTargetPayslip.employee_name}` : ''}</DialogTitle>
+                        <DialogTitle>{t('payroll.emailPayslipTitle')}{emailTargetPayslip ? ` — ${emailTargetPayslip.employee_name}` : ''}</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 gap-4 mt-2">
                         <div>
-                            <Label>Recipient Email Address</Label>
-                            <Input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} placeholder="employee@example.com" className="mt-2" />
+                            <Label>{t('payroll.recipientEmail')}</Label>
+                            <Input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} placeholder={t('payroll.emailPlaceholder')} className="mt-2" />
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSendEmail} isLoading={emailPayslipMut.isPending}>Send Email</Button>
+                        <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>{t('payroll.cancel')}</Button>
+                        <Button variant="primary" onClick={handleSendEmail} isLoading={emailPayslipMut.isPending}>{t('payroll.sendEmail')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -507,25 +508,23 @@ export const PayslipsContent: React.FC = () => {
             <Dialog open={deleteConfirmOpen} onOpenChange={(open) => { setDeleteConfirmOpen(open); if (!open) setDeleteTargetPayslip(null); }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Payslip</DialogTitle>
+                        <DialogTitle>{t('payroll.deletePayslip')}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Are you sure you want to permanently delete{' '}
-                            <span className="font-bold text-gray-900 dark:text-white">{deleteTargetPayslip?.employee_name}'s</span>{' '}
-                            payslip for <span className="font-bold text-gray-900 dark:text-white">{deleteTargetPayslip?.date}</span>?
+                            {t('payroll.deleteConfirmMessage', { name: deleteTargetPayslip?.employee_name ?? '', date: deleteTargetPayslip?.date ?? '' })}
                         </p>
-                        <p className="text-xs text-red-500 mt-2 font-semibold">This action cannot be undone. The payslip and all its component data will be permanently removed.</p>
+                        <p className="text-xs text-red-500 mt-2 font-semibold">{t('payroll.deleteConfirmWarning')}</p>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>{t('payroll.cancel')}</Button>
                         <Button
                             variant="primary"
                             className="bg-red-600 hover:bg-red-700 text-white"
                             onClick={handleDeletePayslip}
                             isLoading={deletePayslipMut.isPending}
                         >
-                            Delete Permanently
+                            {t('payroll.deletePermanently')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

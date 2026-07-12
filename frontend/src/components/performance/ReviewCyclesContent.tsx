@@ -107,12 +107,12 @@ export const ReviewCyclesContent: React.FC = () => {
               </div>
               {cycle.status === 'ACTIVE' && (
                 <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-700">
-                  <button
+                   <Button variant="ghost" 
                     onClick={(e) => { e.stopPropagation(); closeCycleMutation.mutate(cycle.id); }}
                     className="text-xs font-bold text-error-500 hover:text-error-600 transition-colors"
                   >
                     {t('performance.closeCycle')}
-                  </button>
+                  </Button>
                 </div>
               )}
             </Card>

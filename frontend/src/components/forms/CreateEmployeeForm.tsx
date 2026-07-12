@@ -21,9 +21,9 @@ import { ValidationAlert } from '@/components/ui/ValidationAlert';
 import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
 import { PhoneInput } from '@/components/ui/PhoneInput';
-import { showToast } from '@/utils/toast';
 import { useTimezones } from '@/utils/timezone';
 import { permissionsService, TenantRole } from '@/services/permissions.service';
+import { useTranslation } from 'react-i18next';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -33,115 +33,114 @@ interface CreateEmployeeFormProps {
   onSuccess?: () => void;
 }
 
-const createValidationSchema = Yup.object({
-  email: Yup.string().email('Invalid email').required('Email is required'),
+type TranslateFn = (key: string, opts?: Record<string, unknown>) => string;
+
+const makeCreateSchema = (t: TranslateFn) =>
+  Yup.object({
+  email: Yup.string().email(t('employees.validation.invalidEmail')).required(t('employees.validation.emailRequired')),
   first_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('First name is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.firstNameRequired')),
   last_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('Last name is required'),
-  role: Yup.string().required('Role is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.lastNameRequired')),
+  role: Yup.string().required(t('employees.validation.roleRequired')),
   phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
-    .min(5, 'Too short')
-    .max(25, 'Too long')
-    .required('Phone is required'),
-  department_id: Yup.string().required('Department is required'),
-  designation_id: Yup.string().required('Designation is required'),
+    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .min(5, t('employees.validation.tooShort'))
+    .max(25, t('employees.validation.tooLong'))
+    .required(t('employees.validation.phoneRequired')),
+  department_id: Yup.string().required(t('employees.validation.departmentRequired')),
+  designation_id: Yup.string().required(t('employees.validation.designationRequired')),
   employee_id: Yup.string(),
   date_of_birth: Yup.date()
-    .required('Date of birth is required')
-    .max(new Date(), 'Date of birth cannot be in the future')
-    .test('age', 'Employee must be at least 18 years old', function (value) {
+    .required(t('employees.validation.dobRequired'))
+    .max(new Date(), t('employees.validation.dobNotFuture'))
+    .test('age', t('employees.validation.ageMin18'), function (value) {
       if (!value) return true;
       const today = new Date();
       const minBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
       return new Date(value) <= minBirthDate;
     }),
   join_date: Yup.date()
-    .required('Join date is required')
-    .test('is-after-dob', 'Join date must be at least 18 years after Date of Birth', function (value) {
+    .required(t('employees.validation.joinDateRequired'))
+    .test('is-after-dob', t('employees.validation.joinAfterDob'), function (value) {
       const { date_of_birth } = this.parent;
       if (!date_of_birth || !value) return true;
       const dob = new Date(date_of_birth);
       const minJoinDate = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
       return new Date(value) >= minJoinDate;
     }),
-  gender: Yup.string().required('Gender is required'),
-  marital_status: Yup.string().required('Marital status is required'),
-  address: Yup.string().required('Address is required'),
+  gender: Yup.string().required(t('employees.validation.genderRequired')),
+  marital_status: Yup.string().required(t('employees.validation.maritalStatusRequired')),
+  address: Yup.string().required(t('employees.validation.addressRequired')),
   job_location: Yup.string().nullable(),
   bank_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters')
-    .required('Bank name is required'),
+    .matches(/^[A-Za-z\s\-\.&]+$/, t('employees.validation.bankNameLetters'))
+    .required(t('employees.validation.bankNameRequired')),
   account_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Account name must contain only letters')
-    .required('Account name is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.accountNameLetters'))
+    .required(t('employees.validation.accountNameRequired')),
   account_number: Yup.string()
-    .test('digits-only', 'Account number must contain only digits', function (value) {
+    .test('digits-only', t('employees.validation.accountDigits'), function (value) {
       if (!value) return true;
       return /^[0-9]*$/.test(value);
     })
-    .test('valid-length', 'Account number must be 9-18 digits', function (value) {
+    .test('valid-length', t('employees.validation.accountLength'), function (value) {
       if (!value) return true;
       return value.length >= 9 && value.length <= 18;
     })
-    .required('Account number is required'),
+    .required(t('employees.validation.accountRequired')),
   ifsc_code: Yup.string()
-    .required('IFSC code is required'),
+    .required(t('employees.validation.ifscRequired')),
 
   tax_id: Yup.string()
-    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
-    .required('Tax ID is required'),
+    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, t('employees.validation.panFormat'))
+    .required(t('employees.validation.taxIdRequired')),
   aadhar_number: Yup.string()
-    .matches(/^[0-9]{12}$/, 'Aadhaar number must be exactly 12 digits')
-    .required('Aadhaar number is required'),
+    .matches(/^[0-9]{12}$/, t('employees.validation.aadharDigits'))
+    .required(t('employees.validation.aadharRequired')),
   annual_salary: Yup.number()
-    .positive('Salary must be positive')
+    .positive(t('employees.validation.salaryPositive'))
     .nullable(),
   emergency_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('Emergency contact is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.emergencyNameRequired')),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
-    .min(5, 'Too short')
-    .max(25, 'Too long')
-    .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
-    .required('Emergency phone is required'),
-  emergency_relation: Yup.string().required('Emergency relation is required'),
+    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .min(5, t('employees.validation.tooShort'))
+    .max(25, t('employees.validation.tooLong'))
+    .notOneOf([Yup.ref('phone'), null], t('employees.validation.emergencyPhoneSame'))
+    .required(t('employees.validation.emergencyPhoneRequired')),
+  emergency_relation: Yup.string().required(t('employees.validation.emergencyRelationRequired')),
   ctc: Yup.number()
     .transform((value) => (isNaN(value) ? undefined : value))
-    .min(0, 'CTC cannot be negative')
-    .required('Annual CTC (LPA) is required'),
+    .min(0, t('employees.validation.ctcNegative'))
+    .required(t('employees.validation.ctcRequired')),
 });
 
-// Edit mode has less strict validation
-const editValidationSchema = Yup.object({
+const makeEditSchema = (t: TranslateFn) =>
+  Yup.object({
   employee_id: Yup.string(),
   role: Yup.string(),
   first_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('First name is required'),
-  // ... rest of schema
-  // Adding hook for settings
-  // note: multi_replace limitation: cannot insert hook easily without full context.
-  // I will target the component body start.
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.firstNameRequired')),
   last_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('Last name is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.lastNameRequired')),
   date_of_birth: Yup.date()
-    .required('Date of birth is required')
-    .max(new Date(), 'Date of birth cannot be in the future')
-    .test('age', 'Employee must be at least 18 years old', function (value) {
+    .required(t('employees.validation.dobRequired'))
+    .max(new Date(), t('employees.validation.dobNotFuture'))
+    .test('age', t('employees.validation.ageMin18'), function (value) {
       if (!value) return true;
       const today = new Date();
       const minBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
       return new Date(value) <= minBirthDate;
     }),
   join_date: Yup.date()
-    .required('Join date is required')
-    .test('is-after-dob', 'Join date must be at least 18 years after Date of Birth', function (value) {
+    .required(t('employees.validation.joinDateRequired'))
+    .test('is-after-dob', t('employees.validation.joinAfterDob'), function (value) {
       const { date_of_birth } = this.parent;
       if (!date_of_birth || !value) return true;
       const dob = new Date(date_of_birth);
@@ -149,49 +148,49 @@ const editValidationSchema = Yup.object({
       return new Date(value) >= minJoinDate;
     }),
   phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
-    .min(5, 'Too short')
-    .max(25, 'Too long')
-    .required('Phone is required'),
-  gender: Yup.string().required('Gender is required'),
-  marital_status: Yup.string().required('Marital status is required'),
-  address: Yup.string().required('Address is required'),
+    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .min(5, t('employees.validation.tooShort'))
+    .max(25, t('employees.validation.tooLong'))
+    .required(t('employees.validation.phoneRequired')),
+  gender: Yup.string().required(t('employees.validation.genderRequired')),
+  marital_status: Yup.string().required(t('employees.validation.maritalStatusRequired')),
+  address: Yup.string().required(t('employees.validation.addressRequired')),
   bank_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters')
-    .required('Bank name is required'),
+    .matches(/^[A-Za-z\s\-\.&]+$/, t('employees.validation.bankNameLetters'))
+    .required(t('employees.validation.bankNameRequired')),
   account_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Account name must contain only letters')
-    .required('Account name is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.accountNameLetters'))
+    .required(t('employees.validation.accountNameRequired')),
   account_number: Yup.string()
-    .test('digits-only', 'Account number must contain only digits', function (value) {
+    .test('digits-only', t('employees.validation.accountDigits'), function (value) {
       if (!value) return true;
       return /^[0-9]*$/.test(value);
     })
-    .test('valid-length', 'Account number must be 9-18 digits', function (value) {
+    .test('valid-length', t('employees.validation.accountLength'), function (value) {
       if (!value) return true;
       return value.length >= 9 && value.length <= 18;
     })
-    .required('Account number is required'),
+    .required(t('employees.validation.accountRequired')),
   ifsc_code: Yup.string()
-    .required('IFSC code is required'),
+    .required(t('employees.validation.ifscRequired')),
 
   tax_id: Yup.string()
-    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN Card format')
-    .required('Tax ID is required'),
+    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, t('employees.validation.panFormat'))
+    .required(t('employees.validation.taxIdRequired')),
   emergency_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
-    .required('Emergency contact is required'),
+    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .required(t('employees.validation.emergencyNameRequired')),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
-    .min(5, 'Too short')
-    .max(25, 'Too long')
-    .notOneOf([Yup.ref('phone'), null], 'Emergency phone cannot be the same as employee phone')
-    .required('Emergency phone is required'),
-  emergency_relation: Yup.string().required('Emergency relation is required'),
+    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .min(5, t('employees.validation.tooShort'))
+    .max(25, t('employees.validation.tooLong'))
+    .notOneOf([Yup.ref('phone'), null], t('employees.validation.emergencyPhoneSame'))
+    .required(t('employees.validation.emergencyPhoneRequired')),
+  emergency_relation: Yup.string().required(t('employees.validation.emergencyRelationRequired')),
 
   ctc: Yup.number()
     .transform((value) => (isNaN(value) ? undefined : value))
-    .min(0, 'CTC cannot be negative'),
+    .min(0, t('employees.validation.ctcNegative')),
 });
 
 export const CreateEmployeeForm = ({
@@ -205,6 +204,12 @@ export const CreateEmployeeForm = ({
   const { user } = useAuth();
   const { timezones } = useTimezones();
   const isEditMode = !!editEmployee;
+  const { t } = useTranslation();
+
+  const validationSchema = useMemo(
+    () => (isEditMode ? makeEditSchema(t) : makeCreateSchema(t)),
+    [isEditMode, t]
+  );
 
   const [error, setError] = React.useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -216,10 +221,10 @@ export const CreateEmployeeForm = ({
 
   // Step configuration
   const STEPS = [
-    { id: 1, title: 'Basic Info', icon: UserIcon, description: 'Personal details' },
-    { id: 2, title: 'Employment', icon: Briefcase, description: 'Job information' },
-    { id: 3, title: 'Financial', icon: Building2, description: 'Bank & salary' },
-    { id: 4, title: 'Emergency', icon: Phone, description: 'Emergency contact' },
+    { id: 1, title: t('employees.form.stepBasicInfo'), icon: UserIcon, description: t('employees.form.stepBasicInfoDesc') },
+    { id: 2, title: t('employees.form.stepEmployment'), icon: Briefcase, description: t('employees.form.stepEmploymentDesc') },
+    { id: 3, title: t('employees.form.stepFinancial'), icon: Building2, description: t('employees.form.stepFinancialDesc') },
+    { id: 4, title: t('employees.form.stepEmergency'), icon: Phone, description: t('employees.form.stepEmergencyDesc') },
   ];
 
   // Real-time uniqueness check on blur
@@ -235,7 +240,7 @@ export const CreateEmployeeForm = ({
       );
       if (result.exists) {
         const label = result.label || fieldName.replace(/_/g, ' ');
-        const msg = `${label} "${value.trim()}" is already assigned to another employee`;
+        const msg = t('employees.form.fieldAssigned', { label, value: value.trim() });
         setUniqueErrors(prev => ({ ...prev, [fieldName]: msg }));
         formik.setFieldError(fieldName, msg);
       } else {
@@ -296,7 +301,7 @@ export const CreateEmployeeForm = ({
       const employeeName = `${formik.values.first_name} ${formik.values.last_name}`;
       formik.resetForm();
       setCreatedEmployeeName(employeeName);
-      showToast.success('Employee created successfully!');
+      showToast.success(t('employees.form.createdSuccess'));
       setShowSuccessModal(true);
     },
     onError: (err: Error) => {
@@ -324,7 +329,7 @@ export const CreateEmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employee', editEmployee?.id] });
       formik.resetForm(); // Clear dirty state
       setCreatedEmployeeName(`${formik.values.first_name} ${formik.values.last_name}`);
-      showToast.success('Employee profile updated!');
+      showToast.success(t('employees.form.updatedSuccess'));
       setShowSuccessModal(true);
     },
     onError: (err: Error) => {
@@ -342,7 +347,7 @@ export const CreateEmployeeForm = ({
       if (!prefixInput || prefixInput.length < 2) return;
       await tenantService.setEmployeeIdPrefix(prefixInput);
       setPrefixInput('');
-      showToast.success('Employee ID prefix configured successfully');
+      showToast.success(t('employees.form.prefixConfigured'));
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
     } catch (err: any) {
       showToast.error(err.message);
@@ -398,7 +403,7 @@ export const CreateEmployeeForm = ({
       ctc: editEmployee?.ctc || '',
       timezone: editEmployee?.timezone || '',
     },
-    validationSchema: isEditMode ? editValidationSchema : createValidationSchema,
+    validationSchema: validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
     onSubmit: async (values, { setSubmitting }) => {
@@ -406,14 +411,14 @@ export const CreateEmployeeForm = ({
 
       // Extra validation check before submission
       try {
-        const schema = isEditMode ? editValidationSchema : createValidationSchema;
+        const schema = validationSchema;
         await schema.validate(values, { abortEarly: false });
       } catch (validationError: any) {
         // Collect all validation errors
         if (validationError.inner && validationError.inner.length > 0) {
           const errorMessages = validationError.inner.map((err: any) => err.message).join(', ');
-          setError(`Please fix the following errors: ${errorMessages}`);
-          showToast.error('Please fix all validation errors before submitting');
+          setError(t('employees.form.fixErrors', { msg: errorMessages }));
+          showToast.error(t('employees.form.fixAllErrors'));
           setSubmitting(false);
           return;
         }
@@ -474,7 +479,7 @@ export const CreateEmployeeForm = ({
             const data = await response.json();
             formik.setFieldValue('bank_name', data.BANK);
             formik.setFieldValue('branch_name', data.BRANCH);
-            showToast.success(`Bank details fetched: ${data.BANK}`);
+            showToast.success(t('employees.form.bankFetched', { bank: data.BANK }));
           }
         } catch (err) {
           // Silent fail or optional toast
@@ -534,7 +539,7 @@ export const CreateEmployeeForm = ({
     // If there is any unique error currently displaying, block
     const hasUniqueError = Object.values(uniqueErrors).some(err => err !== null);
     if (hasUniqueError) {
-      showToast.error("Please resolve the duplicate field errors before proceeding.");
+      showToast.error(t('employees.form.resolveDuplicateErrors'));
       return;
     }
 
@@ -571,7 +576,7 @@ export const CreateEmployeeForm = ({
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      showToast.error(`Please fix ${stepErrors.length} error(s) before proceeding`);
+      showToast.error(t('employees.form.fixErrorsCount', { count: stepErrors.length }));
     }
   };
 
@@ -654,14 +659,14 @@ export const CreateEmployeeForm = ({
           message={
             <div className="flex-1">
               <p className="text-sm font-medium mb-2">
-                Please fix the following validation errors:
+                {t('employees.form.validationErrorsHeader')}
               </p>
               <ul className="list-disc list-inside text-xs space-y-1">
                 {validationErrors.slice(0, 5).map((err, idx) => (
                   <li key={idx}>{err}</li>
                 ))}
                 {validationErrors.length > 5 && (
-                  <li className="font-medium">...and {validationErrors.length - 5} more errors</li>
+                  <li className="font-medium">{t('employees.form.moreErrors', { count: validationErrors.length - 5 })}</li>
                 )}
               </ul>
             </div>
@@ -680,7 +685,7 @@ export const CreateEmployeeForm = ({
         }}
       >
         <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 mb-5 flex items-center gap-3">
-          <UserIcon className="w-4 h-4 text-brand-500" /> Basic Information
+            <UserIcon className="w-4 h-4 text-brand-500" /> {t('employees.form.basicInformation')}
         </h3>
 
 
@@ -688,7 +693,7 @@ export const CreateEmployeeForm = ({
         {!isEditMode && (
           <div className="mb-2">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Email *
+              {t('employees.form.email')}
             </label>
             <Input
               type="email"
@@ -701,7 +706,7 @@ export const CreateEmployeeForm = ({
               }}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={(formik.touched.email && Boolean(formik.errors.email)) || Boolean(uniqueErrors.email)}
-              placeholder="employee@company.com"
+              placeholder={t('employees.form.phEmail')}
             />
             <FormError message={uniqueErrors.email || (formik.touched.email ? formik.errors.email : undefined)} />
           </div>
@@ -710,7 +715,7 @@ export const CreateEmployeeForm = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              First Name *
+              {t('employees.form.firstName')}
             </label>
             <Input
               type="text"
@@ -719,7 +724,7 @@ export const CreateEmployeeForm = ({
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               onInput={handleInput}
-              placeholder="John"
+              placeholder={t('employees.form.phFirstName')}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={formik.touched.first_name && Boolean(formik.errors.first_name)}
             />
@@ -728,7 +733,7 @@ export const CreateEmployeeForm = ({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Last Name *
+              {t('employees.form.lastName')}
             </label>
             <Input
               type="text"
@@ -737,7 +742,7 @@ export const CreateEmployeeForm = ({
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               onInput={handleInput}
-              placeholder="Doe"
+              placeholder={t('employees.form.phLastName')}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               error={formik.touched.last_name && Boolean(formik.errors.last_name)}
             />
@@ -748,7 +753,7 @@ export const CreateEmployeeForm = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Phone *
+              {t('employees.form.phone')}
             </label>
             <PhoneInput
               name="phone"
@@ -759,7 +764,7 @@ export const CreateEmployeeForm = ({
                 checkUnique('phone', formik.values.phone);
               }}
               error={(formik.touched.phone && Boolean(formik.errors.phone)) || Boolean(uniqueErrors.phone)}
-              placeholder="e.g. 9876543210"
+              placeholder={t('employees.form.phPhone')}
               className="group focus-within:ring-2 focus-within:ring-brand-500/20 transition-all rounded-xl"
             />
             <FormError message={uniqueErrors.phone || (formik.touched.phone ? formik.errors.phone : undefined)} />
@@ -767,12 +772,12 @@ export const CreateEmployeeForm = ({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Date of Birth
+              {t('employees.form.dateOfBirth')}
             </label>
             <DatePicker
               value={formik.values.date_of_birth}
               onChange={(date) => formik.setFieldValue('date_of_birth', date)}
-              placeholder="e.g. 1995-05-20"
+              placeholder={t('employees.form.phDob')}
               maxDate={maxDob}
             />
             {formik.touched.date_of_birth && formik.errors.date_of_birth && (
@@ -784,17 +789,17 @@ export const CreateEmployeeForm = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Gender *
+              {t('employees.form.gender')}
             </label>
             <Select
               name="gender"
               value={formik.values.gender}
               onChange={formik.handleChange}
-              placeholder="Select Gender"
+              placeholder={t('employees.form.phSelectGender')}
             >
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
+              <option value="MALE">{t('employees.form.genderMale')}</option>
+              <option value="FEMALE">{t('employees.form.genderFemale')}</option>
+              <option value="OTHER">{t('employees.form.genderOther')}</option>
             </Select>
             {formik.touched.gender && formik.errors.gender && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.gender}</p>
@@ -803,18 +808,18 @@ export const CreateEmployeeForm = ({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Marital Status *
+              {t('employees.form.maritalStatus')}
             </label>
             <Select
               name="marital_status"
               value={formik.values.marital_status}
               onChange={formik.handleChange}
-              placeholder="Select Status"
+              placeholder={t('employees.form.phSelectStatus')}
             >
-              <option value="SINGLE">Single</option>
-              <option value="MARRIED">Married</option>
-              <option value="DIVORCED">Divorced</option>
-              <option value="WIDOWED">Widowed</option>
+              <option value="SINGLE">{t('employees.form.maritalSingle')}</option>
+              <option value="MARRIED">{t('employees.form.maritalMarried')}</option>
+              <option value="DIVORCED">{t('employees.form.maritalDivorced')}</option>
+              <option value="WIDOWED">{t('employees.form.maritalWidowed')}</option>
             </Select>
             {formik.touched.marital_status && formik.errors.marital_status && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.marital_status}</p>
@@ -823,29 +828,29 @@ export const CreateEmployeeForm = ({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Nationality
+              {t('employees.form.nationality')}
             </label>
             <input
               type="text"
               name="nationality"
               value={formik.values.nationality}
               onChange={formik.handleChange}
-              placeholder="Indian"
+              placeholder={t('employees.form.phNationality')}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-            Address *
-          </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.address')}
+            </label>
           <textarea
             name="address"
             value={formik.values.address}
             onChange={formik.handleChange}
             rows={1}
-            placeholder="123 Main Street, City, State, PIN"
+            placeholder={t('employees.form.phAddress')}
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
           />
           <FormError message={formik.touched.address ? formik.errors.address : undefined} />
@@ -864,14 +869,14 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-brand-500" /> Employment Details
+            <Briefcase className="w-4 h-4 text-brand-500" /> {t('employees.form.employmentDetails')}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Role *
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.role')}
+            </label>
               <Select
                 name="role"
                 value={formik.values.role}
@@ -891,11 +896,11 @@ export const CreateEmployeeForm = ({
                 ) : (
                   /* Fallback if roles haven't loaded yet */
                   <>
-                    <option value="EMPLOYEE">Employee</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="HR">HR</option>
+                    <option value="EMPLOYEE">{t('employees.form.roleEmployee')}</option>
+                    <option value="MANAGER">{t('employees.form.roleManager')}</option>
+                    <option value="HR">{t('employees.form.roleHr')}</option>
                     {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && (
-                      <option value="ADMIN">Admin</option>
+                      <option value="ADMIN">{t('employees.form.roleAdmin')}</option>
                     )}
                   </>
                 )}
@@ -907,14 +912,14 @@ export const CreateEmployeeForm = ({
                 /* Edit mode: simple editable employee ID field */
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                    Employee ID *
+                    {t('employees.form.employeeId')}
                   </label>
                   <input
                     type="text"
                     name="employee_id"
                     value={formik.values.employee_id}
                     onChange={formik.handleChange}
-                    placeholder="Employee ID"
+                    placeholder={t('employees.form.phEmployeeId')}
                     disabled={!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '')}
                     className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1 ${!['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
@@ -928,16 +933,16 @@ export const CreateEmployeeForm = ({
                   {/* Label row with inline toggle */}
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      Employee ID {!(idSettings?.usePrefix ?? true) && <span className="text-red-500">*</span>}
+                      {t('employees.form.employeeId')} {!(idSettings?.usePrefix ?? true) && <span className="text-red-500">*</span>}
                       {(idSettings?.usePrefix ?? true) && idSettings?.isConfigured && (
-                        <span className="text-xs font-normal text-gray-500 ml-1">(Auto)</span>
+                        <span className="text-xs font-normal text-gray-500 ml-1">{t('employees.form.autoTag')}</span>
                       )}
                     </label>
                     {['ADMIN', 'HR', 'SUPER_ADMIN'].includes(user?.role || '') && (
-                      <button
+                       <Button variant="ghost" 
                         type="button"
                         role="switch"
-                        title={`${(idSettings?.usePrefix ?? true) ? 'Switch to manual entry' : 'Switch to auto-generate'}`}
+                        title={(idSettings?.usePrefix ?? true) ? t('employees.form.switchManual') : t('employees.form.switchAuto')}
                         aria-checked={idSettings?.usePrefix ?? true}
                         onClick={() => toggleModeMutation.mutate(!(idSettings?.usePrefix ?? true))}
                         disabled={toggleModeMutation.isPending}
@@ -950,7 +955,7 @@ export const CreateEmployeeForm = ({
                           className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-elev-1 transform transition-transform duration-200 ${(idSettings?.usePrefix ?? true) ? 'translate-x-[18px]' : 'translate-x-[3px]'
                             }`}
                         />
-                      </button>
+                      </Button>
                     )}
                   </div>
 
@@ -964,7 +969,7 @@ export const CreateEmployeeForm = ({
                             type="text"
                             value={prefixInput}
                             onChange={(e) => setPrefixInput(e.target.value.toUpperCase())}
-                            placeholder="e.g. EMP"
+                            placeholder={t('employees.form.phPrefix')}
                             maxLength={5}
                             className="w-full px-4 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-elev-1"
                           />
@@ -974,12 +979,12 @@ export const CreateEmployeeForm = ({
                             disabled={!prefixInput || prefixInput.length < 2}
                             className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap text-xs px-3 py-2.5"
                           >
-                            Save
+                            {t('employees.form.save')}
                           </Button>
                         </div>
                       ) : (
                         <div className="p-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400">
-                          Prefix not configured. Contact admin.
+                          {t('employees.form.prefixNotConfigured')}
                         </div>
                       )
                     ) : (
@@ -990,7 +995,7 @@ export const CreateEmployeeForm = ({
                         value={formik.values.employee_id || idSettings?.nextId || ''}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        placeholder={idSettings?.nextId || 'Auto-generated'}
+                        placeholder={idSettings?.nextId || t('employees.form.autoGenerated')}
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
                       />
                     )
@@ -1003,7 +1008,7 @@ export const CreateEmployeeForm = ({
                         value={formik.values.employee_id}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        placeholder="Enter employee ID (e.g., EMP001)"
+                        placeholder={t('employees.form.phEmployeeIdManual')}
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
                       />
                       {formik.touched.employee_id && formik.errors.employee_id && (
@@ -1020,14 +1025,14 @@ export const CreateEmployeeForm = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Department *
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.department')}
+            </label>
               <Select
                 name="department_id"
                 value={formik.values.department_id}
                 onChange={formik.handleChange}
-                placeholder="Select Department"
+                placeholder={t('employees.form.phSelectDepartment')}
               >
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
@@ -1041,14 +1046,14 @@ export const CreateEmployeeForm = ({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Designation *
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.designation')}
+            </label>
               <Select
                 name="designation_id"
                 value={formik.values.designation_id}
                 onChange={formik.handleChange}
-                placeholder="Select Designation"
+                placeholder={t('employees.form.phSelectDesignation')}
               >
                 {designations.map((des) => (
                   <option key={des.id} value={des.id}>
@@ -1064,14 +1069,14 @@ export const CreateEmployeeForm = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Reports To (Manager)
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.reportsTo')}
+            </label>
               <Select
                 name="reports_to"
                 value={formik.values.reports_to}
                 onChange={formik.handleChange}
-                placeholder="No Manager"
+                placeholder={t('employees.form.phNoManager')}
               >
                 {managers.filter(m => m.id !== editEmployee?.id).map((mgr) => (
                   <option key={mgr.id} value={mgr.employee_uuid || mgr.id}>
@@ -1082,13 +1087,13 @@ export const CreateEmployeeForm = ({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Join Date *
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.joinDate')}
+            </label>
               <DatePicker
                 value={formik.values.join_date}
                 onChange={(date) => formik.setFieldValue('join_date', date)}
-                placeholder="Select join date"
+                placeholder={t('employees.form.phJoinDate')}
                 minDate={minJoinDate}
               />
               {formik.touched.join_date && formik.errors.join_date && (
@@ -1099,26 +1104,26 @@ export const CreateEmployeeForm = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Employment Type
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.employmentType')}
+            </label>
               <Select
                 name="employment_type"
                 value={formik.values.employment_type}
                 onChange={formik.handleChange}
               >
-                <option value="FULL_TIME">Full-time</option>
-                <option value="PART_TIME">Part-time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="INTERN">Intern</option>
-                <option value="TEMP">Temporary</option>
+                  <option value="FULL_TIME">{t('employees.form.empFullTime')}</option>
+                  <option value="PART_TIME">{t('employees.form.empPartTime')}</option>
+                  <option value="CONTRACT">{t('employees.form.empContract')}</option>
+                  <option value="INTERN">{t('employees.form.empIntern')}</option>
+                  <option value="TEMP">{t('employees.form.empTemporary')}</option>
               </Select>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Shift
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+              {t('employees.form.shift')}
+            </label>
               <Select
                 name="shift_id"
                 value={formik.values.shift_id}
@@ -1130,7 +1135,7 @@ export const CreateEmployeeForm = ({
                     formik.setFieldValue('shift', selectedShift.name);
                   }
                 }}
-                placeholder="Select Shift"
+                placeholder={t('employees.form.phSelectShift')}
               >
                 {shifts.map((s: any) => (
                   <option key={s.id} value={s.id}>
@@ -1144,7 +1149,7 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Work Location
+                {t('employees.form.workLocation')}
               </label>
               <input
                 type="text"
@@ -1152,7 +1157,7 @@ export const CreateEmployeeForm = ({
                 value={formik.values.job_location}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                placeholder="e.g. New York, Remote"
+                placeholder={t('employees.form.phWorkLocation')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.job_location && formik.errors.job_location && (
@@ -1168,7 +1173,7 @@ export const CreateEmployeeForm = ({
                 name="timezone"
                 value={formik.values.timezone}
                 onChange={(value) => formik.setFieldValue('timezone', value)}
-                placeholder="Search Timezone..."
+                placeholder={t('employees.form.phTimezone')}
                 options={timezones.map((tz: any) => ({ label: tz.label, value: tz.value }))}
               />
             </div>
@@ -1190,14 +1195,14 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-brand-500" /> Financial Details
+            <Building2 className="w-4 h-4 text-brand-500" /> {t('employees.form.financialDetails')}
           </h3>
 
           {/* Row 1: Aadhaar Number | PAN */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Aadhaar Number *
+                {t('employees.form.aadhaarNumber')}
               </label>
               <input
                 type="text"
@@ -1210,14 +1215,14 @@ export const CreateEmployeeForm = ({
                 }}
                 onInput={handleInput}
                 maxLength={12}
-                placeholder="123456789012"
+                placeholder={t('employees.form.phAadhaar')}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.aadhar_number && formik.errors.aadhar_number) || uniqueErrors.aadhar_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.aadhar_number || (formik.touched.aadhar_number ? (formik.errors.aadhar_number as string) : undefined)} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Tax ID (PAN) *
+                {t('employees.form.taxId')}
               </label>
               <input
                 type="text"
@@ -1230,7 +1235,7 @@ export const CreateEmployeeForm = ({
                 }}
                 onInput={handleInput}
                 maxLength={10}
-                placeholder="ABCDE1234F"
+                placeholder={t('employees.form.phTaxId')}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 uppercase shadow-elev-1 ${((formik.touched.tax_id && formik.errors.tax_id) || uniqueErrors.tax_id) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.tax_id || (formik.touched.tax_id ? (formik.errors.tax_id as string) : undefined)} />
@@ -1241,7 +1246,7 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                IFSC Code *
+                {t('employees.form.ifscCode')}
               </label>
               <input
                 type="text"
@@ -1250,7 +1255,7 @@ export const CreateEmployeeForm = ({
                 onChange={formik.handleChange}
                 onInput={handleInput}
                 maxLength={11}
-                placeholder="HDFC0001234"
+                placeholder={t('employees.form.phIfsc')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1 uppercase"
               />
               {formik.touched.ifsc_code && formik.errors.ifsc_code && (
@@ -1259,19 +1264,19 @@ export const CreateEmployeeForm = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Bank Name *
+                {t('employees.form.bankName')}
               </label>
               <input
                 type="text"
                 name="bank_name"
                 value={formik.values.bank_name}
                 onChange={formik.handleChange}
-                placeholder="e.g. State Bank of India"
+                placeholder={t('employees.form.phBankName')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.values.branch_name && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Branch: <span className="font-medium text-gray-700 dark:text-gray-300">{formik.values.branch_name}</span>
+                  {t('employees.form.branch')}: <span className="font-medium text-gray-700 dark:text-gray-300">{formik.values.branch_name}</span>
                 </p>
               )}
               {formik.touched.bank_name && formik.errors.bank_name && (
@@ -1284,14 +1289,14 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Account Name *
+                {t('employees.form.accountName')}
               </label>
               <input
                 type="text"
                 name="account_name"
                 value={formik.values.account_name}
                 onChange={formik.handleChange}
-                placeholder="e.g. John Doe"
+                placeholder={t('employees.form.phAccountName')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.account_name && formik.errors.account_name && (
@@ -1300,7 +1305,7 @@ export const CreateEmployeeForm = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Account Number *
+                {t('employees.form.accountNumber')}
               </label>
               <input
                 type="text"
@@ -1312,7 +1317,7 @@ export const CreateEmployeeForm = ({
                   checkUnique('account_number', e.target.value);
                 }}
                 onInput={handleInput}
-                placeholder="1234567890123456"
+                placeholder={t('employees.form.phAccountNumber')}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.account_number && formik.errors.account_number) || uniqueErrors.account_number) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.account_number || (formik.touched.account_number ? (formik.errors.account_number as string) : undefined)} />
@@ -1323,7 +1328,7 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                UAN
+                {t('employees.form.uan')}
               </label>
               <input
                 type="text"
@@ -1335,14 +1340,14 @@ export const CreateEmployeeForm = ({
                   checkUnique('uan', e.target.value);
                 }}
                 onInput={handleInput}
-                placeholder="12-digit UAN"
+                placeholder={t('employees.form.phUan')}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-elev-1 ${((formik.touched.uan && formik.errors.uan) || uniqueErrors.uan) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.uan || (formik.touched.uan ? (formik.errors.uan as string) : undefined)} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                PF A/C Number
+                {t('employees.form.pfAccount')}
               </label>
               <input
                 type="text"
@@ -1353,7 +1358,7 @@ export const CreateEmployeeForm = ({
                   formik.handleBlur(e);
                   checkUnique('pf_account', e.target.value);
                 }}
-                placeholder="MH/BOM/12345/000/1234567"
+                placeholder={t('employees.form.phPfAccount')}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 uppercase shadow-elev-1 ${((formik.touched.pf_account && formik.errors.pf_account) || uniqueErrors.pf_account) ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-500'}`}
               />
               <FormError message={uniqueErrors.pf_account || (formik.touched.pf_account ? (formik.errors.pf_account as string) : undefined)} />
@@ -1364,30 +1369,30 @@ export const CreateEmployeeForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                ESI Number
+                {t('employees.form.esiNumber')}
               </label>
               <input
                 type="text"
                 name="esi_number"
                 value={formik.values.esi_number}
                 onChange={formik.handleChange}
-                placeholder="31-00-123456-000-0001"
+                placeholder={t('employees.form.phEsiNumber')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
             </div>
           </div>
 
           <div className="mt-6">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-              Annual CTC (INR) *
-            </label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                {t('employees.form.annualCtc')}
+              </label>
             <Input
               type="number"
               name="ctc"
               value={formik.values.ctc}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              placeholder="e.g., 600000"
+              placeholder={t('employees.form.phCtc')}
               error={formik.touched.ctc && Boolean(formik.errors.ctc)}
             />
             <FormError message={formik.touched.ctc ? (formik.errors.ctc as string) : undefined} />
@@ -1407,13 +1412,13 @@ export const CreateEmployeeForm = ({
       >
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1.5 mb-2 flex items-center gap-2">
-            <Phone className="w-4 h-4 text-brand-500" /> Emergency Contact
+            <Phone className="w-4 h-4 text-brand-500" /> {t('employees.form.emergencyContact')}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Contact Name *
+                {t('employees.form.contactName')}
               </label>
               <input
                 type="text"
@@ -1422,7 +1427,7 @@ export const CreateEmployeeForm = ({
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 onInput={handleInput}
-                placeholder="e.g. Jane Doe"
+                placeholder={t('employees.form.phContactName')}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-elev-1"
               />
               {formik.touched.emergency_name && formik.errors.emergency_name && (
@@ -1431,7 +1436,7 @@ export const CreateEmployeeForm = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Contact Phone *
+                {t('employees.form.contactPhone')}
               </label>
               <PhoneInput
                 name="emergency_phone"
@@ -1439,7 +1444,7 @@ export const CreateEmployeeForm = ({
                 onChange={(val) => formik.setFieldValue('emergency_phone', val)}
                 onBlur={formik.handleBlur}
                 error={formik.touched.emergency_phone && Boolean(formik.errors.emergency_phone)}
-                placeholder="e.g. 9876543210"
+                placeholder={t('employees.form.phPhone')}
                 className="group focus-within:ring-2 focus-within:ring-brand-500/20 transition-all rounded-xl"
               />
               {formik.touched.emergency_phone && formik.errors.emergency_phone && (
@@ -1448,20 +1453,20 @@ export const CreateEmployeeForm = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Relationship *
+                {t('employees.form.relationship')}
               </label>
               <Select
                 name="emergency_relation"
                 value={formik.values.emergency_relation}
                 onChange={formik.handleChange}
-                placeholder="Select Relation"
+                placeholder={t('employees.form.phSelectRelation')}
               >
-                <option value="SPOUSE">Spouse</option>
-                <option value="PARENT">Parent</option>
-                <option value="SIBLING">Sibling</option>
-                <option value="CHILD">Child</option>
-                <option value="FRIEND">Friend</option>
-                <option value="OTHER">Other</option>
+                  <option value="SPOUSE">{t('employees.form.relSpouse')}</option>
+                  <option value="PARENT">{t('employees.form.relParent')}</option>
+                  <option value="SIBLING">{t('employees.form.relSibling')}</option>
+                  <option value="CHILD">{t('employees.form.relChild')}</option>
+                  <option value="FRIEND">{t('employees.form.relFriend')}</option>
+                  <option value="OTHER">{t('employees.form.relOther')}</option>
               </Select>
               {formik.touched.emergency_relation && formik.errors.emergency_relation && (
                 <p className="mt-1 text-sm text-red-600">{formik.errors.emergency_relation}</p>
@@ -1480,11 +1485,11 @@ export const CreateEmployeeForm = ({
       <div className="p-6">
         <div className="flex items-center gap-3 mb-4 text-amber-600">
           <AlertCircle className="w-6 h-6" />
-          <h3 className="text-lg font-semibold">Unsaved Changes</h3>
+          <h3 className="text-lg font-semibold">{t('employees.form.unsavedChangesTitle')}</h3>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          You have unsaved changes in the form. Are you sure you want to leave? All progress will be lost.
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          {t('employees.form.unsavedChangesMsg')}
         </p>
 
         <div className="flex gap-2 w-full">
@@ -1493,7 +1498,7 @@ export const CreateEmployeeForm = ({
             className="flex-1"
             onClick={() => blocker?.reset?.()}
           >
-            Cancel
+            {t('employees.form.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -1502,7 +1507,7 @@ export const CreateEmployeeForm = ({
               blocker?.proceed?.();
             }}
           >
-            Discard Changes
+            {t('employees.form.discardChanges')}
           </Button>
         </div>
       </div>
@@ -1526,7 +1531,7 @@ export const CreateEmployeeForm = ({
         disabled={currentStep === 1}
         className={`${currentStep === 1 ? 'invisible' : ''} h-11 px-6 text-base border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white transition-colors`}
       >
-        <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+        <ChevronLeft className="w-4 h-4 mr-2" /> {t('employees.form.previous')}
       </Button>
 
       {currentStep < 4 ? (
@@ -1535,7 +1540,7 @@ export const CreateEmployeeForm = ({
           onClick={handleNext}
           className="h-11 px-8 text-base bg-brand-500 hover:bg-brand-500/90 text-white shadow-elev-4 shadow-brand-500/25 transition-all hover:-translate-y-0.5"
         >
-          Next <ChevronRight className="w-4 h-4 ml-2" />
+          {t('employees.form.next')} <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       ) : (
         <Button
@@ -1545,7 +1550,7 @@ export const CreateEmployeeForm = ({
           disabled={isLoading}
           className="h-11 px-8 text-base bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-elev-4 shadow-green-500/25 transition-all hover:-translate-y-0.5"
         >
-          {isEditMode ? 'Update Employee' : 'Create Employee'} <Check className="w-4 h-4 ml-2" />
+          {isEditMode ? t('employees.form.updateEmployee') : t('employees.form.createEmployee')} <Check className="w-4 h-4 ml-2" />
         </Button>
       )}
     </div>
@@ -1566,7 +1571,7 @@ export const CreateEmployeeForm = ({
         <Dialog
           open={open}
           onOpenChange={onOpenChange}
-          title={isEditMode ? 'Edit Employee' : 'Add New Employee'}
+          title={isEditMode ? t('employees.editEmployee') : t('employees.addEmployee')}
           className="max-w-3xl"
           footer={footerContent}
         >
@@ -1585,12 +1590,12 @@ export const CreateEmployeeForm = ({
           onSuccess?.();
         }}
         type="success"
-        title={isEditMode ? 'Employee Updated!' : 'Welcome Aboard!'}
+        title={isEditMode ? t('employees.form.employeeUpdated') : t('employees.form.welcomeAboard')}
         message={isEditMode
-          ? `${createdEmployeeName}'s profile has been updated successfully.`
-          : `${createdEmployeeName} has been added to the team. Login credentials have been sent to their email.`
+          ? t('employees.form.updatedMsg', { name: createdEmployeeName })
+          : t('employees.form.addedMsg', { name: createdEmployeeName })
         }
-        buttonText="Continue"
+        buttonText={t('employees.form.continue')}
         onButtonClick={() => {
           setShowSuccessModal(false);
           onOpenChange(false);

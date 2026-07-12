@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek, endOfWeek, addDays, subDays, eachDayOfInterval, isSameDay, isAfter, startOfDay } from 'date-fns';
 import { Loader2, ChevronLeft, ChevronRight, Plus, Trash2, Save, IndianRupee, Ban, Check, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { showToast } from '@/utils/toast';
 
 import { Button } from '@/components/ui/Button';
@@ -45,6 +46,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
     onApprove,
     onReject
 }) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [currentDate, setCurrentDate] = useState(initialDate || (preloadedTimesheet ? new Date(preloadedTimesheet.week_start_date!) : new Date()));
@@ -242,7 +244,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 if (totalRowHours === 0) continue;
 
                 if (!row.projectId) {
-                    showToast.error("Please select a project for all rows with hours");
+                    showToast.error(t('timesheets.entry.validation.selectProject'));
                     hasErrors = true;
                     break;
                 }
@@ -253,7 +255,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         // Block future date entries
                         const entryDate = new Date(dateStr);
                         if (isAfter(startOfDay(entryDate), startOfDay(new Date()))) {
-                            showToast.error(`Cannot log time for future date: ${format(entryDate, 'MMM d')}`);
+                            showToast.error(t('timesheets.entry.validation.futureDate', { date: format(entryDate, 'MMM d') }));
                             hasErrors = true;
                             break;
                         }
@@ -276,7 +278,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             }
 
             if (entries.length === 0) {
-                showToast.error("Please enter some time before saving");
+                showToast.error(t('timesheets.entry.validation.noTime'));
                 setIsSubmitting(false);
                 return;
             }
@@ -288,7 +290,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             }
             for (const [dateStr, total] of Object.entries(dailyTotals)) {
                 if (total > 24) {
-                    showToast.error(`Total hours for ${format(new Date(dateStr), 'MMM d')} exceed 24h (${total}h logged)`);
+                    showToast.error(t('timesheets.entry.validation.exceed24h', { date: format(new Date(dateStr), 'MMM d'), total }));
                     setIsSubmitting(false);
                     return;
                 }
@@ -304,9 +306,9 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             });
 
             if (shouldSubmit) {
-                showToast.success("Timesheet submitted successfully");
+                showToast.success(t('timesheets.entry.submittedSuccess'));
             } else {
-                showToast.success("Timesheet draft saved successfully");
+                showToast.success(t('timesheets.entry.draftSavedSuccess'));
             }
 
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
@@ -316,7 +318,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
         } catch (error: any) {
             console.error(error);
-            showToast.error(shouldSubmit ? "Failed to submit timesheet" : "Failed to save timesheet");
+            showToast.error(shouldSubmit ? t('timesheets.entry.submitFailed') : t('timesheets.entry.saveFailed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -340,7 +342,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
         }
         if (disabled && !selectedTask) {
             return (
-                <p className="text-xs text-gray-400 italic py-0.5">No activity</p>
+                <p className="text-xs text-gray-400 italic py-0.5">{t('timesheets.entry.noActivity')}</p>
             );
         }
 
@@ -352,7 +354,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 disabled={!projectId}
             >
-                <option value="">{isLoading ? "Loading..." : "Select Activity"}</option>
+                <option value="">{isLoading ? t('timesheets.entry.loading') : t('timesheets.entry.selectActivity')}</option>
                 {tasks?.map((t: Task) => (
                     <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
@@ -401,7 +403,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                 timesheetStatus === 'SUBMITTED' ? "bg-brand-50 text-brand-600 border-brand-200" :
                                     "bg-coral-50 text-coral-600 border-coral-200"
                         )}>
-                            {timesheetStatus}
+                            {t(`timesheets.entry.status.${timesheetStatus}`)}
                         </div>
 
                         {/* Edit button for DRAFT and SUBMITTED (not APPROVED, not Approval Mode) */}
@@ -412,7 +414,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                 onClick={() => setForceEdit(true)}
                                 className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-indigo-900/20 border border-brand-200 dark:border-brand-800"
                             >
-                                {timesheetStatus === 'SUBMITTED' ? 'Recall / Edit' : 'Edit'}
+                                {timesheetStatus === 'SUBMITTED' ? t('timesheets.entry.recallEdit') : t('timesheets.entry.edit')}
                             </Button>
                         )}
                     </div>
@@ -423,9 +425,9 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                     <div className="min-w-[1000px] p-6">
                         {/* Grid Header */}
                         <div className="flex border-b border-gray-200 dark:border-white/10 pb-2 mb-2">
-                            <div className="w-[20%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Project</div>
-                            <div className="w-[22%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</div>
-                            <div className="w-8 px-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest" title="Billable"><IndianRupee size={12} className="mx-auto" /></div>
+                            <div className="w-[20%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('timesheets.entry.project')}</div>
+                            <div className="w-[22%] px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('timesheets.entry.activity')}</div>
+                            <div className="w-8 px-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest" title={t('timesheets.entry.billable')}><IndianRupee size={12} className="mx-auto" /></div>
                             {dates.map(dateStr => {
                                 const date = new Date(dateStr);
                                 const isToday = isSameDay(date, new Date());
@@ -444,7 +446,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                 isToday ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" :
                                                     isWeekOff ? "bg-red-50 dark:bg-red-900/10 text-red-400" : "text-gray-500 dark:text-gray-400"
                                         )}
-                                            title={isFutureDate ? "Future date — cannot log time" : isWeekOff ? "Week Off" : undefined}
+                                            title={isFutureDate ? t('timesheets.entry.futureDateTooltip') : isWeekOff ? t('timesheets.entry.weekOff') : undefined}
                                         >
                                             <span className="text-[9px] font-black uppercase">{format(date, 'EEE')}</span>
                                             <span className="text-sm font-bold">{format(date, 'd')}</span>
@@ -452,7 +454,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     </div>
                                 );
                             })}
-                            <div className="w-16 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</div>
+                            <div className="w-16 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('timesheets.entry.total')}</div>
                             <div className="w-8"></div>
                         </div>
 
@@ -464,7 +466,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     <div className="w-[20%] px-2">
                                         {isReadOnly ? (
                                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 py-1">
-                                                {projects?.find((p: any) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">No project</span>}
+                                                {projects?.find((p: any) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">{t('timesheets.entry.noProject')}</span>}
                                             </p>
                                         ) : (
                                             <select
@@ -472,7 +474,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                 onChange={(e) => handleRowChange(row.id, 'projectId', e.target.value)}
                                                 className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-brand-500 transition-colors py-1 cursor-pointer dark:text-gray-200 dark:bg-gray-900"
                                             >
-                                                <option value="">Select Project</option>
+                                                <option value="">{t('timesheets.entry.selectProject')}</option>
                                                 {projects?.map((p: any) => (
                                                     <option key={p.id} value={p.id}>{p.name}</option>
                                                 ))}
@@ -484,7 +486,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     <div className="w-[22%] px-2">
                                         {isReadOnly ? (
                                             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 leading-snug break-words whitespace-normal py-0.5">
-                                                {row.taskTitle || <span className="text-gray-400 italic">No activity</span>}
+                                                {row.taskTitle || <span className="text-gray-400 italic">{t('timesheets.entry.noActivity')}</span>}
                                             </p>
                                         ) : (
                                             <TaskSelect
@@ -505,17 +507,17 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
                                             if (!isProjectBillable) {
                                                 return (
-                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 cursor-not-allowed" title="Project is non-billable">
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 cursor-not-allowed" title={t('timesheets.entry.projectNonBillable')}>
                                                         <Ban size={12} />
                                                     </div>
                                                 );
                                             }
 
                                             return (
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={() => canToggle && setRows(prev => prev.map(r => r.id === row.id ? { ...r, isBillable: !r.isBillable } : r))}
                                                     disabled={!canToggle}
-                                                    title={row.isBillable ? 'Billable' : 'Non-billable'}
+                                                    title={row.isBillable ? t('timesheets.entry.billable') : t('timesheets.entry.nonBillable')}
                                                     className={cn(
                                                         "w-6 h-6 rounded-full flex items-center justify-center transition-all text-[10px] font-black",
                                                         row.isBillable
@@ -525,7 +527,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                     )}
                                                 >
                                                     <IndianRupee size={10} />
-                                                </button>
+                                                </Button>
                                             );
                                         })()}
                                     </div>
@@ -564,7 +566,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                                     (isWeekOff ? "bg-transparent text-red-300 dark:text-red-900/50 placeholder:text-red-200 dark:placeholder:text-red-900/30" : "bg-gray-50/50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:shadow-elev-1 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-indigo-500/20")
                                                         )}
                                                         placeholder={isFutureDate ? "" : " "}
-                                                        title={isFutureDate ? "Cannot log time for future dates" : undefined}
+                                                        title={isFutureDate ? t('timesheets.entry.cannotLogFuture') : undefined}
                                                     />
                                                 </div>
                                             </div>
@@ -579,12 +581,12 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     {/* Actions */}
                                     <div className="w-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         {!isReadOnly && rows.length > 1 && (
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={() => handleRemoveRow(row.id)}
                                                 className="text-gray-300 hover:text-red-500 transition-colors"
                                             >
                                                 <Trash2 size={16} />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
@@ -594,13 +596,13 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         {/* Add Row Button */}
                         {!isReadOnly && (
                             <div className="mt-4">
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={handleAddRow}
                                     className="flex items-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/20 transition-colors"
                                 >
                                     <Plus size={16} />
-                                    ADD NEW LINE
-                                </button>
+                                    {t('timesheets.entry.addNewLine')}
+                                </Button>
                             </div>
                         )}
 
@@ -609,7 +611,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                             <div className="w-[20%] px-2 text-right text-xs font-black text-gray-400 uppercase tracking-widest self-center">
                             </div>
                             <div className="w-[22%] px-2 text-right text-xs font-black text-gray-400 uppercase tracking-widest self-center">
-                                Total Hours
+                                {t('timesheets.entry.totalHours')}
                             </div>
                             <div className="w-8"></div>
                             {dates.map(dateStr => {
@@ -630,7 +632,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                         </span>
                                         {!isApprovalMode && attTotal > 0 && (
                                             <span className="text-[9px] text-gray-400 font-medium">
-                                                of {attTotal.toFixed(1)}
+                                                {t('timesheets.entry.ofHours', { hours: attTotal.toFixed(1) })}
                                             </span>
                                         )}
                                     </div>
@@ -648,7 +650,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 <div className="border-t border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-800/30 px-6 py-4">
                     <div className="flex justify-end gap-4">
                         {onCancel && (
-                            <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+                            <Button variant="ghost" onClick={onCancel}>{t('timesheets.cancel')}</Button>
                         )}
 
                         {/* Approval Actions - ONLY show if status is SUBMITTED */}
@@ -659,14 +661,14 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     className="bg-white dark:bg-gray-700 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 min-w-[100px]"
                                 >
                                     <X size={16} className="mr-2" />
-                                    REJECT
+                                    {t('timesheets.entry.reject')}
                                 </Button>
                                 <Button
                                     onClick={() => onApprove(preloadedTimesheet.id)}
                                     className="bg-green-600 hover:bg-green-700 text-white min-w-[120px]"
                                 >
                                     <Check size={16} className="mr-2" />
-                                    APPROVE
+                                    {t('timesheets.entry.approve')}
                                 </Button>
                             </>
                         )}
@@ -680,7 +682,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     className="bg-brand-500 hover:bg-brand-600 text-white min-w-[120px]"
                                 >
                                     <Save size={16} className="mr-2" />
-                                    {timesheetStatus === 'SUBMITTED' ? 'SAVE AS DRAFT' : 'SAVE DRAFT'}
+                                    {timesheetStatus === 'SUBMITTED' ? t('timesheets.entry.saveAsDraft') : t('timesheets.entry.saveDraft')}
                                 </Button>
 
                                 {(() => {
@@ -727,7 +729,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     const isEligibleToSubmit = now >= friday;
 
                                     return (
-                                        <div title={!isEligibleToSubmit ? "You can only submit the timesheet after the work week is complete (Friday onwards)." : undefined}>
+                                        <div title={!isEligibleToSubmit ? t('timesheets.entry.submitEligibilityTooltip') : undefined}>
                                             <Button
                                                 onClick={() => handleSubmit(true)}
                                                 isLoading={isSubmitting}
@@ -739,7 +741,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                         : "bg-green-600 hover:bg-green-700 text-white"
                                                 )}
                                             >
-                                                {timesheetStatus === 'SUBMITTED' ? 'UPDATE SUBMISSION' : 'SUBMIT'}
+                                                {timesheetStatus === 'SUBMITTED' ? t('timesheets.entry.updateSubmission') : t('timesheets.entry.submit')}
                                             </Button>
                                         </div>
                                     );

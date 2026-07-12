@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { ShiftRosterPage } from '@/pages/organization/ShiftRosterPage';
 import { ShiftsPage } from '@/pages/organization/ShiftsPage';
@@ -38,7 +39,7 @@ export const UnifiedShiftsContent: React.FC = () => {
             {/* Sub-Navigation and Controls */}
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => handleTabChange('roster')}
                         className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
@@ -50,9 +51,9 @@ export const UnifiedShiftsContent: React.FC = () => {
                     >
                         <Calendar size={16} />
                         Shift Roster
-                    </button>
+                    </Button>
                     {canManageShifts && (
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => handleTabChange('manage')}
                             className={`
                         flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
@@ -64,7 +65,7 @@ export const UnifiedShiftsContent: React.FC = () => {
                         >
                             <Settings size={16} />
                             Manage Shifts
-                        </button>
+                        </Button>
                     )}
                 </div>
 

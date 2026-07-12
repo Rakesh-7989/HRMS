@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Briefcase, Clock, IndianRupee, Heart, Zap, Users, BookOpen, Coffee, ArrowRight } from 'lucide-react';
@@ -107,8 +107,8 @@ export const CareersPage: React.FC = () => {
             <p className="text-neutral-500 mb-8">All roles are based in Bengaluru, India. Remote-friendly.</p>
             <div className="flex flex-wrap gap-2 mb-8">
               {depts.map(d => (
-                <button key={d} onClick={() => setSelectedDept(d)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedDept === d ? 'bg-brand-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'}`}>{d}</button>
+                 <Button variant="ghost" key={d} onClick={() => setSelectedDept(d)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedDept === d ? 'bg-brand-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'}`}>{d}</Button>
               ))}
             </div>
             <div className="space-y-4">

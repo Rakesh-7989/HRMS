@@ -163,14 +163,14 @@ export const DelegationContent: React.FC = () => {
                                 const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
                                 return isActive ? (
                                     <div className="flex justify-end">
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => revokeMutation.mutate(row.id)}
                                             disabled={revokeMutation.isPending}
                                             className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
                                             title={t('delegation.revokeDelegation')}
                                         >
                                             <Trash2 size={16} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 ) : null;
                             },
@@ -267,12 +267,12 @@ export const DelegationContent: React.FC = () => {
                                             <p className="text-xs text-gray-500">{selectedDelegate.email}</p>
                                         )}
                                     </div>
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={() => { setSelectedDelegate(null); setDelegateSearch(''); }}
                                         className="text-xs text-red-600 dark:text-red-400 hover:underline"
                                     >
                                         {t('delegation.change')}
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="relative">
@@ -286,7 +286,7 @@ export const DelegationContent: React.FC = () => {
                                     {filteredEmployees.length > 0 && (
                                         <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-4 max-h-48 overflow-y-auto">
                                             {filteredEmployees.slice(0, 8).map((emp) => (
-                                                <button
+                                                 <Button variant="ghost" 
                                                     key={emp.id}
                                                     onClick={() => {
                                                         setSelectedDelegate(emp);
@@ -300,7 +300,7 @@ export const DelegationContent: React.FC = () => {
                                                     {emp.email && (
                                                         <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">{emp.email}</span>
                                                     )}
-                                                </button>
+                                                </Button>
                                             ))}
                                         </div>
                                     )}

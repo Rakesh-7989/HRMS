@@ -39,10 +39,10 @@ export const EmployeeBonusesContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
             {[{ id: undefined, labelKey: 'recruitment.all' }, { id: 'PENDING', labelKey: 'bonus.pending' }, { id: 'APPROVED', labelKey: 'bonus.approved' }, { id: 'PAID', labelKey: 'bonus.paid' }].map(f => (
-              <button key={f.id || 'all'} onClick={() => setFilter(f.id)}
+               <Button variant="ghost" key={f.id || 'all'} onClick={() => setFilter(f.id)}
                 className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                   filter === f.id ? 'bg-white dark:bg-neutral-900 text-brand-600 shadow-elev-1' : 'text-neutral-500'
-                )}>{t(f.labelKey)}</button>
+                )}>{t(f.labelKey)}</Button>
             ))}
           </div>
           <Button size="sm" className="gap-2"><Plus size={16} /> {t('bonus.assignBonus')}</Button>
@@ -63,7 +63,7 @@ export const EmployeeBonusesContent: React.FC = () => {
                 <span className="text-lg font-black text-brand-500">₹{b.amount.toLocaleString()}</span>
                 <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', statusConfig[b.status]?.color)}>{t(statusConfig[b.status]?.labelKey || 'bonus.pending')}</span>
                 {b.status === 'PENDING' && (
-                  <button onClick={() => approveMutation.mutate(b.id)} className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-bold hover:bg-brand-600">{t('bonus.approve')}</button>
+                   <Button variant="ghost" onClick={() => approveMutation.mutate(b.id)} className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-bold hover:bg-brand-600">{t('bonus.approve')}</Button>
                 )}
               </div>
             </Card>

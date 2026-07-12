@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
@@ -176,7 +177,7 @@ const CommandItemRow: React.FC<{
   selected: boolean;
   onSelect: () => void;
 }> = ({ item, selected, onSelect }) => (
-  <button
+   <Button variant="ghost" 
     onClick={onSelect}
     className={cn(
       'w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm text-left transition-colors',
@@ -201,7 +202,7 @@ const CommandItemRow: React.FC<{
         {item.shortcut}
       </kbd>
     )}
-  </button>
+  </Button>
 );
 
 export const createCommandItems = (

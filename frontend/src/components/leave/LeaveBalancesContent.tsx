@@ -133,7 +133,7 @@ export const LeaveBalancesContent: React.FC = () => {
                                 <ul className="py-1">
                                     {searchResults.map((user: any) => (
                                         <li key={user.id}>
-                                            <button
+                                             <Button variant="ghost" 
                                                 className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                 onClick={() => handleSelectEmployee(user)}
                                             >
@@ -150,7 +150,7 @@ export const LeaveBalancesContent: React.FC = () => {
                                                         </span>
                                                     )}
                                                 </div>
-                                            </button>
+                                            </Button>
                                         </li>
                                     ))}
                                 </ul>
@@ -276,7 +276,7 @@ export const LeaveBalancesContent: React.FC = () => {
                             <div>
                                 <Label className="block mb-1.5">{t('leave.action')}</Label>
                                 <div className="flex rounded-md shadow-elev-1">
-                                    <button
+                                     <Button variant="ghost" 
                                         type="button"
                                         onClick={() => setAdjustForm({ ...adjustForm, type: 'ADD' })}
                                         className={cn(
@@ -287,8 +287,8 @@ export const LeaveBalancesContent: React.FC = () => {
                                         )}
                                     >
                                         {t('leave.grant')}
-                                    </button>
-                                    <button
+                                    </Button>
+                                     <Button variant="ghost" 
                                         type="button"
                                         onClick={() => setAdjustForm({ ...adjustForm, type: 'DEDUCT' })}
                                         className={cn(
@@ -299,7 +299,7 @@ export const LeaveBalancesContent: React.FC = () => {
                                         )}
                                     >
                                         {t('leave.deduct')}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             <div>

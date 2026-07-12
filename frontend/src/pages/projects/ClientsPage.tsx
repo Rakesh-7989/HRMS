@@ -290,7 +290,7 @@ export const ClientsPage: React.FC = () => {
                                         </TableCell>
                                         {canManage && (
                                             <TableCell>
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setClientToDelete(client);
@@ -299,7 +299,7 @@ export const ClientsPage: React.FC = () => {
                                                     title="Delete Client"
                                                 >
                                                     <Trash2 size={16} />
-                                                </button>
+                                                </Button>
                                             </TableCell>
                                         )}
                                     </TableRow>

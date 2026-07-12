@@ -309,13 +309,13 @@ export const LeaveContent: React.FC = () => {
                                 header: 'Actions',
                                 accessor: (row) => (
                                     row.status === 'PENDING' ? (
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={() => cancelMutation.mutate(row.id)}
                                             className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                             disabled={cancelMutation.isPending}
                                         >
                                             Cancel
-                                        </button>
+                                        </Button>
                                     ) : null
                                 ),
                             },

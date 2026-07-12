@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Clock, CheckCircle, History } from 'lucide-react';
 import { TimesheetApprovals } from '@/components/projects/TimesheetApprovals';
 import { TimesheetDashboard } from '@/components/timesheets/TimesheetDashboard';
@@ -29,7 +30,7 @@ export const TimesheetContent: React.FC = () => {
 
                 {canManage && (
                     <div className="flex items-center gap-1 p-1 bg-gray-100/50 dark:bg-gray-950/40 rounded-xl border border-gray-100 dark:border-gray-800">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('my')}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
@@ -40,8 +41,8 @@ export const TimesheetContent: React.FC = () => {
                         >
                             <History size={14} />
                             {t('timesheets.myLog')}
-                        </button>
-                        <button
+                        </Button>
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('approvals')}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
@@ -52,7 +53,7 @@ export const TimesheetContent: React.FC = () => {
                         >
                             <CheckCircle size={14} />
                             {t('timesheets.auditQueue')}
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>

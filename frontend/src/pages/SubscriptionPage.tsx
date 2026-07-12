@@ -169,7 +169,7 @@ export const SubscriptionPage: React.FC = () => {
                 <div className="text-center space-y-4">
                     <h2 className="text-3xl font-bold">Available Plans</h2>
                     <div className="inline-flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setBillingCycle('MONTHLY')}
                             className={cn(
                                 "px-4 py-2 rounded-md transition-all text-sm font-medium",
@@ -177,8 +177,8 @@ export const SubscriptionPage: React.FC = () => {
                             )}
                         >
                             Monthly
-                        </button>
-                        <button
+                        </Button>
+                         <Button variant="ghost" 
                             onClick={() => setBillingCycle('YEARLY')}
                             className={cn(
                                 "px-4 py-2 rounded-md transition-all text-sm font-medium",
@@ -186,7 +186,7 @@ export const SubscriptionPage: React.FC = () => {
                             )}
                         >
                             Yearly (Save 15%)
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

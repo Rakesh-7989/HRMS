@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -109,7 +110,7 @@ export const SearchPage: React.FC = () => {
                     type === 'action' && "grid grid-cols-1 md:grid-cols-2 gap-2 space-y-0"
                 )}>
                     {items.map((result) => (
-                        <button
+                         <Button variant="ghost" 
                             key={`${result.type}-${result.id}`}
                             onClick={() => handleResultClick(result)}
                             className={cn(
@@ -146,7 +147,7 @@ export const SearchPage: React.FC = () => {
                                     className="text-gray-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all"
                                 />
                             </div>
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -184,7 +185,7 @@ export const SearchPage: React.FC = () => {
                        placeholder-gray-400 dark:placeholder-gray-500"
                         />
                         {query && (
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => {
                                     setQuery('');
                                     setDebouncedQuery('');
@@ -194,7 +195,7 @@ export const SearchPage: React.FC = () => {
                          hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600"
                             >
                                 <X size={18} />
-                            </button>
+                            </Button>
                         )}
                         {isFetching && (
                             <Loader2
@@ -211,14 +212,14 @@ export const SearchPage: React.FC = () => {
                                 Try searching for:
                             </p>
                             {['Attendance', 'Leave', 'Payroll', 'Add Employee', 'Reports'].map((suggestion) => (
-                                <button
+                                 <Button variant="ghost" 
                                     key={suggestion}
                                     onClick={() => setQuery(suggestion.toLowerCase())}
                                     className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 
                            text-gray-700 dark:text-gray-300 hover:bg-brand-500 hover:text-white transition-colors"
                                 >
                                     {suggestion}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     )}

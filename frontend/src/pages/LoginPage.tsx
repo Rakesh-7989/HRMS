@@ -236,14 +236,14 @@ export const LoginPage: React.FC = () => {
                     placeholder="••••••••"
                     autoComplete="current-password"
                   />
-                  <button
+                   <Button variant="ghost" 
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-brand-500 transition-colors"
                     aria-label="Toggle password visibility"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                  </Button>
                 </div>
                 <FormError message={formik.touched.password ? formik.errors.password : undefined} />
               </div>

@@ -265,14 +265,14 @@ export const AssetReturnPage: React.FC = () => {
                                                 />
                                             )}
                                         </div>
-                                        <button
+                                         <Button variant="ghost" 
                                             type="button"
                                             onClick={() => handleRemoveItem(index)}
                                             className="mt-0.5 text-gray-400 hover:text-red-500 transition-colors"
                                             title="Remove item"
                                         >
                                             <Trash2 size={14} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 ))}
                             </div>
@@ -287,7 +287,7 @@ export const AssetReturnPage: React.FC = () => {
                                     placeholder="Add custom item..."
                                     className="flex-1 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={handleAddItem}
                                     disabled={!newItemName.trim()}
@@ -295,7 +295,7 @@ export const AssetReturnPage: React.FC = () => {
                                 >
                                     <Plus size={14} />
                                     Add
-                                </button>
+                                </Button>
                             </div>
 
                             {hasPartialReturn && (

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -10,9 +11,11 @@ import { cn } from '@/utils/cn';
 import api from '@/services/api';
 import { formatDuration } from '@/utils/format';
 import { resolveImageUrl } from '@/utils/image';
+import { useTranslation } from 'react-i18next';
 
 // --- Remote Video Component ---
 const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, theme }: { stream: MediaStream, userId: string, isTalking: boolean, participant?: { name: string, designation: string, avatar?: string }, isScreenShare?: boolean, theme: string }) => {
+    const { t } = useTranslation();
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isVideoEnabled, setIsVideoEnabled] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +45,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
         };
     }, [stream]);
 
-    const name = participant?.name || `User ${userId.slice(0, 4)}`;
+    const name = participant?.name || `${t('chat.user')} ${userId.slice(0, 4)}`;
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
     return (
@@ -89,13 +92,13 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
                     </div>
                     <div className="mt-4 text-center">
                         <h3 className={cn("font-medium tracking-tight text-lg", theme === 'dark' ? "text-white" : "text-gray-900")}>{name}</h3>
-                        <p className={cn("text-xs mt-1 uppercase tracking-wider", theme === 'dark' ? "text-gray-400" : "text-gray-500")}>{participant?.designation || 'Participant'}</p>
+                        <p className={cn("text-xs mt-1 uppercase tracking-wider", theme === 'dark' ? "text-gray-400" : "text-gray-500")}>{participant?.designation || t('chat.participant')}</p>
                         {!isVideoEnabled && !isLoading && (
                             <div className={cn(
                                 "mt-3 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full border",
                                 theme === 'dark' ? "text-gray-500 bg-white/5 border-white/5" : "text-gray-500 bg-gray-200/50 border-gray-200"
                             )}>
-                                <VideoOff size={10} /> CAMERA OFF
+                                <VideoOff size={10} /> {t('chat.cameraOff').toUpperCase()}
                             </div>
                         )}
                     </div>
@@ -107,7 +110,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
                 <div className={cn("w-2.5 h-2.5 rounded-full shadow-elev-4", isTalking ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
                 <div className="flex flex-col">
                     <span className="leading-tight text-white">{name}</span>
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{participant?.designation || 'Participant'}</span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{participant?.designation || t('chat.participant')}</span>
                 </div>
             </div>
         </div>
@@ -116,6 +119,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
 
 
 export const CallOverlay: React.FC = () => {
+    const { t } = useTranslation();
     const {
         incomingCall, activeCall, isCalling,
         localStream, remoteStreams, callParticipants,
@@ -185,7 +189,7 @@ export const CallOverlay: React.FC = () => {
 
     if (!incomingCall && !activeCall && !isCalling && !isResuming) return null;
 
-    const targetName = activeCall?.name || heldCall?.name || 'Meeting';
+    const targetName = activeCall?.name || heldCall?.name || t('chat.meeting');
     const remoteUserIds = Object.keys(remoteStreams);
 
 
@@ -200,20 +204,20 @@ export const CallOverlay: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-white font-black text-sm tracking-tight">{incomingCall.callerName || 'Incoming Call'}</span>
+                        <span className="text-white font-black text-sm tracking-tight">{incomingCall.callerName || t('chat.incomingCall')}</span>
                         <div className="flex items-center gap-2 text-brand-500 text-[10px] font-black uppercase tracking-widest opacity-80">
                             <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                            {incomingCall.type} call...
+                            {t('chat.callTypeOngoing', { type: incomingCall.type })}
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 p-2">
-                    <button onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-error-500/10 text-error-500 hover:bg-error-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-error-500/20" title="Decline">
-                        <PhoneOff size={20} />
-                    </button>
-                    <button onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-elev-4 shadow-emerald-500/20 active:scale-95">
-                        <Phone size={18} /> ACCEPT
-                    </button>
+                             <Button variant="ghost" onClick={rejectCall} className="w-12 h-12 rounded-2xl bg-error-500/10 text-error-500 hover:bg-error-500 hover:text-white transition-all duration-300 flex items-center justify-center border border-error-500/20" title={t('chat.decline')}>
+                                 <PhoneOff size={20} />
+                             </Button>
+                              <Button variant="ghost" onClick={acceptCall} className="px-6 h-12 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-black text-xs tracking-widest shadow-elev-4 shadow-emerald-500/20 active:scale-95">
+                                 <Phone size={18} /> {t('chat.accept').toUpperCase()}
+                             </Button>
                 </div>
             </div>
         </div>
@@ -291,22 +295,22 @@ export const CallOverlay: React.FC = () => {
                                 <span className={cn("text-3xl font-bold", isDark ? "text-white" : "text-gray-800")}>{incomingCall.callerName?.charAt(0)}</span>
                             </div>
                             <h2 className={cn("text-3xl font-bold mb-2 tracking-tight", isDark ? "text-white" : "text-gray-900")}>{incomingCall.callerName}</h2>
-                            <p className="text-xs font-bold text-brand-500 uppercase tracking-widest opacity-80">{incomingCall.type} Call Request</p>
+                            <p className="text-xs font-bold text-brand-500 uppercase tracking-widest opacity-80">{t('chat.callRequestType', { type: incomingCall.type })}</p>
                         </div>
 
                         <div className="flex items-center justify-center gap-8">
-                            <button onClick={rejectCall} className="flex flex-col items-center gap-3 group">
+                             <Button variant="ghost" onClick={rejectCall} className="flex flex-col items-center gap-3 group">
                                 <div className="w-16 h-16 rounded-full bg-error-500/10 text-error-500 flex items-center justify-center border border-error-500/20 group-hover:bg-error-500 group-hover:text-white transition-all duration-300 active:scale-95">
                                     <PhoneOff size={28} />
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-error-500 transition-colors">Decline</span>
-                            </button>
-                            <button onClick={acceptCall} className="flex flex-col items-center gap-3 group">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-error-500 transition-colors">{t('chat.decline')}</span>
+                            </Button>
+                             <Button variant="ghost" onClick={acceptCall} className="flex flex-col items-center gap-3 group">
                                 <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-elev-4 shadow-emerald-500/40 group-hover:scale-110 group-hover:bg-emerald-400 transition-all duration-300 animate-pulse active:scale-95">
                                     <Phone size={32} />
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Accept</span>
-                            </button>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">{t('chat.accept')}</span>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -330,20 +334,20 @@ export const CallOverlay: React.FC = () => {
                                 </div>
                                 <div className={cn("w-px h-4", isDark ? "bg-white/10" : "bg-gray-300")} />
                                 <span className={cn("text-[10px] font-bold uppercase tracking-widest", isDark ? "text-gray-400" : "text-gray-500")}>
-                                    {remoteUserIds.length + 1} Active
+                                    {remoteUserIds.length + 1} {t('chat.active')}
                                 </span>
                             </div>
 
                             {heldCall && (
                                 <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-elev-4 animate-pulse">
                                     <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                    {heldCall.name} On Hold
+                                    {heldCall.name} {t('chat.onHold')}
                                 </div>
                             )}
                         </div>
 
                         <div className="pointer-events-auto">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setIsMinimized(true)}
                                 className={cn(
                                     "group flex items-center gap-2 px-5 py-2.5 backdrop-blur-xl rounded-full transition-all shadow-elev-4 active:scale-95 border",
@@ -353,8 +357,8 @@ export const CallOverlay: React.FC = () => {
                                 )}
                             >
                                 <Minimize2 size={16} className={cn("transition-colors", isDark ? "text-gray-400 group-hover:text-white" : "text-gray-500 group-hover:text-gray-900")} />
-                                <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", isDark ? "text-gray-400 group-hover:text-white" : "text-gray-500 group-hover:text-gray-900")}>Minimize</span>
-                            </button>
+                                <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", isDark ? "text-gray-400 group-hover:text-white" : "text-gray-500 group-hover:text-gray-900")}>{t('chat.minimize')}</span>
+                            </Button>
                         </div>
                     </header>
 
@@ -403,7 +407,7 @@ export const CallOverlay: React.FC = () => {
                                     isDark
                                         ? "bg-gradient-to-b from-white to-white/60"
                                         : "bg-gradient-to-b from-gray-900 to-gray-600"
-                                )}>Waiting for others...</h3>
+                                )}>{t('chat.waitingForOthers')}</h3>
                                 <div className={cn(
                                     "flex items-center gap-3 px-6 py-2 rounded-full backdrop-blur-md border",
                                     isDark
@@ -414,7 +418,7 @@ export const CallOverlay: React.FC = () => {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                     </span>
-                                    <span className={cn("text-sm font-bold tracking-wide", isDark ? "text-white/80" : "text-gray-600")}>{activeCall?.name || 'Workspace'}</span>
+                                    <span className={cn("text-sm font-bold tracking-wide", isDark ? "text-white/80" : "text-gray-600")}>{activeCall?.name || t('chat.workspace')}</span>
                                 </div>
                             </div>
                         ) : (
@@ -443,41 +447,41 @@ export const CallOverlay: React.FC = () => {
                     {/* Action Bar */}
                     <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 p-4 bg-gray-900/40 backdrop-blur-[50px] rounded-[3.5rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 transition-all duration-500 hover:scale-[1.02] hover:bg-gray-900/60">
                         <div className="flex items-center gap-2 px-4 border-r border-white/10">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={toggleAudio}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
                                     isMuted ? "bg-error-500 text-white shadow-elev-6 shadow-error-500/30" : "hover:bg-white/10 text-white"
                                 )}
-                                title={isMuted ? "Unmute" : "Mute"}
+                                title={isMuted ? t('chat.unmute') : t('chat.mute')}
                             >
                                 {isMuted ? <MicOff size={30} /> : <Mic size={30} />}
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 onClick={toggleVideo}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
                                     isVideoOff ? "bg-error-500 text-white shadow-elev-6 shadow-error-500/30" : "text-brand-500 hover:bg-white/10"
                                 )}
-                                title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                                title={isVideoOff ? t('chat.turnVideoOn') : t('chat.turnVideoOff')}
                             >
                                 {isVideoOff ? <VideoOff size={30} /> : <Video size={30} />}
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 onClick={toggleScreenShare}
                                 className={cn(
                                     "p-5 rounded-[2.2rem] transition-all duration-300 active:scale-90",
                                     isScreenSharing ? "bg-emerald-500 text-white shadow-elev-6 shadow-emerald-500/30" : "text-brand-400 hover:bg-white/10"
                                 )}
-                                title="Share Screen"
+                                title={t('chat.shareScreen')}
                             >
                                 <Monitor size={30} />
-                            </button>
+                            </Button>
                         </div>
 
                         <div className="flex items-center gap-2 px-4">
                             {/* Add User */}
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setShowAddModal(true)}
                                 className={cn(
                                     "w-14 h-14 rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-90 group",
@@ -485,20 +489,20 @@ export const CallOverlay: React.FC = () => {
                                         ? "bg-white/5 text-teal-300 hover:bg-white/10"
                                         : "bg-gray-100 text-teal-600 hover:bg-gray-200"
                                 )}
-                                title="Invite People"
+                                title={t('chat.invitePeople')}
                             >
                                 <UserPlus size={24} className="group-hover:scale-110 transition-transform" />
-                            </button>
+                            </Button>
 
                             {/* End Call (Distinct) */}
-                            <button
+                             <Button variant="ghost" 
                                 onClick={endCall}
                                 className="h-14 px-8 rounded-[2rem] flex items-center justify-center gap-2 bg-error-500 text-white hover:bg-error-600 transition-all duration-300 shadow-elev-5 shadow-error-600/30 ml-2 active:scale-95 group"
-                                title="End Call"
+                                title={t('chat.endCall')}
                             >
                                 <PhoneOff size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                                <span className="font-bold text-sm tracking-wide hidden sm:inline">END</span>
-                            </button>
+                                <span className="font-bold text-sm tracking-wide hidden sm:inline">{t('chat.end')}</span>
+                            </Button>
                         </div>
                     </div>
 
@@ -510,7 +514,7 @@ export const CallOverlay: React.FC = () => {
                         )}>
                             {isScreenSharing && (
                                 <div className="absolute top-5 left-5 z-40 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl flex items-center gap-2 shadow-elev-5 shadow-emerald-500/20">
-                                    <Monitor size={16} /> YOU ARE SHARING
+                                    <Monitor size={16} /> {t('chat.youAreSharing')}
                                 </div>
                             )}
                             <video
@@ -536,14 +540,14 @@ export const CallOverlay: React.FC = () => {
                                             <VideoOff size={40} className="text-white/20" />
                                         </div>
                                     </div>
-                                    <span className={cn("text-[10px] font-bold uppercase tracking-widest mt-2", isDark ? "text-white/40" : "text-gray-400")}>Camera Off</span>
+                                    <span className={cn("text-[10px] font-bold uppercase tracking-widest mt-2", isDark ? "text-white/40" : "text-gray-400")}>{t('chat.cameraOff')}</span>
                                 </div>
                             )}
                             <div className={cn(
                                 "absolute bottom-3 left-3 px-3 py-1.5 backdrop-blur-md rounded-xl border opacity-0 group-hover:opacity-100 transition-opacity duration-300",
                                 isDark ? "bg-black/60 border-white/5" : "bg-white/80 border-gray-200"
                             )}>
-                                <span className={cn("text-[10px] font-bold uppercase tracking-wider", isDark ? "text-white" : "text-gray-900")}>You</span>
+                                <span className={cn("text-[10px] font-bold uppercase tracking-wider", isDark ? "text-white" : "text-gray-900")}>{t('chat.you')}</span>
                             </div>
                             {speakingUsers.has(currentUser?.id || '') && (
                                 <div className="absolute top-5 right-5 w-4 h-4 bg-emerald-500 rounded-full animate-ping z-40" />
@@ -556,19 +560,19 @@ export const CallOverlay: React.FC = () => {
                             <div className="bg-gray-900 w-full max-w-xl rounded-[3.5rem] border border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.6)]">
                                 <div className="p-12 border-b border-white/5 flex justify-between items-center bg-white/5">
                                     <div>
-                                        <h3 className="text-4xl font-black tracking-tight mb-2 italic bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">Invite Team</h3>
-                                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">Build your meeting workspace</p>
+                                        <h3 className="text-4xl font-black tracking-tight mb-2 italic bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">{t('chat.inviteTeam')}</h3>
+                                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">{t('chat.buildMeetingWorkspace')}</p>
                                     </div>
-                                    <button onClick={() => setShowAddModal(false)} className="p-5 hover:bg-white/5 rounded-3xl transition-all active:scale-90 border border-white/10">
+                                     <Button variant="ghost" onClick={() => setShowAddModal(false)} className="p-5 hover:bg-white/5 rounded-3xl transition-all active:scale-90 border border-white/10">
                                         <X size={32} />
-                                    </button>
+                                    </Button>
                                 </div>
                                 <div className="p-12">
                                     <div className="relative mb-10">
                                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-500 opacity-50" size={28} />
                                         <input
                                             type="text"
-                                            placeholder="SEARCH TEAM MEMBERS..."
+                                            placeholder={t('chat.searchTeamMembers')}
                                             className="w-full bg-[#151518] border border-white/5 rounded-[2rem] py-6 pl-16 pr-8 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all font-black text-sm tracking-widest placeholder:text-gray-700"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -590,10 +594,10 @@ export const CallOverlay: React.FC = () => {
                                                         <div className="text-[10px] text-gray-500 font-black tracking-widest uppercase">{contact.designation || contact.job_title || contact.email}</div>
                                                     </div>
                                                 </div>
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={() => {
                                                         if (!contact.id) {
-                                                            import('react-hot-toast').then(t => t.toast.error("Cannot invite: Invalid User ID"));
+                                                            import('react-hot-toast').then(toast => toast.toast.error(t('chat.cannotInviteInvalidUser')));
                                                             return;
                                                         }
                                                         addParticipantToCall(contact.id, `${contact.first_name} ${contact.last_name}`);
@@ -602,7 +606,7 @@ export const CallOverlay: React.FC = () => {
                                                     className="p-5 bg-brand-500 text-white hover:bg-brand-500/80 rounded-[1.8rem] transition-all shadow-elev-6 shadow-brand-500/30 active:scale-95 border-b-4 border-brand-500-dark"
                                                 >
                                                     <UserPlus size={30} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         ))}
                                     </div>

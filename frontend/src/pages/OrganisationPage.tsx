@@ -117,23 +117,23 @@ export const OrganisationPage: React.FC = () => {
           <div className="mb-4 border-b border-gray-200 shrink-0 overflow-x-auto pb-1">
             <div className="flex items-center gap-6 min-w-max px-2">
               {['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                <button onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>
+                 <Button variant="ghost" onClick={() => handleTabChange('directory')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'directory' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>
                   {user?.role === 'SUPER_ADMIN' ? t('organisation.tenantDirectory') : user?.role === 'MANAGER' ? t('organisation.myTeam') : t('organisation.employeeDirectory')}
-                </button>
+                </Button>
               )}
 
 
               {user?.role !== 'SUPER_ADMIN' && (
                 <>
-                  <button onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</button>
+                   <Button variant="ghost" onClick={() => handleTabChange('tree')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'tree' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.organizationTree')}</Button>
                   {['ADMIN', 'HR'].includes(user?.role || '') && (
                     <>
-                      <button onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.departments')}</button>
-                      <button onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.designations')}</button>
+                       <Button variant="ghost" onClick={() => handleTabChange('departments')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'departments' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.departments')}</Button>
+                       <Button variant="ghost" onClick={() => handleTabChange('designations')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'designations' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.designations')}</Button>
                     </>
                   )}
                   {['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'].includes(user?.role || '') && (
-                    <button onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</button>
+                     <Button variant="ghost" onClick={() => handleTabChange('shifts')} className={`py-2 px-3 text-sm whitespace-nowrap ${tab === 'shifts' ? 'font-semibold border-b-2 border-brand-500-gradient' : 'text-muted'}`}>{t('organisation.shifts')}</Button>
                   )}
                 </>
               )}

@@ -71,9 +71,9 @@ export const AIResumeParser: React.FC<AIResumeParserProps> = ({ onParsed, classN
           <div className="flex items-center justify-center gap-3">
             <FileText className="w-6 h-6 text-brand-500" />
             <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{file.name}</span>
-            <button onClick={(e) => { e.stopPropagation(); setFile(null); }} className="p-1 rounded-full hover:bg-neutral-100">
+             <Button variant="ghost" onClick={(e) => { e.stopPropagation(); setFile(null); }} className="p-1 rounded-full hover:bg-neutral-100">
               <X size={14} className="text-neutral-400" />
-            </button>
+            </Button>
             <Button size="sm" onClick={(e) => { e.stopPropagation(); parseMutation.mutate(file); }} className="gap-2">
               <Upload size={14} /> Parse
             </Button>

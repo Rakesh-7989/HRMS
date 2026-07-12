@@ -5,7 +5,7 @@ import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 
-interface Column<T> {
+export interface Column<T> {
     header: string;
     accessorKey?: keyof T;
     cell?: (row: T) => React.ReactNode;

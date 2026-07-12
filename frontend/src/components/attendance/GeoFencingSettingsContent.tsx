@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,12 +10,13 @@ import { Dialog } from '@/components/ui/Dialog';
 import { geoFencingService, GeoFenceLocation, CreateGeoFenceLocationData, GeoFencingSettings } from '@/services/geoFencing.service';
 import { MapPin, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, RefreshCw, Check, X, ShieldCheck, Settings, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 
 export const GeoFencingSettingsContent: React.FC = () => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { confirm } = useConfirm();
     const { hasPermission } = usePermissions();
@@ -56,10 +58,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         mutationFn: (data: Partial<GeoFencingSettings>) => geoFencingService.updateSettings(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-settings'] });
-            showToast.success('Geo-fencing settings updated');
+            showToast.success(t('geoFencing.toast.settingsUpdated'));
         },
         onError: (error: Error) => {
-            showToast.error(error.message || 'Failed to update settings');
+            showToast.error(error.message || t('geoFencing.toast.failedUpdateSettings'));
         }
     });
 
@@ -68,10 +70,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
             handleCloseDialog();
-            showToast.success('Location added');
+            showToast.success(t('geoFencing.toast.locationAdded'));
         },
         onError: (error: Error) => {
-            showToast.error(error.message || 'Failed to add location');
+            showToast.error(error.message || t('geoFencing.toast.failedAddLocation'));
         }
     });
 
@@ -81,10 +83,10 @@ export const GeoFencingSettingsContent: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
             handleCloseDialog();
-            showToast.success('Location updated');
+            showToast.success(t('geoFencing.toast.locationUpdated'));
         },
         onError: (error: Error) => {
-            showToast.error(error.message || 'Failed to update location');
+            showToast.error(error.message || t('geoFencing.toast.failedUpdateLocation'));
         }
     });
 
@@ -92,16 +94,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
         mutationFn: (id: string) => geoFencingService.deleteLocation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['geo-fencing-locations'] });
-            showToast.success('Location deleted');
+            showToast.success(t('geoFencing.toast.locationDeleted'));
         },
         onError: (error: Error) => {
-            showToast.error(error.message || 'Failed to delete location');
+            showToast.error(error.message || t('geoFencing.toast.failedDeleteLocation'));
         }
     });
 
     const handleToggleGeoFencing = () => {
         if (!canManageGeo) {
-            showToast.error('You do not have permission to manage geo-fencing');
+            showToast.error(t('geoFencing.toast.noPermissionManage'));
             return;
         }
         updateSettingsMutation.mutate({ is_enabled: !settings?.is_enabled });
@@ -140,16 +142,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
     const handleSubmitLocation = (e: React.FormEvent) => {
         e.preventDefault();
         if (!locationForm.name.trim()) {
-            showToast.error('Location name is required');
+            showToast.error(t('geoFencing.toast.nameRequired'));
             return;
         }
         if (locationForm.latitude === 0 && locationForm.longitude === 0) {
-            showToast.error('Please enter valid coordinates');
+            showToast.error(t('geoFencing.toast.invalidCoordinates'));
             return;
         }
 
         if (!canManageGeo) {
-            showToast.error('You do not have permission to manage locations');
+            showToast.error(t('geoFencing.toast.noPermissionLocations'));
             return;
         }
         if (editingLocation) {
@@ -161,16 +163,16 @@ export const GeoFencingSettingsContent: React.FC = () => {
 
     const handleDeleteLocation = async (id: string) => {
         if (!canManageGeo) {
-            showToast.error('You do not have permission to delete locations');
+            showToast.error(t('geoFencing.toast.noPermissionDelete'));
             return;
         }
         const location = locations.find(l => l.id === id);
         const result = await confirm({
-            title: 'Delete Location',
-            message: `Are you sure you want to delete "${location?.name || 'this location'}"? This will remove the geo-fence protection for this area.`,
+            title: t('geoFencing.confirm.deleteTitle'),
+            message: t('geoFencing.confirm.deleteMessage', { name: location?.name || t('geoFencing.confirm.thisLocation') }),
             type: 'destructive',
-            confirmText: 'Delete',
-            cancelText: 'Cancel'
+            confirmText: t('geoFencing.confirm.deleteConfirm'),
+            cancelText: t('geoFencing.confirm.deleteCancel')
         });
         if (result) {
             deleteLocationMutation.mutate(id);
@@ -186,19 +188,19 @@ const handleGetCurrentLocation = () => {
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude
                 });
-                showToast.success('Location captured from your device');
+                showToast.success(t('geoFencing.toast.locationCaptured'));
             },
             (error) => {
-                showToast.error('Unable to get your location: ' + error.message);
+                showToast.error(t('geoFencing.toast.unableGetLocation') + error.message);
             }
         );
     } else {
-        showToast.error('Geolocation is not supported by your browser');
+        showToast.error(t('geoFencing.toast.geolocationUnsupported'));
     }
 };
 
 if (settingsLoading) {
-    return <div className="p-8 text-center">Loading geo-fencing settings...</div>;
+    return <div className="p-8 text-center">{t('geoFencing.loading')}</div>;
 }
 
 return (
@@ -214,15 +216,15 @@ return (
                         <ShieldCheck size={28} className={settings?.is_enabled ? "text-green-400" : "text-gray-400"} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold">Geo-Fencing for Attendance</h2>
+                        <h2 className="text-xl font-bold">{t('geoFencing.forAttendanceTitle')}</h2>
                         <p className="text-sm text-gray-300">
                             {settings?.is_enabled
-                                ? 'Employees can only clock in/out from allowed locations'
-                                : 'Geo-fencing is disabled. Employees can clock in/out from anywhere.'}
+                                ? t('geoFencing.enabledDescription')
+                                : t('geoFencing.disabledDescription')}
                         </p>
                     </div>
                 </div>
-                <button
+                 <Button variant="ghost" 
                     onClick={handleToggleGeoFencing}
                     disabled={updateSettingsMutation.isPending || !canManageGeo}
                     className={cn("focus:outline-none", !canManageGeo && "opacity-50 cursor-not-allowed")}
@@ -232,7 +234,7 @@ return (
                     ) : (
                         <ToggleLeft size={48} className="text-gray-400" />
                     )}
-                </button>
+                </Button>
             </div>
         </Card>
 
@@ -241,7 +243,7 @@ return (
             <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Settings size={20} className="text-brand-500" />
-                    Configuration Options
+                    {t('geoFencing.configOptions')}
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                     <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
@@ -252,8 +254,8 @@ return (
                             className="w-5 h-5 rounded text-brand-500"
                         />
                         <div>
-                            <p className="font-medium text-sm">Allow without location</p>
-                            <p className="text-xs text-gray-500">Let employees clock in even if location is unavailable</p>
+                            <p className="font-medium text-sm">{t('geoFencing.allowWithoutLocation')}</p>
+                            <p className="text-xs text-gray-500">{t('geoFencing.allowWithoutLocationHint')}</p>
                         </div>
                     </label>
                     <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
@@ -264,13 +266,13 @@ return (
                             className="w-5 h-5 rounded text-brand-500"
                         />
                         <div>
-                            <p className="font-medium text-sm">Require high accuracy</p>
-                            <p className="text-xs text-gray-500">Use GPS instead of WiFi/Cell (slower but accurate)</p>
+                            <p className="font-medium text-sm">{t('geoFencing.requireHighAccuracy')}</p>
+                            <p className="text-xs text-gray-500">{t('geoFencing.requireHighAccuracyHint')}</p>
                         </div>
                     </label>
                 </div>
                 <div className="mt-4">
-                    <Label className="block mb-2">Location Timeout (seconds)</Label>
+                    <Label className="block mb-2">{t('geoFencing.locationTimeout')}</Label>
                     <Input
                         type="number"
                         min={5}
@@ -287,20 +289,20 @@ return (
         <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <MapPin size={20} className="text-brand-500" />
-                        Allowed Locations
-                    </h3>
-                    <p className="text-sm text-gray-500">Define office locations where employees can clock in/out</p>
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <MapPin size={20} className="text-brand-500" />
+                            {t('geoFencing.allowedLocations')}
+                        </h3>
+                        <p className="text-sm text-gray-500">{t('geoFencing.allowedLocationsHint')}</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => refetchLocations()}>
                         <RefreshCw size={16} className="mr-1" />
-                        Refresh
+                        {t('geoFencing.refresh')}
                     </Button>
                     <Button size="sm" onClick={() => handleOpenLocationDialog()}>
                         <Plus size={16} className="mr-1" />
-                        Add Location
+                        {t('geoFencing.addLocation')}
                     </Button>
                 </div>
             </div>
@@ -312,11 +314,11 @@ return (
             ) : locations.length === 0 ? (
                 <div className="text-center py-12">
                     <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No locations configured</h3>
-                    <p className="mt-1 text-sm text-gray-500">Add your office locations to enable geo-fencing.</p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{t('geoFencing.noLocations')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('geoFencing.noLocationsHint')}</p>
                     <Button className="mt-4" onClick={() => handleOpenLocationDialog()}>
                         <Plus size={16} className="mr-1" />
-                        Add Location
+                        {t('geoFencing.addLocation')}
                     </Button>
                 </div>
             ) : (
@@ -324,11 +326,11 @@ return (
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Coordinates</TableHead>
-                                <TableHead>Radius</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t('geoFencing.table.name')}</TableHead>
+                                <TableHead>{t('geoFencing.table.coordinates')}</TableHead>
+                                <TableHead>{t('geoFencing.table.radius')}</TableHead>
+                                <TableHead>{t('geoFencing.table.status')}</TableHead>
+                                <TableHead className="text-right">{t('geoFencing.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -352,11 +354,11 @@ return (
                                     <TableCell>
                                         {loc.is_active ? (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                <Check size={12} /> Active
+                                                <Check size={12} /> {t('geoFencing.table.active')}
                                             </span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                                                <X size={12} /> Inactive
+                                                <X size={12} /> {t('geoFencing.table.inactive')}
                                             </span>
                                         )}
                                     </TableCell>
@@ -388,11 +390,11 @@ return (
             <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-semibold flex items-center gap-2 text-red-600 dark:text-red-400">
-                            <AlertCircle size={20} />
-                            Recent Geo-Fence Violations
-                        </h3>
-                        <p className="text-sm text-gray-500">Audit log of blocked clock-in/out attempts</p>
+                            <h3 className="text-lg font-semibold flex items-center gap-2 text-red-600 dark:text-red-400">
+                                <AlertCircle size={20} />
+                                {t('geoFencing.violations.title')}
+                            </h3>
+                            <p className="text-sm text-gray-500">{t('geoFencing.violations.hint')}</p>
                     </div>
                 </div>
 
@@ -402,19 +404,19 @@ return (
                     </div>
                 ) : violations.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
-                        No violations recorded.
+                        {t('geoFencing.violations.noViolations')}
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Employee</TableHead>
-                                    <TableHead>Action</TableHead>
-                                    <TableHead>Reason</TableHead>
-                                    <TableHead>Distance</TableHead>
-                                    <TableHead>Device</TableHead>
-                                    <TableHead>Time</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.employee')}</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.action')}</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.reason')}</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.distance')}</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.device')}</TableHead>
+                                    <TableHead>{t('geoFencing.violations.table.time')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -432,15 +434,15 @@ return (
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-xs text-red-600 font-medium">
-                                            {v.violation_reason === 'OUTSIDE_ALLOWED_ZONE' ? 'Outside Allowed Zone' :
-                                                v.violation_reason === 'LOCATION_REQUIRED' ? 'GPS Off / Denied' : v.violation_reason}
+                                            {v.violation_reason === 'OUTSIDE_ALLOWED_ZONE' ? t('geoFencing.violations.outsideAllowedZone') :
+                                                v.violation_reason === 'LOCATION_REQUIRED' ? t('geoFencing.violations.gpsOff') : v.violation_reason}
                                         </TableCell>
                                         <TableCell className="text-xs">
                                             {v.distance_meters ? `${v.distance_meters}m` : '-'}
                                         </TableCell>
                                         <TableCell>
                                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-medium">
-                                                {v.device_type || 'Unknown'}
+                                                {v.device_type || t('geoFencing.violations.unknown')}
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-xs text-gray-500">
@@ -458,33 +460,33 @@ return (
         <Dialog
             open={locationDialogOpen}
             onOpenChange={handleCloseDialog}
-            title={editingLocation ? 'Edit Location' : 'Add Location'}
+            title={editingLocation ? t('geoFencing.dialog.editTitle') : t('geoFencing.dialog.addTitle')}
             className="max-w-md"
         >
             <form onSubmit={handleSubmitLocation}>
                 <div className="space-y-4">
                     <div>
-                        <Label htmlFor="loc-name" className="block mb-1.5">Location Name *</Label>
+                        <Label htmlFor="loc-name" className="block mb-1.5">{t('geoFencing.dialog.name')}</Label>
                         <Input
                             id="loc-name"
                             value={locationForm.name}
                             onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
-                            placeholder="e.g., Main Office"
+                            placeholder={t('geoFencing.dialog.namePlaceholder')}
                             required
                         />
                     </div>
                     <div>
-                        <Label htmlFor="loc-desc" className="block mb-1.5">Description</Label>
+                        <Label htmlFor="loc-desc" className="block mb-1.5">{t('geoFencing.dialog.description')}</Label>
                         <Input
                             id="loc-desc"
                             value={locationForm.description}
                             onChange={(e) => setLocationForm({ ...locationForm, description: e.target.value })}
-                            placeholder="e.g., 5th Floor, Building A"
+                            placeholder={t('geoFencing.dialog.descriptionPlaceholder')}
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="loc-lat" className="block mb-1.5">Latitude *</Label>
+                            <Label htmlFor="loc-lat" className="block mb-1.5">{t('geoFencing.dialog.latitude')}</Label>
                             <Input
                                 id="loc-lat"
                                 type="number"
@@ -495,7 +497,7 @@ return (
                             />
                         </div>
                         <div>
-                            <Label htmlFor="loc-lng" className="block mb-1.5">Longitude *</Label>
+                            <Label htmlFor="loc-lng" className="block mb-1.5">{t('geoFencing.dialog.longitude')}</Label>
                             <Input
                                 id="loc-lng"
                                 type="number"
@@ -508,11 +510,11 @@ return (
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={handleGetCurrentLocation} className="w-full">
                         <MapPin size={16} className="mr-1" />
-                        Use My Current Location
+                        {t('geoFencing.dialog.useCurrentLocation')}
                     </Button>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="loc-radius" className="block mb-1.5">Radius (meters)</Label>
+                            <Label htmlFor="loc-radius" className="block mb-1.5">{t('geoFencing.dialog.radius')}</Label>
                             <Input
                                 id="loc-radius"
                                 type="number"
@@ -530,17 +532,17 @@ return (
                                     onChange={(e) => setLocationForm({ ...locationForm, is_active: e.target.checked })}
                                     className="w-4 h-4 rounded text-brand-500"
                                 />
-                                <span className="text-sm">Active</span>
+                                <span className="text-sm">{t('geoFencing.dialog.active')}</span>
                             </label>
                         </div>
                     </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                     <Button type="button" variant="ghost" onClick={handleCloseDialog}>
-                        Cancel
+                        {t('geoFencing.dialog.cancel')}
                     </Button>
                     <Button type="submit" isLoading={createLocationMutation.isPending || updateLocationMutation.isPending}>
-                        {editingLocation ? 'Update' : 'Add Location'}
+                        {editingLocation ? t('geoFencing.dialog.update') : t('geoFencing.dialog.addTitle')}
                     </Button>
                 </div>
             </form>

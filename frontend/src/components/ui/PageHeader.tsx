@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 
 import { ArrowLeft } from 'lucide-react';
@@ -30,13 +31,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <div className={cn('flex items-center justify-between mb-6', className)}>
       <div className="flex items-center gap-3">
         {onBack && (
-          <button
+           <Button variant="ghost" 
             onClick={onBack}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft size={18} />
-          </button>
+          </Button>
         )}
         <div className="flex flex-col">
           {breadcrumbs && breadcrumbs.length > 0 && (
@@ -45,12 +46,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 <React.Fragment key={crumb.label}>
                   {idx > 0 && <span className="text-gray-300 dark:text-gray-600">/</span>}
                   {crumb.href ? (
-                    <button
+                     <Button variant="ghost" 
                       onClick={() => navigate(crumb.href!)}
                       className="hover:text-brand-500 transition-colors"
                     >
                       {crumb.label}
-                    </button>
+                    </Button>
                   ) : (
                     <span className="text-gray-700 dark:text-gray-300">{crumb.label}</span>
                   )}

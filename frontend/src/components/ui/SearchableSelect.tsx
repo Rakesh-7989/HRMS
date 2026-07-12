@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/Button';
 import { ChevronDown, Search, X } from 'lucide-react';
 
 interface SearchableSelectOption {
@@ -112,7 +113,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             <input type="hidden" name={name} value={value} />
 
             {/* Trigger button */}
-            <button
+             <Button variant="ghost" 
                 type="button"
                 id={id}
                 disabled={disabled}
@@ -132,7 +133,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     size={16}
                     className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
-            </button>
+            </Button>
 
             {/* Dropdown */}
             {isOpen && (
@@ -150,13 +151,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                             className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none"
                         />
                         {search && (
-                            <button
+                             <Button variant="ghost" 
                                 type="button"
                                 onClick={() => setSearch('')}
                                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                             >
                                 <X size={14} />
-                            </button>
+                            </Button>
                         )}
                     </div>
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/utils/cn';
@@ -125,7 +126,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                     </div>
                 ) : (
                     onEdit ? (
-                        <button
+                         <Button variant="ghost" 
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onEdit();
@@ -133,7 +134,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
                             className="flex items-center gap-1 text-[10px] font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                         >
                             + Assign
-                        </button>
+                        </Button>
                     ) : null
                 )}
             </div>

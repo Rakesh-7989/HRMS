@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/Button';
 import { createPortal } from 'react-dom';
 import {
     format,
@@ -201,15 +202,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <div className="flex items-center justify-between px-3 py-3 bg-gradient-to-br from-brand-500/10 via-brand-500/5 to-transparent border-b border-gray-100 dark:border-gray-800">
             {viewMode === 'calendar' && (
                 <>
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setCurrentMonth(subMonths(currentMonth, 1)); }}
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all"
                     >
                         <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
                         className="px-3 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
@@ -217,22 +218,22 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500">
                             {format(currentMonth, 'MMMM yyyy')}
                         </span>
-                    </button>
+                    </Button>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setCurrentMonth(addMonths(currentMonth, 1)); }}
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all"
                     >
                         <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
                 </>
             )}
 
             {viewMode === 'month' && (
                 <>
                     <div className="flex-1" />
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setViewMode('year'); }}
                         className="px-4 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
@@ -240,14 +241,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         <span className="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-500">
                             {currentYear}
                         </span>
-                    </button>
+                    </Button>
                     <div className="flex-1" />
                 </>
             )}
 
             {viewMode === 'year' && (
                 <>
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -257,13 +258,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all disabled:opacity-30"
                     >
                         <ChevronsLeft size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
 
                     <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
                         {yearPageStart} - {Math.min(yearPageStart + 11, maxYear)}
                     </span>
 
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -273,7 +274,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all disabled:opacity-30"
                     >
                         <ChevronsRight size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
+                    </Button>
                 </>
             )}
         </div>
@@ -283,7 +284,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <div className="p-3">
             <div className="grid grid-cols-3 gap-2">
                 {MONTHS.map((month, index) => (
-                    <button
+                     <Button variant="ghost" 
                         key={month}
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleMonthSelect(index); }}
@@ -295,16 +296,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         )}
                     >
                         {month}
-                    </button>
+                    </Button>
                 ))}
             </div>
-            <button
+             <Button variant="ghost" 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('calendar'); }}
                 className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500"
             >
                 ← Back to calendar
-            </button>
+            </Button>
         </div>
     );
 
@@ -312,7 +313,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <div className="p-3">
             <div className="grid grid-cols-3 gap-2">
                 {yearsInPage.map(year => (
-                    <button
+                     <Button variant="ghost" 
                         key={year}
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleYearSelect(year); }}
@@ -326,16 +327,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         )}
                     >
                         {year}
-                    </button>
+                    </Button>
                 ))}
             </div>
-            <button
+             <Button variant="ghost" 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setViewMode('month'); }}
                 className="mt-3 w-full py-2 text-xs font-medium text-gray-500 hover:text-brand-500"
             >
                 ← Back to months
-            </button>
+            </Button>
         </div>
     );
 
@@ -379,7 +380,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 const isBeforeMinDate = parsedMinDate ? (day.getTime() < parsedMinDate.getTime()) : false;
 
                 days.push(
-                    <button
+                     <Button variant="ghost" 
                         type="button"
                         key={day.toString()}
                         disabled={isBeforeMinDate}
@@ -409,7 +410,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         )}>
                             {format(day, 'd')}
                         </span>
-                    </button>
+                    </Button>
                 );
                 day = addDays(day, 1);
             }
@@ -440,7 +441,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     {customTrigger}
                 </div>
             ) : (
-                <button
+                 <Button variant="ghost" 
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={cn(
@@ -466,7 +467,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                             {daysBetween} day{daysBetween !== 1 ? 's' : ''}
                         </span>
                     )}
-                </button>
+                </Button>
             )}
 
             {isOpen && createPortal(
@@ -521,7 +522,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     {viewMode === 'calendar' && (
                         <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                             <div className="flex gap-2">
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -533,8 +534,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                     className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
                                 >
                                     Today
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -547,8 +548,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                     className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
                                 >
                                     2 Days
-                                </button>
-                                <button
+                                </Button>
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -561,10 +562,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                     className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
                                 >
                                     1 Week
-                                </button>
+                                </Button>
                             </div>
                             {(start || end) && (
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -575,7 +576,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                     className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
                                 >
                                     Clear
-                                </button>
+                                </Button>
                             )}
                         </div>
                     )}

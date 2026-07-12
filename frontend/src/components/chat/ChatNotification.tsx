@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useChat } from '@/contexts/ChatContext';
 import { resolveImageUrl } from '@/utils/image';
 import { ChatNotification as ChatNotificationType } from '@/contexts/ChatContext';
@@ -149,12 +150,12 @@ export const ChatNotification: React.FC = () => {
                                 </span>
                             </div>
                         </div>
-                        <button
+                         <Button variant="ghost" 
                             onClick={handleDismissAll}
                             className={`p-1.5 rounded-lg transition-all duration-200 active:scale-90 ${closeBtnClasses}`}
                         >
                             <X size={14} />
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Grouped conversation list */}

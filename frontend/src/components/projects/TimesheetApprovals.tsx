@@ -224,7 +224,7 @@ export const TimesheetApprovals: React.FC = () => {
             {/* Tabs & Search */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex bg-gray-100/50 dark:bg-gray-950/40 p-1 rounded-xl border border-gray-100 dark:border-gray-800 w-fit">
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => setActiveTab('pending')}
                         className={cn(
                             "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
@@ -234,8 +234,8 @@ export const TimesheetApprovals: React.FC = () => {
                         )}
                     >
                         {t('timesheets.pending')}
-                    </button>
-                    <button
+                    </Button>
+                     <Button variant="ghost" 
                         onClick={() => setActiveTab('history')}
                         className={cn(
                             "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
@@ -245,7 +245,7 @@ export const TimesheetApprovals: React.FC = () => {
                         )}
                     >
                         {t('timesheets.historyTab')}
-                    </button>
+                    </Button>
                 </div>
 
                 {activeTab === 'history' && (
@@ -336,7 +336,7 @@ export const TimesheetApprovals: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             {activeTab === 'pending' && timesheets.length > 0 && (
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={toggleSelectAll}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-brand-500 transition-colors"
                                 >
@@ -346,7 +346,7 @@ export const TimesheetApprovals: React.FC = () => {
                                         <Square size={14} />
                                     )}
                                     {t('timesheets.selectAll')}
-                                </button>
+                                </Button>
                             )}
                             <div className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-full ring-1 text-[9px] font-black uppercase tracking-widest",
@@ -408,7 +408,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                         }}
                                                     >
                                                         {/* Checkbox */}
-                                                        <button
+                                                         <Button variant="ghost" 
                                                             onClick={() => toggleSelect(ts.id)}
                                                             className={cn(
                                                                 "transition-colors shrink-0",
@@ -416,7 +416,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             )}
                                                         >
                                                             {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
-                                                        </button>
+                                                        </Button>
 
                                                         {/* Main content */}
                                                         <div className="flex items-center gap-6 flex-1 min-w-0">

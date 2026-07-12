@@ -242,7 +242,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                 {/* Actions Menu */}
                                 {canModifyComment(comment) && (
                                     <div className="relative">
-                                        <button
+                                         <Button variant="ghost" 
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setActiveDropdownId(activeDropdownId === comment.id ? null : comment.id);
@@ -250,11 +250,11 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                                         >
                                             <MoreHorizontal className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                                        </button>
+                                        </Button>
 
                                         {activeDropdownId === comment.id && (
                                             <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-elev-4 z-50 min-w-[120px]">
-                                                <button
+                                                 <Button variant="ghost" 
                                                     onClick={() => {
                                                         setEditingId(comment.id);
                                                         setEditContent(comment.content);
@@ -264,8 +264,8 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                                 >
                                                     <Pencil className="h-3 w-3" />
                                                     Edit
-                                                </button>
-                                                <button
+                                                </Button>
+                                                 <Button variant="ghost" 
                                                     onClick={async () => {
                                                         if (await confirm({ type: 'destructive', title: 'Delete Comment', message: 'Delete this comment?' })) {
                                                             deleteMutation.mutate(comment.id);
@@ -276,7 +276,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                     Delete
-                                                </button>
+                                                </Button>
                                             </div>
                                         )}
                                     </div>
@@ -331,20 +331,20 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                         className="w-full p-3 pr-12 text-sm border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500/20 focus:border-brand-500"
                         rows={2}
                     />
-                    <button
+                     <Button variant="ghost" 
                         type="submit"
                         disabled={!newComment.trim() || createMutation.isPending}
                         className="absolute right-2 bottom-2 p-2 text-brand-500 dark:text-brand-400 hover:bg-brand-500/10 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <Send className="h-4 w-4" />
-                    </button>
+                    </Button>
 
                     {/* Mentions Dropdown */}
                     {showMentions && filteredUsers.length > 0 && (
                         <div className="absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-5 z-[100] max-h-[180px] overflow-y-auto">
                             <div className="p-1">
                                 {filteredUsers.map((mentionUser) => (
-                                    <button
+                                     <Button variant="ghost" 
                                         key={mentionUser.id}
                                         type="button"
                                         onClick={(e) => {
@@ -364,7 +364,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId })
                                                 {mentionUser.email}
                                             </div>
                                         </div>
-                                    </button>
+                                    </Button>
                                 ))}
                             </div>
                         </div>

@@ -336,7 +336,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                 {/* Tabs */}
                 <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 pb-0">
                     {tabs.map(tab => (
-                        <button
+                         <Button variant="ghost" 
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as TabType)}
                             className={cn(
@@ -348,7 +348,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                         >
                             <tab.icon size={16} />
                             {tab.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
@@ -623,7 +623,7 @@ const SensitiveInfoRow: React.FC<{
                         {displayValue}
                     </p>
                     {hasValue && (
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => onReveal(fieldName)}
                             disabled={isLoading}
                             className={cn(
@@ -639,7 +639,7 @@ const SensitiveInfoRow: React.FC<{
                             ) : (
                                 <Eye size={14} />
                             )}
-                        </button>
+                        </Button>
                     )}
                 </div>
                 {isRevealed && (

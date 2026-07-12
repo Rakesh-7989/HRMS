@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -61,13 +62,13 @@ export const Dialog: React.FC<DialogProps> = ({
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 overflow-hidden">
                     {onBack && (
-                      <button
+                       <Button variant="ghost" 
                         onClick={onBack}
                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 group transition-all"
                         title="Back"
                       >
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                      </button>
+                      </Button>
                     )}
                     <div className="overflow-hidden">
                       {title && (
@@ -82,13 +83,13 @@ export const Dialog: React.FC<DialogProps> = ({
                       )}
                     </div>
                   </div>
-                  <button
+                   <Button variant="ghost" 
                     onClick={() => onOpenChange(false)}
                     className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
                     title="Close"
                   >
                     <X size={20} />
-                  </button>
+                  </Button>
                 </div>
               </div>
               {/* Content Wrapper */}
@@ -162,7 +163,7 @@ export const DialogClose: React.FC<DialogCloseProps> = ({ asChild, children, ...
   }
 
   return (
-    <button
+     <Button variant="ghost" 
       type="button"
       className={cn(
         'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2',
@@ -171,7 +172,7 @@ export const DialogClose: React.FC<DialogCloseProps> = ({ asChild, children, ...
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 };
 

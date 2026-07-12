@@ -113,13 +113,13 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader className="relative pr-8">
-                    <button
+                     <Button variant="ghost" 
                         onClick={onClose}
                         className="absolute right-0 top-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
                         aria-label="Close"
                     >
                         <X size={20} />
-                    </button>
+                    </Button>
                     <DialogTitle className="flex items-center gap-2">
                         <Shield className="text-brand-500" size={20} />
                         Two-Factor Authentication

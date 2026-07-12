@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/Label';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { DataTable } from '@/components/ui/DataTable';
-import { SkeletonTable } from '@/components/ui/Skeleton';
+
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
@@ -113,25 +113,25 @@ export const AttendanceReportsContent: React.FC = () => {
             return {
                 summaryCards: [
                     {
-                        title: 'Total Employees',
+                        title: t('attendance.totalEmployees'),
                         value: analytics.overallSummary.total_employees || 0,
                         icon: Users,
                         color: 'text-brand-500'
                     },
                     {
-                        title: 'Present Days',
+                        title: t('attendance.reports.presentDays'),
                         value: analytics.overallSummary.total_present_days || 0,
                         icon: CheckCircle,
                         color: 'text-green-500'
                     },
                     {
-                        title: 'Late Arrivals',
+                        title: t('attendance.lateArrivals'),
                         value: analytics.overallSummary.total_late_days || 0,
                         icon: Clock,
                         color: 'text-yellow-500'
                     },
                     {
-                        title: 'Absent Days',
+                        title: t('attendance.reports.absentDays'),
                         value: analytics.overallSummary.total_absent_days || 0,
                         icon: XCircle,
                         color: 'text-red-500'
@@ -155,25 +155,25 @@ export const AttendanceReportsContent: React.FC = () => {
             return {
                 summaryCards: [
                     {
-                        title: 'Team Members',
+                        title: t('attendance.reports.teamMembers'),
                         value: analytics.teamSummary.total_team_members || 0,
                         icon: Users,
                         color: 'text-brand-500'
                     },
                     {
-                        title: 'Present Days',
+                        title: t('attendance.reports.presentDays'),
                         value: analytics.teamSummary.total_present_days || 0,
                         icon: CheckCircle,
                         color: 'text-green-500'
                     },
                     {
-                        title: 'Late Arrivals',
+                        title: t('attendance.lateArrivals'),
                         value: analytics.teamSummary.total_late_days || 0,
                         icon: Clock,
                         color: 'text-yellow-500'
                     },
                     {
-                        title: 'Absent Days',
+                        title: t('attendance.reports.absentDays'),
                         value: analytics.teamSummary.total_absent_days || 0,
                         icon: XCircle,
                         color: 'text-red-500'
@@ -197,25 +197,25 @@ export const AttendanceReportsContent: React.FC = () => {
             return {
                 summaryCards: [
                     {
-                        title: 'Present Days',
+                        title: t('attendance.reports.presentDays'),
                         value: analytics.personalSummary.present_days || 0,
                         icon: CheckCircle,
                         color: 'text-green-500'
                     },
                     {
-                        title: 'Late Arrivals',
+                        title: t('attendance.lateArrivals'),
                         value: analytics.personalSummary.late_days || 0,
                         icon: Clock,
                         color: 'text-yellow-500'
                     },
                     {
-                        title: 'Absent Days',
+                        title: t('attendance.reports.absentDays'),
                         value: analytics.personalSummary.absent_days || 0,
                         icon: XCircle,
                         color: 'text-red-500'
                     },
                     {
-                        title: 'Attendance Rate',
+                        title: t('attendance.reports.attendanceRate'),
                         value: `${analytics.personalSummary.attendance_rate || 0}%`,
                         icon: TrendingUp,
                         color: 'text-brand-500'
@@ -232,7 +232,7 @@ export const AttendanceReportsContent: React.FC = () => {
         }
 
         return null;
-    }, [analytics, canViewOrgAnalytics, canViewTeamAnalytics]);
+    }, [analytics, canViewOrgAnalytics, canViewTeamAnalytics, t]);
 
     const exportReports = () => {
         if (!reports?.reports) return;
@@ -285,7 +285,7 @@ export const AttendanceReportsContent: React.FC = () => {
                 row.check_in_time ? (
                     <div className={row.is_late ? 'text-red-500 font-medium' : ''}>
                         {formatTime12Hour(row.check_in_time, user?.timezone)}
-                        {row.is_late && <span className="text-[10px] ml-1 block">Late: {row.late_by}</span>}
+                        {row.is_late && <span className="text-[10px] ml-1 block">{t('attendance.late')}: {row.late_by}</span>}
                     </div>
                 ) : '-'
             ),
@@ -383,31 +383,31 @@ export const AttendanceReportsContent: React.FC = () => {
                 >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div className="md:col-span-2">
-                            <Label className="text-sm font-medium mb-2 block">Time Period</Label>
+                            <Label className="text-sm font-medium mb-2 block">{t('attendance.reports.timePeriod')}</Label>
                             <RadioGroup value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)} className="flex gap-4">
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="7d" id="7d" />
-                                    <Label htmlFor="7d">7 Days</Label>
+                                    <Label htmlFor="7d">{t('attendance.reports.period7d')}</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="30d" id="30d" />
-                                    <Label htmlFor="30d">30 Days</Label>
+                                    <Label htmlFor="30d">{t('attendance.reports.period30d')}</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="custom" id="custom" />
-                                    <Label htmlFor="custom">Custom</Label>
+                                    <Label htmlFor="custom">{t('attendance.reports.periodCustom')}</Label>
                                 </div>
                             </RadioGroup>
                         </div>
 
                         {(canViewOrgAnalytics || canViewTeamAnalytics) && (
                             <div className="md:col-span-2">
-                                <Label className="block mb-2">Filter by Employee (Optional)</Label>
+                                <Label className="block mb-2">{t('attendance.reports.filterByEmployee')}</Label>
                                 <Select
                                     value={selectedEmployeeId}
                                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
                                     options={[
-                                        { value: '', label: 'All Employees' },
+                                        { value: '', label: t('attendance.reports.allEmployees') },
                                         ...employees.map(emp => ({
                                             value: emp.id,
                                             label: `${emp.first_name} ${emp.last_name}`
@@ -420,7 +420,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         {selectedPeriod === 'custom' && (
                             <>
                                 <div>
-                                    <Label htmlFor="from-date">From Date</Label>
+                                    <Label htmlFor="from-date">{t('attendance.reports.fromDate')}</Label>
                                     <Input
                                         id="from-date"
                                         type="date"
@@ -429,7 +429,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="to-date">To Date</Label>
+                                    <Label htmlFor="to-date">{t('attendance.reports.toDate')}</Label>
                                     <Input
                                         id="to-date"
                                         type="date"
@@ -482,7 +482,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <LineChartIcon className="mr-2" size={20} />
-                                        Attendance Trends
+                                        {t('attendance.reports.attendanceTrends')}
                                     </h3>
                                     <AreaChart
                                         data={chartData.attendanceTrends}
@@ -504,7 +504,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 <Card className="p-3 sm:p-6">
                                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
                                         <PieChartIcon className="mr-2" size={20} />
-                                        Department Breakdown
+                                        {t('attendance.reports.departmentBreakdown')}
                                     </h3>
                                     <PieChart
                                         data={chartData.departmentBreakdown}
@@ -537,14 +537,14 @@ export const AttendanceReportsContent: React.FC = () => {
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                                     <FileText className="mr-2" size={20} />
-                                    General Attendance Report
+                                    {t('attendance.reports.generalReport')}
                                 </h3>
                                 {reports?.summary && (
                                     <div className="hidden md:flex text-sm text-muted gap-3">
-                                        <span>Total: {reports.summary.total_records}</span>
-                                        <span>Present: {reports.summary.present_count}</span>
-                                        <span>Late: {reports.summary.late_count}</span>
-                                        <span>Absent: {reports.summary.absent_count}</span>
+                                        <span>{t('common.total')}: {reports.summary.total_records}</span>
+                                        <span>{t('attendance.present')}: {reports.summary.present_count}</span>
+                                        <span>{t('attendance.late')}: {reports.summary.late_count}</span>
+                                        <span>{t('attendance.absent')}: {reports.summary.absent_count}</span>
                                     </div>
                                 )}
                             </div>
@@ -553,7 +553,7 @@ export const AttendanceReportsContent: React.FC = () => {
                                 data={reports?.reports || []}
                                 columns={reportColumns}
                                 loading={reportsLoading}
-                                emptyMessage="No attendance records found for this period."
+                                emptyMessage={t('attendance.reports.noRecordsForPeriod')}
                             />
                         </Card>
                     )}

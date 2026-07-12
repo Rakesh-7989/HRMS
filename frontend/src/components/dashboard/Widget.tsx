@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -52,26 +53,26 @@ export const Widget: React.FC<WidgetProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {collapsible && (
-              <button
+               <Button variant="ghost" 
                 onClick={() => setCollapsed(c => !c)}
                 className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"
                 aria-label={collapsed ? 'Expand' : 'Collapse'}
               >
                 {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-              </button>
+              </Button>
             )}
             <h3 className="text-base font-bold text-neutral-900 dark:text-white">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
             {headerAction}
             {error && onRetry && (
-              <button
+               <Button variant="ghost" 
                 onClick={onRetry}
                 className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-brand-500 transition-colors"
                 aria-label="Retry"
               >
                 <RefreshCw size={14} />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -84,12 +85,12 @@ export const Widget: React.FC<WidgetProps> = ({
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <p className="text-sm text-error-500 mb-3">{error}</p>
             {onRetry && (
-              <button
+               <Button variant="ghost" 
                 onClick={onRetry}
                 className="text-sm text-brand-600 dark:text-brand-400 hover:underline underline-offset-2 font-medium"
               >
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         ) : isEmpty ? (

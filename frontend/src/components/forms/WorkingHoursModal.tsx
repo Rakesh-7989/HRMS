@@ -132,7 +132,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                         <label className="block text-sm font-medium mb-3 text-gray-900 dark:text-white">Working Days</label>
                         <div className="grid grid-cols-4 gap-2">
                             {DAYS.map(day => (
-                                <button
+                                 <Button variant="ghost" 
                                     key={day}
                                     type="button"
                                     onClick={() => toggleDay(day)}
@@ -145,7 +145,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                                     disabled={initialDataLoading}
                                 >
                                     {day.substring(0, 3)}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                         {formik.touched.workingDays && formik.errors.workingDays && (

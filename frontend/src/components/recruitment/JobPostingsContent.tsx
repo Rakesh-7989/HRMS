@@ -54,7 +54,7 @@ export const JobPostingsContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
             {[{ id: undefined, labelKey: 'recruitment.all' }, { id: 'PUBLISHED', labelKey: 'recruitment.published' }, { id: 'DRAFT', labelKey: 'recruitment.draft' }, { id: 'CLOSED', labelKey: 'recruitment.closed' }].map(f => (
-              <button
+               <Button variant="ghost" 
                 key={f.id || 'all'}
                 onClick={() => setFilter(f.id)}
                 className={cn(
@@ -63,7 +63,7 @@ export const JobPostingsContent: React.FC = () => {
                 )}
               >
                 {t(f.labelKey)}
-              </button>
+              </Button>
             ))}
           </div>
           <Button size="sm" className="gap-2">
@@ -100,12 +100,12 @@ export const JobPostingsContent: React.FC = () => {
                 </div>
               </div>
               {job.status === 'DRAFT' && (
-                <button
+                 <Button variant="ghost" 
                   onClick={() => publishMutation.mutate(job.id)}
                   className="w-full py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-colors"
                 >
                   {t('recruitment.publish')}
-                </button>
+                </Button>
               )}
             </Card>
           ))}

@@ -162,27 +162,27 @@ export const DesignationsContent: React.FC = () => {
                                     </div>
                                     {canManage && (
                                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={() => handleEdit(d)}
                                                 className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-violet-900/20 transition-colors"
                                                 title={t('common.edit')}
                                             >
                                                 <Edit3 size={15} />
-                                            </button>
-                                            <button
+                                            </Button>
+                                             <Button variant="ghost" 
                                                 onClick={() => toggleStatusMutation.mutate(d)}
                                                 className={`p-1.5 rounded-md transition-colors ${d.is_active ? 'text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
                                                 title={d.is_active ? t('common.deactivate') : t('common.activate')}
                                             >
                                                 {d.is_active ? <X size={15} /> : <Check size={15} />}
-                                            </button>
-                                            <button
+                                            </Button>
+                                             <Button variant="ghost" 
                                                 onClick={() => handleDelete(d.id)}
                                                 className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                                 title={t('common.delete')}
                                             >
                                                 <Trash2 size={15} />
-                                            </button>
+                                            </Button>
                                         </div>
                                     )}
                                 </div>

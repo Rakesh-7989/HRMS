@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -43,12 +44,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
           <p className="text-gray-500 dark:text-gray-400 mb-6">
             Your account has been deactivated. Please contact your administrator for assistance.
           </p>
-          <button
+           <Button variant="ghost" 
             onClick={() => window.location.href = '/login'}
             className="w-full inline-flex justify-center rounded-md border border-transparent shadow-elev-1 px-4 py-2 bg-brand-500 text-base font-medium text-white hover:bg-brand-500-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500/50 sm:text-sm"
           >
             Back to Login
-          </button>
+          </Button>
         </div>
       </div>
     );

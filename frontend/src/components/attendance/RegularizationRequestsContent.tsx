@@ -115,19 +115,19 @@ export const RegularizationRequestsContent: React.FC = () => {
             {/* Header controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 <div className="flex gap-4 border-b border-gray-100 dark:border-gray-800 pb-px sm:border-0 sm:pb-0">
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => setActiveTab('my')}
                         className={`text-sm font-medium pb-2 sm:pb-1 border-b-2 transition-colors ${activeTab === 'my' ? 'border-brand-500 text-brand-500' : 'border-transparent text-muted'} flex-1 sm:flex-none text-center sm:text-left`}
                     >
                         My Requests
-                    </button>
+                    </Button>
                     {canReview && (
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setActiveTab('team')}
                             className={`text-sm font-medium pb-2 sm:pb-1 border-b-2 transition-colors ${activeTab === 'team' ? 'border-brand-500 text-brand-500' : 'border-transparent text-muted'} flex-1 sm:flex-none text-center sm:text-left`}
                         >
                             Start Review ({teamRequests.length || 0})
-                        </button>
+                        </Button>
                     )}
                 </div>
 

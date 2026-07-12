@@ -87,13 +87,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="Enter current password"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowCurrent((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.currentPassword && formik.errors.currentPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.currentPassword}</p>
@@ -110,13 +110,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="At least 8 characters"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowNew((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.newPassword && formik.errors.newPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.newPassword}</p>
@@ -156,13 +156,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
                                     placeholder="Repeat new password"
                                 />
-                                <button
+                                 <Button variant="ghost" 
                                     type="button"
                                     onClick={() => setShowConfirm((p) => !p)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             {formik.touched.confirmPassword && formik.errors.confirmPassword && (
                                 <p className="text-xs text-red-500">{formik.errors.confirmPassword}</p>

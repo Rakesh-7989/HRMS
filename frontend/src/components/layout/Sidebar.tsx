@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -299,12 +300,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Collapse indicator */}
         <div className="hidden md:flex justify-center pb-3">
-          <button
+           <Button variant="ghost" 
             onClick={() => {}}
             className="w-6 h-6 rounded-full bg-neutral-800 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
           >
             {expanded ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-          </button>
+          </Button>
         </div>
       </aside>
     </>

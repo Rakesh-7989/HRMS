@@ -149,7 +149,7 @@ export const LeaveBalancesPage: React.FC = () => {
                                     <ul className="py-1">
                                         {searchResults.map((user: any) => (
                                             <li key={user.id}>
-                                                <button
+                                                 <Button variant="ghost" 
                                                     className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between group"
                                                     onClick={() => handleSelectEmployee(user)}
                                                 >
@@ -159,7 +159,7 @@ export const LeaveBalancesPage: React.FC = () => {
                                                         </p>
                                                         <p className="text-xs text-gray-500">{user.email}</p>
                                                     </div>
-                                                </button>
+                                                </Button>
                                             </li>
                                         ))}
                                     </ul>
@@ -280,7 +280,7 @@ export const LeaveBalancesPage: React.FC = () => {
                                 <div>
                                     <Label className="block mb-1.5">Action</Label>
                                     <div className="flex rounded-md shadow-elev-1">
-                                        <button
+                                         <Button variant="ghost" 
                                             type="button"
                                             onClick={() => setAdjustForm({ ...adjustForm, type: 'ADD' })}
                                             className={cn(
@@ -291,8 +291,8 @@ export const LeaveBalancesPage: React.FC = () => {
                                             )}
                                         >
                                             Grant
-                                        </button>
-                                        <button
+                                        </Button>
+                                         <Button variant="ghost" 
                                             type="button"
                                             onClick={() => setAdjustForm({ ...adjustForm, type: 'DEDUCT' })}
                                             className={cn(
@@ -303,7 +303,7 @@ export const LeaveBalancesPage: React.FC = () => {
                                             )}
                                         >
                                             Deduct
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                                 <div>

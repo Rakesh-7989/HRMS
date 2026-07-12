@@ -56,7 +56,7 @@ export const CandidatesContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
             {[{ id: undefined, labelKey: 'recruitment.all' }, { id: 'NEW', labelKey: 'recruitment.new' }, { id: 'INTERVIEW', labelKey: 'recruitment.interview' }, { id: 'HIRED', labelKey: 'recruitment.hired' }].map(f => (
-              <button
+               <Button variant="ghost" 
                 key={f.id || 'all'}
                 onClick={() => setFilter(f.id)}
                 className={cn(
@@ -65,7 +65,7 @@ export const CandidatesContent: React.FC = () => {
                 )}
               >
                 {t(f.labelKey)}
-              </button>
+              </Button>
             ))}
           </div>
           <Button size="sm" className="gap-2">

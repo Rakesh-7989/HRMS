@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { Button } from '@/components/ui/Button';
 import { Sidebar } from './Sidebar';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/contexts/AuthContext';
@@ -170,13 +171,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="flex items-center justify-between w-full gap-2">
             {/* LEFT: Title + Breadcrumbs */}
             <div className="flex items-center gap-2 min-w-0">
-              <button
+               <Button variant="ghost" 
                 type="button"
                 className="md:hidden text-neutral-500 hover:text-brand-500 transition-colors focus:outline-none shrink-0"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <Menu size={22} />
-              </button>
+              </Button>
               <div className="flex flex-col justify-center min-w-0">
                 <h1 className="text-base md:text-lg font-bold text-neutral-900 dark:text-white leading-snug truncate">
                   {title === 'Dashboard' ? t('common.dashboard') : (title || t('common.dashboard'))}
@@ -223,7 +224,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 )}
                 ref={searchRef}
               >
-                <button
+                 <Button variant="ghost" 
                   type="button"
                   onClick={() => {
                     if (!isSearchExpanded) {
@@ -246,7 +247,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   )}
                 >
                   <Search size={18} />
-                </button>
+                </Button>
                 <input
                   ref={inputRef}
                   type="text"
@@ -286,7 +287,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {!isSearching && hasSuggestions && (
                       <>
                         {flatResults.map((result, index) => (
-                          <button
+                           <Button variant="ghost" 
                             key={`${result.type}-${result.id}`}
                             onClick={() => handleResultClick(result)}
                             className={cn(
@@ -312,9 +313,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             <span className="text-xs text-neutral-400 capitalize flex-shrink-0">
                               {result.type}
                             </span>
-                          </button>
+                          </Button>
                         ))}
-                        <button
+                         <Button variant="ghost" 
                           onClick={() => {
                             navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                             setShowSuggestions(false);
@@ -322,7 +323,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                           className="w-full text-center px-4 py-2.5 text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 border-t border-neutral-100 dark:border-neutral-800 font-medium"
                         >
                           {t('common.viewAllResults', { query: searchQuery })}
-                        </button>
+                        </Button>
                       </>
                     )}
 
@@ -348,7 +349,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                 {/* Profile */}
                 <div className="relative" ref={profileRef}>
-                  <button
+                   <Button variant="ghost" 
                     onClick={() => setProfileOpen((p) => !p)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200 relative group"
                   >
@@ -379,7 +380,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         {user?.role}
                       </p>
                     </div>
-                  </button>
+                  </Button>
 
                   {profileOpen && (
                     <ProfileDropdown onClose={() => setProfileOpen(false)} />
@@ -402,12 +403,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </span>
             </div>
             {user?.role === 'ADMIN' && (
-              <button
+               <Button variant="ghost" 
                 onClick={() => navigate('/pricing')}
                 className="bg-white text-coral-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-neutral-100 transition-colors shadow-elev-1"
               >
                 {t('common.upgradePlan')}
-              </button>
+              </Button>
             )}
           </div>
         )}

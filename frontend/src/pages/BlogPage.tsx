@@ -177,14 +177,14 @@ export const BlogListPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 -mt-6 relative z-10">
         <div className="flex flex-wrap gap-2 justify-center">
           {categories.map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)}
+             <Button variant="ghost" key={cat} onClick={() => setCategory(cat)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                 category === cat
                   ? 'bg-brand-500 text-white shadow-elev-2'
                   : 'bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 hover:border-brand-300'
               }`}>
               {cat === 'All' ? t('common.all') : cat}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

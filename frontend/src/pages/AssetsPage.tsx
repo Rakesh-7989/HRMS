@@ -393,20 +393,20 @@ export const AssetsPage: React.FC = () => {
             cell: (asset: Asset) => (
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
-                  <button
+                   <Button variant="ghost" 
                     onClick={() => handlePrintBarcode(asset.id)}
                     className="text-gray-400 hover:text-gray-600"
                     title="Print Barcode"
                   >
                     <Printer size={14} />
-                  </button>
-                  <button
+                  </Button>
+                   <Button variant="ghost" 
                     onClick={() => handleDownloadBarcode(asset.id, asset.asset_code)}
                     className="text-gray-400 hover:text-gray-600"
                     title="Download Barcode"
                   >
                     <Download size={14} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ),
@@ -951,7 +951,7 @@ export const AssetsPage: React.FC = () => {
               {assignAccessories.map((acc, idx) => (
                 <div key={idx} className="flex items-center gap-2 group">
                   <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
-                  <button type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
+                   <Button variant="ghost" type="button" onClick={() => setAssignAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></Button>
                 </div>
               ))}
               <div className="flex items-center gap-2">
@@ -1055,7 +1055,7 @@ export const AssetsPage: React.FC = () => {
               {swapAccessories.map((acc, idx) => (
                 <div key={idx} className="flex items-center gap-2 group">
                   <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-xl">{acc}</span>
-                  <button type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></button>
+                   <Button variant="ghost" type="button" onClick={() => setSwapAccessories(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10 rounded-lg transition-all duration-200"><Trash2 size={16} /></Button>
                 </div>
               ))}
               <div className="flex items-center gap-2">

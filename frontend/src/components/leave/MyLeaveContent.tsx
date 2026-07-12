@@ -111,13 +111,13 @@ export const MyLeaveContent: React.FC = () => {
             className: 'text-right',
             cell: (leave: any) => (
                 leave.status === 'PENDING' ? (
-                    <button
+                     <Button variant="ghost" 
                         onClick={() => cancelMutation.mutate(leave.id)}
                         className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
                         disabled={cancelMutation.isPending}
                     >
                         {t('leave.cancel')}
-                    </button>
+                    </Button>
                 ) : null
             ),
         },

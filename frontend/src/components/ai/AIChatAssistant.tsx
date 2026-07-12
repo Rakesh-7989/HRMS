@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { aiService, AIChatMessage } from '@/services/ai.service';
@@ -42,9 +43,9 @@ export const AIChatAssistant: React.FC = () => {
               <Bot className="w-5 h-5 text-white" />
               <span className="text-sm font-bold text-white">{t('ai.chatAssistant')}</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10">
+             <Button variant="ghost" onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10">
               <X size={16} className="text-white" />
-            </button>
+            </Button>
           </div>
 
           <div className="h-80 overflow-y-auto p-4 space-y-3">
@@ -92,13 +93,13 @@ export const AIChatAssistant: React.FC = () => {
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 className="flex-1 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-sm outline-none focus:ring-2 focus:ring-brand-500/20"
               />
-              <button
+               <Button variant="ghost" 
                 onClick={handleSend}
                 disabled={!input.trim() || chatMutation.isPending}
                 className="p-2 rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50 transition-all"
               >
                 <Send size={16} />
-              </button>
+              </Button>
             </div>
             <p className="text-[10px] text-neutral-400 mt-1.5 text-center">
               {t('ai.disclaimer')}
@@ -107,7 +108,7 @@ export const AIChatAssistant: React.FC = () => {
         </div>
       )}
 
-      <button
+       <Button variant="ghost" 
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'fixed bottom-6 right-6 p-3.5 rounded-2xl shadow-elev-6 z-50 transition-all duration-300',
@@ -117,7 +118,7 @@ export const AIChatAssistant: React.FC = () => {
         )}
       >
         {isOpen ? <X size={22} /> : <MessageSquare size={22} />}
-      </button>
+      </Button>
     </>
   );
 };

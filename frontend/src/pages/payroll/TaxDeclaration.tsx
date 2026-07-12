@@ -174,18 +174,18 @@ export const TaxDeclaration: React.FC = () => {
                                 <Badge variant="secondary">Selection Frozen</Badge>
                             ) : (
                                 <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                    <button
+                                     <Button variant="ghost" 
                                         onClick={() => handleRegimeChange('OLD')}
                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'OLD' ? 'bg-white shadow-elev-2 text-brand-500' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         Old Regime
-                                    </button>
-                                    <button
+                                    </Button>
+                                     <Button variant="ghost" 
                                         onClick={() => handleRegimeChange('NEW')}
                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${regime?.regime === 'NEW' ? 'bg-white shadow-elev-2 text-brand-500' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         New Regime
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </div>

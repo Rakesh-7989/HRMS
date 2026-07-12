@@ -318,59 +318,52 @@ export const TenantsPage: React.FC = () => {
               </Button>
 
               <div className="relative" onMouseLeave={() => setOpenDropdownId(null)}>
-                <button
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                 <Button variant="ghost"                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === tenant.id ? null : tenant.id); }}
                 >
                   <MoreVertical size={16} className="text-gray-500" />
-                </button>
+                </Button>
                 <div className={`absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-elev-5 transition-all z-[100] overflow-hidden ${openDropdownId === tenant.id ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
                   <div className="flex flex-col py-1">
-                    <button
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); setUpgradeConfig({ isOpen: true, tenantId: tenant.id, currentPlanName: tenant.plan_name || 'No Plan' }); }}
+                     <Button variant="ghost"                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); setUpgradeConfig({ isOpen: true, tenantId: tenant.id, currentPlanName: tenant.plan_name || 'No Plan' }); }}
                       className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
                     >
                       <ArrowUp size={14} /> {t('tenants.upgradePlan')}
-                    </button>
+                    </Button>
 
-                    <button
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); setBillingConfig({ isOpen: true, tenantId: tenant.id, tenantName: tenant.name }); }}
+                     <Button variant="ghost"                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); setBillingConfig({ isOpen: true, tenantId: tenant.id, tenantName: tenant.name }); }}
                       className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
                     >
                       <Receipt size={14} /> {t('tenants.billingHistory')}
-                    </button>
+                    </Button>
 
                     <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
 
                     {tenant.is_active ? (
-                      <button
-                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); deactivateMutation.mutate(tenant.id); }}
+                       <Button variant="ghost"                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); deactivateMutation.mutate(tenant.id); }}
                         className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-orange-600 flex items-center gap-2"
                       >
                         <Ban size={14} /> {t('tenants.deactivateAccount')}
-                      </button>
+                      </Button>
                     ) : (
-                      <button
-                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); activateMutation.mutate(tenant.id); }}
+                       <Button variant="ghost"                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); activateMutation.mutate(tenant.id); }}
                         className="text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 text-green-600 flex items-center gap-2"
                       >
                         <BadgeCheck size={14} /> {t('tenants.activateAccount')}
-                      </button>
+                      </Button>
                     )}
 
-                    <button
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); handleCancelSub(tenant); }}
+                     <Button variant="ghost"                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); handleCancelSub(tenant); }}
                       className="text-left px-4 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 flex items-center gap-2"
                     >
                       <XCircle size={14} /> {t('tenants.cancelSubscription')}
-                    </button>
+                    </Button>
 
-                    <button
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); handleSuspend(tenant); }}
+                     <Button variant="ghost"                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenDropdownId(null); handleSuspend(tenant); }}
                       className="text-left px-4 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/10 text-red-700 flex items-center gap-2"
                     >
                       <ShieldAlert size={14} /> {t('tenants.suspendOrg')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

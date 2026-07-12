@@ -413,12 +413,12 @@ export const CalendarContent: React.FC = () => {
                                             {format(new Date(ann.created_at), 'MMM dd, yyyy - hh:mm a')}
                                         </div>
                                         {canManage && (
-                                            <button
+                                             <Button variant="ghost" 
                                                 onClick={() => deleteAnnouncementMutation.mutate(ann.id)}
                                                 className="absolute top-6 right-6 p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg"
                                             >
                                                 <Trash2 size={16} />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 ))
@@ -460,12 +460,12 @@ export const CalendarContent: React.FC = () => {
                                             </div>
                                         </div>
                                         {canManage && (
-                                            <button
+                                             <Button variant="ghost" 
                                                 className="p-3 text-gray-400 hover:text-red-500 transition-all rounded-xl"
                                                 onClick={() => deleteHolidayMutation.mutate(h.id)}
                                             >
                                                 <Trash2 size={18} />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 ))

@@ -58,16 +58,16 @@ export const HeroSection: React.FC = () => {
             </motion.div>
             <div className="hidden md:flex items-center gap-4">
               {navItems.map(item => (
-                <button key={item.label} onClick={item.onClick} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">{item.label}</button>
+                 <Button variant="ghost" key={item.label} onClick={item.onClick} className="text-neutral-300 hover:text-white transition-colors text-sm font-medium px-3 py-2">{item.label}</Button>
               ))}
               <LanguageSwitcher />
               <div className="h-6 w-px bg-white/10 mx-2" />
               <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate('/login')}>{t('marketing.hero.signIn')}</Button>
               <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
             </div>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white p-2">
+             <Button variant="ghost" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white p-2">
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
@@ -83,13 +83,13 @@ export const HeroSection: React.FC = () => {
           >
             <div className="flex flex-col gap-2">
               {navItems.map(item => (
-                <button
+                 <Button variant="ghost" 
                   key={item.label}
                   onClick={() => { item.onClick(); closeMobileMenu(); }}
                   className="text-left px-4 py-3 text-neutral-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors text-sm font-medium"
                 >
                   {item.label}
-                </button>
+                </Button>
               ))}
               <div className="border-t border-white/10 my-2" />
               <div className="flex items-center gap-3 px-4 py-2">

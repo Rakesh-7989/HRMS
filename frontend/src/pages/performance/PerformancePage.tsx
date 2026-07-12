@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -61,7 +62,7 @@ export const PerformancePage: React.FC = () => {
             if (!canAccess) return null;
             const Icon = tab.icon;
             return (
-              <button
+               <Button variant="ghost" 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
@@ -72,7 +73,7 @@ export const PerformancePage: React.FC = () => {
               >
                 <Icon size={16} />
                 {t(tab.labelKey)}
-              </button>
+              </Button>
             );
           })}
         </div>

@@ -111,7 +111,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                 if (item.roles && !item.roles.includes(user?.role || '')) return null;
                                 const Icon = item.icon;
                                 return (
-                                    <button
+                                     <Button variant="ghost" 
                                         key={item.label}
                                         onClick={() => item.action === 'payslips' ? navigate('/payroll/dashboard') : onNavigate(item.action)}
                                         className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-brand-500/30 hover:bg-brand-500/5 dark:hover:bg-brand-500/5 transition-all group"
@@ -125,7 +125,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-500">
                                             <PlayCircle size={16} />
                                         </div>
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>

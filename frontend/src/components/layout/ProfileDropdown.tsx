@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import {
@@ -133,7 +134,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                     <div className="p-4 bg-gradient-to-br from-brand-500/5 to-transparent dark:from-white/5">
                         <div className="flex items-start justify-between mb-3">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Account</span>
-                            <button
+                             <Button variant="ghost" 
                                 onClick={async () => {
                                     onClose();
                                     await logout();
@@ -141,7 +142,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 className="text-xs font-medium text-red-500 hover:text-red-600 dark:text-red-400 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
                             >
                                 Sign out
-                            </button>
+                            </Button>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -185,19 +186,19 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 ) : (
                                     <span className="text-gray-400 italic">{t('profile.profileDropdown.setAStatus')}</span>
                                 )}
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => { onClose(); navigate('/profile'); }}
                                     className="text-xs font-medium text-brand-500 hover:text-brand-600 hover:underline flex items-center gap-1"
                                 >
                                     Manage Profile <ExternalLink size={10} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
 
                     <div className="p-2 space-y-1">
                         {/* Status Menu Item */}
-                        <button
+                         <Button variant="ghost" 
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group"
                             onClick={() => setView('status')}
                         >
@@ -209,10 +210,10 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{currentStatus.label}</p>
                             </div>
                             <ChevronRight size={16} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-                        </button>
+                        </Button>
 
                         {/* Status Message Item */}
-                        <button
+                         <Button variant="ghost" 
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group"
                             onClick={() => setView('message')}
                         >
@@ -226,13 +227,13 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 </p>
                             </div>
                             <ChevronRight size={16} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-4" />
 
                     <div className="p-2">
-                        <button
+                         <Button variant="ghost" 
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group"
                             onClick={() => { onClose(); navigate('/settings'); }}
                         >
@@ -240,18 +241,18 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 <Settings size={16} />
                             </div>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Settings</span>
-                        </button>
+                        </Button>
                     </div>
                 </>
             ) : view === 'photo' ? (
                 <div className="animate-in slide-in-from-right duration-200 bg-white dark:bg-gray-900 h-full">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setView('main')}
                             className="p-1.5 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             <ArrowLeft size={18} />
-                        </button>
+                        </Button>
                         <span className="text-sm font-bold text-gray-900 dark:text-white">Profile Photo</span>
                     </div>
 
@@ -269,16 +270,16 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
 
                     <div className="p-2 space-y-1">
                         {user?.profile_photo_url && (
-                            <button
+                             <Button variant="ghost" 
                                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                 onClick={() => setShowPhotoPreview(true)}
                             >
                                 <Eye size={18} className="text-gray-500" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">View photo</span>
-                            </button>
+                            </Button>
                         )}
 
-                        <button
+                         <Button variant="ghost" 
                             className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                             onClick={() => fileInputRef.current?.click()}
                         >
@@ -291,28 +292,28 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 accept="image/*"
                                 onChange={handleFileChange}
                             />
-                        </button>
+                        </Button>
 
                         {user?.profile_photo_url && (
-                            <button
+                             <Button variant="ghost" 
                                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group"
                                 onClick={handleRemovePhoto}
                             >
                                 <Trash2 size={18} className="text-red-500 group-hover:text-red-600" />
                                 <span className="text-sm font-medium text-red-600 group-hover:text-red-700">Remove photo</span>
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
             ) : view === 'status' ? (
                 <div className="animate-in slide-in-from-right duration-200 bg-white dark:bg-gray-900 h-full">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setView('main')}
                             className="p-1.5 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             <ArrowLeft size={18} />
-                        </button>
+                        </Button>
                         <span className="text-sm font-bold text-gray-900 dark:text-white">Set Status</span>
                     </div>
 
@@ -321,7 +322,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                             const info = getStatusInfo(s);
                             const isActive = status === s;
                             return (
-                                <button
+                                 <Button variant="ghost" 
                                     key={s}
                                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-brand-500/5 dark:bg-brand-500/10 ring-1 ring-brand-500/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                                     onClick={() => handleStatusChange(s)}
@@ -331,7 +332,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                         {info.label}
                                     </span>
                                     {isActive && <CheckCircle2 size={16} className="ml-auto text-brand-500" />}
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>
@@ -339,12 +340,12 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
             ) : (
                 <div className="animate-in slide-in-from-right duration-200 bg-white dark:bg-gray-900 h-full">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setView('main')}
                             className="p-1.5 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             <ArrowLeft size={18} />
-                        </button>
+                        </Button>
                         <span className="text-sm font-bold text-gray-900 dark:text-white">Status Message</span>
                     </div>
 
@@ -381,18 +382,18 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setView('main')}
                                 className="flex-1 py-2.5 px-4 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                             <Button variant="ghost" 
                                 onClick={handleSaveMessage}
                                 className="flex-1 py-2.5 px-4 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl text-sm font-semibold hover:shadow-elev-4 hover:shadow-brand-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 Save Status
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

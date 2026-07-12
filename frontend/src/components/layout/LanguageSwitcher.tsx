@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -37,7 +38,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
 
     return (
         <div className={cn("relative", className)} ref={containerRef}>
-            <button
+             <Button variant="ghost" 
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 title={t('common.changeLanguage')}
@@ -45,7 +46,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
                 <span className="text-lg">{currentLanguage.flag}</span>
                 <span className="text-xs font-bold uppercase hidden md:inline-block">{currentLanguage.code}</span>
                 <Languages size={16} className="text-gray-500" />
-            </button>
+            </Button>
 
             {isOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-elev-6 border border-gray-100 dark:border-gray-800 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-200">
@@ -53,7 +54,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('common.selectLanguage')}</span>
                     </div>
                     {languages.map((lang) => (
-                        <button
+                         <Button variant="ghost" 
                             key={lang.code}
                             onClick={() => changeLanguage(lang.code)}
                             className={cn(
@@ -68,7 +69,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
                             {i18n.language?.startsWith(lang.code) && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                             )}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

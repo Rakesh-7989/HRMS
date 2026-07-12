@@ -422,12 +422,12 @@ export const LeaveSettingsPage: React.FC = () => {
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
                         <AlertCircle className="h-5 w-5 text-red-500" />
                         <p className="text-red-700 dark:text-red-400 text-sm">{errorMessage}</p>
-                        <button
+                         <Button variant="ghost" 
                             onClick={() => setErrorMessage(null)}
                             className="ml-auto text-red-500 hover:text-red-700"
                         >
                             <X size={16} />
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -435,7 +435,7 @@ export const LeaveSettingsPage: React.FC = () => {
                 <Card className="p-0 overflow-hidden">
                     <div className="flex border-b border-gray-200 dark:border-gray-700">
                         {tabs.map((tab) => (
-                            <button
+                             <Button variant="ghost" 
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={cn(
@@ -447,7 +447,7 @@ export const LeaveSettingsPage: React.FC = () => {
                             >
                                 <tab.icon size={18} />
                                 {tab.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </Card>

@@ -427,7 +427,7 @@ export const TasksPage: React.FC = () => {
                     {/* View Toggle Tabs */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-0.5 bg-gray-100 dark:bg-gray-800">
-                            <button
+                             <Button variant="ghost" 
                                 onClick={() => setActiveTab('list')}
                                 className={cn(
                                     "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
@@ -438,9 +438,9 @@ export const TasksPage: React.FC = () => {
                             >
                                 <List size={14} />
                                 List
-                            </button>
+                            </Button>
                             {canViewKanban && (
-                                <button
+                                 <Button variant="ghost" 
                                     onClick={() => setActiveTab('board')}
                                     className={cn(
                                         "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5",
@@ -451,7 +451,7 @@ export const TasksPage: React.FC = () => {
                                 >
                                     <Columns3 size={14} />
                                     Board
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -673,20 +673,20 @@ export const TasksPage: React.FC = () => {
                                                     <TableCell>
                                                         {canEditTask(task) && (
                                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                                <button
+                                                                 <Button variant="ghost" 
                                                                     onClick={() => handleOpenEditModal(task)}
                                                                     className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
                                                                     title="Edit Task"
                                                                 >
                                                                     <Edit size={16} />
-                                                                </button>
-                                                                <button
+                                                                </Button>
+                                                                 <Button variant="ghost" 
                                                                     onClick={() => setTaskToDelete(task)}
                                                                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                                                                     title="Delete Task"
                                                                 >
                                                                     <Trash2 size={16} />
-                                                                </button>
+                                                                </Button>
                                                             </div>
                                                         )}
                                                     </TableCell>

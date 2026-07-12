@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/Button';
 import { createPortal } from 'react-dom';
 import {
     MessageSquare, Video, Phone, Linkedin, MoreHorizontal,
@@ -131,21 +132,21 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
 
             {/* Actions Bar */}
             <div className="flex items-center gap-1 px-4 py-2">
-                <button onClick={onChat} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Chat">
+                 <Button variant="ghost" onClick={onChat} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Chat">
                     <MessageSquare size={18} />
-                </button>
-                <button onClick={onVideo} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Video Call">
+                </Button>
+                 <Button variant="ghost" onClick={onVideo} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Video Call">
                     <Video size={18} />
-                </button>
-                <button onClick={onCall} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Audio Call">
+                </Button>
+                 <Button variant="ghost" onClick={onCall} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="Audio Call">
                     <Phone size={18} />
-                </button>
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="LinkedIn">
+                </Button>
+                 <Button variant="ghost" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors" title="LinkedIn">
                     <Linkedin size={18} />
-                </button>
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors ml-auto" title="More">
+                </Button>
+                 <Button variant="ghost" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors ml-auto" title="More">
                     <MoreHorizontal size={18} />
-                </button>
+                </Button>
             </div>
 
             {/* Status Box */}
@@ -186,7 +187,7 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <button className="text-brand-500 text-xs font-medium hover:underline">Show more</button>
+                     <Button variant="ghost" className="text-brand-500 text-xs font-medium hover:underline">Show more</Button>
                 </div>
 
                 {/* LinkedIn / External Links Placeholder */}

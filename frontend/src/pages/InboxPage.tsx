@@ -175,24 +175,24 @@ const InboxPage: React.FC = () => {
       <div className="space-y-4">
         <div className="bg-white/5 p-3 rounded-md shadow-elev-1 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
+             <Button variant="ghost" 
               onClick={() => setTab('take')}
               className={`px-3 py-2 rounded-t-md text-sm ${tab === 'take' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               TAKE ACTION ({pendingCount})
-            </button>
-            <button
+            </Button>
+             <Button variant="ghost" 
               onClick={() => setTab('notifications')}
               className={`px-3 py-2 rounded-t-md text-sm ${tab === 'notifications' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               NOTIFICATIONS ({notificationsCount})
-            </button>
-            <button
+            </Button>
+             <Button variant="ghost" 
               onClick={() => setTab('archive')}
               className={`px-3 py-2 rounded-t-md text-sm ${tab === 'archive' ? 'border-b-2 border-brand-500-gradient text-brand-500' : 'text-muted'}`}
             >
               ARCHIVE ({archiveCount})
-            </button>
+            </Button>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted">
             <div className="hidden sm:block">Newest</div>
@@ -208,7 +208,7 @@ const InboxPage: React.FC = () => {
               </div>
               <div className="p-2 space-y-2">
                 {categories.map((c) => (
-                  <button
+                   <Button variant="ghost" 
                     key={c.name}
                     onClick={() => setFilter(c.name)}
                     className={`w-full text-left px-3 py-2 rounded flex items-center justify-between hover:bg-white/10 transition border border-transparent ${filter === c.name ? 'bg-brand-50/80 border border-brand-500/20' : ''}`}
@@ -218,15 +218,15 @@ const InboxPage: React.FC = () => {
                       <span className="text-sm">{c.name}</span>
                     </div>
                     <span className="text-sm text-muted">({c.count})</span>
-                  </button>
+                  </Button>
                 ))}
 
-                <button
+                 <Button variant="ghost" 
                   onClick={() => setFilter('')}
                   className="w-full text-left px-3 py-2 rounded mt-2 text-sm text-muted hover:bg-white/10 transition"
                 >
                   Show all
-                </button>
+                </Button>
               </div>
             </Card>
           </aside>
