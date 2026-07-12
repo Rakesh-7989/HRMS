@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { Calendar, Clock, Home, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
 import { WFHRequestDialog } from '@/components/wfh/WFHRequestDialog';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { DataTable } from '@/components/ui/DataTable';
 
 export const MyWFHRequestsContent: React.FC = () => {
     const { hasPermission } = usePermissions();
@@ -37,6 +38,52 @@ export const MyWFHRequestsContent: React.FC = () => {
         }
     };
 
+    const columns = [
+        {
+            header: 'Date',
+            cell: (request: any) => (
+                <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {format(new Date(request.request_date), 'MMM dd, yyyy')}
+                    </span>
+                </div>
+            ),
+        },
+        {
+            header: 'Reason',
+            cell: (request: any) => request.reason,
+        },
+        {
+            header: 'Status',
+            cell: (request: any) => (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
+                    {getStatusIcon(request.status)}
+                    {request.status === 'PENDING_HR' ? 'PENDING (HR)' : request.status}
+                </span>
+            ),
+        },
+        {
+            header: 'Notes',
+            cell: (request: any) => (
+                <div className="text-xs">
+                    {request.status === 'APPROVED' && request.approval_comment && (
+                        <div className="flex items-start gap-1">
+                            <AlertCircle size={12} className="mt-0.5" />
+                            <span>{request.approval_comment}</span>
+                        </div>
+                    )}
+                    {request.status === 'REJECTED' && request.rejection_reason && (
+                        <div className="flex items-start gap-1 text-red-500">
+                            <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                            <span className="leading-tight">Reason: {request.rejection_reason}</span>
+                        </div>
+                    )}
+                </div>
+            ),
+        },
+    ];
+
     return (
         <div className="space-y-6">
             <Card>
@@ -56,66 +103,12 @@ export const MyWFHRequestsContent: React.FC = () => {
                     )}
                 </div>
 
-                {isLoading ? (
-                    <div className="h-48 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
-                    </div>
-                ) : myRequests.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-muted">
-                        <Home className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-4" />
-                        <p>You haven't made any WFH requests yet.</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Reason</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {myRequests.map((request) => (
-                                    <tr key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                                        <td className="py-3 px-4">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={14} className="text-gray-400" />
-                                                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {format(new Date(request.request_date), 'MMM dd, yyyy')}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                            {request.reason}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
-                                                {getStatusIcon(request.status)}
-                                                {request.status === 'PENDING_HR' ? 'PENDING (HR)' : request.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">
-                                            {request.status === 'APPROVED' && request.approval_comment && (
-                                                <div className="flex items-start gap-1">
-                                                    <AlertCircle size={12} className="mt-0.5" />
-                                                    <span>{request.approval_comment}</span>
-                                                </div>
-                                            )}
-                                            {request.status === 'REJECTED' && request.rejection_reason && (
-                                                <div className="flex items-start gap-1 text-red-500">
-                                                    <AlertCircle size={12} className="mt-0.5 shrink-0" />
-                                                    <span className="leading-tight">Reason: {request.rejection_reason}</span>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    data={myRequests}
+                    columns={columns}
+                    loading={isLoading}
+                    emptyMessage="You haven't made any WFH requests yet."
+                />
             </Card>
 
             <WFHRequestDialog open={isWFHDialogOpen} onOpenChange={setIsWFHDialogOpen} />

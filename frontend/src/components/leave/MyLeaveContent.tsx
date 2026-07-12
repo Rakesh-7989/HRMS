@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { leaveService, LeaveType, LeaveBalance } from '@/services/leave.service';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ApplyLeaveForm } from '@/components/forms/ApplyLeaveForm';
+import { DataTable } from '@/components/ui/DataTable';
 import { Plus, Search, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +64,64 @@ export const MyLeaveContent: React.FC = () => {
             return matchesSearch && matchesStatus && matchesType;
         });
     }, [myLeaves, searchTerm, statusFilter, typeFilter]);
+
+    const leaveColumns = [
+        {
+            header: t('leave.type'),
+            cell: (leave: any) => leave.leave_type_name || leave.leave_type,
+        },
+        {
+            header: t('leave.startDate'),
+            cell: (leave: any) => format(new Date(leave.start_date), 'MMM dd, yyyy'),
+        },
+        {
+            header: t('leave.endDate'),
+            cell: (leave: any) => format(new Date(leave.end_date), 'MMM dd, yyyy'),
+        },
+        {
+            header: t('leave.reason'),
+            cell: (leave: any) => (
+                <span title={leave.reason} className="truncate max-w-[200px] block">{leave.reason}</span>
+            ),
+        },
+        {
+            header: t('leave.status'),
+            cell: (leave: any) => (
+                <div>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : leave.status === 'REJECTED'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : leave.status === 'CANCELLED'
+                                ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        }`}>
+                        {leave.status}
+                    </span>
+                    {(leave.status === 'REJECTED' || leave.status === 'CANCELLED') && leave.rejection_reason && (
+                        <p className="text-xs text-red-500 dark:text-red-400 mt-1 whitespace-normal max-w-[200px]">
+                            {t('leave.reason')}: {leave.rejection_reason}
+                        </p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            header: t('leave.actions'),
+            className: 'text-right',
+            cell: (leave: any) => (
+                leave.status === 'PENDING' ? (
+                    <button
+                        onClick={() => cancelMutation.mutate(leave.id)}
+                        className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+                        disabled={cancelMutation.isPending}
+                    >
+                        {t('leave.cancel')}
+                    </button>
+                ) : null
+            ),
+        },
+    ];
 
     if (!canApply) return <div>{t('leave.accessDenied')}</div>;
 
@@ -171,79 +230,12 @@ export const MyLeaveContent: React.FC = () => {
                     </span>
                 </div>
 
-                {isLoading ? (
-                    <div className="h-64 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
-                    </div>
-                ) : filteredMyLeaves.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-muted">
-                        {myLeaves.length === 0 ? t('leave.noApplicationsFound') : t('leave.noApplicationsMatch')}
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t('leave.type')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t('leave.startDate')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t('leave.endDate')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider min-w-[150px]">{t('leave.reason')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t('leave.status')}</th>
-                                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider text-right whitespace-nowrap">{t('leave.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {filteredMyLeaves.map((leave) => (
-                                    <tr
-                                        key={leave.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                                    >
-                                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">{(leave as any).leave_type_name || leave.leave_type}</td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                            {format(new Date(leave.start_date), 'MMM dd, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                            {format(new Date(leave.end_date), 'MMM dd, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]" title={leave.reason}>
-                                            {leave.reason}
-                                        </td>
-                                        <td className="py-3 px-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : leave.status === 'REJECTED'
-                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        : leave.status === 'CANCELLED'
-                                                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                                                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    }`}
-                                            >
-                                                {leave.status}
-                                            </span>
-                                            {(leave.status === 'REJECTED' || leave.status === 'CANCELLED') && (leave as any).rejection_reason && (
-                                                <p className="text-xs text-red-500 dark:text-red-400 mt-1 whitespace-normal max-w-[200px]">
-                                                    {t('leave.reason')}: {(leave as any).rejection_reason}
-                                                </p>
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
-                                            {leave.status === 'PENDING' && (
-                                                <button
-                                                    onClick={() => cancelMutation.mutate(leave.id)}
-                                                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                                                    disabled={cancelMutation.isPending}
-                                                >
-                                                    {t('leave.cancel')}
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    data={filteredMyLeaves}
+                    columns={leaveColumns}
+                    loading={isLoading}
+                    emptyMessage={myLeaves.length === 0 ? t('leave.noApplicationsFound') : t('leave.noApplicationsMatch')}
+                />
             </Card>
         </div>
     );
