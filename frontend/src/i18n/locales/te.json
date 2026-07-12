@@ -208,7 +208,17 @@
         "fullPresence": "పూర్తి హాజరు",
         "allEmployeesActive": "అందరు ఉద్యోగులు యాక్టివ్‌గా ఉన్నారు.",
         "required": "అవసరం",
-        "worked": "పని చేసారు"
+        "worked": "పని చేసారు",
+        "breakHistory": {
+            "title": "విరామ చరిత్ర",
+            "allEmployees": "అందరు ఉద్యోగులు",
+            "startTime": "ప్రారంభ సమయం",
+            "endTime": "ముగింపు సమయం",
+            "duration": "వ్యవధి",
+            "completed": "పూర్తయింది",
+            "ongoing": "కొనసాగుతోంది",
+            "noRecords": "ఈ తేదీకి విరామ రికార్డులు ఏవీ కనుగొనబడలేదు."
+        }
     },
     "leave": {
         "title": "సెలవు నిర్వహణ",

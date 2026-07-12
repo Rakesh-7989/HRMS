@@ -10,8 +10,10 @@ import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersService } from '@/services/users.service';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 export const BreakHistoryContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [date, setDate] = useState<string>(getCurrentDate(user?.timezone));
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
@@ -38,7 +40,7 @@ export const BreakHistoryContent: React.FC = () => {
         <Card>
             <div className="p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Break History</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('attendance.breakHistory.title')}</h3>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         {canFilterEmployees && (
                             <select
@@ -46,7 +48,7 @@ export const BreakHistoryContent: React.FC = () => {
                                 value={selectedEmployeeId}
                                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
                             >
-                                <option value="">All Employees</option>
+                                <option value="">{t('attendance.breakHistory.allEmployees')}</option>
                                 {employees?.filter(emp => (emp.first_name || emp.last_name) && emp.employee_uuid && emp.role !== 'ADMIN' && emp.role !== 'MANAGER').map((emp) => (
                                     <option key={emp.id} value={emp.employee_uuid}>
                                         {emp.first_name} {emp.last_name} {emp.employee_id ? `(${emp.employee_id})` : ''}
@@ -65,11 +67,11 @@ export const BreakHistoryContent: React.FC = () => {
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={() => setDate(getCurrentDate(user?.timezone))} className="flex-1 sm:flex-none">
-                                Today
+                                {t('common.today')}
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 flex-1 sm:flex-none">
                                 <RefreshCw size={14} />
-                                Refresh
+                                {t('common.refresh')}
                             </Button>
                         </div>
                     </div>
@@ -79,32 +81,33 @@ export const BreakHistoryContent: React.FC = () => {
                     data={history || []}
                     columns={[
                         {
-                            header: 'Employee',
+                            header: t('common.employee'),
+                            accessorKey: 'first_name' as any,
                             cell: (record: any) => `${record.first_name} ${record.last_name}`,
                         },
                         {
-                            header: 'Start Time',
+                            header: t('attendance.breakHistory.startTime'),
                             cell: (record: any) => formatTime12Hour(record.start_time, user?.timezone),
                         },
                         {
-                            header: 'End Time',
+                            header: t('attendance.breakHistory.endTime'),
                             cell: (record: any) => record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-',
                         },
                         {
-                            header: 'Duration',
+                            header: t('attendance.breakHistory.duration'),
                             cell: (record: any) => record.duration_minutes ? `${Math.round(record.duration_minutes)} mins` : '-',
                         },
                         {
-                            header: 'Status',
+                            header: t('common.status'),
                             cell: (record: any) => record.end_time ? (
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Completed</span>
+                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">{t('attendance.breakHistory.completed')}</span>
                             ) : (
-                                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">Ongoing</span>
+                                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">{t('attendance.breakHistory.ongoing')}</span>
                             ),
                         },
                     ]}
                     loading={isLoading}
-                    emptyMessage="No break records found for this date."
+                    emptyMessage={t('attendance.breakHistory.noRecords')}
                 />
             </div>
         </Card>

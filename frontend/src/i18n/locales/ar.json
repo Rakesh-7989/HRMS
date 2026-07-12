@@ -93,7 +93,17 @@
         "employeesClockedIn": "الموظفين الذين سجلوا الحضور",
         "yetToCheckIn": "لم يتم تسجيل الحضور بعد",
         "arrivedWithinSchedule": "وصل في الوقت المحدد",
-        "clockedInAfterSchedule": "سجل الحضور بعد الوقت المحدد"
+        "clockedInAfterSchedule": "سجل الحضور بعد الوقت المحدد",
+        "breakHistory": {
+            "title": "سجل الاستراحات",
+            "allEmployees": "جميع الموظفين",
+            "startTime": "وقت البدء",
+            "endTime": "وقت الانتهاء",
+            "duration": "المدة",
+            "completed": "مكتمل",
+            "ongoing": "جاري",
+            "noRecords": "لم يتم العثور على سجلات استراحة لهذا التاريخ."
+        }
     },
     "leave": {
         "title": "إدارة الإجازات",

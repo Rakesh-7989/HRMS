@@ -93,7 +93,17 @@
         "employeesClockedIn": "कर्मचारी जो क्लॉक इन हैं",
         "yetToCheckIn": "अभी चेक इन करना है",
         "arrivedWithinSchedule": "अनुसूची के भीतर पहुंचे",
-        "clockedInAfterSchedule": "अनुसूची के बाद क्लॉक इन"
+        "clockedInAfterSchedule": "अनुसूची के बाद क्लॉक इन",
+        "breakHistory": {
+            "title": "ब्रेक इतिहास",
+            "allEmployees": "सभी कर्मचारी",
+            "startTime": "प्रारंभ समय",
+            "endTime": "समाप्ति समय",
+            "duration": "अवधि",
+            "completed": "पूर्ण",
+            "ongoing": "चालू",
+            "noRecords": "इस तिथि के लिए कोई ब्रेक रिकॉर्ड नहीं मिला।"
+        }
     },
     "leave": {
         "title": "छुट्टी प्रबंधन",

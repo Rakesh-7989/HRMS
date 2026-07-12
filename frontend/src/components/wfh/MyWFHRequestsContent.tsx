@@ -8,8 +8,10 @@ import { Calendar, Clock, Home, CheckCircle2, XCircle, AlertCircle, Plus } from 
 import { WFHRequestDialog } from '@/components/wfh/WFHRequestDialog';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 export const MyWFHRequestsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { hasPermission } = usePermissions();
     const canCreate = hasPermission('wfh', 'create');
     const [isWFHDialogOpen, setIsWFHDialogOpen] = useState(false);
@@ -40,7 +42,7 @@ export const MyWFHRequestsContent: React.FC = () => {
 
     const columns = [
         {
-            header: 'Date',
+            header: t('common.date'),
             cell: (request: any) => (
                 <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-gray-400" />
@@ -51,11 +53,11 @@ export const MyWFHRequestsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Reason',
+            header: t('common.reason'),
             cell: (request: any) => request.reason,
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: (request: any) => (
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
                     {getStatusIcon(request.status)}
@@ -64,7 +66,7 @@ export const MyWFHRequestsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Notes',
+            header: t('common.notes'),
             cell: (request: any) => (
                 <div className="text-xs">
                     {request.status === 'APPROVED' && request.approval_comment && (
@@ -89,7 +91,7 @@ export const MyWFHRequestsContent: React.FC = () => {
             <Card>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        My WFH Requests
+                        {t('wfh.myRequests')}
                     </h3>
                     {canCreate && (
                         <Button
@@ -98,7 +100,7 @@ export const MyWFHRequestsContent: React.FC = () => {
                             className="flex items-center gap-2"
                         >
                             <Plus size={16} />
-                            New Request
+                            {t('wfh.newRequest')}
                         </Button>
                     )}
                 </div>
@@ -107,7 +109,7 @@ export const MyWFHRequestsContent: React.FC = () => {
                     data={myRequests}
                     columns={columns}
                     loading={isLoading}
-                    emptyMessage="You haven't made any WFH requests yet."
+                    emptyMessage={t('wfh.noRequestsYet')}
                 />
             </Card>
 

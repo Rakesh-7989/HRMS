@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { formatTime12Hour } from '@/utils/timeFormat';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 export const CurrentBreaksContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { data: breaks, isLoading, refetch } = useQuery({
         queryKey: ['current-breaks'],
@@ -38,11 +40,11 @@ export const CurrentBreaksContent: React.FC = () => {
                 <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-4 mb-6">
                     <h3 className="text-lg font-medium flex items-center gap-2 text-gray-900 dark:text-white">
                         <Coffee className="w-5 h-5 text-orange-500" />
-                        On Break Now
+                        {t('attendance.breakHistory.onBreakNow')}
                     </h3>
                     <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 w-full xs:w-auto">
                         <RefreshCw size={14} />
-                        Refresh
+                        {t('common.refresh')}
                     </Button>
                 </div>
 
@@ -50,7 +52,7 @@ export const CurrentBreaksContent: React.FC = () => {
                     data={breaks || []}
                     columns={[
                         {
-                            header: 'Employee',
+                            header: t('common.employee'),
                             cell: (item: any) => (
                                 <div>
                                     <div>{item.first_name} {item.last_name}</div>
@@ -59,7 +61,7 @@ export const CurrentBreaksContent: React.FC = () => {
                             ),
                         },
                         {
-                            header: 'Department',
+                            header: t('common.department'),
                             cell: (item: any) => (
                                 <div>
                                     <div>{item.department_name || '-'}</div>
@@ -68,11 +70,11 @@ export const CurrentBreaksContent: React.FC = () => {
                             ),
                         },
                         {
-                            header: 'Break Start',
+                            header: t('attendance.breakHistory.breakStart'),
                             cell: (item: any) => formatTime12Hour(item.start_time, user?.timezone),
                         },
                         {
-                            header: 'Duration (Approx)',
+                            header: t('attendance.breakHistory.duration'),
                             cell: (item: any) => {
                                 const startTime = new Date(item.start_time);
                                 let diffMinutes = 0;
@@ -89,7 +91,7 @@ export const CurrentBreaksContent: React.FC = () => {
                         },
                     ]}
                     loading={isLoading}
-                    emptyMessage="No one is currently on break."
+                    emptyMessage={t('attendance.breakHistory.noOneOnBreak')}
                 />
             </div>
         </Card>

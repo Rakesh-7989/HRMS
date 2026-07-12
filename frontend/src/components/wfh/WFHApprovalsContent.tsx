@@ -8,8 +8,10 @@ import { CheckCircle, XCircle, Calendar, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 export const WFHApprovalsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { hasPermission } = usePermissions();
     const canApprove = hasPermission('wfh', 'approve');
     const queryClient = useQueryClient();
@@ -91,7 +93,7 @@ export const WFHApprovalsContent: React.FC = () => {
 
     const columns = [
         {
-            header: 'Employee',
+            header: t('wfh.employee'),
             cell: (request: any) => (
                 <div className="flex items-center gap-2">
                     <User size={16} className="text-gray-400" />
@@ -107,7 +109,7 @@ export const WFHApprovalsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Date',
+            header: t('wfh.date'),
             cell: (request: any) => (
                 <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-gray-400" />
@@ -118,13 +120,13 @@ export const WFHApprovalsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Reason',
+            header: t('wfh.reason'),
             cell: (request: any) => (
                 <span className="max-w-xs truncate block">{request.reason}</span>
             ),
         },
         {
-            header: 'Status',
+            header: t('wfh.status'),
             cell: (request: any) => (
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${request.status === 'PENDING_HR'
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
@@ -135,11 +137,11 @@ export const WFHApprovalsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Requested',
+            header: t('wfh.dates'),
             cell: (request: any) => format(new Date(request.created_at), 'MMM dd, hh:mm a'),
         },
         {
-            header: 'Actions',
+            header: t('wfh.actions'),
             cell: (request: any) => (
                 canApprove ? (
                     <div className="flex gap-2">
@@ -161,14 +163,14 @@ export const WFHApprovalsContent: React.FC = () => {
         <div className="space-y-6">
             <Card>
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                    Pending WFH Requests
+                    {t('wfh.pendingRequests')}
                 </h3>
 
                 <DataTable
                     data={pendingRequests}
                     columns={columns}
                     loading={isLoading}
-                    emptyMessage="No pending WFH requests"
+                    emptyMessage={t('wfh.noPendingRequests')}
                 />
             </Card>
 

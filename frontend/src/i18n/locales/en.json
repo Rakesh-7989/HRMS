@@ -215,7 +215,20 @@
         "fullPresence": "Full Presence",
         "allEmployeesActive": "All employees are active.",
         "required": "Required",
-        "worked": "Worked"
+        "worked": "Worked",
+        "breakHistory": {
+            "title": "Break History",
+            "allEmployees": "All Employees",
+            "startTime": "Start Time",
+            "endTime": "End Time",
+            "duration": "Duration",
+            "completed": "Completed",
+            "ongoing": "Ongoing",
+            "noRecords": "No break records found for this date.",
+            "breakStart": "Break Start",
+            "onBreakNow": "On Break Now",
+            "noOneOnBreak": "No one is currently on break."
+        }
     },
     "leave": {
         "title": "Leave Management",
@@ -544,6 +557,21 @@
         "engagement": "Employee Engagement",
         "compliance": "Compliance Reports",
         "aiInsights": "AI Insights"
+    },
+    "wfh": {
+        "myRequests": "My WFH Requests",
+        "newRequest": "New Request",
+        "noRequestsYet": "You haven't made any WFH requests yet.",
+        "upcoming": "Upcoming WFH",
+        "date": "Date",
+        "reason": "Reason",
+        "status": "Status",
+        "employee": "Employee",
+        "type": "Type",
+        "dates": "Dates",
+        "actions": "Actions",
+        "pendingRequests": "Pending WFH Requests",
+        "noPendingRequests": "No pending WFH requests"
     },
     "chat": {
         "searchConversations": "Search conversations...",
