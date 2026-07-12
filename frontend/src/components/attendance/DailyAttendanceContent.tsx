@@ -26,8 +26,10 @@ import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { DataTable } from '@/components/ui/DataTable';
 import { SkeletonTable } from '@/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 export const DailyAttendanceContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const { alert: showAlert } = useConfirm();
@@ -371,19 +373,19 @@ export const DailyAttendanceContent: React.FC = () => {
     // DataTable column definitions
     const teamAttendanceColumns = [
         {
-            header: 'Employee',
+            header: t('common.employee'),
             cell: (att: any) => `${att.first_name} ${att.last_name}`,
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
         },
         {
-            header: 'Check Out',
+            header: t('attendance.checkOut'),
             cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: (att: any) => (
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {att.is_late ? `Late ${att.late_by ? `(${att.late_by})` : ''}` : 'On Time'}
@@ -394,19 +396,19 @@ export const DailyAttendanceContent: React.FC = () => {
 
     const pendingCheckoutColumns = [
         {
-            header: 'Employee',
+            header: t('common.employee'),
             cell: (att: any) => `${att.first_name} ${att.last_name}`,
         },
         {
-            header: 'Date',
+            header: t('common.date'),
             cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: () => (
                 <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-medium">
                     Warning: Pending
@@ -417,50 +419,50 @@ export const DailyAttendanceContent: React.FC = () => {
 
     const myAttendanceColumns = [
         {
-            header: 'Date',
+            header: t('common.date'),
             cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
         },
         {
-            header: 'Check Out',
+            header: t('attendance.checkOut'),
             cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
         },
         {
-            header: 'Total Duration',
+            header: t('attendance.totalDuration'),
             cell: (att: any) => calculateWorkDuration(att.check_in_time, att.check_out_time),
         },
         {
-            header: 'Eff. Hours',
+            header: t('attendance.effectiveHours'),
             cell: (att: any) => att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-',
         },
         {
-            header: 'Overtime',
+            header: t('attendance.overtime'),
             cell: (att: any) => att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
                 <span className="text-green-600 font-semibold">+{att.overtime_hours} hrs</span>
             ) : '-',
         },
         {
-            header: 'Device',
+            header: t('attendance.device'),
             cell: (att: any) => (
                 <div className="flex flex-col gap-1">
                     {att.check_in_device && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
-                            IN: {att.check_in_device}
+                            {t('attendance.checkInShort')}: {att.check_in_device}
                         </span>
                     )}
                     {att.check_out_device && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
-                            OUT: {att.check_out_device}
+                            {t('attendance.checkOutShort')}: {att.check_out_device}
                         </span>
                     )}
                 </div>
             ),
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: (att: any) => (
                 <div className="flex flex-col gap-1 items-start">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
@@ -472,7 +474,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     </span>
                     {att.is_late && (
                         <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                            Late {att.late_by ? `(${att.late_by})` : ''}
+                            {t('attendance.late')} {att.late_by ? `(${att.late_by})` : ''}
                         </span>
                     )}
                 </div>
@@ -482,25 +484,25 @@ export const DailyAttendanceContent: React.FC = () => {
 
     const myPendingCheckoutColumns = [
         {
-            header: 'Date',
+            header: t('common.date'),
             cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: () => (
                 <span className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-0.5 rounded text-xs font-medium">
-                    Pending
+                    {t('common.pending')}
                 </span>
             ),
         },
         {
-            header: 'Actions',
+            header: t('common.actions'),
             cell: (att: any) => (
-                <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>Confirm</Button>
+                <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>{t('common.confirm')}</Button>
             ),
         },
     ];

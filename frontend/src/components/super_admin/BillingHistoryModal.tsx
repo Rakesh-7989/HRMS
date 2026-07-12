@@ -5,6 +5,7 @@ import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Dialog, DialogFooter } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { superAdminService } from '@/services/superAdmin.service';
+import { DataTable } from '@/components/ui/DataTable';
 
 interface BillingHistoryModalProps {
     isOpen: boolean;
@@ -44,50 +45,34 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
                         No billing history found for this tenant.
                     </div>
                 ) : (
-                    <div className="overflow-hidden border border-gray-100 dark:border-gray-800 rounded-xl">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800">
-                                    <tr>
-                                        <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Date</th>
-                                        <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Amount</th>
-                                        <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Status</th>
-                                        <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Method</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-                                    {billingHistory.map((invoice: any) => (
-                                        <tr key={invoice.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
-                                            <td className="p-3 whitespace-nowrap">
-                                                {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
-                                            </td>
-                                            <td className="p-3 font-bold whitespace-nowrap">
-                                                ₹{parseFloat(invoice.amount).toLocaleString()}
-                                            </td>
-                                            <td className="p-3">
-                                                <div className="flex items-center gap-1.5">
-                                                    {invoice.status === 'PAID' ? <CheckCircle2 size={12} className="text-green-500" /> :
-                                                        invoice.status === 'FAILED' ? <AlertCircle size={12} className="text-red-500" /> :
-                                                            <Clock size={12} className="text-coral-500" />}
-                                                    <span className={cn(
-                                                        "text-[9px] font-black uppercase tracking-tighter",
-                                                        invoice.status === 'PAID' ? "text-green-500" :
-                                                            invoice.status === 'FAILED' ? "text-red-500" :
-                                                                "text-coral-500"
-                                                    )}>
-                                                        {invoice.status}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-xs text-muted whitespace-nowrap">
-                                                {invoice.payment_method || 'N/A'}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <DataTable
+                        columns={[
+                            { header: 'Date', accessorKey: 'created_at' as any, cell: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy') },
+                            { header: 'Amount', accessorKey: 'amount' as any, cell: (row: any) => <span className="font-bold">₹{parseFloat(row.amount).toLocaleString()}</span> },
+                            {
+                                header: 'Status',
+                                cell: (row: any) => (
+                                    <div className="flex items-center gap-1.5">
+                                        {row.status === 'PAID' ? <CheckCircle2 size={12} className="text-green-500" /> :
+                                            row.status === 'FAILED' ? <AlertCircle size={12} className="text-red-500" /> :
+                                                <Clock size={12} className="text-coral-500" />}
+                                        <span className={cn(
+                                            "text-[9px] font-black uppercase tracking-tighter",
+                                            row.status === 'PAID' ? "text-green-500" :
+                                                row.status === 'FAILED' ? "text-red-500" :
+                                                    "text-coral-500"
+                                        )}>
+                                            {row.status}
+                                        </span>
+                                    </div>
+                                ),
+                            },
+                            { header: 'Method', cell: (row: any) => <span className="text-xs text-muted">{row.payment_method || 'N/A'}</span> },
+                        ]}
+                        data={billingHistory}
+                        loading={isLoading}
+                        emptyMessage="No billing history found for this tenant."
+                    />
                 )}
             </div>
 
