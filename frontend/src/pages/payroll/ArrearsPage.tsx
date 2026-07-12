@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '@/services/api';
-import {
-    Clock, CheckCircle2, AlertCircle,
+import { Clock, CheckCircle2, AlertCircle,
     Search, Filter,
     Calendar, TrendingUp, RefreshCw
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
+import { DataTable } from '@/components/ui/DataTable';
 import { useTranslation } from 'react-i18next';
 
 interface Arrear {
@@ -169,68 +169,72 @@ export const ArrearsPage: React.FC = () => {
 
             {/* Arrears List */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-elev-1 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead>
-                            <tr className="bg-gray-50 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 font-medium">
-                                <th className="px-6 py-4">Employee</th>
-                                <th className="px-6 py-4">For Month</th>
-                                <th className="px-6 py-4">Amount</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Remarks</th>
-                                <th className="px-6 py-4">Created On</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {filteredArrears.map((arrear) => (
-                                <tr key={arrear.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-full bg-brand-50 dark:bg-indigo-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold">
-                                                {arrear.first_name[0]}{arrear.last_name[0]}
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-gray-900 dark:text-white uppercase tracking-tight">{arrear.first_name} {arrear.last_name}</p>
-                                                <p className="text-xs text-gray-500">{arrear.emp_code}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                            <Calendar className="w-4 h-4 opacity-50" />
-                                            {MONTHS[arrear.month - 1]} {arrear.year}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(arrear.amount)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${arrear.status === 'PAID'
-                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20'
-                                            : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20'
-                                            }`}>
-                                            {arrear.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-gray-500 dark:text-gray-400 italic line-clamp-1 max-w-[200px]" title={arrear.remarks}>
-                                            {arrear.remarks}
-                                        </p>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-400 text-xs">
-                                        {new Date(arrear.created_at).toLocaleDateString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {!filteredArrears.length && (
-                        <div className="p-12 text-center text-gray-400">
-                            <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                            <p>No arrears found matching your criteria.</p>
-                        </div>
-                    )}
-                </div>
+                {(() => {
+                    const columns = [
+                        {
+                            header: t('common.employee'),
+                            cell: (row: Arrear) => (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-full bg-brand-50 dark:bg-indigo-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold">
+                                        {row.first_name[0]}{row.last_name[0]}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-gray-900 dark:text-white uppercase tracking-tight">{row.first_name} {row.last_name}</p>
+                                        <p className="text-xs text-gray-500">{row.emp_code}</p>
+                                    </div>
+                                </div>
+                            ),
+                        },
+                        {
+                            header: t('common.forMonth'),
+                            cell: (row: Arrear) => (
+                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                    <Calendar className="w-4 h-4 opacity-50" />
+                                    {MONTHS[row.month - 1]} {row.year}
+                                </div>
+                            ),
+                        },
+                        {
+                            header: t('common.amount'),
+                            cell: (row: Arrear) => (
+                                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(row.amount)}</span>
+                            ),
+                        },
+                        {
+                            header: t('common.status'),
+                            cell: (row: Arrear) => (
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${row.status === 'PAID'
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20'
+                                    : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20'
+                                    }`}>
+                                    {row.status}
+                                </span>
+                            ),
+                        },
+                        {
+                            header: t('common.remarks'),
+                            cell: (row: Arrear) => (
+                                <p className="text-gray-500 dark:text-gray-400 italic line-clamp-1 max-w-[200px]" title={row.remarks}>
+                                    {row.remarks}
+                                </p>
+                            ),
+                        },
+                        {
+                            header: t('common.createdAt'),
+                            cell: (row: Arrear) => (
+                                <span className="text-gray-400 text-xs">{new Date(row.created_at).toLocaleDateString()}</span>
+                            ),
+                        },
+                    ];
+                    return (
+                        <DataTable
+                            columns={columns}
+                            data={filteredArrears}
+                            pageSize={10}
+                            emptyMessage={t('common.noResultsFound')}
+                        />
+                    );
+                })()}
             </div>
         </div>
     );
