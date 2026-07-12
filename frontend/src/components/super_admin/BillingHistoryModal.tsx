@@ -6,6 +6,7 @@ import { Dialog, DialogFooter } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { superAdminService } from '@/services/superAdmin.service';
 import { DataTable } from '@/components/ui/DataTable';
+import { useTranslation } from 'react-i18next';
 
 interface BillingHistoryModalProps {
     isOpen: boolean;
@@ -20,6 +21,7 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
     tenantId,
     tenantName
 }) => {
+    const { t } = useTranslation();
     const { data: billingHistory = [], isLoading } = useQuery({
         queryKey: ['super-admin', 'billing-history', tenantId],
         queryFn: () => superAdminService.getTenantBillingHistory(tenantId),
@@ -32,8 +34,8 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
         <Dialog
             open={isOpen}
             onOpenChange={onClose}
-            title={`Billing History - ${tenantName}`}
-            description="View all subscription invoices and payment transactions for this organization."
+            title={`${t('billing.history')} - ${tenantName}`}
+            description={t('billing.description')}
         >
             <div className="py-4">
                 {isLoading ? (
@@ -42,15 +44,15 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
                     </div>
                 ) : billingHistory.length === 0 ? (
                     <div className="text-center py-10 text-muted italic">
-                        No billing history found for this tenant.
+                        {t('billing.noHistory')}
                     </div>
                 ) : (
                     <DataTable
                         columns={[
-                            { header: 'Date', accessorKey: 'created_at' as any, cell: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy') },
-                            { header: 'Amount', accessorKey: 'amount' as any, cell: (row: any) => <span className="font-bold">₹{parseFloat(row.amount).toLocaleString()}</span> },
+                            { header: t('common.date'), accessorKey: 'created_at' as any, cell: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy') },
+                            { header: t('common.amount'), accessorKey: 'amount' as any, cell: (row: any) => <span className="font-bold">₹{parseFloat(row.amount).toLocaleString()}</span> },
                             {
-                                header: 'Status',
+                                header: t('common.status'),
                                 cell: (row: any) => (
                                     <div className="flex items-center gap-1.5">
                                         {row.status === 'PAID' ? <CheckCircle2 size={12} className="text-green-500" /> :

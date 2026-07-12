@@ -229,6 +229,14 @@
         "present": "Present",
         "late": "Late",
         "absent": "Absent",
+        "day": "Day",
+        "shift": "Shift",
+        "totalDays": "Total Days",
+        "lateHalfDay": "Late / Half Day",
+        "detailedLog": "Detailed Attendance Log",
+        "totalHours": "Total Hrs",
+        "noRecords": "No attendance records found",
+        "tryAdjusting": "Try adjusting the date range or selecting a different employee.",
         "fullPresence": "Full Presence",
         "allEmployeesActive": "All employees are active.",
         "required": "Required",
@@ -990,7 +998,10 @@
         "planDetails": "Plan Details",
         "nextBilling": "Next Billing Date",
         "paymentSuccess": "Payment Successful",
-        "paymentFailed": "Payment Failed"
+        "paymentFailed": "Payment Failed",
+        "history": "Billing History",
+        "description": "View all subscription invoices and payment transactions for this organization.",
+        "noHistory": "No billing history found for this tenant."
     },
     "expenses": {
         "title": "Expenses",

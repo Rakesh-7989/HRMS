@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { attendanceService } from '@/services/attendance.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { formatTime12Hour } from '@/utils/timeFormat';
 import { format } from 'date-fns';
 import {
@@ -25,6 +25,7 @@ interface IndividualAttendanceReportProps {
 
 export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProps> = ({ employeeId, fromDate, toDate }) => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     // Fetch Report
     const { data: reportData, isLoading } = useQuery({
         queryKey: ['attendance', 'individual-report', employeeId, fromDate, toDate],
@@ -76,28 +77,28 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Total Days</p>
+                            <p className="text-sm text-gray-500">{t('attendance.totalDays')}</p>
                             <p className="text-2xl font-bold">{summary.total_days}</p>
                         </div>
                         <Calendar className="text-brand-500 w-8 h-8" />
                     </Card>
                     <Card className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Present</p>
+                            <p className="text-sm text-gray-500">{t('attendance.present')}</p>
                             <p className="text-2xl font-bold text-green-600">{summary.present_days}</p>
                         </div>
                         <CheckCircle className="text-green-500 w-8 h-8" />
                     </Card>
                     <Card className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Late / Half Day</p>
+                            <p className="text-sm text-gray-500">{t('attendance.lateHalfDay')}</p>
                             <p className="text-2xl font-bold text-yellow-600">{summary.late_days} / {summary.half_days}</p>
                         </div>
                         <Clock className="text-yellow-500 w-8 h-8" />
                     </Card>
                     <Card className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Absent / Leave</p>
+                            <p className="text-sm text-gray-500">{t('attendance.absent')} / {t('attendance.leave')}</p>
                             <p className="text-2xl font-bold text-red-600">{summary.absent_days} / {summary.leave_days}</p>
                         </div>
                         <XCircle className="text-red-500 w-8 h-8" />
@@ -109,24 +110,24 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
             {isLoading ? (
                 <div className="text-center py-10">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500 mx-auto"></div>
-                    <p className="mt-2 text-gray-500">Loading Report...</p>
+                    <p className="mt-2 text-gray-500">{t('common.loading')}</p>
                 </div>
             ) : records.length > 0 ? (
                 <Card className="overflow-hidden">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h3 className="font-semibold text-lg">Detailed Attendance Log</h3>
+                        <h3 className="font-semibold text-lg">{t('attendance.detailedLog')}</h3>
                         <Button variant="outline" size="sm" onClick={exportCSV}>
                             <Download className="w-4 h-4 mr-2" />
-                            Export CSV
+                            {t('common.exportCsv')}
                         </Button>
                     </div>
                     <DataTable
                         columns={[
-                            { header: 'Date', accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
-                            { header: 'Day', accessor: (row) => row.day_of_week, sortKey: 'day_of_week' },
-                            { header: 'Shift', accessor: (row) => row.shift_name || '-', sortKey: 'shift_name' },
+                            { header: t('common.date'), accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
+                            { header: t('attendance.day'), accessor: (row) => row.day_of_week, sortKey: 'day_of_week' },
+                            { header: t('attendance.shift'), accessor: (row) => row.shift_name || '-', sortKey: 'shift_name' },
                             {
-                                header: 'Check In',
+                                header: t('attendance.checkIn'),
                                 accessor: (row) => (
                                     row.check_in_time ? (
                                         <span className={row.is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
@@ -137,9 +138,9 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                                 ),
                                 sortKey: 'check_in_time',
                             },
-                            { header: 'Check Out', accessor: (row) => formatTime12Hour(row.check_out_time, user?.timezone) || '-', sortKey: 'check_out_time' },
+                            { header: t('attendance.checkOut'), accessor: (row) => formatTime12Hour(row.check_out_time, user?.timezone) || '-', sortKey: 'check_out_time' },
                             {
-                                header: 'Status',
+                                header: t('common.status'),
                                 accessor: (row) => (
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium
                                         ${row.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
@@ -152,10 +153,10 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                                 ),
                                 sortKey: 'status',
                             },
-                            { header: 'Total Hrs', accessor: (row) => row.work_hours || '-', sortKey: 'work_hours' },
-                            { header: 'Eff. Hrs', accessor: (row) => row.effective_work_hours || '-', sortKey: 'effective_work_hours' },
+                            { header: t('attendance.totalHours'), accessor: (row) => row.work_hours || '-', sortKey: 'work_hours' },
+                            { header: t('attendance.effectiveHours'), accessor: (row) => row.effective_work_hours || '-', sortKey: 'effective_work_hours' },
                             {
-                                header: 'Overtime',
+                                header: t('attendance.overtime'),
                                 accessor: (row) => (
                                     Number(row.overtime_hours) > 0 ? (
                                         <span className="text-green-600">+{row.overtime_hours}</span>
@@ -171,8 +172,8 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
             ) : (
                 <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                     <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No attendance records found</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try adjusting the date range or selecting a different employee.</p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{t('attendance.noRecords')}</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('attendance.tryAdjusting')}</p>
                 </div>
             )}
         </div>
