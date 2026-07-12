@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { usersService } from '@/services/users.service';
 import { Upload, FileText, CheckCircle2, AlertCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 import { showToast } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
+import { DataTable } from '@/components/ui/DataTable';
 
 interface BulkImportDialogProps {
     open: boolean;
@@ -13,27 +15,28 @@ interface BulkImportDialogProps {
 }
 
 const REQUIRED_FIELDS = [
-    { key: 'email', label: 'Email' },
-    { key: 'first_name', label: 'First Name' },
-    { key: 'last_name', label: 'Last Name' },
-    { key: 'phone', label: 'Phone' },
+    { key: 'email', labelKey: 'bulkImport.email' },
+    { key: 'first_name', labelKey: 'bulkImport.firstName' },
+    { key: 'last_name', labelKey: 'bulkImport.lastName' },
+    { key: 'phone', labelKey: 'bulkImport.phone' },
 ];
 
 const OPTIONAL_FIELDS = [
-    { key: 'employee_id', label: 'Employee ID' },
-    { key: 'department_id', label: 'Department' },
-    { key: 'designation_id', label: 'Designation' },
-    { key: 'join_date', label: 'Join Date' },
-    { key: 'gender', label: 'Gender' },
-    { key: 'marital_status', label: 'Marital Status' },
-    { key: 'address', label: 'Address' },
-    { key: 'ctc', label: 'Annual CTC' },
-    { key: 'bank_name', label: 'Bank Name' },
-    { key: 'account_number', label: 'Account Number' },
-    { key: 'ifsc_code', label: 'IFSC Code' },
+    { key: 'employee_id', labelKey: 'bulkImport.employeeId' },
+    { key: 'department_id', labelKey: 'bulkImport.department' },
+    { key: 'designation_id', labelKey: 'bulkImport.designation' },
+    { key: 'join_date', labelKey: 'bulkImport.joinDate' },
+    { key: 'gender', labelKey: 'bulkImport.gender' },
+    { key: 'marital_status', labelKey: 'bulkImport.maritalStatus' },
+    { key: 'address', labelKey: 'bulkImport.address' },
+    { key: 'ctc', labelKey: 'bulkImport.annualCtc' },
+    { key: 'bank_name', labelKey: 'bulkImport.bankName' },
+    { key: 'account_number', labelKey: 'bulkImport.accountNumber' },
+    { key: 'ifsc_code', labelKey: 'bulkImport.ifscCode' },
 ];
 
 export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpenChange, onSuccess }) => {
+    const { t } = useTranslation();
     const [step, setStep] = useState(1);
     const [file, setFile] = useState<File | null>(null);
     const [headers, setHeaders] = useState<string[]>([]);
@@ -56,12 +59,12 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                 const excelHeaders = data[0] as string[];
                 setHeaders(excelHeaders || []);
 
-                // Auto-match headers
                 const initialMapping: Record<string, string> = {};
                 excelHeaders.forEach(header => {
                     const lowerHeader = header.toLowerCase().replace(/[^a-z]/g, '');
                     [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].forEach(field => {
-                        const lowerField = field.label.toLowerCase().replace(/[^a-z]/g, '');
+                        const label = t(field.labelKey);
+                        const lowerField = label.toLowerCase().replace(/[^a-z]/g, '');
                         const lowerKey = field.key.toLowerCase().replace(/[^a-z]/g, '');
                         if (lowerHeader === lowerField || lowerHeader === lowerKey) {
                             initialMapping[header] = field.key;
@@ -103,11 +106,10 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
     const handleImport = async () => {
         if (!file) return;
 
-        // Check required fields
         const mappedFields = Object.values(mapping);
         const missing = REQUIRED_FIELDS.filter(f => !mappedFields.includes(f.key));
         if (missing.length > 0) {
-            showToast.error(`Missing required mappings: ${missing.map(m => m.label).join(', ')}`);
+            showToast.error(t('bulkImport.missingMapping', { fields: missing.map(m => t(m.labelKey)).join(', ') }));
             return;
         }
 
@@ -132,12 +134,18 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
         setResults(null);
     };
 
+    const errorColumns = [
+        { header: t('bulkImport.row'), accessorKey: 'row' as const },
+        { header: t('bulkImport.identifier'), cell: (err: any) => <span className="font-medium">{err.email || err.name}</span> },
+        { header: t('bulkImport.errorMessage'), cell: (err: any) => <span className="text-[10px]">{err.error}</span> },
+    ];
+
     return (
         <Dialog 
             open={open} 
             onOpenChange={onOpenChange} 
             onBack={step > 1 ? () => setStep(prev => prev - 1) : () => onOpenChange(false)}
-            title="Bulk Employee Import" 
+            title={t('bulkImport.title')} 
             className="max-w-2xl"
         >
             <div className="p-1">
@@ -146,9 +154,9 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                         <div className="w-16 h-16 bg-brand-500/10 rounded-full flex items-center justify-center mb-4 text-brand-500">
                             <Upload className="w-8 h-8" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Upload Excel File</h3>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('bulkImport.uploadTitle')}</h3>
                         <p className="text-gray-500 dark:text-gray-400 text-center mb-6 max-w-sm">
-                            Upload an .xlsx or .xls file. Ensure the first row contains column headers.
+                            {t('bulkImport.uploadDesc')}
                         </p>
                         <input
                             type="file"
@@ -158,7 +166,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                             ref={fileInputRef}
                         />
                         <Button onClick={() => fileInputRef.current?.click()} className="px-8">
-                            Select File
+                            {t('bulkImport.selectFile')}
                         </Button>
                         <div className="mt-8 grid grid-cols-2 gap-4 w-full max-w-md">
                             <div
@@ -169,8 +177,8 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                     <FileText className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-gray-900 dark:text-white">Sample File</div>
-                                    <div className="text-[10px] text-gray-500">Download Template</div>
+                                    <div className="text-xs font-bold text-gray-900 dark:text-white">{t('bulkImport.sampleFile')}</div>
+                                    <div className="text-[10px] text-gray-500">{t('bulkImport.downloadTemplate')}</div>
                                 </div>
                             </div>
                             <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1 flex items-center gap-3">
@@ -178,8 +186,8 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                     <CheckCircle2 className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-gray-900 dark:text-white">Validation</div>
-                                    <div className="text-[10px] text-gray-500">Automatic Checks</div>
+                                    <div className="text-xs font-bold text-gray-900 dark:text-white">{t('bulkImport.validation')}</div>
+                                    <div className="text-[10px] text-gray-500">{t('bulkImport.autoChecks')}</div>
                                 </div>
                             </div>
                         </div>
@@ -191,9 +199,9 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50 flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                             <div>
-                                <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Map Column Headers</h4>
+                                <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">{t('bulkImport.mapColumns')}</h4>
                                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                                    Match the column names from your Excel file to the HRMS system fields. Required fields are marked with (*).
+                                    {t('bulkImport.mapDesc')}
                                 </p>
                             </div>
                         </div>
@@ -201,24 +209,23 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                         <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Required Fields</h4>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">{t('bulkImport.requiredFields')}</h4>
                                     {REQUIRED_FIELDS.map(field => (
                                         <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1">
                                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                                {field.label} *
+                                                {t(field.labelKey)} *
                                             </label>
                                             <select
                                                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                                                 value={Object.keys(mapping).find(h => mapping[h] === field.key) || ''}
                                                 onChange={(e) => {
                                                     const newMapping = { ...mapping };
-                                                    // Remove existing mapping for this field
                                                     Object.keys(newMapping).forEach(h => { if (newMapping[h] === field.key) delete newMapping[h]; });
                                                     if (e.target.value) newMapping[e.target.value] = field.key;
                                                     setMapping(newMapping);
                                                 }}
                                             >
-                                                <option value="">Select Column</option>
+                                                <option value="">{t('bulkImport.selectColumn')}</option>
                                                 {headers.map(h => (
                                                     <option key={h} value={h}>{h}</option>
                                                 ))}
@@ -228,11 +235,11 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                 </div>
 
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Optional Fields</h4>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">{t('bulkImport.optionalFields')}</h4>
                                     {OPTIONAL_FIELDS.map(field => (
                                         <div key={field.key} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1">
                                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                                {field.label}
+                                                {t(field.labelKey)}
                                             </label>
                                             <select
                                                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
@@ -244,7 +251,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                                                     setMapping(newMapping);
                                                 }}
                                             >
-                                                <option value="">Select Column</option>
+                                                <option value="">{t('bulkImport.selectColumn')}</option>
                                                 {headers.map(h => (
                                                     <option key={h} value={h}>{h}</option>
                                                 ))}
@@ -257,10 +264,10 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
 
                         <div className="flex justify-between pt-4 border-t dark:border-gray-700">
                             <Button variant="ghost" onClick={reset}>
-                                <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                                <ChevronLeft className="w-4 h-4 mr-2" /> {t('bulkImport.back')}
                             </Button>
                             <Button onClick={handleImport} isLoading={isLoading}>
-                                Start Import <ChevronRight className="w-4 h-4 ml-2" />
+                                {t('bulkImport.startImport')} <ChevronRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
                     </div>
@@ -272,56 +279,41 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mb-4">
                                 <CheckCircle2 className="w-10 h-10" />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Import Completed</h3>
-                            <p className="text-gray-500">Processing results for {results.total} records</p>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{t('bulkImport.importCompleted')}</h3>
+                            <p className="text-gray-500">{t('bulkImport.processingResults', { count: results.total })}</p>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
                             <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 text-center">
                                 <div className="text-2xl font-black text-gray-900 dark:text-white">{results.total}</div>
-                                <div className="text-[10px] uppercase font-bold text-gray-400">Total</div>
+                                <div className="text-[10px] uppercase font-bold text-gray-400">{t('bulkImport.total')}</div>
                             </div>
                             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-100 dark:border-green-800/50 text-center">
                                 <div className="text-2xl font-black text-green-600">{results.success}</div>
-                                <div className="text-[10px] uppercase font-bold text-green-500">Success</div>
+                                <div className="text-[10px] uppercase font-bold text-green-500">{t('bulkImport.success')}</div>
                             </div>
                             <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-800/50 text-center">
                                 <div className="text-2xl font-black text-red-600">{results.failed}</div>
-                                <div className="text-[10px] uppercase font-bold text-red-500">Failed</div>
+                                <div className="text-[10px] uppercase font-bold text-red-500">{t('bulkImport.failed')}</div>
                             </div>
                         </div>
 
                         {results.errors.length > 0 && (
                             <div className="space-y-3">
                                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 text-red-500" /> Error Details
+                                    <AlertCircle className="w-4 h-4 text-red-500" /> {t('bulkImport.errorDetails')}
                                 </h4>
-                                <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30 overflow-hidden">
-                                    <table className="w-full text-left text-xs">
-                                        <thead className="bg-red-100/50 dark:bg-red-900/30 text-red-900 dark:text-red-200">
-                                            <tr>
-                                                <th className="px-3 py-2 font-bold">Row</th>
-                                                <th className="px-3 py-2 font-bold">Identifier</th>
-                                                <th className="px-3 py-2 font-bold">Error Message</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-red-100 dark:divide-red-900/30">
-                                            {results.errors.map((err: any, idx: number) => (
-                                                <tr key={idx} className="text-red-800 dark:text-red-300">
-                                                    <td className="px-3 py-2">{err.row}</td>
-                                                    <td className="px-3 py-2 font-medium">{err.email || err.name}</td>
-                                                    <td className="px-3 py-2 text-[10px]">{err.error}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <DataTable
+                                    data={results.errors}
+                                    columns={errorColumns}
+                                    emptyMessage=""
+                                />
                             </div>
                         )}
 
                         <div className="flex justify-center pt-4">
                             <Button onClick={() => onOpenChange(false)} className="px-12">
-                                Done
+                                {t('bulkImport.done')}
                             </Button>
                         </div>
                     </div>
