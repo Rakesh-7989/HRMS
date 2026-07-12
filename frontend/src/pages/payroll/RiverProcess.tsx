@@ -102,11 +102,9 @@ export const RiverProcess = () => {
             if (stage === 'RELEASE') endpoint = `/payroll/river/release/${runId}/summary`;
             if (stage === 'INITIATE') endpoint = `/payroll/river/review/${runId}`;
 
-            // Append unique timestamp to fully bypass browser/service-worker caching
             const res = await api.get(`${endpoint}?_t=${Date.now()}`);
             setData(res.data);
 
-            // Auto-set stage from run status if returned (only on first load)
             if (isFirstLoad.current && res.data?.runStatus?.stage && stage === 'REVIEW') {
                 const serverStage = res.data.runStatus.stage;
                 if (STAGES.indexOf(serverStage) > STAGES.indexOf(stage)) {
@@ -118,36 +116,36 @@ export const RiverProcess = () => {
             }
         } catch (error: any) {
             console.error(error);
-            toast.error(error.response?.data?.error || "Failed to load stage data");
+            toast.error(error.response?.data?.error || t('riverProcess.fetchFailed'));
         } finally {
             setLoading(false);
         }
     };
 
     const handleAction = async (action: string, payload: any = {}) => {
-        if (actionLoading) return; // Prevent double-submit on rapid clicks
+        if (actionLoading) return;
         try {
             setActionLoading(true);
             if (action === 'INITIATE') {
                 await api.post(`/payroll/river/initiate/${runId}`);
                 setStage('VERIFY');
-                toast.success("Payroll Calculated & Frozen!");
+                toast.success(t('riverProcess.calculatedFrozen'));
             } else if (action === 'APPROVE') {
                 await api.post(`/payroll/river/verify/${runId}/approve`, { status: 'APPROVED', comments: payload.comments || 'Approved' });
-                toast.success("Payroll Approved!");
+                toast.success(t('riverProcess.approved'));
                 fetchStageData();
             } else if (action === 'REJECT') {
                 await api.post(`/payroll/river/verify/${runId}/approve`, { status: 'REJECTED', comments: payload.comments || 'Rejected' });
-                toast.error("Payroll Rejected");
+                toast.error(t('riverProcess.rejected'));
                 fetchStageData();
             } else if (action === 'RELEASE') {
                 await api.post(`/payroll/river/release/${runId}`);
-                toast.success("Payroll Released to Employees!");
+                toast.success(t('riverProcess.released'));
                 setStage('RELEASE');
                 fetchStageData();
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.error || "Action failed");
+            toast.error(err.response?.data?.error || t('riverProcess.actionFailed'));
         } finally {
             setActionLoading(false);
         }
@@ -155,11 +153,11 @@ export const RiverProcess = () => {
 
     if (loading) {
         return (
-            <DashboardLayout title={t('payroll.payrollManagement') || "Payroll Process"}>
+            <DashboardLayout title={t('payroll.payrollManagement') || t('riverProcess.title')}>
                 <div className="flex items-center justify-center h-[60vh]">
                     <div className="text-center space-y-4">
                         <Loader2 className="w-12 h-12 text-brand-500 animate-spin mx-auto" />
-                        <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading Stage Data...</p>
+                        <p className="text-gray-500 dark:text-gray-400 animate-pulse">{t('riverProcess.loading')}</p>
                     </div>
                 </div>
             </DashboardLayout>
@@ -167,9 +165,8 @@ export const RiverProcess = () => {
     }
 
     return (
-        <DashboardLayout title={t('payroll.payrollManagement') || "Payroll Process"}>
+        <DashboardLayout title={t('payroll.payrollManagement') || t('riverProcess.title')}>
             <div className="space-y-6">
-                {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={() => navigate('/payroll')}
@@ -178,12 +175,11 @@ export const RiverProcess = () => {
                         <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll Process</h1>
-                        <p className="text-xs text-gray-500">Run: {runId?.substring(0, 8)}...</p>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('riverProcess.title')}</h1>
+                        <p className="text-xs text-gray-500">{t('riverProcess.runId', { id: runId?.substring(0, 8) })}...</p>
                     </div>
                 </div>
 
-                {/* Premium Stepper */}
                 <div className="relative mb-8">
                     <div className="flex justify-between items-center relative z-10">
                         {STAGES.map((s, idx) => {
@@ -217,7 +213,6 @@ export const RiverProcess = () => {
                     </div>
                 </div>
 
-                {/* Stage Content */}
                 <div className="mt-6 animate-fadeIn">
                     {stage === 'REVIEW' && <ReviewStage data={data} onNext={() => setStage('INITIATE')} />}
                     {stage === 'INITIATE' && <InitiateStage data={data} onInitiate={() => handleAction('INITIATE')} onBack={() => setStage('REVIEW')} loading={actionLoading} />}
@@ -229,10 +224,8 @@ export const RiverProcess = () => {
     );
 };
 
-// =============================================================================
-// REVIEW STAGE (Enhanced)
-// =============================================================================
 const ReviewStage = ({ data, onNext }: any) => {
+    const { t } = useTranslation();
     const { categories, checklist, variance } = data || {};
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
@@ -242,32 +235,31 @@ const ReviewStage = ({ data, onNext }: any) => {
 
     return (
         <div className="space-y-5">
-            {/* Category Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     {
-                        label: 'Headcount Changes', value: categories?.headcount?.newJoiners || 0,
-                        sub: `${categories?.headcount?.newJoiners || 0} joiners, ${categories?.headcount?.exits || 0} exits`,
+                        label: t('riverProcess.headcountChanges'), value: categories?.headcount?.newJoiners || 0,
+                        sub: t('riverProcess.joinersExits', { joiners: categories?.headcount?.newJoiners || 0, exits: categories?.headcount?.exits || 0 }),
                         icon: Users, color: 'blue', section: 'headcount'
                     },
                     {
-                        label: 'Attendance / LOP', value: categories?.attendance?.employeesWithLop || 0,
-                        sub: `Employees with unpaid leave`,
+                        label: t('riverProcess.attendanceLop'), value: categories?.attendance?.employeesWithLop || 0,
+                        sub: t('riverProcess.employeesWithLop'),
                         icon: Calendar, color: 'amber', section: 'lop'
                     },
                     {
-                        label: 'Salary Revisions', value: categories?.finance?.salaryRevisions || 0,
-                        sub: `Revisions effective this month`,
+                        label: t('riverProcess.salaryRevisions'), value: categories?.finance?.salaryRevisions || 0,
+                        sub: t('riverProcess.revisionsEffective'),
                         icon: IndianRupee, color: 'purple', section: 'revisions'
                     },
                     {
-                        label: 'Arrears Management', value: categories?.arrears?.count || 0,
-                        sub: `${formatCurrency(categories?.arrears?.totalAmount || 0)} pending`,
+                        label: t('riverProcess.arrearsManagement'), value: categories?.arrears?.count || 0,
+                        sub: t('riverProcess.arrearsPending', { amount: formatCurrency(categories?.arrears?.totalAmount || 0) }),
                         icon: IndianRupee, color: 'rose', section: 'arrears'
                     },
                     {
-                        label: 'TDS / Tax Config', value: categories?.finance?.totalTdsEmployees || 0,
-                        sub: `Employees with tax declarations`,
+                        label: t('riverProcess.tdsTaxConfig'), value: categories?.finance?.totalTdsEmployees || 0,
+                        sub: t('riverProcess.taxDeclarations'),
                         icon: Shield, color: 'indigo', section: null
                     }
                 ].map((card, idx) => {
@@ -311,12 +303,11 @@ const ReviewStage = ({ data, onNext }: any) => {
                 })}
             </div>
 
-            {/* Expandable Sections */}
             {expandedSection === 'headcount' && categories?.headcount?.newJoinerDetails?.length > 0 && (
                 <DetailTable
-                    title="New Joiners This Month"
+                    title={t('riverProcess.newJoiners')}
                     icon={<Users className="w-4 h-4 text-blue-400" />}
-                    columns={['Employee', 'Emp Code', 'Department', 'Join Date']}
+                    columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('calendar.startDate')]}
                     rows={categories.headcount.newJoinerDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
                         new Date(e.join_date).toLocaleDateString()
@@ -326,9 +317,9 @@ const ReviewStage = ({ data, onNext }: any) => {
 
             {expandedSection === 'lop' && categories?.attendance?.lopDetails?.length > 0 && (
                 <DetailTable
-                    title="Employees with LOP"
+                    title={t('riverProcess.employeesLop')}
                     icon={<Calendar className="w-4 h-4 text-amber-400" />}
-                    columns={['Employee', 'Emp Code', 'Department', 'LOP Days']}
+                    columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('riverProcess.lopDays')]}
                     rows={categories.attendance.lopDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
                         e.lop_days
@@ -338,9 +329,9 @@ const ReviewStage = ({ data, onNext }: any) => {
 
             {expandedSection === 'revisions' && categories?.finance?.revisionDetails?.length > 0 && (
                 <DetailTable
-                    title="Salary Revisions"
+                    title={t('riverProcess.salaryRevisionsTitle')}
                     icon={<IndianRupee className="w-4 h-4 text-brand-400" />}
-                    columns={['Employee', 'Emp Code', 'Structure', 'Annual CTC', 'Effective From']}
+                    columns={[t('riverProcess.employee'), 'Emp Code', t('riverProcess.structure'), t('riverProcess.annualCtc'), t('riverProcess.effectiveFrom')]}
                     rows={categories.finance.revisionDetails.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.structure_name || '-',
                         formatCurrency(e.annual_ctc), new Date(e.effective_from).toLocaleDateString()
@@ -350,9 +341,9 @@ const ReviewStage = ({ data, onNext }: any) => {
 
             {expandedSection === 'arrears' && categories?.arrears?.details?.length > 0 && (
                 <DetailTable
-                    title="Pending Arrears to be Processed"
+                    title={t('riverProcess.pendingArrears')}
                     icon={<Receipt className="w-4 h-4 text-error-400" />}
-                    columns={['Employee', 'Emp Code', 'Department', 'Amount', 'Reason']}
+                    columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('riverProcess.amount'), t('riverProcess.reason')]}
                     rows={categories.arrears.details.map((e: any) => [
                         `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
                         formatCurrency(e.amount), e.reason || '-'
@@ -360,34 +351,33 @@ const ReviewStage = ({ data, onNext }: any) => {
                 />
             )}
 
-            {/* Variance Analysis */}
             {variance && (
                 <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-700/40 flex justify-between items-center">
                         <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <BarChart3 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
-                            Variance Analysis
+                            {t('riverProcess.varianceAnalysis')}
                         </h4>
                         <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${parseFloat(variance.gross.percent) > 10 ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20' :
                             parseFloat(variance.gross.percent) > 5 ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20' :
                                 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
                             }`}>
-                            {variance.gross.percent > 0 ? '+' : ''}{variance.gross.percent}% vs Last Month
+                            {t('riverProcess.vsLastMonth', { percent: variance.gross.percent > 0 ? `+${variance.gross.percent}` : variance.gross.percent })}
                         </span>
                     </div>
                     <div className="p-4 grid grid-cols-3 gap-6">
                         <div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Gross Pay</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.grossPay')}</span>
                             <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(variance.gross.current)}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500">Prev: {formatCurrency(variance.gross.previous)}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">{t('riverProcess.prev', { amount: formatCurrency(variance.gross.previous) })}</div>
                         </div>
                         <div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Net Pay</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.netPay')}</span>
                             <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(variance.net?.current || 0)}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500">Prev: {formatCurrency(variance.net?.previous || 0)}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">{t('riverProcess.prev', { amount: formatCurrency(variance.net?.previous || 0) })}</div>
                         </div>
                         <div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Headcount</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.headcount')}</span>
                             <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">{variance.headcount.current}</div>
                             <div className="flex items-center gap-1 text-xs mt-1">
                                 {variance.headcount.diff > 0 ?
@@ -396,7 +386,7 @@ const ReviewStage = ({ data, onNext }: any) => {
                                         <TrendingDown className="w-3 h-3 text-red-500 dark:text-red-400" /> : null
                                 }
                                 <span className={variance.headcount.diff > 0 ? 'text-emerald-500 dark:text-emerald-400' : variance.headcount.diff < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500'}>
-                                    {variance.headcount.diff > 0 ? '+' : ''}{variance.headcount.diff} from prev
+                                    {t('riverProcess.diffFromPrev', { diff: variance.headcount.diff > 0 ? `+${variance.headcount.diff}` : variance.headcount.diff })}
                                 </span>
                             </div>
                         </div>
@@ -404,16 +394,15 @@ const ReviewStage = ({ data, onNext }: any) => {
                 </div>
             )}
 
-            {/* Enhanced Checklist */}
             <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                 <div className="p-5">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-brand-500 dark:text-brand-400" />
-                        Pre-Payroll Checklist
+                        {t('riverProcess.prePayrollChecklist')}
                     </h3>
                     <div className="space-y-2">
                         {checklist?.length === 0 ?
-                            <p className="text-gray-500 text-sm">No items pending.</p> :
+                            <p className="text-gray-500 text-sm">{t('riverProcess.noItemsPending')}</p> :
                             checklist?.map((item: any) => (
                                 <div
                                     key={item.id}
@@ -449,7 +438,7 @@ const ReviewStage = ({ data, onNext }: any) => {
                             onClick={onNext}
                             className="gap-2 bg-gradient-to-r from-brand-500 to-blue-600 hover:from-brand-600 hover:to-blue-700 border-0 shadow-elev-4 shadow-brand-500/20"
                         >
-                            Proceed to Initiate <Send className="w-4 h-4" />
+                            {t('riverProcess.proceedToInitiate')} <Send className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
@@ -458,10 +447,8 @@ const ReviewStage = ({ data, onNext }: any) => {
     );
 };
 
-// =============================================================================
-// INITIATE STAGE (Enhanced)
-// =============================================================================
 const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
+    const { t } = useTranslation();
 
     return (
         <div className="max-w-6xl mx-auto">
@@ -469,40 +456,38 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
                 <div className="bg-gradient-to-r from-blue-50 dark:from-blue-500/10 to-brand-50 dark:to-brand-500/10 p-6 border-b border-gray-100 dark:border-gray-700/40">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Zap className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-                        Initiate Payroll Calculation
+                        {t('riverProcess.initiatePayroll')}
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Step 2 of 4 — Lock inputs and calculate</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{t('riverProcess.step2Of4')}</p>
                 </div>
                 <div className="p-8 text-center">
                     <Lock className="w-16 h-16 mx-auto text-blue-500 dark:text-blue-400 mb-6 animate-pulse" />
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Lock & Calculate</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('riverProcess.lockAndCalculate')}</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-2 max-w-md mx-auto">
-                        This action will <strong className="text-gray-900 dark:text-white">freeze</strong> all inputs
-                        (attendance, salary structures, LOP) and trigger the payroll calculation engine.
+                        {t('riverProcess.lockDesc')}
                     </p>
                     <p className="text-xs text-amber-600 dark:text-amber-400/80 mb-8">
-                        ⚠ Any changes after initiation will require a full rollback.
+                        {t('riverProcess.rollbackWarning')}
                     </p>
 
-                    {/* Pre-calc Summary */}
                     <div className="grid grid-cols-3 gap-6 mb-8 max-w-4xl mx-auto">
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">LOP Emps</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.lopEmps')}</div>
                             <div className="text-lg font-bold text-amber-500 dark:text-amber-400">{data?.categories?.attendance?.employeesWithLop || 0}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">New Joiners</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.newJoinersLabel')}</div>
                             <div className="text-lg font-bold text-blue-500 dark:text-blue-400">{data?.categories?.headcount?.newJoiners || 0}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Revisions</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.revisionsLabel')}</div>
                             <div className="text-lg font-bold text-brand-500 dark:text-brand-400">{data?.categories?.finance?.salaryRevisions || 0}</div>
                         </div>
                     </div>
 
                     <div className="flex justify-center gap-4">
                         <Button variant="outline" onClick={onBack} className="border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                            Back to Review
+                            {t('riverProcess.backToReview')}
                         </Button>
                         <Button
                             onClick={onInitiate}
@@ -510,9 +495,9 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
                             className="gap-2 bg-gradient-to-r from-blue-500 to-brand-600 hover:from-blue-600 hover:to-brand-700 border-0 shadow-elev-4 shadow-blue-500/25 min-w-[200px]"
                         >
                             {loading ? (
-                                <><Loader2 className="w-4 h-4 animate-spin" /> Calculating...</>
+                                <><Loader2 className="w-4 h-4 animate-spin" /> {t('riverProcess.calculating')}</>
                             ) : (
-                                <><Lock className="w-4 h-4" /> Lock & Initiate</>
+                                <><Lock className="w-4 h-4" /> {t('riverProcess.lockAndInitiate')}</>
                             )}
                         </Button>
                     </div>
@@ -522,9 +507,6 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
     );
 };
 
-// =============================================================================
-// VERIFY STAGE (Enhanced with full analytics)
-// =============================================================================
 const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
@@ -548,14 +530,13 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
 
     return (
         <div className="space-y-5">
-            {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
                     { label: t('common.breadcrumbs.employees'), value: data?.summary?.count || 0, icon: Users, color: 'blue', isCurrency: false },
-                    { label: 'Total Gross', value: data?.summary?.total_gross || 0, icon: Wallet, color: 'indigo', isCurrency: true },
-                    { label: 'Deductions', value: data?.summary?.total_deductions || 0, icon: IndianRupee, color: 'amber', isCurrency: true },
-                    { label: 'Tax (TDS)', value: data?.summary?.total_tax || 0, icon: Shield, color: 'rose', isCurrency: true },
-                    { label: 'Net Payout', value: data?.summary?.total_net || 0, icon: IndianRupee, color: 'emerald', isCurrency: true }
+                    { label: t('riverProcess.totalGross'), value: data?.summary?.total_gross || 0, icon: Wallet, color: 'indigo', isCurrency: true },
+                    { label: t('riverProcess.deductions'), value: data?.summary?.total_deductions || 0, icon: IndianRupee, color: 'amber', isCurrency: true },
+                    { label: t('riverProcess.taxTds'), value: data?.summary?.total_tax || 0, icon: Shield, color: 'rose', isCurrency: true },
+                    { label: t('riverProcess.netPayout'), value: data?.summary?.total_net || 0, icon: IndianRupee, color: 'emerald', isCurrency: true }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-elev-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -569,14 +550,12 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 ))}
             </div>
 
-            {/* Component Breakdown Chart + Department Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Component Chart */}
                 {componentData.length > 0 && (
                     <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <BarChart3 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
-                            Component Breakdown
+                            {t('riverProcess.componentBreakdown')}
                         </h4>
                         <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={componentData} layout="vertical">
@@ -597,23 +576,22 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                     </div>
                 )}
 
-                {/* Department Breakdown */}
                 {data?.departmentBreakdown?.length > 0 && (
                     <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <Building2 className="w-4 h-4 text-brand-500 dark:text-brand-400" />
-                            Department Summary
+                            {t('riverProcess.departmentSummary')}
                         </h4>
                         <div className="space-y-3 max-h-[220px] overflow-y-auto">
                             {data.departmentBreakdown.map((dept: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/20 rounded-lg">
                                     <div>
                                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{dept.department}</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">{dept.employeeCount} employees</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">{dept.employeeCount} {t('riverProcess.employeesLabel')}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(dept.net)}</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">Gross: {formatCurrency(dept.gross)}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">{t('riverProcess.grossPay')}: {formatCurrency(dept.gross)}</p>
                                     </div>
                                 </div>
                             ))}
@@ -622,21 +600,20 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 )}
             </div>
 
-            {/* Variance Alerts */}
             {data?.varianceAlerts?.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-xl p-5">
                     <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
-                        Variance Alerts ({data.varianceAlerts.length} employees with &gt;10% change)
+                        {t('riverProcess.varianceAlerts', { count: data.varianceAlerts.length })}
                     </h4>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-gray-500 dark:text-gray-400 border-b border-amber-200 dark:border-amber-500/10">
-                                    <th className="text-left py-2 px-2">Employee</th>
-                                    <th className="text-right py-2 px-2">Previous</th>
-                                    <th className="text-right py-2 px-2">Current</th>
-                                    <th className="text-right py-2 px-2">Change</th>
+                                    <th className="text-left py-2 px-2">{t('riverProcess.employee')}</th>
+                                    <th className="text-right py-2 px-2">{t('riverProcess.previous')}</th>
+                                    <th className="text-right py-2 px-2">{t('riverProcess.current')}</th>
+                                    <th className="text-right py-2 px-2">{t('riverProcess.change')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -658,7 +635,6 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 </div>
             )}
 
-            {/* Employee Detail Toggle */}
             <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden shadow-elev-1">
                 <button
                     onClick={() => setShowEmployees(!showEmployees)}
@@ -666,7 +642,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 >
                     <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <Users className="w-4 h-4 text-brand-500 dark:text-brand-400" />
-                        Employee-Level Breakdown ({data?.employees?.length || 0})
+                        {t('riverProcess.employeeBreakdown', { count: data?.employees?.length || 0 })}
                     </span>
                     {showEmployees ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                 </button>
@@ -678,7 +654,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                                 <input
                                     type="text"
-                                    placeholder="Search by name, code, or department..."
+                                    placeholder={t('riverProcess.searchEmployee')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/40 rounded-lg text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/40 focus:border-brand-500/40"
@@ -688,14 +664,14 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                 <table className="w-full text-sm">
                                     <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
                                         <tr className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700/50">
-                                            <th className="text-left py-2 px-2">Employee</th>
-                                            <th className="text-left py-2 px-2">Department</th>
-                                            <th className="text-right py-2 px-2">Basic</th>
-                                            <th className="text-right py-2 px-2">HRA</th>
-                                            <th className="text-right py-2 px-2">Gross</th>
-                                            <th className="text-right py-2 px-2">PF</th>
-                                            <th className="text-right py-2 px-2">TDS</th>
-                                            <th className="text-right py-2 px-2 font-bold">Net</th>
+                                            <th className="text-left py-2 px-2">{t('riverProcess.employee')}</th>
+                                            <th className="text-left py-2 px-2">{t('departments.title')}</th>
+                                            <th className="text-right py-2 px-2">{t('riverProcess.basic')}</th>
+                                            <th className="text-right py-2 px-2">{t('riverProcess.hra')}</th>
+                                            <th className="text-right py-2 px-2">{t('riverProcess.grossPay')}</th>
+                                            <th className="text-right py-2 px-2">{t('riverProcess.pf')}</th>
+                                            <th className="text-right py-2 px-2">{t('riverProcess.tds')}</th>
+                                            <th className="text-right py-2 px-2 font-bold">{t('riverProcess.netPay')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -722,11 +698,10 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 )}
             </div>
 
-            {/* Approval Section */}
             <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl p-5 shadow-elev-1">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Approvals</h4>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t('riverProcess.approvals')}</h4>
                 {data?.approvals?.length === 0 ?
-                    <p className="text-sm text-gray-500 mb-4">No approvals yet.</p> :
+                    <p className="text-sm text-gray-500 mb-4">{t('riverProcess.noApprovals')}</p> :
                     <div className="space-y-2 mb-4">
                         {data?.approvals?.map((a: any) => (
                             <div key={a.id} className={`text-sm p-3 rounded-lg flex items-center gap-2 ${a.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
@@ -749,7 +724,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                         onClick={() => onReject("Needs corrections")}
                         disabled={loading}
                     >
-                        <XCircle className="w-4 h-4 mr-2" /> Reject
+                        <XCircle className="w-4 h-4 mr-2" /> {t('riverProcess.reject')}
                     </Button>
                     <Button
                         className="flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-elev-4 shadow-emerald-500/20"
@@ -757,7 +732,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                         disabled={loading}
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4" />}
-                        Approve Payroll
+                        {t('riverProcess.approvePayroll')}
                     </Button>
                 </div>
 
@@ -767,7 +742,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                             onClick={onNext}
                             className="gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-purple-700 border-0 shadow-elev-4"
                         >
-                            Proceed to Release <Send className="w-4 h-4" />
+                            {t('riverProcess.proceedToRelease')} <Send className="w-4 h-4" />
                         </Button>
                     </div>
                 )}
@@ -776,10 +751,8 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
     );
 };
 
-// =============================================================================
-// RELEASE STAGE (Enhanced with downloads)
-// =============================================================================
 const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
+    const { t } = useTranslation();
     const [released, setReleased] = useState(data?.run?.status === 'RELEASED');
 
     useEffect(() => {
@@ -795,7 +768,6 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                 `/payroll/river/release/${runId}/salary-register`;
             const res = await api.get(endpoint);
 
-            // Convert to CSV and download
             const csvData = type === 'bank' ?
                 convertBankFileToCSV(res.data?.bankEntries || []) :
                 convertRegisterToCSV(res.data || []);
@@ -807,9 +779,9 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
             a.download = `${type === 'bank' ? 'bank_file' : 'salary_register'}_${runId?.substring(0, 8)}.csv`;
             a.click();
             URL.revokeObjectURL(url);
-            toast.success(`${type === 'bank' ? 'Bank File' : 'Salary Register'} downloaded!`);
+            toast.success(type === 'bank' ? t('riverProcess.bankFileDownloaded') : t('riverProcess.registerDownloaded'));
         } catch (err) {
-            toast.error("Download failed");
+            toast.error(t('riverProcess.downloadFailed'));
         }
     };
 
@@ -825,75 +797,71 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
     return (
         <div className="max-w-6xl mx-auto space-y-5">
             {released ? (
-                // Success State
                 <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl p-10 text-center shadow-elev-4">
                     <div className="relative inline-block mb-6">
                         <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
                         <CheckCircle2 className="w-20 h-20 text-emerald-500 dark:text-emerald-400 relative" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Payroll Released!</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-8">Payslips have been generated and published for all employees.</p>
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('riverProcess.payrollReleased')}</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8">{t('riverProcess.payslipsGenerated')}</p>
 
                     <div className="grid grid-cols-3 gap-6 mb-8 max-w-5xl mx-auto">
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Employees</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('common.breadcrumbs.employees')}</div>
                             <div className="text-2xl font-bold text-gray-900 dark:text-white">{data?.totals?.employeeCount || 0}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Total Gross</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.totalGross')}</div>
                             <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Net Payout</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.netPayout')}</div>
                             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(data?.totals?.totalNet || 0)}</div>
                         </div>
                     </div>
 
                     <div className="flex justify-center gap-3">
                         <Button variant="outline" onClick={() => handleDownload('register')} className="gap-2 border-gray-600">
-                            <FileText className="w-4 h-4" /> Salary Register
+                            <FileText className="w-4 h-4" /> {t('riverProcess.salaryRegister')}
                         </Button>
                         <Button variant="outline" onClick={() => handleDownload('bank')} className="gap-2 border-gray-600">
-                            <Download className="w-4 h-4" /> Bank File
+                            <Download className="w-4 h-4" /> {t('riverProcess.bankFile')}
                         </Button>
                     </div>
                 </div>
             ) : (
-                // Pre-Release Confirmation
                 <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border-2 border-emerald-100 dark:border-emerald-500/30 rounded-2xl overflow-hidden shadow-elev-5 shadow-emerald-500/5">
                     <div className="bg-gradient-to-r from-emerald-50 dark:from-emerald-500/10 to-green-50 dark:to-green-500/10 p-6 border-b border-gray-100 dark:border-gray-700/40">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Send className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />
-                            Release Payroll
+                            {t('riverProcess.releasePayroll')}
                         </h3>
-                        <p className="text-gray-400 text-sm mt-1">Final step — Publish payslips and generate reports</p>
+                        <p className="text-gray-400 text-sm mt-1">{t('riverProcess.finalStep')}</p>
                     </div>
 
-                    {/* Summary */}
                     <div className="p-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Employees</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('common.breadcrumbs.employees')}</div>
                                 <div className="text-xl font-bold text-gray-900 dark:text-white">{data?.totals?.employeeCount || 0}</div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Total Gross</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.totalGross')}</div>
                                 <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatCurrency(data?.totals?.totalGross || 0)}</div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Deductions</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.deductions')}</div>
                                 <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{formatCurrency(data?.totals?.totalDeductions || 0)}</div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Net Payout</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('riverProcess.netPayout')}</div>
                                 <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(data?.totals?.totalNet || 0)}</div>
                             </div>
                         </div>
 
-                        {/* Department Breakdown */}
                         {data?.departmentBreakdown?.length > 0 && (
                             <div className="mb-6">
-                                <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Department Breakdown</h4>
+                                <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">{t('riverProcess.departmentBreakdown')}</h4>
                                 <div className="space-y-2">
                                     {data.departmentBreakdown.map((dept: any, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center p-2 bg-gray-700/20 rounded-lg">
@@ -905,16 +873,15 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                             </div>
                         )}
 
-                        {/* Audit Trail */}
                         {data?.auditTrail?.length > 0 && (
                             <div className="mb-6">
-                                <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Audit Trail</h4>
+                                <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">{t('riverProcess.auditTrail')}</h4>
                                 <div className="space-y-2">
                                     {data.auditTrail.map((entry: any, idx: number) => (
                                         <div key={idx} className="flex items-center gap-3 text-xs text-gray-400">
                                             <div className="w-2 h-2 rounded-full bg-indigo-400" />
                                             <span className="text-gray-300 font-medium">{entry.action}</span>
-                                            <span>by {entry.performedBy}</span>
+                                            <span>{t('common.by')} {entry.performedBy}</span>
                                             <span className="ml-auto">{new Date(entry.timestamp).toLocaleString()}</span>
                                         </div>
                                     ))}
@@ -922,14 +889,13 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                             </div>
                         )}
 
-                        {/* Downloads & Release */}
                         <div className="flex flex-col gap-3 max-w-4xl mx-auto w-full">
                             <div className="flex gap-3">
                                 <Button variant="outline" onClick={() => handleDownload('register')} className="flex-1 gap-2 border-gray-600">
-                                    <FileText className="w-4 h-4" /> Download Salary Register
+                                    <FileText className="w-4 h-4" /> {t('riverProcess.downloadSalaryRegister')}
                                 </Button>
                                 <Button variant="outline" onClick={() => handleDownload('bank')} className="flex-1 gap-2 border-gray-600">
-                                    <Download className="w-4 h-4" /> Download Bank File
+                                    <Download className="w-4 h-4" /> {t('riverProcess.downloadBankFile')}
                                 </Button>
                             </div>
                             <Button
@@ -939,9 +905,9 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                                 className="w-full gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 border-0 shadow-elev-4 shadow-emerald-500/25 text-lg py-3"
                             >
                                 {loading ? (
-                                    <><Loader2 className="w-5 h-5 animate-spin" /> Releasing...</>
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> {t('riverProcess.releasing')}</>
                                 ) : (
-                                    <><Send className="w-5 h-5" /> Release & Publish Payslips</>
+                                    <><Send className="w-5 h-5" /> {t('riverProcess.releasePublish')}</>
                                 )}
                             </Button>
                         </div>
@@ -952,40 +918,39 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
     );
 };
 
-// =============================================================================
-// HELPER COMPONENTS
-// =============================================================================
-const DetailTable = ({ title, icon, columns, rows }: any) => (
-    <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden animate-fadeIn shadow-elev-1">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700/40 flex items-center gap-2">
-            {icon}
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>
-            <span className="text-xs text-gray-500 ml-auto">{rows.length} records</span>
-        </div>
-        <div className="overflow-x-auto max-h-[250px] overflow-y-auto">
-            <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900/80">
-                    <tr className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700/40">
-                        {columns.map((col: string, idx: number) => (
-                            <th key={idx} className="text-left py-2 px-3 font-medium text-xs">{col}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row: any[], idx: number) => (
-                        <tr key={idx} className="border-b border-gray-100 dark:border-gray-700/20 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                            {row.map((cell: any, cIdx: number) => (
-                                <td key={cIdx} className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{cell}</td>
+const DetailTable = ({ title, icon, columns, rows }: any) => {
+    const { t } = useTranslation();
+    return (
+        <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden animate-fadeIn shadow-elev-1">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700/40 flex items-center gap-2">
+                {icon}
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>
+                <span className="text-xs text-gray-500 ml-auto">{rows.length} {t('riverProcess.records')}</span>
+            </div>
+            <div className="overflow-x-auto max-h-[250px] overflow-y-auto">
+                <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900/80">
+                        <tr className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700/40">
+                            {columns.map((col: string, idx: number) => (
+                                <th key={idx} className="text-left py-2 px-3 font-medium text-xs">{col}</th>
                             ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {rows.map((row: any[], idx: number) => (
+                            <tr key={idx} className="border-b border-gray-100 dark:border-gray-700/20 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                                {row.map((cell: any, cIdx: number) => (
+                                    <td key={cIdx} className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{cell}</td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
-// CSV helpers
 const convertBankFileToCSV = (entries: any[]) => {
     const headers = ['S.No', 'Employee Name', 'Emp Code', 'Bank Name', 'Account Number', 'IFSC Code', 'Amount'];
     const rows = entries.map(e => [
@@ -993,7 +958,7 @@ const convertBankFileToCSV = (entries: any[]) => {
         `"${(e.employeeName || '').replace(/"/g, '""')}"`,
         e.empCode,
         `"${(e.bankName || '').replace(/"/g, '""')}"`,
-        `="${e.accountNumber}"`,   // Forces Excel to treat as text (preserves leading zeros)
+        `="${e.accountNumber}"`,
         e.ifscCode,
         e.amount
     ]);
