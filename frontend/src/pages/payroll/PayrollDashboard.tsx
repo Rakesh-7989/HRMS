@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
@@ -16,6 +16,7 @@ import {
     ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { DataTable } from '@/components/ui/DataTable';
 
 interface DashboardStats {
     runStatus: {
@@ -472,58 +473,73 @@ export const PayrollDashboard = () => {
                                 <div className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                     <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 </div>
-                                Recent Payroll Runs
+                                {t('payroll.recentRuns')}
                             </h3>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                                        <th className="text-left py-3 px-2 font-medium">Period</th>
-                                        <th className="text-left py-3 px-2 font-medium">Stage</th>
-                                        <th className="text-left py-3 px-2 font-medium">Status</th>
-                                        <th className="text-right py-3 px-2 font-medium">Gross</th>
-                                        <th className="text-right py-3 px-2 font-medium">Net</th>
-                                        <th className="text-center py-3 px-2 font-medium">Employees</th>
-                                        <th className="text-right py-3 px-2 font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {stats.recentHistory.map((run) => (
-                                        <tr key={run.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
-                                            <td className="py-3 px-2 text-gray-700 dark:text-gray-300 font-medium">
-                                                {MONTHS[run.month - 1]} {run.year}
-                                            </td>
-                                            <td className="py-3 px-2">
-                                                <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/20 px-2 py-0.5 rounded">{run.stage}</span>
-                                            </td>
-                                            <td className="py-3 px-2">
-                                                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(run.status)}`}>
-                                                    {run.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-2 text-right text-gray-700 dark:text-gray-300 font-mono text-xs">
-                                                {formatCurrency(run.totalGross)}
-                                            </td>
-                                            <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400 font-mono text-xs">
-                                                {formatCurrency(run.totalNet)}
-                                            </td>
-                                            <td className="py-3 px-2 text-center text-gray-500 dark:text-gray-400">
-                                                {run.totalEmployees}
-                                            </td>
-                                            <td className="py-3 px-2 text-right">
-                                                <button
-                                                    onClick={() => navigate(`/payroll/process/${run.id}`)}
-                                                    className="p-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/30 text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
-                                                >
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        {(() => {
+                            const columns = [
+                                {
+                                    header: t('payroll.period'),
+                                    cell: (run: any) => (
+                                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                                            {MONTHS[run.month - 1]} {run.year}
+                                        </span>
+                                    ),
+                                },
+                                {
+                                    header: t('payroll.stage'),
+                                    cell: (run: any) => (
+                                        <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/20 px-2 py-0.5 rounded">{run.stage}</span>
+                                    ),
+                                },
+                                {
+                                    header: t('common.status'),
+                                    cell: (run: any) => (
+                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(run.status)}`}>
+                                            {run.status}
+                                        </span>
+                                    ),
+                                },
+                                {
+                                    header: t('payroll.gross'),
+                                    cell: (run: any) => (
+                                        <span className="text-right text-gray-700 dark:text-gray-300 font-mono text-xs">{formatCurrency(run.totalGross)}</span>
+                                    ),
+                                },
+                                {
+                                    header: t('payroll.net'),
+                                    cell: (run: any) => (
+                                        <span className="text-right text-emerald-600 dark:text-emerald-400 font-mono text-xs">{formatCurrency(run.totalNet)}</span>
+                                    ),
+                                },
+                                {
+                                    header: t('payroll.employees'),
+                                    cell: (run: any) => (
+                                        <span className="text-center text-gray-500 dark:text-gray-400">{run.totalEmployees}</span>
+                                    ),
+                                },
+                                {
+                                    header: t('common.actions'),
+                                    cell: (run: any) => (
+                                        <button
+                                            onClick={() => navigate(`/payroll/process/${run.id}`)}
+                                            className="p-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/30 text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
+                                            title={t('payroll.viewRun')}
+                                        >
+                                            <ArrowRight className="w-4 h-4" />
+                                        </button>
+                                    ),
+                                },
+                            ];
+                            return (
+                                <DataTable
+                                    columns={columns}
+                                    data={stats.recentHistory}
+                                    pageSize={10}
+                                    emptyMessage={t('payroll.noRuns')}
+                                />
+                            );
+                        })()}
                     </div>
                 )}
             </div>

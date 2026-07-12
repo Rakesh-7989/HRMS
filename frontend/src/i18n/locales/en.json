@@ -820,7 +820,13 @@
         "pfEsiPtTds": "PF + ESI + PT + TDS",
         "taxDeductedTds": "Tax Deducted (TDS)",
         "incomeTaxWithheld": "Income tax withheld",
-        "employeesCount": "employees"
+        "employeesCount": "employees",
+        "recentRuns": "Recent Payroll Runs",
+        "stage": "Stage",
+        "gross": "Gross",
+        "net": "Net",
+        "viewRun": "View Run",
+        "noRuns": "No recent payroll runs"
     },
     "projects": {
         "title": "Projects",
