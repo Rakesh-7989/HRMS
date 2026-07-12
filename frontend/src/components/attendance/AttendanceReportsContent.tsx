@@ -15,6 +15,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { DataTable } from '@/components/ui/DataTable';
 import { SkeletonTable } from '@/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
     TrendingUp,
@@ -35,6 +36,7 @@ import { IndividualAttendanceReport } from './IndividualAttendanceReport';
 export const AttendanceReportsContent: React.FC = () => {
     const { user } = useAuth();
     const { hasPermission } = usePermissions();
+    const { t } = useTranslation();
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
     const [customFromDate, setCustomFromDate] = useState('');
     const [customToDate, setCustomToDate] = useState('');
@@ -264,12 +266,12 @@ export const AttendanceReportsContent: React.FC = () => {
 
     const reportColumns = useMemo(() => [
         {
-            header: 'Date',
+            header: t('common.date'),
             accessorKey: 'date' as const,
             cell: (row: any) => format(new Date(row.date), 'MMM dd'),
         },
         {
-            header: 'Employee',
+            header: t('common.employee'),
             cell: (row: any) => (
                 <div>
                     <div className="font-medium text-gray-900 dark:text-gray-100">{row.first_name} {row.last_name}</div>
@@ -278,7 +280,7 @@ export const AttendanceReportsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Check In',
+            header: t('attendance.checkIn'),
             cell: (row: any) => (
                 row.check_in_time ? (
                     <div className={row.is_late ? 'text-red-500 font-medium' : ''}>
@@ -289,11 +291,11 @@ export const AttendanceReportsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Check Out',
+            header: t('attendance.checkOut'),
             cell: (row: any) => formatTime12Hour(row.check_out_time, user?.timezone) || '-',
         },
         {
-            header: 'Status',
+            header: t('common.status'),
             cell: (row: any) => (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${row.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                     row.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
@@ -304,24 +306,24 @@ export const AttendanceReportsContent: React.FC = () => {
             ),
         },
         {
-            header: 'Work Hrs',
+            header: t('attendance.workingHours'),
             accessorKey: 'work_hours' as const,
             cell: (row: any) => row.work_hours || '-',
         },
         {
-            header: 'Eff. Hrs',
+            header: t('attendance.effectiveHours'),
             accessorKey: 'effective_work_hours' as const,
             cell: (row: any) => <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{row.effective_work_hours || '-'}</span>,
         },
         {
-            header: 'Overtime',
+            header: t('attendance.overtime'),
             cell: (row: any) => (
                 Number(row.overtime_hours) > 0 ? (
                     <span className="text-green-600 font-medium">+{row.overtime_hours}</span>
                 ) : '-'
             ),
         },
-    ], [user?.timezone]);
+    ], [user?.timezone, t]);
 
     return (
         <div className="space-y-6">
@@ -334,7 +336,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         size="sm"
                     >
                         <BarChart3 className="mr-2" size={16} />
-                        Analytics
+                        {t('attendance.analytics')}
                     </Button>
                     <Button
                         variant={selectedView === 'reports' ? 'primary' : 'outline'}
@@ -342,7 +344,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         size="sm"
                     >
                         <FileText className="mr-2" size={16} />
-                        Reports
+                        {t('attendance.reports')}
                     </Button>
                 </div>
 
@@ -354,7 +356,7 @@ export const AttendanceReportsContent: React.FC = () => {
                             size="sm"
                         >
                             <Filter className="mr-2" size={16} />
-                            Filters
+                            {t('common.filters')}
                         </Button>
                     )}
                     {selectedView === 'reports' && !selectedEmployeeId && (canViewOrgAnalytics || canViewTeamAnalytics) && (
@@ -365,7 +367,7 @@ export const AttendanceReportsContent: React.FC = () => {
                             disabled={!reports?.reports?.length}
                         >
                             <Download className="mr-2" size={16} />
-                            Export CSV
+                            {t('common.exportCsv')}
                         </Button>
                     )}
                 </div>
