@@ -108,7 +108,7 @@ export const OrganisationPage: React.FC = () => {
 
   return (
     <DashboardLayout title={t('organisation.title')} breadcrumbs={[{ label: t('common.breadcrumbs.dashboard'), href: '/dashboard/organization' }, { label: t('common.breadcrumbs.organisation') }]}>
-      <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
+      <div className="flex-1 min-h-0 flex flex-col gap-4">
         {/* Helper/Background div - keeping if needed for spacing or visual, else could be removed */}
         {/* <div className="bg-white/5 p-3 rounded-md shadow-elev-1"></div> */}
 
@@ -140,7 +140,7 @@ export const OrganisationPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 relative overflow-hidden">
+          <div className="flex-1 min-h-0 relative">
             {tab === 'departments' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DepartmentsContent /></div>}
             {tab === 'designations' && <div className="h-full overflow-y-auto pr-2 custom-scrollbar"><DesignationsContent /></div>}
             {tab === 'shifts' && <div className="h-full overflow-y-auto"><ShiftsPage /></div>}
@@ -156,7 +156,7 @@ export const OrganisationPage: React.FC = () => {
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" size={18} />
                           <input
                             type="text"
-                            placeholder="Search tenants..."
+                            placeholder={t('organisation.searchTenants')}
                             value={searchTenants}
                             onChange={(e) => setSearchTenants(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-md border bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-sm"
@@ -178,7 +178,7 @@ export const OrganisationPage: React.FC = () => {
                                 <div className="flex items-center justify-between">
                                   <div className="font-semibold text-sm text-gray-900 dark:text-white">{tenant.name}</div>
                                   <div className={`text-xs font-medium ${tenant.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {tenant.is_active ? 'Active' : 'Inactive'}
+                                    {tenant.is_active ? t('organisation.active') : t('organisation.inactive')}
                                   </div>
                                 </div>
 
@@ -187,12 +187,12 @@ export const OrganisationPage: React.FC = () => {
                                 {(tenant.city || tenant.country) && (
                                   <div className="text-xs text-muted mt-2">{[tenant.city, tenant.state, tenant.country].filter(Boolean).join(', ')}</div>
                                 )}
-                                <div className="text-xs text-muted mt-2">Created: {format(new Date(tenant.created_at), 'MMM dd, yyyy')}</div>
+                                <div className="text-xs text-muted mt-2">{t('organisation.createdLabel')} {format(new Date(tenant.created_at), 'MMM dd, yyyy')}</div>
 
                                 <div className="mt-4 flex items-center gap-2">
                                   <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(tenant)} className="text-brand-500 hover:bg-brand-500/5 dark:hover:bg-brand-500/20">
                                     <Eye size={14} />
-                                    View
+                                    {t('organisation.view')}
                                   </Button>
 
 
@@ -214,21 +214,21 @@ export const OrganisationPage: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                   <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Status</p>
-                                    <p className="font-semibold text-gray-900 dark:text-white">{selectedTenant.is_active ? 'Active' : 'Inactive'}</p>
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">{t('organisation.status')}</p>
+                                    <p className="font-semibold text-gray-900 dark:text-white">{selectedTenant.is_active ? t('organisation.active') : t('organisation.inactive')}</p>
                                   </div>
                                   <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Created</p>
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">{t('organisation.created')}</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{format(new Date(selectedTenant.created_at), 'MMM dd, yyyy')}</p>
                                   </div>
                                   <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
-                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">Employees</p>
+                                    <p className="text-xs uppercase tracking-wider text-muted mb-1">{t('organisation.employees')}</p>
                                     <p className="font-semibold text-gray-900 dark:text-white">{tenantEmployeeCountQuery.isLoading ? '...' : tenantEmployeeCountQuery.data ?? 0}</p>
                                   </div>
                                 </div>
 
                                 <div>
-                                  <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">Users</h4>
+                                  <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">{t('organisation.users')}</h4>
                                   {selectedUsersQuery.isLoading ? (
                                     <div className="space-y-3">
                                       {[1, 2, 3].map((i) => (
@@ -241,16 +241,16 @@ export const OrganisationPage: React.FC = () => {
                                         <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                           <div className="mb-2 sm:mb-0">
                                             <p className="font-medium text-gray-900 dark:text-white text-sm">{user.email}</p>
-                                            <p className="text-xs text-muted">{user.role} • Joined {format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
+                                            <p className="text-xs text-muted">{user.role} • {t('organisation.joined')} {format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
                                           </div>
                                           <span className={`text-xs px-2 py-1 rounded inline-flex items-center w-fit ${user.is_active ? 'bg-brand-500/10 text-brand-500 border border-brand-500/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
-                                            {user.is_active ? 'Active' : 'Inactive'}
+                                            {user.is_active ? t('organisation.active') : t('organisation.inactive')}
                                           </span>
                                         </div>
                                       ))}
                                     </div>
                                   ) : (
-                                    <p className="text-muted text-sm italic py-2">No users found for this tenant.</p>
+                                    <p className="text-muted text-sm italic py-2">{t('organisation.noUsersFound')}</p>
                                   )}
                                 </div>
                               </div>
@@ -297,7 +297,7 @@ export const OrganisationPage: React.FC = () => {
                       {!employeesLoading && filteredEmployees.length > 0 && totalEmployees > PAGE_SIZE && (
                         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 mt-6 bg-white dark:bg-gray-800 rounded-md">
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalEmployees)} of {totalEmployees} employees
+                            {t('organisation.showingEmployees', { start: page * PAGE_SIZE + 1, end: Math.min((page + 1) * PAGE_SIZE, totalEmployees), total: totalEmployees })}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button
@@ -309,7 +309,7 @@ export const OrganisationPage: React.FC = () => {
                               <ChevronLeft size={16} />
                             </Button>
                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                              Page {page + 1}
+                              {t('organisation.pageLabel')} {page + 1}
                             </span>
                             <Button
                               variant="outline"

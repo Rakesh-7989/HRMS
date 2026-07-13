@@ -263,7 +263,7 @@ export const PayslipsContent: React.FC = () => {
                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
-                        My Payslips
+                        {t('payroll.myPayslips')}
                     </Button>
                      <Button variant="ghost" 
                         onClick={() => setActiveSubSection('staff')}

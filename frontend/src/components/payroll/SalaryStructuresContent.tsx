@@ -277,7 +277,7 @@ export const SalaryStructuresContent: React.FC = () => {
         return (
             <div className="space-y-0 animate-fadeIn">
                 {/* Full-Page Structure Editor */}
-                <Card padding="none" bordered={false} className="min-h-[calc(100vh-180px)] flex flex-col ring-1 ring-black/5 overflow-hidden">
+                <Card padding="none" bordered={false} className="flex-1 min-h-0 flex flex-col ring-1 ring-black/5">
                     {/* Header Row: Actions & Title */}
                     <header className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 shrink-0">
                         <div className="flex items-center gap-4">
@@ -392,7 +392,7 @@ export const SalaryStructuresContent: React.FC = () => {
                         {/* Editor Workspace (Right) */}
                         <main className="flex-1 bg-white dark:bg-gray-900 flex flex-col min-h-0 overflow-hidden">
                             <div className="px-8 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
-                                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Structure Workspace</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">{t('payroll.salaryStructure.editor.structureWorkspace')}</h3>
                                 <div className="flex items-center gap-2">
                                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse" />
                                     <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">{t('payroll.salaryStructure.editor.componentsSelected', { count: selectedComponents.length })}</span>
@@ -691,7 +691,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                         <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.reference')}</TableHead>
                                         <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.classification')}</TableHead>
                                         <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4">{t('payroll.salaryStructure.list.taxImpact')}</TableHead>
-                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4 text-right">Operations</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase text-gray-400 px-6 py-4 text-right">{t('payroll.salaryStructure.list.table.operations')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

@@ -193,9 +193,9 @@ export const TasksPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: (error: any) => {
+        onError: (_error: any) => {
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to create task');
+            showToast.error(t('projects.taskCreateFailed'));
         },
     });
 
@@ -204,10 +204,10 @@ export const TasksPage: React.FC = () => {
             projectsService.updateTaskStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
-            showToast.success('Status updated');
+            showToast.success(t('projects.statusUpdated'));
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to update status');
+        onError: (_error: any) => {
+            showToast.error(t('projects.statusUpdateFailed'));
         }
     });
 
@@ -219,11 +219,11 @@ export const TasksPage: React.FC = () => {
             setEditingTask(null);
             setIsEditModalOpen(false);
             setIsSubmitting(false);
-            showToast.success('Task updated');
+            showToast.success(t('projects.taskUpdated'));
         },
-        onError: (error: any) => {
+        onError: (_error: any) => {
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to update task');
+            showToast.error(t('projects.taskUpdateFailed'));
         },
     });
 
@@ -232,10 +232,10 @@ export const TasksPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
             setTaskToDelete(null);
-            showToast.success('Task deleted');
+            showToast.success(t('projects.taskDeleted'));
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to delete task');
+        onError: (_error: any) => {
+            showToast.error(t('projects.taskDeleteFailed'));
             setTaskToDelete(null);
         },
     });
@@ -359,7 +359,7 @@ export const TasksPage: React.FC = () => {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-full">
-                    <p>Loading project...</p>
+                    <p>{t('projects.loadingProject')}</p>
                 </div>
             </DashboardLayout>
         );
@@ -377,7 +377,7 @@ export const TasksPage: React.FC = () => {
                 ]}
             >
                 <div className="flex items-center justify-center h-64">
-                    <p>Loading board configuration...</p>
+                    <p>{t('projects.loadingBoard')}</p>
                 </div>
             </DashboardLayout>
         );
@@ -417,12 +417,12 @@ export const TasksPage: React.FC = () => {
                 { label: project?.name || 'Project Details' },
             ]}
         >
-            <div className="flex flex-col h-[calc(100vh-8rem)] gap-4 w-full overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 gap-4 w-full">
                 {/* Header: Tabs, Search, Filters, and Actions - All in One Row */}
                 <div className="shrink-0 flex flex-wrap items-center gap-3">
                     <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} title="Back to Projects">
                         <ArrowLeft size={16} className="mr-2" />
-                        Back
+                        {t('common.back')}
                     </Button>
                     {/* View Toggle Tabs */}
                     <div className="flex items-center gap-3">
@@ -437,7 +437,7 @@ export const TasksPage: React.FC = () => {
                                 )}
                             >
                                 <List size={14} />
-                                List
+                                {t('projects.list')}
                             </Button>
                             {canViewKanban && (
                                  <Button variant="ghost" 
@@ -450,7 +450,7 @@ export const TasksPage: React.FC = () => {
                                     )}
                                 >
                                     <Columns3 size={14} />
-                                    Board
+                                    {t('projects.board')}
                                 </Button>
                             )}
                         </div>
@@ -463,7 +463,7 @@ export const TasksPage: React.FC = () => {
                     <div className="relative w-48">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <Input
-                            placeholder="Search tasks..."
+                            placeholder={t('projects.searchTasks')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-8 h-9 text-sm"
@@ -477,13 +477,13 @@ export const TasksPage: React.FC = () => {
                             onChange={(e) => setStatusFilter(e.target.value as TaskStatus | 'All')}
                             className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                         >
-                            <option value="All">All Status</option>
+                            <option value="All">{t('projects.statusFilter')}</option>
                             {enabledColumns.length === 0 ? (
                                 <>
-                                    <option value="TODO">To Do</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
-                                    <option value="REVIEW">Review</option>
-                                    <option value="DONE">Done</option>
+                                    <option value="TODO">{t('projects.todo')}</option>
+                                    <option value="IN_PROGRESS">{t('projects.inProgress')}</option>
+                                    <option value="REVIEW">{t('projects.review')}</option>
+                                    <option value="DONE">{t('projects.done')}</option>
                                 </>
                             ) : (
                                 enabledColumns.map(col => (
@@ -501,9 +501,9 @@ export const TasksPage: React.FC = () => {
                         onChange={(e) => setAssigneeFilter(e.target.value)}
                         className="h-9 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                     >
-                        <option value="All">All Assignees</option>
+                        <option value="All">{t('projects.allAssignees')}</option>
                         {projectMembers.length === 0 ? (
-                            <option disabled>No members found</option>
+                            <option disabled>{t('projects.noMembersFound')}</option>
                         ) : (
                             projectMembers.map(member => (
                                 <option key={member.id} value={member.employee_id}>
@@ -526,7 +526,7 @@ export const TasksPage: React.FC = () => {
                         {canManage && (
                             <Button size="sm" onClick={() => setIsModalOpen(true)} disabled={isProjectLocked} title={isProjectLocked ? `Cannot add tasks to a ${project?.status?.toLowerCase()} project` : undefined}>
                                 <Plus size={16} className="mr-1" />
-                                Add
+                                {t('common.add')}
                             </Button>
                         )}
                     </div>
@@ -537,7 +537,7 @@ export const TasksPage: React.FC = () => {
                     {isProjectLocked && (
                         <div className="mb-3 px-4 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
                             <span>⚠️</span>
-                            This project is <strong>{project?.status?.toLowerCase()}</strong>. Adding or editing tasks is disabled.
+                            {t('projects.lockedProjectBanner', { status: project?.status?.toLowerCase() })}
                         </div>
                     )}
                     {activeTab === 'list' ? (
@@ -546,26 +546,26 @@ export const TasksPage: React.FC = () => {
                                 <Table>
                                     <TableHeader className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="w-[100px]">ID</TableHead>
-                                            <TableHead className="w-[30%]">Title</TableHead>
-                                            <TableHead className="w-[30%]">Description</TableHead>
-                                            <TableHead className="w-[150px]">Assignee</TableHead>
-                                            <TableHead className="w-[100px]">Priority</TableHead>
-                                            <TableHead className="w-[120px]">Status</TableHead>
-                                            <TableHead className="w-[80px]">Actions</TableHead>
+                                            <TableHead className="w-[100px]">{t('projects.tableId')}</TableHead>
+                                            <TableHead className="w-[30%]">{t('projects.tableTitle')}</TableHead>
+                                            <TableHead className="w-[30%]">{t('projects.tableDescription')}</TableHead>
+                                            <TableHead className="w-[150px]">{t('projects.tableAssignee')}</TableHead>
+                                            <TableHead className="w-[100px]">{t('projects.tablePriority')}</TableHead>
+                                            <TableHead className="w-[120px]">{t('projects.tableStatus')}</TableHead>
+                                            <TableHead className="w-[80px]">{t('projects.tableActions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {tasksLoading ? (
                                             <TableRow>
                                                 <TableCell className="h-24 text-center">
-                                                    Loading tasks...
+                                                    {t('projects.loadingTasks')}
                                                 </TableCell>
                                             </TableRow>
                                         ) : filteredTasks.length === 0 ? (
                                             <TableRow>
                                                 <TableCell className="h-24 text-center">
-                                                    No tasks found for the selected filters
+                                                    {t('projects.noTasksFound')}
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
@@ -611,7 +611,7 @@ export const TasksPage: React.FC = () => {
                                                                 <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
                                                                     {task.assignees.length === 1
                                                                         ? `${task.assignees[0].first_name} ${task.assignees[0].last_name}`
-                                                                        : `${task.assignees.length} assignees`}
+                                                                        : t('projects.assignees', { count: task.assignees.length })}
                                                                 </span>
                                                             </div>
                                                         ) : task.assignee ? (
@@ -622,7 +622,7 @@ export const TasksPage: React.FC = () => {
                                                                 <span>{task.assignee.first_name} {task.assignee.last_name}</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-400">Unassigned</span>
+                                                            <span className="text-gray-400">{t('projects.unassigned')}</span>
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
@@ -656,10 +656,10 @@ export const TasksPage: React.FC = () => {
                                                         >
                                                             {enabledColumns.length === 0 ? (
                                                                 <>
-                                                                    <option value="TODO">To Do</option>
-                                                                    <option value="IN_PROGRESS">In Progress</option>
-                                                                    <option value="REVIEW">Review</option>
-                                                                    <option value="DONE">Done</option>
+                                                                    <option value="TODO">{t('projects.todo')}</option>
+                                                                    <option value="IN_PROGRESS">{t('projects.inProgress')}</option>
+                                                                    <option value="REVIEW">{t('projects.review')}</option>
+                                                                    <option value="DONE">{t('projects.done')}</option>
                                                                 </>
                                                             ) : (
                                                                 enabledColumns.map(col => (
@@ -676,14 +676,14 @@ export const TasksPage: React.FC = () => {
                                                                  <Button variant="ghost" 
                                                                     onClick={() => handleOpenEditModal(task)}
                                                                     className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
-                                                                    title="Edit Task"
+                                                                    title={t('projects.editTask')}
                                                                 >
                                                                     <Edit size={16} />
                                                                 </Button>
                                                                  <Button variant="ghost" 
                                                                     onClick={() => setTaskToDelete(task)}
                                                                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                                    title="Delete Task"
+                                                                    title={t('projects.deleteTask')}
                                                                 >
                                                                     <Trash2 size={16} />
                                                                 </Button>
@@ -724,10 +724,10 @@ export const TasksPage: React.FC = () => {
                     <form onSubmit={handleCreateTask}>
                         <DialogContent className="space-y-4">
                             <DialogHeader>
-                                <DialogTitle>Add New Task</DialogTitle>
+                                <DialogTitle>{t('projects.addNewTask')}</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-2">
-                                <Label htmlFor="title">Task Title *</Label>
+                                <Label htmlFor="title">{t('projects.taskTitleRequired')}</Label>
                                 <Input
                                     id="title"
                                     value={formData.title}
@@ -737,10 +737,10 @@ export const TasksPage: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="assignees">Assignees (Optional)</Label>
+                                <Label htmlFor="assignees">{t('projects.assigneesOptional')}</Label>
                                 <div className="border border-gray-300 dark:border-gray-700 rounded-md p-2 max-h-32 overflow-y-auto bg-white dark:bg-gray-900">
                                     {projectMembers.length === 0 ? (
-                                        <p className="text-sm text-gray-400">No members found - Add members to project first</p>
+                                        <p className="text-sm text-gray-400">{t('projects.noMembersAddFirst')}</p>
                                     ) : (
                                         projectMembers.map(member => (
                                             <label key={member.id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded">
@@ -768,22 +768,22 @@ export const TasksPage: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="priority">Priority</Label>
+                                    <Label htmlFor="priority">{t('projects.priority')}</Label>
                                     <select
                                         id="priority"
                                         value={formData.priority}
                                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
                                         className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                     >
-                                        <option value="LOW">Low</option>
-                                        <option value="MEDIUM">Medium</option>
-                                        <option value="HIGH">High</option>
-                                        <option value="CRITICAL">Critical</option>
+                                        <option value="LOW">{t('projects.low')}</option>
+                                        <option value="MEDIUM">{t('projects.medium')}</option>
+                                        <option value="HIGH">{t('projects.high')}</option>
+                                        <option value="CRITICAL">{t('projects.critical')}</option>
                                     </select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="column_key">Status</Label>
+                                    <Label htmlFor="column_key">{t('projects.tableStatus')}</Label>
                                     <select
                                         id="column_key"
                                         value={formData.column_key}
@@ -792,10 +792,10 @@ export const TasksPage: React.FC = () => {
                                     >
                                         {enabledColumns.length === 0 ? (
                                             <>
-                                                <option value="TODO">To Do</option>
-                                                <option value="IN_PROGRESS">In Progress</option>
-                                                <option value="REVIEW">Review</option>
-                                                <option value="DONE">Done</option>
+                                                <option value="TODO">{t('projects.todo')}</option>
+                                                <option value="IN_PROGRESS">{t('projects.inProgress')}</option>
+                                                <option value="REVIEW">{t('projects.review')}</option>
+                                                <option value="DONE">{t('projects.done')}</option>
                                             </>
                                         ) : (
                                             enabledColumns.map(col => (
@@ -809,19 +809,19 @@ export const TasksPage: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
+                                <Label htmlFor="description">{t('projects.taskDescription')}</Label>
                                 <textarea
                                     id="description"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-                                    placeholder="Task details..."
+                                    placeholder={t('projects.taskDetails')}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="due_date">Due Date</Label>
+                                    <Label htmlFor="due_date">{t('projects.dueDate')}</Label>
                                     <Input
                                         id="due_date"
                                         type="date"
@@ -830,7 +830,7 @@ export const TasksPage: React.FC = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="estimated_hours">Estimated Hours</Label>
+                                    <Label htmlFor="estimated_hours">{t('projects.estimatedHours')}</Label>
                                     <Input
                                         id="estimated_hours"
                                         type="number"
@@ -838,7 +838,7 @@ export const TasksPage: React.FC = () => {
                                         step="0.5"
                                         value={formData.estimated_hours}
                                         onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                        placeholder="e.g. 4"
+                                        placeholder={t('projects.hoursPlaceholder')}
                                     />
                                 </div>
                             </div>
@@ -851,10 +851,10 @@ export const TasksPage: React.FC = () => {
                                 onClick={() => setIsModalOpen(false)}
                                 disabled={isSubmitting}
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </Button>
                             <Button type="submit" isLoading={isSubmitting}>
-                                Create Task
+                                {t('projects.createTask')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -877,50 +877,50 @@ export const TasksPage: React.FC = () => {
                     <form onSubmit={handleUpdateTask}>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Edit Task</DialogTitle>
-                                <p className="text-sm text-gray-500">Update the task details.</p>
+                                <DialogTitle>{t('projects.editTask')}</DialogTitle>
+                                <p className="text-sm text-gray-500">{t('projects.updateTaskDetails')}</p>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit_title">Task Title *</Label>
+                                    <Label htmlFor="edit_title">{t('projects.taskTitleRequired')}</Label>
                                     <Input
                                         id="edit_title"
                                         value={editFormData.title}
                                         onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                                        placeholder="Enter task title"
+                                        placeholder={t('projects.taskTitle')}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit_description">Description</Label>
+                                    <Label htmlFor="edit_description">{t('projects.taskDescription')}</Label>
                                     <textarea
                                         id="edit_description"
                                         value={editFormData.description}
                                         onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                                        placeholder="Enter task description"
+                                        placeholder={t('projects.enterTaskDescription')}
                                         className="flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 shadow-elev-1"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit_priority">Priority</Label>
+                                        <Label htmlFor="edit_priority">{t('projects.priority')}</Label>
                                         <select
                                             id="edit_priority"
                                             value={editFormData.priority}
                                             onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value as TaskPriority })}
                                             className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 shadow-elev-1"
                                         >
-                                            <option value="LOW">Low</option>
-                                            <option value="MEDIUM">Medium</option>
-                                            <option value="HIGH">High</option>
-                                            <option value="URGENT">Urgent</option>
+                                            <option value="LOW">{t('projects.low')}</option>
+                                            <option value="MEDIUM">{t('projects.medium')}</option>
+                                            <option value="HIGH">{t('projects.high')}</option>
+                                            <option value="URGENT">{t('projects.urgent')}</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit_assignees">Assignees (Optional)</Label>
+                                        <Label htmlFor="edit_assignees">{t('projects.assigneesOptional')}</Label>
                                         <div className="border border-gray-300 dark:border-gray-700 rounded-md p-2 max-h-24 overflow-y-auto bg-white dark:bg-gray-900">
                                             {projectMembers.length === 0 ? (
-                                                <p className="text-sm text-gray-400">No members found - Add members to project first</p>
+                                                <p className="text-sm text-gray-400">{t('projects.noMembersAddFirst')}</p>
                                             ) : (
                                                 projectMembers.map((member) => (
                                                     <label key={member.employee_id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-1 rounded text-sm">
@@ -945,7 +945,7 @@ export const TasksPage: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit_due_date">Due Date</Label>
+                                        <Label htmlFor="edit_due_date">{t('projects.dueDate')}</Label>
                                         <Input
                                             id="edit_due_date"
                                             type="date"
@@ -954,7 +954,7 @@ export const TasksPage: React.FC = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit_estimated_hours">Estimated Hours</Label>
+                                        <Label htmlFor="edit_estimated_hours">{t('projects.estimatedHours')}</Label>
                                         <Input
                                             id="edit_estimated_hours"
                                             type="number"
@@ -962,7 +962,7 @@ export const TasksPage: React.FC = () => {
                                             step="0.5"
                                             value={editFormData.estimated_hours}
                                             onChange={(e) => setEditFormData({ ...editFormData, estimated_hours: e.target.value })}
-                                            placeholder="e.g. 4"
+                                            placeholder={t('projects.hoursPlaceholder')}
                                         />
                                     </div>
                                 </div>
@@ -975,10 +975,10 @@ export const TasksPage: React.FC = () => {
                                 onClick={() => setIsEditModalOpen(false)}
                                 disabled={isSubmitting}
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </Button>
                             <Button type="submit" isLoading={isSubmitting}>
-                                Update Task
+                                {t('projects.updateTask')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -988,25 +988,24 @@ export const TasksPage: React.FC = () => {
                 <Dialog
                     open={!!taskToDelete}
                     onOpenChange={(open) => !open && setTaskToDelete(null)}
-                    title="Delete Task"
-                    description="Are you sure you want to delete this task?"
+                    title={t('projects.deleteTask')}
+                    description={t('projects.deleteTaskConfirm')}
                 >
                     <DialogContent>
                         <p className="text-gray-600 dark:text-gray-400">
-                            You are about to delete <strong>{taskToDelete?.title}</strong>.
-                            This action cannot be undone.
+                            {t('projects.deleteTaskWarning', { title: taskToDelete?.title })}
                         </p>
                     </DialogContent>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setTaskToDelete(null)}>
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={() => taskToDelete && deleteTaskMutation.mutate(taskToDelete.id)}
                             isLoading={deleteTaskMutation.isPending}
                         >
-                            Delete
+                            {t('common.delete')}
                         </Button>
                     </DialogFooter>
                 </Dialog>

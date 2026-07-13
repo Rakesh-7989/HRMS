@@ -1166,8 +1166,8 @@ export const CreateEmployeeForm = ({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
-                Preferred Timezone
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+                {t('employees.form.preferredTimezone')}
               </label>
               <SearchableSelect
                 name="timezone"

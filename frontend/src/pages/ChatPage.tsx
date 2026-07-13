@@ -76,7 +76,7 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
             onOpenChange={(open) => !open && onClose()}
             onBack={onClose}
             title={t('chat.forwardMessage')}
-            description="Select a conversation to forward this message"
+            description={t('chat.forwardMessageDesc')}
             className="max-w-sm"
         >
             <div className="relative mb-4">
@@ -113,6 +113,7 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward }: { isOpen: b
 // --- Icons imported above ---
 
 const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, initialSelectedUserIds = [] }: { isOpen: boolean; onClose: () => void; contacts: User[]; onCreate: (name: string, userIds: string[]) => void; isLoading: boolean; initialSelectedUserIds?: string[] }) => {
+    const { t } = useTranslation();
     const [groupName, setGroupName] = useState('');
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [contactSearch, setContactSearch] = useState('');
@@ -145,19 +146,19 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
             onBack={onClose}
-            title="Start a group chat"
-            description="Add people to start a new collaboration"
+            title={t('chat.startGroupChat')}
+            description={t('chat.startGroupChatDesc')}
             className="max-w-md"
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                     <Button variant="ghost" type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">Cancel</Button>
+                     <Button variant="ghost" type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all">{t('common.cancel')}</Button>
                      <Button variant="ghost" 
                         type="submit"
                         form="create-group-form"
                         disabled={!groupName || selectedUsers.length === 0}
                         className="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                     >
-                        Create
+                        {t('common.create')}
                     </Button>
                 </div>
             }
@@ -169,7 +170,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                         value={groupName}
                         onChange={e => setGroupName(e.target.value)}
                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-t-xl focus:border-brand-500 transition-all text-sm outline-none"
-                        placeholder="Enter name of the group"
+                        placeholder={t('chat.enterGroupName')}
                         required
                     />
                 </div>
@@ -180,15 +181,15 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                             className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm outline-none"
                             value={contactSearch}
                             onChange={(e) => setContactSearch(e.target.value)}
-                            placeholder="Enter name, email or phone number"
+                            placeholder={t('chat.searchPlaceholder')}
                         />
                     </div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">Add Participants</label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">{t('chat.addParticipants')}</label>
                     <div className="max-h-52 min-h-[120px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1.5 bg-gray-50/50 dark:bg-gray-800/30">
                         {isLoading ? (
-                            <p className="text-sm text-gray-500 text-center py-8">Loading contacts...</p>
+                            <p className="text-sm text-gray-500 text-center py-8">{t('chat.loadingContacts')}</p>
                         ) : filteredContacts.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-8">No contacts found</p>
+                            <p className="text-sm text-gray-500 text-center py-8">{t('chat.noContactsFound')}</p>
                         ) : (
                             filteredContacts.map(user => (
                                 <div
@@ -215,7 +216,7 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                         )}
                     </div>
                     {selectedUsers.length > 0 && (
-                        <p className="text-xs text-brand-500 mt-2 font-medium">{selectedUsers.length} member(s) selected</p>
+                        <p className="text-xs text-brand-500 mt-2 font-medium">{t('chat.membersSelected', { count: selectedUsers.length })}</p>
                     )}
                 </div>
             </form>
@@ -226,23 +227,24 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
 import { Button } from '@/components/ui/Button';
 
 const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; onClose: () => void; onDelete: (mode: 'me' | 'everyone') => void }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-elev-5" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete this message?</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">This action will remove the message for participants</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('chat.deleteMessageTitle')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('chat.deleteMessageDesc')}</p>
                 <div className="flex flex-col gap-2 w-full mb-4">
                      <Button variant="ghost" 
                         onClick={() => { onDelete('me'); onClose(); }}
                         className="w-full py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30"
                     >
-                        Delete for me
+                        {t('chat.deleteForMe')}
                     </Button>
                 </div>
                 <div className="flex gap-3">
-                     <Button variant="ghost" onClick={onClose} className="flex-1 py-2.5 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</Button>
-                     <Button variant="ghost" onClick={() => { onDelete('everyone'); onClose(); }} className="flex-1 py-2.5 px-4 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">Delete for everyone</Button>
+                     <Button variant="ghost" onClick={onClose} className="flex-1 py-2.5 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('common.cancel')}</Button>
+                     <Button variant="ghost" onClick={() => { onDelete('everyone'); onClose(); }} className="flex-1 py-2.5 px-4 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">{t('chat.deleteForEveryone')}</Button>
                 </div>
             </div>
         </div>
@@ -250,6 +252,7 @@ const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; on
 }
 
 const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticipantIds }: { isOpen: boolean; onClose: () => void; contacts: User[]; onAdd: (userIds: string[]) => void; alreadyParticipantIds: string[] }) => {
+    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -269,18 +272,18 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
             onBack={onClose}
-            title="Add People"
-            description="Select contacts to add to this group"
+            title={t('chat.addPeople')}
+            description={t('chat.addPeopleDesc')}
             className="max-w-md"
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                     <Button variant="ghost" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-xl transition-colors">Cancel</Button>
+                     <Button variant="ghost" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-xl transition-colors">{t('common.cancel')}</Button>
                      <Button variant="ghost" 
                         onClick={() => { onAdd(selectedIds); onClose(); }}
                         disabled={selectedIds.length === 0}
                         className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-elev-4 hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                     >
-                        Add {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
+                        {t('chat.add')}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
                     </Button>
                 </div>
             }
@@ -289,7 +292,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors" size={18} />
                 <input
                     type="text"
-                    placeholder="Search by name or email..."
+                    placeholder={t('chat.searchContacts')}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
@@ -301,7 +304,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                 {filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8">
                         <Users size={32} className="mb-2 opacity-20" />
-                        <p className="text-sm font-medium">No contacts found</p>
+                        <p className="text-sm font-medium">{t('chat.noContactsFound')}</p>
                     </div>
                 ) : filtered.map(contact => {
                     const isSelected = selectedIds.includes(contact.id);
@@ -336,7 +339,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
 };
 
 export const ChatPage = () => {
-    const confirm = useConfirm();
+    const { confirm } = useConfirm();
     const { user, atLeastPlan } = useAuth();
     const { t } = useTranslation();
     const {
@@ -721,13 +724,13 @@ export const ChatPage = () => {
                     type: isImage ? 'IMAGE' : 'FILE',
                     fileUrl: fileUrl
                 });
-                import('react-hot-toast').then(({ toast }) => toast.success('File uploaded successfully'));
+                import('react-hot-toast').then(({ toast }) => toast.success(t('chat.fileUploaded')));
             } else {
                 throw new Error("Invalid response from server");
             }
         } catch (err: any) {
             console.error("Upload failed", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(err.response?.data?.message || 'File upload failed'));
+            import('react-hot-toast').then(({ toast }) => toast.error(err.response?.data?.message || t('chat.fileUploadFailed')));
         }
     };
 
@@ -775,10 +778,10 @@ export const ChatPage = () => {
             await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}?mode=${mode}`);
             // Optimistic update
             queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => old.filter(m => m.id !== messageId));
-            import('react-hot-toast').then(({ toast }) => toast.success('Message deleted'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageDeleted')));
         } catch (err) {
             console.error("Failed to delete", err);
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to delete message'));
+            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.messageDeleteFailed')));
         }
     };
 
@@ -814,10 +817,10 @@ export const ChatPage = () => {
             );
             setEditingMessageId(null);
             setEditContent('');
-            import('react-hot-toast').then(({ toast }) => toast.success('Message updated'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageUpdated')));
         } catch (err: any) {
             console.error("Failed to update", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(err.message || 'Failed to update message'));
+            import('react-hot-toast').then(({ toast }) => toast.error(err.message || t('chat.messageUpdateFailed')));
         }
     };
 
@@ -860,7 +863,7 @@ export const ChatPage = () => {
                 type: message.type,
                 fileUrl: message.file_url
             });
-            import('react-hot-toast').then(({ toast }) => toast.success('Message forwarded'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageForwarded')));
         } catch (err) {
             console.error("Failed to forward", err);
         }
@@ -898,30 +901,30 @@ export const ChatPage = () => {
 
     const handleClearChat = async () => {
         if (!selectedConversationId) return;
-        if (!await confirm({ type: 'destructive', title: 'Clear Chat', message: 'Are you sure you want to clear all messages in this chat? This cannot be undone.' })) return;
+        if (!await confirm({ type: 'destructive', title: t('chat.clearChatTitle'), message: t('chat.clearChatConfirm') })) return;
         try {
             await api.delete(`/chat/conversations/${selectedConversationId}/clear`);
             queryClient.setQueryData(['messages', selectedConversationId], []);
             setShowHeaderMoreMenu(false);
-            import('react-hot-toast').then(({ toast }) => toast.success('Chat history cleared'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.chatCleared')));
         } catch (err) {
             console.error("Failed to clear chat", err);
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to clear chat'));
+            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.chatClearFailed')));
         }
     };
 
     const handleDeleteConversation = async () => {
         if (!selectedConversationId) return;
-        if (!await confirm({ type: 'destructive', title: 'Delete Conversation', message: 'Are you sure you want to delete this entire conversation? This action is permanent and will remove the chat for all participants.' })) return;
+        if (!await confirm({ type: 'destructive', title: t('chat.deleteConversationTitle'), message: t('chat.deleteConversationConfirm') })) return;
         try {
             await api.delete(`/chat/conversations/${selectedConversationId}`);
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
             setSelectedConversationId(null);
             setShowHeaderMoreMenu(false);
-            import('react-hot-toast').then(({ toast }) => toast.success('Conversation permanently deleted'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.conversationDeleted')));
         } catch (err) {
             console.error("Failed to delete conversation", err);
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to delete conversation'));
+            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.conversationDeleteFailed')));
         }
     };
 
@@ -932,23 +935,23 @@ export const ChatPage = () => {
             await api.post(`/chat/conversations/${activeConversation.id}/participants`, { userIds });
             queryClient.invalidateQueries({ queryKey: ['conversation', activeConversation.id] });
             setIsAddingParticipant(false);
-            import('react-hot-toast').then(({ toast }) => toast.success('Participants added'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.participantsAdded')));
         } catch (err) {
             console.error("Failed to add participants", err);
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to add participants'));
+            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.participantsAddFailed')));
         }
     };
 
     const handleRemoveParticipant = async (userId: string) => {
         if (!activeConversation) return;
-        if (!await confirm({ type: 'destructive', title: 'Remove Participant', message: 'Remove this person from the group?' })) return;
+        if (!await confirm({ type: 'destructive', title: t('chat.removeParticipantTitle'), message: t('chat.removeParticipantConfirm') })) return;
         try {
             await api.delete(`/chat/conversations/${activeConversation.id}/participants/${userId}`);
             queryClient.invalidateQueries({ queryKey: ['conversation', activeConversation.id] });
-            import('react-hot-toast').then(({ toast }) => toast.success('Participant removed'));
+            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.participantRemoved')));
         } catch (err) {
             console.error("Failed to remove participant", err);
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to remove participant'));
+            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.participantRemoveFailed')));
         }
     };
 
@@ -998,7 +1001,7 @@ export const ChatPage = () => {
 
     return (
         <DashboardLayout>
-            <div className="-m-4 md:-m-6 flex h-[calc(100vh-4rem)] bg-white dark:bg-gray-900 overflow-hidden">
+            <div className="-m-4 md:-m-6 flex flex-1 min-h-0 bg-white dark:bg-gray-900">
 
                 {/* Sidebar */}
                 <div className="w-[340px] border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
@@ -1019,7 +1022,7 @@ export const ChatPage = () => {
                                             myStatus === 'away' ? 'bg-amber-500' :
                                                 myStatus === 'dnd' ? 'bg-error-500' :
                                                     myStatus === 'busy' ? 'bg-error-500' : 'bg-gray-400'
-                                    )} title={myStatus === 'busy' ? 'In a Meeting' : (myStatus === 'dnd' ? 'Do not disturb' : (myStatus ? myStatus.charAt(0).toUpperCase() + myStatus.slice(1) : 'Available'))}>
+                                    )} title={myStatus === 'busy' ? t('chat.inAMeeting') : (myStatus === 'dnd' ? t('chat.doNotDisturb') : (myStatus ? myStatus.charAt(0).toUpperCase() + myStatus.slice(1) : t('chat.available')))}>
                                         {myStatus === 'available' && <Check size={8} strokeWidth={4} className="text-white" />}
                                         {myStatus === 'away' && <Clock size={8} strokeWidth={3} className="text-white" />}
                                         {myStatus === 'dnd' && <Minus size={8} strokeWidth={4} className="text-white" />}
@@ -1039,14 +1042,14 @@ export const ChatPage = () => {
                                                     s === 'away' ? 'bg-amber-500' :
                                                         s === 'dnd' || s === 'busy' ? 'bg-error-500' : 'bg-gray-400'
                                             )} />
-                                            {s === 'busy' ? 'In a Meeting' : s}
+                                            {s === 'busy' ? t('chat.inAMeeting') : s === 'dnd' ? t('chat.doNotDisturb') : s === 'away' ? t('chat.away') : s === 'available' ? t('chat.available') : s}
                                         </Button>
                                     ))}
                                 </div>
                             </div>
                             <div>
-                                <h2 className="text-xl font-black bg-gradient-to-r from-brand-500 via-brand-500-light to-brand-500 bg-clip-text text-transparent">Messages</h2>
-                                <p className="text-[10px] text-gray-400 font-medium">Stay connected with your team</p>
+                                <h2 className="text-xl font-black bg-gradient-to-r from-brand-500 via-brand-500-light to-brand-500 bg-clip-text text-transparent">{t('chat.messagesTitle')}</h2>
+                                <p className="text-[10px] text-gray-400 font-medium">{t('chat.messagesDesc')}</p>
                             </div>
                         </div>
                         <div className="flex gap-1">
@@ -1081,7 +1084,7 @@ export const ChatPage = () => {
                                     </div>
                                     <input
                                         type="text"
-                                        placeholder="Search messages..."
+                                        placeholder={t('chat.searchMessages')}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-brand-500/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-brand-500/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -1315,7 +1318,7 @@ export const ChatPage = () => {
                                                                 setHoveredUser(null);
                                                             }, 500); // Increased timeout for better UX
                                                         }}
-                                                        title={details.status === 'dnd' ? 'Do not disturb' : (details.status === 'busy' ? 'In a Meeting' : (details.status ? details.status.charAt(0).toUpperCase() + details.status.slice(1) : 'Offline'))}>
+                                                        title={details.status === 'dnd' ? t('chat.doNotDisturb') : (details.status === 'busy' ? t('chat.inAMeeting') : (details.status ? details.status.charAt(0).toUpperCase() + details.status.slice(1) : t('chat.offline')))}>
                                                         {(details.status === 'available' || details.status === 'online') && <Check size={8} strokeWidth={4} className="text-white" />}
                                                         {details.status === 'away' && <Clock size={8} strokeWidth={3} className="text-white" />}
                                                         {details.status === 'dnd' && <Minus size={8} strokeWidth={4} className="text-white" />}
@@ -1400,7 +1403,7 @@ export const ChatPage = () => {
                                                             details.status === 'available' || details.status === 'online' ? 'bg-emerald-500' :
                                                                 details.status === 'away' ? 'bg-amber-500' :
                                                                     details.status === 'dnd' || details.status === 'busy' ? 'bg-error-500' : 'bg-gray-400 dark:bg-gray-600'
-                                                        )} title={details.status ? details.status.charAt(0).toUpperCase() + details.status.slice(1) : 'Offline'} />
+                                                        )} title={details.status ? details.status.charAt(0).toUpperCase() + details.status.slice(1) : t('chat.offline')} />
                                                     </div>
                                                     <span className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate max-w-[150px]">
                                                         {details.name}
@@ -1421,7 +1424,7 @@ export const ChatPage = () => {
                                                         : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                                                 )}
                                             >
-                                                {tab === 'chat' ? 'Chat' : tab === 'files' ? 'Files' : 'Photos'}
+                                                {tab === 'chat' ? t('chat.tabChat') : tab === 'files' ? t('chat.tabFiles') : t('chat.tabPhotos')}
                                                 {chatViewTab === tab && (
                                                     <div className="absolute -bottom-2.5 left-0 right-0 h-[2px] bg-brand-500 rounded-full" />
                                                 )}
@@ -1441,7 +1444,7 @@ export const ChatPage = () => {
                                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                             </div>
                                             <Video size={16} className="animate-pulse" />
-                                            <span className="text-[11px] font-bold">Join</span>
+                                            <span className="text-[11px] font-bold">{t('chat.join')}</span>
                                         </Button>
                                     )}
                                     {canVoiceCall && atLeastPlan(3) && (
@@ -1456,7 +1459,7 @@ export const ChatPage = () => {
                                                 }
                                             }}
                                             className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-brand-500" : "text-gray-400")}
-                                            title={activeCall ? "Toggle Audio" : "Audio Call"}
+                                            title={activeCall ? t('chat.toggleAudio') : t('chat.audioCall')}
                                         >
                                             {activeCall && isMuted ? <MicOff size={20} /> : <Phone size={20} />}
                                         </Button>
@@ -1473,7 +1476,7 @@ export const ChatPage = () => {
                                                 }
                                             }}
                                             className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isVideoOff ? "text-brand-500" : "text-gray-400")}
-                                            title={activeCall ? "Toggle Video" : "Video Call"}
+                                            title={activeCall ? t('chat.toggleVideo') : t('chat.videoCall')}
                                         >
                                             {activeCall && isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
                                         </Button>
@@ -1481,7 +1484,7 @@ export const ChatPage = () => {
                                      <Button variant="ghost" 
                                         onClick={() => setShowMessageSearch(!showMessageSearch)}
                                         className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", showMessageSearch && "text-brand-500")}
-                                        title="Search in conversation"
+                                        title={t('chat.searchInConversation')}
                                     >
                                         <Search size={20} />
                                     </Button>
@@ -1490,7 +1493,7 @@ export const ChatPage = () => {
                                              <Button variant="ghost" 
                                                 onClick={() => setShowHeaderMoreMenu(!showHeaderMoreMenu)}
                                                 className={cn("p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", showHeaderMoreMenu ? "text-brand-500 bg-brand-500/10" : "text-gray-500")}
-                                                title="More options"
+                                                title={t('chat.moreOptions')}
                                             >
                                                 <MoreHorizontal size={20} />
                                             </Button>
@@ -1499,26 +1502,26 @@ export const ChatPage = () => {
                                                     <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
                                                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                                                         <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversation Actions</p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('chat.conversationActions')}</p>
                                                         </div>
                                                          <Button variant="ghost" onClick={() => { setIsViewingGroupProfile(true); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                             <User size={16} className="text-gray-400" />
-                                                            View {activeConversation?.type === 'GROUP' ? 'Group Info' : 'Participant Profile'}
+                                                             {t(activeConversation?.type === 'GROUP' ? 'chat.viewGroupInfo' : 'chat.viewParticipantProfile')}
                                                         </Button>
                                                          <Button variant="ghost" onClick={() => { setShowPins(!showPins); setShowHeaderMoreMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                             <Pin size={16} className={cn("text-gray-400", showPins && "text-brand-500 fill-primary")} />
-                                                            {showPins ? 'Hide' : 'Show'} Pinned Messages
+                                                            {showPins ? t('chat.hidePinned') : t('chat.showPinned')}
                                                         </Button>
                                                         {canManageChat && (
                                                             <>
                                                                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2" />
                                                                  <Button variant="ghost" onClick={handleClearChat} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
                                                                     <Eraser size={16} />
-                                                                    Clear Chat History
+                                                                     {t('chat.clearChatHistory')}
                                                                 </Button>
                                                                  <Button variant="ghost" onClick={handleDeleteConversation} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                                                     <Trash2 size={16} />
-                                                                    Delete Conversation
+                                                                     {t('chat.deleteConversation')}
                                                                 </Button>
                                                             </>
                                                         )}
@@ -1542,7 +1545,7 @@ export const ChatPage = () => {
                                             <div className="bg-brand-500/5 border-b border-brand-500/10 px-6 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar animate-in slide-in-from-top duration-300">
                                                 <div className="flex-shrink-0 flex items-center gap-1.5 text-brand-500 text-xs font-bold uppercase tracking-wider">
                                                     <Pin size={12} className="fill-primary" />
-                                                    Pinned
+                                                    {t('chat.pinned')}
                                                 </div>
                                                 <div className="flex items-center gap-3 pr-4">
                                                     {messages.filter(m => m.is_pinned).map(msg => (
@@ -1573,9 +1576,9 @@ export const ChatPage = () => {
                                                     <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-elev-1 border border-gray-100 dark:border-gray-700">
                                                         <MessageSquare size={40} className="text-gray-300 dark:text-gray-600" />
                                                     </div>
-                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">No messages yet</h3>
+                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('chat.noMessagesYet')}</h3>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[200px] mx-auto">
-                                                        Start the conversation by sending a message below.
+                                                        {t('chat.noMessagesDesc')}
                                                     </p>
                                                 </div>
                                             ) : messages?.map((msg, index) => {
@@ -1595,7 +1598,7 @@ export const ChatPage = () => {
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                        {callData.status === 'missed' ? 'Missed call' : `Call ended`}
+                                                                        {callData.status === 'missed' ? t('chat.missedCall') : t('chat.callEnded')}
                                                                     </span>
                                                                     <span className="opacity-70">
                                                                         {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} • `}
@@ -1708,7 +1711,7 @@ export const ChatPage = () => {
                                                                                         }}
                                                                                     />
                                                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                                                                                        <span className="text-white text-xs font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">Click to view</span>
+                                                                                        <span className="text-white text-xs font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">{t('chat.clickToView')}</span>
                                                                                     </div>
                                                                                 </div>
                                                                                 <p className={cn("text-[9px] mt-1 font-medium truncate opacity-60", isMe ? "text-white text-right" : "text-gray-500")}>
@@ -1728,20 +1731,20 @@ export const ChatPage = () => {
                                                                                 const isAudio = ['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(ext);
 
                                                                                 const fileConfig = isPdf
-                                                                                    ? { icon: FileText, color: 'text-red-500', bg: isMe ? 'bg-red-400/20' : 'bg-red-50 dark:bg-red-900/20', accent: 'bg-red-500', label: 'PDF Document' }
+                                                                                    ? { icon: FileText, color: 'text-red-500', bg: isMe ? 'bg-red-400/20' : 'bg-red-50 dark:bg-red-900/20', accent: 'bg-red-500', label: t('chat.pdfDocument') }
                                                                                     : isArchive
-                                                                                        ? { icon: FileArchive, color: 'text-amber-500', bg: isMe ? 'bg-amber-400/20' : 'bg-amber-50 dark:bg-amber-900/20', accent: 'bg-amber-500', label: 'Archive' }
+                                                                                        ? { icon: FileArchive, color: 'text-amber-500', bg: isMe ? 'bg-amber-400/20' : 'bg-amber-50 dark:bg-amber-900/20', accent: 'bg-amber-500', label: t('chat.archive') }
                                                                                         : isDoc
-                                                                                            ? { icon: FileText, color: 'text-blue-500', bg: isMe ? 'bg-blue-400/20' : 'bg-blue-50 dark:bg-blue-900/20', accent: 'bg-blue-500', label: 'Document' }
+                                                                                            ? { icon: FileText, color: 'text-blue-500', bg: isMe ? 'bg-blue-400/20' : 'bg-blue-50 dark:bg-blue-900/20', accent: 'bg-blue-500', label: t('chat.document') }
                                                                                             : isSheet
-                                                                                                ? { icon: FileSpreadsheet, color: 'text-emerald-500', bg: isMe ? 'bg-emerald-400/20' : 'bg-emerald-50 dark:bg-emerald-900/20', accent: 'bg-emerald-500', label: 'Spreadsheet' }
+                                                                                                ? { icon: FileSpreadsheet, color: 'text-emerald-500', bg: isMe ? 'bg-emerald-400/20' : 'bg-emerald-50 dark:bg-emerald-900/20', accent: 'bg-emerald-500', label: t('chat.spreadsheet') }
                                                                                                 : isPresentation
-                                                                                                    ? { icon: FileText, color: 'text-orange-500', bg: isMe ? 'bg-orange-400/20' : 'bg-orange-50 dark:bg-orange-900/20', accent: 'bg-orange-500', label: 'Presentation' }
+                                                                                                    ? { icon: FileText, color: 'text-orange-500', bg: isMe ? 'bg-orange-400/20' : 'bg-orange-50 dark:bg-orange-900/20', accent: 'bg-orange-500', label: t('chat.presentation') }
                                                                                                     : isVideo
-                                                                                                        ? { icon: Video, color: 'text-brand-500', bg: isMe ? 'bg-brand-400/20' : 'bg-brand-50 dark:bg-brand-500/10', accent: 'bg-brand-500', label: 'Video' }
+                                                                                                        ? { icon: Video, color: 'text-brand-500', bg: isMe ? 'bg-brand-400/20' : 'bg-brand-50 dark:bg-brand-500/10', accent: 'bg-brand-500', label: t('chat.video') }
                                                                                                         : isAudio
-                                                                                                            ? { icon: Phone, color: 'text-pink-500', bg: isMe ? 'bg-pink-400/20' : 'bg-pink-50 dark:bg-pink-900/20', accent: 'bg-pink-500', label: 'Audio' }
-                                                                                                            : { icon: File, color: 'text-gray-500', bg: isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-800', accent: 'bg-gray-500', label: 'File' };
+                                                                                                            ? { icon: Phone, color: 'text-pink-500', bg: isMe ? 'bg-pink-400/20' : 'bg-pink-50 dark:bg-pink-900/20', accent: 'bg-pink-500', label: t('chat.audio') }
+                                                                                                            : { icon: File, color: 'text-gray-500', bg: isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-800', accent: 'bg-gray-500', label: t('chat.file') };
 
                                                                                 const IconComponent = fileConfig.icon;
 
@@ -1771,7 +1774,7 @@ export const ChatPage = () => {
                                                                                                 {msg.content}
                                                                                             </p>
                                                                                             <p className={cn("text-[10px] mt-0.5", isMe ? 'text-white/60' : 'text-gray-400')}>
-                                                                                                {fileConfig.label} • {isPdf ? 'Tap to open' : 'Tap to download'}
+                                                                                                {fileConfig.label} • {isPdf ? t('chat.tapToOpen') : t('chat.tapToDownload')}
                                                                                             </p>
                                                                                         </div>
                                                                                         <div className={cn(
@@ -1786,7 +1789,7 @@ export const ChatPage = () => {
                                                                         ) : (
                                                                             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                                                                                 {msg.content}
-                                                                                {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
+                                                                                {msg.is_edited && <span className="text-[10px] opacity-60 ml-1 italic">{t('chat.edited')}</span>}
                                                                             </p>
                                                                         )}
 
@@ -1900,7 +1903,7 @@ export const ChatPage = () => {
                                                                                 setReplyToMessage(msg);
                                                                             }}
                                                                             className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-150"
-                                                                            title="Reply"
+                                                                            title={t('chat.reply')}
                                                                         >
                                                                             <CornerUpLeft size={16} />
                                                                         </Button>
@@ -1913,7 +1916,7 @@ export const ChatPage = () => {
                                                                                     "w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg transition-all duration-150",
                                                                                     showMoreMenu === msg.id && "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                                                                                 )}
-                                                                                title="More options"
+                                                                                title={t('chat.moreOptions')}
                                                                             >
                                                                                 <MoreHorizontal size={16} />
                                                                             </Button>
@@ -1932,25 +1935,25 @@ export const ChatPage = () => {
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
                                                                                             <Share size={16} className="text-gray-400" />
-                                                                                            Forward
+                                                                                            {t('chat.forward')}
                                                                                         </Button>
                                                                                          <Button variant="ghost" 
                                                                                             onClick={() => {
                                                                                                 navigator.clipboard.writeText(msg.content);
                                                                                                 setShowMoreMenu(null);
-                                                                                                import('react-hot-toast').then(({ toast }) => toast.success('Copied to clipboard'));
+                                                                                                import('react-hot-toast').then(({ toast }) => toast.success(t('chat.copiedToClipboard')));
                                                                                             }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
                                                                                             <Copy size={16} className="text-gray-400" />
-                                                                                            Copy message
+                                                                                            {t('chat.copyMessage')}
                                                                                         </Button>
                                                                                          <Button variant="ghost" 
                                                                                             onClick={() => { handleTogglePin(msg.id); setShowMoreMenu(null); }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
                                                                                             <Pin size={16} className={cn("text-gray-400", msg.is_pinned && "fill-primary text-brand-500")} />
-                                                                                            {msg.is_pinned ? 'Unpin message' : 'Pin for everyone'}
+                                                                                            {msg.is_pinned ? t('chat.unpinMessage') : t('chat.pinForEveryone')}
                                                                                         </Button>
 
                                                                                          {isMe && msg.type === 'TEXT' && canEditMessages && (
@@ -1961,7 +1964,7 @@ export const ChatPage = () => {
                                                                                                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                                 >
                                                                                                     <Edit2 size={16} className="text-gray-400" />
-                                                                                                    Edit
+                                                                                                    {t('chat.edit')}
                                                                                                 </Button>
                                                                                             </>
                                                                                         )}
@@ -1974,7 +1977,7 @@ export const ChatPage = () => {
                                                                                                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                                                                                 >
                                                                                                     <Trash2 size={16} />
-                                                                                                    Delete
+                                                                                                    {t('chat.delete')}
                                                                                                 </Button>
                                                                                             </>
                                                                                         )}
@@ -2005,8 +2008,8 @@ export const ChatPage = () => {
                                                                 <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                                                                     <FileText size={28} className="text-gray-300 dark:text-gray-600" />
                                                                 </div>
-                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No files shared yet</p>
-                                                                <p className="text-xs text-gray-400 mt-1">Files shared in this conversation will appear here</p>
+                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('chat.noFilesShared')}</p>
+                                                                <p className="text-xs text-gray-400 mt-1">{t('chat.noFilesDesc')}</p>
                                                             </div>
                                                         );
                                                     }
@@ -2014,10 +2017,10 @@ export const ChatPage = () => {
                                                         <div className="divide-y divide-gray-100 dark:divide-gray-800">
                                                             {/* Table Header */}
                                                             <div className="flex items-center gap-4 px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
-                                                                <span className="flex-1">Name</span>
-                                                                <span className="w-32 text-center">Shared by</span>
-                                                                <span className="w-28 text-center">Date</span>
-                                                                <span className="w-16 text-center">Action</span>
+                                                            <span className="flex-1">{t('chat.fileName')}</span>
+                                                            <span className="w-32 text-center">{t('chat.sharedBy')}</span>
+                                                            <span className="w-28 text-center">{t('chat.date')}</span>
+                                                            <span className="w-16 text-center">{t('chat.action')}</span>
                                                             </div>
                                                             {fileMessages.map(msg => {
                                                                 const fileUrl = msg.file_url?.startsWith('http') ? msg.file_url : resolveImageUrl(msg.file_url);
@@ -2057,7 +2060,7 @@ export const ChatPage = () => {
                                                                              <Button variant="ghost" 
                                                                                 onClick={(e) => { e.stopPropagation(); if (fileUrl) handleDownload(fileUrl, msg.content); }}
                                                                                 className="p-2 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
-                                                                                title="Download"
+                                                                                title={t('chat.download')}
                                                                             >
                                                                                 <Download size={16} />
                                                                             </Button>
@@ -2086,15 +2089,15 @@ export const ChatPage = () => {
                                                                 <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                                                                     <Image size={28} className="text-gray-300 dark:text-gray-600" />
                                                                 </div>
-                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No photos shared yet</p>
-                                                                <p className="text-xs text-gray-400 mt-1">Photos shared in this conversation will appear here</p>
+                                                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('chat.noPhotosShared')}</p>
+                                                                <p className="text-xs text-gray-400 mt-1">{t('chat.noPhotosDesc')}</p>
                                                             </div>
                                                         );
                                                     }
                                                     return (
                                                         <div>
                                                             <div className="flex items-center justify-between mb-4">
-                                                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{photoMessages.length} photo{photoMessages.length !== 1 ? 's' : ''}</h3>
+                                                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('chat.photoCount', { count: photoMessages.length })}</h3>
                                                             </div>
                                                             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                                                 {photoMessages.map(msg => {
@@ -2147,7 +2150,7 @@ export const ChatPage = () => {
                                             <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                                                 {!canSend ? (
                                                     <div className="px-5 py-4 text-center">
-                                                        <p className="text-sm text-gray-500 italic">You don't have permission to send messages in this chat.</p>
+                                                        <p className="text-sm text-gray-500 italic">{t('chat.noPermission')}</p>
                                                     </div>
                                                 ) : (
                                                     <>
@@ -2176,7 +2179,7 @@ export const ChatPage = () => {
                                                                     type="text"
                                                                     value={messageInput}
                                                                     onChange={handleInputChange}
-                                                                    placeholder="Type a message"
+                                                                     placeholder={t('chat.typeMessage')}
                                                                     className="flex-1 bg-transparent border-0 outline-none focus:ring-0 text-sm py-3 px-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                                                 />
 
@@ -2187,7 +2190,7 @@ export const ChatPage = () => {
                                                                             type="button"
                                                                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                                                             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                            title="Emoji"
+                                                                            title={t('chat.emoji')}
                                                                         >
                                                                             <Smile size={20} />
                                                                         </Button>
@@ -2222,7 +2225,7 @@ export const ChatPage = () => {
                                                                             input.click();
                                                                         }}
                                                                         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                        title="Send image"
+                                                                        title={t('chat.sendImage')}
                                                                     >
                                                                         <Image size={20} />
                                                                     </Button>
@@ -2232,7 +2235,7 @@ export const ChatPage = () => {
                                                                         type="button"
                                                                         onClick={() => fileInputRef.current?.click()}
                                                                         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                        title="Attach file"
+                                                                        title={t('chat.attachFile')}
                                                                     >
                                                                         <Paperclip size={20} />
                                                                     </Button>
@@ -2242,7 +2245,7 @@ export const ChatPage = () => {
                                                                         type="button"
                                                                         onClick={() => setShowPins(!showPins)}
                                                                         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                                                        title="More options"
+                                                                        title={t('chat.moreOptions')}
                                                                     >
                                                                         <Plus size={20} />
                                                                     </Button>
@@ -2252,7 +2255,7 @@ export const ChatPage = () => {
                                                                         type="submit"
                                                                         disabled={!messageInput.trim()}
                                                                         className="p-2 text-gray-400 hover:text-brand-500 disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-brand-500/10"
-                                                                        title="Send"
+                                                                        title={t('chat.send')}
                                                                     >
                                                                         <Send size={20} />
                                                                     </Button>
@@ -2297,13 +2300,13 @@ export const ChatPage = () => {
                                     <Plus size={16} className="text-white" />
                                 </div>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">Start a Conversation</h3>
-                            <p className="text-sm text-gray-400 text-center max-w-xs mb-6">Select a conversation from the sidebar or start a new chat with your team members</p>
+                            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">{t('chat.startConversation')}</h3>
+                            <p className="text-sm text-gray-400 text-center max-w-xs mb-6">{t('chat.startConversationDesc')}</p>
                              <Button variant="ghost" 
                                 onClick={() => setIsSelectingContact(true)}
                                 className="px-6 py-2.5 bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white rounded-xl font-medium text-sm hover:shadow-elev-4 hover:shadow-brand-500/25 transition-all duration-300 hover:scale-105"
                             >
-                                New Conversation
+                                {t('chat.newConversation')}
                             </Button>
                         </div>
                     )}
@@ -2321,8 +2324,8 @@ export const ChatPage = () => {
                 open={isViewingGroupProfile && !!activeConversation}
                 onOpenChange={(open) => !open && setIsViewingGroupProfile(false)}
                 onBack={() => setIsViewingGroupProfile(false)}
-                title="Group Profile"
-                description="View team members and group details"
+                title={t('chat.groupProfile')}
+                description={t('chat.groupProfileDesc')}
                 className="max-w-md"
                 footer={
                     <div className="flex justify-end w-full">
@@ -2331,7 +2334,7 @@ export const ChatPage = () => {
                             onClick={() => setIsViewingGroupProfile(false)}
                             className="rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold hover:bg-neutral-50 dark:hover:bg-white/5 w-full"
                         >
-                            Dismiss
+                            {t('chat.dismiss')}
                         </Button>
                     </div>
                 }
@@ -2342,18 +2345,18 @@ export const ChatPage = () => {
                             {getConversationDetails(activeConversation!).initials}
                         </div>
                         <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">{getConversationDetails(activeConversation!).name}</h2>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeConversation?.participants?.length || 0} Operatives Enrolled</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('chat.operativesEnrolled', { count: activeConversation?.participants?.length || 0 })}</p>
                     </div>
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Team Members</h4>
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('chat.teamMembers')}</h4>
                             {activeConversation?.type === 'GROUP' && canManageGroup && (
                                  <Button variant="ghost" 
                                     onClick={() => setIsAddingParticipant(true)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
                                 >
-                                    <UserPlus size={12} strokeWidth={3} /> Add
+                                    <UserPlus size={12} strokeWidth={3} /> {t('chat.add')}
                                 </Button>
                             )}
                         </div>
@@ -2366,17 +2369,17 @@ export const ChatPage = () => {
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
-                                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || 'Member'}</p>
+                                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || t('chat.member')}</p>
                                         </div>
                                     </div>
                                     {p.id === user?.id ? (
-                                        <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest px-2 py-1 bg-brand-500/10 rounded-lg">You</span>
+                                        <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest px-2 py-1 bg-brand-500/10 rounded-lg">{t('chat.you')}</span>
                                     ) : (
                                         activeConversation?.type === 'GROUP' && canManageGroup && (
                                              <Button variant="ghost" 
                                                 onClick={() => handleRemoveParticipant(p.id)}
                                                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
-                                                title="Remove participant"
+                                                title={t('chat.removeParticipantAction')}
                                             >
                                                 <UserMinus size={14} />
                                             </Button>
@@ -2414,10 +2417,10 @@ export const ChatPage = () => {
                         const newGroup = res.data.data;
                         queryClient.invalidateQueries({ queryKey: ['conversations'] });
                         setSelectedConversationId(newGroup.id);
-                        import('react-hot-toast').then(({ toast }) => toast.success(`Group "${name}" created`));
+                        import('react-hot-toast').then(({ toast }) => toast.success(t('chat.groupCreated', { name })));
                     } catch (e) {
                         console.error("Failed to create group", e);
-                        import('react-hot-toast').then(({ toast }) => toast.error('Failed to create group'));
+                        import('react-hot-toast').then(({ toast }) => toast.error(t('chat.groupCreateFailed')));
                     }
                 }}
             />
@@ -2438,7 +2441,7 @@ export const ChatPage = () => {
                                     {lightboxImage.sender?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
                                 </div>
                                 <div>
-                                    <p className="text-white text-sm font-semibold">{lightboxImage.sender || 'Unknown'}</p>
+                                    <p className="text-white text-sm font-semibold">{lightboxImage.sender || t('chat.unknown')}</p>
                                     <p className="text-white/50 text-xs">{lightboxImage.time}</p>
                                 </div>
                             </div>
@@ -2446,7 +2449,7 @@ export const ChatPage = () => {
                                  <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(z => Math.max(z - 0.25, 0.25))}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                    title="Zoom Out (-)"
+                                    title={t('chat.zoomOut')}
                                 >
                                     <ZoomOut size={20} />
                                 </Button>
@@ -2454,21 +2457,21 @@ export const ChatPage = () => {
                                  <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(z => Math.min(z + 0.25, 5))}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                    title="Zoom In (+)"
+                                    title={t('chat.zoomIn')}
                                 >
                                     <ZoomIn size={20} />
                                 </Button>
                                  <Button variant="ghost" 
                                     onClick={() => setLightboxZoom(1)}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                    title="Reset Zoom"
+                                    title={t('chat.resetZoom')}
                                 >
                                     <Maximize2 size={18} />
                                 </Button>
                                  <Button variant="ghost" 
                                     onClick={() => setLightboxRotation(r => r + 90)}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                    title="Rotate (R)"
+                                    title={t('chat.rotate')}
                                 >
                                     <RotateCw size={18} />
                                 </Button>
@@ -2476,15 +2479,15 @@ export const ChatPage = () => {
                                  <Button variant="ghost" 
                                     onClick={() => handleDownload(lightboxImage.url, lightboxImage.name)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                    title="Download"
+                                    title={t('chat.download')}
                                 >
                                     <Download size={16} />
-                                    Download
+                                    {t('chat.download')}
                                 </Button>
                                  <Button variant="ghost" 
                                     onClick={closeLightbox}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
-                                    title="Close (Esc)"
+                                    title={t('chat.close')}
                                 >
                                     <X size={22} />
                                 </Button>
@@ -2550,23 +2553,23 @@ export const ChatPage = () => {
                                  <Button variant="ghost" 
                                     onClick={() => handleDownload(filePreview.url, filePreview.name)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                    title="Download"
+                                    title={t('chat.download')}
                                 >
                                     <Download size={16} />
-                                    Download
+                                    {t('chat.download')}
                                 </Button>
                                  <Button variant="ghost" 
                                     onClick={() => window.open(filePreview.url, '_blank')}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-medium"
-                                    title="Open in new tab"
+                                    title={t('chat.openInNewTab')}
                                 >
                                     <ExternalLink size={16} />
-                                    New Tab
+                                    {t('chat.newTab')}
                                 </Button>
                                  <Button variant="ghost" 
                                     onClick={closeFilePreview}
                                     className="p-2.5 text-white/70 hover:text-white hover:bg-red-500/20 rounded-xl transition-all ml-2"
-                                    title="Close (Esc)"
+                                    title={t('chat.close')}
                                 >
                                     <X size={22} />
                                 </Button>
