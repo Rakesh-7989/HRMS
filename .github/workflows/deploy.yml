@@ -69,6 +69,7 @@ jobs:
           --cwd=frontend
           --token=${{ secrets.VERCEL_TOKEN }}
           --scope=${{ env.VERCEL_ORG_ID }}
+          --project=${{ vars.VERCEL_FRONTEND_PROJECT_ID }}
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
@@ -92,3 +93,4 @@ jobs:
           --cwd=backend
           --token=${{ secrets.VERCEL_TOKEN }}
           --scope=${{ env.VERCEL_ORG_ID }}
+          --project=${{ vars.VERCEL_BACKEND_PROJECT_ID }}
