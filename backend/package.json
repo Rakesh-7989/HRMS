@@ -14,6 +14,7 @@
     "test": "jest",
     "seed:salary": "node scripts/seed_salary_structure.js",
     "seed:test": "node scripts/seed-test-data.js",
+    "seed:synthetic": "node scripts/synthetic-seed.js",
     "fix:payroll": "node scripts/fix_payroll_assignments.js",
     "bench:api": "node benchmarks/api-latency.js",
     "bench:db": "node benchmarks/db-queries.js",
