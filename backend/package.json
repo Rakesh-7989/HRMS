@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "scripts": {
+"scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "lint": "eslint .",
@@ -16,7 +16,9 @@
     "seed:test": "node scripts/seed-test-data.js",
     "fix:payroll": "node scripts/fix_payroll_assignments.js",
     "bench:api": "node benchmarks/api-latency.js",
-    "bench:db": "node benchmarks/db-queries.js"
+    "bench:db": "node benchmarks/db-queries.js",
+    "diff:month": "node scripts/month-end-diff.js",
+    "cron:diff": "node scripts/month-end-diff-cron.js"
   },
   "dependencies": {
     "@sentry/node": "^10.65.0",
