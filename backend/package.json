@@ -14,7 +14,9 @@
     "test": "jest",
     "seed:salary": "node scripts/seed_salary_structure.js",
     "seed:test": "node scripts/seed-test-data.js",
-    "fix:payroll": "node scripts/fix_payroll_assignments.js"
+    "fix:payroll": "node scripts/fix_payroll_assignments.js",
+    "bench:api": "node benchmarks/api-latency.js",
+    "bench:db": "node benchmarks/db-queries.js"
   },
   "dependencies": {
     "@sentry/node": "^10.65.0",
@@ -54,6 +56,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "autocannon": "^8.0.0",
     "eslint": "^8.57.1",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
