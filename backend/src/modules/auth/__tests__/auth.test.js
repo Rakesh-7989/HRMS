@@ -10,6 +10,10 @@ jest.mock('../../../config/logger', () => ({
   warn: jest.fn(),
 }));
 jest.mock('../../../utils/auditLogger', () => jest.fn().mockResolvedValue());
+jest.mock('../../../config/mailer', () => ({
+  sendPasswordResetEmail: jest.fn().mockResolvedValue(),
+  sendPasswordChangedNotification: jest.fn().mockResolvedValue(),
+}));
 
 const mockDb = jest.fn().mockResolvedValue({ rowCount: 1, rows: [{}] });
 jest.mock('../../../config/db', () => ({
