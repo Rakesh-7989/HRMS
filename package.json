@@ -11,12 +11,4 @@
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0"
   },
-  "lint-staged": {
-    "frontend/src/**/*.{ts,tsx}": [
-      "cd frontend && npx eslint --fix"
-    ],
-    "backend/src/**/*.js": [
-      "cd backend && npx eslint --fix"
-    ]
-  }
 }
