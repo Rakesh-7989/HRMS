@@ -29,6 +29,10 @@ const queryClient = new QueryClient({
   },
 });
 
+if (import.meta.env.PROD) {
+  console.log('[WellZo] Frontend build deployed successfully');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
