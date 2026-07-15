@@ -153,7 +153,7 @@ const runBenchmark = async (query) => {
 };
 
 const runAllBenchmarks = async () => {
-  console.log('🚀 Starting Database Query Benchmarks');
+  console.log('Starting Database Query Benchmarks');
   console.log('='.repeat(60));
 
   const results = [];
@@ -163,24 +163,24 @@ const runAllBenchmarks = async () => {
       const result = await runBenchmark(query);
       results.push(result);
     } catch (err) {
-      console.error(`  ❌ Failed: ${err.message}`);
+      console.error('  Failed:', err.message);
       results.push({ name: query.name, error: err.message });
     }
   }
 
   await pool.end();
 
-  console.log('\n' + '='.repeat(60));
-  console.log('📈 DB QUERY BENCHMARK SUMMARY');
+console.log('\n' + '='.repeat(60));
+  console.log('DB QUERY BENCHMARK SUMMARY');
   console.log('='.repeat(60));
-  console.log(`${'Query':<35} ${'Avg(ms)':>10} ${'P50(ms)':>10} ${'P95(ms)':>10} ${'P99(ms)':>10}`);
+  console.log('Query'.padEnd(35) + ' Avg(ms)'.padStart(10) + ' P50(ms)'.padStart(10) + ' P95(ms)'.padStart(10) + ' P99(ms)'.padStart(10));
   console.log('-'.repeat(75));
   
   for (const r of results) {
     if (r.error) {
-      console.log(`${r.name:<35} ERROR: ${r.error}`);
+      console.log(r.name.padEnd(35) + ' ERROR: ' + r.error);
     } else {
-      console.log(`${r.name:<35} ${r.avg.toFixed(2).padStart(10)} ${r.p50.toFixed(2).padStart(10)} ${r.p95.toFixed(2).padStart(10)} ${r.p99.toFixed(2).padStart(10)}`);
+      console.log(r.name.padEnd(35) + r.avg.toFixed(2).padStart(10) + r.p50.toFixed(2).padStart(10) + r.p95.toFixed(2).padStart(10) + r.p99.toFixed(2).padStart(10));
     }
   }
 };

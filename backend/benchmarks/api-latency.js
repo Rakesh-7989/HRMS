@@ -59,7 +59,7 @@ const runBenchmark = async (endpoint) => {
 };
 
 const runAllBenchmarks = async () => {
-  console.log('🚀 Starting API Latency Benchmarks');
+  console.log('Starting API Latency Benchmarks');
   console.log(`Target: ${BASE_URL}`);
   console.log('='.repeat(60));
 
@@ -70,23 +70,23 @@ const runAllBenchmarks = async () => {
       const result = await runBenchmark(endpoint);
       results.push(result);
     } catch (err) {
-      console.error(`  ❌ Failed: ${err.message}`);
+      console.error('  Failed:', err.message);
       results.push({ endpoint: `${endpoint.method} ${endpoint.path}`, error: err.message });
     }
   }
 
-  // Summary
+// Summary
   console.log('\n' + '='.repeat(60));
-  console.log('📈 SUMMARY');
+  console.log('SUMMARY');
   console.log('='.repeat(60));
-  console.log(`${'Endpoint':<25} ${'RPS':>10} ${'Avg(ms)':>10} ${'P95(ms)':>10} ${'P99(ms)':>10} ${'Errors':>8}`);
+  console.log('Endpoint'.padEnd(25) + ' RPS'.padStart(10) + ' Avg(ms)'.padStart(10) + ' P95(ms)'.padStart(10) + ' P99(ms)'.padStart(10) + ' Errors'.padStart(8));
   console.log('-'.repeat(73));
   
   for (const r of results) {
     if (r.error) {
-      console.log(`${r.endpoint:<25} ${'ERROR':>10} ${r.error}`);
+      console.log(r.endpoint.padEnd(25) + ' ERROR'.padStart(10) + ' ' + r.error);
     } else {
-      console.log(`${r.endpoint:<25} ${r.rps.toFixed(2).padStart(10)} ${r.latencyAvg.toFixed(2).padStart(10)} ${r.latencyP95.toFixed(2).padStart(10)} ${r.latencyP99.toFixed(2).padStart(10)} ${r.errors.toString().padStart(8)}`);
+      console.log(r.endpoint.padEnd(25) + r.rps.toFixed(2).padStart(10) + r.latencyAvg.toFixed(2).padStart(10) + r.latencyP95.toFixed(2).padStart(10) + r.latencyP99.toFixed(2).padStart(10) + r.errors.toString().padStart(8));
     }
   }
 };
