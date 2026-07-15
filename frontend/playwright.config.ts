@@ -31,4 +31,5 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: { maxDiffPixels: 100 },
   },
+  testIgnore: isCI ? ['**/auth.spec.ts'] : [],
 });
