@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -64,16 +64,16 @@ export const LeaveBalancesPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to adjust balance');
+            setErrorMessage((error as {message?: string}).message || 'Failed to adjust balance');
         },
     });
 
     // Handlers
-    const handleSelectEmployee = (user: any) => {
+    const handleSelectEmployee = (user: Record<string, unknown>) => {
         setSelectedEmployee({
-            id: user.id,
-            name: `${user.first_name} ${user.last_name}`,
-            email: user.email,
+            id: user.id as string,
+            name: `${user.first_name as string} ${user.last_name as string}`,
+            email: user.email as string,
         });
         setSearchQuery('');
     };
@@ -147,17 +147,17 @@ export const LeaveBalancesPage: React.FC = () => {
                                     <div className="p-4 text-center text-sm text-gray-500">No employees found</div>
                                 ) : (
                                     <ul className="py-1">
-                                        {searchResults.map((user: any) => (
-                                            <li key={user.id}>
+                                        {(searchResults as unknown as Record<string, unknown>[]).map((user: Record<string, unknown>) => (
+                                            <li key={user.id as string}>
                                                  <Button variant="ghost" 
                                                     className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between group"
                                                     onClick={() => handleSelectEmployee(user)}
                                                 >
                                                     <div>
                                                         <p className="font-medium text-sm text-gray-900 dark:text-white">
-                                                            {user.first_name} {user.last_name}
+                                                            {user.first_name as string} {user.last_name as string}
                                                         </p>
-                                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                                        <p className="text-xs text-gray-500">{user.email as string}</p>
                                                     </div>
                                                 </Button>
                                             </li>

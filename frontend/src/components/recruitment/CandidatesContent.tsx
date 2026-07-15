@@ -1,13 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { recruitmentService, Candidate } from '@/services/recruitment.service';
+import { useQuery } from '@tanstack/react-query';
+import { recruitmentService } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
-import { Users, Plus, Mail, Phone, Building2, IndianRupee, Loader2 } from 'lucide-react';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { Users, Plus, Mail, Phone, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { showToast } from '@/utils/toast';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   NEW: { labelKey: 'recruitment.new', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
@@ -25,21 +24,11 @@ const sourceConfig: Record<string, string> = {
 
 export const CandidatesContent: React.FC = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const [filter, setFilter] = React.useState<string | undefined>(undefined);
 
   const { data: candidates, isLoading } = useQuery({
     queryKey: ['recruitment-candidates', filter],
     queryFn: () => recruitmentService.getCandidates(filter).then(r => r.data),
-  });
-
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      recruitmentService.updateCandidateStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recruitment-candidates'] });
-      showToast.success(t('recruitment.statusUpdated'));
-    },
   });
 
   if (isLoading) {

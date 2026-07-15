@@ -189,7 +189,8 @@ const generatePDFFromData = async (data) => {
             .replace(/[\u2013\u2014]/g, '-')   // En/Em dash → hyphen
             .replace(/\u2026/g, '...')         // Ellipsis → three dots
             .replace(/[\u00A0]/g, ' ')         // Non-breaking space → regular space
-            .replace(/[^\x20-\x7E\u00A0-\u00FF\u0900-\u097F]/g, ''); // Keep ASCII + Latin-1 + Devanagari
+            // eslint-disable-next-line no-misleading-character-class
+            .replace(/[^\x20-\x7E\u00A0-\u00FF\u0900-\u097F]/ug, ''); // Keep ASCII + Latin-1 + Devanagari
     };
 
     // Sanitize key text fields upfront

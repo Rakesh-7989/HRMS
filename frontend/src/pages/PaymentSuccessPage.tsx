@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ROUTES } from '@/utils/constants';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Loader2, XCircle, Mail, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const PaymentSuccessPage: React.FC = () => {
-  const { t: _t } = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
@@ -32,9 +33,9 @@ export const PaymentSuccessPage: React.FC = () => {
         await tenantRegistrationService.verifyPaymentPublic(orderId);
         setStatus('success');
         setMessage('Your payment has been verified successfully. Your subscription is now active and login credentials have been sent to your email.');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Verification error:', error);
-        const errMsg = error?.response?.data?.message || error?.message || 'We could not verify your payment.';
+        const errMsg = (error as {response?: {data?: {message?: string}}; message?: string})?.response?.data?.message || (error as {message?: string})?.message || 'We could not verify your payment.';
         setStatus('error');
         setMessage(errMsg);
       }
@@ -145,7 +146,7 @@ export const PaymentSuccessPage: React.FC = () => {
               <Button
                 variant="primary"
                 className="w-full h-12 font-semibold"
-                onClick={() => navigate('/payment-failure')}
+                onClick={() => navigate(ROUTES.PAYMENT_FAILURE)}
               >
                 View Options
               </Button>

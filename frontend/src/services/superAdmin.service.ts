@@ -59,37 +59,37 @@ export const superAdminService = {
     return response.data.count || 0;
   },
 
-  cancelTenantSubscription: async (id: string): Promise<any> => {
+  cancelTenantSubscription: async (id: string): Promise<Record<string, unknown>> => {
     const response = await api.post(`/subscriptions/admin/cancel/${id}`);
     return response.data;
   },
 
-  extendTenantSubscription: async (id: string, days: number): Promise<any> => {
+  extendTenantSubscription: async (id: string, days: number): Promise<Record<string, unknown>> => {
     const response = await api.post(`/subscriptions/admin/extend/${id}`, { days });
     return response.data;
   },
 
-  enableTenantSubscription: async (id: string, planId?: string, days?: number): Promise<any> => {
+  enableTenantSubscription: async (id: string, planId?: string, days?: number): Promise<Record<string, unknown>> => {
     const response = await api.post(`/subscriptions/admin/enable/${id}`, { planId, days });
     return response.data;
   },
 
-  upgradeTenantSubscription: async (id: string, planId: string, billingCycle?: string): Promise<any> => {
+  upgradeTenantSubscription: async (id: string, planId: string, billingCycle?: string): Promise<Record<string, unknown>> => {
     const response = await api.post(`/subscriptions/admin/upgrade/${id}`, { planId, billingCycle });
     return response.data;
   },
 
-  suspendTenantSubscription: async (id: string): Promise<any> => {
+  suspendTenantSubscription: async (id: string): Promise<Record<string, unknown>> => {
     const response = await api.post(`/subscriptions/admin/suspend/${id}`);
     return response.data;
   },
 
-  getTenantBillingHistory: async (id: string): Promise<any[]> => {
+  getTenantBillingHistory: async (id: string): Promise<Record<string, unknown>[]> => {
     const response = await api.get(`/subscriptions/admin/billing/${id}`);
     return response.data.data || [];
   },
 
-  getPlans: async (): Promise<any[]> => {
+  getPlans: async (): Promise<Record<string, unknown>[]> => {
     const response = await api.get('/subscriptions/plans');
     return response.data.data || [];
   },

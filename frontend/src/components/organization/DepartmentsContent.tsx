@@ -45,8 +45,9 @@ export const DepartmentsContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['departments'] });
             showToast.success(t('departments.deleted'));
         },
-        onError: (err: any) => {
-            const message = err.response?.data?.message || err.message || t('departments.deleteFailed');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            const message = error.response?.data?.message || error.message || t('departments.deleteFailed');
             showToast.error(message);
         },
     });
@@ -58,8 +59,9 @@ export const DepartmentsContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['departments'] });
             showToast.success(!variables.is_active ? t('departments.activated') : t('departments.deactivated'));
         },
-        onError: (err: any) => {
-            const message = err.response?.data?.message || err.message || t('departments.statusUpdateFailed');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            const message = error.response?.data?.message || error.message || t('departments.statusUpdateFailed');
             showToast.error(message);
         },
     });

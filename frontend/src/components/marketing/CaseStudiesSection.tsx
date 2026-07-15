@@ -1,9 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, IndianRupee, TrendingUp, Users, Building2, Star, Quote } from 'lucide-react';
+import { ArrowRight, Users, Star, Quote } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
-import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
 
 const caseStudies = [

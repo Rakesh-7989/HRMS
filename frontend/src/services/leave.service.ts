@@ -279,7 +279,7 @@ const handleApiError = (error: unknown): never => {
 
 // Helper to extract data from response (handles both nested and non-nested formats)
 const extractData = <T>(response: { data: T | { data: T; status?: string } }): T => {
-  const responseData = response.data as any;
+  const responseData = response.data as unknown as { data: T; status?: string };
   // If response has a 'data' property that's the actual data, use that
   if (responseData && typeof responseData === 'object' && 'data' in responseData) {
     return responseData.data;
@@ -504,21 +504,21 @@ export const leaveService = {
       });
       const rawData = extractData(response) || [];
       // Issue 23: Fix entitled calculation — use raw backend fields
-      return rawData.map((item: any) => ({
-        id: item.id,
-        employee_id: item.employee_id,
-        leave_type_id: item.leave_type_id,
+      return rawData.map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        employee_id: item.employee_id as string,
+        leave_type_id: item.leave_type_id as string,
         leave_type: {
-          id: item.leave_type_id,
-          name: item.leave_type_name || 'Unknown',
-          code: item.leave_type_code || '',
+          id: item.leave_type_id as string,
+          name: (item.leave_type_name as string) || 'Unknown',
+          code: (item.leave_type_code as string) || '',
         },
-        year: item.year,
-        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
-        used: parseFloat(item.used || 0),
-        pending: parseFloat(item.pending || 0),
-        available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carry_forward || 0),
+        year: item.year as number,
+        entitled: parseFloat((item.opening_balance as string) || '0') + parseFloat((item.accrued as string) || '0') + parseFloat((item.adjusted as string) || '0') + parseFloat((item.carry_forward as string) || '0'),
+        used: parseFloat((item.used as string) || '0'),
+        pending: parseFloat((item.pending as string) || '0'),
+        available: parseFloat((item.current_balance as string) || '0'),
+        carried_forward: parseFloat((item.carry_forward as string) || '0'),
       }));
     } catch (error) {
       console.error('Error fetching balances:', error);
@@ -533,21 +533,21 @@ export const leaveService = {
       });
       const rawData = extractData(response) || [];
       // Issue 23: Fix entitled calculation
-      return rawData.map((item: any) => ({
-        id: item.id,
-        employee_id: item.employee_id,
-        leave_type_id: item.leave_type_id,
+      return rawData.map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        employee_id: item.employee_id as string,
+        leave_type_id: item.leave_type_id as string,
         leave_type: {
-          id: item.leave_type_id,
-          name: item.leave_type_name || 'Unknown',
-          code: item.leave_type_code || '',
+          id: item.leave_type_id as string,
+          name: (item.leave_type_name as string) || 'Unknown',
+          code: (item.leave_type_code as string) || '',
         },
-        year: item.year,
-        entitled: parseFloat(item.opening_balance || 0) + parseFloat(item.accrued || 0) + parseFloat(item.adjusted || 0) + parseFloat(item.carry_forward || 0),
-        used: parseFloat(item.used || 0),
-        pending: parseFloat(item.pending || 0),
-        available: parseFloat(item.current_balance || 0),
-        carried_forward: parseFloat(item.carry_forward || 0),
+        year: item.year as number,
+        entitled: parseFloat((item.opening_balance as string) || '0') + parseFloat((item.accrued as string) || '0') + parseFloat((item.adjusted as string) || '0') + parseFloat((item.carry_forward as string) || '0'),
+        used: parseFloat((item.used as string) || '0'),
+        pending: parseFloat((item.pending as string) || '0'),
+        available: parseFloat((item.current_balance as string) || '0'),
+        carried_forward: parseFloat((item.carry_forward as string) || '0'),
       }));
     } catch (error) {
       console.error('Error fetching employee balances:', error);
@@ -564,7 +564,7 @@ export const leaveService = {
     }
   },
 
-  getAdjustmentHistory: async (employeeId: string, params?: YearParams): Promise<any[]> => {
+  getAdjustmentHistory: async (employeeId: string, params?: YearParams): Promise<Array<Record<string, unknown>>> => {
     try {
       const response = await api.get(`/leave/balances/employee/${employeeId}/history`, { params });
       return extractData(response) || [];
@@ -753,7 +753,7 @@ export const leaveService = {
     }
   },
 
-  getPendingAgeingReport: async (): Promise<any[]> => {
+  getPendingAgeingReport: async (): Promise<Array<Record<string, unknown>>> => {
     try {
       const response = await api.get('/leave/reports/pending-ageing');
       return extractData(response) || [];
@@ -763,7 +763,7 @@ export const leaveService = {
     }
   },
 
-  getUpcomingLeavesReport: async (days?: number): Promise<any[]> => {
+  getUpcomingLeavesReport: async (days?: number): Promise<Array<Record<string, unknown>>> => {
     try {
       const response = await api.get('/leave/reports/upcoming', {
         params: days ? { days } : undefined

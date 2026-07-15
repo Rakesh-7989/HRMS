@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -15,10 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getShifts, createShift, updateShift, deleteShift, assignShift, Shift } from '@/services/shift.service';
 import { usersService } from '@/services/users.service';
 import { Plus, Edit2, Trash2, UserPlus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
-export const ShiftsPage = () => {
+export const ShiftsPage: React.FC = () => {
   const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -49,10 +49,11 @@ export const ShiftsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setIsModalOpen(false);
-            showToast.success('Shift created successfully');
+            showToast.success(t('organization.shiftCreated'));
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.message || 'Failed to create shift';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const msg = (err as {response?: {data?: {message?: string}}}).response?.data?.message || t('organization.shiftCreateFailed');
             showToast.error(msg);
         }
     });
@@ -63,10 +64,11 @@ export const ShiftsPage = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setIsModalOpen(false);
             setEditingShift(null);
-            showToast.success('Shift updated successfully');
+            showToast.success(t('organization.shiftUpdated'));
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.message || 'Failed to update shift';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const msg = (err as {response?: {data?: {message?: string}}}).response?.data?.message || t('organization.shiftUpdateFailed');
             showToast.error(msg);
         }
     });
@@ -75,12 +77,13 @@ export const ShiftsPage = () => {
         mutationFn: deleteShift,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
-            showToast.success('Shift deleted successfully');
+            showToast.success(t('organization.shiftDeleted'));
             setIsDeleteModalOpen(false);
             setShiftToDelete(null);
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.message || 'Failed to delete shift';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const msg = (err as {response?: {data?: {message?: string}}}).response?.data?.message || t('organization.shiftDeleteFailed');
             showToast.error(msg);
         }
     });
@@ -88,16 +91,17 @@ export const ShiftsPage = () => {
     const assignMutation = useMutation({
         mutationFn: (data: { shiftId: string; employeeIds: string[]; assignToAll: boolean }) =>
             assignShift(data.shiftId, data.employeeIds, data.assignToAll),
-        onSuccess: (data: any) => {
+        onSuccess: (data: Record<string, unknown>) => {
             setIsAssignModalOpen(false);
             setSelectedEmployeeIds([]);
             setAssignToAll(false);
             queryClient.invalidateQueries({ queryKey: ['users'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
-            const count = data?.data?.updatedCount || data?.updatedCount || 'users';
+            const responseData = data as unknown as Record<string, unknown>;
+            const count = (responseData.data as Record<string, unknown>)?.updatedCount || responseData.updatedCount || 'users';
             showToast.success(`Shift assigned to ${count} successfully`);
         },
-        onError: () => showToast.error('Failed to assign shift')
+        onError: () => showToast.error(t('organization.shiftAssignFailed'))
     });
 
     const [formData, setFormData] = useState<{
@@ -174,11 +178,11 @@ export const ShiftsPage = () => {
     const handleAssignSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedShiftId) {
-            showToast.error('Please select a shift');
+            showToast.error(t('organization.selectShift'));
             return;
         }
         if (!assignToAll && selectedEmployeeIds.length === 0) {
-            showToast.error('Please select at least one employee');
+            showToast.error(t('organization.selectEmployee'));
             return;
         }
         assignMutation.mutate({
@@ -409,24 +413,24 @@ export const ShiftsPage = () => {
                                 <div className="space-y-2">
                                     <Label>Select Employees</Label>
                                     <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1">
-                                        {employees
-                                            .filter((emp: any) => !['ADMIN'].includes(emp.role) && emp.employee_uuid)
-                                            .map((emp: any) => (
-                                                <div key={emp.id} className="flex items-center space-x-2">
+                                        {(employees as unknown as Record<string, unknown>[])
+                                            .filter((emp: Record<string, unknown>) => !['ADMIN'].includes(emp.role as string) && emp.employee_uuid)
+                                            .map((emp: Record<string, unknown>) => (
+                                                <div key={emp.id as string} className="flex items-center space-x-2">
                                                     <input
                                                         type="checkbox"
-                                                        id={`emp-${emp.id}`}
-                                                        checked={selectedEmployeeIds.includes(emp.employee_uuid!)}
+                                                        id={`emp-${emp.id as string}`}
+                                                        checked={selectedEmployeeIds.includes(emp.employee_uuid as string)}
                                                         onChange={(e) => {
                                                             if (e.target.checked) {
-                                                                setSelectedEmployeeIds([...selectedEmployeeIds, emp.employee_uuid!]);
+                                                                setSelectedEmployeeIds([...selectedEmployeeIds, emp.employee_uuid as string]);
                                                             } else {
-                                                                setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.employee_uuid));
+                                                                setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== (emp.employee_uuid as string)));
                                                             }
                                                         }}
                                                     />
-                                                    <label htmlFor={`emp-${emp.id}`} className="text-sm cursor-pointer select-none">
-                                                        {emp.first_name} {emp.last_name} ({emp.email})
+                                                    <label htmlFor={`emp-${emp.id as string}`} className="text-sm cursor-pointer select-none">
+                                                        {emp.first_name as string} {emp.last_name as string} ({emp.email as string})
                                                     </label>
                                                 </div>
                                             ))}

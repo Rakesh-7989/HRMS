@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -10,7 +10,7 @@ import { Plus, Edit3, Trash2, Building2, Check, X, Search } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 export const DepartmentsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -45,11 +45,11 @@ export const DepartmentsPage: React.FC = () => {
     mutationFn: (id: string) => departmentService.deleteDepartment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      showToast.success('Department deleted successfully');
+      showToast.success(t('organization.departmentDeleted'));
     },
-    onError: (err: any) => {
-      const backendMessage = err.response?.data?.message;
-      const axiosMessage = err.message;
+    onError: (err: unknown) => {
+      const backendMessage = (err as {response?: {data?: {message?: string}}}).response?.data?.message;
+      const axiosMessage = (err as {message?: string}).message;
       showToast.error(backendMessage || `Error: ${axiosMessage}`);
     },
   });
@@ -61,8 +61,8 @@ export const DepartmentsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
       showToast.success(`Department ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
     },
-    onError: (err: any) => {
-      showToast.error(err.response?.data?.message || err.message || 'Failed to update department status');
+    onError: (err: unknown) => {
+      showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to update department status');
     },
   });
 
@@ -244,4 +244,4 @@ export const DepartmentsPage: React.FC = () => {
   );
 };
 
-export default DepartmentsPage;
+

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { performanceService, ReviewCycle, PerformanceReview } from '@/services/performance.service';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { performanceService } from '@/services/performance.service';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
-import { BarChart3, Plus, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { BarChart3, Plus, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { showToast } from '@/utils/toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   DRAFT: { labelKey: 'performance.draft', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400' },
@@ -24,7 +23,6 @@ const reviewStatusConfig: Record<string, { labelKey: string; color: string }> = 
 
 export const ReviewCyclesContent: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null);
 
@@ -44,15 +42,6 @@ export const ReviewCyclesContent: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performance-cycles'] });
       showToast.success(t('performance.reviewCycleClosed'));
-    },
-  });
-
-  const handleSubmitReview = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { rating: number; comments: string } }) =>
-      performanceService.submitReview(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['performance-reviews'] });
-      showToast.success(t('performance.reviewSubmitted'));
     },
   });
 

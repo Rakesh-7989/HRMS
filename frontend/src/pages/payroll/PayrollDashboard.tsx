@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
@@ -94,7 +94,7 @@ const formatCurrency = (val: number) => {
 // Reusable card class for consistent light/dark theming
 const cardClass = "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-elev-2 hover:shadow-elev-4 transition-all duration-300";
 
-export const PayrollDashboard = () => {
+export const PayrollDashboard: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -102,7 +102,7 @@ export const PayrollDashboard = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
             const res = await api.get(`/payroll/river/dashboard?month=${selectedMonth}&year=${selectedYear}`);
@@ -110,12 +110,10 @@ export const PayrollDashboard = () => {
         } catch (error) {
             console.error(error);
             showToast.error("Failed to load dashboard stats");
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [selectedMonth, selectedYear]);
 
-    useEffect(() => { fetchStats(); }, [selectedMonth, selectedYear]);
+    useEffect(() => { fetchStats(); }, [fetchStats]);
 
     const handleStartProcess = async () => {
         if (stats?.runStatus) {
@@ -127,8 +125,8 @@ export const PayrollDashboard = () => {
             const res = await api.post('/payroll/river/run', { month: selectedMonth, year: selectedYear });
             showToast.success("New Payroll Run Started!");
             navigate(`/payroll/process/${res.data.id}`);
-        } catch (error: any) {
-            showToast.error(error.response?.data?.error || "Failed to start payroll run");
+        } catch (error: unknown) {
+            showToast.error((error as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || "Failed to start payroll run");
         } finally {
             setLoading(false);
         }
@@ -480,49 +478,49 @@ export const PayrollDashboard = () => {
                             const columns = [
                                 {
                                     header: t('payroll.period'),
-                                    cell: (run: any) => (
+                                    cell: (run: Record<string, unknown>) => (
                                         <span className="text-gray-700 dark:text-gray-300 font-medium">
-                                            {MONTHS[run.month - 1]} {run.year}
+                                            {MONTHS[(run.month as number) - 1]} {run.year as string}
                                         </span>
                                     ),
                                 },
                                 {
                                     header: t('payroll.stage'),
-                                    cell: (run: any) => (
-                                        <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/20 px-2 py-0.5 rounded">{run.stage}</span>
+                                    cell: (run: Record<string, unknown>) => (
+                                        <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/20 px-2 py-0.5 rounded">{run.stage as string}</span>
                                     ),
                                 },
                                 {
                                     header: t('common.status'),
-                                    cell: (run: any) => (
-                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(run.status)}`}>
-                                            {run.status}
+                                    cell: (run: Record<string, unknown>) => (
+                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(run.status as string)}`}>
+                                            {run.status as string}
                                         </span>
                                     ),
                                 },
                                 {
                                     header: t('payroll.gross'),
-                                    cell: (run: any) => (
-                                        <span className="text-right text-gray-700 dark:text-gray-300 font-mono text-xs">{formatCurrency(run.totalGross)}</span>
+                                    cell: (run: Record<string, unknown>) => (
+                                        <span className="text-right text-gray-700 dark:text-gray-300 font-mono text-xs">{formatCurrency(run.totalGross as number)}</span>
                                     ),
                                 },
                                 {
                                     header: t('payroll.net'),
-                                    cell: (run: any) => (
-                                        <span className="text-right text-emerald-600 dark:text-emerald-400 font-mono text-xs">{formatCurrency(run.totalNet)}</span>
+                                    cell: (run: Record<string, unknown>) => (
+                                        <span className="text-right text-emerald-600 dark:text-emerald-400 font-mono text-xs">{formatCurrency(run.totalNet as number)}</span>
                                     ),
                                 },
                                 {
                                     header: t('payroll.employees'),
-                                    cell: (run: any) => (
-                                        <span className="text-center text-gray-500 dark:text-gray-400">{run.totalEmployees}</span>
+                                    cell: (run: Record<string, unknown>) => (
+                                        <span className="text-center text-gray-500 dark:text-gray-400">{run.totalEmployees as number}</span>
                                     ),
                                 },
                                 {
                                     header: t('common.actions'),
-                                    cell: (run: any) => (
+                                    cell: (run: Record<string, unknown>) => (
                                          <Button variant="ghost" 
-                                            onClick={() => navigate(`/payroll/process/${run.id}`)}
+                                            onClick={() => navigate(`/payroll/process/${run.id as string}`)}
                                             className="p-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-indigo-900/30 text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                                             title={t('payroll.viewRun')}
                                         >
@@ -547,4 +545,4 @@ export const PayrollDashboard = () => {
     );
 };
 
-export default PayrollDashboard;
+

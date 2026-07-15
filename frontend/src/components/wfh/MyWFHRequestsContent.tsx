@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { wfhService } from '@/services/wfh.service';
 import { format } from 'date-fns';
-import { Calendar, Clock, Home, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
 import { WFHRequestDialog } from '@/components/wfh/WFHRequestDialog';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DataTable } from '@/components/ui/DataTable';
@@ -15,7 +15,7 @@ export const MyWFHRequestsContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const canCreate = hasPermission('wfh', 'create');
     const [isWFHDialogOpen, setIsWFHDialogOpen] = useState(false);
-    const { data: myRequests = [], isLoading } = useQuery({
+    const { data: myRequests = [], isLoading } = useQuery<{ request_date: string; reason: string; status: string; approval_comment?: string; rejection_reason?: string }[]>({
         queryKey: ['wfh-requests', 'my'],
         queryFn: () => wfhService.getMyRequests(),
     });
@@ -43,7 +43,7 @@ export const MyWFHRequestsContent: React.FC = () => {
     const columns = [
         {
             header: t('common.date'),
-            cell: (request: any) => (
+            cell: (request: { request_date: string; reason: string; status: string; approval_comment?: string; rejection_reason?: string }) => (
                 <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-gray-400" />
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -54,20 +54,20 @@ export const MyWFHRequestsContent: React.FC = () => {
         },
         {
             header: t('common.reason'),
-            cell: (request: any) => request.reason,
+            cell: (request: { request_date: string; reason: string; status: string; approval_comment?: string; rejection_reason?: string }) => request.reason,
         },
         {
             header: t('common.status'),
-            cell: (request: any) => (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
-                    {getStatusIcon(request.status)}
+            cell: (request: { request_date: string; reason: string; status: string; approval_comment?: string; rejection_reason?: string }) => (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(request.status as string)}`}>
+                    {getStatusIcon(request.status as string)}
                     {request.status === 'PENDING_HR' ? 'PENDING (HR)' : request.status}
                 </span>
             ),
         },
         {
             header: t('common.notes'),
-            cell: (request: any) => (
+            cell: (request: { request_date: string; reason: string; status: string; approval_comment?: string; rejection_reason?: string }) => (
                 <div className="text-xs">
                     {request.status === 'APPROVED' && request.approval_comment && (
                         <div className="flex items-start gap-1">

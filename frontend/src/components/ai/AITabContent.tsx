@@ -3,7 +3,7 @@ import { AISentimentAnalysis } from './AISentimentAnalysis';
 import { AISkillsGapAnalyzer } from './AISkillsGapAnalyzer';
 import { AIResumeParser } from './AIResumeParser';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Brain, Sparkles, MessageSquareText, BarChart3, Target, Upload } from 'lucide-react';
 
 interface AITabContentProps {

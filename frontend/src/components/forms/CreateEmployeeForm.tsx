@@ -39,14 +39,14 @@ const makeCreateSchema = (t: TranslateFn) =>
   Yup.object({
   email: Yup.string().email(t('employees.validation.invalidEmail')).required(t('employees.validation.emailRequired')),
   first_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.firstNameRequired')),
   last_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.lastNameRequired')),
   role: Yup.string().required(t('employees.validation.roleRequired')),
   phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .matches(/^[0-9+\s.]*$/, t('employees.validation.phoneFormat'))
     .min(5, t('employees.validation.tooShort'))
     .max(25, t('employees.validation.tooLong'))
     .required(t('employees.validation.phoneRequired')),
@@ -76,10 +76,10 @@ const makeCreateSchema = (t: TranslateFn) =>
   address: Yup.string().required(t('employees.validation.addressRequired')),
   job_location: Yup.string().nullable(),
   bank_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.&]+$/, t('employees.validation.bankNameLetters'))
+    .matches(/^[A-Za-z\s\-.&]+$/, t('employees.validation.bankNameLetters'))
     .required(t('employees.validation.bankNameRequired')),
   account_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.accountNameLetters'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.accountNameLetters'))
     .required(t('employees.validation.accountNameRequired')),
   account_number: Yup.string()
     .test('digits-only', t('employees.validation.accountDigits'), function (value) {
@@ -104,10 +104,10 @@ const makeCreateSchema = (t: TranslateFn) =>
     .positive(t('employees.validation.salaryPositive'))
     .nullable(),
   emergency_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.emergencyNameRequired')),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .matches(/^[0-9+\s.]*$/, t('employees.validation.phoneFormat'))
     .min(5, t('employees.validation.tooShort'))
     .max(25, t('employees.validation.tooLong'))
     .notOneOf([Yup.ref('phone'), null], t('employees.validation.emergencyPhoneSame'))
@@ -124,10 +124,10 @@ const makeEditSchema = (t: TranslateFn) =>
   employee_id: Yup.string(),
   role: Yup.string(),
   first_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.firstNameRequired')),
   last_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.lastNameRequired')),
   date_of_birth: Yup.date()
     .required(t('employees.validation.dobRequired'))
@@ -148,7 +148,7 @@ const makeEditSchema = (t: TranslateFn) =>
       return new Date(value) >= minJoinDate;
     }),
   phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .matches(/^[0-9+\s.]*$/, t('employees.validation.phoneFormat'))
     .min(5, t('employees.validation.tooShort'))
     .max(25, t('employees.validation.tooLong'))
     .required(t('employees.validation.phoneRequired')),
@@ -156,10 +156,10 @@ const makeEditSchema = (t: TranslateFn) =>
   marital_status: Yup.string().required(t('employees.validation.maritalStatusRequired')),
   address: Yup.string().required(t('employees.validation.addressRequired')),
   bank_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.&]+$/, t('employees.validation.bankNameLetters'))
+    .matches(/^[A-Za-z\s\-.&]+$/, t('employees.validation.bankNameLetters'))
     .required(t('employees.validation.bankNameRequired')),
   account_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.accountNameLetters'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.accountNameLetters'))
     .required(t('employees.validation.accountNameRequired')),
   account_number: Yup.string()
     .test('digits-only', t('employees.validation.accountDigits'), function (value) {
@@ -178,10 +178,10 @@ const makeEditSchema = (t: TranslateFn) =>
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, t('employees.validation.panFormat'))
     .required(t('employees.validation.taxIdRequired')),
   emergency_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, t('employees.validation.nameLettersOnly'))
+    .matches(/^[A-Za-z\s\-.]+$/, t('employees.validation.nameLettersOnly'))
     .required(t('employees.validation.emergencyNameRequired')),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, t('employees.validation.phoneFormat'))
+    .matches(/^[0-9+\s.]*$/, t('employees.validation.phoneFormat'))
     .min(5, t('employees.validation.tooShort'))
     .max(25, t('employees.validation.tooLong'))
     .notOneOf([Yup.ref('phone'), null], t('employees.validation.emergencyPhoneSame'))
@@ -193,7 +193,7 @@ const makeEditSchema = (t: TranslateFn) =>
     .min(0, t('employees.validation.ctcNegative')),
 });
 
-export const CreateEmployeeForm = ({
+export const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
   open,
   onOpenChange,
   asPage = false,
@@ -349,8 +349,8 @@ export const CreateEmployeeForm = ({
       setPrefixInput('');
       showToast.success(t('employees.form.prefixConfigured'));
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
-    } catch (err: any) {
-      showToast.error(err.message);
+    } catch (err: unknown) {
+      showToast.error((err as { message?: string }).message || 'Failed');
     }
   };
 
@@ -413,10 +413,10 @@ export const CreateEmployeeForm = ({
       try {
         const schema = validationSchema;
         await schema.validate(values, { abortEarly: false });
-      } catch (validationError: any) {
-        // Collect all validation errors
-        if (validationError.inner && validationError.inner.length > 0) {
-          const errorMessages = validationError.inner.map((err: any) => err.message).join(', ');
+      } catch (validationError: unknown) {
+        const ve = validationError as { inner?: Array<{ message: string }> };
+        if (ve.inner && ve.inner.length > 0) {
+          const errorMessages = ve.inner.map((err: { message: string }) => err.message).join(', ');
           setError(t('employees.form.fixErrors', { msg: errorMessages }));
           showToast.error(t('employees.form.fixAllErrors'));
           setSubmitting(false);
@@ -461,12 +461,12 @@ export const CreateEmployeeForm = ({
       setError(null);
       formik.resetForm();
     }
-  }, [open]);
+  }, [open, formik]);
 
   // Clear generic error when user starts correcting any field
   useEffect(() => {
     if (error) setError(null);
-  }, [formik.values]);
+  }, [error, formik.values]);
 
   // Auto-fetch Bank Details from IFSC
   useEffect(() => {
@@ -493,14 +493,14 @@ export const CreateEmployeeForm = ({
     }, 500); // Debounce slightly to avoid rapid calls while typing last char
 
     return () => clearTimeout(timeoutId);
-  }, [formik.values.ifsc_code]);
+  }, [formik.values.ifsc_code, formik, t]);
 
   // Initialize employee ID from settings in Create Mode
   useEffect(() => {
     if (!isEditMode && idSettings?.nextId && !formik.values.employee_id && (idSettings?.usePrefix ?? true)) {
       formik.setFieldValue('employee_id', idSettings.nextId);
     }
-  }, [idSettings?.nextId, isEditMode, formik.values.employee_id, idSettings?.usePrefix]);
+  }, [idSettings?.nextId, isEditMode, formik.values.employee_id, idSettings?.usePrefix, formik]);
 
   // Helper to check if form has validation errors
   const hasValidationErrors = Object.keys(formik.errors).length > 0 && formik.submitCount > 0;
@@ -509,7 +509,7 @@ export const CreateEmployeeForm = ({
   const getValidationErrorSummary = () => {
     if (!hasValidationErrors) return null;
     const errors = Object.entries(formik.errors)
-      .filter(([_, value]) => value)
+      .filter(([, value]) => value)
       .map(([key, value]) => {
         // Make field names more readable
         const fieldName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -527,7 +527,7 @@ export const CreateEmployeeForm = ({
     const name = target.name;
 
     if (name === 'first_name' || name === 'last_name' || name === 'emergency_name') {
-      target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
+      target.value = target.value.replace(/[^A-Za-z\s\-.]/g, '');
     } else if (name === 'phone' || name === 'emergency_phone' || name === 'account_number' || name === 'uan' || name === 'aadhar_number') {
       target.value = target.value.replace(/[^0-9]/g, '');
     } else if (name === 'ifsc_code' || name === 'tax_id') {
@@ -1130,14 +1130,14 @@ export const CreateEmployeeForm = ({
                 onChange={(e) => {
                   formik.handleChange(e);
                   // Also set the shift name for legacy support if needed
-                  const selectedShift = shifts.find((s: any) => s.id === e.target.value);
+                  const selectedShift = shifts.find((s: { id: string; name: string }) => s.id === e.target.value);
                   if (selectedShift) {
                     formik.setFieldValue('shift', selectedShift.name);
                   }
                 }}
                 placeholder={t('employees.form.phSelectShift')}
               >
-                {shifts.map((s: any) => (
+                {shifts.map((s: { id: string; name: string; start_time: string; end_time: string }) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)})
                   </option>
@@ -1174,7 +1174,7 @@ export const CreateEmployeeForm = ({
                 value={formik.values.timezone}
                 onChange={(value) => formik.setFieldValue('timezone', value)}
                 placeholder={t('employees.form.phTimezone')}
-                options={timezones.map((tz: any) => ({ label: tz.label, value: tz.value }))}
+                options={timezones.map((tz: { label: string; value: string }) => ({ label: tz.label, value: tz.value }))}
               />
             </div>
           </div>

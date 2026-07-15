@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/utils/cn';
 import { StatusBadge } from './StatusBadge';
 import type { Task } from '@/types/project.types';
@@ -53,10 +52,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
             task,
         },
         disabled: !canMove, // Disable drag if permission denied
-    });
+    }) as {
+        attributes: React.HTMLAttributes<HTMLElement>;
+        listeners: Record<string, React.EventHandler<React.SyntheticEvent>>;
+        setNodeRef: (node: HTMLElement | null) => void;
+        transform: string;
+        transition: string;
+        isDragging: boolean;
+    };
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform,
         transition,
     };
 
@@ -79,7 +85,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onEdit }) => 
             style={style}
             {...attributes}
             {...listeners}
+            role="button"
+            tabIndex={0}
             onClick={onClick}
+            onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && onClick) { e.preventDefault(); onClick(); } }}
             className={cn(
                 "bg-white dark:bg-gray-800 p-3 rounded-lg shadow-elev-1 border border-gray-200 dark:border-gray-700",
                 "hover:shadow-elev-3 transition-shadow group flex flex-col gap-2",

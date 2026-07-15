@@ -197,7 +197,7 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
-                            {user.image && <img src={user.image} className="w-full h-full object-cover opacity-50 grayscale" />}
+                            {user.image && <img src={user.image} alt="" className="w-full h-full object-cover opacity-50 grayscale" />}
                         </div>
                         <div className="text-xs text-gray-500">
                             No linked profile

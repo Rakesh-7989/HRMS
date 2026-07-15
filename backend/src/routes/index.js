@@ -3,7 +3,6 @@ const express = require('express');
 const dbSessionContext = require('../middleware/dbSessionContext');
 const verifyJwt = require('../middleware/verifyJwt');
 const requireRole = require('../middleware/requireRole');
-const requirePermission = require('../middleware/requirePermission');
 const { requireFeature, checkAccess } = require('../middleware/subscription.middleware');
 const planGuard = require('../middleware/planGuard');
 
@@ -41,6 +40,22 @@ const subscriptionAdminRouter = require('../modules/subscriptions/subscriptions.
 const chatRouter = require('../modules/chat/chat.router');
 const commonRouter = require('../modules/common/common.router');
 const router = express.Router();
+
+const { pool } = require('../config/db');
+
+// Health check (no auth, for monitoring)
+router.get('/health', async (req, res) => {
+  const health = { status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() };
+  try {
+    await pool.query('SELECT 1');
+    health.database = 'connected';
+  } catch {
+    health.database = 'disconnected';
+    health.status = 'degraded';
+  }
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
+});
 
 // Always attach RLS/ALS context
 router.use(dbSessionContext);

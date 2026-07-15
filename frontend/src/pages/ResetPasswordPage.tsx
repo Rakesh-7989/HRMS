@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const ResetPasswordPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -24,7 +25,7 @@ export const ResetPasswordPage: React.FC = () => {
         if (!token) {
             setError(t('auth.invalidResetToken'));
         }
-    }, [token]);
+    }, [token, t]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,10 +52,10 @@ export const ResetPasswordPage: React.FC = () => {
             await authService.resetPassword(token, password);
             setMessage(t('auth.passwordResetSuccess'));
             setTimeout(() => {
-                navigate('/login');
+                navigate(ROUTES.LOGIN);
             }, 2000);
-        } catch (err: any) {
-            setError(err?.message || t('auth.failedResetPassword'));
+        } catch (err: unknown) {
+            setError((err as {message?: string})?.message || t('auth.failedResetPassword'));
         } finally {
             setIsLoading(false);
         }

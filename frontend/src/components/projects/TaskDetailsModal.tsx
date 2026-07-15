@@ -63,18 +63,18 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     {/* Status & Priority */}
                     <div className="flex flex-wrap gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</label>
-                            <StatusBadge type="task" status={(task.status || task.column_key || 'TODO') as any} />
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</span>
+                            <StatusBadge type="task" status={((task.status || task.column_key || 'TODO') as unknown as 'TODO' | 'IN_PROGRESS' | 'DONE')} />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</label>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</span>
                             <StatusBadge type="priority" status={task.priority} />
                         </div>
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Description</label>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Description</span>
                         <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
                             {task.description || <span className="text-gray-400 italic">No description provided</span>}
                         </div>
@@ -84,10 +84,10 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Assignees */}
                         <div className="space-y-2">
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <User size={14} />
                                 Assignees
-                            </label>
+                            </span>
                             <div className="flex flex-wrap gap-2">
                                 {task.assignees && task.assignees.length > 0 ? (
                                     task.assignees.map(assignee => (
@@ -143,10 +143,10 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         {/* Assigned By */}
                         {task.assigned_by && (
                             <div className="space-y-2">
-                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     <User size={14} />
                                     Assigned By
-                                </label>
+                                </span>
                                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-2 py-1.5 rounded-md border border-gray-100 dark:border-gray-700 w-fit">
                                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-purple-700 flex items-center justify-center text-[10px] text-white font-bold">
                                         {(task.assigned_by.first_name || '').charAt(0)}{(task.assigned_by.last_name || '').charAt(0)}
@@ -167,10 +167,10 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <div className="space-y-4">
                             {task.due_date && (
                                 <div className="space-y-1">
-                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <Calendar size={14} />
                                         Due Date
-                                    </label>
+                                    </span>
                                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {format(new Date(task.due_date), 'MMM d, yyyy')}
                                     </div>
@@ -179,10 +179,10 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
                             {task.estimated_hours && (
                                 <div className="space-y-1">
-                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <Clock size={14} />
                                         Estimated Hours
-                                    </label>
+                                    </span>
                                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {task.estimated_hours} hours
                                     </div>

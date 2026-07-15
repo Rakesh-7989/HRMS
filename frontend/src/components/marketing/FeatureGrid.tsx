@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  MapPin, Clock, IndianRupee, ClipboardList, Calendar, Shield,
-  Users, Building2, FileText, Network, Briefcase, MessageCircle,
+  MapPin, IndianRupee, ClipboardList, Calendar, Shield,
+  Users, FileText, Network, Briefcase, MessageCircle,
   ArrowRight, Fingerprint, BadgeCheck,
 } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
@@ -10,6 +10,7 @@ import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 interface Feature {
   id: string;
@@ -187,7 +188,7 @@ export const FeatureGrid: React.FC = () => {
 
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="text-center mt-16">
-          <Button variant="premium" size="lg" onClick={() => navigate('/features')}>
+          <Button variant="premium" size="lg" onClick={() => navigate(ROUTES.FEATURES)}>
             {t('marketing.features.cta')} <ArrowRight size={20} />
           </Button>
         </motion.div>

@@ -15,6 +15,7 @@ import { ProfileDropdown } from './ProfileDropdown';
 import { useChat } from '@/contexts/ChatContext';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ROUTES } from '@/utils/constants';
 
 interface BreadcrumbItem {
   label: string;
@@ -76,7 +77,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [searchQuery]);
 
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ['header-search', debouncedQuery],
@@ -404,7 +405,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
             {user?.role === 'ADMIN' && (
                <Button variant="ghost" 
-                onClick={() => navigate('/pricing')}
+                onClick={() => navigate(ROUTES.PRICING)}
                 className="bg-white text-coral-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-neutral-100 transition-colors shadow-elev-1"
               >
                 {t('common.upgradePlan')}

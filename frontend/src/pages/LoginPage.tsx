@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -19,7 +19,7 @@ import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 // Moved inside component or create a factory
-const createValidationSchema = (t: any) => Yup.object({
+const createValidationSchema = (t: (key: string) => string) => Yup.object({
   email: Yup.string().email(t('auth.validEmail')).required(t('auth.emailRequired')),
   password: Yup.string().required(t('auth.passwordRequired')),
   rememberMe: Yup.boolean(),
@@ -34,13 +34,7 @@ export const LoginPage: React.FC = () => {
   const [twoFactorRequired, setTwoFactorRequired] = React.useState(false);
   const [preAuthToken, setPreAuthToken] = React.useState<string | null>(null);
   const [twoFactorToken, setTwoFactorToken] = React.useState('');
-  const { setUser } = useAuth() as any; // Need access to setUser for 2FA flow
-
-  React.useEffect(() => {
-    if (twoFactorToken.length === 6 && twoFactorRequired) {
-      handle2FAVerify(new Event('submit') as any);
-    }
-  }, [twoFactorToken, twoFactorRequired]);
+  const { setUser } = useAuth(); // Need access to setUser for 2FA flow
 
   const finalValidationSchema = React.useMemo(() => createValidationSchema(t), [t]);
 
@@ -63,26 +57,27 @@ export const LoginPage: React.FC = () => {
         const res = await login(values);
         if (res?.status === '2FA_REQUIRED') {
           setTwoFactorRequired(true);
-          setPreAuthToken(res.preAuthToken);
+          setPreAuthToken((res as unknown as Record<string, unknown>).preAuthToken as string);
         } else {
           showToast.success(t('common.loginSuccess'));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errorObj = err as { response?: { data?: Record<string, unknown> }; message?: string };
         // Check for payment pending response
-        const responseData = err.response?.data;
+        const responseData = errorObj.response?.data;
         if (responseData?.paymentPending) {
           // Redirect to complete payment page
           const params = new URLSearchParams({
-            tenant_id: responseData.tenant_id,
-            email: responseData.email
+            tenant_id: (responseData as Record<string, unknown>).tenant_id as string,
+            email: (responseData as Record<string, unknown>).email as string
           });
           window.location.href = `/complete-payment?${params.toString()}`;
           return;
         }
 
         let errorMessage =
-          err.response?.data?.message ||
-          err.message ||
+          (errorObj.response?.data as { message?: string })?.message ||
+          errorObj.message ||
           'Login failed. Please check your connection.';
 
         if (errorMessage === 'Invalid credentials') {
@@ -100,7 +95,7 @@ export const LoginPage: React.FC = () => {
     },
   });
 
-  const handle2FAVerify = async (e: React.FormEvent) => {
+  const handle2FAVerify = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!twoFactorToken || !preAuthToken) return;
 
@@ -126,12 +121,18 @@ export const LoginPage: React.FC = () => {
       const dashboard = ROLE_DASHBOARDS[user.role] || '/dashboard/personal';
       showToast.success(t('common.loginSuccess'));
       window.location.href = dashboard; // Force redirect to ensure state is clean
-    } catch (err: any) {
-      setError(err.response?.data?.message || t('auth.verificationFailed'));
+    } catch (err: unknown) {
+      setError(((err as { response?: { data?: { message?: string } } }).response?.data?.message) || t('auth.verificationFailed'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [twoFactorToken, preAuthToken, formik.values.rememberMe, t, setUser]);
+
+  React.useEffect(() => {
+    if (twoFactorToken.length === 6 && twoFactorRequired) {
+      handle2FAVerify(new Event('submit') as unknown as React.FormEvent);
+    }
+  }, [twoFactorToken, twoFactorRequired, handle2FAVerify]);
 
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
@@ -180,7 +181,6 @@ export const LoginPage: React.FC = () => {
                   value={twoFactorToken}
                   onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   className="text-center text-3xl tracking-[1em] font-mono h-16"
-                  autoFocus
                 />
               </div>
 

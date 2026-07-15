@@ -3,7 +3,8 @@ import { showToast } from '@/utils/toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService } from '@/services/attendance.service';
+import { DataTable, Column } from '@/components/ui/DataTable';
+import { attendanceService, Attendance } from '@/services/attendance.service';
 import { wfhService } from '@/services/wfh.service';
 import { geoFencingService } from '@/services/geoFencing.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,8 +25,6 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
-import { DataTable } from '@/components/ui/DataTable';
-import { SkeletonTable } from '@/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 
 export const DailyAttendanceContent: React.FC = () => {
@@ -120,7 +119,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     allow_clock_without_location: true,
                     location_timeout_seconds: 30,
                     require_high_accuracy: false
-                } as any;
+                } as { is_enabled: boolean; allow_clock_without_location: boolean; location_timeout_seconds: number; require_high_accuracy: boolean };
             }
         },
         enabled: shouldFetchPersonal,
@@ -137,7 +136,7 @@ export const DailyAttendanceContent: React.FC = () => {
                     const now = new Date();
 
                     // Get check-in absolute time
-                    const checkInUtc = (todayAttendance as any).check_in_time_utc;
+                    const checkInUtc = (todayAttendance as { check_in_time_utc?: string }).check_in_time_utc;
                     let checkInDate: Date;
 
                     if (checkInUtc) {
@@ -207,18 +206,19 @@ export const DailyAttendanceContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
-            showToast.success('Successfully clocked in!');
+            showToast.success(t('attendance.clockedIn'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
 
-            let message = serverMessage || 'Failed to clock in. Please try again.';
+            const message = serverMessage || 'Failed to clock in. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                showToast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                showToast.error(t('attendance.profileIncomplete'));
             } else if (serverMessage.includes('on approved leave')) {
-                showToast.error('You are on approved leave today and cannot clock in.');
+                showToast.error(t('attendance.onLeaveCannotClock'));
             } else if (serverMessage.includes('Already clocked in')) {
-                showToast.error('You have already clocked in today.');
+                showToast.error(t('attendance.alreadyClockedIn'));
             } else if (serverMessage.includes('Location validation failed')) {
                 showToast.error(serverMessage);
             } else {
@@ -240,18 +240,19 @@ export const DailyAttendanceContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
-            showToast.success('Successfully clocked out!');
+            showToast.success(t('attendance.clockedOut'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
 
-            let message = serverMessage || 'Failed to clock out. Please try again.';
+            const message = serverMessage || 'Failed to clock out. Please try again.';
             if (serverMessage.includes('Employee profile not linked')) {
-                showToast.error('Your employee profile is not complete. Please contact HR to set up your employee details.');
+                showToast.error(t('attendance.profileIncomplete'));
             } else if (serverMessage.includes('No check-in found')) {
-                showToast.error('No check-in record found for today. Please clock in first.');
+                showToast.error(t('attendance.noCheckInRecord'));
             } else if (serverMessage.includes('Already clocked out')) {
-                showToast.error('You have already clocked out today.');
+                showToast.error(t('attendance.alreadyClockedOut'));
             } else if (serverMessage.includes('Location validation failed')) {
                 showToast.error(serverMessage);
             } else {
@@ -283,7 +284,7 @@ export const DailyAttendanceContent: React.FC = () => {
     const handleClockIn = async () => {
         // Skip Geofence if WFH is approved today
         if (isWFHApprovedToday()) {
-            clockInMutation.mutate({ device: detectDeviceType() } as any);
+            clockInMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
             return;
         }
 
@@ -298,12 +299,12 @@ export const DailyAttendanceContent: React.FC = () => {
                 return;
             }
             clockInMutation.mutate({
-                latitude: check.position?.coords.latitude!,
-                longitude: check.position?.coords.longitude!,
+                latitude: check.position!.coords.latitude,
+                longitude: check.position!.coords.longitude,
                 device: detectDeviceType()
             });
         } else {
-            clockInMutation.mutate({ device: detectDeviceType() } as any);
+            clockInMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
         }
     };
 
@@ -325,12 +326,12 @@ export const DailyAttendanceContent: React.FC = () => {
                 return;
             }
             coords = {
-                latitude: check.position?.coords.latitude!,
-                longitude: check.position?.coords.longitude!,
+                latitude: check.position!.coords.latitude,
+                longitude: check.position!.coords.longitude,
                 device: detectDeviceType()
             };
         } else {
-            coords = { device: detectDeviceType() } as any;
+            coords = { device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string };
         }
 
         // Check if EOD Report is needed (WFH / Remote)
@@ -349,7 +350,7 @@ export const DailyAttendanceContent: React.FC = () => {
         clockOutMutation.mutate({
             ...clockOutCoords,
             eodReport: eodReport
-        } as any); // Cast as any because react-query types might be tricky with optional args in mutationFn
+        } as unknown as { latitude: number; longitude: number; device?: string; eodReport?: string });
 
         setShowEODDialog(false);
         setEodReport('');
@@ -371,22 +372,22 @@ export const DailyAttendanceContent: React.FC = () => {
     );
 
     // DataTable column definitions
-    const teamAttendanceColumns = [
+    const teamAttendanceColumns: Column<Attendance>[] = [
         {
             header: t('common.employee'),
-            cell: (att: any) => `${att.first_name} ${att.last_name}`,
+            cell: (att: Attendance) => `${att.first_name || ''} ${att.last_name || ''}`,
         },
         {
             header: t('attendance.checkIn'),
-            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+            cell: (att: Attendance) => att.check_in_time ? formatTime12Hour(att.check_in_time, user?.timezone) : '-',
         },
         {
             header: t('attendance.checkOut'),
-            cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
+            cell: (att: Attendance) => att.check_out_time ? formatTime12Hour(att.check_out_time, user?.timezone) : '-',
         },
         {
             header: t('common.status'),
-            cell: (att: any) => (
+            cell: (att: Attendance) => (
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.is_late ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {att.is_late ? `Late ${att.late_by ? `(${att.late_by})` : ''}` : 'On Time'}
                 </span>
@@ -394,18 +395,18 @@ export const DailyAttendanceContent: React.FC = () => {
         },
     ];
 
-    const pendingCheckoutColumns = [
+    const pendingCheckoutColumns: Column<Attendance>[] = [
         {
             header: t('common.employee'),
-            cell: (att: any) => `${att.first_name} ${att.last_name}`,
+            cell: (att: Attendance) => `${att.first_name || ''} ${att.last_name || ''}`,
         },
         {
             header: t('common.date'),
-            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+            cell: (att: Attendance) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
             header: t('attendance.checkIn'),
-            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+            cell: (att: Attendance) => att.check_in_time ? formatTime12Hour(att.check_in_time, user?.timezone) : '-',
         },
         {
             header: t('common.status'),
@@ -417,36 +418,36 @@ export const DailyAttendanceContent: React.FC = () => {
         },
     ];
 
-    const myAttendanceColumns = [
+    const myAttendanceColumns: Column<Attendance>[] = [
         {
             header: t('common.date'),
-            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+            cell: (att: Attendance) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
             header: t('attendance.checkIn'),
-            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+            cell: (att: Attendance) => att.check_in_time ? formatTime12Hour(att.check_in_time, user?.timezone) : '-',
         },
         {
             header: t('attendance.checkOut'),
-            cell: (att: any) => formatTime12Hour(att.check_out_time, user?.timezone),
+            cell: (att: Attendance) => att.check_out_time ? formatTime12Hour(att.check_out_time, user?.timezone) : '-',
         },
         {
             header: t('attendance.totalDuration'),
-            cell: (att: any) => calculateWorkDuration(att.check_in_time, att.check_out_time),
+            cell: (att: Attendance) => att.check_in_time && att.check_out_time ? calculateWorkDuration(att.check_in_time, att.check_out_time) : '-',
         },
         {
             header: t('attendance.effectiveHours'),
-            cell: (att: any) => att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-',
+            cell: (att: Attendance) => att.effective_work_hours ? `${att.effective_work_hours} hrs` : '-',
         },
         {
             header: t('attendance.overtime'),
-            cell: (att: any) => att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
+            cell: (att: Attendance) => att.overtime_hours && parseFloat(att.overtime_hours) > 0 ? (
                 <span className="text-green-600 font-semibold">+{att.overtime_hours} hrs</span>
             ) : '-',
         },
         {
             header: t('attendance.device'),
-            cell: (att: any) => (
+            cell: (att: Attendance) => (
                 <div className="flex flex-col gap-1">
                     {att.check_in_device && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 inline-block w-fit">
@@ -463,7 +464,7 @@ export const DailyAttendanceContent: React.FC = () => {
         },
         {
             header: t('common.status'),
-            cell: (att: any) => (
+            cell: (att: Attendance) => (
                 <div className="flex flex-col gap-1 items-start">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${att.status === 'PRESENT' || att.status === 'APPROVED'
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -482,14 +483,14 @@ export const DailyAttendanceContent: React.FC = () => {
         },
     ];
 
-    const myPendingCheckoutColumns = [
+    const myPendingCheckoutColumns: Column<Attendance>[] = [
         {
             header: t('common.date'),
-            cell: (att: any) => format(new Date(att.date), 'MMM dd, yyyy'),
+            cell: (att: Attendance) => format(new Date(att.date), 'MMM dd, yyyy'),
         },
         {
             header: t('attendance.checkIn'),
-            cell: (att: any) => formatTime12Hour(att.check_in_time, user?.timezone),
+            cell: (att: Attendance) => att.check_in_time ? formatTime12Hour(att.check_in_time, user?.timezone) : '-',
         },
         {
             header: t('common.status'),
@@ -501,7 +502,7 @@ export const DailyAttendanceContent: React.FC = () => {
         },
         {
             header: t('common.actions'),
-            cell: (att: any) => (
+            cell: (att: Attendance) => (
                 <Button size="sm" onClick={() => setSelectedAttendanceId(att.id)}>{t('common.confirm')}</Button>
             ),
         },
@@ -564,7 +565,7 @@ export const DailyAttendanceContent: React.FC = () => {
                             </Button>
                         )}
 
-                        {canClockOut && isTimerRunning && (
+                        {canClock && isTimerRunning && (
                             <div className="w-full sm:w-auto grid grid-cols-2 sm:flex gap-3">
                                 {todayAttendance?.active_break ? (
                                     <Button

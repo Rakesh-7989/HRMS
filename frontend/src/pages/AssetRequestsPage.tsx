@@ -11,7 +11,6 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    ClipboardList,
     ArrowLeft,
     Edit,
     Trash2
@@ -22,6 +21,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
 import { DataTable } from '@/components/ui/DataTable';
+import { ROUTES } from '@/utils/constants';
 
 export const AssetRequestsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -33,16 +33,6 @@ export const AssetRequestsPage: React.FC = () => {
     const canManageRequests = hasPermission('assets', 'manage_requests') || hasPermission('assets', 'manage');
     const canRequest = hasPermission('assets', 'request');
     const canView = hasPermission('assets', 'view') || canManageRequests;
-
-    if (!canView && !canRequest) {
-        return (
-            <DashboardLayout title="Access Denied">
-                <Card>
-                    <p className="p-8 text-center text-gray-500">You do not have permission to view asset requests.</p>
-                </Card>
-            </DashboardLayout>
-        );
-    }
 
     // Edit/Delete State
     const [showModal, setShowModal] = useState(false);
@@ -66,24 +56,24 @@ export const AssetRequestsPage: React.FC = () => {
             assetsService.handleRequest(id, { status, admin_notes }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            showToast.success('Request updated successfully');
+            showToast.success(t('assets.requestUpdated'));
         },
-        onError: (error: any) => {
-            showToast.error(error.message || 'Failed to update request');
+        onError: (error: unknown) => {
+            showToast.error((error as {message?: string}).message || t('assets.updateRequestFailed'));
         }
     });
 
     const updateRequestMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) =>
+        mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
             assetsService.updateRequest(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            showToast.success('Request updated successfully');
+            showToast.success(t('assets.requestUpdated'));
             setShowModal(false);
             resetForm();
         },
-        onError: (error: any) => {
-            showToast.error(error.message || 'Failed to update request');
+        onError: (error: unknown) => {
+            showToast.error((error as {message?: string}).message || t('assets.updateRequestFailed'));
             setIsSubmitting(false);
         }
     });
@@ -92,12 +82,22 @@ export const AssetRequestsPage: React.FC = () => {
         mutationFn: (id: string) => assetsService.cancelRequest(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
-            showToast.success('Request cancelled successfully');
+            showToast.success(t('assets.requestCancelled'));
         },
-        onError: (error: any) => {
-            showToast.error(error.message || 'Failed to cancel request');
+        onError: (error: unknown) => {
+            showToast.error((error as {message?: string}).message || t('assets.cancelRequestFailed'));
         }
     });
+
+    if (!canView && !canRequest) {
+        return (
+            <DashboardLayout title="Access Denied">
+                <Card>
+                    <p className="p-8 text-center text-gray-500">You do not have permission to view asset requests.</p>
+                </Card>
+            </DashboardLayout>
+        );
+    }
 
     const resetForm = () => {
         setFormData({
@@ -111,14 +111,15 @@ export const AssetRequestsPage: React.FC = () => {
         setIsSubmitting(false);
     };
 
-    const handleEdit = (request: any) => {
+    const handleEdit = (request: unknown) => {
+        const r = request as Record<string, unknown>;
         setFormData({
-            asset_name: request.asset_name,
-            category: request.category,
-            priority: request.priority,
-            reason: request.reason || ''
+            asset_name: r.asset_name as string,
+            category: r.category as string,
+            priority: r.priority as string,
+            reason: (r.reason as string) || ''
         });
-        setEditingId(request.id);
+        setEditingId(r.id as string);
         setIsEditMode(true);
         setShowModal(true);
     };
@@ -186,7 +187,7 @@ export const AssetRequestsPage: React.FC = () => {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="sm" onClick={() => navigate('/assets')} className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.ASSETS)} className="flex items-center gap-2">
                             <ArrowLeft size={16} />
                             Back
                         </Button>
@@ -206,25 +207,25 @@ export const AssetRequestsPage: React.FC = () => {
                         columns={[
                             {
                                 header: 'Employee',
-                                accessor: (row: any) => (
+                                cell: (row: Record<string, unknown>) => (
                                     <div>
                                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {row.first_name} {row.last_name}
+                                            {row.first_name as string} {row.last_name as string}
                                         </div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.employee_code}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.employee_code as string}</div>
                                     </div>
                                 ),
                                 sortKey: 'first_name',
                             },
                             {
                                 header: 'Asset Details',
-                                accessor: (row: any) => (
+                                cell: (row: Record<string, unknown>) => (
                                     <div>
-                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{row.asset_name}</div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.category}</div>
-                                        {row.reason && (
-                                            <div className="mt-1 text-xs text-gray-400 max-w-xs truncate" title={row.reason}>
-                                                Reason: {row.reason}
+                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{row.asset_name as string}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">{row.category as string}</div>
+                                        {(row.reason as string) && (
+                                            <div className="mt-1 text-xs text-gray-400 max-w-xs truncate" title={(row.reason as string)}>
+                                                Reason: {row.reason as string}
                                             </div>
                                         )}
                                     </div>
@@ -233,26 +234,26 @@ export const AssetRequestsPage: React.FC = () => {
                             },
                             {
                                 header: 'Priority',
-                                accessor: (row: any) => getPriorityBadge(row.priority),
+                                cell: (row: Record<string, unknown>) => getPriorityBadge(row.priority as string),
                                 sortKey: 'priority',
                             },
                             {
                                 header: 'Status',
-                                accessor: (row: any) => getStatusBadge(row.status),
+                                cell: (row: Record<string, unknown>) => getStatusBadge(row.status as string),
                                 sortKey: 'status',
                             },
                             {
                                 header: 'Requested On',
-                                accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy'),
+                                cell: (row: Record<string, unknown>) => format(new Date(row.created_at as string), 'MMM dd, yyyy'),
                                 sortKey: 'created_at',
                             },
                             {
                                 header: 'Actions',
-                                accessor: (row: any) => {
-                                    if (row.status !== 'PENDING') {
-                                        return <span className="text-gray-400 italic text-xs">{row.status === 'APPROVED' ? 'Approved' : 'Rejected'}</span>;
+                                cell: (row: Record<string, unknown>) => {
+                                    if ((row.status as string) !== 'PENDING') {
+                                        return <span className="text-gray-400 italic text-xs">{(row.status as string) === 'APPROVED' ? 'Approved' : 'Rejected'}</span>;
                                     }
-                                    const isSelfRequest = user?.employee_id === row.employee_id;
+                                    const isSelfRequest = (user as unknown as Record<string, unknown>)?.employee_id === (row.employee_id as string);
                                     if (isSelfRequest) {
                                         return (
                                             <div className="flex gap-2">
@@ -270,7 +271,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                     variant="outline"
                                                     className="text-red-600 border-red-200 hover:bg-red-50"
                                                     title="Cancel Request"
-                                                    onClick={() => handleDelete(row.id)}
+                                                    onClick={() => handleDelete(row.id as string)}
                                                 >
                                                     <Trash2 size={14} />
                                                 </Button>
@@ -284,7 +285,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                     size="sm"
                                                     className="bg-green-600 hover:bg-green-700"
                                                     title="Approve Request"
-                                                    onClick={() => handleActionMutation.mutate({ id: row.id, status: 'APPROVED' })}
+                                                    onClick={() => handleActionMutation.mutate({ id: row.id as string, status: 'APPROVED' })}
                                                 >
                                                     Approve
                                                 </Button>
@@ -302,7 +303,7 @@ export const AssetRequestsPage: React.FC = () => {
                                                             cancelText: 'Cancel'
                                                         });
                                                         if (notes !== null) {
-                                                            handleActionMutation.mutate({ id: row.id, status: 'REJECTED', admin_notes: notes });
+                                                            handleActionMutation.mutate({ id: row.id as string, status: 'REJECTED', admin_notes: notes });
                                                         }
                                                     }}
                                                 >
@@ -315,8 +316,8 @@ export const AssetRequestsPage: React.FC = () => {
                                 },
                             },
                         ]}
-                        data={requests || []}
-                        isLoading={isLoading}
+                        data={requests as unknown as Record<string, unknown>[] || []}
+                        loading={isLoading}
                         emptyMessage="No asset requests found."
                         pageSize={10}
                     />
@@ -356,10 +357,11 @@ export const AssetRequestsPage: React.FC = () => {
             >
                 <form id="edit-request-form" onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="assetrequest-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Asset Name / Description *
                         </label>
                         <input
+                            id="assetrequest-name"
                             type="text"
                             required
                             value={formData.asset_name}
@@ -369,10 +371,11 @@ export const AssetRequestsPage: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="assetrequest-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Category *
                         </label>
                         <select
+                            id="assetrequest-category"
                             required
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -388,10 +391,11 @@ export const AssetRequestsPage: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="assetrequest-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Priority *
                         </label>
                         <select
+                            id="assetrequest-priority"
                             required
                             value={formData.priority}
                             onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -404,10 +408,11 @@ export const AssetRequestsPage: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="assetrequest-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Reason *
                         </label>
                         <textarea
+                            id="assetrequest-reason"
                             required
                             value={formData.reason}
                             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -9,6 +9,10 @@ import { departmentService } from '@/services/department.service';
 import { designationService } from '@/services/designation.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { permissionsService } from '@/services/permissions.service';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { Dialog } from '@/components/ui/Dialog';
+import { BulkImportDialog } from '@/components/employees/BulkImportDialog';
 import { resolveImageUrl } from '@/utils/image';
 import { cn } from '@/utils/cn';
 import { obfuscateId } from '@/utils/obfuscation';
@@ -21,8 +25,6 @@ import {
   Edit,
   Filter,
   X,
-  ChevronLeft,
-  ChevronRight,
   Building2,
   Briefcase,
   Trash2,
@@ -33,7 +35,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from '@/components/ui/DataTable';
-import { SkeletonTable } from '@/components/ui/Skeleton';
+import { ROUTES } from '@/utils/constants';
 
 const PAGE_SIZE = 10;
 
@@ -97,17 +99,17 @@ export const EmployeesPage: React.FC = () => {
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
       usersService.updateStatus(id, is_active),
-    onSuccess: (updatedUser: any, variables) => {
+    onSuccess: (updatedUser: unknown, variables) => {
       // Update individual employee cache if available for immediate UI updates
-      const userId = (updatedUser && updatedUser.id) || variables.id;
+      const userId = ((updatedUser as Record<string, unknown>)?.id as string) || variables.id;
       if (updatedUser) {
         queryClient.setQueryData(['employee', userId], updatedUser);
       }
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      showToast.success('Employee status updated');
+      showToast.success(t('employees.statusUpdated'));
     },
-    onError: (err: any) => {
-      const message = err.response?.data?.message || err.message || 'Failed to update status';
+    onError: (err: unknown) => {
+      const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to update status';
       showToast.error(message);
     },
   });
@@ -116,10 +118,10 @@ export const EmployeesPage: React.FC = () => {
     mutationFn: (id: string) => usersService.softDeleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      showToast.success('Employee deleted successfully');
+      showToast.success(t('employees.deletedSuccess'));
     },
-    onError: (err: any) => {
-      const message = err.response?.data?.message || err.message || 'Failed to delete';
+    onError: (err: unknown) => {
+      const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to delete';
       showToast.error(message);
     },
   });
@@ -136,7 +138,7 @@ export const EmployeesPage: React.FC = () => {
     if (departmentFilter && String(emp.department_id) !== String(departmentFilter)) return false;
 
     // Status filter - Handle robustly
-    if (statusFilter === 'active' && !Boolean(emp.is_active)) return false;
+    if (statusFilter === 'active' && !emp.is_active) return false;
     if (statusFilter === 'inactive' && Boolean(emp.is_active)) return false;
 
     // Search filter (as fallback)
@@ -270,7 +272,7 @@ export const EmployeesPage: React.FC = () => {
       accessorKey: 'id' as keyof User,
       className: 'w-48 text-right',
       cell: (emp: User) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" role="button" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
@@ -409,7 +411,7 @@ export const EmployeesPage: React.FC = () => {
                 )}
                 {canCreate && (
                   <Button
-                    onClick={() => navigate('/dashboard/employees/new')}
+                    onClick={() => navigate(ROUTES.EMPLOYEES_NEW)}
                     disabled={isLimitReached}
                     title={isLimitReached ? `Plan limit reached (${currentCount}/${maxEmployees}). Upgrade to add more.` : 'Add new employee'}
                     className={cn(isLimitReached && "opacity-50 cursor-not-allowed")}
@@ -464,7 +466,7 @@ export const EmployeesPage: React.FC = () => {
                 <UserCheck size={16} className="text-gray-500" />
                 <select
                   value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as any); }}
+                  onChange={(e) => { setStatusFilter(e.target.value as '' | 'active' | 'inactive'); }}
                   className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">{t('employees.filterByStatus')}</option>
@@ -574,4 +576,4 @@ export const EmployeesPage: React.FC = () => {
   );
 };
 
-export default EmployeesPage;
+

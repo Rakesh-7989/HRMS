@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import payrollService, { Expense, ExpenseCategory } from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -15,17 +15,25 @@ export const ExpensesContent: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: expenses = [], refetch } = useQuery<any[]>({ queryKey: ['payroll', 'expenses'], queryFn: () => payrollService.listExpenses(), enabled: !!user });
-    const { data: categories = [] } = useQuery<any[]>({ queryKey: ['payroll', 'expense-categories'], queryFn: () => payrollService.listExpenseCategories(), enabled: !!user });
+const { data: expenses = [], refetch } = useQuery<Expense[]>({
+        queryKey: ['payroll', 'expenses'],
+        queryFn: () => payrollService.listExpenses(),
+        enabled: !!user,
+    });
+    const { data: categories = [] } = useQuery<ExpenseCategory[]>({
+        queryKey: ['payroll', 'expense-categories'],
+        queryFn: () => payrollService.listExpenseCategories(),
+        enabled: !!user,
+    });
 
     const [addOpen, setAddOpen] = useState(false);
     const [categoryId, setCategoryId] = useState('');
-    const [amount, setAmount] = useState<number | ''>('');
+    const [amount, setAmount] = useState<string>('');
     const [expenseDate, setExpenseDate] = useState('');
     const [payrollIncluded, setPayrollIncluded] = useState(false);
 
-    const createExpenseMut = useMutation({ mutationFn: (payload: any) => payrollService.createExpense(payload), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setAddOpen(false); setCategoryId(''); setAmount(''); setExpenseDate(''); setPayrollIncluded(false); } });
-    const createCategoryMut = useMutation({ mutationFn: (payload: any) => payrollService.createExpenseCategory(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'expense-categories'] }) });
+    const createExpenseMut = useMutation({ mutationFn: (payload: { categoryId: string; amount: number; expenseDate: string; payrollIncluded: boolean }) => payrollService.createExpense(payload), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setAddOpen(false); setCategoryId(''); setAmount(''); setExpenseDate(''); setPayrollIncluded(false); } });
+    const createCategoryMut = useMutation({ mutationFn: (payload: { name: string; code: string; description?: string }) => payrollService.createExpenseCategory(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'expense-categories'] }) });
 
     const handleCreateExpense = () => {
         if (!categoryId || !amount) return;
@@ -51,13 +59,13 @@ export const ExpensesContent: React.FC = () => {
 
     // Edit / Delete / Approve / Toggle payroll states
     const [editOpen, setEditOpen] = useState(false);
-    const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
+    const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-    const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState<any | null>(null);
+    const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState<Expense | null>(null);
 
     const updateExpenseMut = useMutation({
-        mutationFn: ({ expenseId, payload }: { expenseId: string; payload: any }) => payrollService.updateExpense(expenseId, payload),
+        mutationFn: ({ expenseId, payload }: { expenseId: string; payload: { categoryId?: string; amount?: number; expenseDate?: string; payrollIncluded?: boolean } }) => payrollService.updateExpense(expenseId, payload),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setEditOpen(false); setSelectedExpense(null); }
     });
 
@@ -67,7 +75,7 @@ export const ExpensesContent: React.FC = () => {
     });
 
     const approveExpenseMut = useMutation({
-        mutationFn: ({ expenseId, payload }: { expenseId: string; payload: any }) => payrollService.approveExpense(expenseId, payload),
+        mutationFn: ({ expenseId, payload }: { expenseId: string; payload: { status: 'APPROVED' | 'REJECTED' } }) => payrollService.approveExpense(expenseId, payload),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setApproveDialogOpen(false); setSelectedExpenseForApproval(null); }
     });
 
@@ -77,30 +85,29 @@ export const ExpensesContent: React.FC = () => {
     });
 
     // helpers
-    const openEdit = (e: any) => {
+    const openEdit = (e: Expense) => {
         setSelectedExpense(e);
-        setCategoryId((e.category_id || e.categoryId || '') as string);
-        setAmount(e.amount || '');
-        setExpenseDate(e.expense_date || e.expenseDate || '');
+        setCategoryId(e.category_id || '');
+        setAmount(e.amount?.toString() || '');
+        setExpenseDate(e.expense_date || '');
         setPayrollIncluded(!!e.payroll_included);
         setEditOpen(true);
     };
 
     const handleSaveEdit = () => {
         if (!selectedExpense) return;
-        const payload: any = {};
+        const payload: { categoryId?: string; amount?: number; expenseDate?: string; payrollIncluded: boolean } = { payrollIncluded: !!payrollIncluded };
         if (categoryId) payload.categoryId = categoryId;
         if (amount !== '') payload.amount = Number(amount);
         if (expenseDate) payload.expenseDate = expenseDate;
-        payload.payrollIncluded = !!payrollIncluded;
         updateExpenseMut.mutate({ expenseId: selectedExpense.id, payload });
     };
 
-    const openDelete = (e: any) => { setSelectedExpense(e); setDeleteOpen(true); };
+    const openDelete = (e: Expense) => { setSelectedExpense(e); setDeleteOpen(true); };
     const confirmDelete = () => { if (selectedExpense) deleteExpenseMut.mutate(selectedExpense.id); };
 
-    const handleApprove = (e: any) => { approveExpenseMut.mutate({ expenseId: e.id, payload: { status: 'APPROVED' } }); };
-    const openReject = (e: any) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
+    const handleApprove = (e: Expense) => { approveExpenseMut.mutate({ expenseId: e.id, payload: { status: 'APPROVED' } }); };
+    const openReject = (e: Expense) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
     const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id, payload: { status: 'REJECTED' } }); };
     return (
         <>
@@ -135,7 +142,7 @@ export const ExpensesContent: React.FC = () => {
                                 <TableCell>-</TableCell>
                             </TableRow>
                         ) : (
-                            expenses.map((e: any) => (
+                            expenses.map((e: Expense) => (
                                 <TableRow key={e.id}>
                                     <TableCell>{e.category}</TableCell>
                                     <TableCell>{e.amount}</TableCell>
@@ -189,11 +196,11 @@ export const ExpensesContent: React.FC = () => {
                         <Label>Category</Label>
                         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 text-black dark:text-white border-gray-300 dark:border-gray-600">
                             <option value="">Select category</option>
-                            {categories.map((c: any) => (<option value={c.id} key={c.id}>{c.name}</option>))}
+                            {categories.map((c: ExpenseCategory) => (<option value={c.id} key={c.id}>{c.name}</option>))}
                         </select>
 
                         <Label>Amount</Label>
-                        <Input type="number" value={String(amount)} onChange={(e) => setAmount(Number(e.target.value) || '')} />
+                        <Input type="number" value={String(amount)} onChange={(e) => setAmount(String(Number(e.target.value) || ''))} />
 
                         <Label>Expense Date</Label>
                         <DatePicker value={expenseDate} onChange={setExpenseDate} placeholder="Select date" />
@@ -222,11 +229,11 @@ export const ExpensesContent: React.FC = () => {
                         <Label>Category</Label>
                         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 text-black dark:text-white border-gray-300 dark:border-gray-600">
                             <option value="">(leave unchanged)</option>
-                            {categories.map((c: any) => (<option value={c.id} key={c.id}>{c.name}</option>))}
+                            {categories.map((c: ExpenseCategory) => (<option value={c.id} key={c.id}>{c.name}</option>))}
                         </select>
 
                         <Label>Amount</Label>
-                        <Input type="number" value={String(amount)} onChange={(e) => setAmount(Number(e.target.value) || '')} />
+                        <Input type="number" value={String(amount)} onChange={(e) => setAmount(String(Number(e.target.value) || ''))} />
 
                         <Label>Expense Date</Label>
                         <DatePicker value={expenseDate} onChange={setExpenseDate} placeholder="Select date" />

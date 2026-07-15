@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +30,7 @@ interface Reimbursement {
 const CATEGORIES = ['MEDICAL', 'TRAVEL', 'PHONE', 'FOOD', 'OTHER'] as const;
 
 export const ReimbursementsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
@@ -43,7 +45,10 @@ export const ReimbursementsContent: React.FC = () => {
     // Fetch reimbursements - my claims for employees, all for HR/Admin
     const { data: reimbursements = [], isLoading, refetch } = useQuery<Reimbursement[]>({
         queryKey: ['payroll', 'reimbursements', isAdmin ? 'all' : 'my'],
-        queryFn: () => payrollService.listReimbursements(isAdmin ? 'all' : 'my'),
+        queryFn: async () => {
+            const result = await payrollService.listReimbursements(isAdmin ? undefined : { status: 'PENDING' });
+            return result as Reimbursement[];
+        },
         retry: 1
     });
 
@@ -52,26 +57,28 @@ export const ReimbursementsContent: React.FC = () => {
         mutationFn: (payload: { category: string; amount: number; claimDate: string; description?: string; receiptUrl?: string }) =>
             payrollService.createReimbursement(payload),
         onSuccess: () => {
-            showToast.success('Reimbursement claim submitted');
+            showToast.success(t('payroll.reimbursementSubmitted'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'reimbursements'] });
             setAddOpen(false);
             resetForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to submit claim');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            showToast.error(error?.response?.data?.message || 'Failed to submit claim');
         }
     });
 
     // Approve/Reject reimbursement (HR/Admin only)
     const approveMutation = useMutation({
-        mutationFn: ({ id, status, includeInPayroll }: { id: string; status: 'APPROVED' | 'REJECTED'; includeInPayroll?: boolean }) =>
-            payrollService.approveReimbursement(id, { status, includeInPayroll }),
+        mutationFn: ({ id, status }: { id: string; status: 'APPROVED' | 'REJECTED' }) =>
+            payrollService.approveReimbursement(id, { status }),
         onSuccess: () => {
-            showToast.success('Reimbursement updated');
+            showToast.success(t('payroll.reimbursementUpdated'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'reimbursements'] });
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to update');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            showToast.error(error?.response?.data?.message || 'Failed to update');
         }
     });
 
@@ -85,7 +92,7 @@ export const ReimbursementsContent: React.FC = () => {
 
     const handleCreate = () => {
         if (!amount || Number(amount) <= 0) {
-            showToast.error('Please enter a valid amount');
+            showToast.error(t('payroll.enterValidAmount'));
             return;
         }
         createMutation.mutate({
@@ -179,30 +186,30 @@ export const ReimbursementsContent: React.FC = () => {
                                     <TableCell className="max-w-[200px] truncate">{r.description || '-'}</TableCell>
                                     <TableCell>{getStatusBadge(r.status)}</TableCell>
                                     <TableCell>{r.include_in_payroll ? '✅ Yes' : '❌ No'}</TableCell>
-                                    {isAdmin && (
-                                        <TableCell>
-                                            {r.status === 'PENDING' && (
-                                                <div className="flex gap-1">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-green-600 hover:text-green-700"
-                                                        onClick={() => approveMutation.mutate({ id: r.id, status: 'APPROVED', includeInPayroll: true })}
-                                                    >
-                                                        <CheckCircle className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-red-600 hover:text-red-700"
-                                                        onClick={() => approveMutation.mutate({ id: r.id, status: 'REJECTED' })}
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                    )}
+{isAdmin && (
+                                            <TableCell>
+                                                {r.status === 'PENDING' && (
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="text-green-600 hover:text-green-700"
+                                                            onClick={() => approveMutation.mutate({ id: r.id, status: 'APPROVED' })}
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => approveMutation.mutate({ id: r.id, status: 'REJECTED' })}
+                                                        >
+                                                            <XCircle className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                        )}
                                 </TableRow>
                             ))
                         )}

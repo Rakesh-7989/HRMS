@@ -6,6 +6,7 @@ import { AnimatedText } from '@/components/ui/AnimatedText';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -17,17 +18,15 @@ const fadeInUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
-const trustIcons = [Shield, CheckCircle, IndianRupee, Building2];
-
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { label: t('marketing.nav.features'), onClick: () => navigate('/features') },
-    { label: t('marketing.nav.pricing'), onClick: () => navigate('/pricing') },
-    { label: t('marketing.nav.about'), onClick: () => navigate('/about') },
+    { label: t('marketing.nav.features'), onClick: () => navigate(ROUTES.FEATURES) },
+    { label: t('marketing.nav.pricing'), onClick: () => navigate(ROUTES.PRICING) },
+    { label: t('marketing.nav.about'), onClick: () => navigate(ROUTES.ABOUT) },
   ];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -62,8 +61,8 @@ export const HeroSection: React.FC = () => {
               ))}
               <LanguageSwitcher />
               <div className="h-6 w-px bg-white/10 mx-2" />
-              <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate('/login')}>{t('marketing.hero.signIn')}</Button>
-              <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
+              <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10" onClick={() => navigate(ROUTES.LOGIN)}>{t('marketing.hero.signIn')}</Button>
+              <Button variant="premium" size="sm" onClick={() => navigate(ROUTES.PRICING)}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
             </div>
              <Button variant="ghost" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white p-2">
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -96,8 +95,8 @@ export const HeroSection: React.FC = () => {
                 <LanguageSwitcher />
               </div>
               <div className="flex flex-col gap-2 px-4 pt-2">
-                <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10 w-full justify-center" onClick={() => { navigate('/login'); closeMobileMenu(); }}>{t('marketing.hero.signIn')}</Button>
-                <Button variant="premium" size="sm" className="w-full justify-center" onClick={() => { navigate('/pricing'); closeMobileMenu(); }}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
+                <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/10 w-full justify-center" onClick={() => { navigate(ROUTES.LOGIN); closeMobileMenu(); }}>{t('marketing.hero.signIn')}</Button>
+                <Button variant="premium" size="sm" className="w-full justify-center" onClick={() => { navigate(ROUTES.PRICING); closeMobileMenu(); }}>{t('marketing.hero.ctaPrimary')} <ArrowRight size={16} /></Button>
               </div>
             </div>
           </motion.div>
@@ -139,7 +138,7 @@ export const HeroSection: React.FC = () => {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
-              <Button size="xl" variant="premium" className="rounded-xl px-8 group" onClick={() => navigate('/pricing')}>
+              <Button size="xl" variant="premium" className="rounded-xl px-8 group" onClick={() => navigate(ROUTES.PRICING)}>
                 {t('marketing.hero.ctaPrimary')} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button size="xl" variant="outline" className="rounded-xl px-8 border-white/10 text-white hover:bg-white/10" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>

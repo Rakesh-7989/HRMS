@@ -124,9 +124,9 @@ export const RolesPermissionsPage: React.FC = () => {
     // User override state
     const [showUserOverrides, setShowUserOverrides] = useState(false);
     const [userSearchQuery, setUserSearchQuery] = useState('');
-    const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
-    const [userPermissions, setUserPermissions] = useState<any[]>([]);
+    const [userSearchResults, setUserSearchResults] = useState<Record<string, unknown>[]>([]);
+    const [selectedUser, setSelectedUser] = useState<Record<string, unknown> | null>(null);
+    const [userPermissions, setUserPermissions] = useState<Record<string, unknown>[]>([]);
     const [userPermLoading, setUserPermLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
 
@@ -143,12 +143,12 @@ export const RolesPermissionsPage: React.FC = () => {
             // Fetch admin count for usage display
             const users = await usersService.getUsers({ role: 'ADMIN' });
             setAdminCount(Array.isArray(users) ? users.length : 0);
-        } catch (err: any) {
+        } catch (err: unknown) {
             showToast.error(t('roles.failedLoadRoles'));
         } finally {
             setRolesLoading(false);
         }
-    }, [activeRole]);
+    }, [activeRole, t]);
 
     useEffect(() => {
         fetchRoles();
@@ -165,12 +165,12 @@ export const RolesPermissionsPage: React.FC = () => {
             setHasChanges(false);
             const modules = new Set(perms.map(p => p.module));
             setExpandedModules(modules);
-        } catch (err: any) {
-            showToast.error(err?.response?.data?.message || t('roles.failedLoadPerms'));
+        } catch (err: unknown) {
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('roles.failedLoadPerms'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         if (activeRole) fetchRolePermissions(activeRole);
@@ -208,8 +208,8 @@ export const RolesPermissionsPage: React.FC = () => {
             await refreshPermissions();
 
             showToast.success(t('roles.permissionsUpdated', { role: activeRole }));
-        } catch (err: any) {
-            showToast.error(err?.response?.data?.message || t('roles.failedSavePerms'));
+        } catch (err: unknown) {
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('roles.failedSavePerms'));
         } finally {
             setSaving(false);
         }
@@ -256,8 +256,8 @@ export const RolesPermissionsPage: React.FC = () => {
             await fetchRoles();
             // Switch to the new role
             setActiveRole(newRoleName.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_'));
-        } catch (err: any) {
-            showToast.error(err?.response?.data?.message || t('roles.failedCreateRole'));
+        } catch (err: unknown) {
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('roles.failedCreateRole'));
         } finally {
             setCreating(false);
         }
@@ -273,8 +273,8 @@ export const RolesPermissionsPage: React.FC = () => {
             if (activeRole === role) {
                 setActiveRole('ADMIN');
             }
-        } catch (err: any) {
-            showToast.error(err?.response?.data?.message || t('roles.failedDeleteRole'));
+        } catch (err: unknown) {
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('roles.failedDeleteRole'));
         }
     };
 
@@ -302,14 +302,14 @@ export const RolesPermissionsPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [userSearchQuery, searchUsers]);
 
-    const selectUserForOverride = async (usr: any) => {
-        setSelectedUser(usr);
+    const selectUserForOverride = async (usr: unknown) => {
+        setSelectedUser(usr as Record<string, unknown>);
         setUserSearchQuery('');
         setUserSearchResults([]);
         setUserPermLoading(true);
         try {
-            const perms = await permissionsService.getUserPermissions(usr.user_id || usr.id);
-            setUserPermissions(perms);
+            const perms = await permissionsService.getUserPermissions(((usr as Record<string, unknown>).user_id || (usr as Record<string, unknown>).id) as string);
+            setUserPermissions(perms as unknown as Record<string, unknown>[]);
         } catch {
             showToast.error(t('roles.failedLoadPerms'));
         } finally {
@@ -319,7 +319,7 @@ export const RolesPermissionsPage: React.FC = () => {
 
     const handleUserOverrideToggle = async (permissionId: string, currentOverride: boolean | null, roleEnabled: boolean) => {
         if (!selectedUser) return;
-        const userId = selectedUser.user_id || selectedUser.id;
+        const userId = (selectedUser.user_id || selectedUser.id) as string;
         let newGranted: boolean | null;
         if (currentOverride === null) {
             newGranted = !roleEnabled;
@@ -331,7 +331,7 @@ export const RolesPermissionsPage: React.FC = () => {
                 { permission_id: permissionId, granted: newGranted }
             ]);
             const perms = await permissionsService.getUserPermissions(userId);
-            setUserPermissions(perms);
+            setUserPermissions(perms as unknown as Record<string, unknown>[]);
             showToast.success(t('roles.permUpdatedUser'));
         } catch {
             showToast.error(t('roles.failedSavePerms'));
@@ -409,7 +409,10 @@ export const RolesPermissionsPage: React.FC = () => {
                     {roles.map(r => (
                         <div
                             key={r.role}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setActiveRole(r.role)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveRole(r.role); } }}
                             className={`relative group px-5 py-3 rounded-xl transition-all duration-200 text-left min-w-[140px] cursor-pointer ${activeRole === r.role
                                 ? 'ring-2 ring-purple-500 shadow-elev-4 scale-[1.02]'
                                 : 'hover:shadow-elev-3 hover:scale-[1.01]'
@@ -558,7 +561,10 @@ export const RolesPermissionsPage: React.FC = () => {
                                         {/* Module Header */}
                                         <div
                                             className="flex items-center justify-between px-5 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                            role="button"
+                                            tabIndex={0}
                                             onClick={() => toggleModule(module)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleModule(module); } }}
                                         >
                                             <div className="flex items-center gap-3">
                                                 {expanded
@@ -664,18 +670,18 @@ export const RolesPermissionsPage: React.FC = () => {
 
                                 {userSearchResults.length > 0 && (
                                     <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-elev-4 max-h-48 overflow-y-auto">
-                                        {userSearchResults.map((usr: any) => (
+                                        {userSearchResults.map((usr: Record<string, unknown>) => (
                                              <Button variant="ghost" 
-                                                key={usr.user_id || usr.id}
+                                                key={usr.user_id as string || usr.id as string}
                                                 onClick={() => selectUserForOverride(usr)}
                                                 className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors"
                                             >
                                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-brand-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                                    {(usr.first_name || 'U')[0]}
+                                                    {((usr.first_name as string) || 'U')[0]}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{usr.first_name} {usr.last_name}</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{usr.email} · {usr.role}</p>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{usr.first_name as string} {usr.last_name as string}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{usr.email as string} · {usr.role as string}</p>
                                                 </div>
                                             </Button>
                                         ))}
@@ -688,11 +694,11 @@ export const RolesPermissionsPage: React.FC = () => {
                                     <div className="px-4 py-3 bg-brand-50 dark:bg-brand-500/10 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-brand-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                                {(selectedUser.first_name || 'U')[0]}
+                                                {(selectedUser.first_name as string || 'U')[0]}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{selectedUser.first_name} {selectedUser.last_name}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('roles.roleLabel')} {selectedUser.role}</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{selectedUser.first_name as string} {selectedUser.last_name as string}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('roles.roleLabel')} {selectedUser.role as string}</p>
                                             </div>
                                         </div>
                         <Button
@@ -710,40 +716,41 @@ export const RolesPermissionsPage: React.FC = () => {
                                         </div>
                                     ) : (
                                         <div className="max-h-[50vh] overflow-y-auto">
-                                            {userPermissions.map((perm: any) => {
-                                                const hasOverride = perm.user_override !== null && perm.user_override !== undefined;
+                                            {userPermissions.map((perm: unknown) => {
+                                                const p = perm as Record<string, unknown>;
+                                                const hasOverride = (p.user_override as boolean | null) !== null && (p.user_override as boolean | null) !== undefined;
                                                 return (
                                                     <div
-                                                        key={perm.permission_id}
+                                                        key={p.permission_id as string}
                                                         className={`flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-0 ${hasOverride ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
                                                             }`}
                                                     >
                                                         <div className="flex-1 min-w-0 pr-2">
-                                                            <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{perm.label}</p>
+                                                            <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{p.label as string}</p>
                                                             <div className="flex items-center gap-1 mt-0.5">
-                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${perm.role_enabled
+                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${p.role_enabled
                                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                                     : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                                     }`}>
-                                                                    {t('roles.roleLabel')} {perm.role_enabled ? t('common.on') : t('common.off')}
+                                                                    {t('roles.roleLabel')} {p.role_enabled ? t('common.on') : t('common.off')}
                                                                 </span>
                                                                 {hasOverride && (
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                                        {t('roles.overrideLabel')} {perm.user_override ? t('roles.grant') : t('roles.deny')}
+                                                                        {t('roles.overrideLabel')} {(p.user_override as boolean) ? t('roles.grant') : t('roles.deny')}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
                                                          <Button variant="ghost" 
-                                                            onClick={() => handleUserOverrideToggle(perm.permission_id, perm.user_override ?? null, perm.role_enabled)}
-                                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${perm.effective
+                                                            onClick={() => handleUserOverrideToggle(p.permission_id as string, p.user_override as boolean ?? null, p.role_enabled as boolean)}
+                                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${p.effective
                                                                 ? hasOverride ? 'bg-amber-500' : 'bg-brand-500'
                                                                 : hasOverride ? 'bg-red-400' : 'bg-gray-300 dark:bg-gray-600'
                                                                 }`}
                                                         >
                                                             <span
                                                                 className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-elev-2 transition-transform"
-                                                                style={{ transform: `translateX(${perm.effective ? '18px' : '2px'})` }}
+                                                                style={{ transform: `translateX(${p.effective ? '18px' : '2px'})` }}
                                                             />
                                                         </Button>
                                                     </div>
@@ -761,4 +768,4 @@ export const RolesPermissionsPage: React.FC = () => {
     );
 };
 
-export default RolesPermissionsPage;
+

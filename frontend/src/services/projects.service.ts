@@ -19,6 +19,9 @@ import type {
     MentionableUser,
 } from '@/types/project.types';
 
+// Re-export types for consumers
+export type { Client, Project };
+
 /**
  * Projects Service
  * Handles all project, client, and task related API calls

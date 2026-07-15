@@ -15,7 +15,7 @@ const strongPassword = z
 exports.loginSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email format"),
-    password: strongPassword,
+    password: z.string().min(1, "Password is required"),
     rememberMe: z.boolean().optional()
   })
 });

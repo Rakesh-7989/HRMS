@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -83,18 +83,18 @@ const ChartCard = ({
   </motion.div>
 );
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-elev-6 border border-white/10 min-w-[150px]">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry: Record<string, unknown>, index: number) => (
           <div key={index} className="flex items-center justify-between gap-4 py-1">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-              <span className="text-sm font-medium text-slate-300">{entry.name}</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: (entry.color || entry.fill) as string }} />
+              <span className="text-sm font-medium text-slate-300">{entry.name as string}</span>
             </div>
-            <span className="text-sm font-black">{entry.value}</span>
+            <span className="text-sm font-black">{entry.value as string}</span>
           </div>
         ))}
       </div>
@@ -109,7 +109,7 @@ const StatCard = ({
   title: string;
   value: number | string;
   subtitle?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   delay?: number;
   trend?: number;
@@ -162,7 +162,7 @@ const StatCard = ({
   </motion.div>
 );
 
-const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?: number; onClick?: () => void }) => {
+const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: Record<string, unknown>; delay?: number; onClick?: () => void }) => {
   const { t } = useTranslation();
   return (
     <motion.div
@@ -176,24 +176,24 @@ const ActiveMemberCard = ({ member, delay = 0, onClick }: { member: any; delay?:
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="relative shrink-0">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-black text-lg shadow-elev-4 group-hover:scale-110 transition-transform">
-            {member.first_name[0]}{member.last_name[0]}
+            {(member.first_name as string)[0]}{(member.last_name as string)[0]}
           </div>
-          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${member.on_leave_today > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${(member.on_leave_today as number) > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-slate-900 dark:text-white text-base break-words leading-tight">{member.first_name} {member.last_name}</h4>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation || t('common.teamMember')}</p>
+          <h4 className="font-black text-slate-900 dark:text-white text-base break-words leading-tight">{member.first_name as string} {member.last_name as string}</h4>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest break-words">{member.designation as string || t('common.teamMember')}</p>
         </div>
       </div>
       <div className="flex items-center gap-4 shrink-0 ml-3">
         <div className="text-right hidden sm:block">
-          <p className={`text-[10px] font-black px-2 py-0.5 rounded-full ${member.on_leave_today > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
-            {member.on_leave_today > 0 ? t('profile.profileDropdown.away') : t('common.active')}
+          <p className={`text-[10px] font-black px-2 py-0.5 rounded-full ${(member.on_leave_today as number) > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
+            {(member.on_leave_today as number) > 0 ? t('profile.profileDropdown.away') : t('common.active')}
           </p>
         </div>
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-neutral-200 dark:border-white/5 shadow-elev-1"
           aria-label="View member details"
         >
@@ -221,27 +221,6 @@ export const ManagerDashboard: React.FC = () => {
     end: format(new Date(), 'yyyy-MM-dd')
   });
 
-
-  // Tooltip State for Matrix (Fixed Positioning to escape overflow)
-  const [tooltipData, setTooltipData] = useState<{
-    x: number;
-    y: number;
-    content: {
-      date: Date;
-      member: any;
-      statusLabel: string;
-      record: any;
-    };
-  } | null>(null);
-
-  const handleTooltip = (e: React.MouseEvent, date: Date, member: any, statusLabel: string, record: any) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setTooltipData({
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-      content: { date, member, statusLabel, record }
-    });
-  };
 
   // --- Data Fetching ---
 
@@ -336,34 +315,34 @@ export const ManagerDashboard: React.FC = () => {
     mutationFn: (id: string) => leaveService.approveLeave(id, 'Approved from Dashboard'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
-      showToast.success('Leave approved');
+      showToast.success(t('leave.approved'));
     },
-    onError: (err: any) => showToast.error(err.message || 'Approval failed'),
+    onError: (err: unknown) => showToast.error((err as { message?: string }).message || 'Approval failed'),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveService.rejectLeave(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
-      showToast.success('Leave rejected');
+      showToast.success(t('leave.rejected'));
     },
-    onError: (err: any) => showToast.error(err.message || 'Rejection failed'),
+    onError: (err: unknown) => showToast.error((err as { message?: string }).message || 'Rejection failed'),
   });
 
   // --- Data Processing ---
 
   const teamMembers = useMemo(() => {
-    return (teamData as any)?.directReports || (teamData as any)?.teamMembers || [];
+    return ((teamData as unknown as Record<string, unknown>)?.directReports as Record<string, unknown>[]) || ((teamData as unknown as Record<string, unknown>)?.teamMembers as Record<string, unknown>[]) || [];
   }, [teamData]);
 
   const uniqueTeamMembers = teamMembers;
 
-  const teamMemberIds = useMemo(() => new Set(teamMembers.map((m: any) => m.id)), [teamMembers]);
+  const teamMemberIds = useMemo(() => new Set(teamMembers.map((m: Record<string, unknown>) => m.id)), [teamMembers]);
 
   // Filter tasks to only show team tasks
   const teamTasks = useMemo(() => {
-    const allTasksResult = (taskData as any) || {};
-    const allTasks = Array.isArray(allTasksResult) ? allTasksResult : (allTasksResult.tasks || []);
+    const allTasksResult = (taskData as unknown as Record<string, unknown>) || {};
+    const allTasks = Array.isArray(allTasksResult) ? allTasksResult : (allTasksResult.tasks as Record<string, unknown>[] || []);
     return allTasks.filter((t: Task) => {
       const isAssigned = t.assigned_to && teamMemberIds.has(t.assigned_to);
       const isMultipleAssigned = t.assignees?.some(a => teamMemberIds.has(a.id));
@@ -373,14 +352,14 @@ export const ManagerDashboard: React.FC = () => {
 
   const metrics = useMemo(() => {
     const totalTasks = teamTasks.length;
-    const completedTasks = teamTasks.filter((t: any) => t.status === 'DONE' || t.column_key === 'DONE').length;
+    const completedTasks = teamTasks.filter((t: Record<string, unknown>) => t.status === 'DONE' || t.column_key === 'DONE').length;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     // Use teamAttendanceToday for real-time status
     // Backend returns STATUS: 'IN_OFFICE', 'COMPLETED', 'ABSENT' using CURRENT_DATE
-    const todayRecords = (teamData as any)?.teamAttendanceToday || [];
+    const todayRecords = ((teamData as unknown as Record<string, unknown>)?.teamAttendanceToday as Record<string, unknown>[]) || [];
 
-    const activeCount = todayRecords.filter((r: any) =>
+    const activeCount = todayRecords.filter((r: Record<string, unknown>) =>
       r.status === 'IN_OFFICE' ||
       r.status === 'COMPLETED' ||
       r.status === 'PRESENT' ||
@@ -390,7 +369,7 @@ export const ManagerDashboard: React.FC = () => {
 
     // Count explicit Absents or Leaves
     // Backend returns 'ABSENT' if check_in_time is null
-    // const absentCount = todayRecords.filter((r: any) => r.status === 'ABSENT' || r.status === 'LEAVE').length;
+    // const absentCount = todayRecords.filter((r: unknown) => r.status === 'ABSENT' || r.status === 'LEAVE').length;
 
     // If total records matched team size, we could use absentCount.
     // However, safest fallback for 'Not Here' is (Total - Active).
@@ -408,9 +387,9 @@ export const ManagerDashboard: React.FC = () => {
   const attendanceTrendData = useMemo(() => {
     const trends = attendanceTrends?.dailyTrends || [];
     // Create a dictionary for fast lookup
-    const trendsMap = trends.reduce((acc: any, curr: any) => {
+    const trendsMap = trends.reduce((acc: Record<string, unknown>, curr: Record<string, unknown>) => {
       // Backend date might be ISO string or YYYY-MM-DD
-      const dateKey = format(parseISO(curr.date), 'yyyy-MM-dd');
+      const dateKey = format(parseISO(curr.date as string), 'yyyy-MM-dd');
       acc[dateKey] = curr;
       return acc;
     }, {});
@@ -426,8 +405,8 @@ export const ManagerDashboard: React.FC = () => {
         const dateKey = format(day, 'yyyy-MM-dd');
         const d = trendsMap[dateKey] || {};
 
-        const onTime = Math.max(0, (Number(d.present_count) || 0) - (Number(d.late_count) || 0));
-        const late = Number(d.late_count) || 0;
+        const onTime = Math.max(0, (Number((d as Record<string, unknown>).present_count) || 0) - (Number((d as Record<string, unknown>).late_count) || 0));
+        const late = Number((d as Record<string, unknown>).late_count) || 0;
 
         const totalTeamSize = teamMembers.length || 0;
 
@@ -444,7 +423,7 @@ export const ManagerDashboard: React.FC = () => {
           Present: onTime,
           Absent: calculatedAbsent,
           Late: late,
-          ActiveMembers: Number(d.active_members) || 0
+          ActiveMembers: Number((d as Record<string, unknown>).active_members) || 0
         };
       });
     } catch (e) {
@@ -474,21 +453,21 @@ export const ManagerDashboard: React.FC = () => {
     }
 
     // Map records for O(1) access
-    const attendanceMap: Record<string, any> = {};
+    const attendanceMap: Record<string, Record<string, unknown>> = {};
     if (Array.isArray(rawAttendanceRecords)) {
-      rawAttendanceRecords.forEach((r: any) => {
-        if (!r || !r.date) return;
+      rawAttendanceRecords.forEach((r) => {
+        const r2 = r as unknown as Record<string, unknown>;
+        if (!r2 || !r2.date) return;
         try {
-          // Ensure strict date formatting matching the key generation
-          const rDate = format(parseISO(r.date), 'yyyy-MM-dd');
-          attendanceMap[`${r.employee_id}-${rDate}`] = r;
+          const rDate = format(parseISO(r2.date as string), 'yyyy-MM-dd');
+          attendanceMap[`${r2.employee_id}-${rDate}`] = r2;
         } catch (e) {
           // Skip invalid dates
         }
       });
     }
 
-    uniqueTeamMembers.forEach((member: any) => {
+    uniqueTeamMembers.forEach((member: Record<string, unknown>) => {
       days.forEach(day => {
         const dateKey = format(day, 'yyyy-MM-dd');
         // Assuming member.id is the User ID matching employee_id
@@ -539,7 +518,7 @@ export const ManagerDashboard: React.FC = () => {
 
     const targetTasks = selectedProjectId === 'ALL'
       ? teamTasks
-      : teamTasks.filter((t: any) => t.project_id === selectedProjectId);
+      : teamTasks.filter((t: Record<string, unknown>) => t.project_id === selectedProjectId);
 
     const counts = {
       'TODO': 0,
@@ -548,7 +527,7 @@ export const ManagerDashboard: React.FC = () => {
       'DONE': 0
     } as Record<string, number>;
 
-    targetTasks.forEach((t: any) => {
+    targetTasks.forEach((t: Record<string, unknown>) => {
       // Normalize Status/Column Key
       const rawStatus = (t.column_key || t.status || '').toString().toUpperCase();
 
@@ -578,7 +557,7 @@ export const ManagerDashboard: React.FC = () => {
   const performanceData = useMemo(() => {
     // Check for Project Filter
     const relevantTasks = (selectedProjectId && selectedProjectId !== 'ALL')
-      ? teamTasks.filter((t: any) => t.project_id === selectedProjectId)
+      ? teamTasks.filter((t: Record<string, unknown>) => t.project_id === selectedProjectId)
       : teamTasks;
 
     // Parse attendance date range
@@ -592,23 +571,24 @@ export const ManagerDashboard: React.FC = () => {
     }
 
     // Map attendance records for O(1) access
-    const attendanceMap: Record<string, any> = {};
+    const attendanceMap: Record<string, Record<string, unknown>> = {};
     if (Array.isArray(rawAttendanceRecords)) {
-      rawAttendanceRecords.forEach((r: any) => {
-        if (!r || !r.date) return;
+      rawAttendanceRecords.forEach((r) => {
+        const r2 = r as unknown as Record<string, unknown>;
+        if (!r2 || !r2.date) return;
         try {
-          const rDate = format(parseISO(r.date), 'yyyy-MM-dd');
-          attendanceMap[`${r.employee_id}-${rDate}`] = r;
-        } catch (e) { }
+          const rDate = format(parseISO(r2.date as string), 'yyyy-MM-dd');
+          attendanceMap[`${r2.employee_id}-${rDate}`] = r2;
+        } catch (e) { /* Swallow error intentionally */ }
       });
     }
 
-    return teamMembers.map((m: any) => {
+    return teamMembers.map((m: Record<string, unknown>) => {
       // Task Performance
-      const memberTasks = relevantTasks.filter((t: any) =>
-        t.assigned_to === m.id || t.assignees?.some((a: any) => a.id === m.id)
+      const memberTasks = relevantTasks.filter((t: Record<string, unknown>) =>
+        t.assigned_to === m.id || (t.assignees as Array<Record<string, unknown>>)?.some((a: Record<string, unknown>) => a.id === m.id)
       );
-      const completed = memberTasks.filter((t: any) => t.column_key === 'DONE' || t.status === 'DONE').length;
+      const completed = memberTasks.filter((t: Record<string, unknown>) => t.column_key === 'DONE' || t.status === 'DONE').length;
       const taskScore = memberTasks.length > 0 ? (completed / memberTasks.length) * 100 : 0;
 
       // Attendance Performance
@@ -632,7 +612,7 @@ export const ManagerDashboard: React.FC = () => {
       const overallScore = Math.round((taskScore + attendanceScore) / 2);
 
       return {
-        name: `${m.first_name} ${m.last_name.charAt(0)}.`,
+        name: `${m.first_name as string} ${(m.last_name as string).charAt(0)}.`,
         score: overallScore,
         taskScore: Math.round(taskScore),
         attendanceScore: Math.round(attendanceScore),
@@ -640,44 +620,44 @@ export const ManagerDashboard: React.FC = () => {
         tasks: memberTasks.length,
         completed: completed
       };
-    }).sort((a: any, b: any) => b.score - a.score);
+    }).sort((a: Record<string, unknown>, b: Record<string, unknown>) => (b.score as number) - (a.score as number));
   }, [teamMembers, teamTasks, selectedProjectId, rawAttendanceRecords, attendanceDateRange]);
 
   // 4. Workload Distribution (Donut)
   const workloadData = useMemo(() => {
     // Filter tasks by selected project if one is active
     const relevantTasks = (selectedProjectId && selectedProjectId !== 'ALL')
-      ? teamTasks.filter((t: any) => t.project_id === selectedProjectId)
+      ? teamTasks.filter((t: Record<string, unknown>) => t.project_id === selectedProjectId)
       : teamTasks;
 
-    return teamMembers.map((m: any) => {
-      const activeTasks = relevantTasks.filter((t: any) =>
-        (t.assigned_to === m.id || t.assignees?.some((a: any) => a.id === m.id)) &&
+    return teamMembers.map((m: Record<string, unknown>) => {
+      const activeTasks = relevantTasks.filter((t: Record<string, unknown>) =>
+        (t.assigned_to === m.id || (t.assignees as Array<Record<string, unknown>>)?.some((a: Record<string, unknown>) => a.id === m.id)) &&
         (t.column_key !== 'DONE' && t.status !== 'DONE')
       ).length;
-      return { name: `${m.first_name} ${m.last_name.charAt(0)}.`, value: activeTasks };
+      return { name: `${m.first_name as string} ${(m.last_name as string).charAt(0)}.`, value: activeTasks };
     }).filter((d: { value: number }) => d.value > 0);
   }, [teamMembers, teamTasks, selectedProjectId]);
 
   // 5. Deadline Adherence (Donut)
   const deadlineAdherence = useMemo(() => {
     const now = new Date();
-    const completedOnTime = teamTasks.filter((t: any) => {
+    const completedOnTime = teamTasks.filter((t: Record<string, unknown>) => {
       if (t.column_key !== 'DONE' && t.status !== 'DONE') return false;
       if (!t.due_date) return true;
-      return !isAfter(now, parseISO(t.due_date));
+      return !isAfter(now, parseISO(t.due_date as string));
     }).length;
 
-    const overdue = teamTasks.filter((t: any) => {
+    const overdue = teamTasks.filter((t: Record<string, unknown>) => {
       if (t.column_key === 'DONE' || t.status === 'DONE') return false;
       if (!t.due_date) return false;
-      return isAfter(now, parseISO(t.due_date));
+      return isAfter(now, parseISO(t.due_date as string));
     }).length;
 
-    const ongoing = teamTasks.filter((t: any) => {
+    const ongoing = teamTasks.filter((t: Record<string, unknown>) => {
       if (t.column_key === 'DONE' || t.status === 'DONE') return false;
       if (!t.due_date) return true;
-      return !isAfter(now, parseISO(t.due_date));
+      return !isAfter(now, parseISO(t.due_date as string));
     }).length;
 
     return [
@@ -693,11 +673,11 @@ export const ManagerDashboard: React.FC = () => {
     return getGreeting(user?.timezone);
   }, [user?.timezone]);
 
-  const totalPending = (pendingRequests as any)?.data?.length || 0;
+    const totalPending = ((pendingRequests as unknown as Record<string, unknown>)?.data as Record<string, unknown>[])?.length || 0;
 
   // Custom Active Shape for Pie
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  const renderActiveShape = (props: Record<string, unknown>) => {
+    const cx = props.cx as number; const cy = props.cy as number; const innerRadius = props.innerRadius as number; const outerRadius = props.outerRadius as number; const startAngle = props.startAngle as number; const endAngle = props.endAngle as number; const fill = props.fill as string;
     return (
       <g>
         <Sector
@@ -971,20 +951,20 @@ export const ManagerDashboard: React.FC = () => {
 
                       {/* Employee Rows - Vertically Scrollable */}
                       <div className="flex flex-col gap-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-                        {uniqueTeamMembers.map((member: any) => (
-                          <div key={member.id} className="flex items-center group/row">
+                        {uniqueTeamMembers.map((member: Record<string, unknown>) => (
+                          <div key={member.id as string} className="flex items-center group/row">
                             {/* Name Column */}
                             {/* Name Column (Sticky) */}
                             <div className="w-[140px] sm:w-[180px] flex-shrink-0 flex items-center gap-3 pr-4 sticky left-0 z-20 bg-white dark:bg-neutral-900 border-r border-slate-50 dark:border-white/5 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
                               <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-xs font-bold text-brand-600 dark:text-brand-400 shrink-0">
-                                {member.first_name?.[0]}{member.last_name?.[0]}
+                                {(member.first_name as string)?.[0]}{(member.last_name as string)?.[0]}
                               </div>
                               <div className="flex flex-col overflow-hidden">
                                 <span className="text-xs sm:text-sm font-semibold truncate text-neutral-700 dark:text-neutral-200">
-                                  {member.first_name} {member.last_name}
+                                  {member.first_name as string} {member.last_name as string}
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] text-slate-400 truncate">
-                                  {member.designation?.name || member.role || 'Team Member'}
+                                  {(member.designation as Record<string, unknown>)?.name as string || member.role as string || 'Team Member'}
                                 </span>
                               </div>
                             </div>
@@ -1005,10 +985,10 @@ export const ManagerDashboard: React.FC = () => {
 
                                 return days.map((day, i) => {
                                   const dateKey = format(day, 'yyyy-MM-dd');
-                                  const record = rawAttendanceRecords?.find((r: any) => {
+                                  const record = (rawAttendanceRecords as unknown as Array<Record<string, unknown>>)?.find((r: Record<string, unknown>) => {
                                     if (!r || !r.date) return false;
                                     try {
-                                      return r.employee_id === member.id && format(parseISO(r.date), 'yyyy-MM-dd') === dateKey
+                                      return r.employee_id === member.id && format(parseISO(r.date as string), 'yyyy-MM-dd') === dateKey
                                     } catch { return false; }
                                   });
 
@@ -1044,7 +1024,7 @@ export const ManagerDashboard: React.FC = () => {
                                   return (
 <div
                                 key={i}
-                                className="w-8 h-8 rounded-md transition-all hover:scale-110 ${bgClass}"
+                                className={`w-8 h-8 rounded-md transition-all hover:scale-110 ${bgClass}`}
                               >
                                 {record && (
                                   <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-max px-1.5 py-0.5 rounded text-[9px] font-medium text-white shadow-lg bg-gray-900 opacity-0 group-hover/cell:opacity-100 transition-opacity whitespace-nowrap">
@@ -1063,34 +1043,6 @@ export const ManagerDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Fixed Tooltip Overlay */}
-                {tooltipData && (
-                  <div
-                    className="fixed z-[9999] pointer-events-none"
-                    style={{
-                      top: tooltipData.y - 10,
-                      left: tooltipData.x,
-                      transform: 'translate(-50%, -100%)'
-                    }}
-                  >
-                    <div className="bg-white dark:bg-neutral-900 p-2 rounded-lg shadow-elev-5 border border-neutral-100 dark:border-slate-700 text-xs min-w-[120px]">
-                      <div className="font-bold whitespace-nowrap">{format(tooltipData.content.date, 'MMM dd, yyyy')}</div>
-                      <div className="text-[10px] text-slate-500 mb-1">{tooltipData.content.member.first_name}</div>
-                      <div className={`font-semibold ${tooltipData.content.statusLabel === 'Present' ? 'text-emerald-500' :
-                        tooltipData.content.statusLabel === 'Late' ? 'text-amber-500' :
-                          tooltipData.content.statusLabel === 'Absent' ? 'text-error-500' : 'text-slate-400'
-                        }`}>
-                        {tooltipData.content.statusLabel}
-                      </div>
-                      {tooltipData.content.record?.check_in_time && (() => {
-                        try {
-                          return <div className="text-[10px] text-slate-400 mt-1">In: {format(parseISO(tooltipData.content.record.check_in_time), 'HH:mm')}</div>;
-                        } catch (e) { return null; }
-                      })()}
-                    </div>
-                  </div>
-                )}
 
                 {/* Legend */}
                 <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
@@ -1126,8 +1078,8 @@ export const ManagerDashboard: React.FC = () => {
                 >
                   <option value="" disabled>Select Project</option>
                   {/*  */}
-                  {projects?.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                  {(projects as unknown as Record<string, unknown>[])?.map((p: Record<string, unknown>) => (
+                    <option key={String(p.id)} value={String(p.id)}>{String(p.name)}</option>
                   ))}
                 </select>
               </div>
@@ -1164,8 +1116,8 @@ export const ManagerDashboard: React.FC = () => {
                           barSize={24}
                           animationDuration={2000}
                         >
-                          {taskProgressData.map((_entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={_entry.fill} />
+                          {taskProgressData.map((_entry: Record<string, unknown>, index: number) => (
+                            <Cell key={`cell-${index}`} fill={_entry.fill as string} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -1202,12 +1154,12 @@ export const ManagerDashboard: React.FC = () => {
             badge="Live Status"
           >
             <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar">
-              {teamMembers.map((member: any, i: number) => (
+              {teamMembers.map((member: Record<string, unknown>, i: number) => (
                 <ActiveMemberCard
-                  key={member.id}
+                  key={member.id as string}
                   member={member}
                   delay={0.8 + i * 0.05}
-                  onClick={() => navigate(`/dashboard/employees/${member.user_id}`)}
+                  onClick={() => navigate(`/dashboard/employees/${member.user_id as string}`)}
                 />
               ))}
             </div>
@@ -1232,11 +1184,12 @@ export const ManagerDashboard: React.FC = () => {
                     paddingAngle={8}
                     dataKey="value"
                     activeIndex={activePieIndex}
-                    activeShape={renderActiveShape}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    activeShape={renderActiveShape as any}
                     onMouseEnter={(_, index) => setActivePieIndex(index)}
                     onMouseLeave={() => setActivePieIndex(undefined)}
                   >
-                    {workloadData.map((_entry: any, index: number) => (
+                    {workloadData.map((_entry: Record<string, unknown>, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
@@ -1250,16 +1203,16 @@ export const ManagerDashboard: React.FC = () => {
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Active</p>
                 <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
-                  {workloadData.reduce((acc: number, curr: any) => acc + curr.value, 0)}
+                  {workloadData.reduce((acc: number, curr: Record<string, unknown>) => acc + (curr.value as number), 0)}
                 </p>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 overflow-y-auto custom-scrollbar pr-3">
-              {workloadData.map((item: any, i: number) => (
+              {workloadData.map((item: Record<string, unknown>, i: number) => (
                 <div key={i} className="flex items-center gap-2 p-2 rounded-xl hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-elev-1" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 break-words leading-tight flex-1">{item.name}</span>
-                  <span className="text-[11px] font-black text-slate-900 dark:text-white shrink-0">{item.value}</span>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 break-words leading-tight flex-1">{item.name as string}</span>
+                  <span className="text-[11px] font-black text-slate-900 dark:text-white shrink-0">{item.value as number}</span>
                 </div>
               ))}
             </div>
@@ -1295,16 +1248,16 @@ export const ManagerDashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
             <div className="mt-8 space-y-4">
-              {deadlineAdherence.map((item: any, i: number) => (
+              {deadlineAdherence.map((item: Record<string, unknown>, i: number) => (
                 <div key={i} className="flex items-center justify-between group">
                   <div className="flex items-center gap-4">
-                    <div className="w-3.5 h-3.5 rounded-full ring-4 ring-current/5" style={{ backgroundColor: item.fill }} />
-                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">{item.name}</span>
+                    <div className="w-3.5 h-3.5 rounded-full ring-4 ring-current/5" style={{ backgroundColor: item.fill as string }} />
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">{item.name as string}</span>
                   </div>
                   <div className="flex items-center gap-6">
-                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover:scale-110 transition-transform">{item.value}</span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover:scale-110 transition-transform">{item.value as number}</span>
                     <span className="text-[10px] font-black text-slate-400 w-12 text-right bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                      {teamTasks.length > 0 ? Math.round((item.value / teamTasks.length) * 100) : 0}%
+                      {teamTasks.length > 0 ? Math.round(((item.value as number) / teamTasks.length) * 100) : 0}%
                     </span>
                   </div>
                 </div>
@@ -1335,7 +1288,7 @@ export const ManagerDashboard: React.FC = () => {
                 {/* Navigation Arrows */}
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 hover:bg-neutral-50 dark:hover:bg-slate-700"
                   onClick={() => {
                     const container = document.getElementById('perf-carousel-bottom');
@@ -1347,7 +1300,7 @@ export const ManagerDashboard: React.FC = () => {
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-elev-4 border border-neutral-200 dark:border-slate-700 hover:bg-neutral-50 dark:hover:bg-slate-700"
                   onClick={() => {
                     const container = document.getElementById('perf-carousel-bottom');
@@ -1364,7 +1317,7 @@ export const ManagerDashboard: React.FC = () => {
                   className="flex gap-4 overflow-x-auto scroll-smooth px-10 pb-2 hide-scrollbar"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {performanceData.map((item: any, i: number) => (
+                  {performanceData.map((item: Record<string, unknown>, i: number) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -1378,11 +1331,11 @@ export const ManagerDashboard: React.FC = () => {
                           className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-elev-3"
                           style={{ background: COLORS[i % COLORS.length] }}
                         >
-                          {item.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                          {(item.name as string).split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{item.name}</p>
-                          <p className="text-[10px] text-slate-400">{item.tasks || 0} tasks assigned</p>
+                          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{item.name as string}</p>
+                          <p className="text-[10px] text-slate-400">{(item.tasks as number) || 0} tasks assigned</p>
                         </div>
                       </div>
 
@@ -1403,15 +1356,15 @@ export const ManagerDashboard: React.FC = () => {
                               cx="48"
                               cy="48"
                               r="40"
-                              stroke={item.score > 80 ? '#10b981' : item.score > 50 ? '#6366f1' : item.score > 0 ? '#f59e0b' : '#94a3b8'}
+                              stroke={(item.score as number) > 80 ? '#10b981' : (item.score as number) > 50 ? '#6366f1' : (item.score as number) > 0 ? '#f59e0b' : '#94a3b8'}
                               strokeWidth="6"
                               fill="none"
                               strokeLinecap="round"
-                              strokeDasharray={`${(item.score / 100) * 251} 251`}
+                              strokeDasharray={`${((item.score as number) / 100) * 251} 251`}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{item.score}%</span>
+                            <span className="text-xl font-black text-slate-800 dark:text-white">{(item.score as number)}%</span>
                             <span className="text-[9px] text-slate-400 uppercase tracking-wider">Overall</span>
                           </div>
                         </div>
@@ -1423,12 +1376,12 @@ export const ManagerDashboard: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Attendance</span>
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{item.attendanceScore || 0}%</span>
+                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{(item.attendanceScore as number) || 0}%</span>
                           </div>
                           <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
-                              style={{ width: `${item.attendanceScore || 0}%` }}
+                              style={{ width: `${(item.attendanceScore as number) || 0}%` }}
                             />
                           </div>
                         </div>
@@ -1436,12 +1389,12 @@ export const ManagerDashboard: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Tasks</span>
-                            <span className="text-[10px] font-black text-brand-600 dark:text-brand-400">{item.taskScore || 0}%</span>
+                            <span className="text-[10px] font-black text-brand-600 dark:text-brand-400">{(item.taskScore as number) || 0}%</span>
                           </div>
                           <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full transition-all duration-500"
-                              style={{ width: `${item.taskScore || 0}%` }}
+                              style={{ width: `${(item.taskScore as number) || 0}%` }}
                             />
                           </div>
                         </div>
@@ -1469,9 +1422,9 @@ export const ManagerDashboard: React.FC = () => {
             <div className="space-y-4 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
               <AnimatePresence mode="popLayout">
                 {totalPending > 0 ? (
-                  (pendingRequests as any).data.map((request: any, i: number) => (
+                  ((pendingRequests as unknown as Record<string, unknown>).data as Array<Record<string, unknown>>)?.map((request: Record<string, unknown>, i: number) => (
                     <motion.div
-                      key={request.id}
+                      key={request.id as string}
                       layout
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -1485,9 +1438,9 @@ export const ManagerDashboard: React.FC = () => {
                             <Calendar className="w-6 h-6 text-amber-600" />
                           </div>
                           <div>
-                            <h4 className="font-black text-slate-900 dark:text-white text-base">{request.first_name} {request.last_name}</h4>
+                            <h4 className="font-black text-slate-900 dark:text-white text-base">{request.first_name as string} {request.last_name as string}</h4>
                             <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest mt-1">
-                              {request.leave_type} <span className="text-slate-400 mx-2">•</span> {format(parseISO(request.start_date), 'MMM dd')} - {format(parseISO(request.end_date), 'MMM dd')}
+                              {request.leave_type as string} <span className="text-slate-400 mx-2">•</span> {format(parseISO(request.start_date as string), 'MMM dd')} - {format(parseISO(request.end_date as string), 'MMM dd')}
                             </p>
                           </div>
                         </div>
@@ -1495,7 +1448,7 @@ export const ManagerDashboard: React.FC = () => {
                           <motion.button
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => approveMutation.mutate(request.id)}
+                            onClick={() => approveMutation.mutate(request.id as string)}
                             className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 shadow-elev-1"
                           >
                             <CheckCircle className="w-5 h-5" />
@@ -1505,7 +1458,7 @@ export const ManagerDashboard: React.FC = () => {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => {
                               const reason = prompt('Reason for rejection:');
-                              if (reason) rejectMutation.mutate({ id: request.id, reason });
+                              if (reason) rejectMutation.mutate({ id: request.id as string, reason });
                             }}
                             className="w-10 h-10 rounded-2xl bg-error-50 text-error-600 flex items-center justify-center hover:bg-error-100 shadow-elev-1"
                           >
@@ -1513,9 +1466,9 @@ export const ManagerDashboard: React.FC = () => {
                           </motion.button>
                         </div>
                       </div>
-                      {request.reason && (
+                      {(request.reason as string) && (
                         <div className="bg-neutral-50 dark:bg-slate-700/30 p-4 rounded-2xl border border-neutral-100 dark:border-white/5">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 italic font-medium leading-relaxed">"{request.reason}"</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 italic font-medium leading-relaxed">"{request.reason as string}"</p>
                         </div>
                       )}
                     </motion.div>
@@ -1539,15 +1492,15 @@ export const ManagerDashboard: React.FC = () => {
           {/* Celebrations */}
           <ChartCard title="Team Celebrations" subtitle="Birthdays, Anniversaries & New Joinees" delay={1.3}>
             <div className="space-y-3 mt-2">
-              {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 4).map((evt: any, i: number) => (
+              {([...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])] as unknown as Record<string, unknown>[]).slice(0, 4).map((evt: Record<string, unknown>, i: number) => (
                 <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-elev-4 border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
                     {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
+                    <p className="font-black text-slate-900 dark:text-white text-base">{evt.name as string}</p>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                      {evt.date} <span className="text-neutral-200 dark:text-neutral-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
+                      {evt.date as string} <span className="text-neutral-200 dark:text-neutral-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? 'Birthday' : evt.type === 'JOINER' ? 'New Joiner' : 'Anniversary'}
                     </p>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -32,15 +32,17 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
         onSubmit: async (values) => {
             try {
                 await couponService.createCoupon({
-                    ...values,
-                    max_redemptions: values.max_redemptions ? Number(values.max_redemptions) : undefined,
-                    expires_at: values.expires_at || undefined
-                } as any);
-                showToast.success('Coupon created');
+                    code: (values as Record<string, unknown>).code as string,
+                    discount_type: (values as Record<string, unknown>).discount_type as 'PERCENT' | 'FIXED',
+                    discount_value: (values as Record<string, unknown>).discount_value as number,
+                    max_redemptions: (values as Record<string, unknown>).max_redemptions ? Number((values as Record<string, unknown>).max_redemptions) : undefined,
+                    expires_at: (values as Record<string, unknown>).expires_at as string || undefined
+                });
+                showToast.success(t('subscription.couponCreated'));
                 onSuccess();
                 onClose();
-            } catch (error: any) {
-                showToast.error(error.response?.data?.message || 'Failed to create coupon');
+            } catch (error: unknown) {
+                showToast.error((error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to create coupon');
             }
         }
     });
@@ -66,8 +68,9 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
         >
             <form id="create-coupon-form" onSubmit={formik.handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
+                    <label htmlFor="coupon-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
                     <input
+                        id="coupon-code"
                         type="text"
                         name="code"
                         className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 uppercase"
@@ -83,20 +86,22 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                        <label htmlFor="coupon-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                         <select
+                            id="coupon-type"
                             name="discount_type"
                             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             value={formik.values.discount_type}
                             onChange={formik.handleChange}
                         >
                             <option value="PERCENT">Percentage (%)</option>
-                            <option value="FIXED">Fixed Amount (₹)</option>
+                            <option value="FIXED">Fixed Amount (â‚¹)</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value</label>
+                        <label htmlFor="coupon-value" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value</label>
                         <input
+                            id="coupon-value"
                             type="number"
                             name="discount_value"
                             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -108,8 +113,9 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Redemptions (Optional)</label>
+                    <label htmlFor="coupon-max" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Redemptions (Optional)</label>
                     <input
+                        id="coupon-max"
                         type="number"
                         name="max_redemptions"
                         className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -120,8 +126,9 @@ const CreateCouponModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; on
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date (Optional)</label>
+                    <label htmlFor="coupon-expiry" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date (Optional)</label>
                     <input
+                        id="coupon-expiry"
                         type="date"
                         name="expires_at"
                         className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -148,7 +155,7 @@ export const CouponsPage: React.FC = () => {
     const copyLink = (code: string) => {
         const link = `${window.location.origin}/pricing?coupon=${code}`;
         navigator.clipboard.writeText(link);
-        showToast.success('Link copied to clipboard');
+        showToast.success(_t('common.linkCopied'));
     };
 
     return (

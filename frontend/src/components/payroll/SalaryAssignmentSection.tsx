@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { payrollService, CTCBreakdown } from '@/services/payroll.service';
+import { payrollService, CTCBreakdown, SalaryRevision } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Calculator, Check, AlertCircle, History, Save, IndianRupee, Calendar, FileText, TrendingUp, Info } from 'lucide-react';
 import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 interface SalaryAssignmentSectionProps {
     employeeId: string;
@@ -16,6 +17,7 @@ interface SalaryAssignmentSectionProps {
 }
 
 export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = ({ employeeId, isReadOnly = false }) => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [selectedStructureId, setSelectedStructureId] = useState('');
     const [annualCTC, setAnnualCTC] = useState<number | ''>('');
@@ -43,7 +45,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
     const calculateMut = useMutation({
         mutationFn: () => payrollService.calculateCTC(selectedStructureId, Number(annualCTC)),
         onSuccess: (data) => setBreakdown(data),
-        onError: (err: any) => showToast.error(err.message || 'Failed to calculate breakdown')
+        onError: (err: Error) => showToast.error(err.message || 'Failed to calculate breakdown')
     });
 
     const assignMut = useMutation({
@@ -56,11 +58,11 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-salary', employeeId] });
             queryClient.invalidateQueries({ queryKey: ['employee-salary-history', employeeId] });
-            showToast.success('Salary assigned successfully');
+            showToast.success(t('payroll.salaryAssigned'));
             setReason('');
             setBreakdown(null);
         },
-        onError: (err: any) => showToast.error(err.message || 'Failed to assign salary')
+        onError: (err: Error) => showToast.error(err.message || 'Failed to assign salary')
     });
 
     useEffect(() => {
@@ -139,7 +141,7 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                 <div className="relative group/input">
                                     <Input
                                         type="number"
-                                        value={annualCTC as any}
+                                        value={annualCTC}
                                         onChange={(e) => setAnnualCTC(Number(e.target.value) || '')}
                                         placeholder="e.g. 1200000"
                                         className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-elev-1"
@@ -306,26 +308,26 @@ export const SalaryAssignmentSection: React.FC<SalaryAssignmentSectionProps> = (
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {history.map((h: any) => (
-                                    <TableRow key={h.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors group">
+                                {history.map((h: SalaryRevision) => (
+                                    <TableRow key={h.id as string} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors group">
                                         <TableCell className="px-8 py-4 text-[13px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">
-                                            {format(new Date(h.effective_from), 'MMM dd, yyyy')}
+                                            {format(new Date(h.effective_from as string), 'MMM dd, yyyy')}
                                         </TableCell>
                                         <TableCell className="px-8 py-4">
-                                            <span className="text-[13px] font-black text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors">{formatCurrency(h.annual_ctc)}</span>
+                                            <span className="text-[13px] font-black text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors">{formatCurrency(h.annual_ctc as number)}</span>
                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">/ Yr</span>
                                         </TableCell>
                                         <TableCell className="px-8 py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-brand-400" />
-                                                <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">{h.structure_name}</span>
+                                                <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">{h.structure_name as string}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-8 py-4">
-                                            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 italic">"{h.revision_reason || 'System Initialized'}"</span>
+                                            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 italic">"{h.revision_reason as string || 'System Initialized'}"</span>
                                         </TableCell>
                                         <TableCell className="px-8 py-4 text-right">
-                                            {h.is_current ? (
+                                            {(h.is_current as boolean) ? (
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-brand-50 dark:bg-brand-500/10 text-brand-600 uppercase tracking-tight ring-1 ring-purple-500/20">
                                                     <Check size={10} className="mr-1 stroke-[3px]" /> Currently Active
                                                 </span>

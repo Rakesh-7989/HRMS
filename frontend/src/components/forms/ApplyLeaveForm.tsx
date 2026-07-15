@@ -173,7 +173,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Leave Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="leave-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Leave Type *
             </label>
             {typesLoading ? (
@@ -186,6 +186,7 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
               </div>
             ) : (
               <select
+                id="leave-type"
                 name="leave_type_id"
                 value={formik.values.leave_type_id}
                 onChange={formik.handleChange}
@@ -224,9 +225,9 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Date Range - Single Calendar */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Leave Duration *
-            </label>
+            </span>
             <DateRangePicker
               startDate={formik.values.start_date}
               endDate={formik.values.end_date}
@@ -305,10 +306,11 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
 
           {/* Reason */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="leave-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Reason *
             </label>
             <textarea
+              id="leave-reason"
               name="reason"
               value={formik.values.reason}
               onChange={formik.handleChange}
@@ -325,9 +327,9 @@ export const ApplyLeaveForm: React.FC<ApplyLeaveFormProps> = ({
           {/* Attachment Upload - Show when leave type requires attachment */}
           {selectedLeaveType?.requires_attachment && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Attachment *
-              </label>
+              </span>
 
               {!selectedFile ? (
                 <div className="relative">

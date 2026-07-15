@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { aiService } from '@/services/ai.service';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
-import { Brain, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Users, Loader2 } from 'lucide-react';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { Brain, TrendingUp, AlertTriangle, Lightbulb, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 const severityConfig: Record<string, { color: string; icon: React.ElementType }> = {

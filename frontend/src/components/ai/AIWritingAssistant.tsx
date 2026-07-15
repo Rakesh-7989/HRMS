@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
 import { aiService } from '@/services/ai.service';
 import { Sparkles, Loader2, X, Wand2 } from 'lucide-react';
-import { cn } from '@/utils/cn';
 
 interface AIWritingAssistantProps {
   targetTextArea: HTMLTextAreaElement | null;
@@ -91,7 +90,6 @@ export const AIWritingAssistant: React.FC<AIWritingAssistantProps> = ({ targetTe
           ) : (
             <div className="space-y-2">
               <textarea
-                autoFocus
                 placeholder="Describe what you want to write..."
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
@@ -121,6 +119,7 @@ export const AIWritingAssistant: React.FC<AIWritingAssistantProps> = ({ targetTe
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAIWritingAssistant = () => {
   const [activeField, setActiveField] = useState<HTMLTextAreaElement | null>(null);
 

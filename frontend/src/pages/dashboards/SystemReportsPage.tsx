@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import {
     BarChart, Bar, LineChart, Line, AreaChart, Area,
@@ -18,19 +18,20 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-gray-800 p-3 rounded-xl shadow-elev-5">
                 <p className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">{label}</p>
-                {payload.map((entry: any, index: number) => (
+                {payload.map((entry: Record<string, unknown>, index: number) => (
                     <div key={index} className="flex items-center gap-2 mt-1">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color as string }} />
                         <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {entry.name}: {entry.name.toLowerCase().includes('revenue') ? `₹${entry.value.toLocaleString()}` : entry.value.toLocaleString()}
+                            {entry.name as string}: {(entry.name as string).toLowerCase().includes('revenue') ? `₹${(entry.value as number).toLocaleString()}` : (entry.value as number).toLocaleString()}
                         </span>
                     </div>
                 ))}
@@ -40,7 +41,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const ReportCard = ({ title, children, icon: Icon, delay = 0 }: any) => (
+const ReportCard = ({ title, children, icon: Icon, delay = 0 }: { title: string; children: React.ReactNode; icon?: React.ComponentType<{ className?: string }>; delay?: number }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -73,7 +74,7 @@ export const SystemReportsPage: React.FC = () => {
         return {
             revenue: reports.mrrTrend?.map(d => ({
                 date: format(new Date(d.date), 'MMM dd'),
-                Revenue: parseFloat(d.revenue as any)
+                Revenue: parseFloat(String(d.revenue))
             })).reverse() || [],
             growth: reports.growthChurn?.map(d => ({
                 month: format(new Date(d.month), 'MMM yy'),
@@ -124,7 +125,7 @@ export const SystemReportsPage: React.FC = () => {
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Platform Insights</h1>
                         <p className="text-gray-500 dark:text-gray-400">Core business metrics and platform usage analytics</p>
                     </div>
-                    <Button onClick={() => navigate('/dashboard/system')} className="rounded-xl px-6 h-12 bg-brand-600 hover:bg-brand-600 text-white font-bold shadow-elev-4 shadow-brand-200">
+                    <Button onClick={() => navigate(ROUTES.SUPER_ADMIN_DASHBOARD)} className="rounded-xl px-6 h-12 bg-brand-600 hover:bg-brand-600 text-white font-bold shadow-elev-4 shadow-brand-200">
                         <ChevronLeft className="w-5 h-5 mr-2" /> Back to Nexus
                     </Button>
                 </div>

@@ -279,12 +279,12 @@ export const LeaveContent: React.FC = () => {
                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">My Leave History</h3>
                     <DataTable
                         columns={[
-                            { header: 'Type', accessor: (row) => (row as any).leave_type_name || row.leave_type, sortKey: 'leave_type' },
-                            { header: 'Start Date', accessor: (row) => format(new Date(row.start_date), 'MMM dd, yyyy'), sortKey: 'start_date' },
-                            { header: 'End Date', accessor: (row) => format(new Date(row.end_date), 'MMM dd, yyyy'), sortKey: 'end_date' },
+                            { header: 'Type', cell: (row: { leave_type_name?: string; leave_type: string }) => row.leave_type_name || row.leave_type, sortKey: 'leave_type' },
+                            { header: 'Start Date', cell: (row: { start_date: string }) => format(new Date(row.start_date), 'MMM dd, yyyy'), sortKey: 'start_date' },
+                            { header: 'End Date', cell: (row: { end_date: string }) => format(new Date(row.end_date), 'MMM dd, yyyy'), sortKey: 'end_date' },
                             {
                                 header: 'Status',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div className="flex flex-col gap-1 items-start">
                                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.status === 'APPROVED'
                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -307,7 +307,7 @@ export const LeaveContent: React.FC = () => {
                             },
                             {
                                 header: 'Actions',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     row.status === 'PENDING' ? (
                                          <Button variant="ghost" 
                                             onClick={() => cancelMutation.mutate(row.id)}
@@ -321,7 +321,7 @@ export const LeaveContent: React.FC = () => {
                             },
                         ]}
                         data={filteredMyLeaves}
-                        isLoading={isLoading}
+                        loading={isLoading}
                         emptyMessage={myLeaves.length === 0 ? 'No leave applications found' : 'No applications match your filters'}
                         pageSize={10}
                     />
@@ -336,23 +336,23 @@ export const LeaveContent: React.FC = () => {
                         columns={[
                             {
                                 header: 'Employee',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <span className="text-gray-900 dark:text-white">
                                         {row.employee?.first_name} {row.employee?.last_name}
                                     </span>
                                 ),
                                 sortKey: 'employee',
                             },
-                            { header: 'Type', accessor: (row) => (row as any).leave_type_name || row.leave_type, sortKey: 'leave_type' },
+                            { header: 'Type', cell: (row: { leave_type_name?: string; leave_type: string }) => row.leave_type_name || row.leave_type, sortKey: 'leave_type' },
                             {
                                 header: 'Dates',
-                                accessor: (row) => `${format(new Date(row.start_date), 'MMM dd')} - ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
+                                cell: (row) => `${format(new Date(row.start_date), 'MMM dd')} - ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
                                 sortKey: 'start_date',
                             },
-                            { header: 'Reason', accessor: (row) => row.reason || '-' },
+                            { header: 'Reason', cell: (row) => row.reason || '-' },
                             {
                                 header: 'Actions',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div className="flex gap-2">
                                         <Button
                                             variant="ghost"
@@ -366,7 +366,7 @@ export const LeaveContent: React.FC = () => {
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => {
-                                                setSelectedLeave(row as any);
+                                                setSelectedLeave(row as unknown as LeaveApplication);
                                                 setShowRejectDialog(true);
                                             }}
                                             isLoading={rejectMutation.isPending}
@@ -396,15 +396,16 @@ export const LeaveContent: React.FC = () => {
                             <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg p-3">
                                 <p className="text-xs text-red-800 dark:text-red-400">
                                     You are about to reject the leave request for
-                                    <strong> {selectedLeave.employee?.first_name || (selectedLeave as any).first_name} {selectedLeave.employee?.last_name || (selectedLeave as any).last_name}</strong>
+                                    <strong> {selectedLeave.employee?.first_name || (selectedLeave as { first_name?: string }).first_name} {selectedLeave.employee?.last_name || (selectedLeave as { last_name?: string }).last_name}</strong>
                                 </p>
                             </div>
 
                             <div className="mt-4">
-                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label htmlFor="rejection-reason" className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                                     Rejection Reason *
                                 </label>
                                 <textarea
+                                    id="rejection-reason"
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}

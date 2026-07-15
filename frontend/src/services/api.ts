@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { API_BASE_URL } from '@/utils/constants';
 import type { ApiResponse } from '@/types';
 
@@ -31,8 +31,8 @@ const getErrorMessage = (error: AxiosError<ApiResponse>): string => {
   if (!error.response) return 'Network error. Please check your internet connection.';
 
   const status = error.response.status;
-  const data = error.response.data as any;
-  let backendMessage = data?.message || data?.error;
+  const data = error.response.data as unknown as Record<string, unknown>;
+  let backendMessage: string = (data?.message as string) || (data?.error as string) || '';
 
   // Extract specific validation message if available
   if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
@@ -75,7 +75,7 @@ const getErrorMessage = (error: AxiosError<ApiResponse>): string => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse>) => {
-    const originalRequest = error.config as any;
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
     // Don't retry on login/refresh endpoints to avoid infinite loops
     if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
@@ -84,7 +84,7 @@ api.interceptors.response.use(
 
     // Check for 403 Forbidden - Account Inactive/Revoked
     if (error.response?.status === 403) {
-      const errorMessage = (error.response?.data as any)?.message || '';
+      const errorMessage = error.response?.data?.message || '';
       if (
         errorMessage.toLowerCase().includes('inactive') ||
         errorMessage.toLowerCase().includes('revoked') ||
@@ -104,7 +104,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const errorMessage = (error.response?.data as any)?.message || '';
+      const errorMessage = error.response?.data?.message || '';
       // If the error is specific to account status, DO NOT REFRESH. Log out immediately.
       if (
         errorMessage.toLowerCase().includes('inactive') ||
@@ -151,6 +151,7 @@ api.interceptors.response.use(
           sessionStorage.setItem('refreshToken', newRefreshToken);
         }
 
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {

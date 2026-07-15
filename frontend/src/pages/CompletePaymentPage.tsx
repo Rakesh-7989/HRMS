@@ -8,6 +8,7 @@ import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { tenantRegistrationService } from '@/services/tenantRegistration.service';
 import { UpiPaymentModal } from '@/components/payment/UpiPaymentModal';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const CompletePaymentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,22 +38,23 @@ export const CompletePaymentPage: React.FC = () => {
     setError(null);
 
     try {
-      const response = await tenantRegistrationService.initiatePaymentForTenant(tenantId, email);
+      const response = (await tenantRegistrationService.initiatePaymentForTenant(tenantId, email)) as Record<string, unknown>;
 
-      if (response.success && response.data?.payment_session_id) {
-        const cashfree = (window as any).Cashfree({
+      if (response.success && (response.data as Record<string, unknown>)?.payment_session_id) {
+        const Cashfree = (window as unknown as Record<string, unknown>).Cashfree as (config: Record<string, unknown>) => { checkout: (config: Record<string, unknown>) => Promise<void> };
+        const cashfree = Cashfree({
           mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox'
         });
 
         await cashfree.checkout({
-          paymentSessionId: response.data.payment_session_id,
+          paymentSessionId: (response.data as Record<string, unknown>).payment_session_id,
           redirectTarget: '_self'
         });
       } else {
         setError(t('payment.errors.createSession'));
       }
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.initPayment');
+    } catch (err: unknown) {
+      const errMsg = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || (err as {message?: string})?.message || t('payment.errors.initPayment');
       setError(errMsg);
     } finally {
       setLoading(false);
@@ -66,25 +68,25 @@ export const CompletePaymentPage: React.FC = () => {
     setError(null);
 
     try {
-      const response = await tenantRegistrationService.initiatePaymentForTenant(tenantId, email);
+      const response = (await tenantRegistrationService.initiatePaymentForTenant(tenantId, email)) as Record<string, unknown>;
 
-      if (response.success && response.data?.order_id) {
-        const qrResponse = await tenantRegistrationService.getUpiQr(response.data.order_id);
+      if (response.success && (response.data as Record<string, unknown>)?.order_id) {
+        const qrResponse = (await tenantRegistrationService.getUpiQr((response.data as Record<string, unknown>).order_id as string)) as Record<string, unknown>;
 
-        if (qrResponse.success && qrResponse.data?.upi_qr_code) {
+        if (qrResponse.success && (qrResponse.data as Record<string, unknown>)?.upi_qr_code) {
           setUpiState({
             open: true,
-            qrCode: qrResponse.data.upi_qr_code,
-            orderId: response.data.order_id,
+            qrCode: (qrResponse.data as Record<string, unknown>).upi_qr_code as string,
+            orderId: (response.data as Record<string, unknown>).order_id as string,
           });
         } else {
-          setError(qrResponse.message || t('payment.errors.upiQrFailed'));
+          setError((qrResponse.message as string) || t('payment.errors.upiQrFailed'));
         }
       } else {
         setError(t('payment.errors.createSession'));
       }
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.initUpi');
+    } catch (err: unknown) {
+      const errMsg = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || (err as {message?: string})?.message || t('payment.errors.initUpi');
       setError(errMsg);
     } finally {
       setLoading(false);
@@ -93,16 +95,16 @@ export const CompletePaymentPage: React.FC = () => {
 
   const handleVerifyUpi = useCallback(async (orderId: string) => {
     try {
-      const result = await tenantRegistrationService.verifyPaymentPublic(orderId);
+      const result = (await tenantRegistrationService.verifyPaymentPublic(orderId)) as Record<string, unknown>;
       return { success: true, data: result };
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || t('payment.errors.verificationFailed');
-      if (err?.response?.status === 500 || errMsg.includes('not found') || errMsg.includes('No')) {
+    } catch (err: unknown) {
+      const errMsg = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || (err as {message?: string})?.message || t('payment.errors.verificationFailed');
+      if ((err as {response?: {status?: number}})?.response?.status === 500 || errMsg.includes('not found') || errMsg.includes('No')) {
         return { success: true, data: { success: false, error: errMsg } };
       }
       throw err;
     }
-  }, []);
+  }, [t]);
 
   const handleUpiSuccess = useCallback(() => {
     setTimeout(() => {
@@ -110,7 +112,7 @@ export const CompletePaymentPage: React.FC = () => {
     }, 2000);
   }, [navigate, upiState.orderId]);
 
-  const handleUpiError = useCallback((_message: string) => {
+  const handleUpiError = useCallback(() => {
     setUpiState({ open: false, qrCode: '', orderId: '' });
   }, []);
 
@@ -206,7 +208,7 @@ export const CompletePaymentPage: React.FC = () => {
 
              <Button variant="ghost" 
               className="w-full h-10 text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-500/10 rounded-xl transition-all"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate(ROUTES.REGISTER)}
               disabled={loading}
             >
               <RefreshCw size={12} />
@@ -215,7 +217,7 @@ export const CompletePaymentPage: React.FC = () => {
 
              <Button variant="ghost" 
               className="w-full h-10 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-500/10 rounded-xl transition-all"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(ROUTES.LOGIN)}
               disabled={loading}
             >
               <ArrowLeft size={12} />

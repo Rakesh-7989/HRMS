@@ -42,7 +42,7 @@ export const calendarService = {
         return response.data.data;
     },
 
-   async addCompanyHoliday(date: string, holiday_name: string, state?: string): Promise<any> {
+   async addCompanyHoliday(date: string, holiday_name: string, state?: string): Promise<CompanyHoliday> {
     const response = await api.post('/calendar/company/holidays', { date, holiday_name, state });
     return response.data;
   },

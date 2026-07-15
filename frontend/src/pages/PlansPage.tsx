@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { plansService, Plan } from '@/services/plans.service';
 import { Edit2, Plus, Save, Check, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
@@ -72,11 +72,11 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            showToast.success('Plan updated successfully');
+            showToast.success(t('subscription.planUpdated'));
             setEditingPlan(null);
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to update plan');
+        onError: (error: unknown) => {
+            showToast.error((error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to update plan');
         }
     });
 
@@ -85,11 +85,11 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            showToast.success('Plan created successfully');
+            showToast.success(t('subscription.planCreated'));
             setIsCreating(false);
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to create plan');
+        onError: (error: unknown) => {
+            showToast.error((error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to create plan');
         }
     });
 
@@ -98,10 +98,10 @@ export const PlansPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plans-admin'] });
             queryClient.invalidateQueries({ queryKey: ['plans'] });
-            showToast.success('Plan deleted successfully');
+            showToast.success(t('subscription.planDeleted'));
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to delete plan');
+        onError: (error: unknown) => {
+            showToast.error((error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to delete plan');
         }
     });
 
@@ -118,11 +118,11 @@ export const PlansPage: React.FC = () => {
     const handleDelete = async (plan: Plan) => {
         const isConfirmed = await confirm({
             title: 'Delete Plan',
-            description: `Are you sure you want to delete ${plan.name}? This action cannot be undone.`,
+            message: `Are you sure you want to delete ${plan.name}? This action cannot be undone.`,
             confirmText: 'Delete',
             cancelText: 'Cancel',
-            variant: 'destructive'
-        } as any);
+            type: 'destructive'
+        });
 
         if (isConfirmed) {
             deleteMutation.mutate(plan.id);
@@ -159,7 +159,7 @@ export const PlansPage: React.FC = () => {
         return (
             <DashboardLayout title="Subscription Plans">
                 <div className="p-8 text-center">
-                    <p className="text-red-500 mb-4">Error loading plans: {(error as any).message}</p>
+                    <p className="text-red-500 mb-4">Error loading plans: {(error as {message?: string})?.message || 'Unknown error'}</p>
                     <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['plans'] })}>Retry</Button>
                 </div>
             </DashboardLayout>
@@ -271,8 +271,9 @@ export const PlansPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Plan Name</label>
+                                <label htmlFor="plan-name" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Plan Name</label>
                                 <input
+                                    id="plan-name"
                                     type="text"
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                     value={isCreating ? newPlan.name : editingPlan?.name}
@@ -284,10 +285,11 @@ export const PlansPage: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Base Monthly Price</label>
+                                <label htmlFor="plan-price" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Base Monthly Price</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
                                     <input
+                                        id="plan-price"
                                         type="number"
                                         className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                         value={isCreating ? newPlan.price : editingPlan?.price}
@@ -299,8 +301,9 @@ export const PlansPage: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Max Employees</label>
+                                <label htmlFor="plan-max-emp" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Max Employees</label>
                                 <input
+                                    id="plan-max-emp"
                                     type="number"
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 focus:border-transparent outline-none font-medium"
                                     placeholder="Leave empty for unlimited"
@@ -327,7 +330,7 @@ export const PlansPage: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Features Selection</label>
+                            <span className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Features Selection</span>
                             <div className="flex-1 min-h-[300px] max-h-[400px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-2xl p-4 space-y-5 bg-gray-50/30 dark:bg-gray-900/30 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
                                 {Object.entries(categoryLabels).map(([cat, label]) => {
                                     const currentFeatures = (isCreating ? newPlan.features : editingPlan?.features) || {};
@@ -346,13 +349,13 @@ export const PlansPage: React.FC = () => {
                                                                 checked={isEnabled as boolean}
                                                                 onChange={(e) => {
                                                                     if (isCreating) {
-                                                                        const newFeats = { ...newPlan.features } as any;
-                                                                        if (!newFeats[cat]) newFeats[cat] = {};
+                                                                        const newFeats = { ...newPlan.features } as Record<string, Record<string, boolean>>;
+                                                                        if (!newFeats[cat]) newFeats[cat] = {} as Record<string, boolean>;
                                                                         newFeats[cat][feat] = e.target.checked;
                                                                         setNewPlan({ ...newPlan, features: newFeats });
                                                                     } else {
-                                                                        const newFeats = { ...editingPlan!.features } as any;
-                                                                        if (!newFeats[cat]) newFeats[cat] = {};
+                                                                        const newFeats = { ...editingPlan!.features } as Record<string, Record<string, boolean>>;
+                                                                        if (!newFeats[cat]) newFeats[cat] = {} as Record<string, boolean>;
                                                                         newFeats[cat][feat] = e.target.checked;
                                                                         setEditingPlan({ ...editingPlan!, features: newFeats });
                                                                     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,58 +15,58 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 
 const MerchantsPage: React.FC = () => {
   const { t } = useTranslation();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
 
   const qc = useQueryClient();
-  const { data: merchants = [], isLoading } = useQuery<any[]>({ queryKey: ['payroll', 'merchants'], queryFn: () => payrollService.listMerchants() });
-  const { data: vendorPayments = [] } = useQuery<any[]>({ queryKey: ['payroll', 'vendor-payments'], queryFn: () => payrollService.listVendorPayments() });
-  const { data: thirdPartyPayouts = [] } = useQuery<any[]>({ queryKey: ['payroll', 'third-party-payouts'], queryFn: () => payrollService.listThirdPartyPayouts() });
+  const { data: merchants = [], isLoading } = useQuery({ queryKey: ['payroll', 'merchants'], queryFn: () => payrollService.listMerchants() as unknown as Promise<Record<string, unknown>[]>, });
+  const { data: vendorPayments = [] } = useQuery({ queryKey: ['payroll', 'vendor-payments'], queryFn: () => payrollService.listVendorPayments() as unknown as Promise<Record<string, unknown>[]>, });
+  const { data: thirdPartyPayouts = [] } = useQuery({ queryKey: ['payroll', 'third-party-payouts'], queryFn: () => payrollService.listThirdPartyPayouts() as unknown as Promise<Record<string, unknown>[]>, });
   // Try merchant transactions under merchants router first; payrollService.listMerchantTransactions handles fallback
-  const { data: merchantTransactions = [] } = useQuery<any[]>({ queryKey: ['payroll', 'merchant-transactions'], queryFn: () => payrollService.listMerchantTransactions() });
+  const { data: merchantTransactions = [] } = useQuery({ queryKey: ['payroll', 'merchant-transactions'], queryFn: () => payrollService.listMerchantTransactions() as unknown as Promise<Record<string, unknown>[]>, });
 
   const { user } = useAuth();
   const role = user?.role || '';
 
   // Mutations
   const createVendorMut = useMutation({
-    mutationFn: (payload: any) => payrollService.createVendorPayout(payload),
-    onMutate: async (payload: any) => {
+    mutationFn: (payload: Record<string, unknown>) => (payrollService.createVendorPayout as (p: Record<string, unknown>) => Promise<unknown>)(payload),
+    onMutate: async (payload: Record<string, unknown>) => {
       await qc.cancelQueries({ queryKey: ['payroll', 'vendor-payments'] });
-      const previous = qc.getQueryData<any[]>(['payroll', 'vendor-payments']);
+      const previous = qc.getQueryData<Record<string, unknown>[]>(['payroll', 'vendor-payments']);
       const tempId = `tmp-vendor-${Date.now()}`;
       const tempItem = { id: tempId, vendorName: payload.vendorName, amount: payload.amount, paymentDate: payload.paymentDate, notes: payload.notes, paid: false };
-      qc.setQueryData(['payroll', 'vendor-payments'], (old: any[] | undefined) => { return [...(old || []), tempItem]; });
+      qc.setQueryData(['payroll', 'vendor-payments'], (old: Record<string, unknown>[] | undefined) => { return [...(old || []), tempItem]; });
       return { previous, tempId };
     },
-    onError: (_err, _variables, context: any) => {
-      if (context?.previous) qc.setQueryData(['payroll', 'vendor-payments'], context.previous);
+    onError: (_err, _variables, context: Record<string, unknown> | undefined) => {
+      if (context?.previous) qc.setQueryData(['payroll', 'vendor-payments'], context.previous as Record<string, unknown>[]);
     },
-    onSuccess: (data: any, _variables, context: any) => {
-      qc.setQueryData(['payroll', 'vendor-payments'], (old: any[] | undefined) => {
-        if (!old) return [data];
-        return old.map((it: any) => (it.id === context?.tempId ? data : it));
+    onSuccess: (data: unknown, _variables, context: Record<string, unknown> | undefined) => {
+      qc.setQueryData(['payroll', 'vendor-payments'], (old: Record<string, unknown>[] | undefined) => {
+        if (!old) return [data as Record<string, unknown>];
+        return old.map((it: Record<string, unknown>) => (it.id === context?.tempId ? data as Record<string, unknown> : it));
       });
       qc.invalidateQueries({ queryKey: ['payroll', 'vendor-payments'] });
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['payroll', 'vendor-payments'] }),
   });
   const createThirdMut = useMutation({
-    mutationFn: (payload: any) => payrollService.createThirdPartyPayout(payload),
-    onMutate: async (payload: any) => {
+    mutationFn: (payload: Record<string, unknown>) => (payrollService.createThirdPartyPayout as (p: Record<string, unknown>) => Promise<unknown>)(payload),
+    onMutate: async (payload: Record<string, unknown>) => {
       await qc.cancelQueries({ queryKey: ['payroll', 'third-party-payouts'] });
-      const previous = qc.getQueryData<any[]>(['payroll', 'third-party-payouts']);
+      const previous = qc.getQueryData<Record<string, unknown>[]>(['payroll', 'third-party-payouts']);
       const tempId = `tmp-third-${Date.now()}`;
       const tempItem = { id: tempId, providerName: payload.providerName, amount: payload.amount, payoutDate: payload.payoutDate, notes: payload.notes, paid: false };
-      qc.setQueryData(['payroll', 'third-party-payouts'], (old: any[] | undefined) => { return [...(old || []), tempItem]; });
+      qc.setQueryData(['payroll', 'third-party-payouts'], (old: Record<string, unknown>[] | undefined) => { return [...(old || []), tempItem]; });
       return { previous, tempId };
     },
-    onError: (_err, _variables, context: any) => {
-      if (context?.previous) qc.setQueryData(['payroll', 'third-party-payouts'], context.previous);
+    onError: (_err, _variables, context: Record<string, unknown> | undefined) => {
+      if (context?.previous) qc.setQueryData(['payroll', 'third-party-payouts'], context.previous as Record<string, unknown>[]);
     },
-    onSuccess: (data: any, _variables, context: any) => {
-      qc.setQueryData(['payroll', 'third-party-payouts'], (old: any[] | undefined) => {
-        if (!old) return [data];
-        return old.map((it: any) => (it.id === context?.tempId ? data : it));
+    onSuccess: (data: unknown, _variables, context: Record<string, unknown> | undefined) => {
+      qc.setQueryData(['payroll', 'third-party-payouts'], (old: Record<string, unknown>[] | undefined) => {
+        if (!old) return [data as Record<string, unknown>];
+        return old.map((it: Record<string, unknown>) => (it.id === context?.tempId ? data as Record<string, unknown> : it));
       });
       qc.invalidateQueries({ queryKey: ['payroll', 'third-party-payouts'] });
     },
@@ -161,8 +161,8 @@ const MerchantsPage: React.FC = () => {
     }
   };
 
-  const displayedVendorPayments = (vendorPayments || []).filter((v: any) => showHidden || !localVendorHidden.includes(v.id));
-  const displayedThirdPartyPayouts = (thirdPartyPayouts || []).filter((t: any) => showHidden || !localThirdHidden.includes(t.id));
+  const displayedVendorPayments = (vendorPayments || []).filter((v: Record<string, unknown>) => showHidden || !localVendorHidden.includes(v.id as string));
+  const displayedThirdPartyPayouts = (thirdPartyPayouts || []).filter((t: Record<string, unknown>) => showHidden || !localThirdHidden.includes(t.id as string));
 
   return (
     <DashboardLayout title="Merchants & Vendors">
@@ -198,8 +198,8 @@ const MerchantsPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              merchants.map((m: any) => (
-                <TableRow key={m.id}><TableCell>{m.name}</TableCell><TableCell>{m.info || '—'}</TableCell></TableRow>
+              merchants.map((m: Record<string, unknown>) => (
+                <TableRow key={m.id as string}><TableCell>{m.name as string}</TableCell><TableCell>{(m.info as string) || '—'}</TableCell></TableRow>
               ))
             )}
           </TableBody>
@@ -228,21 +228,21 @@ const MerchantsPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              displayedVendorPayments.map((v: any) => (
-                <TableRow key={v.id}>
-                  <TableCell>{v.vendorName || v.vendor_name || v.vendor || '—'}</TableCell>
-                  <TableCell>{v.amount}</TableCell>
-                  <TableCell>{v.paymentDate || v.payout_date || v.date || '—'}</TableCell>
-                  <TableCell>{(v.paid || localVendorPaid.includes(v.id)) ? 'Paid' : 'Pending'}{localVendorHidden.includes(v.id) && !showHidden ? ' (Deleted)' : ''}</TableCell>
+              displayedVendorPayments.map((v: Record<string, unknown>) => (
+                <TableRow key={v.id as string}>
+                  <TableCell>{(v.vendorName as string) || (v.vendor_name as string) || (v.vendor as string) || '—'}</TableCell>
+                  <TableCell>{v.amount as number}</TableCell>
+                  <TableCell>{(v.paymentDate as string) || (v.payout_date as string) || (v.date as string) || '—'}</TableCell>
+                  <TableCell>{(v.paid || localVendorPaid.includes(v.id as string)) ? 'Paid' : 'Pending'}{localVendorHidden.includes(v.id as string) && !showHidden ? ' (Deleted)' : ''}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {(['ADMIN', 'HR'].includes(role)) && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => toggleVendorPaid(v.id, v.paid)} isLoading={markVendorPaidMut.isPending}>{(v.paid || localVendorPaid.includes(v.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
-                          {!localVendorHidden.includes(v.id) ? (
-                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payment', message: 'Delete this vendor payment?' })) return; toggleVendorHidden(v.id); }}>{t('common.delete')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => toggleVendorPaid(v.id as string, v.paid as boolean)} isLoading={markVendorPaidMut.isPending}>{(v.paid || localVendorPaid.includes(v.id as string)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
+                          {!localVendorHidden.includes(v.id as string) ? (
+                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payment', message: 'Delete this vendor payment?' })) return; toggleVendorHidden(v.id as string); }}>{t('common.delete')}</Button>
                           ) : (
-                            <Button size="sm" variant="outline" onClick={() => toggleVendorHidden(v.id)}>Restore</Button>
+                            <Button size="sm" variant="outline" onClick={() => toggleVendorHidden(v.id as string)}>Restore</Button>
                           )}
                         </>
                       )}
@@ -277,21 +277,21 @@ const MerchantsPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              displayedThirdPartyPayouts.map((t: any) => (
-                <TableRow key={t.id}>
-                  <TableCell>{t.providerName || t.provider_name || t.provider || '—'}</TableCell>
-                  <TableCell>{t.amount}</TableCell>
-                  <TableCell>{t.payoutDate || t.paymentDate || t.date || '—'}</TableCell>
-                  <TableCell>{(t.paid || localThirdPaid.includes(t.id)) ? 'Paid' : 'Pending'}{localThirdHidden.includes(t.id) && !showHidden ? ' (Deleted)' : ''}</TableCell>
+              displayedThirdPartyPayouts.map((p: Record<string, unknown>) => (
+                <TableRow key={p.id as string}>
+                  <TableCell>{(p.providerName as string) || (p.provider_name as string) || (p.provider as string) || '—'}</TableCell>
+                  <TableCell>{p.amount as number}</TableCell>
+                  <TableCell>{(p.payoutDate as string) || (p.paymentDate as string) || (p.date as string) || '—'}</TableCell>
+                  <TableCell>{(p.paid as boolean || localThirdPaid.includes(p.id as string)) ? 'Paid' : 'Pending'}{localThirdHidden.includes(p.id as string) && !showHidden ? ' (Deleted)' : ''}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {(['ADMIN', 'HR'].includes(role)) && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => toggleThirdPaid(t.id, t.paid)} isLoading={markThirdPaidMut.isPending}>{(t.paid || localThirdPaid.includes(t.id)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
-                          {!localThirdHidden.includes(t.id) ? (
-                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payout', message: 'Delete this third-party payout?' })) return; toggleThirdHidden(t.id); }}>{t('common.delete')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => toggleThirdPaid(p.id as string, p.paid as boolean)} isLoading={markThirdPaidMut.isPending}>{(p.paid as boolean || localThirdPaid.includes(p.id as string)) ? 'Mark Unpaid' : 'Mark Paid'}</Button>
+                          {!localThirdHidden.includes(p.id as string) ? (
+                            <Button size="sm" variant="destructive" onClick={async () => { if (!await confirm({ type: 'destructive', title: 'Delete Payout', message: 'Delete this third-party payout?' })) return; toggleThirdHidden(p.id as string); }}>{t('common.delete')}</Button>
                           ) : (
-                            <Button size="sm" variant="outline" onClick={() => toggleThirdHidden(t.id)}>Restore</Button>
+                            <Button size="sm" variant="outline" onClick={() => toggleThirdHidden(p.id as string)}>Restore</Button>
                           )}
                         </>
                       )}
@@ -310,13 +310,13 @@ const MerchantsPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => {
               const combined = [
-                ...(merchantTransactions || []).map((r: any) => ({ ...r, __source: 'merchant' })),
-                ...(vendorPayments || []).map((r: any) => ({ ...r, __source: 'vendor' })),
-                ...(thirdPartyPayouts || []).map((r: any) => ({ ...r, __source: 'third_party' })),
+                ...(merchantTransactions || []).map((r: Record<string, unknown>) => ({ ...r, __source: 'merchant' })),
+                ...(vendorPayments || []).map((r: Record<string, unknown>) => ({ ...r, __source: 'vendor' })),
+                ...(thirdPartyPayouts || []).map((r: Record<string, unknown>) => ({ ...r, __source: 'third_party' })),
               ];
               if (!combined.length) { alert('No transactions to export'); return; }
-              const headers = Array.from(new Set(combined.flatMap((r: any) => Object.keys(r))));
-              const csv = [headers.join(','), ...combined.map((r: any) => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
+              const headers = Array.from(new Set(combined.flatMap((r: Record<string, unknown>) => Object.keys(r))));
+              const csv = [headers.join(','), ...combined.map((r: Record<string, unknown>) => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
               const blob = new Blob([csv], { type: 'text/csv' });
               const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'merchant-transactions.csv'; a.click(); window.URL.revokeObjectURL(url);
             }}>Export Transactions</Button>
@@ -343,13 +343,13 @@ const MerchantsPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              merchantTransactions.map((m: any) => (
-                <TableRow key={m.id}>
-                  <TableCell>{m.id}</TableCell>
-                  <TableCell>{m.employee_name || m.employee_id || '—'}</TableCell>
-                  <TableCell>{m.type}</TableCell>
-                  <TableCell>{m.amount}</TableCell>
-                  <TableCell>{m.tx_date || m.date || '—'}</TableCell>
+              merchantTransactions.map((m: Record<string, unknown>) => (
+                <TableRow key={m.id as string}>
+                  <TableCell>{m.id as string}</TableCell>
+                  <TableCell>{(m.employee_name as string) || (m.employee_id as string) || '—'}</TableCell>
+                  <TableCell>{m.type as string}</TableCell>
+                  <TableCell>{m.amount as number}</TableCell>
+                  <TableCell>{(m.tx_date as string) || (m.date as string) || '—'}</TableCell>
                 </TableRow>
               ))
             )}
@@ -366,9 +366,9 @@ const MerchantsPage: React.FC = () => {
           <form onSubmit={(e) => { e.preventDefault(); handleVendorCreate(); }}>
             <div className="grid gap-2">
               <Label>Vendor name</Label>
-              <Input autoFocus value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
+              <Input value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
               <Label>Amount</Label>
-              <Input value={vendorAmount as any} onChange={(e) => setVendorAmount(Number(e.target.value) || '')} type="number" />
+              <Input value={vendorAmount} onChange={(e) => setVendorAmount(Number(e.target.value) || '')} type="number" />
               <Label>Payment date</Label>
               <Input type="date" value={vendorDate} onChange={(e) => setVendorDate(e.target.value)} />
               <Label>Notes (optional)</Label>
@@ -392,9 +392,9 @@ const MerchantsPage: React.FC = () => {
           <form onSubmit={(e) => { e.preventDefault(); handleThirdCreate(); }}>
             <div className="grid gap-2">
               <Label>Provider name</Label>
-              <Input autoFocus value={thirdName} onChange={(e) => setThirdName(e.target.value)} />
+              <Input value={thirdName} onChange={(e) => setThirdName(e.target.value)} />
               <Label>Amount</Label>
-              <Input value={thirdAmount as any} onChange={(e) => setThirdAmount(Number(e.target.value) || '')} type="number" />
+              <Input value={thirdAmount} onChange={(e) => setThirdAmount(Number(e.target.value) || '')} type="number" />
               <Label>Payout date</Label>
               <Input type="date" value={thirdDate} onChange={(e) => setThirdDate(e.target.value)} />
               <Label>Notes (optional)</Label>
@@ -413,4 +413,4 @@ const MerchantsPage: React.FC = () => {
   );
 };
 
-export default MerchantsPage;
+export { MerchantsPage };

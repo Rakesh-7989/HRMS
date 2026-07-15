@@ -21,4 +21,4 @@ const FnFSettlementsPage: React.FC = () => {
     );
 };
 
-export default FnFSettlementsPage;
+export { FnFSettlementsPage };

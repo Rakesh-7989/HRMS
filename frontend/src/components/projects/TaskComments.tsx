@@ -14,7 +14,7 @@ interface TaskCommentsProps {
 }
 
 export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId, projectId }) => {
-    const confirm = useConfirm();
+    const { confirm } = useConfirm();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [newComment, setNewComment] = useState('');

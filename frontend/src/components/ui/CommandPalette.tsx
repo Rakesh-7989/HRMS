@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/constants';
 
 interface CommandItem {
   id: string;
@@ -205,6 +206,7 @@ const CommandItemRow: React.FC<{
   </Button>
 );
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const createCommandItems = (
   navigate: ReturnType<typeof useNavigate>,
   routes: Record<string, string>,
@@ -213,7 +215,7 @@ export const createCommandItems = (
   {
     label: 'Navigation',
     items: [
-      { id: 'nav-home', label: 'Home', description: 'Go to home page', icon: null, onSelect: () => navigate('/') },
+      { id: 'nav-home', label: 'Home', description: 'Go to home page', icon: null, onSelect: () => navigate(ROUTES.HOME) },
       { id: 'nav-dashboard', label: 'Dashboard', description: 'View your dashboard', icon: null, onSelect: () => navigate(routes.DASHBOARD) },
       ...extra ?? [],
     ].map((item, i) => ({ ...item, id: item.id || `cmd-${i}` })),

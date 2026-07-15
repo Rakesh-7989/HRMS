@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const ForgotPasswordPage: React.FC = () => {
-  const { t: _t } = useTranslation();
+  useTranslation();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -21,8 +21,8 @@ export const ForgotPasswordPage: React.FC = () => {
     try {
       await authService.forgotPassword(email);
       setMessage('Reset link sent to your email if it exists in our system.');
-    } catch (err: any) {
-      setError(err?.message || 'Failed to process request');
+    } catch (err: unknown) {
+      setError((err as {message?: string})?.message || 'Failed to process request');
     } finally {
       setIsLoading(false);
     }
@@ -46,8 +46,9 @@ export const ForgotPasswordPage: React.FC = () => {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label htmlFor="forgot-email" className="block text-sm font-medium mb-2">Email</label>
               <input
+                id="forgot-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

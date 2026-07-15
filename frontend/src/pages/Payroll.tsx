@@ -79,10 +79,10 @@ export const Payroll: React.FC = () => {
 
       // No existing run — create a new one
       const res = await api.post('/payroll/river/run', { month, year });
-      showToast.success('New Payroll Run Started!');
+      showToast.success(t('payroll.runStarted'));
       navigate(`/payroll/process/${res.data.id}`);
-    } catch (error: any) {
-      showToast.error(error.response?.data?.error || 'Failed to start payroll run');
+    } catch (error: unknown) {
+      showToast.error(((error as { response?: { data?: { error?: string } } }).response?.data?.error) || 'Failed to start payroll run');
     } finally {
       setPayRunLoading(false);
     }
@@ -112,7 +112,7 @@ export const Payroll: React.FC = () => {
                   : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-700/50'
                   }`}
               >
-                {t((tab as any).labelKey)}
+                {t(tab.labelKey)}
               </Button>
             );
           })}
@@ -139,7 +139,7 @@ export const Payroll: React.FC = () => {
       <div className="min-h-[500px]">
         {activeTab === 'dashboard' && <PayrollDashboard />}
         {activeTab === 'summary' && (
-          <PayrollSummary onNavigate={(tab) => setActiveTab(tab as any)} />
+          <PayrollSummary onNavigate={(tab) => setActiveTab(tab as string)} />
         )}
         {activeTab === 'payslips' && <PayslipsContent />}
         {activeTab === 'tax' && <TaxDeclaration />}
@@ -151,4 +151,4 @@ export const Payroll: React.FC = () => {
   );
 };
 
-export default Payroll;
+

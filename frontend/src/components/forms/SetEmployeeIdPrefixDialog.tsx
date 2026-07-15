@@ -85,10 +85,11 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
 
                 {/* Input */}
                 <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
+                    <label htmlFor="emp-prefix" className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
                         Prefix <span className="text-error-500">*</span>
                     </label>
                     <input
+                        id="emp-prefix"
                         type="text"
                         value={prefix}
                         onChange={(e) => {
@@ -100,7 +101,6 @@ export const SetEmployeeIdPrefixDialog: React.FC<SetEmployeeIdPrefixDialogProps>
                         }}
                         placeholder="e.g., AM, EMP, GZ"
                         maxLength={5}
-                        autoFocus
                         className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 text-xl uppercase font-black tracking-[0.2em] transition-all shadow-elev-1"
                     />
                     <p className="text-[9px] text-gray-400 font-medium ml-1">Must be 2-5 uppercase characters</p>

@@ -30,8 +30,8 @@ export const COMMON_TIMEZONES: TimezoneOption[] = [
  * Generates an exhaustive list of timezones using native browser APIs as a robust fallback.
  */
 export const getLocalExhaustiveTimezones = (): TimezoneOption[] => {
-    const ianaNames = (Intl as any).supportedValuesOf
-        ? (Intl as any).supportedValuesOf('timeZone')
+    const ianaNames = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf
+        ? (Intl as unknown as { supportedValuesOf: (key: string) => string[] }).supportedValuesOf('timeZone')
         : [];
 
     const date = new Date();
@@ -72,7 +72,7 @@ export const fetchExternalTimezones = async (): Promise<TimezoneOption[]> => {
         const data = await response.json();
 
         if (data.status === 'OK' && Array.isArray(data.zones)) {
-            const externalTimezones: TimezoneOption[] = data.zones.map((tz: any) => ({
+            const externalTimezones: TimezoneOption[] = data.zones.map((tz: Record<string, string>) => ({
                 label: `(UTC${tz.gmtOffsetName.replace('UTC', '')}) ${tz.zoneName.replace(/_/g, ' ')}`,
                 value: tz.zoneName
             }));

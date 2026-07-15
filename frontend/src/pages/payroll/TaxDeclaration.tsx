@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,11 +27,7 @@ export const TaxDeclaration: React.FC = () => {
     const [editAmount, setEditAmount] = useState<string>('');
     const [editLink, setEditLink] = useState<string>('');
 
-    useEffect(() => {
-        fetchData();
-    }, [fy]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [regimeData, sectionsData, declarationsData] = await Promise.all([
@@ -44,19 +40,24 @@ export const TaxDeclaration: React.FC = () => {
             setDeclarations(declarationsData);
         } catch (error) {
             console.error(error);
-            showToast.error('Failed to load tax data');
+            showToast.error(t('payroll.taxDataLoadFailed'));
         } finally {
             setLoading(false);
         }
-    };
+    }, [fy, t]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleRegimeChange = async (newRegime: 'OLD' | 'NEW') => {
         try {
             await taxService.setRegime(fy, newRegime);
             setRegime({ ...regime!, regime: newRegime });
             showToast.success(`Tax regime updated to ${newRegime}`);
-        } catch (error: any) {
-            const message = error.response?.data?.message || error.message || 'Failed to update regime';
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to update regime';
             showToast.error(message);
         }
     };
@@ -74,13 +75,14 @@ export const TaxDeclaration: React.FC = () => {
                 declaredAmount: parseFloat(editAmount),
                 proofUrl: editLink
             });
-            showToast.success('Declaration saved');
+            showToast.success(t('payroll.declarationSaved'));
             setEditingId(null);
             setEditAmount('');
             setEditLink('');
             fetchData(); // Refresh to show pending status
-        } catch (error: any) {
-            const message = error.response?.data?.message || error.message || 'Failed to save declaration';
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to save declaration';
             showToast.error(message);
         }
     };
@@ -90,10 +92,11 @@ export const TaxDeclaration: React.FC = () => {
             showToast.loading('Generating Form 16...');
             await taxService.downloadForm16(fy);
             showToast.dismiss();
-            showToast.success('Form 16 downloaded');
-        } catch (error: any) {
+            showToast.success(t('payroll.form16Downloaded'));
+        } catch (error: unknown) {
             showToast.dismiss();
-            const message = error.response?.data?.message || error.message || 'Failed to download Form 16';
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to download Form 16';
             showToast.error(message);
         }
     };
@@ -203,9 +206,9 @@ export const TaxDeclaration: React.FC = () => {
                         <Card className="p-4 bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800">
                             <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2">Why Choose New Regime?</h4>
                             <ul className="list-disc list-inside text-sm text-green-700 dark:text-green-400 space-y-1">
-                                <li>Lower tax rates for income up to ₹15L</li>
+                                <li>Lower tax rates for income up to â‚¹15L</li>
                                 <li>Simple tax filing, no proof submission needed</li>
-                                <li>Standard Deduction of ₹50,000 is allowed</li>
+                                <li>Standard Deduction of â‚¹50,000 is allowed</li>
                             </ul>
                         </Card>
                     </div>
@@ -238,7 +241,7 @@ export const TaxDeclaration: React.FC = () => {
                                             </div>
                                             <p className="text-sm text-muted-foreground mb-2">{section.description}</p>
                                             {section.max_limit && (
-                                                <p className="text-xs text-gray-500">Max Limit: ₹{section.max_limit.toLocaleString()}</p>
+                                                <p className="text-xs text-gray-500">Max Limit: â‚¹{section.max_limit.toLocaleString()}</p>
                                             )}
                                         </div>
 
@@ -272,7 +275,7 @@ export const TaxDeclaration: React.FC = () => {
                                                 <div className="flex flex-col items-end gap-2">
                                                     {declaration ? (
                                                         <>
-                                                            <div className="text-2xl font-bold">₹{parseFloat(declaration.declared_amount as any).toLocaleString()}</div>
+                                                            <div className="text-2xl font-bold">â‚¹{parseFloat(String(declaration.declared_amount)).toLocaleString()}</div>
                                                             <div className="flex items-center gap-2">
                                                                 <Badge className={
                                                                     declaration.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
@@ -283,7 +286,7 @@ export const TaxDeclaration: React.FC = () => {
                                                                 </Badge>
                                                                 {declaration.approved_amount > 0 && declaration.status === 'APPROVED' && (
                                                                     <span className="text-xs text-green-600 flex items-center gap-1">
-                                                                        <CheckCircle2 className="w-3 h-3" /> Approved: ₹{declaration.approved_amount}
+                                                                        <CheckCircle2 className="w-3 h-3" /> Approved: â‚¹{declaration.approved_amount}
                                                                     </span>
                                                                 )}
                                                             </div>

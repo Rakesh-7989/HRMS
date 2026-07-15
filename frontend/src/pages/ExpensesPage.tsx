@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import payrollService, { Expense, ExpenseCategory } from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -28,8 +28,8 @@ const ExpensesPage: React.FC = () => {
   const canUpdate = hasPermission('payroll', 'manage'); // Falling back to payroll:manage for edit/delete if specific not found
   const canDelete = hasPermission('payroll', 'manage');
 
-  const { data: expenses = [], refetch } = useQuery<any[]>({ queryKey: ['payroll', 'expenses'], queryFn: () => payrollService.listExpenses(), enabled: !!user });
-  const { data: categories = [] } = useQuery<any[]>({ queryKey: ['payroll', 'expense-categories'], queryFn: () => payrollService.listExpenseCategories(), enabled: !!user });
+  const { data: expenses = [], refetch } = useQuery<Expense[]>({ queryKey: ['payroll', 'expenses'], queryFn: () => payrollService.listExpenses(), enabled: !!user });
+  const { data: categories = [] } = useQuery<ExpenseCategory[]>({ queryKey: ['payroll', 'expense-categories'], queryFn: () => payrollService.listExpenseCategories(), enabled: !!user });
 
   const [addOpen, setAddOpen] = useState(false);
   const [categoryId, setCategoryId] = useState('');
@@ -37,8 +37,8 @@ const ExpensesPage: React.FC = () => {
   const [expenseDate, setExpenseDate] = useState('');
   const [payrollIncluded, setPayrollIncluded] = useState(false);
 
-  const createExpenseMut = useMutation({ mutationFn: (payload: any) => payrollService.createExpense(payload), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setAddOpen(false); setCategoryId(''); setAmount(''); setExpenseDate(''); setPayrollIncluded(false); } });
-  const createCategoryMut = useMutation({ mutationFn: (payload: any) => payrollService.createExpenseCategory(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'expense-categories'] }) });
+  const createExpenseMut = useMutation({ mutationFn: (payload: Record<string, unknown>) => (payrollService.createExpense as (p: Record<string, unknown>) => Promise<unknown>)(payload), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setAddOpen(false); setCategoryId(''); setAmount(''); setExpenseDate(''); setPayrollIncluded(false); } });
+  const createCategoryMut = useMutation({ mutationFn: (payload: Record<string, unknown>) => (payrollService.createExpenseCategory as (p: Record<string, unknown>) => Promise<unknown>)(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'expense-categories'] }) });
 
   const handleCreateExpense = () => {
     if (!categoryId || !amount) return;
@@ -64,13 +64,13 @@ const ExpensesPage: React.FC = () => {
 
   // Edit / Delete / Approve / Toggle payroll states
   const [editOpen, setEditOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState<any | null>(null);
+  const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState<Expense | null>(null);
 
   const updateExpenseMut = useMutation({
-    mutationFn: ({ expenseId, payload }: { expenseId: string; payload: any }) => payrollService.updateExpense(expenseId, payload),
+    mutationFn: ({ expenseId, payload }: { expenseId: string; payload: Record<string, unknown> }) => payrollService.updateExpense(expenseId, payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setEditOpen(false); setSelectedExpense(null); }
   });
 
@@ -80,7 +80,7 @@ const ExpensesPage: React.FC = () => {
   });
 
   const approveExpenseMut = useMutation({
-    mutationFn: ({ expenseId, payload }: { expenseId: string; payload: any }) => payrollService.approveExpense(expenseId, payload),
+    mutationFn: ({ expenseId, payload }: { expenseId: string; payload: Record<string, unknown> }) => (payrollService.approveExpense as (id: string, p: Record<string, unknown>) => Promise<unknown>)(expenseId, payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll', 'expenses'] }); queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] }); setApproveDialogOpen(false); setSelectedExpenseForApproval(null); }
   });
 
@@ -90,31 +90,31 @@ const ExpensesPage: React.FC = () => {
   });
 
   // helpers
-  const openEdit = (e: any) => {
+  const openEdit = (e: Expense) => {
     setSelectedExpense(e);
     setCategoryId((e.category_id || e.categoryId || '') as string);
-    setAmount(e.amount || '');
-    setExpenseDate(e.expense_date || e.expenseDate || '');
+    setAmount((e.amount || '') as number | '');
+    setExpenseDate((e.expense_date || e.expenseDate || '') as string);
     setPayrollIncluded(!!e.payroll_included);
     setEditOpen(true);
   };
 
   const handleSaveEdit = () => {
     if (!selectedExpense) return;
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (categoryId) payload.categoryId = categoryId;
     if (amount !== '') payload.amount = Number(amount);
     if (expenseDate) payload.expenseDate = expenseDate;
     payload.payrollIncluded = !!payrollIncluded;
-    updateExpenseMut.mutate({ expenseId: selectedExpense.id, payload });
+    updateExpenseMut.mutate({ expenseId: selectedExpense.id as string, payload });
   };
 
-  const openDelete = (e: any) => { setSelectedExpense(e); setDeleteOpen(true); };
-  const confirmDelete = () => { if (selectedExpense) deleteExpenseMut.mutate(selectedExpense.id); };
+  const openDelete = (e: Expense) => { setSelectedExpense(e); setDeleteOpen(true); };
+  const confirmDelete = () => { if (selectedExpense) deleteExpenseMut.mutate(selectedExpense.id as string); };
 
-  const handleApprove = (e: any) => { approveExpenseMut.mutate({ expenseId: e.id, payload: { status: 'APPROVED' } }); };
-  const openReject = (e: any) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
-  const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id, payload: { status: 'REJECTED' } }); };
+  const handleApprove = (e: Expense) => { approveExpenseMut.mutate({ expenseId: e.id as string, payload: { status: 'APPROVED' } }); };
+  const openReject = (e: Expense) => { setSelectedExpenseForApproval(e); setApproveDialogOpen(true); };
+  const confirmReject = () => { if (selectedExpenseForApproval) approveExpenseMut.mutate({ expenseId: selectedExpenseForApproval.id as string, payload: { status: 'REJECTED' } }); };
   return (
     <DashboardLayout title={t('expenses.title')}>
       {/* Sidebar removed - already in DashboardLayout */}
@@ -157,32 +157,32 @@ const ExpensesPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              expenses.map((e: any) => (
-                <TableRow key={e.id}>
-                  <TableCell>{e.category}</TableCell>
-                  <TableCell>₹{Number(e.amount).toLocaleString('en-IN')}</TableCell>
-                  <TableCell>{e.expense_date}</TableCell>
+              expenses.map((e: Expense) => (
+                <TableRow key={e.id as string}>
+                  <TableCell>{e.category as string}</TableCell>
+                  <TableCell>₹{Number(e.amount as number).toLocaleString('en-IN')}</TableCell>
+                  <TableCell>{e.expense_date as string}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {((e.status || 'PENDING').toUpperCase() === 'APPROVED') && <CheckCircle className="text-green-600" size={16} />}
-                      {((e.status || 'PENDING').toUpperCase() === 'REJECTED') && <XCircle className="text-red-600" size={16} />}
-                      {((e.status || 'PENDING').toUpperCase() === 'PENDING') && <Clock className="text-yellow-500" size={16} />}
-                      <span className="text-sm">{(e.status ?? 'PENDING').toUpperCase()}</span>
+                      {((e.status as string || 'PENDING').toUpperCase() === 'APPROVED') && <CheckCircle className="text-green-600" size={16} />}
+                      {((e.status as string || 'PENDING').toUpperCase() === 'REJECTED') && <XCircle className="text-red-600" size={16} />}
+                      {((e.status as string || 'PENDING').toUpperCase() === 'PENDING') && <Clock className="text-yellow-500" size={16} />}
+                      <span className="text-sm">{(e.status as string ?? 'PENDING').toUpperCase()}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     {canTogglePayroll ? (
-                      <input type="checkbox" checked={!!e.payroll_included} onChange={(ev) => togglePayrollMut.mutate({ expenseId: e.id, payrollIncluded: !!ev.target.checked })} />
+                      <input type="checkbox" checked={!!e.payroll_included} onChange={(ev) => togglePayrollMut.mutate({ expenseId: e.id as string, payrollIncluded: !!ev.target.checked })} />
                     ) : (
-                      <span>{String(e.payroll_included ?? false)}</span>
+                      <span>{String(!!e.payroll_included)}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {canApprove && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => handleApprove(e)} disabled={((e.status || '').toUpperCase() === 'APPROVED') || approveExpenseMut.isPending}>Approve</Button>
-                          <Button size="sm" variant="outline" onClick={() => openReject(e)} disabled={((e.status || '').toUpperCase() === 'REJECTED') || approveExpenseMut.isPending}>Reject</Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleApprove(e)} disabled={((e.status as string || '').toUpperCase() === 'APPROVED') || approveExpenseMut.isPending}>Approve</Button>
+                          <Button size="sm" variant="outline" onClick={() => openReject(e)} disabled={((e.status as string || '').toUpperCase() === 'REJECTED') || approveExpenseMut.isPending}>Reject</Button>
                         </>
                       )}
 
@@ -211,7 +211,7 @@ const ExpensesPage: React.FC = () => {
             <Label>Category</Label>
             <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border rounded-md">
               <option value="">Select category</option>
-              {categories.map((c: any) => (<option value={c.id} key={c.id}>{c.name}</option>))}
+              {categories.map((c: ExpenseCategory) => (<option value={c.id as string} key={c.id as string}>{c.name as string}</option>))}
             </select>
 
             <Label>Amount</Label>
@@ -244,7 +244,7 @@ const ExpensesPage: React.FC = () => {
             <Label>Category</Label>
             <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border rounded-md">
               <option value="">(leave unchanged)</option>
-              {categories.map((c: any) => (<option value={c.id} key={c.id}>{c.name}</option>))}
+              {categories.map((c: ExpenseCategory) => (<option value={c.id as string} key={c.id as string}>{c.name as string}</option>))}
             </select>
 
             <Label>Amount</Label>
@@ -273,7 +273,7 @@ const ExpensesPage: React.FC = () => {
             <DialogTitle>Reject Expense</DialogTitle>
           </DialogHeader>
 
-          <div>You're about to reject the expense for <strong>{selectedExpenseForApproval?.category}</strong>. Are you sure?</div>
+          <div>You're about to reject the expense for <strong>{selectedExpenseForApproval?.category as string}</strong>. Are you sure?</div>
 
           <DialogFooter>
             <Button variant="destructive" isLoading={approveExpenseMut.isPending} onClick={confirmReject}>Reject</Button>
@@ -289,7 +289,7 @@ const ExpensesPage: React.FC = () => {
             <DialogTitle>Delete Expense</DialogTitle>
           </DialogHeader>
 
-          <div>Are you sure you want to delete the expense for <strong>{selectedExpense?.category}</strong> of amount <strong>{selectedExpense?.amount}</strong> ? This is a soft delete.</div>
+          <div>Are you sure you want to delete the expense for <strong>{selectedExpense?.category as string}</strong> of amount <strong>{selectedExpense?.amount as number}</strong> ? This is a soft delete.</div>
 
           <DialogFooter>
             <Button variant="destructive" isLoading={deleteExpenseMut.isPending} onClick={confirmDelete}>{t('common.delete')}</Button>
@@ -326,4 +326,4 @@ const ExpensesPage: React.FC = () => {
   );
 };
 
-export default ExpensesPage;
+export { ExpensesPage };

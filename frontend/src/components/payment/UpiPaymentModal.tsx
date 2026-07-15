@@ -1,31 +1,29 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, Loader2, CheckCircle, XCircle, AlertCircle, Copy, ExternalLink, X } from 'lucide-react';
+import { Smartphone, Loader2, CheckCircle, XCircle, Copy, ExternalLink, X } from 'lucide-react';
 import QRCode from 'qrcode';
-import { cn } from '@/utils/cn';
 
 interface UpiPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   upiQrCode: string;
   orderId: string;
-  onVerify: (orderId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
-  onSuccess?: (data?: any) => void;
+  onVerify: (orderId: string) => Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }>;
+  onSuccess?: (data?: Record<string, unknown>) => void;
   onError?: (message: string) => void;
   email?: string;
   amount?: number;
 }
 
 export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
-  isOpen,
+isOpen,
   onClose,
   upiQrCode,
   orderId,
   onVerify,
   onSuccess,
   onError,
-  email,
   amount,
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -35,6 +33,46 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const attemptsRef = useRef(0);
   const MAX_POLL_ATTEMPTS = 60;
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    attemptsRef.current = 0;
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      attemptsRef.current += 1;
+      if (attemptsRef.current > MAX_POLL_ATTEMPTS) {
+        stopPolling();
+        setStatus('failed');
+        setErrorMessage('Payment verification timed out. Please check your UPI app for payment status.');
+        return;
+      }
+      try {
+        const result = await onVerify(orderId);
+        if (result.success && result.data?.success) {
+          stopPolling();
+          setStatus('success');
+          onSuccess?.(result.data);
+          setTimeout(() => onClose(), 2000);
+        } else if (result.data?.success === false) {
+          if (attemptsRef.current > 3) {
+            stopPolling();
+            setStatus('failed');
+            const errMsg = result.data?.error || 'Payment verification failed.';
+            setErrorMessage(String(errMsg));
+            onError?.(String(errMsg));
+          }
+        }
+      } catch {
+        setStatus('waiting');
+      }
+    }, 3000);
+  }, [orderId, onVerify, onSuccess, onError, onClose, stopPolling]);
 
   useEffect(() => {
     if (isOpen && upiQrCode) {
@@ -55,50 +93,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
         });
     }
     return () => stopPolling();
-  }, [isOpen, upiQrCode]);
-
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
-
-  const startPolling = useCallback(() => {
-    attemptsRef.current = 0;
-    stopPolling();
-
-    pollRef.current = setInterval(async () => {
-      attemptsRef.current += 1;
-
-      if (attemptsRef.current > MAX_POLL_ATTEMPTS) {
-        stopPolling();
-        setStatus('failed');
-        setErrorMessage('Payment verification timed out. Please check your UPI app for payment status.');
-        return;
-      }
-
-      setStatus('verifying');
-      try {
-        const result = await onVerify(orderId);
-        if (result.success && result.data?.success) {
-          stopPolling();
-          setStatus('success');
-          onSuccess?.(result.data);
-        } else if (result.data?.success === false) {
-          if (attemptsRef.current > 3) {
-            stopPolling();
-            setStatus('failed');
-            const errMsg = result.data?.error || 'Payment verification failed.';
-            setErrorMessage(errMsg);
-            onError?.(errMsg);
-          }
-        }
-      } catch {
-        setStatus('waiting');
-      }
-    }, 5000);
-  }, [orderId, onVerify, onSuccess, onError, stopPolling]);
+  }, [isOpen, upiQrCode, startPolling, stopPolling]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(upiQrCode);
@@ -148,131 +143,115 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
               {/* Status icon */}
               <div className="flex justify-center mb-4">
                 {status === 'generating' && (
-                  <div className="w-16 h-16 rounded-full bg-brand-500/10 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
-                  </div>
+                  <Loader2 className="w-16 h-16 text-brand-500 animate-spin" />
                 )}
                 {status === 'waiting' && (
-                  <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center animate-pulse">
-                    <Smartphone className="w-8 h-8 text-green-600 dark:text-green-400" />
-                  </div>
+                  <Smartphone className="w-16 h-16 text-brand-500" />
                 )}
                 {status === 'verifying' && (
-                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
-                  </div>
+                  <Loader2 className="w-16 h-16 text-brand-500 animate-spin" />
                 )}
                 {status === 'success' && (
-                  <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center">
-                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                  </div>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
+                    <CheckCircle className="w-16 h-16 text-success-500" />
+                  </motion.div>
                 )}
                 {status === 'failed' && (
-                  <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
-                    <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  <XCircle className="w-16 h-16 text-error-500" />
+                )}
+              </div>
+
+              {/* Status text */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {status === 'generating' && 'Generating QR Code...'}
+                  {status === 'waiting' && 'Scan QR Code to Pay'}
+                  {status === 'verifying' && 'Verifying Payment...'}
+                  {status === 'success' && 'Payment Successful!'}
+                  {status === 'failed' && 'Payment Failed'}
+                </h3>
+                {errorMessage && (
+                  <p className="text-sm text-error-500 mt-1">{errorMessage}</p>
+                )}
+                {status === 'waiting' && !errorMessage && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Open your UPI app and scan the QR code to complete the payment.
+                  </p>
+                )}
+              </div>
+
+              {/* QR Code */}
+              <div className="flex justify-center mb-6">
+                {qrDataUrl ? (
+                  <div className="bg-white p-4 rounded-xl shadow-inner border border-gray-100 dark:border-gray-800 dark:bg-gray-800">
+                    <img src={qrDataUrl} alt="UPI QR Code" className="w-64 h-64" />
+                  </div>
+                ) : (
+                  <div className="w-64 h-64 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
                   </div>
                 )}
               </div>
 
-              {/* Title */}
-              <h3 className="text-lg font-bold text-center text-gray-900 dark:text-white mb-1">
-                {status === 'generating' && 'Generating QR Code...'}
-                {status === 'waiting' && 'Scan with UPI App'}
-                {status === 'verifying' && 'Verifying Payment...'}
-                {status === 'success' && 'Payment Successful!'}
-                {status === 'failed' && 'Payment Failed'}
-              </h3>
+              {/* UPI ID & Copy */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl mb-4">
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate max-w-[180px]">
+                    {upiQrCode}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="text-gray-500 hover:text-brand-500"
+                >
+                  {copied ? <CheckCircle size={16} className="text-success-500" /> : <Copy size={16} />}
+                  <span className="ml-1 text-[11px] font-medium">{copied ? 'Copied!' : 'Copy'}</span>
+                </Button>
+              </div>
 
+              {/* Amount display */}
               {amount && (
-                <p className="text-center text-2xl font-black text-brand-500 mb-4">
-                  ₹{amount.toLocaleString()}
-                </p>
-              )}
-
-              {/* QR code or status */}
-              {status === 'generating' && (
-                <div className="flex justify-center py-8">
-                  <div className="w-64 h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse flex items-center justify-center">
-                    <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
-                  </div>
+                <div className="text-center mb-4">
+                  <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</span>
+                  <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">₹{amount.toLocaleString()}</p>
                 </div>
               )}
 
-              {(status === 'waiting' || status === 'verifying') && qrDataUrl && (
-                <div className="space-y-4">
-                  <div className="flex justify-center">
-                    <div className="p-3 bg-white rounded-xl shadow-elev-4 border border-gray-100">
-                      <img src={qrDataUrl} alt="UPI QR Code" className="w-56 h-56" />
-                    </div>
-                  </div>
+              {/* Actions */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={openUpiApp}
+                  disabled={!qrDataUrl || status === 'generating' || status === 'success' || status === 'failed'}
+                >
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  Open UPI App
+                </Button>
+                <Button
+                  variant={status === 'failed' ? 'primary' : 'outline'}
+                  className="flex-1"
+                  onClick={handleRetry}
+                  disabled={status === 'generating' || status === 'verifying'}
+                >
+                  <Loader2 className="w-4 h-4 mr-2" />
+                  {status === 'failed' ? 'Retry' : 'Regenerate QR'}
+                </Button>
+              </div>
 
-                  <div className="flex justify-center gap-2">
-                     <Button variant="ghost" 
-                      onClick={handleCopy}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                        copied
-                          ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                      )}
-                    >
-                      <Copy size={14} />
-                      {copied ? 'Copied!' : 'Copy UPI ID'}
-                    </Button>
-                     <Button variant="ghost" 
-                      onClick={openUpiApp}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-all"
-                    >
-                      <ExternalLink size={14} />
-                      Open UPI App
-                    </Button>
-                  </div>
-
-                  <p className="text-[10px] text-center text-gray-400 font-medium px-4">
-                    Scan the QR code using any UPI app (Google Pay, PhonePe, Paytm) to complete the payment.
-                    This page will automatically detect the payment.
-                  </p>
-
-                  {status === 'verifying' && (
-                    <div className="flex items-center justify-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-bold">
-                      <Loader2 size={14} className="animate-spin" />
-                      Checking payment status...
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {status === 'success' && (
-                <div className="text-center space-y-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your payment has been processed successfully.
-                    {email && <><br />Credentials will be sent to <strong className="text-brand-500">{email}</strong></>}
-                  </p>
-                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full animate-pulse" style={{ width: '100%' }} />
-                  </div>
-                </div>
-              )}
-
-              {status === 'failed' && (
-                <div className="text-center space-y-3">
-                  <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                    {errorMessage || 'Payment could not be processed.'}
-                  </p>
-                   <Button variant="ghost" 
-                    onClick={handleRetry}
-                    className="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-500-dark transition-colors"
-                  >
-                    Retry Payment
-                  </Button>
-                </div>
-              )}
-
-              {errorMessage && status !== 'failed' && (
-                <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-2">
-                  <AlertCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
-                  <p className="text-[10px] font-bold text-red-500">{errorMessage}</p>
-                </div>
+              {/* Open in UPI App */}
+              {qrDataUrl && (
+                <Button
+                  variant="ghost"
+                  className="w-full mt-3 text-xs text-gray-500 hover:text-brand-500"
+                  onClick={openUpiApp}
+                >
+                  <ExternalLink className="w-3 h-3 mr-1 inline-block" />
+                  Can't scan? Open in UPI App
+                </Button>
               )}
             </div>
           </motion.div>

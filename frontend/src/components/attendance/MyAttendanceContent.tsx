@@ -1,26 +1,26 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
-import { attendanceService } from '@/services/attendance.service';
+import { attendanceService, Attendance } from '@/services/attendance.service';
 import { format } from 'date-fns';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatTime12Hour, calculateWorkDuration } from '@/utils/timeFormat';
-import { DataTable } from '@/components/ui/DataTable';
+import { DataTable, Column } from '@/components/ui/DataTable';
 import { useTranslation } from 'react-i18next';
 
 export const MyAttendanceContent: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const { data: attendanceHistory = [], isLoading } = useQuery({
+    const { data: attendanceHistory = [], isLoading } = useQuery<Attendance[]>({
         queryKey: ['attendance', 'history'],
         queryFn: () => attendanceService.getMyAttendance({ limit: 30 }),
     });
 
-    const columns = [
+    const columns: Column<Attendance>[] = [
         {
             header: t('common.date'),
-            cell: (record: any) => (
+            cell: (record: Attendance) => (
                 <div>
                     <div className="font-medium whitespace-nowrap">{format(new Date(record.date), 'MMM dd, yyyy')}</div>
                     <div className="text-xs text-muted font-normal">{format(new Date(record.date), 'EEEE')}</div>
@@ -29,7 +29,7 @@ export const MyAttendanceContent: React.FC = () => {
         },
         {
             header: t('common.status'),
-            cell: (record: any) => (
+            cell: (record: Attendance) => (
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${record.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                     record.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                         record.status === 'HALF_DAY' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -48,21 +48,21 @@ export const MyAttendanceContent: React.FC = () => {
         {
             header: t('attendance.checkIn'),
             className: 'text-center',
-            cell: (record: any) => (
+            cell: (record: Attendance) => record.check_in_time ? (
                 <span className="font-mono">{formatTime12Hour(record.check_in_time, user?.timezone)}</span>
-            ),
+            ) : '-',
         },
         {
             header: t('attendance.checkOut'),
             className: 'text-center',
-            cell: (record: any) => (
+            cell: (record: Attendance) => record.check_out_time ? (
                 <span className="font-mono">{formatTime12Hour(record.check_out_time, user?.timezone)}</span>
-            ),
+            ) : '-',
         },
         {
             header: t('common.notes'),
             className: 'text-right',
-            cell: (record: any) => (
+            cell: (record: Attendance) => (
                 record.check_in_time && record.check_out_time ? (
                     <span className="text-xs text-muted flex items-center justify-end gap-1">
                         <span>{calculateWorkDuration(record.check_in_time, record.check_out_time)}</span>

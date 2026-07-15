@@ -13,7 +13,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const NotificationsPage: React.FC = () => {
   const { t } = useTranslation();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
     const queryClient = useQueryClient();
     const [page, setPage] = useState(0);
     const limit = 20;
@@ -34,7 +34,7 @@ export const NotificationsPage: React.FC = () => {
         mutationFn: () => notificationsService.markAllAsRead(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            showToast.success('All notifications marked as read');
+            showToast.success(t('common.notificationsRead'));
         },
     });
 
@@ -42,7 +42,7 @@ export const NotificationsPage: React.FC = () => {
         mutationFn: (id: string) => notificationsService.deleteNotification(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            showToast.success('Notification deleted');
+            showToast.success(t('common.notificationDeleted'));
         },
     });
 
@@ -110,11 +110,14 @@ export const NotificationsPage: React.FC = () => {
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
+                                    role="button"
+                                    tabIndex={0}
                                     className={cn(
                                         "p-6 flex gap-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 relative group",
                                         !notification.read && "bg-brand-50/30 dark:bg-brand-500/5"
                                     )}
                                     onClick={() => !notification.read && markAsReadMutation.mutate(notification.id)}
+                                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !notification.read) { e.preventDefault(); markAsReadMutation.mutate(notification.id); } }}
                                 >
                                     <div className="flex-shrink-0 mt-1">
                                         {getNotificationIcon(notification.type)}
@@ -200,4 +203,4 @@ export const NotificationsPage: React.FC = () => {
     );
 };
 
-export default NotificationsPage;
+

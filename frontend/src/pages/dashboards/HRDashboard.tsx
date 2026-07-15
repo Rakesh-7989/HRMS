@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -19,32 +19,34 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 // Custom Tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-elev-6 border border-gray-700 min-w-[140px]">
         <p className="text-sm text-gray-400 mb-2 uppercase tracking-wider font-extrabold border-b border-gray-700 pb-1">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const isUtilization = entry.dataKey === 'value' && entry.payload.count !== undefined;
+        {payload.map((entry: Record<string, unknown>, index: number) => {
+          const entryPayload = entry.payload as Record<string, unknown> | undefined;
+          const isUtilization = entry.dataKey === 'value' && entryPayload?.count !== undefined;
           return (
             <div key={index} className="space-y-1 py-1">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color as string }} />
                   <span className="text-sm font-medium text-gray-300">
-                    {isUtilization ? 'Taken' : entry.name}
+                    {isUtilization ? 'Taken' : (entry.name as string)}
                   </span>
                 </div>
                 <span className="text-sm font-bold">
-                  {entry.value}{isUtilization ? '%' : ''}
+                  {String(entry.value)}{isUtilization ? '%' : ''}
                 </span>
               </div>
               {isUtilization && (
                 <div className="flex items-center justify-between text-[10px] text-gray-500 ml-4 font-bold uppercase tracking-tighter">
                   <span>Req. Count</span>
-                  <span>{entry.payload.count}</span>
+                  <span>{String(entryPayload?.count)}</span>
                 </div>
               )}
             </div>
@@ -63,7 +65,7 @@ const StatCard = ({
   title: string;
   value: number | string;
   subtitle?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   delay?: number;
 }) => (
@@ -108,7 +110,7 @@ const StatCard = ({
 );
 
 // Leave Request Card - Enhanced Informational Layout
-const LeaveRequestCard = ({ request, index }: { request: any; index: number }) => {
+const LeaveRequestCard = ({ request, index }: { request: Record<string, unknown>; index: number }) => {
   const { t } = useTranslation();
   return (
     <motion.div
@@ -122,7 +124,7 @@ const LeaveRequestCard = ({ request, index }: { request: any; index: number }) =
           {/* Avatar with soft glow */}
           <div className="relative shrink-0">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-black text-base shadow-elev-3 group-hover:scale-105 transition-transform">
-              {request.first_name?.charAt(0)}{request.last_name?.charAt(0)}
+              {(request.first_name as string)?.charAt(0)}{(request.last_name as string)?.charAt(0)}
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white dark:border-gray-900" />
           </div>
@@ -131,19 +133,19 @@ const LeaveRequestCard = ({ request, index }: { request: any; index: number }) =
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm">
-                {request.first_name} {request.last_name}
+                {request.first_name as string} {request.last_name as string}
               </h4>
               <span className="text-[9px] text-gray-400 font-bold uppercase">
-                {format(new Date(request.created_at), 'MMM dd')}
+                {format(new Date(request.created_at as string), 'MMM dd')}
               </span>
             </div>
 
             <div className="flex items-center gap-2 mt-0.5">
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[9px] font-black uppercase tracking-wider">
                 <Calendar className="w-2.5 h-2.5" />
-                {format(new Date(request.start_date), 'MMM dd')} - {format(new Date(request.end_date), 'MMM dd')}
+                {format(new Date(request.start_date as string), 'MMM dd')} - {format(new Date(request.end_date as string), 'MMM dd')}
               </div>
-              <span className="text-[9px] text-gray-400 font-bold uppercase truncate">• {request.department}</span>
+              <span className="text-[9px] text-gray-400 font-bold uppercase truncate">• {request.department as string}</span>
             </div>
           </div>
 
@@ -266,8 +268,8 @@ export const HRDashboard: React.FC = () => {
   const employeesOnLeave = baseData?.employeesOnLeaveToday || [];
 
   // Custom Active Shape for Pie
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  const renderActiveShape = (props: Record<string, unknown>) => {
+    const cx = props.cx as number; const cy = props.cy as number; const innerRadius = props.innerRadius as number; const outerRadius = props.outerRadius as number; const startAngle = props.startAngle as number; const endAngle = props.endAngle as number; const fill = props.fill as string;
     return (
       <g>
         <Sector
@@ -294,9 +296,9 @@ export const HRDashboard: React.FC = () => {
   };
 
   // Chart data
-  const leaveDistData = leaveTypeDist.map((lt: any) => ({
-    name: lt.leave_type,
-    value: parseFloat(lt.utilization_percentage) || 0,
+  const leaveDistData = leaveTypeDist.map((lt: Record<string, unknown>) => ({
+    name: lt.leave_type as string,
+    value: parseFloat(lt.utilization_percentage as string) || 0,
     count: lt.count
   }));
 
@@ -481,7 +483,8 @@ export const HRDashboard: React.FC = () => {
                       </defs>
                       <Pie
                         activeIndex={activePieIndex}
-                        activeShape={renderActiveShape}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        activeShape={renderActiveShape as any}
                         data={leaveStatusData}
                         cx="50%"
                         cy="50%"
@@ -499,7 +502,7 @@ export const HRDashboard: React.FC = () => {
                         {leaveStatusData.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={entry.color.includes('#') ? entry.color : `url(#${entry.color})`}
+                            fill={(entry.color as string).includes('#') ? entry.color : `url(#${entry.color})`}
                             strokeWidth={2}
                             stroke="rgba(255,255,255,0.05)"
                           />
@@ -516,7 +519,7 @@ export const HRDashboard: React.FC = () => {
                 <div className="w-full lg:w-1/2 flex flex-col gap-3">
                   {leaveStatusData.map((item, index) => (
                     <motion.div
-                      key={item.name}
+                      key={item.name as string}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.8 + index * 0.1 }}
@@ -782,8 +785,8 @@ export const HRDashboard: React.FC = () => {
           >
             {pendingRequests.length > 0 ? (
               <div className="space-y-2 h-[170px] overflow-y-auto pr-1.5 custom-scrollbar">
-                {pendingRequests.map((request: any, index: number) => (
-                  <LeaveRequestCard key={request.id} request={request} index={index} />
+                {pendingRequests.map((request: Record<string, unknown>, index: number) => (
+                  <LeaveRequestCard key={request.id as string} request={request} index={index} />
                 ))}
               </div>
             ) : (
@@ -806,7 +809,7 @@ export const HRDashboard: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/attendance')}
+                onClick={() => navigate(ROUTES.ATTENDANCE)}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100/50"
               >
                 {t('common.logs')}
@@ -816,9 +819,9 @@ export const HRDashboard: React.FC = () => {
           >
             {employeesOnLeave.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-[170px] overflow-y-auto pr-1.5 custom-scrollbar">
-                {employeesOnLeave.map((emp: any, index: number) => (
+                {employeesOnLeave.map((emp: Record<string, unknown>, index: number) => (
                   <motion.div
-                    key={emp.id}
+                    key={emp.id as string}
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
@@ -826,20 +829,20 @@ export const HRDashboard: React.FC = () => {
                   >
                     <div className="relative shrink-0">
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-brand-600 flex items-center justify-center text-white font-black text-sm shadow-elev-1 group-hover:scale-105 transition-transform">
-                        {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
+                        {(emp.first_name as string)?.charAt(0)}{(emp.last_name as string)?.charAt(0)}
                       </div>
                       <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900 shadow-elev-1" />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 dark:text-white truncate text-xs">
-                        {emp.first_name} {emp.last_name}
+                        {emp.first_name as string} {emp.last_name as string}
                       </p>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[8px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                          {emp.leave_type}
+                          {emp.leave_type as string}
                         </span>
-                        <span className="text-[8px] text-gray-400 font-bold">• {emp.department}</span>
+                        <span className="text-[8px] text-gray-400 font-bold">• {emp.department as string}</span>
                       </div>
                     </div>
                   </motion.div>

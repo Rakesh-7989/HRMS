@@ -1,12 +1,20 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '@/utils/constants';
 import api from '@/services/api';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { showToast } from '@/utils/toast';
-import { resolveImageUrl } from '@/utils/image';
+
+import { API_BASE_URL as STATIC_BASE_URL } from '@/utils/constants';
+const resolveImageUrl = (url?: string | null): string | undefined => {
+    if (!url) return undefined;
+    if (url.startsWith('http')) return url;
+    const base = STATIC_BASE_URL.replace('/api', '');
+    return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
 interface ParticipantInfo {
     name: string;
@@ -46,7 +54,7 @@ export interface UserStatusInfo {
 interface ChatContextType {
     socket: Socket | null;
     isConnected: boolean;
-    sendMessage: (room: string, message: any) => void;
+    sendMessage: (room: string, message: Record<string, unknown>) => void;
     joinRoom: (room: string) => void;
     // Calling
     isCalling: boolean;
@@ -99,6 +107,7 @@ const ICE_SERVERS = {
 };
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -118,15 +127,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [totalUnreadCount, setTotalUnreadCount] = useState(0);
     const [typingStatus, setTypingStatus] = useState<Record<string, string[]>>({});
     const [chatNotifications, setChatNotifications] = useState<ChatNotification[]>([]);
-    const [heldCall, setHeldCall] = useState<any>(null);
+    const [heldCall, setHeldCall] = useState<ChatContextType['activeCall']>(null);
     const [isResuming, setIsResuming] = useState(false);
     const [myStatus, setMyStatus] = useState<'available' | 'busy' | 'dnd' | 'away' | 'offline'>(
-        (localStorage.getItem('userPresenceStatus') as any) || 'available'
+        (localStorage.getItem('userPresenceStatus') as 'available' | 'busy' | 'dnd' | 'away' | 'offline') || 'available'
     );
     const [userStatuses, setUserStatuses] = useState<Record<string, UserStatusInfo>>({});
-    const heldCallRef = useRef<any>(null);
+    const heldCallRef = useRef<ChatContextType['activeCall']>(null);
     useEffect(() => { heldCallRef.current = heldCall; }, [heldCall]);
-    const chatDismissTimerRef = useRef<any>(null);
+    const chatDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activeConversationRef = useRef<string | null>(null);
 
     const queryClient = useQueryClient();
@@ -151,7 +160,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         socketRef.current?.emit('update_manual_status', status);
     }, []);
 
-    const handleMediaError = useCallback((err: any) => {
+    const handleMediaError = useCallback((err: Error) => {
         console.error("Media access error:", err);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
             showToast.error("Permission denied. Please allow access to your microphone/camera.");
@@ -167,14 +176,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchTotalUnread = useCallback(async () => {
         try {
             const res = await api.get('/chat/conversations');
-            const total = res.data.data.reduce((acc: number, conv: any) => acc + (conv.unread_count || 0), 0);
+            const total = res.data.data.reduce((acc: number, conv: Record<string, unknown>) => acc + ((conv.unread_count as number) || 0), 0);
             setTotalUnreadCount(total);
-        } catch (err) { console.error("Unread fetch failed", err); }
+        } catch (err: unknown) { console.error("Unread fetch failed", err); }
     }, []);
 
     const logCall = useCallback(async (conversationId: string, callType: string, duration: number, status: string) => {
         try { await api.post(`/chat/conversations/${conversationId}/log-call`, { callType, duration, status }); }
-        catch (err) { console.error("Log call failed", err); }
+        catch (err: unknown) { console.error("Log call failed", err); }
     }, []);
 
     const cleanupCall = useCallback(() => {
@@ -234,7 +243,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     avatar: resolveImageUrl(data.profile_photo_url || data.avatar)
                 }
             }));
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(`Fetch participant ${userId} failed`, err);
         }
     }, []);
@@ -243,7 +252,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!stream.getAudioTracks().length) return;
         try {
             if (!audioContext.current || audioContext.current.state === 'closed') {
-                audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioContext.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
             }
             const source = audioContext.current.createMediaStreamSource(stream);
             const analyser = audioContext.current.createAnalyser();
@@ -367,14 +376,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     fetchParticipantInfo(data.from);
                     setIncomingCall(data);
 
-                    import('react-hot-toast').then(t => {
-                        t.toast.dismiss(`call-${data.from}`); // avoid duplicates
-                        t.toast(`${data.isGroup ? 'Group Call Invite' : 'Incoming Call'}`, {
-                            icon: '📞',
-                            id: `call-${data.from}`,
-                            duration: 10000,
-                            position: 'top-center'
-                        });
+                    toast.dismiss(`call-${data.from}`); // avoid duplicates
+                    toast(`${data.isGroup ? 'Group Call Invite' : 'Incoming Call'}`, {
+                        icon: '📞',
+                        id: `call-${data.from}`,
+                        duration: 10000,
+                        position: 'top-center'
                     });
                     return;
                 } else if (!isAcceptable) {
@@ -420,7 +427,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         s.on('ice-candidate', async ({ from, candidate }) => {
             const pc = peerConnections.current.get(from);
             if (pc && pc.remoteDescription) {
-                try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { }
+                try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { /* Swallow error intentionally */ }
             } else {
                 const cands = pendingCandidates.current.get(from) || [];
                 cands.push(candidate);
@@ -449,13 +456,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         s.on('unread_update', fetchTotalUnread);
         s.on('user_status_change', (data: { userId: string, status: string }) => {
             const rawStatus = data.status.toLowerCase();
-            const mappedStatus = rawStatus === 'online' ? 'available' : rawStatus as any;
+            const mappedStatus = rawStatus === 'online' ? 'available' : rawStatus;
             setUserStatuses(prev => ({
                 ...prev,
-                [data.userId]: { ...prev[data.userId], status: mappedStatus }
+                [data.userId]: { ...prev[data.userId], status: mappedStatus } as UserStatusInfo
             }));
             if (data.userId === user?.id) {
-                setMyStatus(mappedStatus);
+                setMyStatus(mappedStatus as 'available' | 'busy' | 'dnd' | 'away' | 'offline');
                 localStorage.setItem('userPresenceStatus', mappedStatus);
             }
         });
@@ -502,7 +509,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
         });
 
-        s.on('conversation_deleted', ({ conversationId: _unused }) => {
+        s.on('conversation_deleted', () => {
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
         });
 
@@ -520,30 +527,31 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }));
         });
 
-        s.on('new_message', (message: any) => {
+        s.on('new_message', (msg: unknown) => {
+            const message = msg as Record<string, unknown>;
             if (message.senderId === user.id) return;
             // Add to notifications if not in the active room
             setChatNotifications(prev => [
                 {
-                    messageId: message.id,
-                    conversationId: message.conversationId,
-                    senderId: message.senderId,
-                    senderName: message.senderName,
-                    senderAvatar: message.senderAvatar,
-                    content: message.content,
-                    type: message.type,
-                    createdAt: message.createdAt,
-                    conversationType: message.conversationType,
-                    conversationName: message.conversationName
+                    messageId: message.id as string,
+                    conversationId: message.conversationId as string,
+                    senderId: message.senderId as string,
+                    senderName: message.senderName as string,
+                    senderAvatar: message.senderAvatar as string | undefined,
+                    content: message.content as string,
+                    type: message.type as 'TEXT' | 'FILE' | 'IMAGE' | 'CALL',
+                    createdAt: message.createdAt as string,
+                    conversationType: message.conversationType as 'DIRECT' | 'GROUP',
+                    conversationName: message.conversationName as string | undefined
                 },
                 ...prev
             ]);
         });
 
-        s.on('status_update', ({ userId, status, message, messageExpiry, lastSeen }: any) => {
+        s.on('status_update', (update: { userId: string; status: string; message?: string; messageExpiry?: string; lastSeen?: string }) => {
             setUserStatuses(prev => ({
                 ...prev,
-                [userId]: { status, message, messageExpiry, lastSeen }
+                [update.userId]: { status: update.status as UserStatusInfo['status'], message: update.message, messageExpiry: update.messageExpiry, lastSeen: update.lastSeen || new Date().toISOString() }
             }));
         });
 
@@ -559,10 +567,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(chatDismissTimerRef.current);
             }
         };
-    }, [user, fetchTotalUnread, cleanupCall, queryClient, setupPeerConnection, fetchParticipantInfo]);
+    }, [user, fetchTotalUnread, cleanupCall, queryClient, setupPeerConnection, fetchParticipantInfo, socket]);
 
     useEffect(() => {
-        let timer: any;
+        let timer: ReturnType<typeof setInterval> | undefined;
         if (isCalling || activeCall) {
             timer = setInterval(() => {
                 const talking = new Set<string>();
@@ -584,7 +592,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initiateCall = useCallback(async (to: string, name: string, type: 'audio' | 'video', conversationId?: string, isGroup?: boolean) => {
         if (!socketRef.current) return;
         if (activeCallRef.current) {
-            import('react-hot-toast').then(({ toast }) => toast.error('End your current call first'));
+            showToast.error(t('chat.endCurrentCall'));
             return;
         }
         try {
@@ -621,11 +629,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 fetchParticipantInfo(to);
             }
             updateMyStatus('busy');
-        } catch (err) {
-            handleMediaError(err);
+        } catch (err: unknown) {
+            handleMediaError(err as Error);
             cleanupCall();
         }
-    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError, updateMyStatus]);
+    }, [user, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError, updateMyStatus, t]);
 
     const acceptCall = useCallback(async () => {
         if (!incomingCall || !socketRef.current) return;
@@ -697,8 +705,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             fetchParticipantInfo(callData.from);
             updateMyStatus('busy');
-        } catch (err) {
-            handleMediaError(err);
+        } catch (err: unknown) {
+            handleMediaError(err as Error);
             cleanupCall();
         }
     }, [user, incomingCall, monitorAudioLevel, setupPeerConnection, cleanupCall, fetchParticipantInfo, handleMediaError, updateMyStatus]);
@@ -747,8 +755,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             socketRef.current.emit('join_room', conversationId);
             socketRef.current.emit('group-call-started', { conversationId, type });
             updateMyStatus('busy');
-        } catch (err) {
-            handleMediaError(err);
+        } catch (err: unknown) {
+            handleMediaError(err as Error);
             cleanupCall();
         }
     }, [user, monitorAudioLevel, cleanupCall, handleMediaError, updateMyStatus]);
@@ -769,7 +777,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
 
-        let vt = localStreamRef.current.getVideoTracks()[0];
+        const vt = localStreamRef.current.getVideoTracks()[0];
         if (!vt) {
             try {
                 const vs = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -789,14 +797,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 });
                 setIsVideoOff(false);
-            } catch (e) {
-                handleMediaError(e);
+            } catch (e: unknown) {
+                handleMediaError(e as Error);
             }
         } else {
             vt.enabled = !vt.enabled;
             setIsVideoOff(!vt.enabled);
         }
-    }, [isScreenSharing]);
+    }, [isScreenSharing, handleMediaError]);
 
     const endCall = useCallback(() => {
         const active = activeCallRef.current;
@@ -816,13 +824,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const h = heldCallRef.current;
             setHeldCall(null);
             setIsResuming(true);
-            import('react-hot-toast').then(({ toast }) => {
-                toast("Resuming previous call...", { icon: '🔄', duration: 3000 });
-            });
+            toast("Resuming previous call...", { icon: '🔄', duration: 3000 });
             setTimeout(async () => {
                 try {
                     if (h.isGroup) {
-                        await joinActiveCall(h.conversationId, h.type);
+                        await joinActiveCall(h.conversationId!, h.type);
                     } else {
                         // For 1-on-1 resume, we treat it like a new call but skip the "End current" check since cleanupCall already ran
                         const isVideo = h.type === 'video';
@@ -859,10 +865,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await api.post(`/chat/conversations/${id}/read`);
             fetchTotalUnread();
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        } catch (e) { }
+        } catch (e) { /* Swallow error intentionally */ }
     }, [fetchTotalUnread, queryClient]);
 
-    const sendMessage = useCallback((room: string, message: any) => {
+    const sendMessage = useCallback((room: string, message: Record<string, unknown>) => {
         socketRef.current?.emit('send_message', { room, ...message });
     }, []);
 
@@ -885,7 +891,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isGroup: true
         });
 
-        import('react-hot-toast').then(t => t.toast.success(`Invitation sent to ${userName}`));
+        showToast.success(`Invitation sent to ${userName}`);
         fetchParticipantInfo(userId);
     }, [fetchParticipantInfo]);
 
@@ -947,19 +953,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             await pc.setLocalDescription(offer);
                             socketRef.current?.emit('call-user', { to: tid, offer, type: 'video', conversationId: activeCallRef.current?.conversationId });
                         }
-                    } catch (e) { console.error("[ScreenShare] PC sync failed", e); }
+                    } catch (e: unknown) { console.error("[ScreenShare] PC sync failed", e); }
                 });
-            } catch (e) {
-                handleMediaError(e);
+            } catch (e: unknown) {
+                handleMediaError(e as Error);
                 setIsScreenSharing(false);
             }
         }
-    }, [isScreenSharing, stopScreenShare]);
+    }, [isScreenSharing, stopScreenShare, handleMediaError]);
 
     const [callDuration, setCallDuration] = useState(0);
 
     useEffect(() => {
-        let interval: any;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (activeCall && !isCalling) { // Timer starts when it's an active call (accepted) and NOT in calling state
             interval = setInterval(() => {
                 setCallDuration(prev => prev + 1);
@@ -1022,7 +1028,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sendTypingStatus, isScreenSharing, toggleScreenShare, addParticipantToCall, speakingUsers,
         callDuration,
         chatNotifications, dismissChatNotification, setActiveConversation,
-        heldCall, isResuming, myStatus, userStatuses, user
+        heldCall, isResuming, myStatus, userStatuses, user,
+        updateMyStatus
     ]);
 
 
@@ -1033,6 +1040,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useChat = () => {
     const context = useContext(ChatContext);
     if (!context) throw new Error('useChat must be used within a ChatProvider');

@@ -69,8 +69,9 @@ export const RegularizationRequestsContent: React.FC = () => {
             setIsApplyModalOpen(false);
             setFormData({ date: '', check_in_time: '', check_out_time: '', reason: '' });
         },
-        onError: (error: any) => {
-            alert(error.message || 'Failed to submit request');
+        onError: (error: unknown) => {
+            const err = error as { message?: string };
+            alert(err.message || 'Failed to submit request');
         }
     });
 
@@ -86,8 +87,9 @@ export const RegularizationRequestsContent: React.FC = () => {
             setOverrideCheckIn('');
             setOverrideCheckOut('');
         },
-        onError: (error: any) => {
-            alert(error.message || 'Failed to review request');
+        onError: (error: unknown) => {
+            const err = error as { message?: string };
+            alert(err.message || 'Failed to review request');
         }
     });
 
@@ -144,10 +146,10 @@ export const RegularizationRequestsContent: React.FC = () => {
                 {activeTab === 'my' ? (
                     <DataTable
                         columns={[
-                            { header: 'Date', accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
+                            { header: 'Date', cell: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
                             {
                                 header: 'Time',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <>
                                         In: {row.check_in_time}<br />
                                         Out: {row.check_out_time || '-'}
@@ -155,10 +157,10 @@ export const RegularizationRequestsContent: React.FC = () => {
                                 ),
                                 sortKey: 'check_in_time',
                             },
-                            { header: 'Reason', accessor: (row) => row.reason },
+                            { header: 'Reason', cell: (row) => row.reason },
                             {
                                 header: 'Status',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div>
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${row.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                             row.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
@@ -173,7 +175,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                             },
                         ]}
                         data={myRequests}
-                        isLoading={myLoading}
+                        loading={myLoading}
                         emptyMessage="No regularization requests found."
                         pageSize={10}
                     />
@@ -182,7 +184,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                         columns={[
                             {
                                 header: 'Employee',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div>
                                         <div className="font-medium">{row.first_name} {row.last_name}</div>
                                         <div className="text-xs text-muted">{row.designation_name || row.email}</div>
@@ -192,7 +194,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                             },
                             {
                                 header: 'Date/Time',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div>
                                         <div className="flex items-center gap-1"><Calendar size={12} /> {format(new Date(row.date), 'MMM dd')}</div>
                                         <div className="text-xs text-muted mt-0.5">
@@ -202,10 +204,10 @@ export const RegularizationRequestsContent: React.FC = () => {
                                 ),
                                 sortKey: 'date',
                             },
-                            { header: 'Reason', accessor: (row) => row.reason },
+                            { header: 'Reason', cell: (row) => row.reason },
                             {
                                 header: 'Actions',
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <div className="flex gap-2">
                                         <Button
                                             size="sm"
@@ -226,7 +228,7 @@ export const RegularizationRequestsContent: React.FC = () => {
                             },
                         ]}
                         data={teamRequests}
-                        isLoading={teamLoading}
+                        loading={teamLoading}
                         emptyMessage="No pending requests for your team."
                         pageSize={10}
                     />

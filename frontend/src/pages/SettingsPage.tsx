@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -35,9 +35,9 @@ import { showToast } from '@/utils/toast';
 import defaultLogo from '../../Assests/logo.svg';
 import { useTimezones, getTimezoneLabel } from '@/utils/timezone';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ROUTES } from '@/utils/constants';
 
 export const SettingsPage: React.FC = () => {
-  const confirm = useConfirm();
   const { theme, toggleTheme } = useTheme();
   const { user, setUser } = useAuth();
   const { t } = useTranslation();
@@ -119,7 +119,7 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-xs text-gray-600 dark:text-muted">Manage leave types and accrual rules</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => navigate('/leave/settings')}>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.LEAVE_SETTINGS)}>
                   {t('common.manage')}
                 </Button>
               </div>
@@ -140,7 +140,7 @@ export const SettingsPage: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/pricing')}
+                onClick={() => navigate(ROUTES.PRICING)}
                 className="gap-2"
               >
                 {t('billing.upgradePlan')}
@@ -181,7 +181,7 @@ export const SettingsPage: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     className="w-full text-brand-500 hover:bg-brand-500/5 border border-brand-500/20"
-                    onClick={() => navigate('/billing')}
+                    onClick={() => navigate(ROUTES.BILLING)}
                   >
                     View Billing History & Invoices
                   </Button>
@@ -190,7 +190,7 @@ export const SettingsPage: React.FC = () => {
             ) : (
               <div className="p-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
                 <p className="text-gray-500 mb-3">No active subscription found</p>
-                <Button size="sm" onClick={() => navigate('/pricing')}>Explore Plans</Button>
+                <Button size="sm" onClick={() => navigate(ROUTES.PRICING)}>Explore Plans</Button>
               </div>
             )}
           </Card>
@@ -213,8 +213,9 @@ export const SettingsPage: React.FC = () => {
                   Receive notifications via email
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor="notif-email" aria-label="Email Notifications" className="relative inline-flex items-center cursor-pointer">
                 <input
+                  id="notif-email"
                   type="checkbox"
                   checked={notifications.email}
                   onChange={(e) =>
@@ -232,8 +233,9 @@ export const SettingsPage: React.FC = () => {
                   Receive browser push notifications
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor="notif-push" aria-label="Push Notifications" className="relative inline-flex items-center cursor-pointer">
                 <input
+                  id="notif-push"
                   type="checkbox"
                   checked={notifications.push}
                   onChange={(e) =>
@@ -251,8 +253,9 @@ export const SettingsPage: React.FC = () => {
                   Get notified when leave requests need approval
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor="notif-leave" aria-label="Leave Approval Alerts" className="relative inline-flex items-center cursor-pointer">
                 <input
+                  id="notif-leave"
                   type="checkbox"
                   checked={notifications.leaveApprovals}
                   onChange={(e) =>
@@ -270,8 +273,9 @@ export const SettingsPage: React.FC = () => {
                   Get notified about attendance anomalies
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor="notif-attendance" aria-label="Attendance Alerts" className="relative inline-flex items-center cursor-pointer">
                 <input
+                  id="notif-attendance"
                   type="checkbox"
                   checked={notifications.attendanceAlerts}
                   onChange={(e) =>
@@ -286,7 +290,7 @@ export const SettingsPage: React.FC = () => {
               <Button
                 size="sm"
                 className="w-full"
-                onClick={() => showToast.success('Notification preferences saved!')}
+                onClick={() => showToast.success(t('settings.notificationPrefSaved'))}
               >
                 Save Notification Preferences
               </Button>
@@ -445,7 +449,7 @@ const WorkingHoursSection: React.FC<{
   const [formData, setFormData] = useState(workingHours);
 
   const updateMutation = useMutation({
-    mutationFn: (hours: any) => adminService.updateTenantProfile({
+    mutationFn: (hours: { startTime: string; endTime: string; workingDays: string[] }) => adminService.updateTenantProfile({
       settings: { workingHours: hours }
     }),
     onSuccess: () => {
@@ -576,6 +580,8 @@ const OrganizationProfileSection: React.FC<{
     type: 'success' | 'error';
   }>>
 }> = ({ userRole, setSuccessConfig }) => {
+  const { t } = useTranslation();
+  const { confirm } = useConfirm();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -625,8 +631,8 @@ const OrganizationProfileSection: React.FC<{
       });
       setUploading(false);
     },
-    onError: (err: any) => {
-      showToast.error(err.response?.data?.message || 'Failed to upload logo');
+    onError: (err: unknown) => {
+      showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to upload logo');
       setUploading(false);
     }
   });
@@ -649,10 +655,10 @@ const OrganizationProfileSection: React.FC<{
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
-      showToast.success('Logo removed successfully');
+      showToast.success(t('settings.logoRemoved'));
     },
-    onError: (err: any) => {
-      showToast.error(err.message || 'Failed to remove logo');
+    onError: (err: unknown) => {
+      showToast.error((err as {message?: string}).message || 'Failed to remove logo');
     }
   });
 
@@ -660,7 +666,7 @@ const OrganizationProfileSection: React.FC<{
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        showToast.error('Logo file size must be less than 2MB');
+        showToast.error(t('settings.logoSizeLimit'));
         return;
       }
       setUploading(true);
@@ -680,11 +686,11 @@ const OrganizationProfileSection: React.FC<{
         type: 'success'
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setSuccessConfig({
         isOpen: true,
         title: 'Update Failed',
-        message: error.response?.data?.message || 'Failed to update organization details',
+        message: (error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to update organization details',
         type: 'error'
       });
     }
@@ -692,7 +698,7 @@ const OrganizationProfileSection: React.FC<{
 
   const handleUpdate = () => {
     if (!formData.name.trim()) {
-      showToast.error('Organization name is required');
+      showToast.error(t('settings.orgNameRequired'));
       return;
     }
     const payload = {
@@ -702,8 +708,7 @@ const OrganizationProfileSection: React.FC<{
         timezone: formData.timezone
       }
     };
-    // @ts-ignore - removing timezone from top level if it's not expected there
-    delete (payload as any).timezone;
+    delete (payload as Record<string, unknown>).timezone;
 
     updateMutation.mutate(payload);
   };
@@ -910,7 +915,7 @@ const OrganizationProfileSection: React.FC<{
                   value={formData.timezone}
                   onChange={(val) => setFormData({ ...formData, timezone: val })}
                   placeholder="Search Timezone..."
-                  options={timezones.map((tz: any) => ({ label: tz.label, value: tz.value }))}
+                  options={timezones.map((tz: {label: string; value: string}) => ({ label: tz.label, value: tz.value }))}
                 />
               </div>
             </div>
@@ -934,6 +939,7 @@ const EmployeeIdSection: React.FC<{
     type: 'success' | 'error';
   }>>
 }> = ({ userRole, setSuccessConfig }) => {
+  const { t } = useTranslation();
   const [prefixInput, setPrefixInput] = useState('');
   const queryClient = useQueryClient();
 
@@ -950,14 +956,14 @@ const EmployeeIdSection: React.FC<{
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
     },
     onError: (err: Error) => {
-      showToast.error(err.message);
+      showToast.error((err as {message?: string}).message);
     }
   });
 
   const handleSetPrefix = async () => {
     try {
       if (!prefixInput || prefixInput.length < 2) {
-        showToast.error('Prefix must be at least 2 characters');
+        showToast.error(t('settings.prefixMinLength'));
         return;
       }
       await tenantService.setEmployeeIdPrefix(prefixInput.toUpperCase());
@@ -969,8 +975,8 @@ const EmployeeIdSection: React.FC<{
         type: 'success'
       });
       queryClient.invalidateQueries({ queryKey: ['employee-id-settings'] });
-    } catch (err: any) {
-      showToast.error(err.message);
+    } catch (err: unknown) {
+      showToast.error((err as {message?: string}).message);
     }
   };
 
@@ -995,8 +1001,9 @@ const EmployeeIdSection: React.FC<{
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Prefix Mode</p>
             <p className="text-xs text-gray-500">Auto-increment IDs with a custom prefix</p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label htmlFor="prefix-mode" aria-label="Prefix Mode" className="relative inline-flex items-center cursor-pointer">
             <input
+              id="prefix-mode"
               type="checkbox"
               checked={idSettings?.usePrefix ?? false}
               onChange={(e) => toggleModeMutation.mutate(e.target.checked)}

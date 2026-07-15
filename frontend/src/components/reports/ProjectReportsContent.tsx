@@ -15,11 +15,13 @@ import {
 } from '@/components/ui/Table';
 import { Users, Briefcase, Calendar, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 import { showToast } from '@/utils/toast';
 
 type ReportType = 'project' | 'client' | 'utilization';
 
 export const ProjectReportsContent: React.FC = () => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<ReportType>('project');
     const [selectedProject, setSelectedProject] = useState<string>('');
     const [selectedClient, setSelectedClient] = useState<string>('');
@@ -52,7 +54,7 @@ export const ProjectReportsContent: React.FC = () => {
         enabled: activeTab === 'client' && !!selectedClient,
     });
 
-    const { data: utilizationReport, isLoading: loadingUtilizationReport } = useQuery({
+    const { data: utilizationReport = [], isLoading: loadingUtilizationReport } = useQuery<{ id: string; first_name: string; last_name: string; email: string; projects_assigned: number; total_hours_logged: number; utilization_percent: number }[]>({
         queryKey: ['report', 'utilization', startDate, endDate],
         queryFn: () => projectsService.getUtilizationReport({ start_date: startDate, end_date: endDate }),
         enabled: activeTab === 'utilization',
@@ -99,7 +101,7 @@ export const ProjectReportsContent: React.FC = () => {
                     ['Total Timesheets', String(projectReport.total_timesheets || 0)],
                 ];
                 downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Project report exported successfully!');
+                showToast.success(t('projects.projectReportExported'));
 
             } else if (activeTab === 'client' && clientReport) {
                 const clientName = clients.find(c => c.id === selectedClient)?.name || 'Client';
@@ -118,7 +120,7 @@ export const ProjectReportsContent: React.FC = () => {
                     ...(clientReport.projects || []).map((p: string) => [p]),
                 ];
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Client report exported successfully!');
+                showToast.success(t('projects.clientReportExported'));
 
             } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
                 const rows: string[][] = [
@@ -127,7 +129,7 @@ export const ProjectReportsContent: React.FC = () => {
                     ['Generated On', new Date().toLocaleString()],
                     [],
                     ['Employee Name', 'Email', 'Assigned Projects', 'Logged Hours', 'Utilization %'],
-                    ...utilizationReport.map((emp: any) => [
+                    ...utilizationReport.map((emp) => [
                         `${emp.first_name || ''} ${emp.last_name || ''}`.trim(),
                         emp.email || '',
                         String(emp.projects_assigned || 0),
@@ -136,14 +138,14 @@ export const ProjectReportsContent: React.FC = () => {
                     ]),
                 ];
                 downloadCSV(rows, `utilization_report_${dateRange}.csv`);
-                showToast.success('Utilization report exported successfully!');
+                showToast.success(t('projects.utilizationExported'));
 
             } else {
-                showToast.error('No data available to export. Please select filters and load report first.');
+                showToast.error(t('projects.noExportData'));
             }
         } catch (error) {
             console.error('Export error:', error);
-            showToast.error('Failed to export report. Please try again.');
+            showToast.error(t('projects.exportFailedRetry'));
         }
     };
 
@@ -314,7 +316,7 @@ export const ProjectReportsContent: React.FC = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {utilizationReport.map((emp: any) => (
+                                    {utilizationReport.map((emp) => (
                                         <TableRow key={emp.id}>
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">

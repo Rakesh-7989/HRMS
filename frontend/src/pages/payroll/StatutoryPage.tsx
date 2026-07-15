@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Trash2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const StatutoryPage: React.FC = () => {
   const { t } = useTranslation();
@@ -102,16 +103,16 @@ const StatutoryPage: React.FC = () => {
         createDedMut.mutate({
             name: dedForm.name,
             code: dedForm.code || dedForm.name.toUpperCase().replace(/\s+/g, '_'),
-            category: dedForm.category as any,
+            category: dedForm.category as string,
             is_statutory: dedForm.isStatutory,
-            calculation_type: dedForm.calculationType as any,
+            calculation_type: dedForm.calculationType as string,
             is_taxable: true,
             is_recurring: true
         });
     };
 
     // --- COST CENTERS TAB ---
-    const { data: costCenters = [] } = useQuery<any[]>({
+    const { data: costCenters = [] } = useQuery<Record<string, unknown>[]>({
         queryKey: ['payroll', 'cost-centers'],
         queryFn: () => payrollService.getCostCenters()
     });
@@ -121,7 +122,7 @@ const StatutoryPage: React.FC = () => {
     const [ccAlloc, setCcAlloc] = useState<number | ''>('');
 
     const createCcMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createCostCenter(payload),
+        mutationFn: (payload: { name: string; budgetAllocated: number }) => payrollService.createCostCenter(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centers'] });
             setCcOpen(false); setCcName(''); setCcAlloc('');
@@ -137,7 +138,7 @@ const StatutoryPage: React.FC = () => {
             title="Statutory & Compliance"
             breadcrumbs={[{ label: t('common.breadcrumbs.payroll'), href: '/payroll' }, { label: 'Statutory' }]}
             actions={
-                <Button variant="outline" onClick={() => navigate('/payroll')}>
+                <Button variant="outline" onClick={() => navigate(ROUTES.PAYROLL)}>
                     Back
                 </Button>
             }
@@ -268,11 +269,11 @@ const StatutoryPage: React.FC = () => {
                             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Allocated</TableHead><TableHead>Spent</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {costCenters.length === 0 ? <TableRow><TableCell className="text-center">No cost centers</TableCell><TableCell>{null}</TableCell><TableCell>{null}</TableCell></TableRow> :
-                                    costCenters.map(c => (
-                                        <TableRow key={c.id}>
-                                            <TableCell>{c.name}</TableCell>
-                                            <TableCell>{c.budgetAllocated || c.allocated}</TableCell>
-                                            <TableCell>{c.spent}</TableCell>
+                                    costCenters.map((c: Record<string, unknown>) => (
+                                        <TableRow key={c.id as string}>
+                                            <TableCell>{c.name as string}</TableCell>
+                                            <TableCell>{(c.budgetAllocated || c.allocated) as number}</TableCell>
+                                            <TableCell>{c.spent as number}</TableCell>
                                         </TableRow>
                                     ))
                                 }
@@ -338,4 +339,4 @@ const StatutoryPage: React.FC = () => {
     );
 };
 
-export default StatutoryPage;
+export { StatutoryPage };

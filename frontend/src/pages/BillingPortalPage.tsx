@@ -14,6 +14,7 @@ import { subscriptionService } from '@/services/subscription.service';
 import { load } from '@cashfreepayments/cashfree-js';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from '@/components/ui/DataTable';
+import { ROUTES } from '@/utils/constants';
 
 
 export const BillingPortalPage: React.FC = () => {
@@ -31,7 +32,7 @@ export const BillingPortalPage: React.FC = () => {
         message: '',
     });
 
-    const { data: invoices, isLoading } = useQuery<any[]>({
+    const { data: invoices, isLoading } = useQuery<Record<string, unknown>[]>({
         queryKey: ['my-invoices'],
         queryFn: () => subscriptionService.getInvoices(),
     });
@@ -52,7 +53,7 @@ export const BillingPortalPage: React.FC = () => {
 
             if (result.payment_session_id) {
                 const cashfree = await load({
-                    mode: (import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox').toLowerCase() as any
+                    mode: (import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox').toLowerCase() as 'sandbox' | 'production'
                 });
 
                 await cashfree.checkout({
@@ -60,11 +61,11 @@ export const BillingPortalPage: React.FC = () => {
                     redirectTarget: "_self"
                 });
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             setErrorConfig({
                 isOpen: true,
                 title: 'Payment Error',
-                message: error.message || 'Error initiating payment'
+                message: (error as {message?: string}).message || 'Error initiating payment'
             });
         }
     };
@@ -136,7 +137,7 @@ export const BillingPortalPage: React.FC = () => {
                                             </p>
                                         </div>
                                         <Button
-                                            onClick={() => navigate('/pricing')}
+                                            onClick={() => navigate(ROUTES.PRICING)}
                                             className="bg-coral-500 hover:bg-coral-600 text-white shadow-elev-4 shadow-coral-600/20 w-full sm:w-auto"
                                         >
                                             <Zap size={16} className="mr-2" />
@@ -166,7 +167,7 @@ export const BillingPortalPage: React.FC = () => {
                                         variant="outline"
                                         size="sm"
                                         className="w-full mt-2"
-                                        onClick={() => navigate('/pricing')}
+                                        onClick={() => navigate(ROUTES.PRICING)}
                                     >
                                         <ExternalLink className="mr-2" size={14} />
                                         Upgrade Limits
@@ -184,23 +185,23 @@ export const BillingPortalPage: React.FC = () => {
                             <Card className="overflow-hidden border-none shadow-elev-5">
                                 <DataTable
                                     columns={[
-                                        { header: 'Date', accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy'), sortKey: 'created_at' },
-                                        { header: 'Invoice #', accessor: (row: any) => <span className="font-mono text-gray-500">{row.invoice_number || row.id.slice(0, 8)}</span> },
-                                        { header: 'Amount', accessor: (row: any) => <span className="font-bold">₹{row.amount?.toLocaleString()}</span>, sortKey: 'amount' },
+                                        { header: 'Date', cell: (row: Record<string, unknown>) => format(new Date(row.created_at as string), 'MMM dd, yyyy'), sortKey: 'created_at' },
+                                        { header: 'Invoice #', cell: (row: Record<string, unknown>) => <span className="font-mono text-gray-500">{(row.invoice_number as string) || (row.id as string).slice(0, 8)}</span> },
+                                        { header: 'Amount', cell: (row: Record<string, unknown>) => <span className="font-bold">₹{(row.amount as number)?.toLocaleString()}</span>, sortKey: 'amount' },
                                         {
                                             header: 'Status',
-                                            accessor: (row: any) => (
+                                            cell: (row: Record<string, unknown>) => (
                                                 <div className="flex items-center gap-2">
-                                                    {row.status === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
-                                                        row.status === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
+                                                    {(row.status as string) === 'PAID' ? <CheckCircle2 size={14} className="text-green-500" /> :
+                                                        (row.status as string) === 'FAILED' ? <AlertCircle size={14} className="text-red-500" /> :
                                                             <Clock size={14} className="text-coral-500" />}
                                                     <span className={cn(
                                                         "text-[10px] font-black uppercase tracking-widest",
-                                                        row.status === 'PAID' ? "text-green-500" :
-                                                            row.status === 'FAILED' ? "text-red-500" :
+                                                        (row.status as string) === 'PAID' ? "text-green-500" :
+                                                            (row.status as string) === 'FAILED' ? "text-red-500" :
                                                                 "text-coral-500"
                                                     )}>
-                                                        {row.status}
+                                                        {row.status as string}
                                                     </span>
                                                 </div>
                                             ),
@@ -208,18 +209,18 @@ export const BillingPortalPage: React.FC = () => {
                                         },
                                         {
                                             header: '',
-                                            accessor: (row: any) => (
+                                            cell: (row: Record<string, unknown>) => (
                                                 <div className="flex justify-end gap-2">
-                                                    {(row.status === 'PENDING' || row.status === 'FAILED') && (
+                                                    {((row.status as string) === 'PENDING' || (row.status as string) === 'FAILED') && (
                                                         <Button
                                                             size="sm"
                                                             className="h-8 bg-brand-500 hover:bg-brand-600 text-white"
-                                                            onClick={() => handleRetryPayment(row.id)}
+                                                            onClick={() => handleRetryPayment(row.id as string)}
                                                         >
                                                             Pay Now
                                                         </Button>
                                                     )}
-                                                    {row.status === 'PAID' && (
+                                                    {(row.status as string) === 'PAID' && (
                                                         <Button variant="ghost" size="sm" className="h-8 text-brand-500 hover:bg-brand-500/10">
                                                             <Download size={16} className="mr-1" />
                                                             PDF
@@ -230,7 +231,7 @@ export const BillingPortalPage: React.FC = () => {
                                         },
                                     ]}
                                     data={invoices || []}
-                                    isLoading={isLoading}
+                                    loading={isLoading}
                                     emptyMessage="No billing transactions found for this organization."
                                     pageSize={10}
                                 />

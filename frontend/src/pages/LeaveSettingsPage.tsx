@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -93,7 +93,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to create leave type');
+            setErrorMessage((error as {message?: string}).message || 'Failed to create leave type');
         },
     });
 
@@ -108,7 +108,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to update leave type');
+            setErrorMessage((error as {message?: string}).message || 'Failed to update leave type');
         },
     });
 
@@ -119,7 +119,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to delete leave type');
+            setErrorMessage((error as {message?: string}).message || 'Failed to delete leave type');
         },
     });
 
@@ -133,7 +133,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to create policy');
+            setErrorMessage((error as {message?: string}).message || 'Failed to create policy');
         },
     });
 
@@ -148,7 +148,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to update policy');
+            setErrorMessage((error as {message?: string}).message || 'Failed to update policy');
         },
     });
 
@@ -159,7 +159,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to delete policy');
+            setErrorMessage((error as {message?: string}).message || 'Failed to delete policy');
         },
     });
 
@@ -173,7 +173,7 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to create holiday');
+            setErrorMessage((error as {message?: string}).message || 'Failed to create holiday');
         },
     });
 
@@ -184,23 +184,23 @@ export const LeaveSettingsPage: React.FC = () => {
             setErrorMessage(null);
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to delete holiday');
+            setErrorMessage((error as {message?: string}).message || 'Failed to delete holiday');
         },
     });
 
     // Run Accrual Mutation
     const runAccrualMutation = useMutation({
         mutationFn: () => leaveService.runAccrual(),
-        onSuccess: (data: any) => {
+        onSuccess: (data: unknown) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             showAlert({
                 title: 'Accrual Processed',
-                message: `Accrual run successfully! Processed ${data.accruals_processed} records.`,
+                message: `Accrual run successfully! Processed ${(data as Record<string, unknown>).accruals_processed} records.`,
                 confirmText: 'Great'
             });
         },
         onError: (error: Error) => {
-            setErrorMessage(error.message || 'Failed to run accrual');
+            setErrorMessage((error as {message?: string}).message || 'Failed to run accrual');
         },
     });
 
@@ -659,7 +659,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                             <TableCell className="font-medium">{policy.name}</TableCell>
                                             <TableCell>
                                                 <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                                                    {(policy as any).leave_type_name || policy.leave_type?.name || 'N/A'}
+                                                    {(policy as unknown as Record<string, unknown>).leave_type_name as string || ((policy as unknown as Record<string, unknown>).leave_type as Record<string, unknown>)?.name as string || 'N/A'}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
@@ -672,7 +672,7 @@ export const LeaveSettingsPage: React.FC = () => {
                                                 {policy.max_balance ? (
                                                     <span>{policy.max_balance}d</span>
                                                 ) : (
-                                                    <span className="text-gray-400">∞</span>
+                                                    <span className="text-gray-400">âˆž</span>
                                                 )}
                                             </TableCell>
                                             <TableCell>
@@ -1174,4 +1174,4 @@ export const LeaveSettingsPage: React.FC = () => {
     );
 };
 
-export default LeaveSettingsPage;
+

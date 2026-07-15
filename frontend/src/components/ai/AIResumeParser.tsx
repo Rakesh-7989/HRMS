@@ -46,6 +46,9 @@ export const AIResumeParser: React.FC<AIResumeParserProps> = ({ onParsed, classN
       </div>
 
       <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { inputRef.current?.click(); } }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}

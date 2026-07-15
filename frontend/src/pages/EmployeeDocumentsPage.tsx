@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -39,10 +39,10 @@ export const EmployeeDocumentsPage: React.FC = () => {
         mutationFn: (docId: string) => documentsService.deleteDocument(docId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-documents', id] });
-            showToast.success('Document deleted');
+            showToast.success(t('employees.documentDeleted'));
         },
-        onError: (err: any) => {
-            const message = err.response?.data?.message || err.message || 'Failed to delete';
+        onError: (err: unknown) => {
+            const message = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to delete';
             showToast.error(message);
         }
     });
@@ -52,11 +52,11 @@ export const EmployeeDocumentsPage: React.FC = () => {
             documentsService.uploadDocument(id!, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employee-documents', id] });
-            showToast.success('Document uploaded successfully');
+            showToast.success(t('common.documentUploaded'));
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             console.error('Upload failed:', error);
-            const msg = error?.response?.data?.message || error.message || 'Failed to upload document';
+            const msg = (error as {response?: {data?: {message?: string}}})?.response?.data?.message || (error as {message?: string}).message || 'Failed to upload document';
             showToast.error(msg);
         }
     });
@@ -71,7 +71,7 @@ export const EmployeeDocumentsPage: React.FC = () => {
 
         // Check file size (limit to ~8MB to safely fit in 10MB JSON body with Base64 overhead)
         if (file.size > 8 * 1024 * 1024) {
-            showToast.error('File size too large (max 8MB)');
+            showToast.error(t('common.fileTooLarge'));
             e.currentTarget.value = '';
             return;
         }
@@ -129,33 +129,33 @@ export const EmployeeDocumentsPage: React.FC = () => {
                         const columns = [
                             {
                                 header: t('common.documentName'),
-                                cell: (doc: any) => (
+                                cell: (doc: Record<string, unknown>) => (
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
                                             <FileText size={18} />
                                         </div>
-                                        <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{doc.file_name as string}</span>
                                     </div>
                                 ),
                             },
                             {
                                 header: t('common.type'),
-                                cell: (doc: any) => (
-                                    <span className="text-xs text-gray-500">{doc.file_type || t('common.unknown')}</span>
+                                cell: (doc: Record<string, unknown>) => (
+                                    <span className="text-xs text-gray-500">{(doc.file_type as string) || t('common.unknown')}</span>
                                 ),
                             },
                             {
                                 header: t('common.uploadedOn'),
-                                cell: (doc: any) => (
-                                    <span className="text-xs text-gray-500">{format(new Date(doc.created_at), 'MMM d, yyyy')}</span>
+                                cell: (doc: Record<string, unknown>) => (
+                                    <span className="text-xs text-gray-500">{format(new Date(doc.created_at as string), 'MMM d, yyyy')}</span>
                                 ),
                             },
                             {
                                 header: t('common.actions'),
-                                cell: (doc: any) => (
+                                cell: (doc: Record<string, unknown>) => (
                                     <div className="flex items-center justify-end gap-2">
                                         <a
-                                            href={doc.file_url}
+                                            href={doc.file_url as string}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-600 dark:text-gray-400"
@@ -167,13 +167,13 @@ export const EmployeeDocumentsPage: React.FC = () => {
                                             onClick={async () => {
                                                 const result = await confirm({
                                                     title: t('profile.deleteDocumentTitle'),
-                                                    message: t('profile.deleteDocumentMessage', { name: doc.file_name }),
+                                                    message: t('profile.deleteDocumentMessage', { name: doc.file_name as string }),
                                                     type: 'destructive',
                                                     confirmText: t('common.delete'),
                                                     cancelText: t('common.cancel')
                                                 });
                                                 if (result) {
-                                                    deleteMutation.mutate(doc.id);
+                                                    deleteMutation.mutate(doc.id as string);
                                                 }
                                             }}
                                             className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600"
@@ -188,8 +188,8 @@ export const EmployeeDocumentsPage: React.FC = () => {
                         return (
                             <DataTable
                                 columns={columns}
-                                data={filteredDocs}
-                                isLoading={isLoading}
+                                data={filteredDocs as unknown as Record<string, unknown>[]}
+                                loading={isLoading}
                                 pageSize={10}
                                 emptyMessage={t('common.noDocuments')}
                             />

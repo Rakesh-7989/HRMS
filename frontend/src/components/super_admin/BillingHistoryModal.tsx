@@ -28,7 +28,7 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
         enabled: isOpen && !!tenantId,
     });
 
-    const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
+    const cn = (...classes: (string | boolean | null | undefined)[]) => classes.filter(Boolean).join(' ');
 
     return (
         <Dialog
@@ -49,27 +49,27 @@ export const BillingHistoryModal: React.FC<BillingHistoryModalProps> = ({
                 ) : (
                     <DataTable
                         columns={[
-                            { header: t('common.date'), accessorKey: 'created_at' as any, cell: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy') },
-                            { header: t('common.amount'), accessorKey: 'amount' as any, cell: (row: any) => <span className="font-bold">₹{parseFloat(row.amount).toLocaleString()}</span> },
+                            { header: t('common.date'), accessorKey: 'created_at' as unknown as string, cell: (row: Record<string, unknown>) => format(new Date(row.created_at as string), 'MMM dd, yyyy') },
+                            { header: t('common.amount'), accessorKey: 'amount' as unknown as string, cell: (row: Record<string, unknown>) => <span className="font-bold">₹{parseFloat(row.amount as string).toLocaleString()}</span> },
                             {
                                 header: t('common.status'),
-                                cell: (row: any) => (
+                                cell: (row: Record<string, unknown>) => (
                                     <div className="flex items-center gap-1.5">
                                         {row.status === 'PAID' ? <CheckCircle2 size={12} className="text-green-500" /> :
                                             row.status === 'FAILED' ? <AlertCircle size={12} className="text-red-500" /> :
-                                                <Clock size={12} className="text-coral-500" />}
-                                        <span className={cn(
-                                            "text-[9px] font-black uppercase tracking-tighter",
-                                            row.status === 'PAID' ? "text-green-500" :
-                                                row.status === 'FAILED' ? "text-red-500" :
-                                                    "text-coral-500"
-                                        )}>
-                                            {row.status}
-                                        </span>
+<Clock size={12} className="text-coral-500" />}
+                                    <span className={cn(
+                                        "text-[9px] font-black uppercase tracking-tighter",
+                                        row.status === 'PAID' ? "text-green-500" :
+                                            row.status === 'FAILED' ? "text-red-500" :
+                                                "text-coral-500"
+                                    )}>
+                                        {String(row.status)}
+                                    </span>
                                     </div>
                                 ),
                             },
-                            { header: 'Method', cell: (row: any) => <span className="text-xs text-muted">{row.payment_method || 'N/A'}</span> },
+                            { header: 'Method', cell: (row: Record<string, unknown>) => <span className="text-xs text-muted">{(row.payment_method as string) || 'N/A'}</span> },
                         ]}
                         data={billingHistory}
                         loading={isLoading}

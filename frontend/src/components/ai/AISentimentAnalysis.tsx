@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { aiService, SentimentAnalysis } from '@/services/ai.service';
+import { aiService } from '@/services/ai.service';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
-import { Brain, TrendingUp, TrendingDown, Minus, Loader2, BarChart3, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Brain, TrendingUp, TrendingDown, Minus, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 interface AISentimentAnalysisProps {
   surveyId?: string;

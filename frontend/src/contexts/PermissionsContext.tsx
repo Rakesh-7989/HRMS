@@ -84,6 +84,7 @@ export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePermissions = () => {
     const context = useContext(PermissionsContext);
     if (context === undefined) {

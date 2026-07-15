@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
-import { SalaryTemplate } from '@/types/payroll';
+import payrollService, { SalaryStructureTemplate } from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -18,13 +17,13 @@ const SalaryTemplatesPage: React.FC = () => {
 
     const queryClient = useQueryClient();
 
-    const { data: templates = [], isLoading } = useQuery<SalaryTemplate[]>({
+    const { data: templates = [], isLoading } = useQuery<SalaryStructureTemplate[]>({
         queryKey: ['payroll', 'templates'],
         queryFn: () => payrollService.getSalaryTemplates(),
     });
 
     const [addOpen, setAddOpen] = useState(false);
-    const [editingTemplate, setEditingTemplate] = useState<SalaryTemplate | null>(null);
+    const [editingTemplate, setEditingTemplate] = useState<SalaryStructureTemplate | null>(null);
 
     const [form, setForm] = useState({
         name: '',
@@ -42,7 +41,7 @@ const SalaryTemplatesPage: React.FC = () => {
     };
 
     const createMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createSalaryTemplate(payload),
+        mutationFn: (payload: Record<string, unknown>) => payrollService.createSalaryTemplate(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'templates'] });
             setAddOpen(false);
@@ -51,7 +50,7 @@ const SalaryTemplatesPage: React.FC = () => {
     });
 
     const updateMut = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: any }) => payrollService.updateSalaryTemplate(id, payload),
+        mutationFn: ({ id, payload }: { id: string; payload: Record<string, unknown> }) => payrollService.updateSalaryTemplate(id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'templates'] });
             setAddOpen(false);
@@ -85,16 +84,23 @@ const SalaryTemplatesPage: React.FC = () => {
         }
     };
 
-    const handleEdit = (t: SalaryTemplate) => {
+    const handleEdit = (t: SalaryStructureTemplate) => {
         setEditingTemplate(t);
+        // Extract percentages from components
+        const basicComp = t.components.find(c => c.code === 'BASIC' || c.name.toLowerCase().includes('basic'));
+        const hraComp = t.components.find(c => c.code === 'HRA' || c.name.toLowerCase().includes('hra'));
+        const daComp = t.components.find(c => c.code === 'DA' || c.name.toLowerCase().includes('da'));
+        const specialComp = t.components.find(c => c.code === 'SPL' || c.name.toLowerCase().includes('special'));
+        const otherComp = t.components.find(c => c.code === 'OTHR' || c.name.toLowerCase().includes('other'));
+        
         setForm({
             name: t.name,
             description: t.description || '',
-            basicPercentage: t.basic_percentage,
-            hraPercentage: t.hra_percentage,
-            daPercentage: t.da_percentage,
-            specialAllowancePercentage: t.special_allowance_percentage,
-            otherAllowancePercentage: t.other_allowance_percentage,
+            basicPercentage: basicComp?.percentage || 0,
+            hraPercentage: hraComp?.percentage || 0,
+            daPercentage: daComp?.percentage || 0,
+            specialAllowancePercentage: specialComp?.percentage || 0,
+            otherAllowancePercentage: otherComp?.percentage || 0,
         });
         setAddOpen(true);
     };
@@ -121,23 +127,29 @@ const SalaryTemplatesPage: React.FC = () => {
                     <TableBody>
                         {isLoading ? <TableRow><TableCell colSpan={5}>{t('common.loading')}</TableCell></TableRow> :
                             templates.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center p-4">No templates found</TableCell></TableRow> :
-                                templates.map(t => (
-                                    <TableRow key={t.id}>
-                                        <TableCell>
-                                            <div className="font-medium">{t.name}</div>
-                                            <div className="text-xs text-gray-500">{t.description}</div>
-                                        </TableCell>
-                                        <TableCell>{t.basic_percentage}%</TableCell>
-                                        <TableCell>{t.hra_percentage}%</TableCell>
-                                        <TableCell>{t.special_allowance_percentage}%</TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
-                                                <Button size="sm" variant="ghost" onClick={() => handleEdit(t)}><Edit2 size={16} /></Button>
-                                                <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => deleteMut.mutate(t.id)}><Trash2 size={16} /></Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                templates.map(t => {
+                                        // Extract percentages from components
+                                        const basicComp = t.components.find(c => c.code === 'BASIC' || c.name.toLowerCase().includes('basic'));
+                                        const hraComp = t.components.find(c => c.code === 'HRA' || c.name.toLowerCase().includes('hra'));
+                                        const specialComp = t.components.find(c => c.code === 'SPL' || c.name.toLowerCase().includes('special'));
+                                        return (
+                                            <TableRow key={t.id}>
+                                                <TableCell>
+                                                    <div className="font-medium">{t.name}</div>
+                                                    <div className="text-xs text-gray-500">{t.description}</div>
+                                                </TableCell>
+                                                <TableCell>{basicComp?.percentage ?? 0}%</TableCell>
+                                                <TableCell>{hraComp?.percentage ?? 0}%</TableCell>
+                                                <TableCell>{specialComp?.percentage ?? 0}%</TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" variant="ghost" onClick={() => handleEdit(t)}><Edit2 size={16} /></Button>
+                                                        <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => deleteMut.mutate(t.id)}><Trash2 size={16} /></Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                         }
                     </TableBody>
                 </Table>
@@ -167,4 +179,4 @@ const SalaryTemplatesPage: React.FC = () => {
     );
 };
 
-export default SalaryTemplatesPage;
+export { SalaryTemplatesPage };

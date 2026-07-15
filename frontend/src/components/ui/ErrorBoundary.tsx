@@ -1,79 +1,76 @@
-import React from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import i18n from '@/i18n/config';
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+interface Props {
+    children?: ReactNode;
 }
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
+interface State {
+    hasError: boolean;
+    error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+export class ErrorBoundary extends Component<Props, State> {
+    public state: State = {
+        hasError: false,
+        error: null,
+    };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    this.props.onError?.(error, errorInfo);
-  }
-
-  handleRetry = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-red-500" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Something went wrong
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
-            {this.state.error?.message || 'An unexpected error occurred. Please try again.'}
-          </p>
-          <div className="flex items-center gap-3">
-            <Button variant="primary" onClick={this.handleRetry} className="flex items-center gap-2">
-              <RefreshCw size={16} />
-              Try Again
-            </Button>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Reload Page
-            </Button>
-          </div>
-        </div>
-      );
+    public static getDerivedStateFromError(error: Error): State {
+        return { hasError: true, error };
     }
 
-    return this.props.children;
-  }
+    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.error('Uncaught error:', error, errorInfo);
+    }
+
+    private handleReload = () => {
+        window.location.reload();
+    };
+
+    public render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+                    <div className="bg-white p-8 rounded-lg shadow-elev-4 max-w-md w-full text-center border border-gray-100">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg
+                                className="w-8 h-8 text-red-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
+                            </svg>
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">{i18n.t('errorBoundary.title')}</h1>
+                        <p className="text-gray-600 mb-6">
+                            {i18n.t('errorBoundary.description')}
+                        </p>
+                        {this.state.error && (
+                            <div className="bg-gray-50 p-3 rounded text-left text-xs text-gray-500 mb-6 overflow-auto max-h-32 font-mono">
+                                {this.state.error.toString()}
+                            </div>
+                        )}
+                         <Button variant="ghost" 
+                            onClick={this.handleReload}
+                            className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            {i18n.t('errorBoundary.reload')}
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
 }
 
-export const withErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
-): React.FC<P> => {
-  const Wrapped: React.FC<P> = (props) => (
-    <ErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-  Wrapped.displayName = `withErrorBoundary(${Component.displayName || Component.name || 'Component'})`;
-  return Wrapped;
-};
+export default ErrorBoundary;

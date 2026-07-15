@@ -765,6 +765,8 @@ exports.getUserById = async (db, id, tenantId, requester, options = {}) => {
     const isSelf = requester ? requester.id === id : false;
     const isHRAdmin = requester ? ['ADMIN', 'HR', 'SUPER_ADMIN'].includes(requester.role) : false;
     const isDirectManager = requester ? user.reports_to === requester.employeeId : false;
+    const isManager = requester ? requester.role === 'MANAGER' : false;
+    const isDirectReport = isDirectManager;
     
     // Check if the requester is a delegate who can see this employee
     let isDelegate = false;
@@ -1456,6 +1458,7 @@ exports.assignDepartment = async (db, id, departmentId, actor) => {
 };
 
 exports.assignDesignation = async (db, id, designationId, actor) => {
+  const query = getQuery(db);
   const res = await query(
     `UPDATE employees SET designation_id=$1, updated_at=now() WHERE user_id=$2 AND tenant_id=$3 RETURNING *`,
     [designationId, id, actor.tenantId]

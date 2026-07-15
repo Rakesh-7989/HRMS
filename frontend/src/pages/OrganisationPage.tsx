@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -25,28 +25,28 @@ export const OrganisationPage: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as any) || 'directory';
+  const initialTab = (searchParams.get('tab') as 'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster') || 'directory';
   const [tab, setTab] = useState<'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster'>(initialTab);
 
   // Sync tab state with URL
-  const handleTabChange = (newTab: typeof tab) => {
+  const handleTabChange = useCallback((newTab: typeof tab) => {
     setTab(newTab);
     setSearchParams({ tab: newTab });
-  };
+  }, [setSearchParams]);
 
   // If user is SUPER_ADMIN, ensure tree tab is not active
   useEffect(() => {
     if (user?.role === 'SUPER_ADMIN' && tab === 'tree') handleTabChange('directory');
     if (user?.role === 'EMPLOYEE' && tab === 'directory') handleTabChange('tree');
-  }, [user?.role, tab]);
+  }, [user?.role, tab, handleTabChange]);
 
   // Sync state if URL changes externally
   useEffect(() => {
     const urlTab = searchParams.get('tab');
     if (urlTab && urlTab !== tab) {
-      setTab(urlTab as any);
+      setTab(urlTab as 'directory' | 'tree' | 'departments' | 'designations' | 'shifts' | 'roster');
     }
-  }, [searchParams]);
+  }, [searchParams, tab]);
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 16;
@@ -71,8 +71,8 @@ export const OrganisationPage: React.FC = () => {
     enabled: ['ADMIN', 'HR', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '')
   });
 
-  const filteredEmployees = usersResponse?.data || [];
-  const totalEmployees = usersResponse?.pagination?.total || filteredEmployees.length;
+  const filteredEmployees = (usersResponse?.data as unknown as Record<string, unknown>[]) || [];
+  const totalEmployees = ((usersResponse?.pagination as Record<string, unknown>)?.total as number) || filteredEmployees.length;
   const displayEmployees = filteredEmployees.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // SUPER_ADMIN tenant directory state & queries
@@ -281,13 +281,13 @@ export const OrganisationPage: React.FC = () => {
                         <EmptyState title={t('common.noEmployees')} compact />
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                          {displayEmployees.map((emp: any) => (
-                            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-elev-1 p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-elev-3 transition-shadow">
-                              <div className="w-10 h-10 rounded-full bg-brand-500/10 text-brand-500 font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{(emp.first_name || emp.email || 'U').charAt(0)}</div>
+                          {displayEmployees.map((emp: Record<string, unknown>) => (
+                            <div key={emp.id as string} className="bg-white dark:bg-gray-800 rounded-lg shadow-elev-1 p-4 flex items-center gap-3 border border-gray-200 dark:border-gray-700 hover:shadow-elev-3 transition-shadow">
+                              <div className="w-10 h-10 rounded-full bg-brand-500/10 text-brand-500 font-bold flex items-center justify-center text-sm uppercase shrink-0 h-10 w-10">{((emp.first_name as string) || (emp.email as string) || 'U').charAt(0)}</div>
                               <div className="min-w-0">
-                                <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name} {emp.last_name}</div>
-                                <div className="text-xs text-muted truncate">{emp.role}</div>
-                                <div className="text-xs text-muted truncate">{emp.email}</div>
+                                <div className="font-medium text-gray-900 dark:text-white truncate">{emp.first_name as string} {emp.last_name as string}</div>
+                                <div className="text-xs text-muted truncate">{emp.role as string}</div>
+                                <div className="text-xs text-muted truncate">{emp.email as string}</div>
                               </div>
                             </div>
                           ))}
@@ -335,4 +335,4 @@ export const OrganisationPage: React.FC = () => {
 };
 
 
-export default OrganisationPage;
+

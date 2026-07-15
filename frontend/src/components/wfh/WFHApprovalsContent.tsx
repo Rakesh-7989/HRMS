@@ -10,6 +10,12 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { DataTable } from '@/components/ui/DataTable';
 import { useTranslation } from 'react-i18next';
 
+interface TeamCapacityStats {
+    totalTeamSize: number;
+    approvedWFHCount: number;
+    approvedLeaveCount: number;
+}
+
 export const WFHApprovalsContent: React.FC = () => {
     const { t } = useTranslation();
     const { hasPermission } = usePermissions();
@@ -21,7 +27,7 @@ export const WFHApprovalsContent: React.FC = () => {
     const [showRejectDialog, setShowRejectDialog] = useState(false);
     const [showApproveDialog, setShowApproveDialog] = useState(false);
 
-    const { data: pendingRequests = [], isLoading } = useQuery({
+    const { data: pendingRequests = [], isLoading } = useQuery<WFHRequest[]>({
         queryKey: ['wfh-requests', 'pending'],
         queryFn: () => wfhService.getPendingRequests(),
     });
@@ -49,7 +55,7 @@ export const WFHApprovalsContent: React.FC = () => {
         },
     });
 
-    const [capacityStats, setCapacityStats] = useState<any>(null);
+    const [capacityStats, setCapacityStats] = useState<TeamCapacityStats | null>(null);
 
     const checkCapacity = async (request: WFHRequest) => {
         try {
@@ -94,7 +100,7 @@ export const WFHApprovalsContent: React.FC = () => {
     const columns = [
         {
             header: t('wfh.employee'),
-            cell: (request: any) => (
+            cell: (request: WFHRequest) => (
                 <div className="flex items-center gap-2">
                     <User size={16} className="text-gray-400" />
                     <div>
@@ -110,7 +116,7 @@ export const WFHApprovalsContent: React.FC = () => {
         },
         {
             header: t('wfh.date'),
-            cell: (request: any) => (
+            cell: (request: WFHRequest) => (
                 <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-gray-400" />
                     <span className="text-sm text-gray-900 dark:text-white">
@@ -121,13 +127,13 @@ export const WFHApprovalsContent: React.FC = () => {
         },
         {
             header: t('wfh.reason'),
-            cell: (request: any) => (
+            cell: (request: WFHRequest) => (
                 <span className="max-w-xs truncate block">{request.reason}</span>
             ),
         },
         {
             header: t('wfh.status'),
-            cell: (request: any) => (
+            cell: (request: WFHRequest) => (
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${request.status === 'PENDING_HR'
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                     : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -138,11 +144,11 @@ export const WFHApprovalsContent: React.FC = () => {
         },
         {
             header: t('wfh.dates'),
-            cell: (request: any) => format(new Date(request.created_at), 'MMM dd, hh:mm a'),
+            cell: (request: WFHRequest) => format(new Date(request.created_at), 'MMM dd, hh:mm a'),
         },
         {
             header: t('wfh.actions'),
-            cell: (request: any) => (
+            cell: (request: WFHRequest) => (
                 canApprove ? (
                     <div className="flex gap-2">
                         <Button size="sm" variant="primary" onClick={() => handleApprove(request)}>
@@ -215,10 +221,11 @@ export const WFHApprovalsContent: React.FC = () => {
                             </div>
 
                             <div className="mt-4">
-                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label htmlFor="wfh-comment" className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                                     Comment (Optional)
                                 </label>
                                 <textarea
+                                    id="wfh-comment"
                                     value={approvalComment}
                                     onChange={(e) => setApprovalComment(e.target.value)}
                                     rows={2}
@@ -265,10 +272,11 @@ export const WFHApprovalsContent: React.FC = () => {
                             </div>
 
                             <div className="mt-4">
-                                <label className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label htmlFor="wfh-rejection-reason" className="block text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                                     Rejection Reason *
                                 </label>
                                 <textarea
+                                    id="wfh-rejection-reason"
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                     rows={3}

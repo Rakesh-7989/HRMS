@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, FolderKanban, Edit, Calendar, List, BarChart3, Users, Trash2, Clock } from 'lucide-react';
@@ -33,6 +33,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { Project, ProjectStatus } from '@/types/project.types';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const ProjectsPage: React.FC = () => {
     const { t } = useTranslation();
@@ -99,26 +100,28 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.createProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
-            showToast.success('Project created successfully');
+            showToast.success(t('projects.createdSuccess'));
             handleCloseModal();
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to create project');
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to create project');
         },
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) =>
+        mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
             projectsService.updateProject(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
-            showToast.success('Project updated successfully');
+            showToast.success(t('projects.updatedSuccess'));
             handleCloseModal();
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to update project');
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to update project');
         },
     });
 
@@ -127,11 +130,12 @@ export const ProjectsPage: React.FC = () => {
         mutationFn: projectsService.deleteProject,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
-            showToast.success('Project deleted successfully');
+            showToast.success(t('projects.deletedSuccess'));
             setProjectToDelete(null);
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to delete project. It may have linked tasks.');
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to delete project. It may have linked tasks.');
             setProjectToDelete(null);
         },
     });
@@ -185,13 +189,13 @@ export const ProjectsPage: React.FC = () => {
         const endDate = new Date(formData.end_date);
 
         if (endDate < startDate) {
-            showToast.error('End date cannot be earlier than start date');
+            showToast.error(t('projects.endBeforeStart'));
             return;
         }
 
         // Prevent future start date for Active projects
         if (formData.status === 'ACTIVE' && startDate > today) {
-            showToast.error('Cannot set status to ACTIVE if start date is in the future');
+            showToast.error(t('projects.cannotSetActiveFuture'));
             return;
         }
 
@@ -205,7 +209,7 @@ export const ProjectsPage: React.FC = () => {
         if (editingProject) {
             updateMutation.mutate({ id: editingProject.id, data: submissionData });
         } else {
-            createMutation.mutate(submissionData as any);
+            createMutation.mutate(submissionData);
         }
     };
 
@@ -272,7 +276,7 @@ export const ProjectsPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                             {canManage && (
                                 <>
-                                    <Button variant="outline" onClick={() => navigate('/projects/clients')}>
+                                    <Button variant="outline" onClick={() => navigate(ROUTES.PROJECTS_CLIENTS)}>
                                         {t('projects.manageClients')}
                                     </Button>
                                     <Button onClick={handleOpenCreateModal}>
@@ -387,7 +391,7 @@ export const ProjectsPage: React.FC = () => {
                                                 </TableCell>
                                                 {canManage && (
                                                     <TableCell>
-                                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && e.stopPropagation()}>
                                                             {canManageMembers && (
                                                                  <Button variant="ghost" 
                                                                     onClick={() => handleOpenMembersModal(project)}
@@ -511,7 +515,7 @@ export const ProjectsPage: React.FC = () => {
                                 <select
                                     id="billing_type"
                                     value={formData.billing_type}
-                                    onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as any })}
+                                    onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as 'HOURLY' | 'FIXED' | 'NON_BILLABLE' })}
                                     className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                                 >
                                     <option value="HOURLY">Hourly (Time & Materials)</option>

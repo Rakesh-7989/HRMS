@@ -50,7 +50,7 @@ export const authService = {
       return {
         status: '2FA_REQUIRED',
         preAuthToken: response.data.preAuthToken,
-      } as any;
+      } as unknown as AuthResponse;
     }
 
     if (response.data.status !== 'success') {
@@ -178,8 +178,8 @@ export const authService = {
     }
   },
 
-  listActiveSessions: async (): Promise<any[]> => {
-    const response = await api.get<{ status: 'success'; sessions: any[] }>('/auth/sessions');
+  listActiveSessions: async (): Promise<Array<{ id: string; device?: string; last_active?: string; ip_address?: string }>> => {
+    const response = await api.get<{ status: 'success'; sessions: Array<{ id: string; device?: string; last_active?: string; ip_address?: string }> }>('/auth/sessions');
     if (response.data.status !== 'success') {
       throw new Error('Failed to fetch active sessions');
     }
@@ -188,7 +188,7 @@ export const authService = {
 
   // Get user profile from personal dashboard (available to all roles)
   async getProfileFromDashboard(): Promise<User> {
-    const response = await api.get<{ status: 'success'; data?: { profile?: any } }>('/dashboards/personal');
+    const response = await api.get<{ status: 'success'; data?: { profile?: Record<string, unknown> } }>('/dashboards/personal');
     const dashboardData = response.data.data;
     if (!dashboardData?.profile) {
       throw new Error('Failed to fetch profile from dashboard');
@@ -204,12 +204,12 @@ export const authService = {
     // Merge dashboard profile with current user data
     return {
       id: currentUser.id,
-      email: profile.email || currentUser.email,
-      first_name: profile.first_name || '',
-      last_name: profile.last_name || '',
+      email: (profile.email as string) || currentUser.email,
+      first_name: (profile.first_name as string) || '',
+      last_name: (profile.last_name as string) || '',
       role: currentUser.role,
       tenant_id: currentUser.tenant_id,
-      is_active: profile.is_active ?? true,
+      is_active: (profile.is_active as boolean) ?? true,
     };
   },
 

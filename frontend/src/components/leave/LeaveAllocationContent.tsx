@@ -9,7 +9,7 @@ import { leaveService, LeaveType } from '@/services/leave.service';
 import { usersService, User } from '@/services/users.service';
 import { CheckCircle, AlertCircle, RefreshCw, Users, User as UserIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useTranslation } from 'react-i18next';
 

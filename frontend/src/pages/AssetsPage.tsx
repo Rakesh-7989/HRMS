@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -17,8 +17,6 @@ import {
   UserX,
   Download,
   Printer,
-  Loader2,
-  AlertCircle,
   ClipboardList,
   FileText,
   RefreshCw,
@@ -27,9 +25,7 @@ import {
   Package,
   Wrench,
   CheckCircle2,
-  PlusCircle,
-  ChevronLeft,
-  ChevronRight
+  PlusCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +34,7 @@ import type { Asset, AssetStatus, AssetCategory } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/ui/Dialog';
 import { DataTable } from '@/components/ui/DataTable';
-import { SkeletonTable } from '@/components/ui/Skeleton';
+import { ROUTES } from '@/utils/constants';
 
 export const AssetsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -79,7 +75,7 @@ export const AssetsPage: React.FC = () => {
   const [swapSubmitting, setSwapSubmitting] = useState(false);
 
   // Fetch assets from backend
-  const { data: assets = [], isLoading, isError } = useQuery<Asset[]>({
+  const { data: assets = [], isLoading } = useQuery<Asset[]>({
     queryKey: ['assets', user?.role, user?.id],
     queryFn: () => {
       // Backend handles role-based filtering via JWT token
@@ -102,9 +98,9 @@ export const AssetsPage: React.FC = () => {
     setExportingCSV(true);
     try {
       await assetsService.exportCSV();
-      showToast.success('Assets exported successfully!');
+      showToast.success(t('assets.exportedSuccess'));
     } catch {
-      showToast.error('Failed to export assets.');
+      showToast.error(t('assets.exportFailed'));
     } finally {
       setExportingCSV(false);
     }
@@ -220,10 +216,10 @@ export const AssetsPage: React.FC = () => {
           printWindow.document.close();
         }
       } else {
-        showToast.error('Barcode not available for this asset.');
+        showToast.error(t('assets.barcodeNotAvailable'));
       }
     } catch {
-      showToast.error('Failed to retrieve barcode.');
+      showToast.error(t('assets.barcodeRetrieveFailed'));
     }
   };
 
@@ -236,10 +232,10 @@ export const AssetsPage: React.FC = () => {
         link.download = `barcode-${assetCode}.png`;
         link.click();
       } else {
-        showToast.error('Barcode not available for this asset.');
+        showToast.error(t('assets.barcodeNotAvailable'));
       }
     } catch {
-      showToast.error('Failed to download barcode.');
+      showToast.error(t('assets.barcodeDownloadFailed'));
     }
   };
 
@@ -255,7 +251,7 @@ export const AssetsPage: React.FC = () => {
         reason: requestForm.reason
       });
 
-      showToast.success('Asset request submitted successfully!');
+      showToast.success(t('assets.requestSubmitted'));
 
       setRequestForm({
         assetName: '',
@@ -264,8 +260,8 @@ export const AssetsPage: React.FC = () => {
         priority: 'Medium',
       });
       setShowRequestModal(false);
-    } catch (error: any) {
-      showToast.error(error.message || 'Failed to submit request');
+    } catch (error: unknown) {
+      showToast.error((error as {message?: string}).message || t('assets.submitRequestFailed'));
     } finally {
       setRequestSubmitting(false);
     }
@@ -275,7 +271,7 @@ export const AssetsPage: React.FC = () => {
   const handleAssignAssetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignForm.assetId || !assignForm.employeeId) {
-      showToast.error('Please select both an asset and an employee.');
+      showToast.error(t('assets.selectBoth'));
       return;
     }
     setAssignSubmitting(true);
@@ -284,14 +280,14 @@ export const AssetsPage: React.FC = () => {
       { id: assignForm.assetId, employeeId: assignForm.employeeId, accessories: assignAccessories.length > 0 ? assignAccessories : undefined },
       {
         onSuccess: () => {
-          showToast.success('Asset assigned successfully!');
+          showToast.success(t('assets.assignedSuccess'));
           setAssignForm({ assetId: '', employeeId: '' });
           setAssignAccessories([]);
           setShowAssignModal(false);
           setAssignSubmitting(false);
         },
         onError: () => {
-          showToast.error('Failed to assign asset. Please try again.');
+          showToast.error(t('assets.assignFailed'));
           setAssignSubmitting(false);
         },
       }
@@ -317,7 +313,7 @@ export const AssetsPage: React.FC = () => {
   const handleSwapSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!swapOldAssetId || !swapNewAssetId) {
-      showToast.error('Please select a replacement asset.');
+      showToast.error(t('assets.selectReplacement'));
       return;
     }
     setSwapSubmitting(true);
@@ -326,7 +322,7 @@ export const AssetsPage: React.FC = () => {
       { oldAssetId: swapOldAssetId, newAssetId: swapNewAssetId, newAccessories: swapAccessories.length > 0 ? swapAccessories : undefined },
       {
         onSuccess: () => {
-          showToast.success('Asset swapped successfully!');
+          showToast.success(t('assets.swappedSuccess'));
           setSwapOldAssetId('');
           setSwapNewAssetId('');
           setSwapAccessories([]);
@@ -334,7 +330,7 @@ export const AssetsPage: React.FC = () => {
           setSwapSubmitting(false);
         },
         onError: (error: Error) => {
-          showToast.error(error.message || 'Failed to swap asset.');
+          showToast.error((error as {message?: string}).message || t('assets.swapFailed'));
           setSwapSubmitting(false);
         },
       }
@@ -572,7 +568,7 @@ export const AssetsPage: React.FC = () => {
         {isAnyAdmin && dashboard && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: t('assets.totalAssets'), value: dashboard.summary.total_assets, sub: `₹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
+              { label: t('assets.totalAssets'), value: dashboard.summary.total_assets, sub: `â‚¹${Number(dashboard.summary.total_book_value).toLocaleString()} value`, icon: Package, gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
               { label: t('assets.available'), value: dashboard.summary.available_count, icon: UserCheck, gradient: 'linear-gradient(135deg, #10b981, #059669)', status: 'text-emerald-500' },
               { label: t('assets.assigned'), value: dashboard.summary.assigned_count, icon: BarChart3, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', status: 'text-amber-500' },
               { label: t('assets.underRepair'), value: dashboard.summary.under_repair_count, icon: Wrench, gradient: 'linear-gradient(135deg, #ec4899, #db2777)', status: 'text-error-500' }
@@ -719,7 +715,7 @@ export const AssetsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/assets/requests')}
+                onClick={() => navigate(ROUTES.ASSETS_REQUESTS)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-brand-500/10 dark:bg-brand-500/20 border border-brand-200 dark:border-brand-500/30 rounded-2xl text-sm font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/30 shadow-elev-1 transition-all whitespace-nowrap min-w-fit"
               >
                 <ClipboardList size={18} />
@@ -733,7 +729,7 @@ export const AssetsPage: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                    whileHover={{ y: -2, boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4)' }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate('/assets/new')}
+                  onClick={() => navigate(ROUTES.ASSETS_NEW)}
                   className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 rounded-2xl text-sm font-bold text-white shadow-elev-4 shadow-brand-500/20 whitespace-nowrap min-w-fit"
                 >
                   <Plus size={18} />
@@ -791,10 +787,11 @@ export const AssetsPage: React.FC = () => {
         <form id="request-asset-form" onSubmit={handleRequestAssetSubmit} className="space-y-5">
           {/* Asset Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="request-asset-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Asset Name / Description *
             </label>
             <input
+              id="request-asset-name"
               type="text"
               required
               value={requestForm.assetName}
@@ -806,10 +803,11 @@ export const AssetsPage: React.FC = () => {
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="request-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Category *
             </label>
             <select
+              id="request-category"
               required
               value={requestForm.category}
               onChange={(e) => setRequestForm({ ...requestForm, category: e.target.value as AssetCategory })}
@@ -826,10 +824,11 @@ export const AssetsPage: React.FC = () => {
 
           {/* Priority */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="request-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Priority *
             </label>
             <select
+              id="request-priority"
               required
               value={requestForm.priority}
               onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
@@ -843,10 +842,11 @@ export const AssetsPage: React.FC = () => {
 
           {/* Reason */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="request-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Reason for Request *
             </label>
             <textarea
+              id="request-reason"
               required
               value={requestForm.reason}
               onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
@@ -893,10 +893,11 @@ export const AssetsPage: React.FC = () => {
         <form id="assign-asset-form" onSubmit={handleAssignAssetSubmit} className="p-1 space-y-5">
           {/* Select Asset */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="assign-asset" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select Asset *
             </label>
             <select
+              id="assign-asset"
               required
               value={assignForm.assetId}
               onChange={(e) => setAssignForm({ ...assignForm, assetId: e.target.value })}
@@ -918,10 +919,11 @@ export const AssetsPage: React.FC = () => {
 
           {/* Select Employee */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="assign-employee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select Employee *
             </label>
             <select
+              id="assign-employee"
               required
               value={assignForm.employeeId}
               onChange={(e) => setAssignForm({ ...assignForm, employeeId: e.target.value })}
@@ -944,7 +946,7 @@ export const AssetsPage: React.FC = () => {
 
           {/* Accessories */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="assign-accessories" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Accessories Being Given
             </label>
             <div className="space-y-3">
@@ -1028,10 +1030,11 @@ export const AssetsPage: React.FC = () => {
 
           {/* Select New Asset */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="swap-asset" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Replacement Asset *
             </label>
             <select
+              id="swap-asset"
               required
               value={swapNewAssetId}
               onChange={(e) => setSwapNewAssetId(e.target.value)}
@@ -1048,7 +1051,7 @@ export const AssetsPage: React.FC = () => {
 
           {/* Accessories for new asset */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="swap-accessories" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Accessories for New Asset
             </label>
             <div className="space-y-3">

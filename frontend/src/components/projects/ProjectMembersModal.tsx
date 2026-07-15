@@ -33,7 +33,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
     onClose,
     canManage,
 }) => {
-    const confirm = useConfirm();
+    const { confirm } = useConfirm();
     const queryClient = useQueryClient();
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>('MEMBER');
@@ -67,12 +67,12 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['project-members', project?.id] });
             setSelectedEmployee('');
-            setSelectedRole('MEMBER');
+setSelectedRole('MEMBER');
             setIsAdding(false);
         },
-        onError: (error: any) => {
-            alert(error?.response?.data?.message || 'Failed to add member');
-            setIsAdding(false);
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(error.response?.data?.message || 'Failed to add member');
         },
     });
 
@@ -83,8 +83,9 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['project-members', project?.id] });
         },
-        onError: (error: any) => {
-            alert(error?.response?.data?.message || 'Failed to remove member');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(error.response?.data?.message || 'Failed to remove member');
         },
     });
 

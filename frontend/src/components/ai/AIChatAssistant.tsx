@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { aiService, AIChatMessage } from '@/services/ai.service';
-import { MessageSquare, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Bot, User } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export const AIChatAssistant: React.FC = () => {

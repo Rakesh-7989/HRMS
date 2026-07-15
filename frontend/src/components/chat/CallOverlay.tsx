@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import { formatDuration } from '@/utils/format';
 import { resolveImageUrl } from '@/utils/image';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,7 @@ const RemoteVideo = ({ stream, userId, isTalking, participant, isScreenShare, th
             isTalking ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.3)]" : "border-white/5"
         )}>
             {/* Video Element */}
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Live video call stream, captions not applicable */}
             <video
                 ref={videoRef}
                 autoPlay
@@ -137,7 +139,7 @@ export const CallOverlay: React.FC = () => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [contacts, setContacts] = useState<any[]>([]);
+    const [contacts, setContacts] = useState<{ id: string; first_name: string; last_name: string; email: string; designation?: string; job_title?: string; profile_photo_url?: string }[]>([]);
 
     const filteredContacts = contacts.filter(c =>
         `${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(searchQuery.toLowerCase())
@@ -597,7 +599,7 @@ export const CallOverlay: React.FC = () => {
                                                  <Button variant="ghost" 
                                                     onClick={() => {
                                                         if (!contact.id) {
-                                                            import('react-hot-toast').then(toast => toast.toast.error(t('chat.cannotInviteInvalidUser')));
+                                                            showToast.error(t('chat.cannotInviteInvalidUser'));
                                                             return;
                                                         }
                                                         addParticipantToCall(contact.id, `${contact.first_name} ${contact.last_name}`);

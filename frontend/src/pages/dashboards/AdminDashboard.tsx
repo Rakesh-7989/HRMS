@@ -46,14 +46,14 @@ const staggerContainer = {
 };
 
 // Custom Tooltip for charts
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 text-white px-4 py-3 rounded-xl shadow-elev-6 border border-gray-700">
         <p className="text-xs text-gray-400 mb-1">{label}</p>
-        {payload.map((entry: any) => (
-          <p key={entry.name} className="text-sm font-semibold" style={{ color: entry.color }}>
-            {entry.name}: {entry.value}
+        {payload.map((entry: Record<string, unknown>) => (
+          <p key={String(entry.name)} className="text-sm font-semibold" style={{ color: String(entry.color) }}>
+            {String(entry.name)}: {String(entry.value)}
           </p>
         ))}
       </div>
@@ -70,7 +70,7 @@ const StatCard = ({
   value: number | string;
   change?: number;
   trend?: 'up' | 'down';
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string[];
   delay?: number;
 }) => {
@@ -234,9 +234,9 @@ export const AdminDashboard: React.FC = () => {
   }, [data]);
 
   const performanceScore = React.useMemo(() => {
-    const tasks = (data as any)?.taskMetrics || [];
-    const doneTasks = tasks.find((t: any) => t.column_key.toLowerCase().includes('done'))?.count || 0;
-    const totalTasks = tasks.reduce((acc: number, curr: any) => acc + Number(curr.count), 0);
+    const tasks = ((data as unknown as Record<string, unknown>)?.taskMetrics as Record<string, unknown>[]) || [];
+    const doneTasks = (tasks.find((t: Record<string, unknown>) => String(t.column_key).toLowerCase().includes('done'))?.count as number) || 0;
+    const totalTasks = tasks.reduce((acc: number, curr: Record<string, unknown>) => acc + Number(curr.count), 0);
     const taskCompletionRate = totalTasks > 0 ? (doneTasks / totalTasks) : 0.5; // Default 0.5 if no tasks
 
     const attRate = parseFloat(attendanceRate) / 100;
@@ -257,20 +257,20 @@ export const AdminDashboard: React.FC = () => {
   // Process data for charts
 
 
-  const roleChartData = roleDist.map((r: any) => ({
-    name: r.role,
+  const roleChartData = roleDist.map((r: Record<string, unknown>) => ({
+    name: r.role as string,
     value: Number(r.count),
   }));
 
-  const taskChartData = ((data as any)?.taskMetrics || []).map((t: any) => ({
-    status: t.column_key.replace('_', ' '),
+  const taskChartData = (((data as unknown as Record<string, unknown>)?.taskMetrics || []) as Record<string, unknown>[]).map((t: Record<string, unknown>) => ({
+    status: (t.column_key as string).replace('_', ' '),
     count: Number(t.count),
   }));
 
 
 
   // Calculate max for percentage
-  const maxDeptCount = Math.max(...deptAnalytics.map((d: any) => Number(d.employee_count)), 1);
+  const maxDeptCount = Math.max(...deptAnalytics.map((d: Record<string, unknown>) => Number(d.employee_count)), 1);
 
   if (isLoading) {
     return (
@@ -410,7 +410,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]}>
-                    {taskChartData.map((_: any, index: number) => (
+                    {taskChartData.map((_: Record<string, unknown>, index: number) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Bar>
@@ -448,7 +448,7 @@ export const AdminDashboard: React.FC = () => {
                     animationBegin={0}
                     animationDuration={1000}
                   >
-                    {roleChartData.map((_: any, index: number) => (
+                    {roleChartData.map((_: Record<string, unknown>, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={`url(#pieGradient${index % CHART_COLORS.length})`}
@@ -481,9 +481,9 @@ export const AdminDashboard: React.FC = () => {
           >
             <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {leaveStats.map((s: any, i: number) => (
+                {leaveStats.map((s: Record<string, unknown>, i: number) => (
                   <motion.div
-                    key={s.leave_type}
+                    key={s.leave_type as string}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.7 + (i * 0.05) }}
@@ -494,7 +494,7 @@ export const AdminDashboard: React.FC = () => {
                         <Calendar className="w-5 h-5" />
                       </div>
                       <span className="font-bold text-gray-900 dark:text-white group-hover:text-brand-600 transition-colors text-sm truncate">
-                        {s.leave_type}
+                        {s.leave_type as string}
                       </span>
                     </div>
                   </motion.div>
@@ -515,10 +515,10 @@ export const AdminDashboard: React.FC = () => {
             delay={0.8}
           >
             <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
-              {deptAnalytics.slice(0, 6).map((dept: any, index: number) => (
+              {deptAnalytics.slice(0, 6).map((dept: Record<string, unknown>, index: number) => (
                 <DepartmentRow
-                  key={dept.name}
-                  name={dept.name}
+                  key={dept.name as string}
+                  name={dept.name as string}
                   count={Number(dept.employee_count)}
                   percentage={(Number(dept.employee_count) / maxDeptCount) * 100}
                   index={index}
@@ -547,14 +547,14 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="space-y-3">
-              {(peopleEventsData?.birthdays || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
+              {(peopleEventsData?.birthdays || []).slice(0, 3).map((person) => (
+                <div key={String((person as unknown as Record<string, unknown>).id)} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center font-black text-pink-600 dark:text-pink-400 border border-pink-200/50 dark:border-pink-500/30 group-hover:scale-110 transition-transform">
-                    {person.name?.charAt(0)}
+                    {String(person.name).charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
-                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{String(person.name)}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{String(person.date)}</p>
                   </div>
                 </div>
               ))}
@@ -579,14 +579,14 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="space-y-3">
-              {(peopleEventsData?.anniversaries || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
+              {(peopleEventsData?.anniversaries || []).slice(0, 3).map((person) => (
+                <div key={String((person as unknown as Record<string, unknown>).id)} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center font-black text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/30 group-hover:scale-110 transition-transform">
-                    {person.name?.charAt(0)}
+                    {String(person.name).charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
-                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{String(person.name)}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{String(person.date)}</p>
                   </div>
                 </div>
               ))}
@@ -611,14 +611,14 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="space-y-3">
-              {(peopleEventsData?.joiners || []).slice(0, 3).map((person: any) => (
-                <div key={person.id} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
+              {(peopleEventsData?.joiners || []).slice(0, 3).map((person) => (
+                <div key={String((person as unknown as Record<string, unknown>).id)} className="flex items-center gap-3 bg-neutral-50 dark:bg-white/5 rounded-2xl p-3 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/30 group-hover:scale-110 transition-transform">
-                    {person.name?.charAt(0)}
+                    {String(person.name).charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{person.name}</p>
-                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{person.date}</p>
+                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{String(person.name)}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">{String(person.date)}</p>
                   </div>
                 </div>
               ))}

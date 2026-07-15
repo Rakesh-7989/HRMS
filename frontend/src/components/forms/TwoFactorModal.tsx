@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -25,6 +26,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
     isTwoFactorEnabled,
     onStatusChange,
 }) => {
+    const { t } = useTranslation();
     const [step, setStep] = useState<'setup' | 'verify' | 'recovery' | 'disable'>('setup');
     const [qrCode, setQrCode] = useState('');
     const [secret, setSecret] = useState('');
@@ -33,18 +35,6 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [password, setPassword] = useState('');
     const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            if (isTwoFactorEnabled && step === 'setup') {
-                setStep('disable');
-            } else if (!isTwoFactorEnabled) {
-                handleSetup();
-            }
-        } else {
-            resetState();
-        }
-    }, [isOpen]);
 
     const resetState = () => {
         setStep('setup');
@@ -56,7 +46,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         setCopied(false);
     };
 
-    const handleSetup = async () => {
+    const handleSetup = useCallback(async () => {
         try {
             setLoading(true);
             const data = await authService.setup2FA();
@@ -64,12 +54,24 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
             setSecret(data.secret);
             setStep('setup');
         } catch (error) {
-            showToast.error('Failed to initialize 2FA setup');
+            showToast.error(t('settings.twoFactorInitFailed'));
             onClose();
         } finally {
             setLoading(false);
         }
-    };
+    }, [t, onClose]);
+
+    useEffect(() => {
+        if (isOpen) {
+            if (isTwoFactorEnabled && step === 'setup') {
+                setStep('disable');
+            } else if (!isTwoFactorEnabled) {
+                handleSetup();
+            }
+        } else {
+            resetState();
+        }
+    }, [isOpen, handleSetup, isTwoFactorEnabled, step]);
 
     const handleEnable = async () => {
         if (!token) return;
@@ -79,9 +81,10 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
             setRecoveryCodes(data.recoveryCodes);
             setStep('recovery');
             onStatusChange(true);
-            showToast.success('Two-factor authentication enabled!');
-        } catch (error: any) {
-            showToast.error(error.response?.data?.message || 'Verification failed');
+            showToast.success(t('settings.twoFactorEnabled'));
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            showToast.error(err.response?.data?.message || 'Verification failed');
         } finally {
             setLoading(false);
         }
@@ -93,10 +96,11 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
             setLoading(true);
             await authService.disable2FA(password);
             onStatusChange(false);
-            showToast.success('Two-factor authentication disabled');
+            showToast.success(t('settings.twoFactorDisabled'));
             onClose();
-        } catch (error: any) {
-            showToast.error(error.response?.data?.message || 'Failed to disable 2FA');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            showToast.error(err.response?.data?.message || 'Failed to disable 2FA');
         } finally {
             setLoading(false);
         }

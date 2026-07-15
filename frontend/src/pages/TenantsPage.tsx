@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -90,8 +90,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.activatedTitle'), t('tenants.activatedMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.activateFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.activateFailMessage'));
     },
   });
 
@@ -101,8 +101,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.deactivatedTitle'), t('tenants.deactivatedMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.deactivateFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.deactivateFailMessage'));
     },
   });
 
@@ -112,8 +112,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.subCancelledTitle'), t('tenants.subCancelledMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.cancelFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.cancelFailMessage'));
     },
   });
 
@@ -123,8 +123,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.subExtendedTitle'), t('tenants.subExtendedMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.extendFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.extendFailMessage'));
     },
   });
 
@@ -134,8 +134,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.subEnabledTitle'), t('tenants.subEnabledMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.enableFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.enableFailMessage'));
     },
   });
 
@@ -145,8 +145,8 @@ export const TenantsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
       showSuccess(t('tenants.subSuspendedTitle'), t('tenants.subSuspendedMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.suspendFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.suspendFailMessage'));
     },
   });
 
@@ -157,8 +157,8 @@ export const TenantsPage: React.FC = () => {
       setUpgradeConfig({ ...upgradeConfig, isOpen: false });
       showSuccess(t('tenants.planUpgradedTitle'), t('tenants.planUpgradedMessage'));
     },
-    onError: (error: any) => {
-      showError(error.message || t('tenants.upgradeFailMessage'));
+    onError: (error: unknown) => {
+      showError((error as {message?: string}).message || t('tenants.upgradeFailMessage'));
     },
   });
 
@@ -176,7 +176,7 @@ export const TenantsPage: React.FC = () => {
 
   const activeCount = useMemo(() => tenants.filter((t) => t.is_active).length, [tenants]);
 
-  const handleEnableSub = (tenant: Tenant) => {
+  const handleEnableSub = useCallback((tenant: Tenant) => {
     confirm({
       title: t('tenants.enableSubscription'),
       message: t('tenants.enableSubMessage'),
@@ -186,9 +186,9 @@ export const TenantsPage: React.FC = () => {
     }).then((result) => {
       if (result) enableSubscriptionMutation.mutate(tenant.id);
     });
-  };
+  }, [t, confirm, enableSubscriptionMutation]);
 
-  const handleExtendSub = (tenant: Tenant) => {
+  const handleExtendSub = useCallback((tenant: Tenant) => {
     prompt({
       title: t('tenants.extendSubscription'),
       message: t('tenants.extendSubMessage'),
@@ -200,9 +200,9 @@ export const TenantsPage: React.FC = () => {
         extendSubscriptionMutation.mutate({ id: tenant.id, days: parseInt(value as string) });
       }
     });
-  };
+  }, [t, prompt, extendSubscriptionMutation]);
 
-  const handleCancelSub = (tenant: Tenant) => {
+  const handleCancelSub = useCallback((tenant: Tenant) => {
     confirm({
       title: t('tenants.cancelSubscription'),
       message: t('tenants.cancelSubMessage'),
@@ -212,9 +212,9 @@ export const TenantsPage: React.FC = () => {
     }).then((result) => {
       if (result) cancelSubscriptionMutation.mutate(tenant.id);
     });
-  };
+  }, [t, confirm, cancelSubscriptionMutation]);
 
-  const handleSuspend = (tenant: Tenant) => {
+  const handleSuspend = useCallback((tenant: Tenant) => {
     confirm({
       title: t('tenants.suspendOrg'),
       message: t('tenants.suspendOrgMessage'),
@@ -224,7 +224,7 @@ export const TenantsPage: React.FC = () => {
     }).then((result) => {
       if (result) suspendMutation.mutate(tenant.id);
     });
-  };
+  }, [t, confirm, suspendMutation]);
 
   const columns = useMemo(() => [
     {
@@ -372,7 +372,7 @@ export const TenantsPage: React.FC = () => {
         </div>
       ),
     },
-  ], [t, tenants, openDropdownId, enableSubscriptionMutation.isPending, enableSubscriptionMutation.variables, extendSubscriptionMutation.isPending, extendSubscriptionMutation.variables]);
+  ], [t, openDropdownId, enableSubscriptionMutation.isPending, enableSubscriptionMutation.variables, extendSubscriptionMutation.isPending, extendSubscriptionMutation.variables, activateMutation, deactivateMutation, handleCancelSub, handleEnableSub, handleExtendSub, handleSuspend]);
 
   return (
     <DashboardLayout
@@ -450,9 +450,9 @@ export const TenantsPage: React.FC = () => {
                       <div key={i} className="h-12 bg-brand-500-light rounded animate-pulse" />
                     ))}
                   </div>
-                ) : selectedUsersQuery.data && (selectedUsersQuery.data as any[]).length > 0 ? (
+                ) : selectedUsersQuery.data && selectedUsersQuery.data.length > 0 ? (
                   <div className="space-y-2">
-                    {(selectedUsersQuery.data as any[]).map((user) => (
+                    {selectedUsersQuery.data.map((user) => (
                       <div
                         key={user.id}
                         className="flex items-center justify-between p-3 rounded-md bg-background border-border"
@@ -490,7 +490,7 @@ export const TenantsPage: React.FC = () => {
         onClose={() => setUpgradeConfig({ ...upgradeConfig, isOpen: false })}
         onUpgrade={(planId) => upgradeMutation.mutate({ id: upgradeConfig.tenantId, planId })}
         currentPlanName={upgradeConfig.currentPlanName}
-        plans={plansData}
+        plans={plansData as unknown as { id: string; name: string; description?: string; price: string | number; prices?: { id: string; interval: string; unit_amount: string | number; currency: string }[]; max_employees?: number }[]}
         isLoading={upgradeMutation.isPending}
       />
 

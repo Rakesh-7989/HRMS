@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useTranslation } from 'react-i18next';
+import { showToast } from '@/utils/toast';
 import api from '@/services/api';
 import { format } from 'date-fns';
 import { Send, Phone, Video, Search, Paperclip, Edit2, Trash2, X, Check, Users, Plus, Smile, Clock, Minus, PhoneIncoming, Pin, ArrowRight, MicOff, VideoOff, Download, FileText, FileArchive, FileSpreadsheet, File, ExternalLink, CornerUpLeft, Share, MoreHorizontal, Copy, Image, UserPlus, User, Eraser, UserMinus, MessageSquare, ZoomIn, ZoomOut, Maximize2, RotateCw } from 'lucide-react';
@@ -194,7 +195,10 @@ const CreateGroupModal = ({ isOpen, onClose, contacts, onCreate, isLoading, init
                             filteredContacts.map(user => (
                                 <div
                                     key={user.id}
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => toggleUser(user.id)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleUser(user.id); } }}
                                     className={cn(
                                         "p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200",
                                         selectedUsers.includes(user.id)
@@ -230,8 +234,8 @@ const DeleteMessageModal = ({ isOpen, onClose, onDelete }: { isOpen: boolean; on
     const { t } = useTranslation();
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-elev-5" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-elev-5" role="button" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('chat.deleteMessageTitle')}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('chat.deleteMessageDesc')}</p>
                 <div className="flex flex-col gap-2 w-full mb-4">
@@ -296,7 +300,6 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500/20 dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
-                    autoFocus
                 />
             </div>
 
@@ -317,7 +320,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
                             <div className="relative">
                                 <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                                     {contact.profile_pic ? (
-                                        <img src={resolveImageUrl(contact.profile_pic)} className="w-full h-full object-cover" />
+                                        <img src={resolveImageUrl(contact.profile_pic)} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <span className="font-bold text-gray-500 dark:text-gray-400">{(contact.first_name?.[0] || contact.email[0]).toUpperCase()}</span>
                                     )}
@@ -338,7 +341,7 @@ const AddParticipantModal = ({ isOpen, onClose, contacts, onAdd, alreadyParticip
     );
 };
 
-export const ChatPage = () => {
+export const ChatPage: React.FC = () => {
     const { confirm } = useConfirm();
     const { user, atLeastPlan } = useAuth();
     const { t } = useTranslation();
@@ -468,7 +471,7 @@ export const ChatPage = () => {
     });
 
     const otherParticipantId = activeConversation?.type === 'DIRECT'
-        ? activeConversation.participants?.find((p: any) => p.id !== user?.id)?.id
+        ? (activeConversation.participants as unknown as Record<string, unknown>[])?.find((p: Record<string, unknown>) => p.id !== (user as unknown as Record<string, unknown>)?.id)?.id
         : null;
 
     const handleStartDirectChat = async (contactUserId: string) => {
@@ -601,7 +604,7 @@ export const ChatPage = () => {
                 socket.off('message_deleted');
             };
         }
-    }, [socket, selectedConversationId, queryClient, markAsRead]);
+    }, [socket, selectedConversationId, queryClient, markAsRead, user?.id]);
 
     // Listen for reactions
     useEffect(() => {
@@ -724,13 +727,13 @@ export const ChatPage = () => {
                     type: isImage ? 'IMAGE' : 'FILE',
                     fileUrl: fileUrl
                 });
-                import('react-hot-toast').then(({ toast }) => toast.success(t('chat.fileUploaded')));
+                showToast.success(t('chat.fileUploaded'));
             } else {
                 throw new Error("Invalid response from server");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Upload failed", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(err.response?.data?.message || t('chat.fileUploadFailed')));
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('chat.fileUploadFailed'));
         }
     };
 
@@ -778,10 +781,10 @@ export const ChatPage = () => {
             await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}?mode=${mode}`);
             // Optimistic update
             queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) => old.filter(m => m.id !== messageId));
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageDeleted')));
+            showToast.success(t('chat.messageDeleted'));
         } catch (err) {
             console.error("Failed to delete", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.messageDeleteFailed')));
+            showToast.error(t('chat.messageDeleteFailed'));
         }
     };
 
@@ -817,10 +820,10 @@ export const ChatPage = () => {
             );
             setEditingMessageId(null);
             setEditContent('');
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageUpdated')));
-        } catch (err: any) {
+            showToast.success(t('chat.messageUpdated'));
+        } catch (err: unknown) {
             console.error("Failed to update", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(err.message || t('chat.messageUpdateFailed')));
+            showToast.error((err as {message?: string}).message || t('chat.messageUpdateFailed'));
         }
     };
 
@@ -863,13 +866,13 @@ export const ChatPage = () => {
                 type: message.type,
                 fileUrl: message.file_url
             });
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.messageForwarded')));
+            showToast.success(t('chat.messageForwarded'));
         } catch (err) {
             console.error("Failed to forward", err);
         }
     };
 
-    const handleToggleReaction = async (messageId: string, emoji: string, currentReactions: any[] = []) => {
+    const handleToggleReaction = async (messageId: string, emoji: string, currentReactions: Record<string, unknown>[] = []) => {
         if (!selectedConversationId || !user) return;
         const existing = currentReactions?.find(r => String(r.user_id) === String(user.id) && r.emoji === emoji);
 
@@ -906,10 +909,10 @@ export const ChatPage = () => {
             await api.delete(`/chat/conversations/${selectedConversationId}/clear`);
             queryClient.setQueryData(['messages', selectedConversationId], []);
             setShowHeaderMoreMenu(false);
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.chatCleared')));
+            showToast.success(t('chat.chatCleared'));
         } catch (err) {
             console.error("Failed to clear chat", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.chatClearFailed')));
+            showToast.error(t('chat.chatClearFailed'));
         }
     };
 
@@ -921,10 +924,10 @@ export const ChatPage = () => {
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
             setSelectedConversationId(null);
             setShowHeaderMoreMenu(false);
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.conversationDeleted')));
+            showToast.success(t('chat.conversationDeleted'));
         } catch (err) {
             console.error("Failed to delete conversation", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.conversationDeleteFailed')));
+            showToast.error(t('chat.conversationDeleteFailed'));
         }
     };
 
@@ -935,10 +938,10 @@ export const ChatPage = () => {
             await api.post(`/chat/conversations/${activeConversation.id}/participants`, { userIds });
             queryClient.invalidateQueries({ queryKey: ['conversation', activeConversation.id] });
             setIsAddingParticipant(false);
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.participantsAdded')));
+            showToast.success(t('chat.participantsAdded'));
         } catch (err) {
             console.error("Failed to add participants", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.participantsAddFailed')));
+            showToast.error(t('chat.participantsAddFailed'));
         }
     };
 
@@ -948,10 +951,10 @@ export const ChatPage = () => {
         try {
             await api.delete(`/chat/conversations/${activeConversation.id}/participants/${userId}`);
             queryClient.invalidateQueries({ queryKey: ['conversation', activeConversation.id] });
-            import('react-hot-toast').then(({ toast }) => toast.success(t('chat.participantRemoved')));
+            showToast.success(t('chat.participantRemoved'));
         } catch (err) {
             console.error("Failed to remove participant", err);
-            import('react-hot-toast').then(({ toast }) => toast.error(t('chat.participantRemoveFailed')));
+            showToast.error(t('chat.participantRemoveFailed'));
         }
     };
 
@@ -965,25 +968,25 @@ export const ChatPage = () => {
             const other = conv.participants?.find(p => String(p.id) !== String(user?.id)) || conv.participants?.[0];
             const name = `${other?.first_name || ''} ${other?.last_name || ''}`.trim() || other?.email || 'Unknown';
 
-            // Get dynamic status if available
             // Get dynamic status if available - checking both user_id (preferred) and id, with type leniency
-            const targetId = (other as any)?.user_id || other?.id;
-            const dynamicStatus = targetId ? (userStatuses[targetId] || userStatuses[String(targetId)] || userStatuses[Number(targetId)]) : undefined;
+            const otherRecord = other as unknown as Record<string, unknown>;
+            const targetId = otherRecord?.user_id as string || otherRecord?.id as string;
+            const dynamicStatus = targetId ? (userStatuses as Record<string, unknown>)[targetId] || (userStatuses as Record<string, unknown>)[String(targetId)] || (userStatuses as Record<string, unknown>)[Number(targetId)] : undefined;
 
-            const status = (dynamicStatus && 'status' in dynamicStatus) ? dynamicStatus.status : other?.status?.toLowerCase();
-            const status_message = (dynamicStatus && 'message' in dynamicStatus) ? dynamicStatus.message : (other as any)?.status_message;
-            const status_expiry = (dynamicStatus && 'expiry' in dynamicStatus) ? dynamicStatus.expiry : (other as any)?.status_expiry;
+            const status = (dynamicStatus && typeof dynamicStatus === 'object' && 'status' in dynamicStatus) ? (dynamicStatus as Record<string, unknown>).status as string : (otherRecord?.status as string)?.toLowerCase();
+            const status_message = (dynamicStatus && typeof dynamicStatus === 'object' && 'message' in dynamicStatus) ? (dynamicStatus as Record<string, unknown>).message as string : otherRecord?.status_message as string;
+            const status_expiry = (dynamicStatus && typeof dynamicStatus === 'object' && 'expiry' in dynamicStatus) ? (dynamicStatus as Record<string, unknown>).expiry as string : otherRecord?.status_expiry as string;
 
             return {
                 name,
-                image: other?.profile_pic ? resolveImageUrl(other.profile_pic) : null,
+                image: otherRecord?.profile_pic ? resolveImageUrl(otherRecord.profile_pic as string) : null,
                 initials: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-                participantId: other?.id,
+                participantId: otherRecord?.id,
                 status,
                 status_message,
                 status_expiry,
-                email: other?.email,
-                job_title: (other as any)?.job_title || other?.designation
+                email: otherRecord?.email,
+                job_title: otherRecord?.job_title as string || otherRecord?.designation as string
             };
         }
         return {
@@ -1132,7 +1135,6 @@ export const ChatPage = () => {
                                         value={contactSearchQuery}
                                         onChange={(e) => setContactSearchQuery(e.target.value)}
                                         className="block w-full pl-10 pr-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-brand-500/30 rounded-xl text-sm transition-all duration-200 focus:ring-4 focus:ring-brand-500/10 placeholder:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                        autoFocus
                                     />
                                 </div>
                             </div>
@@ -1169,7 +1171,7 @@ export const ChatPage = () => {
                                                     <div className="relative">
                                                         <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500/5 to-brand-500/10 flex items-center justify-center text-brand-500 font-bold shadow-elev-1 group-hover:from-brand-500 group-hover:to-brand-500-light group-hover:text-white transition-all duration-300">
                                                             {contact.profile_pic ? (
-                                                                <img src={resolveImageUrl(contact.profile_pic)} className="w-full h-full object-cover rounded-xl" />
+                                                                <img src={resolveImageUrl(contact.profile_pic)} alt="" className="w-full h-full object-cover rounded-xl" />
                                                             ) : (
                                                                 (contact.first_name?.charAt(0) || contact.email.charAt(0))
                                                             )}
@@ -1283,7 +1285,7 @@ export const ChatPage = () => {
                                                         isActive ? "bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-brand-500 dark:text-brand-500-light"
                                                     )}>
                                                         {details.image ? (
-                                                            <img src={details.image} className="w-full h-full object-cover rounded-2xl" />
+                                                            <img src={details.image} alt="" className="w-full h-full object-cover rounded-2xl" />
                                                         ) : details.initials}
                                                     </div>
                                                     <div className={cn(
@@ -1307,8 +1309,8 @@ export const ChatPage = () => {
                                                                     status: details.status,
                                                                     status_message: details.status_message,
                                                                     status_expiry: details.status_expiry,
-                                                                    email: details.email,
-                                                                    job_title: details.job_title
+                                                                 email: details.email as string | undefined,
+                                                                     job_title: details.job_title as string | undefined
                                                                 });
                                                             }
                                                         }}
@@ -1348,9 +1350,9 @@ export const ChatPage = () => {
                                                         )}>
                                                             {(() => {
                                                                 if (!conv.last_message) return 'No messages';
-                                                                if (conv.last_message.type === 'CALL') return '📞 Call record';
-                                                                if (conv.last_message.type === 'IMAGE') return '🖼️ Image';
-                                                                if (conv.last_message.type === 'FILE') return '📁 Attachment';
+                                                                if (conv.last_message.type === 'CALL') return 'ðŸ“ž Call record';
+                                                                if (conv.last_message.type === 'IMAGE') return 'ðŸ–¼ï¸ Image';
+                                                                if (conv.last_message.type === 'FILE') return 'ðŸ“ Attachment';
                                                                 return conv.last_message.content;
                                                             })()}
                                                         </p>
@@ -1395,7 +1397,7 @@ export const ChatPage = () => {
                                                     <div className="relative">
                                                         <div className="h-8 w-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-semibold text-sm">
                                                             {details.image ? (
-                                                                <img src={details.image} className="w-full h-full object-cover rounded-full" />
+                                                                <img src={details.image} alt="" className="w-full h-full object-cover rounded-full" />
                                                             ) : details.initials}
                                                         </div>
                                                         <div className={cn(
@@ -1454,8 +1456,8 @@ export const ChatPage = () => {
                                                 const conv = conversations?.find(c => c.id === selectedConversationId);
                                                 if (conv) {
                                                     const details = getConversationDetails(conv);
-                                                    if (details.participantId) initiateCall(details.participantId, details.name, 'audio', selectedConversationId);
-                                                    else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'audio', conv.id, true);
+                                                    if (details.participantId) initiateCall(details.participantId as string, details.name, 'audio', selectedConversationId);
+                                                    else if ((conv as unknown as Record<string, unknown>).type === 'GROUP') initiateCall((conv as unknown as Record<string, unknown>).id as string, ((conv as unknown as Record<string, unknown>).name as string) || 'Group', 'audio', (conv as unknown as Record<string, unknown>).id as string, true);
                                                 }
                                             }}
                                             className={cn("hover:text-gray-600 dark:hover:text-gray-200 transition-colors", activeCall && !isMuted ? "text-brand-500" : "text-gray-400")}
@@ -1471,7 +1473,7 @@ export const ChatPage = () => {
                                                 const conv = conversations?.find(c => c.id === selectedConversationId);
                                                 if (conv) {
                                                     const details = getConversationDetails(conv);
-                                                    if (details.participantId) initiateCall(details.participantId, details.name, 'video', selectedConversationId);
+                                                    if (details.participantId) initiateCall(details.participantId as string, details.name, 'video', selectedConversationId);
                                                     else if (conv.type === 'GROUP') initiateCall(conv.id, conv.name || 'Group', 'video', conv.id, true);
                                                 }
                                             }}
@@ -1499,7 +1501,7 @@ export const ChatPage = () => {
                                             </Button>
                                             {showHeaderMoreMenu && (
                                                 <>
-                                                    <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMoreMenu(false)} />
+                                                    <div className="fixed inset-0 z-40" role="button" tabIndex={0} onClick={() => setShowHeaderMoreMenu(false)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowHeaderMoreMenu(false); } }} />
                                                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                                                         <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-700 mb-1">
                                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('chat.conversationActions')}</p>
@@ -1551,12 +1553,15 @@ export const ChatPage = () => {
                                                     {messages.filter(m => m.is_pinned).map(msg => (
                                                         <div
                                                             key={msg.id}
+                                                            role="button"
+                                                            tabIndex={0}
                                                             onClick={() => {
                                                                 const el = document.getElementById(`message-${msg.id}`);
                                                                 el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                                                 setHighlightedMessageId(msg.id);
                                                                 setTimeout(() => setHighlightedMessageId(null), 2000);
                                                             }}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = document.getElementById(`message-${msg.id}`); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setHighlightedMessageId(msg.id); setTimeout(() => setHighlightedMessageId(null), 2000); } }}
                                                             className="flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 border border-brand-500/20 rounded-lg px-3 py-1.5 cursor-pointer hover:shadow-elev-3 transition-all group relative"
                                                         >
                                                             <p className="text-xs truncate font-medium text-gray-700 dark:text-gray-200">{msg.content}</p>
@@ -1589,7 +1594,7 @@ export const ChatPage = () => {
 
                                                 if (msg.type === 'CALL') {
                                                     let callData = { callType: 'audio', duration: 0, status: 'ended' };
-                                                    try { callData = JSON.parse(msg.content); } catch (e) { }
+                                                    try { callData = JSON.parse(msg.content); } catch (e) { /* Swallow error intentionally */ }
                                                     return (
                                                         <div key={msg.id} className="flex justify-center my-6">
                                                             <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-6 py-2 text-xs text-gray-500 flex items-center gap-3 border border-gray-200 dark:border-gray-700 shadow-elev-1 animate-in fade-in zoom-in-95 duration-300">
@@ -1601,7 +1606,7 @@ export const ChatPage = () => {
                                                                         {callData.status === 'missed' ? t('chat.missedCall') : t('chat.callEnded')}
                                                                     </span>
                                                                     <span className="opacity-70">
-                                                                        {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} • `}
+                                                                        {callData.status !== 'missed' && `${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')} â€¢ `}
                                                                         {format(new Date(msg.created_at), 'HH:mm')}
                                                                     </span>
                                                                 </div>
@@ -1627,7 +1632,7 @@ export const ChatPage = () => {
                                                             {showAvatar ? (
                                                                 <div className="h-8 w-8 rounded-full bg-brand-500/15 flex items-center justify-center overflow-hidden">
                                                                     {msg.sender_profile_pic ? (
-                                                                        <img src={resolveImageUrl(msg.sender_profile_pic)} className="w-full h-full object-cover" />
+                                                                        <img src={resolveImageUrl(msg.sender_profile_pic)} alt="" className="w-full h-full object-cover" />
                                                                     ) : (
                                                                         <span className="text-[10px] font-bold text-brand-500">{msg.sender_first_name?.[0] || 'U'}</span>
                                                                     )}
@@ -1675,7 +1680,6 @@ export const ChatPage = () => {
                                                                             value={editContent}
                                                                             onChange={(e) => setEditContent(e.target.value)}
                                                                             className="text-gray-900 text-sm rounded p-1 w-full"
-                                                                            autoFocus
                                                                             onKeyDown={(e) => {
                                                                                 if (e.key === 'Enter') saveEdit(msg.id);
                                                                                 if (e.key === 'Escape') cancelEditing();
@@ -1690,6 +1694,8 @@ export const ChatPage = () => {
                                                                     <>
                                                                         {msg.type === 'IMAGE' || (msg.type === 'FILE' && msg.file_url && /\.(jpg|jpeg|png|gif|webp)$/i.test(msg.file_url)) ? (
                                                                             <div
+                                                                                role="button"
+                                                                                tabIndex={0}
                                                                                 className="relative group/img cursor-pointer max-w-[300px]"
                                                                                 onClick={() => {
                                                                                     const url = resolveImageUrl(msg.file_url) || '';
@@ -1700,6 +1706,7 @@ export const ChatPage = () => {
                                                                                         format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
                                                                                     );
                                                                                 }}
+                                                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const url = resolveImageUrl(msg.file_url) || ''; openLightbox(url, msg.content, `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(), format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')); } }}
                                                                             >
                                                                                 <div className="relative rounded-xl overflow-hidden shadow-elev-3 border border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                                                                                     <img
@@ -1749,20 +1756,23 @@ export const ChatPage = () => {
                                                                                 const IconComponent = fileConfig.icon;
 
                                                                                 return (
-                                                                                    <div
-                                                                                        className={cn(
-                                                                                            "flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group/file min-w-[220px] max-w-[300px]",
-                                                                                            isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-elev-3 border border-gray-100 dark:border-gray-700"
-                                                                                        )}
-                                                                                        onClick={(e) => {
-                                                                                            e.preventDefault();
-                                                                                            if (isPdf) {
-                                                                                                window.open(fileUrl, '_blank', 'noopener,noreferrer');
-                                                                                            } else {
-                                                                                                if (fileUrl) handleDownload(fileUrl, msg.content);
-                                                                                            }
-                                                                                        }}
-                                                                                    >
+                                                                                <div
+                                                                                    role="button"
+                                                                                    tabIndex={0}
+                                                                                    className={cn(
+                                                                                        "flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group/file min-w-[220px] max-w-[300px]",
+                                                                                        isMe ? "bg-white/10 hover:bg-white/20" : "bg-white dark:bg-gray-800/90 hover:shadow-elev-3 border border-gray-100 dark:border-gray-700"
+                                                                                    )}
+                                                                                    onClick={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        if (isPdf) {
+                                                                                            window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                                                                                        } else {
+                                                                                            if (fileUrl) handleDownload(fileUrl, msg.content);
+                                                                                        }
+                                                                                    }}
+                                                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (isPdf) { window.open(fileUrl, '_blank', 'noopener,noreferrer'); } else { if (fileUrl) handleDownload(fileUrl, msg.content); } } }}
+                                                                                >
                                                                                         <div className={cn("relative p-3 rounded-xl flex-shrink-0 transition-transform group-hover/file:scale-110", fileConfig.bg)}>
                                                                                             <IconComponent size={24} className={isMe ? 'text-white' : fileConfig.color} />
                                                                                             <span className={cn("absolute -bottom-1 -right-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md uppercase leading-none shadow-elev-1", fileConfig.accent)}>
@@ -1774,7 +1784,7 @@ export const ChatPage = () => {
                                                                                                 {msg.content}
                                                                                             </p>
                                                                                             <p className={cn("text-[10px] mt-0.5", isMe ? 'text-white/60' : 'text-gray-400')}>
-                                                                                                {fileConfig.label} • {isPdf ? t('chat.tapToOpen') : t('chat.tapToDownload')}
+                                                                                                {fileConfig.label} â€¢ {isPdf ? t('chat.tapToOpen') : t('chat.tapToDownload')}
                                                                                             </p>
                                                                                         </div>
                                                                                         <div className={cn(
@@ -1852,7 +1862,7 @@ export const ChatPage = () => {
                                                                     {/* Teams-style action bar */}
                                                                     <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-elev-4 shadow-black/8 dark:shadow-black/30 border border-gray-200 dark:border-gray-600 overflow-visible">
                                                                         {/* Quick emoji reactions */}
-                                                                        {['👍', '❤️', '😆', '😮'].map(emoji => (
+                                                                        {['ðŸ‘', 'â¤ï¸', 'ðŸ˜†', 'ðŸ˜®'].map(emoji => (
                                                                              <Button variant="ghost" 
                                                                                 key={emoji}
                                                                                 onClick={() => handleToggleReaction(msg.id, emoji, msg.reactions)}
@@ -1877,7 +1887,7 @@ export const ChatPage = () => {
                                                                             {showReactionPicker === msg.id && (
                                                                                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-elev-5 border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-200">
                                                                                     <div className="flex gap-1">
-                                                                                        {['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '💯', '🙏'].map(emoji => (
+                                                                                        {['ðŸ‘', 'â¤ï¸', 'ðŸ˜‚', 'ðŸ˜®', 'ðŸ˜¢', 'ðŸ‘', 'ðŸ”¥', 'ðŸŽ‰', 'ðŸ’¯', 'ðŸ™'].map(emoji => (
                                                                                              <Button variant="ghost" 
                                                                                                 key={emoji}
                                                                                                 onClick={() => {
@@ -1925,7 +1935,7 @@ export const ChatPage = () => {
                                                                             {showMoreMenu === msg.id && (
                                                                                 <>
                                                                                     {/* Invisible overlay to close menu on click outside */}
-                                                                                    <div className="fixed inset-0 z-30" onClick={() => setShowMoreMenu(null)} />
+                                                                                    <div className="fixed inset-0 z-30" role="button" tabIndex={0} onClick={() => setShowMoreMenu(null)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowMoreMenu(null); } }} />
                                                                                     <div className={cn(
                                                                                         "absolute top-full mt-1 z-40 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-elev-5 shadow-black/10 dark:shadow-black/30 border border-gray-200 dark:border-gray-700 py-1 animate-in fade-in slide-in-from-top-2 duration-150",
                                                                                         isMe ? "right-0" : "left-0"
@@ -1941,7 +1951,7 @@ export const ChatPage = () => {
                                                                                             onClick={() => {
                                                                                                 navigator.clipboard.writeText(msg.content);
                                                                                                 setShowMoreMenu(null);
-                                                                                                import('react-hot-toast').then(({ toast }) => toast.success(t('chat.copiedToClipboard')));
+                                                                                                showToast.success(t('chat.copiedToClipboard'));
                                                                                             }}
                                                                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                                                                         >
@@ -2038,8 +2048,11 @@ export const ChatPage = () => {
                                                                 return (
                                                                     <div
                                                                         key={msg.id}
+                                                                        role="button"
+                                                                        tabIndex={0}
                                                                         className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
                                                                         onClick={() => isPdf ? (fileUrl && window.open(fileUrl, '_blank')) : (fileUrl && handleDownload(fileUrl, msg.content))}
+                                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isPdf ? (fileUrl && window.open(fileUrl, '_blank')) : (fileUrl && handleDownload(fileUrl, msg.content)); } }}
                                                                     >
                                                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                                                             <div className={cn('p-2.5 rounded-lg flex-shrink-0', bgColor)}>
@@ -2105,6 +2118,8 @@ export const ChatPage = () => {
                                                                     return (
                                                                         <div
                                                                             key={msg.id}
+                                                                            role="button"
+                                                                            tabIndex={0}
                                                                             className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-100 dark:bg-gray-800"
                                                                             onClick={() => openLightbox(
                                                                                 imgUrl,
@@ -2112,6 +2127,7 @@ export const ChatPage = () => {
                                                                                 `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(),
                                                                                 format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')
                                                                             )}
+                                                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(imgUrl, msg.content, `${msg.sender_first_name || ''} ${msg.sender_last_name || ''}`.trim(), format(new Date(msg.created_at), 'dd MMM yyyy, HH:mm')); } }}
                                                                         >
                                                                             <img
                                                                                 src={resolveImageUrl(msg.file_url)}
@@ -2196,7 +2212,7 @@ export const ChatPage = () => {
                                                                         </Button>
                                                                         {showEmojiPicker && (
                                                                             <>
-                                                                                <div className="fixed inset-0 z-[90]" onClick={() => setShowEmojiPicker(false)} />
+                                                                                <div className="fixed inset-0 z-[90]" role="button" tabIndex={0} onClick={() => setShowEmojiPicker(false)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowEmojiPicker(false); } }} />
                                                                                 <EmojiPicker
                                                                                     onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
                                                                                     onClose={() => setShowEmojiPicker(false)}
@@ -2361,23 +2377,23 @@ export const ChatPage = () => {
                             )}
                         </div>
                         <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                            {activeConversation?.participants?.map((p: any) => (
-                                <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 group/participant">
+                            {(activeConversation?.participants as unknown as Record<string, unknown>[])?.map((p: Record<string, unknown>) => (
+                                <div key={p.id as string} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 group/participant">
                                     <div className="flex items-center gap-3">
                                         <div className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500 text-xs font-bold ring-1 ring-brand-500/20">
-                                            {p.first_name?.[0]}{p.last_name?.[0]}
+                                            {(p.first_name as string)?.[0]}{(p.last_name as string)?.[0]}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name} {p.last_name}</p>
-                                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{p.designation || t('chat.member')}</p>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white">{p.first_name as string} {p.last_name as string}</p>
+                                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-tighter">{(p.designation as string) || t('chat.member')}</p>
                                         </div>
                                     </div>
-                                    {p.id === user?.id ? (
+                                    {(p.id as string) === (user as unknown as Record<string, unknown>)?.id ? (
                                         <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest px-2 py-1 bg-brand-500/10 rounded-lg">{t('chat.you')}</span>
                                     ) : (
                                         activeConversation?.type === 'GROUP' && canManageGroup && (
                                              <Button variant="ghost" 
-                                                onClick={() => handleRemoveParticipant(p.id)}
+                                                onClick={() => handleRemoveParticipant(p.id as string)}
                                                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover/participant:opacity-100 transition-all"
                                                 title={t('chat.removeParticipantAction')}
                                             >
@@ -2410,17 +2426,17 @@ export const ChatPage = () => {
                 onClose={() => setIsGroupModalOpen(false)}
                 contacts={contacts || []}
                 isLoading={isLoadingContacts}
-                initialSelectedUserIds={otherParticipantId ? [otherParticipantId] : []}
+                initialSelectedUserIds={otherParticipantId ? [otherParticipantId as string] : []}
                 onCreate={async (name, userIds) => {
                     try {
                         const res = await api.post('/chat/groups', { name, participantIds: userIds });
                         const newGroup = res.data.data;
                         queryClient.invalidateQueries({ queryKey: ['conversations'] });
                         setSelectedConversationId(newGroup.id);
-                        import('react-hot-toast').then(({ toast }) => toast.success(t('chat.groupCreated', { name })));
+                        showToast.success(t('chat.groupCreated', { name }));
                     } catch (e) {
                         console.error("Failed to create group", e);
-                        import('react-hot-toast').then(({ toast }) => toast.error(t('chat.groupCreateFailed')));
+                        showToast.error(t('chat.groupCreateFailed'));
                     }
                 }}
             />
@@ -2429,12 +2445,18 @@ export const ChatPage = () => {
                 lightboxImage && (
                     <div
                         className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
+                        role="button"
+                        tabIndex={0}
                         onClick={closeLightbox}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeLightbox(); } }}
                     >
                         {/* Top Bar */}
                         <div
                             className="flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/80 to-transparent z-10"
+                            role="button"
+                            tabIndex={-1}
                             onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold">
@@ -2497,7 +2519,10 @@ export const ChatPage = () => {
                         {/* Image Container */}
                         <div
                             className="flex-1 flex items-center justify-center overflow-auto p-8"
+                            role="button"
+                            tabIndex={0}
                             onClick={(e) => { if (e.target === e.currentTarget) closeLightbox(); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeLightbox(); } }}
                         >
                             <img
                                 src={lightboxImage.url}
@@ -2507,7 +2532,6 @@ export const ChatPage = () => {
                                     transform: `scale(${lightboxZoom}) rotate(${lightboxRotation}deg)`,
                                     cursor: lightboxZoom > 1 ? 'grab' : 'default'
                                 }}
-                                onClick={(e) => e.stopPropagation()}
                                 draggable={false}
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Unavailable';
@@ -2527,12 +2551,18 @@ export const ChatPage = () => {
                 filePreview && (
                     <div
                         className="fixed inset-0 z-[200] flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
+                        role="button"
+                        tabIndex={0}
                         onClick={closeFilePreview}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeFilePreview(); } }}
                     >
                         {/* Top Bar */}
                         <div
                             className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-800 z-10"
+                            role="button"
+                            tabIndex={-1}
                             onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="relative p-2.5 rounded-xl bg-red-500/10">
@@ -2545,7 +2575,7 @@ export const ChatPage = () => {
                                     <p className="text-white text-sm font-semibold truncate max-w-[400px]">{filePreview.name}</p>
                                     <p className="text-white/40 text-xs">
                                         {filePreview.sender && `Sent by ${filePreview.sender}`}
-                                        {filePreview.time && ` • ${filePreview.time}`}
+                                        {filePreview.time && ` â€¢ ${filePreview.time}`}
                                     </p>
                                 </div>
                             </div>
@@ -2579,7 +2609,10 @@ export const ChatPage = () => {
                         {/* PDF Viewer */}
                         <div
                             className="flex-1 w-full bg-gray-800"
+                            role="button"
+                            tabIndex={-1}
                             onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                         >
                             <iframe
                                 src={filePreview.url}
@@ -2619,5 +2652,5 @@ export const ChatPage = () => {
     );
 };
 
-export default ChatPage;
+
 

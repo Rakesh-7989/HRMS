@@ -33,27 +33,27 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
     const logoutAllMutation = useMutation({
         mutationFn: authService.logoutAll,
         onSuccess: () => {
-            showToast.info('Successfully logged out from other devices', { icon: '✅' });
+            showToast.success('Successfully logged out from other devices');
             queryClient.invalidateQueries({ queryKey: ['active-sessions'] });
         },
-        onError: (err: any) => {
-            showToast.info(err.message || 'Failed to logout from other devices', { icon: '❌' });
+        onError: (err: unknown) => {
+            showToast.error((err as { message?: string }).message || 'Failed to logout from other devices');
         }
     });
 
-    const getDeviceIcon = (userAgent: string) => {
-        const ua = userAgent.toLowerCase();
-        if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) return <Smartphone size={18} />;
-        if (ua.includes('win') || ua.includes('mac') || ua.includes('linux')) return <Laptop size={18} />;
+    const getDeviceIcon = (device: string) => {
+        const d = device.toLowerCase();
+        if (d.includes('mobile') || d.includes('android') || d.includes('iphone')) return <Smartphone size={18} />;
+        if (d.includes('win') || d.includes('mac') || d.includes('linux')) return <Laptop size={18} />;
         return <Globe size={18} />;
     };
 
-    const getBrowserInfo = (userAgent: string) => {
-        const ua = userAgent.toLowerCase();
-        if (ua.includes('chrome')) return 'Chrome';
-        if (ua.includes('firefox')) return 'Firefox';
-        if (ua.includes('safari')) return 'Safari';
-        if (ua.includes('edge')) return 'Edge';
+    const getBrowserInfo = (device: string) => {
+        const d = device.toLowerCase();
+        if (d.includes('chrome')) return 'Chrome';
+        if (d.includes('firefox')) return 'Firefox';
+        if (d.includes('safari')) return 'Safari';
+        if (d.includes('edge')) return 'Edge';
         return 'Unknown Browser';
     };
 
@@ -118,13 +118,13 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
                                                 ? 'bg-brand-500 text-white'
                                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                                                 }`}>
-                                                {getDeviceIcon(session.user_agent || '')}
+                                                {getDeviceIcon(session.device || '')}
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-semibold text-gray-900 dark:text-white">
-                                                        {getBrowserInfo(session.user_agent || '')} on {session.ip_address || 'Unknown IP'}
-                                                    </h4>
+<h4 className="font-semibold text-gray-900 dark:text-white">
+                                                            {getBrowserInfo(session.device || '')} on {session.ip_address || 'Unknown IP'}
+                                                        </h4>
                                                     {index === 0 && (
                                                         <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded uppercase">
                                                             <CheckCircle2 size={10} /> Current
@@ -134,10 +134,8 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
                                                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-muted">
                                                     <span className="flex items-center gap-1">
                                                         <Clock size={12} />
-                                                        Started: {format(new Date(session.created_at), 'MMM dd, HH:mm')}
+                                                        Started: {session.last_active ? format(new Date(session.last_active), 'MMM dd, HH:mm') : 'Unknown'}
                                                     </span>
-                                                    <span>•</span>
-                                                    <span>Expires: {format(new Date(session.expires_at), 'MMM dd')}</span>
                                                 </div>
                                             </div>
                                         </div>

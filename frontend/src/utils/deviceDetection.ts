@@ -35,7 +35,7 @@ export const getBrowserInfo = (): string => {
     else if (ua.indexOf("Chrome") > -1) browser = "Chrome";
     else if (ua.indexOf("Safari") > -1) browser = "Safari";
     else if (ua.indexOf("Edge") > -1) browser = "Edge";
-    else if (ua.indexOf("MSIE") > -1 || !!(document as any).documentMode) browser = "IE";
+    else if (ua.indexOf("MSIE") > -1 || !!(document as unknown as { documentMode?: boolean }).documentMode) browser = "IE";
 
     return `${browser} on ${navigator.platform}`;
 };

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { engagementService } from '@/services/engagement.service';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Cake, Sparkles, Gift, Star, Loader2 } from 'lucide-react';
 
 const typeIcons: Record<string, React.ElementType> = {

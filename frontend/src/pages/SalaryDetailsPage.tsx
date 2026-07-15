@@ -18,15 +18,15 @@ const SalaryDetailsPage: React.FC = () => {
   const { hasPermission } = usePermissions();
   const canManageSalary = hasPermission('payroll', 'manage_salary');
   const queryClient = useQueryClient();
-  const { data: components = [] } = useQuery<any[]>({ queryKey: ['payroll', 'salary-components'], queryFn: () => payrollService.listSalaryComponents() });
-  const { data: structure = {} } = useQuery<any>({ queryKey: ['payroll', 'salary-structure'], queryFn: () => payrollService.getSalaryStructure() });
+  const { data: components = [] } = useQuery<Record<string, unknown>[]>({ queryKey: ['payroll', 'salary-components'], queryFn: () => payrollService.listSalaryComponents() as Promise<Record<string, unknown>[]> });
+  const { data: structure = {} as Record<string, unknown> } = useQuery<Record<string, unknown>>({ queryKey: ['payroll', 'salary-structure'], queryFn: () => payrollService.getSalaryStructure() as Promise<Record<string, unknown>> });
 
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | ''>('');
 
-  const createComponentMut = useMutation({ mutationFn: (payload: any) => payrollService.createSalaryComponent(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-components'] }) });
-  const updateStructureMut = useMutation({ mutationFn: (payload: any) => payrollService.updateSalaryStructure(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-structure'] }) });
+  const createComponentMut = useMutation({ mutationFn: (payload: { name: string; amount: number }) => payrollService.createSalaryComponent(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-components'] }) });
+  const updateStructureMut = useMutation({ mutationFn: (payload: { basic: number; hra_percent: number; other_allowances: number; monthly_deductions: number; employer_contrib?: number }) => payrollService.updateSalaryStructure(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-structure'] }) });
 
   const [basic, setBasic] = useState<number | ''>('');
   const [hra, setHra] = useState<number | ''>(20);
@@ -34,14 +34,14 @@ const SalaryDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (structure) {
-      setBasic(structure.basic ?? '');
-      setHra(structure.hra_percent ?? 20);
-      setOtherAllowances(structure.other_allowances ?? '');
+      setBasic((structure as Record<string, unknown>).basic as number ?? '');
+      setHra((structure as Record<string, unknown>).hra_percent as number ?? 20);
+      setOtherAllowances((structure as Record<string, unknown>).other_allowances as number ?? '');
     }
   }, [structure]);
 
   const handleSaveStructure = () => {
-    updateStructureMut.mutate({ basic: Number(basic || 0), hra_percent: Number(hra || 0), other_allowances: Number(otherAllowances || 0) });
+    updateStructureMut.mutate({ basic: Number(basic || 0), hra_percent: Number(hra || 0), other_allowances: Number(otherAllowances || 0), monthly_deductions: 0 });
   };
 
   return (
@@ -73,7 +73,7 @@ const SalaryDetailsPage: React.FC = () => {
             {components.length === 0 ? (
               <TableRow><TableCell>No components</TableCell><TableCell>-</TableCell></TableRow>
             ) : (
-              components.map((c: any) => (<TableRow key={c.id}><TableCell>{c.name}</TableCell><TableCell>{c.amount}</TableCell></TableRow>))
+              components.map((c: Record<string, unknown>) => (<TableRow key={c.id as string}><TableCell>{c.name as string}</TableCell><TableCell>{c.amount as number}</TableCell></TableRow>))
             )}
           </TableBody>
         </Table>
@@ -84,15 +84,15 @@ const SalaryDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label>Basic</Label>
-            <Input value={basic as any} onChange={(e) => setBasic(Number(e.target.value))} type="number" />
+            <Input value={basic} onChange={(e) => setBasic(Number(e.target.value))} type="number" />
           </div>
           <div>
             <Label>HRA %</Label>
-            <Input value={hra as any} onChange={(e) => setHra(Number(e.target.value))} type="number" />
+            <Input value={hra} onChange={(e) => setHra(Number(e.target.value))} type="number" />
           </div>
           <div>
             <Label>Other allowances</Label>
-            <Input value={otherAllowances as any} onChange={(e) => setOtherAllowances(Number(e.target.value))} type="number" />
+            <Input value={otherAllowances} onChange={(e) => setOtherAllowances(Number(e.target.value))} type="number" />
           </div>
         </div>
       </Card>
@@ -106,7 +106,7 @@ const SalaryDetailsPage: React.FC = () => {
             <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
             <Label>Amount</Label>
-            <Input value={amount as any} onChange={(e) => setAmount(Number(e.target.value))} type="number" />
+            <Input value={amount} onChange={(e) => setAmount(Number(e.target.value))} type="number" />
           </div>
           <DialogFooter>
             <Button onClick={() => createComponentMut.mutate({ name, amount: Number(amount || 0) }, { onSuccess: () => setAddOpen(false) })}>Create</Button>
@@ -119,4 +119,4 @@ const SalaryDetailsPage: React.FC = () => {
   );
 };
 
-export default SalaryDetailsPage;
+export { SalaryDetailsPage };

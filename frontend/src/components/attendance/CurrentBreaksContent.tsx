@@ -18,7 +18,7 @@ export const CurrentBreaksContent: React.FC = () => {
     });
 
     // Force re-render every minute to update the "duration" calculation
-    const [_, setTick] = React.useState(0);
+    const [, setTick] = React.useState(0);
     React.useEffect(() => {
         const timer = setInterval(() => {
             setTick(t => t + 1);
@@ -53,7 +53,7 @@ export const CurrentBreaksContent: React.FC = () => {
                     columns={[
                         {
                             header: t('common.employee'),
-                            cell: (item: any) => (
+                            cell: (item: { first_name: string; last_name: string; email: string }) => (
                                 <div>
                                     <div>{item.first_name} {item.last_name}</div>
                                     <div className="text-xs text-gray-500">{item.email}</div>
@@ -62,7 +62,7 @@ export const CurrentBreaksContent: React.FC = () => {
                         },
                         {
                             header: t('common.department'),
-                            cell: (item: any) => (
+                            cell: (item: { department_name?: string; designation_name?: string }) => (
                                 <div>
                                     <div>{item.department_name || '-'}</div>
                                     <div className="text-xs text-gray-500">{item.designation_name || '-'}</div>
@@ -71,11 +71,11 @@ export const CurrentBreaksContent: React.FC = () => {
                         },
                         {
                             header: t('attendance.breakHistory.breakStart'),
-                            cell: (item: any) => formatTime12Hour(item.start_time, user?.timezone),
+                            cell: (item: { start_time: string }) => formatTime12Hour(item.start_time, user?.timezone),
                         },
                         {
                             header: t('attendance.breakHistory.duration'),
-                            cell: (item: any) => {
+                            cell: (item: { start_time: string }) => {
                                 const startTime = new Date(item.start_time);
                                 let diffMinutes = 0;
                                 if (!isNaN(startTime.getTime())) {

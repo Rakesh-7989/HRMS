@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { performanceService, Goal } from '@/services/performance.service';
+import { useQuery } from '@tanstack/react-query';
+import { performanceService } from '@/services/performance.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Target, Plus, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { showToast } from '@/utils/toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 const goalStatusConfig: Record<string, { labelKey: string; color: string }> = {
   NOT_STARTED: { labelKey: 'performance.notStarted', color: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
@@ -26,8 +24,6 @@ const categoryConfig: Record<string, { labelKey: string; color: string }> = {
 
 export const GoalsContent: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [view, setView] = useState<'all' | 'mine'>('mine');
 
   const { data: goals, isLoading } = useQuery({

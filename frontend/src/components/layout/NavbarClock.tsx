@@ -9,7 +9,6 @@ import { Clock, MapPin, Coffee } from 'lucide-react';
 import { detectDeviceType } from '@/utils/deviceDetection';
 import { formatDuration } from '@/utils/timeFormat';
 import { useConfirm } from '@/contexts/ConfirmContext';
-import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 
@@ -56,7 +55,7 @@ export const NavbarClock: React.FC = () => {
                     allow_clock_without_location: true,
                     location_timeout_seconds: 30,
                     require_high_accuracy: false
-                } as any; // Secure default
+                } as { is_enabled: boolean; allow_clock_without_location: boolean; location_timeout_seconds: number; require_high_accuracy: boolean };
             }
         },
         enabled: shouldFetch,
@@ -74,7 +73,7 @@ export const NavbarClock: React.FC = () => {
                     const now = new Date();
 
                     // Get check-in absolute time
-                    const checkInUtc = (todayAttendance as any).check_in_time_utc;
+                    const checkInUtc = (todayAttendance as { check_in_time_utc?: string }).check_in_time_utc;
                     let checkInDate: Date;
 
                     if (checkInUtc) {
@@ -143,10 +142,11 @@ export const NavbarClock: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(true);
-            showToast.success('Successfully clocked in!');
+            showToast.success(t('attendance.clockedIn'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
             showAlert({
                 title: 'Attendance Error',
                 message: serverMessage || 'Failed to clock in. Please try again.',
@@ -163,10 +163,11 @@ export const NavbarClock: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setIsTimerRunning(false);
             setCurrentTimer(0);
-            showToast.success('Successfully clocked out!');
+            showToast.success(t('attendance.clockedOut'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
             showAlert({
                 title: 'Attendance Error',
                 message: serverMessage || 'Failed to clock out. Please try again.',
@@ -182,10 +183,11 @@ export const NavbarClock: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            showToast.success('Break started');
+            showToast.success(t('attendance.breakStarted'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
             showAlert({
                 title: 'Break Error',
                 message: serverMessage || 'Failed to start break. Please try again.',
@@ -200,10 +202,11 @@ export const NavbarClock: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            showToast.success('Break ended');
+            showToast.success(t('attendance.breakEnded'));
         },
-        onError: (error: any) => {
-            const serverMessage = error.response?.data?.message || error.message || '';
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            const serverMessage = err.response?.data?.message || err.message || '';
             showAlert({
                 title: 'Break Error',
                 message: serverMessage || 'Failed to end break. Please try again.',
@@ -224,12 +227,12 @@ export const NavbarClock: React.FC = () => {
                 });
             }
             clockInMutation.mutate({
-                latitude: check.position?.coords.latitude!,
-                longitude: check.position?.coords.longitude!,
+                latitude: check.position!.coords.latitude,
+                longitude: check.position!.coords.longitude,
                 device: detectDeviceType()
             });
         } else {
-            clockInMutation.mutate({ device: detectDeviceType() } as any);
+            clockInMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
         }
     };
 
@@ -255,12 +258,12 @@ export const NavbarClock: React.FC = () => {
                 return;
             }
             clockOutMutation.mutate({
-                latitude: check.position?.coords.latitude!,
-                longitude: check.position?.coords.longitude!,
+                latitude: check.position!.coords.latitude,
+                longitude: check.position!.coords.longitude,
                 device: detectDeviceType()
             });
         } else {
-            clockOutMutation.mutate({ device: detectDeviceType() } as any);
+            clockOutMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
         }
     };
 

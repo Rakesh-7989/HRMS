@@ -9,6 +9,7 @@ export interface Column<T> {
     header: string;
     accessorKey?: keyof T;
     cell?: (row: T) => React.ReactNode;
+    sortKey?: keyof T | string;
     className?: string;
 }
 
@@ -32,7 +33,7 @@ export function DataTable<T>({
     pageSizeOptions = [10, 25, 50],
     onRowClick,
     className = "",
-}: DataTableProps<T>) {
+}: DataTableProps<T>): React.ReactElement | null {
     const [sortKey, setSortKey] = useState<keyof T | null>(null);
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
     const [page, setPage] = useState(0);
@@ -87,12 +88,12 @@ export function DataTable<T>({
                             {columns.map((col, idx) => (
                                 <th
                                     key={idx}
-                                    className={`px-4 py-3 ${col.className || ''} ${col.accessorKey ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-white/10' : ''}`}
-                                    onClick={() => col.accessorKey && handleSort(col.accessorKey)}
+                                    className={`px-4 py-3 ${col.className || ''} ${(col.sortKey || col.accessorKey) ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-white/10' : ''}`}
+                                    onClick={() => { const k = col.sortKey || col.accessorKey; k && handleSort(k as keyof T); }}
                                 >
                                     <span className="inline-flex items-center gap-1">
                                         {col.header}
-                                        {col.accessorKey && sortKey === col.accessorKey && (
+                                        {(col.sortKey || col.accessorKey) && sortKey === (col.sortKey || col.accessorKey) && (
                                             sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
                                         )}
                                     </span>

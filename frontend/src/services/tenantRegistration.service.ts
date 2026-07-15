@@ -37,7 +37,7 @@ export const tenantRegistrationService = {
     return response.data;
   },
 
-  registerTenant: async (payload: TenantRegistrationPayload): Promise<any> => {
+  registerTenant: async (payload: TenantRegistrationPayload): Promise<Record<string, unknown>> => {
     const response = await api.post('/tenants/register', payload);
     return response.data;
   },
@@ -45,7 +45,7 @@ export const tenantRegistrationService = {
   /**
    * Verify payment - uses raw axios (no auth header) since user isn't logged in during registration
    */
-  verifyPaymentPublic: async (orderId: string): Promise<any> => {
+  verifyPaymentPublic: async (orderId: string): Promise<Record<string, unknown>> => {
     const response = await axios.post(`${API_BASE_URL}/subscriptions/verify-payment`, {
       order_id: orderId
     });
@@ -56,7 +56,7 @@ export const tenantRegistrationService = {
    * Initiate payment for a pending-payment tenant (public, no auth needed)
    * Used when a tenant with incomplete payment tries to login or retry
    */
-  initiatePaymentForTenant: async (tenantId: string, email: string): Promise<any> => {
+  initiatePaymentForTenant: async (tenantId: string, email: string): Promise<Record<string, unknown>> => {
     const response = await axios.post(`${API_BASE_URL}/subscriptions/initiate-tenant-payment`, {
       tenant_id: tenantId,
       email

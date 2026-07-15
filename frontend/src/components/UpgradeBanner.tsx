@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { Sparkles, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/constants';
 
 interface UpgradeBannerProps {
     planName: string;
@@ -19,7 +20,7 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
 
     const handleUpgrade = () => {
         if (isAdmin) {
-            navigate('/pricing');
+            navigate(ROUTES.PRICING);
         }
     };
 

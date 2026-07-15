@@ -1,6 +1,48 @@
 import api from './api';
 import type { ApiResponse } from '@/types';
 
+export interface MerchantTransaction {
+    id: string;
+    merchant_id?: string;
+    merchant_name?: string;
+    type?: string;
+    amount?: number;
+    date?: string;
+    status?: string;
+}
+
+export interface VendorPayment {
+    id: string;
+    vendor_name?: string;
+    vendor?: string;
+    amount?: number;
+    payout_date?: string;
+    date?: string;
+    status?: string;
+    paid?: boolean;
+}
+
+export interface ThirdPartyPayout {
+    id: string;
+    provider_name?: string;
+    provider?: string;
+    amount?: number;
+    payout_date?: string;
+    date?: string;
+    status?: string;
+    paid?: boolean;
+}
+
+export interface Merchant {
+    id: string;
+    name: string;
+    code?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    address?: string;
+    is_active?: boolean;
+}
+
 export interface PayrollSummary {
   total_employees: number;
   monthly_payroll: number; // assume rupees
@@ -26,6 +68,42 @@ export interface DeductionType {
   calculation_type?: string;
   is_taxable?: boolean;
   is_recurring?: boolean;
+}
+
+export interface LoanType {
+  id: string;
+  name: string;
+  interest_rate?: number;
+  interestRate?: number;
+  interest_type?: 'FLAT' | 'REDUCING';
+  interestType?: 'FLAT' | 'REDUCING';
+  max_amount?: number;
+  maxAmount?: number;
+  max_tenure_months?: number;
+  maxTenureMonths?: number;
+  is_taxable?: boolean;
+  isTaxable?: boolean;
+  description?: string;
+}
+
+export interface Expense {
+  id: string;
+  category: string;
+  amount: number;
+  expense_date: string;
+  status?: string;
+  payroll_included?: boolean;
+  category_id?: string;
+  categoryId?: string;
+  expenseDate?: string;
+  payrollIncluded?: boolean;
+}
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
 }
 
 export interface PTSlab {
@@ -95,41 +173,41 @@ export const payrollService = {
 
   listExpenseCategories: async () => {
     try {
-      const response = await api.get<ApiResponse<Array<{ id: string; name: string }>>>('/payroll/expenses/getcategories');
+      const response = await api.get<ApiResponse<Array<ExpenseCategory>>>('/payroll/expenses/getcategories');
       return response.data.data || [];
     } catch (err) {
       return [];
     }
   },
 
-  createExpenseCategory: async (payload: { name: string }) => {
+  createExpenseCategory: async (payload: { name: string; code: string; description?: string }) => {
     const response = await api.post<ApiResponse<{ id: string; name: string }>>('/payroll/expenses/createcategories', payload);
     return response.data.data!;
   },
 
   approveExpense: async (expenseId: string, payload: { status: 'APPROVED' | 'REJECTED' }) => {
-    const response = await api.patch<ApiResponse<any>>(`/payroll/expenses/${expenseId}/approve`, payload);
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/expenses/${expenseId}/approve`, payload);
     return response.data.data!;
   },
 
   rejectExpense: async (expenseId: string) => {
     // convenience wrapper
-    const response = await api.patch<ApiResponse<any>>(`/payroll/expenses/${expenseId}/approve`, { status: 'REJECTED' });
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/expenses/${expenseId}/approve`, { status: 'REJECTED' });
     return response.data.data!;
   },
 
   setExpensePayrollInclusion: async (expenseId: string, payrollIncluded: boolean) => {
-    const response = await api.patch<ApiResponse<any>>(`/payroll/expenses/${expenseId}/payroll`, { payrollIncluded });
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/expenses/${expenseId}/payroll`, { payrollIncluded });
     return response.data.data!;
   },
 
   updateExpense: async (expenseId: string, payload: { categoryId?: string; amount?: number; expenseDate?: string; description?: string; payrollIncluded?: boolean }) => {
-    const response = await api.put<ApiResponse<any>>(`/payroll/expenses/${expenseId}`, payload);
+    const response = await api.put<ApiResponse<unknown>>(`/payroll/expenses/${expenseId}`, payload);
     return response.data.data!;
   },
 
   deleteExpense: async (expenseId: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/expenses/${expenseId}`);
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/expenses/${expenseId}`);
     return response.data.data!;
   },
 
@@ -183,16 +261,17 @@ export const payrollService = {
       console.debug('[payrollService] listLoans response', response?.data);
 
       return response.data.data || [];
-    } catch (err: any) {
-      console.error('[payrollService] listLoans failed', err?.response?.status, err?.response?.data || err.message || err);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string };
+      console.error('[payrollService] listLoans failed', axiosErr?.response?.status, axiosErr?.response?.data || axiosErr.message || err);
       // rethrow so callers (useQuery) can catch and show UI feedback
       throw err;
     }
   },
 
-  createLoan: async (payload: any) => {
+  createLoan: async (payload: Record<string, unknown>) => {
     // Accept either admin (snake_case) payloads or employee (camelCase) payloads and forward to backend
-    const response = await api.post<ApiResponse<any>>('/payroll/loans/', payload);
+    const response = await api.post<ApiResponse<unknown>>('/payroll/loans/', payload);
     return response.data.data!;
   },
 
@@ -209,7 +288,7 @@ export const payrollService = {
   // Payslips related placeholders
   listPayslips: async (params?: { from_date?: string; to_date?: string }) => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/payslips', { params });
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/payslips', { params });
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -218,7 +297,7 @@ export const payrollService = {
 
   getMyPayslips: async () => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/payslips/my');
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/payslips/my');
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -227,7 +306,7 @@ export const payrollService = {
 
   listPaySchedules: async () => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/schedules');
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/schedules');
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -235,13 +314,13 @@ export const payrollService = {
   },
 
   updatePaySchedule: async (scheduleId: string, payload: { cycle?: string; credit_day?: number; cutoff_day?: number }) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/schedules/${scheduleId}`, payload);
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/schedules/${scheduleId}`, payload);
     return response.data.data!;
   },
 
   listDeductions: async (params?: { from_date?: string; to_date?: string }) => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/deductions', { params });
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/deductions', { params });
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -268,13 +347,13 @@ export const payrollService = {
   },
 
   createDeduction: async (payload: { employee_name?: string; employee_id?: string; type: string; amount: number; effective_date?: string; note?: string }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/deductions', payload);
+    const response = await api.post<ApiResponse<unknown>>('/payroll/deductions', payload);
     return response.data.data!;
   },
 
   listIncomeTax: async (params?: { from_date?: string; to_date?: string }) => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/income-tax', { params });
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/income-tax', { params });
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -283,7 +362,7 @@ export const payrollService = {
 
   listSalaryRevisions: async (params?: { from_date?: string; to_date?: string }) => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/salary-revisions', { params });
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/salary-revisions', { params });
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -292,24 +371,24 @@ export const payrollService = {
 
   // Payslip generation, download, email and history
   generateMonthlyPayslips: async (payload: { month: number; year: number }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/payslips/generate', payload);
+    const response = await api.post<ApiResponse<unknown>>('/payroll/payslips/generate', payload);
     return response.data.data!;
   },
 
   downloadPayslip: async (payslipId: string) => {
     // returns binary PDF
-    const response = await api.get(`/payroll/payslips/${payslipId}/download`, { responseType: 'blob' as any });
+    const response = await api.get(`/payroll/payslips/${payslipId}/download`, { responseType: 'blob' });
     return response.data;
   },
 
   emailPayslip: async (payslipId: string, payload?: { to?: string }) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/payslips/${payslipId}/email`, payload);
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/payslips/${payslipId}/email`, payload);
     return response.data.data!;
   },
 
   listPayslipHistory: async (params?: { employee_id?: string; from_date?: string; to_date?: string }) => {
     try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/payslips/history', { params });
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/payslips/history', { params });
       return response.data.data || [];
     } catch (err) {
       return [];
@@ -318,47 +397,46 @@ export const payrollService = {
 
   // Void a payrun (keeps data for audit trail)
   voidPayRun: async (payrunId: string) => {
-    const response = await api.patch<ApiResponse<any>>(`/payroll/payrun/${payrunId}/void`);
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/payrun/${payrunId}/void`);
     return response.data.data!;
   },
 
   // Delete a single payslip item from a payrun
   deletePayslipItem: async (payrunId: string, itemId: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/payrun/${payrunId}/items/${itemId}`);
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/payrun/${payrunId}/items/${itemId}`);
     return response.data.data!;
   },
 
   // Delete an entire payrun (DRAFT/CALCULATED/PENDING_APPROVAL only)
   deletePayRun: async (payrunId: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/payrun/${payrunId}`);
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/payrun/${payrunId}`);
     return response.data.data!;
   },
 
   // Loan payments and closure
   createLoanPayment: async (loanId: string, payload: { amount: number; tx_date?: string; note?: string }) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/loans/${loanId}/payments`, payload);
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/loans/${loanId}/payments`, payload);
     return response.data.data!;
   },
 
   approveLoan: async (loanId: string, payload: { status: 'APPROVED' | 'REJECTED'; remarks?: string }) => {
-    const response = await api.patch<ApiResponse<any>>(`/payroll/loans/${loanId}/approve`, payload);
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/loans/${loanId}/approve`, payload);
     return response.data.data!;
   },
 
   closeLoan: async (loanId: string) => {
     // backend expects a PATCH for close
-    const response = await api.patch<ApiResponse<any>>(`/payroll/loans/${loanId}/close`);
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/loans/${loanId}/close`);
     return response.data.data!;
   },
 
   // Loan Types (HR / ADMIN)
-  listLoanTypes: async () => {
+  listLoanTypes: async (): Promise<LoanType[]> => {
     try {
       // Debug: inspect token payload to help verify the role sent with the request
       try {
         const token = localStorage.getItem('accessToken');
         if (!token) {
-          // eslint-disable-next-line no-console
           console.debug('[payrollService] listLoanTypes - no accessToken found');
         } else {
           const base64Url = token.split('.')[1];
@@ -370,374 +448,54 @@ export const payrollService = {
         console.warn('[payrollService] Failed to decode accessToken for listLoanTypes', tErr);
       }
 
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/loans/loantype');
+      const response = await api.get<ApiResponse<LoanType[]>>('/payroll/loan-types');
       return response.data.data || [];
-    } catch (err: any) {
-      console.error('[payrollService] listLoanTypes failed', err?.response?.status, err?.response?.data || err.message || err);
-      // Rethrow so callers (useQuery) can surface the error to UI
+    } catch (err: unknown) {
+      console.error('[payrollService] listLoanTypes failed', err);
       throw err;
     }
   },
 
-  getLoanType: async (loanTypeId: string) => {
-    const response = await api.get<ApiResponse<any>>(`/payroll/loans/loantype/${loanTypeId}`);
-    return response.data.data!;
-  },
-
-  createLoanType: async (payload: any) => {
-    // normalize payload to camelCase keys expected by backend validator
-    const body = {
-      name: payload.name,
-      interestRate: payload.interestRate ?? payload.interest_rate ?? 0,
-      interestType: payload.interestType ?? payload.interest_type ?? 'FLAT',
-      maxAmount: payload.maxAmount ?? payload.max_amount ?? undefined,
-      maxTenureMonths: payload.maxTenureMonths ?? payload.max_tenure_months ?? undefined,
-      isTaxable: payload.isTaxable ?? payload.is_taxable ?? false,
-      isActive: payload.isActive ?? payload.is_active ?? true,
-    };
-    const response = await api.post<ApiResponse<any>>('/payroll/loans/loantype', body);
-    return response.data.data!;
-  },
-
-  updateLoanType: async (loanTypeId: string, payload: any) => {
-    const body = {
-      name: payload.name,
-      interestRate: payload.interestRate ?? payload.interest_rate,
-      interestType: payload.interestType ?? payload.interest_type,
-      maxAmount: payload.maxAmount ?? payload.max_amount,
-      maxTenureMonths: payload.maxTenureMonths ?? payload.max_tenure_months,
-      isTaxable: payload.isTaxable ?? payload.is_taxable,
-      isActive: payload.isActive ?? payload.is_active,
-    };
-    const response = await api.put<ApiResponse<any>>(`/payroll/loans/loantype/${loanTypeId}`, body);
-    return response.data.data!;
-  },
-
-  deleteLoanType: async (loanTypeId: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/loans/loantype/${loanTypeId}`);
-    return response.data.data!;
-  },
-
-  // Cost centers & project allocations
-  listCostCenters: async () => {
-    try {
-      const response = await api.get<ApiResponse<Array<{ id: string; name: string; allocated: number; spent: number }>>>('/payroll/cost-centers');
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  // Create cost center (simple helper for frontend forms)
-  createCostCenter: async (payload: { name: string; allocated?: number }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/cost-centers', payload);
-    return response.data.data!;
-  },
-
-
-  listProjectAllocations: async () => {
-    try {
-      const response = await api.get<ApiResponse<Array<{ id: string; project_name: string; department: string; allocated: number; spent: number }>>>('/payroll/project-allocations');
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  getCostCenterReports: async (params?: { from_date?: string; to_date?: string }) => {
-    try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/cost-center-reports', { params });
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  getCostCentreAllocations: async (params?: { costCentreId?: string; employeeId?: string }) => {
-    try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/statutory/cost-centre-allocations', { params });
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  upsertCostCentreAllocation: async (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/statutory/cost-centre-allocations', payload);
-    return response.data.data!;
-  },
-
-  deleteCostCentreAllocation: async (id: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/cost-centre-allocations/${id}`);
-    return response.data.data;
-  },
-
-  // Merchants, vendors and third-party payouts
-  listMerchants: async () => {
-    try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/merchants');
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  // Salary structure
-  getSalaryStructure: async () => {
-    try {
-      const response = await api.get<ApiResponse<any>>('/payroll/salary-structure');
-      return response.data.data || null;
-    } catch (err) {
-      return null;
-    }
-  },
-
-  // Vendor / 3rd-party payouts - use Merchants router endpoints which are now mounted at /payroll/merchants
-  listVendorPayments: async () => {
-    try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/merchants/getvendors');
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  createVendorPayout: async (payload: { vendorName: string; amount: number; paymentDate?: string; notes?: string }) => {
-    // backend validator expects { vendorName, amount, paymentDate }
-    const body = { vendorName: payload.vendorName, amount: payload.amount, paymentDate: payload.paymentDate || new Date().toISOString().slice(0, 10), notes: payload.notes };
-    const response = await api.post<ApiResponse<any>>('/payroll/merchants/createvendors', body);
-    return response.data.data!;
-  },
-
-  listThirdPartyPayouts: async () => {
-    try {
-      const response = await api.get<ApiResponse<Array<any>>>('/payroll/merchants/getthird-party');
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  createThirdPartyPayout: async (payload: { providerName: string; amount: number; payoutDate?: string; notes?: string }) => {
-    const body = { providerName: payload.providerName, amount: payload.amount, payoutDate: payload.payoutDate || new Date().toISOString().slice(0, 10), notes: payload.notes };
-    const response = await api.post<ApiResponse<any>>('/payroll/merchants/createthird-party', body);
-    return response.data.data!;
-  },
-
-  updateSalaryStructure: async (payload: { basic: number; hra_percent: number; other_allowances: number; monthly_deductions: number; employer_contrib?: number }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/salary-structure', payload);
-    return response.data.data!;
-  },
-
-  listMerchantTransactions: async () => {
-    // Try merchants router transaction endpoint first, then fallback to legacy path
-    try {
-      const primary = await api.get<ApiResponse<Array<any>>>('/payroll/merchants/transactions');
-      return primary.data.data || [];
-    } catch (err) {
-      try {
-        const fallback = await api.get<ApiResponse<Array<any>>>('/payroll/merchant-transactions');
-        return fallback.data.data || [];
-      } catch (err2) {
-        return [];
-      }
-    }
-  },
-
-  markVendorPaymentPaid: async (paymentId: string) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/vendor-payments/${paymentId}/paid`);
-    return response.data.data!;
-  },
-
-  markThirdPartyPayoutPaid: async (payoutId: string) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/third-party-payouts/${payoutId}/paid`);
-    return response.data.data!;
-  },
-
-  // ==========================================================================
-  // Tax Declarations
-  // ==========================================================================
-  getTaxDeclaration: async (fy: string) => {
-    try {
-      const response = await api.get<ApiResponse<any>>(`/payroll/tax-declarations/${fy}`);
-      return response.data.data;
-    } catch (err) { return null; }
-  },
-
-  submitTaxDeclaration: async (payload: any) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/tax-declarations', payload);
-    return response.data.data!;
-  },
-
-
-  // ==========================================================================
-  // Pay Runs
-  // ==========================================================================
-  getPayRuns: async () => {
-    try {
-      const response = await api.get<ApiResponse<any>>('/payroll/runs');
-      return response.data.data || [];
-    } catch { return []; }
-  },
-
-  createPayRun: async (payload: { periodMonth: number; periodYear: number }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/runs', payload);
-    return response.data.data!;
-  },
-
-  calculatePayRun: async (id: string) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/runs/${id}/calculate`);
-    return response.data.data!;
-  },
-
-  approvePayRun: async (id: string) => {
-    const response = await api.put<ApiResponse<any>>(`/payroll/runs/${id}/approve`);
-    return response.data.data!;
-  },
-
-  lockPayRun: async (id: string) => {
-    const response = await api.put<ApiResponse<any>>(`/payroll/runs/${id}/lock`);
-    return response.data.data!;
-  },
-
-  // ==========================================================================
-  // FnF Settlements
-  // ==========================================================================
-
-  getFnFSettlements: async () => {
-    // try {
-    //   const response = await api.get<ApiResponse<Array<FnFSettlement>>>('/payroll/fnf');
-    //   return response.data.data || [];
-    // } catch (err) {
-    //   console.warn('Backend FnF endpoint missing, returning mock', err);
-    //   return [];
-    // }
-    try {
-      const response = await api.get<ApiResponse<Array<FnFSettlement>>>('/payroll/settlement/fnf');
-      return response.data.data || [];
-    } catch (err) { return []; }
-  },
-
-  createFnFSettlement: async (payload: { employeeId: string; lastWorkingDay: string; resignationDate?: string }) => {
-    const response = await api.post<ApiResponse<FnFSettlement>>('/payroll/settlement/fnf', payload);
-    return response.data.data!;
-  },
-
-  getFnFSettlementById: async (id: string) => {
-    const response = await api.get<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}`);
-    return response.data.data!;
-  },
-
-  submitFnF: async (id: string) => {
-    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/submit`);
-    return response.data.data!;
-  },
-
-  approveFnF: async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    // backend expects PATCH /payroll/settlement/fnf/:id/approve with body { status }
-    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/approve`, { status });
-    return response.data.data!;
-  },
-
-  payFnF: async (id: string) => {
-    // backend expects PATCH /payroll/settlement/fnf/:id/pay
-    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/pay`);
-    return response.data.data!;
-  },
-
-  // ============================================================================
-  // MISSING METHODS (Added for build fix)
-  // ============================================================================
-
-  listReimbursements: async (scope: 'my' | 'all' = 'my') => {
-    try {
-      const endpoint = scope === 'all' ? '/payroll/settlement/reimbursements' : '/payroll/settlement/reimbursements/my';
-      const response = await api.get<ApiResponse<Array<any>>>(endpoint);
-      return response.data.data || [];
-    } catch (err) {
-      return [];
-    }
-  },
-
-  createReimbursement: async (payload: { category: string; amount: number; claimDate: string; description?: string; receiptUrl?: string }) => {
-    const response = await api.post<ApiResponse<any>>('/payroll/settlement/reimbursements', payload);
-    return response.data.data!;
-  },
-
-  approveReimbursement: async (id: string, payload: { status: 'APPROVED' | 'REJECTED'; includeInPayroll?: boolean }) => {
-    const response = await api.patch<ApiResponse<any>>(`/payroll/settlement/reimbursements/${id}/approve`, payload);
-    return response.data.data!;
-  },
-
-  getSalaryTemplates: async () => {
-    // Mock data for now to satisfy build and types validation
-    // In real app, this should fetch from /payroll/salary-templates
-    return [
-      {
-        id: 't1',
-        name: 'Standard Structure',
-        description: 'Default structure',
-        basic_percentage: 50,
-        hra_percentage: 20,
-        da_percentage: 0,
-        special_allowance_percentage: 30,
-        other_allowance_percentage: 0,
-        is_default: true,
-        is_active: true,
-        created_at: new Date().toISOString()
-      }
-    ];
-  },
-
-  createSalaryTemplate: async (payload: any) => {
-    return payrollService.createSalaryComponent(payload);
-  },
-
-  updateSalaryTemplate: async (id: string, payload: any) => {
-    // Stub or implement real endpoint
-    const response = await api.put<ApiResponse<any>>(`/payroll/salary-components/${id}`, payload);
-    return response.data.data!;
-  },
-
-  deleteSalaryTemplate: async (id: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/salary-components/${id}`);
-    return response.data.data!;
-  },
-
-  getStatutoryConfig: async () => {
-    const response = await api.get<ApiResponse<StatutoryConfig>>('/payroll/statutory/config');
-    return response.data.data!;
-  },
-
-  updateStatutoryConfig: async (payload: Partial<StatutoryConfig>) => {
-    const response = await api.put<ApiResponse<StatutoryConfig>>('/payroll/statutory/config', payload);
-    return response.data.data!;
-  },
-
-  getPTSlabs: async () => {
-    const response = await api.get<ApiResponse<PTSlab[]>>('/payroll/statutory/pt-slabs');
+  listMerchants: async (): Promise<Merchant[]> => {
+    const response = await api.get<ApiResponse<Merchant[]>>('/payroll/merchants');
     return response.data.data || [];
   },
 
-  createPTSlab: async (payload: Partial<PTSlab>) => {
-    const response = await api.post<ApiResponse<PTSlab>>('/payroll/statutory/pt-slabs', payload);
+  createMerchant: async (payload: { name: string; code: string; contact_email?: string; contact_phone?: string; address?: string; is_active?: boolean }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/merchants', payload);
     return response.data.data!;
   },
 
-  deletePTSlab: async (id: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/payroll/statutory/pt-slabs/${id}`);
+  updateMerchant: async (id: string, payload: Partial<{ name: string; code: string; contact_email: string; contact_phone: string; address: string; is_active: boolean }>) => {
+    const response = await api.put<ApiResponse<unknown>>(`/payroll/merchants/${id}`, payload);
     return response.data.data!;
   },
 
-  getCostCenters: async () => {
-    return payrollService.listCostCenters();
+  deleteMerchant: async (id: string) => {
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/merchants/${id}`);
+    return response.data.data!;
   },
 
-  // =====================================================
-  // SALARY STRUCTURE MANAGEMENT (Keka-Style)
-  // =====================================================
+  listReimbursements: async (params?: { from_date?: string; to_date?: string; status?: string }) => {
+    try {
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/reimbursements', { params });
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
 
-  // Salary Components
+  createReimbursement: async (payload: { employee_id?: string; category: string; amount: number; date?: string; description?: string }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/reimbursements', payload);
+    return response.data.data!;
+  },
+
+  approveReimbursement: async (id: string, payload: { status: 'APPROVED' | 'REJECTED'; remarks?: string }) => {
+    const response = await api.patch<ApiResponse<unknown>>(`/payroll/reimbursements/${id}/approve`, payload);
+    return response.data.data!;
+  },
+
+  // Salary structure management (Keka-style)
   listSalaryComponentsV2: async (filters?: { component_type?: string; is_active?: boolean }) => {
     const response = await api.get<ApiResponse<SalaryComponent[]>>('/payroll/salary-structures/components', { params: filters });
     return response.data.data || [];
@@ -783,7 +541,7 @@ export const payrollService = {
   },
 
   migrateEmployeesToStructure: async (id: string) => {
-    const response = await api.post<ApiResponse<any>>(`/payroll/salary-structures/structures/${id}/migrate`);
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/salary-structures/structures/${id}/migrate`);
     return response.data; // Return the whole report object
   },
 
@@ -829,7 +587,269 @@ export const payrollService = {
       template_id: templateId
     });
     return response.data.data!;
-  }
+  },
+
+  // Cost Centers
+  listCostCenters: async () => {
+    try {
+      const response = await api.get<ApiResponse<Array<{ id: string; name: string; allocated: number; spent: number }>>>('/payroll/cost-centers');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  // Merchant / Vendor / Third-party
+  listMerchantTransactions: async (): Promise<MerchantTransaction[]> => {
+    try {
+      const primary = await api.get<ApiResponse<MerchantTransaction[]>>('/payroll/merchants/transactions');
+      return primary.data.data || [];
+    } catch (err) {
+      try {
+        const fallback = await api.get<ApiResponse<MerchantTransaction[]>>('/payroll/merchant-transactions');
+        return fallback.data.data || [];
+      } catch (err2) {
+        return [];
+      }
+    }
+  },
+
+  listVendorPayments: async (): Promise<VendorPayment[]> => {
+    try {
+      const response = await api.get<ApiResponse<VendorPayment[]>>('/payroll/merchants/getvendors');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  listThirdPartyPayouts: async (): Promise<ThirdPartyPayout[]> => {
+    try {
+      const response = await api.get<ApiResponse<ThirdPartyPayout[]>>('/payroll/merchants/getthird-party');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  createVendorPayout: async (payload: { vendorName: string; amount: number; paymentDate?: string; notes?: string }) => {
+    const body = { vendorName: payload.vendorName, amount: payload.amount, paymentDate: payload.paymentDate || new Date().toISOString().slice(0, 10), notes: payload.notes };
+    const response = await api.post<ApiResponse<unknown>>('/payroll/merchants/createvendors', body);
+    return response.data.data!;
+  },
+
+  createThirdPartyPayout: async (payload: { providerName: string; amount: number; payoutDate?: string; notes?: string }) => {
+    const body = { providerName: payload.providerName, amount: payload.amount, payoutDate: payload.payoutDate || new Date().toISOString().slice(0, 10), notes: payload.notes };
+    const response = await api.post<ApiResponse<unknown>>('/payroll/merchants/createthird-party', body);
+    return response.data.data!;
+  },
+
+  markVendorPaymentPaid: async (paymentId: string) => {
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/vendor-payments/${paymentId}/paid`);
+    return response.data.data!;
+  },
+
+  markThirdPartyPayoutPaid: async (payoutId: string) => {
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/third-party-payouts/${payoutId}/paid`);
+    return response.data.data!;
+  },
+
+  // Loan Types (HR/Admin)
+  createLoanType: async (payload: Record<string, unknown>) => {
+    const body = {
+      name: payload.name,
+      interestRate: payload.interestRate ?? payload.interest_rate ?? 0,
+      interestType: payload.interestType ?? payload.interest_type ?? 'FLAT',
+      maxAmount: payload.maxAmount ?? payload.max_amount ?? undefined,
+      maxTenureMonths: payload.maxTenureMonths ?? payload.max_tenure_months ?? undefined,
+      isTaxable: payload.isTaxable ?? payload.is_taxable ?? false,
+      isActive: payload.isActive ?? payload.is_active ?? true,
+    };
+    const response = await api.post<ApiResponse<unknown>>('/payroll/loans/loantype', body);
+    return response.data.data!;
+  },
+
+  updateLoanType: async (loanTypeId: string, payload: Record<string, unknown>) => {
+    const body = {
+      name: payload.name,
+      interestRate: payload.interestRate ?? payload.interest_rate,
+      interestType: payload.interestType ?? payload.interest_type,
+      maxAmount: payload.maxAmount ?? payload.max_amount,
+      maxTenureMonths: payload.maxTenureMonths ?? payload.max_tenure_months,
+      isTaxable: payload.isTaxable ?? payload.is_taxable,
+      isActive: payload.isActive ?? payload.is_active,
+    };
+    const response = await api.put<ApiResponse<unknown>>(`/payroll/loans/loantype/${loanTypeId}`, body);
+    return response.data.data!;
+  },
+
+  deleteLoanType: async (loanTypeId: string) => {
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/loans/loantype/${loanTypeId}`);
+    return response.data.data!;
+  },
+
+// Salary structure aliases for backward compatibility
+  getSalaryStructure: async () => {
+    const response = await api.get<ApiResponse<unknown>>('/payroll/salary-structure');
+    return response.data.data || null;
+  },
+
+  updateSalaryStructure: async (payload: { basic: number; hra_percent: number; other_allowances: number; monthly_deductions: number; employer_contrib?: number }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/salary-structure', payload);
+    return response.data.data!;
+  },
+
+  // FnF Settlements
+  getFnFSettlements: async () => {
+    try {
+      const response = await api.get<ApiResponse<FnFSettlement[]>>('/payroll/settlement/fnf');
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  getFnFSettlementById: async (id: string) => {
+    const response = await api.get<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}`);
+    return response.data.data!;
+  },
+
+  createFnFSettlement: async (payload: { employeeId: string; lastWorkingDay: string; resignationDate?: string }) => {
+    const response = await api.post<ApiResponse<FnFSettlement>>('/payroll/settlement/fnf', payload);
+    return response.data.data!;
+  },
+
+  submitFnF: async (id: string) => {
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/submit`);
+    return response.data.data!;
+  },
+
+  approveFnF: async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/approve`, { status });
+    return response.data.data!;
+  },
+
+  payFnF: async (id: string) => {
+    const response = await api.patch<ApiResponse<FnFSettlement>>(`/payroll/settlement/fnf/${id}/pay`);
+    return response.data.data!;
+  },
+
+  // Pay Runs
+  getPayRuns: async () => {
+    try {
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/runs');
+      return response.data.data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  createPayRun: async (payload: { periodMonth: number; periodYear: number }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/runs', payload);
+    return response.data.data!;
+  },
+
+  calculatePayRun: async (id: string) => {
+    const response = await api.post<ApiResponse<unknown>>(`/payroll/runs/${id}/calculate`);
+    return response.data.data!;
+  },
+
+  approvePayRun: async (id: string) => {
+    const response = await api.put<ApiResponse<unknown>>(`/payroll/runs/${id}/approve`);
+    return response.data.data!;
+  },
+
+  lockPayRun: async (id: string) => {
+    const response = await api.put<ApiResponse<unknown>>(`/payroll/runs/${id}/lock`);
+    return response.data.data!;
+  },
+
+  // Salary Templates (legacy)
+  getSalaryTemplates: async () => {
+    return payrollService.listStructureTemplates();
+  },
+
+  createSalaryTemplate: async (payload: Record<string, unknown>) => {
+    return payrollService.createSalaryComponentV2(payload as Partial<SalaryComponent>);
+  },
+
+  updateSalaryTemplate: async (id: string, payload: Record<string, unknown>) => {
+    return payrollService.updateSalaryComponentV2(id, payload as Partial<SalaryComponent>);
+  },
+
+  deleteSalaryTemplate: async (id: string) => {
+    return payrollService.deleteSalaryComponentV2(id);
+  },
+
+  // Statutory
+  getStatutoryConfig: async () => {
+    const response = await api.get<ApiResponse<StatutoryConfig>>('/payroll/statutory/config');
+    return response.data.data!;
+  },
+
+  updateStatutoryConfig: async (payload: Partial<StatutoryConfig>) => {
+    const response = await api.put<ApiResponse<StatutoryConfig>>('/payroll/statutory/config', payload);
+    return response.data.data!;
+  },
+
+  getPTSlabs: async () => {
+    const response = await api.get<ApiResponse<PTSlab[]>>('/payroll/statutory/pt-slabs');
+    return response.data.data || [];
+  },
+
+  createPTSlab: async (payload: Partial<PTSlab>) => {
+    const response = await api.post<ApiResponse<PTSlab>>('/payroll/statutory/pt-slabs', payload);
+    return response.data.data!;
+  },
+
+  deletePTSlab: async (id: string) => {
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/statutory/pt-slabs/${id}`);
+    return response.data.data!;
+  },
+
+  // Cost Centers
+  getCostCenters: async () => {
+    return payrollService.listCostCenters();
+  },
+
+  createCostCenter: async (payload: { name: string; allocated?: number }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/cost-centers', payload);
+    return response.data.data!;
+  },
+
+  getCostCentreAllocations: async (params?: { costCentreId?: string; employeeId?: string }) => {
+    try {
+      const response = await api.get<ApiResponse<unknown[]>>('/payroll/statutory/cost-centre-allocations', { params });
+      return response.data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  upsertCostCentreAllocation: async (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/statutory/cost-centre-allocations', payload);
+    return response.data.data!;
+  },
+
+  deleteCostCentreAllocation: async (id: string) => {
+    const response = await api.delete<ApiResponse<unknown>>(`/payroll/statutory/cost-centre-allocations/${id}`);
+    return response.data.data!;
+  },
+
+  // Tax Declarations
+  getTaxDeclaration: async (fy: string) => {
+    try {
+      const response = await api.get<ApiResponse<unknown>>(`/payroll/tax-declarations/${fy}`);
+      return response.data.data;
+    } catch (err) {
+      return null;
+    }
+  },
+
+  submitTaxDeclaration: async (payload: Record<string, unknown>) => {
+    const response = await api.post<ApiResponse<unknown>>('/payroll/tax-declarations', payload);
+    return response.data.data!;
+  },
 };
 
 // =====================================================
@@ -975,6 +995,7 @@ export interface SalaryRevision {
   revision_reason?: string;
   created_by_email?: string;
   created_at: string;
+  is_current?: boolean;
 }
 
 export interface FnFSettlement {
@@ -1010,4 +1031,3 @@ export interface FnFSettlement {
 }
 
 export default payrollService;
-

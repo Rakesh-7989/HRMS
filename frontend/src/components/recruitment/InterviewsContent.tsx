@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { recruitmentService } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Calendar, Video, Phone, MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

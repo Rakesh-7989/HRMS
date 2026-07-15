@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { engagementService } from '@/services/engagement.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
-import { Award, Plus, Heart, Loader2 } from 'lucide-react';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { Award, Heart, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 const categoryConfig: Record<string, { labelKey: string; icon: string; color: string }> = {

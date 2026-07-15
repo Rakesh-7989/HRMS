@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { showToast } from '@/utils/toast';
@@ -43,25 +43,20 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                         workingHours: values
                     }
                 });
-                showToast.info('Working hours updated successfully', { icon: '✅' });
+                showToast.success('Working hours updated successfully');
                 if (onSuccess) onSuccess();
                 onClose();
-            } catch (err: any) {
-                const message = err.response?.data?.message || err.message || 'Failed to update working hours';
-                showToast.info(message, { icon: '❌' });
+            } catch (err: unknown) {
+                const error = err as { response?: { data?: { message?: string } }; message?: string };
+                const message = error.response?.data?.message || error.message || 'Failed to update working hours';
+                showToast.error(message);
             } finally {
                 setIsLoading(false);
             }
         },
     });
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchProfile();
-        }
-    }, [isOpen]);
-
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         setInitialDataLoading(true);
         try {
             const profile = await adminService.getTenantProfile();
@@ -77,7 +72,13 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
         } finally {
             setInitialDataLoading(false);
         }
-    };
+    }, [formik]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchProfile();
+        }
+    }, [isOpen, fetchProfile]);
 
     const toggleDay = (day: string) => {
         const currentDays = [...formik.values.workingDays];
@@ -105,8 +106,9 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                 <form onSubmit={formik.handleSubmit} className="space-y-6 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">Start Time</label>
+                            <label htmlFor="start-time" className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">Start Time</label>
                             <input
+                                id="start-time"
                                 name="startTime"
                                 type="time"
                                 value={formik.values.startTime}
@@ -116,8 +118,9 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">End Time</label>
+                            <label htmlFor="end-time" className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">End Time</label>
                             <input
+                                id="end-time"
                                 name="endTime"
                                 type="time"
                                 value={formik.values.endTime}
@@ -129,7 +132,7 @@ export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ isOpen, on
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-3 text-gray-900 dark:text-white">Working Days</label>
+                        <span className="block text-sm font-medium mb-3 text-gray-900 dark:text-white">Working Days</span>
                         <div className="grid grid-cols-4 gap-2">
                             {DAYS.map(day => (
                                  <Button variant="ghost" 

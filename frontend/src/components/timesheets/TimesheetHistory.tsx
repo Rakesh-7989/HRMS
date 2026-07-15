@@ -10,7 +10,7 @@ interface TimesheetHistoryProps {
     onWeekSelect?: (date: Date) => void;
 }
 
-export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: TimesheetHistoryProps) => {
+export const TimesheetHistory: React.FC<TimesheetHistoryProps> = ({ excludeWeekStartDate, onWeekSelect }) => {
 
     // Fetch all my entries (flattened)
     // We'll group them by week on client side to match the design
@@ -34,8 +34,32 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
         );
     }
 
-    // Group by Week Start Date
-    const grouped = entries.reduce((acc: any, entry: any) => {
+    interface TimesheetEntry {
+    id: string;
+    week_start_date: string;
+    week_end_date: string;
+    status: string;
+    rejection_reason: string | null;
+    hours: number;
+    project_id?: string;
+    project_name?: string;
+    task_id?: string;
+    task_title?: string;
+    is_billable?: boolean;
+    notes?: string;
+}
+
+interface WeekGroup {
+    weekStart: string;
+    weekEnd: string;
+    status: string;
+    rejection_reason: string | null;
+    totalHours: number;
+    entries: TimesheetEntry[];
+}
+
+// Group by Week Start Date
+    const grouped = (entries as TimesheetEntry[]).reduce((acc: Record<string, WeekGroup>, entry: TimesheetEntry) => {
         const key = entry.week_start_date;
         if (!acc[key]) {
             acc[key] = {
@@ -50,23 +74,22 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
         acc[key].entries.push(entry);
         acc[key].totalHours += Number(entry.hours);
         return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, WeekGroup>);
 
     // Sort weeks descending and filter excluded week
     const sortedWeeks = Object.values(grouped)
-        .filter((week: any) => {
+        .filter((week: WeekGroup) => {
             if (!excludeWeekStartDate) return true;
-            // Parse backend date (likely ISO string or YYYY-MM-DD)
             const weekDate = parseISO(week.weekStart);
             return !isSameDay(weekDate, excludeWeekStartDate);
         })
-        .sort((a: any, b: any) =>
+        .sort((a: WeekGroup, b: WeekGroup) =>
             new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
         );
 
     return (
         <div className="space-y-4">
-            {sortedWeeks.map((week: any) => {
+            {sortedWeeks.map((week: WeekGroup) => {
                 const startDate = parseISO(week.weekStart);
                 const endDate = parseISO(week.weekEnd);
 
@@ -74,8 +97,11 @@ export const TimesheetHistory = ({ excludeWeekStartDate, onWeekSelect }: Timeshe
                     <div key={week.weekStart} className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-gray-900 transition-colors">
                         {/* Week Header */}
                         <div
+                            role="button"
+                            tabIndex={0}
                             className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                             onClick={() => onWeekSelect && onWeekSelect(startDate)}
+                            onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && onWeekSelect) { e.preventDefault(); onWeekSelect(startDate); } }}
                         >
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-3">

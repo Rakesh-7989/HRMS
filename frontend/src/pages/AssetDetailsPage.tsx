@@ -28,6 +28,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import type { AssetStatus } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from '@/components/ui/DataTable';
+import { ROUTES } from '@/utils/constants';
 
 export const AssetDetailsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -157,7 +158,7 @@ export const AssetDetailsPage: React.FC = () => {
         printWindow.document.close();
       }
     } else {
-      showToast.error('Barcode not available to print.');
+      showToast.error(t('assets.barcodeNotAvailable'));
     }
   };
 
@@ -168,7 +169,7 @@ export const AssetDetailsPage: React.FC = () => {
       link.download = `barcode-${asset?.asset_code || 'asset'}.png`;
       link.click();
     } else {
-      showToast.error('Barcode not available to download.');
+      showToast.error(t('assets.barcodeNotAvailable'));
     }
   };
 
@@ -186,7 +187,7 @@ export const AssetDetailsPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={() => navigate('/assets')}
+            onClick={() => navigate(ROUTES.ASSETS)}
             className="flex items-center gap-2 rounded-2xl border-neutral-200 dark:border-white/10 text-slate-500 font-bold px-5 py-2.5"
           >
             <ArrowLeft size={18} />
@@ -537,13 +538,13 @@ export const AssetDetailsPage: React.FC = () => {
                   <div>
                     <DataTable
                       columns={[
-                        { header: 'Date', accessor: (row: any) => format(new Date(row.created_at), 'MMM dd, yyyy HH:mm'), sortKey: 'created_at' },
-                        { header: 'Event', accessor: (row: any) => row.event_type, sortKey: 'event_type' },
-                        { header: 'Description', accessor: (row: any) => row.description || '-' },
-                        { header: 'Performed By', accessor: (row: any) => row.created_by_name || 'System', sortKey: 'created_by_name' },
+                        { header: 'Date', cell: (row: Record<string, unknown>) => format(new Date(row.created_at as string), 'MMM dd, yyyy HH:mm'), sortKey: 'created_at' },
+                        { header: 'Event', cell: (row: Record<string, unknown>) => row.event_type as string, sortKey: 'event_type' },
+                        { header: 'Description', cell: (row: Record<string, unknown>) => (row.description as string) || '-' },
+                        { header: 'Performed By', cell: (row: Record<string, unknown>) => (row.created_by_name as string) || 'System', sortKey: 'created_by_name' },
                       ]}
-                      data={trackingHistory || []}
-                      isLoading={isLoadingTracking}
+                      data={(trackingHistory || []) as unknown as Record<string, unknown>[]}
+                      loading={isLoadingTracking}
                       emptyMessage="No tracking events found."
                       pageSize={10}
                     />
@@ -556,37 +557,37 @@ export const AssetDetailsPage: React.FC = () => {
                       columns={[
                         {
                           header: 'Employee',
-                          accessor: (row: any) => {
-                            const name = row.first_name && row.last_name
-                              ? `${row.first_name} ${row.last_name}`
-                              : row.employee_id || '-';
+                          cell: (row: Record<string, unknown>) => {
+                            const name = (row.first_name as string) && (row.last_name as string)
+                              ? `${row.first_name as string} ${row.last_name as string}`
+                              : (row.employee_id as string) || '-';
                             return name;
                           },
                           sortKey: 'first_name',
                         },
-                        { header: 'Department', accessor: (row: any) => row.department_name || '-', sortKey: 'department_name' },
-                        { header: 'Assigned Date', accessor: (row: any) => row.assigned_date ? format(new Date(row.assigned_date), 'MMM dd, yyyy') : '-', sortKey: 'assigned_date' },
+                        { header: 'Department', cell: (row: Record<string, unknown>) => (row.department_name as string) || '-', sortKey: 'department_name' },
+                        { header: 'Assigned Date', cell: (row: Record<string, unknown>) => row.assigned_date ? format(new Date(row.assigned_date as string), 'MMM dd, yyyy') : '-', sortKey: 'assigned_date' },
                         {
                           header: 'Return Date',
-                          accessor: (row: any) => row.return_date
-                            ? format(new Date(row.return_date), 'MMM dd, yyyy')
+                          cell: (row: Record<string, unknown>) => row.return_date
+                            ? format(new Date(row.return_date as string), 'MMM dd, yyyy')
                             : <span className="text-green-600 dark:text-green-400 font-medium">Active</span>,
                           sortKey: 'return_date',
                         },
                         {
                           header: 'Duration',
-                          accessor: (row: any) => {
-                            const start = new Date(row.assigned_date);
-                            const end = row.return_date ? new Date(row.return_date) : new Date();
+                          cell: (row: Record<string, unknown>) => {
+                            const start = new Date(row.assigned_date as string);
+                            const end = row.return_date ? new Date(row.return_date as string) : new Date();
                             const diffTime = Math.abs(end.getTime() - start.getTime());
                             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                             return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
                           },
                         },
-                        { header: 'Description', accessor: (row: any) => row.description || '-' },
+                        { header: 'Description', cell: (row: Record<string, unknown>) => (row.description as string) || '-' },
                       ]}
-                      data={usageHistory || []}
-                      isLoading={isLoadingUsage}
+                      data={(usageHistory || []) as unknown as Record<string, unknown>[]}
+                      loading={isLoadingUsage}
                       emptyMessage="No usage history found."
                       pageSize={10}
                     />

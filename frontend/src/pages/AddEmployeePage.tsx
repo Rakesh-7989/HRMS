@@ -6,13 +6,14 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const AddEmployeePage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate('/dashboard/employees');
+    navigate(ROUTES.EMPLOYEES);
   };
 
   // Subscription Query for Limit Check
@@ -57,10 +58,10 @@ export const AddEmployeePage: React.FC = () => {
             Please upgrade your plan to add more employees.
           </p>
             <div className="flex gap-3 mt-4">
-            <Button variant="outline" onClick={() => navigate('/dashboard/employees')}>
+            <Button variant="outline" onClick={() => navigate(ROUTES.EMPLOYEES)}>
               Back to Employees
             </Button>
-            <Button onClick={() => navigate('/settings/billing')}>
+            <Button onClick={() => navigate(ROUTES.SETTINGS_BILLING)}>
               Upgrade Plan
             </Button>
           </div>

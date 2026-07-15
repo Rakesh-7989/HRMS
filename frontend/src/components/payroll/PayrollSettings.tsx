@@ -45,8 +45,8 @@ export const PayrollSettings: React.FC = () => {
                 setLogoPreview(`${BASE_URL}${result.logo_url}`);
             }
             alert('Logo uploaded successfully!');
-        } catch (err: any) {
-            alert('Failed to upload logo: ' + (err.response?.data?.message || err.message));
+        } catch (err: unknown) {
+            alert('Failed to upload logo: ' + ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as { message?: string }).message));
         } finally {
             setUploading(false);
         }
@@ -103,10 +103,11 @@ export const PayrollSettings: React.FC = () => {
                     <h4 className="text-sm font-medium mb-4">Payslip Customization</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Theme Color</label>
+                            <label htmlFor="theme-color" className="block text-sm font-medium text-gray-700 mb-2">Theme Color</label>
                             <p className="text-xs text-gray-500 mb-3">Select the primary color used in Generated Payslips.</p>
                             <div className="flex items-center gap-3">
                                 <input
+                                    id="theme-color"
                                     type="color"
                                     value={profile?.settings?.primary_color || '#1a365d'}
                                     onChange={(e) => {
@@ -126,7 +127,7 @@ export const PayrollSettings: React.FC = () => {
                         <div className="flex items-end">
                              <Button variant="ghost" 
                                 onClick={async () => {
-                                    try {
+try {
                                         setUploading(true);
                                         await adminService.updateTenantProfile({
                                             settings: {
@@ -134,8 +135,9 @@ export const PayrollSettings: React.FC = () => {
                                             }
                                         });
                                         alert('Settings saved successfully!');
-                                    } catch (err: any) {
-                                        alert('Failed to save settings: ' + err.message);
+                                    } catch (err: unknown) {
+                                        const error = err as { message?: string };
+                                        alert('Failed to save settings: ' + error.message);
                                     } finally {
                                         setUploading(false);
                                     }
@@ -153,23 +155,23 @@ export const PayrollSettings: React.FC = () => {
                     <h4 className="text-sm font-medium mb-4">Company Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                            <label className="block text-gray-500">Company Name</label>
+                            <span className="block text-gray-500">Company Name</span>
                             <div className="mt-1 font-medium">{profile?.name || '—'}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-500">Domain</label>
+                            <span className="block text-gray-500">Domain</span>
                             <div className="mt-1 font-medium">{profile?.domain || '—'}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-500">Email</label>
+                            <span className="block text-gray-500">Email</span>
                             <div className="mt-1 font-medium">{profile?.email || '—'}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-500">Phone</label>
+                            <span className="block text-gray-500">Phone</span>
                             <div className="mt-1 font-medium">{profile?.phone || '—'}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-500">Address</label>
+                            <span className="block text-gray-500">Address</span>
                             <div className="mt-1 font-medium">{[profile?.address, profile?.city, profile?.state, profile?.country].filter(Boolean).join(', ') || '—'}</div>
                         </div>
                     </div>

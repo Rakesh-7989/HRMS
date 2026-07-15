@@ -163,11 +163,14 @@ export const ChatNotification: React.FC = () => {
                         {grouped.map((g) => (
                             <div
                                 key={g.conversationId}
+                                role="button"
+                                tabIndex={0}
                                 className={`flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${rowHover}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleNavigate(g);
                                 }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNavigate(g); } }}
                             >
                                 {/* Avatar */}
                                 <div className="relative flex-shrink-0">

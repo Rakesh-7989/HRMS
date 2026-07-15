@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
 interface BarChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   dataKey: string;
   xKey: string;
   name?: string;

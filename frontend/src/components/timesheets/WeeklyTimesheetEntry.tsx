@@ -12,7 +12,7 @@ import { timesheetService } from '@/services/timesheet.service';
 import { attendanceService } from '@/services/attendance.service';
 import { projectsService } from '@/services/projects.service';
 import { cn } from '@/utils/cn';
-import { Task, Timesheet } from '@/types/project.types';
+import { Task, Timesheet, Project } from '@/types/project.types';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Interfaces
@@ -71,7 +71,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 notes: {}
             }]);
         }
-    }, [currentDate]);
+    }, [currentDate, preloadedTimesheet]);
 
     // Get current week range
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
@@ -100,7 +100,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
     });
 
     const activeEntries = preloadedTimesheet ? preloadedTimesheet.entries : fetchedEntries;
-    const activeTimesheetStatus = preloadedTimesheet ? preloadedTimesheet.status : (activeEntries as any)?.[0]?.status;
+    const activeTimesheetStatus = preloadedTimesheet ? preloadedTimesheet.status : (activeEntries as Array<Record<string, unknown>>)?.[0]?.status as string;
 
     // Fetch projects
     const { data: projects } = useQuery({
@@ -124,9 +124,12 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 // Skip entries that don't belong to the current week view
                 if (!currentWeekDates.has(dateStr)) return;
 
-                // Handle both flat entries and nested entries structures
-                const pId = ((entry as any).project?.id || (entry as any).project_id || '').toString();
-                const tId = ((entry as any).task?.id || (entry as any).task_id || '').toString();
+                const e = entry as Record<string, unknown>;
+                const project = e.project as Record<string, unknown> | undefined;
+                const task = e.task as Record<string, unknown> | undefined;
+
+                const pId = (project?.id ?? e.project_id ?? '').toString();
+                const tId = (task?.id ?? e.task_id ?? '').toString();
 
                 const key = `${pId}-${tId}`;
 
@@ -135,11 +138,11 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                         id: key,
                         projectId: pId,
                         taskId: tId,
-                        isBillable: (entry as any).is_billable !== false,
+                        isBillable: e.is_billable !== false,
                         hours: {},
                         notes: {},
-                        projectName: (entry as any).project?.name || (entry as any).project_name,
-                        taskTitle: (entry as any).task?.title || (entry as any).task_title
+                        projectName: (project?.name as string) || (e.project_name as string),
+                        taskTitle: (task?.title as string) || (e.task_title as string)
                     };
                 }
 
@@ -169,7 +172,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                 setRows(initRows);
             }
         }
-    }, [activeEntries, projects, isApprovalMode, dates.join(',')]);
+    }, [activeEntries, projects, isApprovalMode, dates]);
 
     const timesheetStatus = activeTimesheetStatus || 'DRAFT';
     const hasExistingData = activeEntries && activeEntries.length > 0;
@@ -198,20 +201,20 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
             isBillable: true,
             hours: {},
             notes: {}
-        }]);
+        } as TimesheetRow]);
     };
 
     const handleRemoveRow = (id: string) => {
         setRows(prev => prev.filter(r => r.id !== id));
     };
 
-    const handleRowChange = (id: string, field: keyof TimesheetRow, value: any) => {
+    const handleRowChange = (id: string, field: keyof TimesheetRow, value: unknown) => {
         setRows(prev => prev.map(r => {
             if (r.id !== id) return r;
             if (field === 'projectId' && value !== r.projectId) {
-                const proj = projects?.find((p: any) => p.id?.toString() === value?.toString());
+                const proj = projects?.find((p: Project) => p.id?.toString() === value?.toString());
                 const isProjectBillable = proj?.is_billable !== false;
-                return { ...r, projectId: value, taskId: '', isBillable: isProjectBillable };
+                return { ...r, projectId: value as string, taskId: '', isBillable: isProjectBillable };
             }
             return { ...r, [field]: value };
         }));
@@ -236,7 +239,14 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
         setIsSubmitting(true);
         try {
             // Validation
-            const entries: any[] = [];
+            const entries: {
+                work_date: string;
+                hours: number;
+                project_id: string;
+                task_id?: string;
+                notes?: string;
+                is_billable?: boolean;
+            }[] = [];
             let hasErrors = false;
 
             for (const row of rows) {
@@ -316,7 +326,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
 
             if (onSuccess) onSuccess();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
             showToast.error(shouldSubmit ? t('timesheets.entry.submitFailed') : t('timesheets.entry.saveFailed'));
         } finally {
@@ -466,7 +476,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     <div className="w-[20%] px-2">
                                         {isReadOnly ? (
                                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 py-1">
-                                                {projects?.find((p: any) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">{t('timesheets.entry.noProject')}</span>}
+                                                {projects?.find((p: Project) => p.id?.toString() === row.projectId?.toString())?.name || row.projectName || <span className="text-gray-400 italic font-normal">{t('timesheets.entry.noProject')}</span>}
                                             </p>
                                         ) : (
                                             <select
@@ -475,7 +485,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                                 className="w-full bg-transparent text-sm font-semibold outline-none border-b border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-brand-500 transition-colors py-1 cursor-pointer dark:text-gray-200 dark:bg-gray-900"
                                             >
                                                 <option value="">{t('timesheets.entry.selectProject')}</option>
-                                                {projects?.map((p: any) => (
+                                                {projects?.map((p: Project) => (
                                                     <option key={p.id} value={p.id}>{p.name}</option>
                                                 ))}
                                             </select>
@@ -501,7 +511,7 @@ export const WeeklyTimesheetEntry: React.FC<WeeklyTimesheetEntryProps> = ({
                                     {/* Billable Toggle */}
                                     <div className="w-8 px-1 flex items-center justify-center">
                                         {(() => {
-                                            const project = projects?.find((p: any) => p.id?.toString() === row.projectId?.toString());
+                                            const project = projects?.find((p: Project) => p.id?.toString() === row.projectId?.toString());
                                             const isProjectBillable = project?.is_billable !== false;
                                             const canToggle = !isReadOnly && isProjectBillable;
 

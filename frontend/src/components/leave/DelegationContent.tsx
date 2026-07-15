@@ -43,7 +43,7 @@ export const DelegationContent: React.FC = () => {
                 const res = await api.get('/users', { params: { limit: 200 } });
                 const users = res.data?.users || res.data?.data || res.data || [];
                 if (Array.isArray(users)) {
-                    return users.filter((u: any) => u.id !== user?.id);
+                    return users.filter((u: { id: string }) => u.id !== user?.id);
                 }
                 return [];
             } catch (err) {
@@ -124,10 +124,10 @@ export const DelegationContent: React.FC = () => {
                     columns={[
                         {
                             header: t('delegation.delegate'),
-                            accessor: (row: Delegation) => (
+                            cell: (row: Delegation) => (
                                 <div>
                                     <span className="text-gray-900 dark:text-white">
-                                        {[(row as any).delegate_first_name, (row as any).delegate_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
+                                        {[(row as { delegate_first_name?: string }).delegate_first_name, (row as { delegate_last_name?: string }).delegate_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
                                     </span>
                                     {row.delegate_email && (
                                         <span className="block text-xs text-gray-500 dark:text-gray-400">{row.delegate_email}</span>
@@ -138,13 +138,13 @@ export const DelegationContent: React.FC = () => {
                         },
                         {
                             header: t('delegation.period'),
-                            accessor: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
+                            cell: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
                             sortKey: 'start_date',
                         },
-                        { header: t('delegation.reason'), accessor: (row: Delegation) => row.reason || '—' },
+                        { header: t('delegation.reason'), cell: (row: Delegation) => row.reason || '—' },
                         {
                             header: t('delegation.status'),
-                            accessor: (row: Delegation) => {
+                            cell: (row: Delegation) => {
                                 const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
                                 return (
                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
@@ -159,7 +159,7 @@ export const DelegationContent: React.FC = () => {
                         },
                         {
                             header: t('delegation.actions'),
-                            accessor: (row: Delegation) => {
+                            cell: (row: Delegation) => {
                                 const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
                                 return isActive ? (
                                     <div className="flex justify-end">
@@ -177,7 +177,7 @@ export const DelegationContent: React.FC = () => {
                         },
                     ]}
                     data={myDelegations}
-                    isLoading={loadingMine}
+                    loading={loadingMine}
                     emptyMessage={t('delegation.noActiveDelegations')}
                     pageSize={10}
                 />
@@ -194,10 +194,10 @@ export const DelegationContent: React.FC = () => {
                     columns={[
                         {
                             header: t('delegation.delegatedBy'),
-                            accessor: (row: Delegation) => (
+                            cell: (row: Delegation) => (
                                 <div>
                                     <span className="text-gray-900 dark:text-white">
-                                        {[(row as any).delegator_first_name, (row as any).delegator_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
+                                        {[(row as { delegator_first_name?: string }).delegator_first_name, (row as { delegator_last_name?: string }).delegator_last_name].filter(Boolean).join(' ') || t('delegation.unknown')}
                                     </span>
                                     {row.delegator_email && (
                                         <span className="block text-xs text-gray-500 dark:text-gray-400">{row.delegator_email}</span>
@@ -208,13 +208,13 @@ export const DelegationContent: React.FC = () => {
                         },
                         {
                             header: t('delegation.period'),
-                            accessor: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
+                            cell: (row: Delegation) => `${format(new Date(row.start_date), 'MMM dd')} — ${format(new Date(row.end_date), 'MMM dd, yyyy')}`,
                             sortKey: 'start_date',
                         },
-                        { header: t('delegation.reason'), accessor: (row: Delegation) => row.reason || '—' },
+                        { header: t('delegation.reason'), cell: (row: Delegation) => row.reason || '—' },
                         {
                             header: t('delegation.status'),
-                            accessor: (row: Delegation) => {
+                            cell: (row: Delegation) => {
                                 const isActive = row.is_active && new Date(row.end_date) >= new Date(todayStr);
                                 return (
                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${isActive
@@ -229,7 +229,7 @@ export const DelegationContent: React.FC = () => {
                         },
                     ]}
                     data={delegationsToMe}
-                    isLoading={loadingToMe}
+                    loading={loadingToMe}
                     emptyMessage={t('delegation.noOneDelegated')}
                     pageSize={10}
                 />

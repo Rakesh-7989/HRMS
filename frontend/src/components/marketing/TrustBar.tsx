@@ -39,7 +39,7 @@ export const TrustBar: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-          {t('marketing.trustBar.stats', { returnObjects: true }).map((stat, i) => (
+          {(t('marketing.trustBar.stats', { returnObjects: true }) as { value: string; label: string }[]).map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
               <p className="text-3xl md:text-4xl font-extrabold text-neutral-900 dark:text-white">{stat.value}</p>

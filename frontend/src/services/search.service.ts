@@ -113,10 +113,10 @@ export const searchService = {
                 params: { search: searchTerm },
             });
             const users = usersResponse.data?.users || [];
-            results.employees = users.slice(0, 8).map((user: any) => ({
-                id: user.id,
+            results.employees = users.slice(0, 8).map((user: Record<string, unknown>) => ({
+                id: user.id as string,
                 type: 'employee' as const,
-                title: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+                title: `${(user.first_name as string) || ''} ${(user.last_name as string) || ''}`.trim() || (user.email as string),
                 subtitle: `${user.role} • ${user.email}`,
                 url: `/employees/${user.id}`,
             }));
@@ -125,15 +125,15 @@ export const searchService = {
             try {
                 const assetsResponse = await api.get('/assets');
                 const assets = assetsResponse.data?.assets || assetsResponse.data || [];
-                const filteredAssets = assets.filter((asset: any) =>
-                    asset.name?.toLowerCase().includes(searchTerm) ||
-                    asset.asset_code?.toLowerCase().includes(searchTerm) ||
-                    asset.category?.toLowerCase().includes(searchTerm)
+                const filteredAssets = assets.filter((asset: Record<string, unknown>) =>
+                    (asset.name as string)?.toLowerCase().includes(searchTerm) ||
+                    (asset.asset_code as string)?.toLowerCase().includes(searchTerm) ||
+                    (asset.category as string)?.toLowerCase().includes(searchTerm)
                 );
-                results.assets = filteredAssets.slice(0, 8).map((asset: any) => ({
-                    id: asset.id,
+                results.assets = filteredAssets.slice(0, 8).map((asset: Record<string, unknown>) => ({
+                    id: asset.id as string,
                     type: 'asset' as const,
-                    title: asset.name,
+                    title: asset.name as string,
                     subtitle: `${asset.category} • ${asset.status}`,
                     url: `/assets/${asset.id}`,
                 }));
@@ -145,15 +145,15 @@ export const searchService = {
             try {
                 const projectsResponse = await api.get('/projects');
                 const projects = projectsResponse.data?.projects || projectsResponse.data?.data || [];
-                const filteredProjects = projects.filter((project: any) =>
-                    project.name?.toLowerCase().includes(searchTerm) ||
-                    project.description?.toLowerCase().includes(searchTerm)
+                const filteredProjects = projects.filter((project: Record<string, unknown>) =>
+                    (project.name as string)?.toLowerCase().includes(searchTerm) ||
+                    (project.description as string)?.toLowerCase().includes(searchTerm)
                 );
-                results.projects = filteredProjects.slice(0, 8).map((project: any) => ({
-                    id: project.id,
+                results.projects = filteredProjects.slice(0, 8).map((project: Record<string, unknown>) => ({
+                    id: project.id as string,
                     type: 'project' as const,
-                    title: project.name,
-                    subtitle: `${project.status || 'Active'} • ${project.client_name || 'No client'}`,
+                    title: project.name as string,
+                    subtitle: `${project.status || 'Active'} • ${(project.client_name as string) || 'No client'}`,
                     url: `/projects/${project.id}`,
                 }));
             } catch {

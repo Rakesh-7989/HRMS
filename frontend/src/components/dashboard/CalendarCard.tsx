@@ -65,7 +65,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                 if (!isNaN(d.getTime())) {
                     key = format(d, 'MMM dd');
                 }
-            } catch (err) { }
+            } catch (err) { /* Swallow error intentionally */ }
             const count = map.get(key) || 0;
             map.set(key, count + 1);
         });
@@ -409,7 +409,7 @@ const CalendarCard: React.FC<Props> = ({ events = {}, className = '', compact = 
                         <DialogTitle className="text-lg font-bold tracking-tight text-center mb-4">{selectedDateLabel}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3 mt-4">
-                        {selectedDateEvents.map((ev: any, idx) => (
+                        {selectedDateEvents.map((ev: PersonEvent, idx) => (
                             <motion.div
                                 key={ev.id}
                                 initial={{ opacity: 0, x: -10 }}

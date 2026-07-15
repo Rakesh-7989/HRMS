@@ -92,7 +92,7 @@ exports.handleContactSales = async (req, res) => {
         }
         
         // Basic phone validation (allowing digits, spaces, +, -, or ())
-        const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+        const phoneRegex = /^[\d\s+\-()]+$/;
         if (!phoneRegex.test(phoneNumber) || phoneNumber.replace(/\D/g, '').length < 7) {
             return res.status(400).json({
                 status: 'ERROR',

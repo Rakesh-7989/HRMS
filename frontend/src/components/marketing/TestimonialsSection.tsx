@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Quote, Building2, IndianRupee, Users } from 'lucide-react';
+import { Star, Quote, Building2 } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
@@ -124,7 +124,7 @@ export const TestimonialsSection: React.FC = () => {
 
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="flex flex-wrap justify-center gap-6 mt-12 text-sm text-neutral-500">
-          {t('marketing.testimonials.industries', { returnObjects: true }).map((industry, index) => (
+          {(t('marketing.testimonials.industries', { returnObjects: true }) as string[]).map((industry, index) => (
             <span key={index} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
               <Building2 size={14} className="text-neutral-400" />
               {industry}

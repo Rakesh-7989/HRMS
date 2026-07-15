@@ -16,7 +16,7 @@ import { DataTable } from '@/components/ui/DataTable';
 export const TeamLeaveContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const { t } = useTranslation();
-    const { user: _user } = useAuth();
+    useAuth();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -80,9 +80,9 @@ export const TeamLeaveContent: React.FC = () => {
 
     const filteredList = useMemo(() => {
         return currentList.filter((leave) => {
-            const emp = leave.employee || (leave as any).user || (leave as any);
+            const emp = leave.employee || (leave as { user?: { first_name?: string; last_name?: string } }).user || (leave as { first_name?: string; last_name?: string });
             const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
-            const leaveTypeName = ((leave as any).leave_type_name || leave.leave_type || '').toLowerCase();
+            const leaveTypeName = ((leave as { leave_type_name?: string }).leave_type_name || leave.leave_type || '').toLowerCase();
 
             const matchesSearch = searchTerm === '' ||
                 fullName.includes(searchTerm.toLowerCase()) ||
@@ -91,7 +91,7 @@ export const TeamLeaveContent: React.FC = () => {
 
             const matchesType = typeFilter === 'ALL' ||
                 leave.leave_type === typeFilter ||
-                (leave as any).leave_type_name === typeFilter;
+                (leave as { leave_type_name?: string }).leave_type_name === typeFilter;
 
             return matchesSearch && matchesType;
         });
@@ -101,7 +101,7 @@ export const TeamLeaveContent: React.FC = () => {
         {
             header: t('leave.employee'),
             cell: (leave: LeaveApplication) => {
-                const emp = leave.employee || (leave as any).user || (leave as any);
+                const emp = leave.employee || (leave as { user?: { first_name?: string; last_name?: string; email?: string } }).user || (leave as { first_name?: string; last_name?: string; email?: string });
                 return (
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
@@ -121,7 +121,7 @@ export const TeamLeaveContent: React.FC = () => {
             header: t('leave.type'),
             cell: (leave: LeaveApplication) => (
                 <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm text-gray-600 dark:text-muted">
-                    {(leave as any).leave_type_name || leave.leave_type}
+                    {(leave as { leave_type_name?: string }).leave_type_name || leave.leave_type}
                 </span>
             ),
         },
@@ -139,10 +139,10 @@ export const TeamLeaveContent: React.FC = () => {
         {
             header: t('leave.approver'),
             cell: (leave: LeaveApplication) => (
-                (leave as any).manager_first_name ? (
+                (leave as { manager_first_name?: string }).manager_first_name ? (
                     <div className="flex flex-col">
                         <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {(leave as any).manager_first_name} {(leave as any).manager_last_name}
+                            {(leave as { manager_first_name?: string; manager_last_name?: string }).manager_first_name} {(leave as { manager_last_name?: string }).manager_last_name}
                         </span>
                         <span className="text-[9px] text-muted uppercase tracking-tighter italic">{t('leave.reportingManager')}</span>
                     </div>
@@ -184,7 +184,7 @@ export const TeamLeaveContent: React.FC = () => {
         {
             header: t('leave.actions'),
             cell: (leave: LeaveApplication) => (
-                leave.status === 'PENDING' && (leave as any).can_approve ? (
+                leave.status === 'PENDING' && (leave as { can_approve?: boolean }).can_approve ? (
                     <div className="flex gap-1 justify-end">
                         <Button
                             variant="ghost"
@@ -219,7 +219,7 @@ export const TeamLeaveContent: React.FC = () => {
                 )
             ),
         },
-    ], [t, approveMutation.isPending, rejectMutation.isPending, approveMutation, rejectMutation]);
+    ], [t, approveMutation, rejectMutation]);
 
     if (!canApprove) return <div className="p-8 text-center bg-red-50 text-red-600 rounded-lg">{t('leave.accessDenied')}: Insufficient permissions</div>;
 
@@ -343,7 +343,7 @@ export const TeamLeaveContent: React.FC = () => {
                             <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg p-3">
                                 <p className="text-xs text-red-800 dark:text-red-400">
                                     {t('leave.aboutToReject')}
-                                    <strong> {selectedLeave.employee?.first_name || (selectedLeave as any).first_name} {selectedLeave.employee?.last_name || (selectedLeave as any).last_name}</strong>
+                                    <strong> {selectedLeave.employee?.first_name || (selectedLeave as { first_name?: string }).first_name} {selectedLeave.employee?.last_name || (selectedLeave as { last_name?: string }).last_name}</strong>
                                 </p>
                             </div>
 

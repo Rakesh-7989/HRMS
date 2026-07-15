@@ -380,7 +380,7 @@ exports.uploadProfilePhoto = async (req, res) => {
     }
 
     // Audit
-    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: filePath }); } catch (e) { }
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: dbPath }); } catch (e) { }
 
     res.json({ status: "success", data: result });
   } catch (err) {

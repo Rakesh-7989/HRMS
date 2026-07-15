@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/services/api';
-import { Clock, CheckCircle2, AlertCircle,
+import { Clock, CheckCircle2,
     Search, Filter,
     Calendar, TrendingUp, RefreshCw
 } from 'lucide-react';
@@ -39,7 +39,7 @@ export const ArrearsPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [arrearsRes, summaryRes] = await Promise.all([
@@ -54,11 +54,11 @@ export const ArrearsPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
 
     useEffect(() => {
         fetchData();
-    }, [statusFilter]);
+    }, [fetchData]);
 
     const formatCurrency = (val: string | number) => {
         const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -172,7 +172,7 @@ export const ArrearsPage: React.FC = () => {
                 {(() => {
                     const columns = [
                         {
-                            header: t('common.employee'),
+                            header: _t('common.employee'),
                             cell: (row: Arrear) => (
                                 <div className="flex items-center gap-3">
                                     <div className="w-9 h-9 rounded-full bg-brand-50 dark:bg-indigo-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold">
@@ -186,7 +186,7 @@ export const ArrearsPage: React.FC = () => {
                             ),
                         },
                         {
-                            header: t('common.forMonth'),
+                            header: _t('common.forMonth'),
                             cell: (row: Arrear) => (
                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                     <Calendar className="w-4 h-4 opacity-50" />
@@ -195,13 +195,13 @@ export const ArrearsPage: React.FC = () => {
                             ),
                         },
                         {
-                            header: t('common.amount'),
+                            header: _t('common.amount'),
                             cell: (row: Arrear) => (
                                 <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(row.amount)}</span>
                             ),
                         },
                         {
-                            header: t('common.status'),
+                            header: _t('common.status'),
                             cell: (row: Arrear) => (
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${row.status === 'PAID'
                                     ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20'
@@ -212,7 +212,7 @@ export const ArrearsPage: React.FC = () => {
                             ),
                         },
                         {
-                            header: t('common.remarks'),
+                            header: _t('common.remarks'),
                             cell: (row: Arrear) => (
                                 <p className="text-gray-500 dark:text-gray-400 italic line-clamp-1 max-w-[200px]" title={row.remarks}>
                                     {row.remarks}
@@ -220,7 +220,7 @@ export const ArrearsPage: React.FC = () => {
                             ),
                         },
                         {
-                            header: t('common.createdAt'),
+                            header: _t('common.createdAt'),
                             cell: (row: Arrear) => (
                                 <span className="text-gray-400 text-xs">{new Date(row.created_at).toLocaleDateString()}</span>
                             ),
@@ -231,7 +231,7 @@ export const ArrearsPage: React.FC = () => {
                             columns={columns}
                             data={filteredArrears}
                             pageSize={10}
-                            emptyMessage={t('common.noResultsFound')}
+                            emptyMessage={_t('common.noResultsFound')}
                         />
                     );
                 })()}

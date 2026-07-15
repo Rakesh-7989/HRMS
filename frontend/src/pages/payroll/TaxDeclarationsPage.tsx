@@ -27,11 +27,12 @@ const TaxDeclarationsPage: React.FC = () => {
         other: 0
     });
 
-    const { data: declaration, isLoading } = useQuery<TaxDeclaration | null>({
+    const { data: declaration, isLoading } = useQuery<TaxDeclaration | null, Error, TaxDeclaration | null>({
         queryKey: ['tax-declaration', fy],
-        queryFn: async () => {
+        queryFn: async (): Promise<TaxDeclaration | null> => {
             try {
-                return await payrollService.getTaxDeclaration(fy);
+                const result = await payrollService.getTaxDeclaration(fy);
+                return result as unknown as TaxDeclaration | null;
             } catch { return null; }
         }
     });
@@ -49,12 +50,12 @@ const TaxDeclarationsPage: React.FC = () => {
     }, [declaration]);
 
     const submitMut = useMutation({
-        mutationFn: (payload: any) => payrollService.submitTaxDeclaration(payload),
+        mutationFn: (payload: Record<string, unknown>) => payrollService.submitTaxDeclaration(payload),
         onSuccess: () => {
-            showToast.success('Tax Declaration Submitted');
+            showToast.success(t('payroll.taxDeclared'));
             queryClient.invalidateQueries({ queryKey: ['tax-declaration'] });
         },
-        onError: (err: any) => showToast.error('Failed to submit: ' + (err?.response?.data?.message || err.message))
+        onError: (err: unknown) => showToast.error(t('payroll.fnfSubmitFailedPrefix') + ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as { message?: string }).message))
     });
 
     const handleSubmit = () => {
@@ -150,4 +151,4 @@ const TaxDeclarationsPage: React.FC = () => {
     );
 };
 
-export default TaxDeclarationsPage;
+export { TaxDeclarationsPage };

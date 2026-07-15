@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { showToast } from '@/utils/toast';
@@ -19,7 +19,7 @@ const validationSchema = Yup.object({
         .max(255, 'Name must not exceed 255 characters')
         .required('Organization name is required'),
     phone: Yup.string()
-        .matches(/^[0-9+\-()\s\.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
+        .matches(/^[0-9+\-()\s.]*$/, 'Phone number can only contain numbers and basic symbols (+, -, (, ), .)')
         .max(20, 'Phone must not exceed 20 characters')
         .nullable(),
     email: Yup.string()
@@ -47,25 +47,20 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
             setIsLoading(true);
             try {
                 await adminService.updateTenantProfile(values);
-                showToast.info('Organization updated successfully', { icon: '✅' });
+                showToast.success('Organization updated successfully');
                 if (onSuccess) onSuccess();
                 onClose();
-            } catch (err: any) {
-                const message = err.response?.data?.message || err.message || 'Failed to update organization';
-                showToast.info(message, { icon: '❌' });
+            } catch (err: unknown) {
+                const error = err as { response?: { data?: { message?: string } }; message?: string };
+                const message = error.response?.data?.message || error.message || 'Failed to update organization';
+                showToast.error(message);
             } finally {
                 setIsLoading(false);
             }
         },
     });
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchProfile();
-        }
-    }, [isOpen]);
-
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         setInitialDataLoading(true);
         try {
             const profile = await adminService.getTenantProfile();
@@ -73,7 +68,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                 name: profile.name || '',
                 phone: profile.phone || '',
                 email: profile.email || '',
-                address: (profile as any).address || '',
+                address: (profile as { address?: string }).address || '',
                 city: profile.city || '',
                 state: profile.state || '',
                 country: profile.country || '',
@@ -83,15 +78,21 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
         } finally {
             setInitialDataLoading(false);
         }
-    };
+    }, [formik]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchProfile();
+        }
+    }, [isOpen, fetchProfile]);
 
     const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
         const target = e.target as HTMLInputElement;
         const name = target.name;
         if (name === 'name') {
-            target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
+            target.value = target.value.replace(/[^A-Za-z\s\-.]/g, '');
         } else if (name === 'phone') {
-            target.value = target.value.replace(/[^0-9+\-()\s\.]/g, '');
+            target.value = target.value.replace(/[^0-9+\-()\s.]/g, '');
         }
     };
 
@@ -110,8 +111,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                 <form onSubmit={formik.handleSubmit} className="space-y-4 py-4">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Organization Name *</label>
+                            <label htmlFor="org-name" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Organization Name *</label>
                             <input
+                                id="org-name"
                                 name="name"
                                 value={formik.values.name}
                                 onChange={formik.handleChange}
@@ -126,37 +128,40 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Phone</label>
-                                <input
-                                    name="phone"
-                                    value={formik.values.phone}
-                                    onChange={formik.handleChange}
-                                    onInput={handleInput}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
-                                    placeholder="+1 234 567 890"
-                                    disabled={initialDataLoading}
-                                />
+                            <label htmlFor="org-phone" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Phone</label>
+                            <input
+                                id="org-phone"
+                                name="phone"
+                                value={formik.values.phone}
+                                onChange={formik.handleChange}
+                                onInput={handleInput}
+                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
+                                placeholder="+1 234 567 890"
+                                disabled={initialDataLoading}
+                            />
                                 {formik.touched.phone && formik.errors.phone && <p className="text-xs text-red-400 mt-1">{formik.errors.phone}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Email *</label>
-                                <input
-                                    name="email"
-                                    type="email"
-                                    value={formik.values.email}
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
-                                    placeholder="admin@company.com"
-                                    disabled={initialDataLoading}
-                                />
+                            <label htmlFor="org-email" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Email *</label>
+                            <input
+                                id="org-email"
+                                name="email"
+                                type="email"
+                                value={formik.values.email}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
+                                placeholder="admin@company.com"
+                                disabled={initialDataLoading}
+                            />
                                 {formik.touched.email && formik.errors.email && <p className="text-xs text-red-400 mt-1">{formik.errors.email}</p>}
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Address</label>
+                            <label htmlFor="org-address" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Address</label>
                             <input
+                                id="org-address"
                                 name="address"
                                 value={formik.values.address}
                                 onChange={formik.handleChange}
@@ -168,8 +173,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
 
                         <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">City</label>
+                                <label htmlFor="org-city" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">City</label>
                                 <input
+                                    id="org-city"
                                     name="city"
                                     value={formik.values.city}
                                     onChange={formik.handleChange}
@@ -178,8 +184,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">State</label>
+                                <label htmlFor="org-state" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">State</label>
                                 <input
+                                    id="org-state"
                                     name="state"
                                     value={formik.values.state}
                                     onChange={formik.handleChange}
@@ -188,8 +195,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({ is
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Country</label>
+                                <label htmlFor="org-country" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Country</label>
                                 <input
+                                    id="org-country"
                                     name="country"
                                     value={formik.values.country}
                                     onChange={formik.handleChange}

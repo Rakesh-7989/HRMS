@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { PageTransition } from '@/components/common/PageTransition';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PageTransition } from '@/components/ui/PageTransition';
 import api from '@/services/api'; // Adjust path if needed
 import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/Button';
@@ -11,14 +11,13 @@ import {
     Play,
     RefreshCcw,
     Search,
-    Lock,
-    Unlock
+    Lock
 } from 'lucide-react';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import { DataTable, Column } from '@/components/ui/DataTable';
 
-export const DBADashboard = () => {
+export const DBADashboard: React.FC = () => {
     const { t } = useTranslation();
 
     // Auth State for DBA Console
@@ -31,14 +30,26 @@ export const DBADashboard = () => {
     const [activeTab, setActiveTab] = useState<'explorer' | 'sql'>('sql'); // Default to SQL for power users
 
     // Data State
-    const [tableData, setTableData] = useState<{ columns: any[], rows: any[], total: number } | null>(null);
+    const [tableData, setTableData] = useState<{ columns: Record<string, unknown>[]; rows: Record<string, unknown>[]; total: number } | null>(null);
     const [query, setQuery] = useState('');
-    const [queryResult, setQueryResult] = useState<any | null>(null);
+    const [queryResult, setQueryResult] = useState<Record<string, unknown> | null>(null);
 
     // UI State
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [limit, setLimit] = useState(50);
+
+    const fetchTables = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/dba/tables');
+            setTables(res.data.tables);
+        } catch (err: unknown) {
+            showToast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('dba.failedFetchTables'));
+        } finally {
+            setLoading(false);
+        }
+    }, [t]);
 
     useEffect(() => {
         // Check if previously unlocked in this session
@@ -47,7 +58,7 @@ export const DBADashboard = () => {
             setIsLocked(false);
             fetchTables();
         }
-    }, []);
+    }, [fetchTables]);
 
     const handleUnlock = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,18 +80,6 @@ export const DBADashboard = () => {
         }
     };
 
-    const fetchTables = async () => {
-        try {
-            setLoading(true);
-            const res = await api.get('/dba/tables');
-            setTables(res.data.tables);
-        } catch (err: any) {
-            showToast.error(err.response?.data?.message || t('dba.failedFetchTables'));
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const fetchTableData = async (tableName: string) => {
         try {
             setLoading(true);
@@ -89,8 +88,8 @@ export const DBADashboard = () => {
 
             const res = await api.get(`/dba/tables/${tableName}?limit=${limit}`);
             setTableData(res.data);
-        } catch (err: any) {
-            showToast.error(err.response?.data?.message || t('dba.failedFetchTableData'));
+        } catch (err: unknown) {
+            showToast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('dba.failedFetchTableData'));
         } finally {
             setLoading(false);
         }
@@ -109,9 +108,10 @@ export const DBADashboard = () => {
             if (res.data.status === 'success') {
                 showToast.success(t('dba.queryExecuted', { duration: res.data.duration }));
             }
-        } catch (err: any) {
-            const msg = err.response?.data?.message || err.message;
-            const detail = err.response?.data?.detail;
+        } catch (err: unknown) {
+            const apiErr = err as { response?: { data?: { message?: string; detail?: string } }; message?: string };
+            const msg = apiErr.response?.data?.message || apiErr.message;
+            const detail = apiErr.response?.data?.detail;
             showToast.error(t('dba.queryError', { msg, detail: detail || '' }));
             setQueryResult(null);
         } finally {
@@ -146,7 +146,6 @@ export const DBADashboard = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
                                 placeholder={t('dba.passwordPlaceholder')}
-                                autoFocus
                             />
                         </div>
                         <Button
@@ -260,7 +259,7 @@ export const DBADashboard = () => {
                         )}
                         <Button
                             variant="ghost"
-                            size="icon"
+                            size="sm"
                             onClick={() => {
                                 setIsLocked(true);
                                 sessionStorage.removeItem('dba_unlocked');
@@ -307,7 +306,7 @@ export const DBADashboard = () => {
                                     </span>
                                     {queryResult && (
                                         <span className="text-xs text-gray-400 font-mono">
-                                            {t('dba.rowsDuration', { count: queryResult.rowCount, duration: queryResult.duration })}
+                                            {t('dba.rowsDuration', { count: (queryResult as Record<string, unknown>).rowCount as number, duration: (queryResult as Record<string, unknown>).duration as string })}
                                         </span>
                                     )}
                                 </div>
@@ -320,8 +319,8 @@ export const DBADashboard = () => {
                                         </div>
                                     ) : (
                                         <ResultsTable
-                                            columns={queryResult.fields}
-                                            rows={queryResult.rows}
+                                            columns={(queryResult as Record<string, unknown>).fields as string[]}
+                                            rows={(queryResult as Record<string, unknown>).rows as Record<string, unknown>[]}
                                         />
                                     )}
                                 </div>
@@ -362,10 +361,10 @@ export const DBADashboard = () => {
                                         {tableData ? (
                                             <DataTable
                                                 data={tableData.rows}
-                                                columns={tableData.columns.map((col: any) => ({
-                                                    header: `${col.column_name} · ${col.data_type}`,
-                                                    accessorKey: col.column_name,
-                                                    cell: (row: any) => <CellValue value={row[col.column_name]} />,
+                                                columns={tableData.columns.map((col: Record<string, unknown>) => ({
+                                                    header: `${col.column_name as string} · ${col.data_type as string}`,
+                                                    accessorKey: col.column_name as string,
+                                                    cell: (row: Record<string, unknown>) => <CellValue value={row[col.column_name as string]} />,
                                                 }))}
                                                 pageSize={limit}
                                                 pageSizeOptions={[50, 100, 500]}
@@ -393,7 +392,7 @@ export const DBADashboard = () => {
 
 // Start Helper Components
 
-const CellValue = ({ value }: { value: any }) => {
+const CellValue = ({ value }: { value: unknown }) => {
     const { t } = useTranslation();
     if (value === null || value === undefined) {
         return <span className="text-gray-600 italic">{t('dba.nullValue')}</span>;
@@ -411,14 +410,14 @@ const CellValue = ({ value }: { value: any }) => {
     return <span className="font-mono text-xs text-gray-300">{String(value)}</span>;
 };
 
-const ResultsTable = ({ columns, rows }: { columns: string[], rows: any[] }) => {
+const ResultsTable = ({ columns, rows }: { columns: string[]; rows: Record<string, unknown>[] }) => {
     const { t } = useTranslation();
     if (!rows || rows.length === 0) return <div className="p-4 text-gray-500 italic">{t('dba.noRows')}</div>;
 
-    const tableColumns: Column<any>[] = columns.map((col) => ({
+    const tableColumns: Column<Record<string, unknown>>[] = columns.map((col) => ({
         header: col,
         accessorKey: col,
-        cell: (row: any) => <CellValue value={row[col]} />,
+        cell: (row: Record<string, unknown>) => <CellValue value={row[col]} />,
     }));
 
     return (
